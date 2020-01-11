@@ -40,6 +40,8 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 		case "q":
 			fallthrough
 		case "esc":
+			fallthrough
+		case "ctrl+c":
 			return m, tea.Quit
 
 		}

@@ -11,11 +11,13 @@ type KeyPressMsg string
 
 // Control keys
 const (
+	keyETX = 3 // ctrl+c
 	keyESC = 27
 	keyUS  = 31
 )
 
 var controlKeyNames = map[int]string{
+	keyETX: "ctrl+c",
 	keyESC: "esc",
 	keyUS:  "us",
 }
