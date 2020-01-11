@@ -36,6 +36,8 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 			}
 
 		case "q":
+			fallthrough
+		case "esc":
 			return m, tea.Quit
 
 		}
@@ -56,7 +58,7 @@ func view(model tea.Model) string {
 	)
 
 	return fmt.Sprintf(
-		"What to do today?\n\n%s\n\n(press j/k or up/down to select, q to quit)",
+		"What to do today?\n\n%s\n\n(press j/k or up/down to select, q or esc to quit)",
 		choices,
 	)
 }

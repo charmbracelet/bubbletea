@@ -9,6 +9,17 @@ import (
 // KeyPressMsg contains information about a keypress
 type KeyPressMsg string
 
+// Control keys
+const (
+	keyESC = 27
+	keyUS  = 31
+)
+
+var controlKeyNames = map[int]string{
+	keyESC: "esc",
+	keyUS:  "us",
+}
+
 var keyNames = map[string]string{
 	"\x1b[A": "up",
 	"\x1b[B": "down",
@@ -27,16 +38,24 @@ func ReadKey(r io.Reader) (string, error) {
 		return "", err
 	}
 
-	// Was it a special key, like an arrow key?
-	if s, ok := keyNames[string(buf[:n])]; ok {
-		return s, nil
-	}
-
-	// Nope, just a regular key
+	// Get rune
 	c, _ := utf8.DecodeRune(buf[:])
 	if c == utf8.RuneError {
 		return "", errors.New("no such rune")
 	}
 
+	// Is it a control character?
+	if n == 1 && c <= keyUS {
+		if s, ok := controlKeyNames[int(c)]; ok {
+			return s, nil
+		}
+	}
+
+	// Is it a special key, like an arrow key?
+	if s, ok := keyNames[string(buf[:n])]; ok {
+		return s, nil
+	}
+
+	// Nope, just a regular, ol' rune
 	return string(c), nil
 }
