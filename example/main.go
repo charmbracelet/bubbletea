@@ -9,7 +9,9 @@ type Model int
 
 func main() {
 	p := tea.NewProgram(0, update, view)
-	p.Start()
+	if err := p.Start(); err != nil {
+		fmt.Println("could not start program:", err)
+	}
 }
 
 func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
