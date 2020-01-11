@@ -9,20 +9,30 @@ import (
 // KeyPressMsg contains information about a keypress
 type KeyPressMsg string
 
+var keyNames = map[string]string{
+	"\x1b[A": "up",
+	"\x1b[B": "down",
+	"\x1b[C": "right",
+	"\x1b[D": "left",
+}
+
 // ReadKey reads keypress input from a TTY and returns a string representation
 // of a key
 func ReadKey(r io.Reader) (string, error) {
 	var buf [256]byte
 
 	// Read and block
-	_, err := r.Read(buf[:])
+	n, err := r.Read(buf[:])
 	if err != nil {
 		return "", err
 	}
 
-	// TODO: non-rune keys like arrows, meta keys, and so on
+	// Was it a special key, like an arrow key?
+	if s, ok := keyNames[string(buf[:n])]; ok {
+		return s, nil
+	}
 
-	// Read "normal" key
+	// Nope, just a regular key
 	c, _ := utf8.DecodeRune(buf[:])
 	if c == utf8.RuneError {
 		return "", errors.New("no such rune")
