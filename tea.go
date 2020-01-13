@@ -20,6 +20,10 @@ type Model interface{}
 // Cmd is an IO operation. If it's nil it's considered a no-op.
 type Cmd func() Msg
 
+// Sub is an event subscription. If it's nil it's considered a no-op. But why
+// would you subscribe to nil?
+type Sub func(Model) Msg
+
 // Update is called when a message is received. It may update the model and/or
 // send a command.
 type Update func(Msg, Model) (Model, Cmd)
@@ -29,10 +33,11 @@ type View func(Model) string
 
 // Program is a terminal user interface
 type Program struct {
-	model  Model
-	update Update
-	view   View
-	rw     io.ReadWriter
+	model         Model
+	update        Update
+	view          View
+	subscriptions []Sub
+	rw            io.ReadWriter
 }
 
 // Quit command
@@ -44,12 +49,12 @@ func Quit() Msg {
 type quitMsg struct{}
 
 // NewProgram creates a new Program
-func NewProgram(model Model, update Update, view View) *Program {
+func NewProgram(model Model, update Update, view View, subs []Sub) *Program {
 	return &Program{
-		model:  model,
-		update: update,
-		view:   view,
-		// TODO: subscriptions
+		model:         model,
+		update:        update,
+		view:          view,
+		subscriptions: subs,
 	}
 }
 
@@ -81,8 +86,9 @@ func (p *Program) Start() error {
 	p.render(model, true)
 
 	// Subscribe to user input
-	// TODO: move to program struct to allow for subscriptions to other things,
-	// too, like timers, frames, download/upload progress and so on.
+	// TODO: should we move this to the end-user program level or just keep this
+	// here, since it blocks nicely and user input will probably be something
+	// users typically need?
 	go func() {
 		for {
 			select {
@@ -104,6 +110,28 @@ func (p *Program) Start() error {
 					go func() {
 						msgs <- cmd()
 					}()
+				}
+			}
+		}
+	}()
+
+	// Subscriptions. Subscribe to user input.
+	// TODO: should the blocking `for` be here, or in the end-user portion
+	// of the program?
+	go func() {
+		select {
+		case <-done:
+			return
+		default:
+			if len(p.subscriptions) > 0 {
+				for _, sub := range p.subscriptions {
+					if sub != nil {
+						go func() {
+							for {
+								msgs <- sub(p.model)
+							}
+						}()
+					}
 				}
 			}
 		}
@@ -163,6 +191,7 @@ func clearLines(n int) {
 	}
 }
 
-func clearScreen() {
+// ClearScreen clears the visible portion of the terminal
+func ClearScreen() {
 	fmt.Printf(esc + "2J" + esc + "3J" + esc + "1;1H")
 }
