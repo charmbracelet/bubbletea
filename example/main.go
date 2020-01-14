@@ -2,35 +2,63 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"strings"
 	"tea"
 	"time"
+
+	"github.com/fogleman/ease"
 )
 
 // Model contains the data for our application.
 type Model struct {
-	Choice int
-	Ticks  int
+	Choice   int
+	Chosen   bool
+	Ticks    int
+	Frames   int
+	Progress float64
 }
 
-// TickMsg signals that the timer has ticked
-type TickMsg struct{}
+type tickMsg struct{}
+
+type frameMsg struct{}
 
 func main() {
 	p := tea.NewProgram(
-		Model{0, 10},
+		Model{0, false, 10, 0, 0},
 		update,
 		view,
-		[]tea.Sub{tick},
+		[]tea.Sub{tick, frame},
 	)
 	if err := p.Start(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
 
-// Update. Triggered when new messages arrive.
+// SUBSCRIPTIONS
+
+func tick(model tea.Model) tea.Msg {
+	time.Sleep(time.Second)
+	return tickMsg{}
+}
+
+func frame(model tea.Model) tea.Msg {
+	time.Sleep(time.Second / 16)
+	return frameMsg{}
+}
+
+// UPDATES
+
 func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := model.(Model)
 
+	if !m.Chosen {
+		return updateChoices(msg, m)
+	}
+	return updateChosen(msg, m)
+}
+
+func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyPressMsg:
@@ -49,6 +77,9 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 			if m.Choice < 0 {
 				m.Choice = 0
 			}
+		case "enter":
+			m.Chosen = true
+			return m, nil
 		case "q":
 			fallthrough
 		case "esc":
@@ -57,7 +88,7 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case TickMsg:
+	case tickMsg:
 		if m.Ticks == 0 {
 			return m, tea.Quit
 		}
@@ -67,24 +98,51 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Subscription
-func tick(_ tea.Model) tea.Msg {
-	time.Sleep(time.Second)
-	return TickMsg{}
+func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+
+	case tea.KeyPressMsg:
+		switch msg {
+		case "q":
+			fallthrough
+		case "esc":
+			fallthrough
+		case "ctrl+c":
+			return m, tea.Quit
+		}
+
+	case frameMsg:
+		m.Frames += 1
+		m.Progress = ease.OutBounce(float64(m.Frames) / float64(120))
+		if m.Progress > 1 {
+			m.Progress = 1
+		}
+		return m, nil
+
+	}
+
+	return m, nil
 }
 
-// View template
-const tpl = `What to do today?
+// VIEWS
+
+func view(model tea.Model) string {
+	m, _ := model.(Model)
+	if !m.Chosen {
+		return choicesView(m)
+	}
+	return chosenView(m)
+}
+
+const choicesTpl = `What to do today?
 
 %s
 
 Program quits in %d seconds.
 
-(press j/k or up/down to select, q or esc to quit)`
+(press j/k or up/down to select, enter to choose, and q or esc to quit)`
 
-// View function. Called after an Update().
-func view(model tea.Model) string {
-	m, _ := model.(Model)
+func choicesView(m Model) string {
 	c := m.Choice
 
 	choices := fmt.Sprintf(
@@ -95,14 +153,40 @@ func view(model tea.Model) string {
 		checkbox("See friends", c == 3),
 	)
 
-	return fmt.Sprintf(tpl, choices, m.Ticks)
+	return fmt.Sprintf(choicesTpl, choices, m.Ticks)
 }
 
-// Checkbox widget
+func chosenView(m Model) string {
+	var msg string
+
+	switch m.Choice {
+	case 0:
+		msg = "Carrot planting?\n\nCool, we'll need libgarden and vegeutils..."
+	case 1:
+		msg = "A trip to the market?\n\nOkay, then we should install marketkit and libshopping..."
+	case 2:
+		msg = "Reading time?\n\nOkay, cool, then we’ll need a library. Yes, a literal library..."
+	default:
+		msg = "It’s always good to see friends.\n\nFetching social-skills and conversationutils..."
+	}
+
+	return "\n" + msg + "\n\n\n\n\n Downloading...\n" + progressbar(80, m.Progress) + "%"
+}
+
 func checkbox(label string, checked bool) string {
 	check := " "
 	if checked {
 		check = "x"
 	}
 	return fmt.Sprintf("[%s] %s", check, label)
+}
+
+func progressbar(width int, percent float64) string {
+	metaChars := 7
+	w := float64(width - metaChars)
+	fullSize := int(math.Round(w * percent))
+	emptySize := int(w) - fullSize
+	fullCells := strings.Repeat("#", fullSize)
+	emptyCells := strings.Repeat(".", emptySize)
+	return fmt.Sprintf("|%s%s| %3.0f", fullCells, emptyCells, math.Round(percent*100))
 }

@@ -11,13 +11,17 @@ type KeyPressMsg string
 
 // Control keys
 const (
-	keyETX = 3 // ctrl+c
+	keyETX = 3  // break, ctrl+c
+	keyLF  = 9  // line-feed, \n
+	keyCR  = 13 // carriage return, \r
 	keyESC = 27
 	keyUS  = 31
 )
 
 var controlKeyNames = map[int]string{
 	keyETX: "ctrl+c",
+	keyLF:  "enter",
+	keyCR:  "enter",
 	keyESC: "esc",
 	keyUS:  "us",
 }
