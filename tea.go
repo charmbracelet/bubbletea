@@ -14,14 +14,13 @@ const esc = "\033["
 // Msg represents an action. It's used by Update to update the UI.
 type Msg interface{}
 
-// Model contains the data for an application
+// Model contains the updatable data for an application
 type Model interface{}
 
 // Cmd is an IO operation. If it's nil it's considered a no-op.
 type Cmd func() Msg
 
-// Sub is an event subscription. If it's nil it's considered a no-op. But why
-// would you subscribe to nil?
+// Sub is an event subscription. If it returns nil it's considered a no-op.
 type Sub func(Model) Msg
 
 // Update is called when a message is received. It may update the model and/or
@@ -40,7 +39,7 @@ type Program struct {
 	rw            io.ReadWriter
 }
 
-// Quit command
+// Quit is a command that tells the program to exit
 func Quit() Msg {
 	return quitMsg{}
 }
@@ -91,15 +90,12 @@ func (p *Program) Start() error {
 	// users typically need?
 	go func() {
 		for {
-			select {
-			default:
-				msg, _ := ReadKey(p.rw)
-				msgs <- KeyPressMsg(msg)
-			}
+			msg, _ := ReadKey(p.rw)
+			msgs <- KeyPressMsg(msg)
 		}
 	}()
 
-	// Process subscriptions
+	// Initialize subscriptions
 	go func() {
 		if len(p.subscriptions) > 0 {
 			for _, sub := range p.subscriptions {
@@ -145,7 +141,7 @@ func (p *Program) Start() error {
 	}
 }
 
-// Render a view
+// Render a view to the terminal
 func (p *Program) render(model Model, init bool) {
 	view := p.view(model)
 
@@ -159,22 +155,27 @@ func (p *Program) render(model Model, init bool) {
 	io.WriteString(p.rw, view)
 }
 
+// Hide the cursor
 func hideCursor() {
 	fmt.Printf(esc + "?25l")
 }
 
+// Show the cursor
 func showCursor() {
 	fmt.Printf(esc + "?25h")
 }
 
+// Move the cursor up a given number of lines
 func cursorUp(n int) {
 	fmt.Printf(esc+"%dF", n)
 }
 
+// Clear the current line
 func clearLine() {
 	fmt.Printf(esc + "2K")
 }
 
+// Clear a given number of lines
 func clearLines(n int) {
 	for i := 0; i < n; i++ {
 		cursorUp(1)

@@ -15,7 +15,7 @@ const (
 	keyLF  = 9  // line-feed, \n
 	keyCR  = 13 // carriage return, \r
 	keyESC = 27
-	keyUS  = 31
+	keyUS  = 31 // unit separator
 )
 
 var controlNames = map[int]string{
