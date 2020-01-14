@@ -6,28 +6,28 @@ import (
 	"time"
 )
 
+// Model contains the data for our application.
 type Model struct {
 	Choice int
 	Ticks  int
 }
 
+// TickMsg signals that the timer has ticked
 type TickMsg struct{}
 
-const tpl = `What to do today?
-
-%s
-
-Elapsed: %d seconds.
-
-(press j/k or up/down to select, q or esc to quit)`
-
 func main() {
-	p := tea.NewProgram(Model{0, 0}, update, view, []tea.Sub{tick})
+	p := tea.NewProgram(
+		Model{0, 10},
+		update,
+		view,
+		[]tea.Sub{tick},
+	)
 	if err := p.Start(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
 
+// Update. Triggered when new messages arrive.
 func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := model.(Model)
 
@@ -58,7 +58,10 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 		}
 
 	case TickMsg:
-		m.Ticks += 1
+		if m.Ticks == 0 {
+			return m, tea.Quit
+		}
+		m.Ticks -= 1
 	}
 
 	return m, nil
@@ -66,10 +69,20 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 // Subscription
 func tick(_ tea.Model) tea.Msg {
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second)
 	return TickMsg{}
 }
 
+// View template
+const tpl = `What to do today?
+
+%s
+
+Program quits in %d seconds.
+
+(press j/k or up/down to select, q or esc to quit)`
+
+// View function. Called after an Update().
 func view(model tea.Model) string {
 	m, _ := model.(Model)
 	c := m.Choice
@@ -85,6 +98,7 @@ func view(model tea.Model) string {
 	return fmt.Sprintf(tpl, choices, m.Ticks)
 }
 
+// Checkbox widget
 func checkbox(label string, checked bool) string {
 	check := " "
 	if checked {
