@@ -99,6 +99,19 @@ func (p *Program) Start() error {
 		}
 	}()
 
+	// Process subscriptions
+	go func() {
+		if len(p.subscriptions) > 0 {
+			for _, sub := range p.subscriptions {
+				go func(s Sub) {
+					for {
+						msgs <- s(p.model)
+					}
+				}(sub)
+			}
+		}
+	}()
+
 	// Process commands
 	go func() {
 		for {
@@ -110,28 +123,6 @@ func (p *Program) Start() error {
 					go func() {
 						msgs <- cmd()
 					}()
-				}
-			}
-		}
-	}()
-
-	// Subscriptions. Subscribe to user input.
-	// TODO: should the blocking `for` be here, or in the end-user portion
-	// of the program?
-	go func() {
-		select {
-		case <-done:
-			return
-		default:
-			if len(p.subscriptions) > 0 {
-				for _, sub := range p.subscriptions {
-					if sub != nil {
-						go func() {
-							for {
-								msgs <- sub(p.model)
-							}
-						}()
-					}
 				}
 			}
 		}
