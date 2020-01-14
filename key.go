@@ -18,7 +18,7 @@ const (
 	keyUS  = 31
 )
 
-var controlKeyNames = map[int]string{
+var controlNames = map[int]string{
 	keyETX: "ctrl+c",
 	keyLF:  "enter",
 	keyCR:  "enter",
@@ -26,7 +26,7 @@ var controlKeyNames = map[int]string{
 	keyUS:  "us",
 }
 
-var keyNames = map[string]string{
+var sequenceNames = map[string]string{
 	"\x1b[A": "up",
 	"\x1b[B": "down",
 	"\x1b[C": "right",
@@ -52,13 +52,13 @@ func ReadKey(r io.Reader) (string, error) {
 
 	// Is it a control character?
 	if n == 1 && c <= keyUS {
-		if s, ok := controlKeyNames[int(c)]; ok {
+		if s, ok := controlNames[int(c)]; ok {
 			return s, nil
 		}
 	}
 
-	// Is it a special key, like an arrow key?
-	if s, ok := keyNames[string(buf[:n])]; ok {
+	// Is it a special sequence, like an arrow key?
+	if s, ok := sequenceNames[string(buf[:n])]; ok {
 		return s, nil
 	}
 
