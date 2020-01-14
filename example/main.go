@@ -17,6 +17,7 @@ type Model struct {
 	Ticks    int
 	Frames   int
 	Progress float64
+	Loaded   bool
 }
 
 type tickMsg struct{}
@@ -25,7 +26,7 @@ type frameMsg struct{}
 
 func main() {
 	p := tea.NewProgram(
-		Model{0, false, 10, 0, 0},
+		Model{0, false, 10, 0, 0, false},
 		update,
 		view,
 		[]tea.Sub{tick, frame},
@@ -112,13 +113,23 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 		}
 
 	case frameMsg:
-		m.Frames += 1
-		m.Progress = ease.OutBounce(float64(m.Frames) / float64(120))
-		if m.Progress > 1 {
-			m.Progress = 1
+		if !m.Loaded {
+			m.Frames += 1
+			m.Progress = ease.OutBounce(float64(m.Frames) / float64(60))
+			if m.Progress >= 1 {
+				m.Progress = 1
+				m.Loaded = true
+				m.Ticks = 3
+			}
 		}
-		return m, nil
 
+	case tickMsg:
+		if m.Loaded {
+			if m.Ticks == 0 {
+				return m, tea.Quit
+			}
+			m.Ticks -= 1
+		}
 	}
 
 	return m, nil
@@ -165,12 +176,17 @@ func chosenView(m Model) string {
 	case 1:
 		msg = "A trip to the market?\n\nOkay, then we should install marketkit and libshopping..."
 	case 2:
-		msg = "Reading time?\n\nOkay, cool, then we’ll need a library. Yes, a literal library..."
+		msg = "Reading time?\n\nOkay, cool, then we’ll need a library. Yes, an actual library."
 	default:
 		msg = "It’s always good to see friends.\n\nFetching social-skills and conversationutils..."
 	}
 
-	return "\n" + msg + "\n\n\n\n\n Downloading...\n" + progressbar(80, m.Progress) + "%"
+	label := "Downloading..."
+	if m.Loaded {
+		label = fmt.Sprintf("Downloaded. Exiting in %d...", m.Ticks)
+	}
+
+	return msg + "\n\n\n\n\n\n " + label + "\n" + progressbar(80, m.Progress) + "%"
 }
 
 func checkbox(label string, checked bool) string {
