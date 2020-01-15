@@ -44,7 +44,7 @@ func tick(model tea.Model) tea.Msg {
 }
 
 func frame(model tea.Model) tea.Msg {
-	time.Sleep(time.Second / 16)
+	time.Sleep(time.Second / 60)
 	return frameMsg{}
 }
 
@@ -115,7 +115,7 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	case frameMsg:
 		if !m.Loaded {
 			m.Frames += 1
-			m.Progress = ease.OutBounce(float64(m.Frames) / float64(60))
+			m.Progress = ease.OutBounce(float64(m.Frames) / float64(120))
 			if m.Progress >= 1 {
 				m.Progress = 1
 				m.Loaded = true
