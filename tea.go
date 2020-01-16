@@ -169,13 +169,15 @@ func showCursor() {
 	fmt.Printf(esc + "?25h")
 }
 
-// Move the cursor up a given number of lines
-func cursorDown(n int) {
+// Move the cursor down a given number of lines and place it at the beginning
+// of the line
+func cursorNextLine(n int) {
 	fmt.Printf(esc+"%dE", n)
 }
 
-// Move the cursor up a given number of lines
-func cursorUp(n int) {
+// Move the cursor up a given number of lines and place it at the beginning of
+// the line
+func cursorPrevLine(n int) {
 	fmt.Printf(esc+"%dF", n)
 }
 
@@ -188,7 +190,7 @@ func clearLine() {
 func clearLines(n int) {
 	for i := 0; i < n; i++ {
 		clearLine()
-		cursorUp(1)
+		cursorPrevLine(1)
 	}
 }
 
