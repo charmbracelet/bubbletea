@@ -170,6 +170,11 @@ func showCursor() {
 }
 
 // Move the cursor up a given number of lines
+func cursorDown(n int) {
+	fmt.Printf(esc+"%dE", n)
+}
+
+// Move the cursor up a given number of lines
 func cursorUp(n int) {
 	fmt.Printf(esc+"%dF", n)
 }
