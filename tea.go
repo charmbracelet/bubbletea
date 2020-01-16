@@ -188,9 +188,10 @@ func clearLine() {
 
 // Clear a given number of lines
 func clearLines(n int) {
+	clearLine()
 	for i := 0; i < n; i++ {
-		clearLine()
 		cursorPrevLine(1)
+		clearLine()
 	}
 }
 
