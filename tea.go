@@ -11,6 +11,9 @@ import (
 // Escape sequence
 const esc = "\033["
 
+// The number of lines we last rendered
+var linesRendered = 0
+
 // Msg represents an action. It's used by Update to update the UI.
 type Msg interface{}
 
@@ -150,9 +153,10 @@ func (p *Program) render(model Model, init bool) {
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
 	if !init {
-		clearLines(strings.Count(view, "\r\n"))
+		clearLines(linesRendered)
 	}
 	io.WriteString(p.rw, view)
+	linesRendered = strings.Count(view, "\r\n")
 }
 
 // Hide the cursor
@@ -178,8 +182,8 @@ func clearLine() {
 // Clear a given number of lines
 func clearLines(n int) {
 	for i := 0; i < n; i++ {
-		cursorUp(1)
 		clearLine()
+		cursorUp(1)
 	}
 }
 

@@ -186,7 +186,7 @@ func chosenView(m Model) string {
 		label = fmt.Sprintf("Downloaded. Exiting in %d...", m.Ticks)
 	}
 
-	return msg + "\n\n\n\n\n\n " + label + "\n" + progressbar(80, m.Progress) + "%"
+	return msg + "\n\n " + label + "\n" + progressbar(80, m.Progress) + "%"
 }
 
 func checkbox(label string, checked bool) string {
