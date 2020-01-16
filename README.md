@@ -61,7 +61,7 @@ Hungry for more? See the [other examples][examples].
 Heavily inspired by both [The Elm Architecture][elm] by Evan Czaplicki et al.
 and [go-tea][gotea] by TJ Holowaychuk.
 
-[elm]: https://elm-lang.org
+[elm]: https://guide.elm-lang.org/architecture/
 [gotea]: https://github.com/tj/go-tea
 
 ***
