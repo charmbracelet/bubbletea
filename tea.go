@@ -85,7 +85,7 @@ func (p *Program) Start() error {
 
 	// Render initial view
 	hideCursor()
-	p.render(model, true)
+	p.render(model)
 
 	// Subscribe to user input
 	// TODO: should we move this to the end-user program level or just keep this
@@ -138,21 +138,21 @@ func (p *Program) Start() error {
 
 			model, cmd = p.update(msg, model)
 			cmds <- cmd // process command (if any)
-			p.render(model, false)
+			p.render(model)
 			p.model = model
 		}
 	}
 }
 
 // Render a view to the terminal
-func (p *Program) render(model Model, init bool) {
-	view := p.view(model)
+func (p *Program) render(model Model) {
+	view := p.view(model) + "\n"
 
 	// We need to add carriage returns to ensure that the cursor travels to the
 	// start of a column after a newline
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
-	if !init {
+	if linesRendered > 0 {
 		clearLines(linesRendered)
 	}
 	io.WriteString(p.rw, view)

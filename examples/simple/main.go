@@ -35,7 +35,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 
 func view(mdl tea.Model) string {
 	m, _ := mdl.(model)
-	return fmt.Sprintf("Hi. This program will exit in %d seconds...\n", m)
+	return fmt.Sprintf("Hi. This program will exit in %d seconds...", m)
 }
 
 func tick(_ tea.Model) tea.Msg {
