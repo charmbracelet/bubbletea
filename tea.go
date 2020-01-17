@@ -87,10 +87,9 @@ func (p *Program) Start() error {
 	hideCursor()
 	p.render(model)
 
-	// Subscribe to user input
-	// TODO: should we move this to the end-user program level or just keep this
-	// here, since it blocks nicely and user input will probably be something
-	// users typically need?
+	// Subscribe to user input. We could move this out of here and offer it
+	// as a subscription, but it blocks nicely and seems to be a common enough
+	// need that we're enabling it by default.
 	go func() {
 		for {
 			msg, _ := ReadKey(p.rw)
@@ -195,7 +194,19 @@ func clearLines(n int) {
 	}
 }
 
-// ClearScreen clears the visible portion of the terminal
+// Fullscreen switches to the altscreen and clears the terminal. The former
+// view can be restored with ExitFullscreen().
+func Fullscreen() {
+	fmt.Print(esc + "?1049h" + esc + "H")
+}
+
+// ExitFullscreen exits the altscreen and returns the former terminal view
+func ExitFullscreen() {
+	fmt.Print(esc + "?1049l")
+}
+
+// ClearScreen clears the visible portion of the terminal. Effectively, it
+// fills the terminal with blank spaces.
 func ClearScreen() {
 	fmt.Printf(esc + "2J" + esc + "3J" + esc + "1;1H")
 }
