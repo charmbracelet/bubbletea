@@ -3,6 +3,8 @@ package tea
 import (
 	"fmt"
 	"io"
+	"log"
+	"log/syslog"
 	"strings"
 
 	"github.com/pkg/term"
@@ -209,4 +211,17 @@ func ExitFullscreen() {
 // fills the terminal with blank spaces.
 func ClearScreen() {
 	fmt.Printf(esc + "2J" + esc + "3J" + esc + "1;1H")
+}
+
+// UseSysLog logs to the system log. This becomes helpful when debugging since
+// we can't easily print to the terminal since our TUI is occupying it!
+//
+// On macOS this is a just a matter of: tail -f /var/log/system.log
+func UseSysLog(programName string) error {
+	l, err := syslog.New(syslog.LOG_NOTICE, programName)
+	if err != nil {
+		return err
+	}
+	log.SetOutput(l)
+	return nil
 }
