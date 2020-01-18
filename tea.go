@@ -213,6 +213,11 @@ func ClearScreen() {
 	fmt.Printf(esc + "2J" + esc + "3J" + esc + "1;1H")
 }
 
+// Invert inverts the foreground and background colors of a given string
+func Invert(s string) string {
+	return esc + "7m" + s + esc + "0m"
+}
+
 // UseSysLog logs to the system log. This becomes helpful when debugging since
 // we can't easily print to the terminal since our TUI is occupying it!
 //
