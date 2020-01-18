@@ -95,7 +95,7 @@ func (p *Program) Start() error {
 	go func() {
 		for {
 			msg, _ := ReadKey(p.rw)
-			msgs <- KeyPressMsg(msg)
+			msgs <- KeyMsg(msg)
 		}
 	}()
 

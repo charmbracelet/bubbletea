@@ -1,5 +1,7 @@
 package main
 
+// TODO: This code feels messy. Clean it up.
+
 import (
 	"fmt"
 	"math"
@@ -62,8 +64,8 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	case tea.KeyPressMsg:
-		switch msg {
+	case tea.KeyMsg:
+		switch msg.String() {
 		case "j":
 			fallthrough
 		case "down":
@@ -85,7 +87,7 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 			fallthrough
 		case "esc":
 			fallthrough
-		case "ctrl+c":
+		case "break":
 			return m, tea.Quit
 		}
 
@@ -102,13 +104,13 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	case tea.KeyPressMsg:
-		switch msg {
+	case tea.KeyMsg:
+		switch msg.String() {
 		case "q":
 			fallthrough
 		case "esc":
 			fallthrough
-		case "ctrl+c":
+		case "break":
 			return m, tea.Quit
 		}
 

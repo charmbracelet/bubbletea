@@ -22,14 +22,14 @@ func main() {
 	}
 }
 
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
+func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := mdl.(model)
 
-	switch message := msg.(type) {
+	switch msg := message.(type) {
 
-	case tea.KeyPressMsg:
-		switch message {
-		case "ctrl+c":
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "break":
 			fallthrough
 		case "esc":
 			fallthrough
