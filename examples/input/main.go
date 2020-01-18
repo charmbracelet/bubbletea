@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"tea"
 
-	"tea/input"
+	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/teaparty/input"
 )
 
 type Model struct {
