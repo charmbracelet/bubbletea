@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -44,6 +45,22 @@ type Program struct {
 	rw            io.ReadWriter
 }
 
+// ErrMsg is just a regular message containing an error. We handle it in Update
+// just like a regular message by case switching. Of course, the developer
+// could also define her own errors as well.
+type ErrMsg struct {
+	error
+}
+
+func (e ErrMsg) String() string {
+	return e.Error()
+}
+
+// NewErrMsg is a convenience function for creating a generic ErrMsg
+func NewErrMsg(s string) ErrMsg {
+	return ErrMsg{errors.New(s)}
+}
+
 // Quit is a command that tells the program to exit
 func Quit() Msg {
 	return quitMsg{}
@@ -63,7 +80,6 @@ func NewProgram(model Model, update Update, view View, subs []Sub) *Program {
 }
 
 // Start initializes the program
-// TODO: error channel
 func (p *Program) Start() error {
 	var (
 		model = p.model
