@@ -1,7 +1,6 @@
 package input
 
 import (
-	"log"
 	"tea"
 	"time"
 )
@@ -31,13 +30,14 @@ func DefaultModel() Model {
 func Update(msg tea.Msg, model tea.Model) (Model, tea.Cmd) {
 	m, _ := model.(Model)
 
-	log.Printf("msg: %v\n", msg)
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyBackspace:
-			m.Value = m.Value[:len(m.Value)-1]
+			if len(m.Value) > 0 {
+				m.Value = m.Value[:len(m.Value)-1]
+			}
 		case tea.KeyRune:
 			m.Value = m.Value + msg.String()
 		}
