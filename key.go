@@ -46,7 +46,7 @@ const (
 	KeyLeft
 	KeyUnitSeparator
 	KeyBackspace
-	KeyRune
+	KeyRune = -1
 )
 
 // Friendly key names
@@ -111,7 +111,7 @@ func ReadKey(r io.Reader) (Key, error) {
 
 	// Is it a control character?
 	if n == 1 && c <= keyUS || c == keyDEL {
-		if k, ok := controlKeys[n]; ok {
+		if k, ok := controlKeys[int(c)]; ok {
 			return Key{Type: k}, nil
 		}
 	}
