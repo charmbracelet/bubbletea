@@ -27,9 +27,7 @@ func DefaultModel() Model {
 	}
 }
 
-func Update(msg tea.Msg, model tea.Model) (Model, tea.Cmd) {
-	m, _ := model.(Model)
-
+func Update(msg tea.Msg, m Model) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -52,15 +50,14 @@ func Update(msg tea.Msg, model tea.Model) (Model, tea.Cmd) {
 func View(model tea.Model) string {
 	m, _ := model.(Model)
 	cursor := m.Cursor
-	//if m.Blink {
-	//cursor = m.HiddenCursor
-	//}
+	if m.Blink {
+		cursor = m.HiddenCursor
+	}
 	return m.Prompt + m.Value + cursor
 }
 
 func Blink(model tea.Model) tea.Msg {
-	//m, _ := model.(Model)
-	//time.Sleep(m.BlinkSpeed)
-	time.Sleep(time.Second)
+	m, _ := model.(Model)
+	time.Sleep(m.BlinkSpeed)
 	return CursorBlinkMsg{}
 }

@@ -25,8 +25,16 @@ func main() {
 		},
 		update,
 		view,
-		nil,
-		//[]tea.Sub{input.Blink},
+		[]tea.Sub{
+			// Just hand off the subscription to the input component
+			func(m tea.Model) tea.Msg {
+				if m, ok := m.(model); ok {
+					return input.Blink(m.input)
+				}
+				// TODO: return error
+				return nil
+			},
+		},
 	)
 
 	if err := p.Start(); err != nil {
@@ -36,7 +44,6 @@ func main() {
 
 func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-
 	m, _ := mdl.(model)
 
 	switch msg := msg.(type) {
@@ -47,22 +54,22 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 		case "esc":
 			return m, tea.Quit
 		}
-
-	case input.CursorBlinkMsg:
-		return input.Update(msg, m.input)
 	}
 
 	m.input, cmd = input.Update(msg, m.input)
 	return m, cmd
 }
 
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-	help := "(esc to exit)"
+func view(m tea.Model) string {
+	if m, ok := m.(model); ok {
+		help := "(esc to exit)"
 
-	return fmt.Sprintf(
-		"What’s your favorite Pokémon?\n\n%s\n\n%s",
-		input.View(m.input),
-		help,
-	)
+		return fmt.Sprintf(
+			"What’s your favorite Pokémon?\n\n%s\n\n%s",
+			input.View(m.input),
+			help,
+		)
+	}
+	// TODO: return error
+	return ""
 }
