@@ -1,7 +1,7 @@
-# Tea 茶
+# Tea
 
-The fun, stateful way to build terminal apps. A Go framework based on [The Elm
-Architecture][elm].
+茶! The fun, functional way to build terminal apps. A Go framework based on
+[The Elm Architecture][elm].
 
 ## Simple example
 
