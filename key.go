@@ -38,6 +38,7 @@ type KeyType int
 // Possible keys
 const (
 	KeyBreak KeyType = iota
+	KeyTab
 	KeyEnter
 	KeyEscape
 	KeyUp
@@ -52,6 +53,7 @@ const (
 // Friendly key names
 var keyNames = map[KeyType]string{
 	KeyBreak:         "break",
+	KeyTab:           "tab",
 	KeyEnter:         "enter",
 	KeyEscape:        "esc",
 	KeyUp:            "up",
@@ -67,7 +69,8 @@ var keyNames = map[KeyType]string{
 // specific, so we set the values explicitly to avoid any confusion
 const (
 	keyETX = 3   // break, ctrl+c
-	keyLF  = 9   // line-feed, \n
+	keyHT  = 9   // horizontal tabulation, \t
+	keyLF  = 10  // line feed, \n
 	keyCR  = 13  // carriage return, \r
 	keyESC = 27  // escape
 	keyUS  = 31  // unit separator
