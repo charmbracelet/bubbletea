@@ -10,9 +10,6 @@ import (
 	"github.com/pkg/term"
 )
 
-// The number of lines we last rendered
-var linesRendered = 0
-
 // Msg represents an action. It's used by Update to update the UI.
 type Msg interface{}
 
@@ -39,6 +36,7 @@ type Program struct {
 	view          View
 	subscriptions []Sub
 	rw            io.ReadWriter
+	linesRendered int
 }
 
 // ErrMsg is just a regular message containing an error. We handle it in Update
@@ -165,11 +163,11 @@ func (p *Program) render(model Model) {
 	// start of a column after a newline
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
-	if linesRendered > 0 {
-		clearLines(linesRendered)
+	if p.linesRendered > 0 {
+		clearLines(p.linesRendered)
 	}
 	io.WriteString(p.rw, view)
-	linesRendered = strings.Count(view, "\r\n")
+	p.linesRendered = strings.Count(view, "\r\n")
 }
 
 // UseSysLog sets up logging to log the system log. This becomes helpful when
