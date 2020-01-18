@@ -5,8 +5,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"tea"
 	"time"
+
+	"github.com/charmbracelet/tea"
 )
 
 type model int

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"tea"
 	"time"
 
+	"github.com/charmbracelet/tea"
 	"github.com/fogleman/ease"
 )
 
