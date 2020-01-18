@@ -10,22 +10,32 @@ import (
 	"github.com/charmbracelet/tea"
 )
 
-type model int
+// A model can be more or less any type of data. It holds all the data for a
+// program, so often it's a struct. For this simple example, however, all
+// we'll need is a simple integer.
+type Model int
 
-type tickMsg struct{}
+// Messages are events that we respond to in our Update function. This
+// particular one indicates that the timer has ticked.
+type TickMsg struct{}
 
 func main() {
-	err := tea.NewProgram(model(5), update, view, []tea.Sub{tick}).Start()
-	if err != nil {
+	// Initialize our program
+	p := tea.NewProgram(Model(5), update, view, []tea.Sub{tick})
+	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
+// Update is called when messages are recived. The idea is that you inspect
+// the message and update the model (or send back a new one) accordingly. You
+// can also return a commmand, which is a function that peforms I/O and
+// returns a message.
+func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
+	m, _ := model.(Model)
 
 	switch msg.(type) {
-	case tickMsg:
+	case TickMsg:
 		m -= 1
 		if m <= 0 {
 			return m, tea.Quit
@@ -34,12 +44,16 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
+// Views take data from the model and return a string which will be rendered
+// to the terminal.
+func view(model tea.Model) string {
+	m, _ := model.(Model)
 	return fmt.Sprintf("Hi. This program will exit in %d seconds...", m)
 }
 
+// This is a subscription which we setup in NewProgram(). It waits for one
+// second, sends a tick, and then restarts.
 func tick(_ tea.Model) tea.Msg {
 	time.Sleep(time.Second)
-	return tickMsg{}
+	return TickMsg{}
 }
