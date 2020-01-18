@@ -172,8 +172,9 @@ func (p *Program) render(model Model) {
 	linesRendered = strings.Count(view, "\r\n")
 }
 
-// UseSysLog logs to the system log. This becomes helpful when debugging since
-// we can't easily print to the terminal since our TUI is occupying it!
+// UseSysLog sets up logging to log the system log. This becomes helpful when
+// debugging since we can't easily print to the terminal since our TUI is
+// occupying it!
 //
 // On macOS this is a just a matter of: tail -f /var/log/system.log
 func UseSysLog(programName string) error {
