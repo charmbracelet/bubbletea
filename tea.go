@@ -101,7 +101,7 @@ func (p *Program) Start() error {
 	}()
 
 	// Initialize program
-	model, _ = p.init()
+	model, cmd = p.init()
 	if cmd != nil {
 		go func() {
 			cmds <- cmd
