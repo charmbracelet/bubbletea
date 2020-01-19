@@ -17,10 +17,14 @@ type tickMsg struct{}
 func main() {
 	tea.Fullscreen()
 	defer tea.ExitFullscreen()
-	err := tea.NewProgram(model(5), update, view, []tea.Sub{tick}).Start()
+	err := tea.NewProgram(initialize, update, view, []tea.Sub{tick}).Start()
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initialize() (tea.Model, tea.Cmd) {
+	return model(5), nil
 }
 
 func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {

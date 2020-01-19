@@ -28,7 +28,7 @@ type frameMsg struct{}
 
 func main() {
 	p := tea.NewProgram(
-		Model{0, false, 10, 0, 0, false},
+		initialize,
 		update,
 		view,
 		[]tea.Sub{tick, frame},
@@ -36,6 +36,12 @@ func main() {
 	if err := p.Start(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
+}
+
+// INIT
+
+func initialize() (tea.Model, tea.Cmd) {
+	return Model{0, false, 10, 0, 0, false}, nil
 }
 
 // SUBSCRIPTIONS

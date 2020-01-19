@@ -22,10 +22,7 @@ func main() {
 	tea.UseSysLog("tea")
 
 	p := tea.NewProgram(
-		Model{
-			Input: input.DefaultModel(),
-			Error: nil,
-		},
+		initialize,
 		update,
 		view,
 		[]tea.Sub{
@@ -44,6 +41,13 @@ func main() {
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initialize() (tea.Model, tea.Cmd) {
+	return Model{
+		Input: input.DefaultModel(),
+		Error: nil,
+	}, nil
 }
 
 func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {

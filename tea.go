@@ -22,6 +22,10 @@ type Cmd func() Msg
 // Sub is an event subscription. If it returns nil it's considered a no-op.
 type Sub func(Model) Msg
 
+// Init is the first function that will be called. It returns your initial
+// model and runs an optional command
+type Init func() (Model, Cmd)
+
 // Update is called when a message is received. It may update the model and/or
 // send a command.
 type Update func(Msg, Model) (Model, Cmd)
@@ -31,7 +35,7 @@ type View func(Model) string
 
 // Program is a terminal user interface
 type Program struct {
-	model         Model
+	init          Init
 	update        Update
 	view          View
 	subscriptions []Sub
@@ -64,9 +68,9 @@ func Quit() Msg {
 type quitMsg struct{}
 
 // NewProgram creates a new Program
-func NewProgram(model Model, update Update, view View, subs []Sub) *Program {
+func NewProgram(init Init, update Update, view View, subs []Sub) *Program {
 	return &Program{
-		model:         model,
+		init:          init,
 		update:        update,
 		view:          view,
 		subscriptions: subs,
@@ -76,7 +80,7 @@ func NewProgram(model Model, update Update, view View, subs []Sub) *Program {
 // Start initializes the program
 func (p *Program) Start() error {
 	var (
-		model = p.model
+		model Model
 		cmd   Cmd
 		cmds  = make(chan Cmd)
 		msgs  = make(chan Msg)
@@ -90,13 +94,21 @@ func (p *Program) Start() error {
 
 	p.rw = tty
 	tty.SetRaw()
+	hideCursor()
 	defer func() {
 		showCursor()
 		tty.Restore()
 	}()
 
+	// Initialize program
+	model, _ = p.init()
+	if cmd != nil {
+		go func() {
+			cmds <- cmd
+		}()
+	}
+
 	// Render initial view
-	hideCursor()
 	p.render(model)
 
 	// Subscribe to user input. We could move this out of here and offer it
@@ -115,7 +127,7 @@ func (p *Program) Start() error {
 			for _, sub := range p.subscriptions {
 				go func(s Sub) {
 					for {
-						msgs <- s(p.model)
+						msgs <- s(model)
 					}
 				}(sub)
 			}
@@ -148,9 +160,9 @@ func (p *Program) Start() error {
 			}
 
 			model, cmd = p.update(msg, model)
+			log.Println(model)
 			cmds <- cmd // process command (if any)
 			p.render(model)
-			p.model = model
 		}
 	}
 }

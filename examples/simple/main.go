@@ -21,10 +21,14 @@ type TickMsg struct{}
 
 func main() {
 	// Initialize our program
-	p := tea.NewProgram(Model(5), update, view, []tea.Sub{tick})
+	p := tea.NewProgram(initialize, update, view, []tea.Sub{tick})
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initialize() (tea.Model, tea.Cmd) {
+	return Model(5), nil
 }
 
 // Update is called when messages are recived. The idea is that you inspect
