@@ -160,7 +160,6 @@ func (p *Program) Start() error {
 			}
 
 			model, cmd = p.update(msg, model)
-			log.Println(model)
 			cmds <- cmd // process command (if any)
 			p.render(model)
 		}
