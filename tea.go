@@ -59,6 +59,12 @@ func NewErrMsg(s string) ErrMsg {
 	return ErrMsg{errors.New(s)}
 }
 
+// NewErrMsgFromErr is a convenience function for creating an ErrMsg from an
+// existing error
+func NewErrMsgFromErr(e error) ErrMsg {
+	return ErrMsg{e}
+}
+
 // Quit is a command that tells the program to exit
 func Quit(_ Model) Msg {
 	return quitMsg{}
