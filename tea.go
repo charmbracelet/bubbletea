@@ -17,7 +17,7 @@ type Msg interface{}
 type Model interface{}
 
 // Cmd is an IO operation. If it's nil it's considered a no-op.
-type Cmd func() Msg
+type Cmd func(Model) Msg
 
 // Sub is an event subscription. If it returns nil it's considered a no-op.
 type Sub func(Model) Msg
@@ -60,7 +60,7 @@ func NewErrMsg(s string) ErrMsg {
 }
 
 // Quit is a command that tells the program to exit
-func Quit() Msg {
+func Quit(_ Model) Msg {
 	return quitMsg{}
 }
 
@@ -121,7 +121,7 @@ func (p *Program) Start() error {
 		}
 	}()
 
-	// Initialize subscriptions
+	// Process subscriptions
 	go func() {
 		if len(p.subscriptions) > 0 {
 			for _, sub := range p.subscriptions {
@@ -143,7 +143,7 @@ func (p *Program) Start() error {
 			case cmd := <-cmds:
 				if cmd != nil {
 					go func() {
-						msgs <- cmd()
+						msgs <- cmd(model)
 					}()
 				}
 			}

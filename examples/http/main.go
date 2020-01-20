@@ -73,7 +73,7 @@ func view(model tea.Model) string {
 	return fmt.Sprintf("The server said: %d %s", m.Status, http.StatusText(m.Status))
 }
 
-func checkServer() tea.Msg {
+func checkServer(_ tea.Model) tea.Msg {
 	c := &http.Client{
 		Timeout: 10 * time.Second,
 	}
