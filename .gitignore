@@ -1,1 +1,6 @@
 .DS_Store
+/examples/fullscreen/fullscreen
+/examples/http/http
+/examples/input/input
+/examples/simple/simple
+/examples/views/views
