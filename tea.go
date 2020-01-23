@@ -40,7 +40,6 @@ type Program struct {
 	view          View
 	subscriptions []Sub
 	rw            io.ReadWriter
-	linesRendered int
 }
 
 // ErrMsg is just a regular message containing an error. We handle it in Update
@@ -86,11 +85,12 @@ func NewProgram(init Init, update Update, view View, subs []Sub) *Program {
 // Start initializes the program
 func (p *Program) Start() error {
 	var (
-		model Model
-		cmd   Cmd
-		cmds  = make(chan Cmd)
-		msgs  = make(chan Msg)
-		done  = make(chan struct{})
+		model         Model
+		cmd           Cmd
+		cmds          = make(chan Cmd)
+		msgs          = make(chan Msg)
+		done          = make(chan struct{})
+		linesRendered int
 	)
 
 	tty, err := term.Open("/dev/tty")
@@ -115,7 +115,7 @@ func (p *Program) Start() error {
 	}
 
 	// Render initial view
-	p.render(model)
+	linesRendered = p.render(model, linesRendered)
 
 	// Subscribe to user input. We could move this out of here and offer it
 	// as a subscription, but it blocks nicely and seems to be a common enough
@@ -167,24 +167,24 @@ func (p *Program) Start() error {
 
 			model, cmd = p.update(msg, model)
 			cmds <- cmd // process command (if any)
-			p.render(model)
+			linesRendered = p.render(model, linesRendered)
 		}
 	}
 }
 
-// Render a view to the terminal
-func (p *Program) render(model Model) {
+// Render a view to the terminal. Returns the number of lines rendered.
+func (p *Program) render(model Model, linesRendered int) int {
 	view := p.view(model) + "\n"
 
 	// We need to add carriage returns to ensure that the cursor travels to the
 	// start of a column after a newline
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
-	if p.linesRendered > 0 {
-		clearLines(p.linesRendered)
+	if linesRendered > 0 {
+		clearLines(linesRendered)
 	}
 	io.WriteString(p.rw, view)
-	p.linesRendered = strings.Count(view, "\r\n")
+	return strings.Count(view, "\r\n")
 }
 
 // UseSysLog sets up logging to log the system log. This becomes helpful when
