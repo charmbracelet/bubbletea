@@ -67,3 +67,7 @@ and [go-tea][gotea] by TJ Holowaychuk.
 ***
 
 Part of [Charm](https://charm.sh). For more info see `ssh charm.sh`. Charm热爱开源!
+
+## License
+
+[MIT](https://github.com/charmbracelet/brodie/raw/master/LICENSE)
