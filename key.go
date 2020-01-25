@@ -21,10 +21,7 @@ func (k *KeyMsg) String() string {
 
 // IsRune returns weather or not the key is a rune
 func (k *KeyMsg) IsRune() bool {
-	if k.Type == KeyRune {
-		return true
-	}
-	return false
+	return k.Type == KeyRune
 }
 
 type Key struct {
