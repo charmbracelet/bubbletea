@@ -24,6 +24,7 @@ func (k *KeyMsg) IsRune() bool {
 	return k.Type == KeyRune
 }
 
+// Key contains information about a keypress
 type Key struct {
 	Type KeyType
 	Rune rune
