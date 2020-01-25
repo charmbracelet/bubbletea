@@ -6,8 +6,6 @@ import (
 	"log"
 	"log/syslog"
 	"strings"
-
-	"github.com/pkg/term"
 )
 
 // Msg represents an action. It's used by Update to update the UI.
@@ -39,7 +37,6 @@ type Program struct {
 	update        Update
 	view          View
 	subscriptions []Sub
-	rw            io.ReadWriter
 }
 
 // ErrMsg is just a regular message containing an error. We handle it in Update
@@ -93,18 +90,11 @@ func (p *Program) Start() error {
 		linesRendered int
 	)
 
-	tty, err := term.Open("/dev/tty")
+	err := initTerminal()
 	if err != nil {
 		return err
 	}
-
-	p.rw = tty
-	tty.SetRaw()
-	hideCursor()
-	defer func() {
-		showCursor()
-		tty.Restore()
-	}()
+	defer restoreTerminal()
 
 	// Initialize program
 	model, cmd = p.init()
@@ -122,7 +112,7 @@ func (p *Program) Start() error {
 	// need that we're enabling it by default.
 	go func() {
 		for {
-			msg, _ := ReadKey(p.rw)
+			msg, _ := ReadKey(os.Stdin)
 			msgs <- KeyMsg(msg)
 		}
 	}()
@@ -183,7 +173,7 @@ func (p *Program) render(model Model, linesRendered int) int {
 	if linesRendered > 0 {
 		clearLines(linesRendered)
 	}
-	io.WriteString(p.rw, view)
+	io.WriteString(os.Stdout, view)
 	return strings.Count(view, "\r\n")
 }
 
