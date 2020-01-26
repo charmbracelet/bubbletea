@@ -1,9 +1,8 @@
-github.com/charmbracelet/tea v0.0.0-20200118154546-df52853f9d94/go.mod h1:lijy1lXOKNwMjBu/jTT/DvR8yE9PhtX2olGFsCz9/Vk=
-github.com/charmbracelet/tea v0.0.0-20200120185458-524cf2cffd81 h1:qwRuBEfzt4P7s4yOAanWmy/JoJNDszFnAPIiTMGka08=
-github.com/charmbracelet/tea v0.0.0-20200120185458-524cf2cffd81/go.mod h1:UsFFdg04MNbcYi1r2FBtdDEFY07bObaYDKHhE1xZUaQ=
+github.com/charmbracelet/teaparty v0.0.0-20200118155738-c83a0bee59b9 h1:YQvJgppGVexnzIJ+KJlK9lBYA3+zXfdqZO/5Ngedtb0=
 github.com/charmbracelet/teaparty v0.0.0-20200118155738-c83a0bee59b9/go.mod h1:z8JWtuxM0oA+dZfi7BkgBW2YGbyOTbWAixFs46W3SK4=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776 h1:VRIbnDWRmAh5yBdz+J6yFMF5vso1It6vn+WmM/5l7MA=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776/go.mod h1:9wvnDu3YOfxzWM9Cst40msBF1C2UdQgDv962oTxSuMs=
 github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 h1:A7GG7zcGjl3jqAqGPmcNjd/D9hzL95SuoOQAaFNdLU0=
 github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942/go.mod h1:eCbImbZ95eXtAUIbLAuAVnBnwf83mjf6QIVH8SHYwqQ=
+golang.org/x/sys v0.0.0-20200120151820-655fe14d7479 h1:LhLiKguPgZL+Tglay4GhVtfF0kb8cvOJ0dHTCBO8YNI=
 golang.org/x/sys v0.0.0-20200120151820-655fe14d7479/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

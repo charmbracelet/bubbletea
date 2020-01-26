@@ -21,7 +21,7 @@ type TickMsg struct{}
 
 func main() {
 	// Initialize our program
-	p := tea.NewProgram(initialize, update, view, []tea.Sub{tick})
+	p := tea.NewProgram(initialize, update, view, subscriptions)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
@@ -57,7 +57,11 @@ func view(model tea.Model) string {
 
 // This is a subscription which we setup in NewProgram(). It waits for one
 // second, sends a tick, and then restarts.
-func tick(_ tea.Model) tea.Msg {
-	time.Sleep(time.Second)
-	return TickMsg{}
+func subscriptions(_ tea.Model) tea.Subs {
+	return tea.Subs{
+		"tick": func(_ tea.Model) tea.Msg {
+			time.Sleep(time.Second)
+			return TickMsg{}
+		},
+	}
 }

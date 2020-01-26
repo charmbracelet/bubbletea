@@ -17,7 +17,7 @@ type tickMsg struct{}
 func main() {
 	tea.Fullscreen()
 	defer tea.ExitFullscreen()
-	err := tea.NewProgram(initialize, update, view, []tea.Sub{tick}).Start()
+	err := tea.NewProgram(initialize, update, view, subscriptions).Start()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,12 +53,16 @@ func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func subscriptions(_ tea.Model) tea.Subs {
+	return tea.Subs{
+		"tick": func(_ tea.Model) tea.Msg {
+			time.Sleep(time.Second)
+			return tickMsg{}
+		},
+	}
+}
+
 func view(mdl tea.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
-}
-
-func tick(_ tea.Model) tea.Msg {
-	time.Sleep(time.Second)
-	return tickMsg{}
 }

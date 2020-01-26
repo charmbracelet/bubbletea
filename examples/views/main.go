@@ -31,7 +31,7 @@ func main() {
 		initialize,
 		update,
 		view,
-		[]tea.Sub{tick, frame},
+		subscriptions,
 	)
 	if err := p.Start(); err != nil {
 		fmt.Println("could not start program:", err)
@@ -45,6 +45,18 @@ func initialize() (tea.Model, tea.Cmd) {
 }
 
 // SUBSCRIPTIONS
+
+func subscriptions(model tea.Model) tea.Subs {
+	m, _ := model.(Model)
+	if !m.Chosen || m.Loaded {
+		return tea.Subs{
+			"tick": tick,
+		}
+	}
+	return tea.Subs{
+		"frame": frame,
+	}
+}
 
 func tick(model tea.Model) tea.Msg {
 	time.Sleep(time.Second)

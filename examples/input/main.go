@@ -25,17 +25,7 @@ func main() {
 		initialize,
 		update,
 		view,
-		[]tea.Sub{
-			// We just hand off the subscription to the input component, giving
-			// it the model it expects.
-			func(model tea.Model) tea.Msg {
-				m, ok := model.(Model)
-				if !ok {
-					return tea.NewErrMsg("could not perform assertion on model")
-				}
-				return input.Blink(m.Input)
-			},
-		},
+		subscriptions,
 	)
 
 	if err := p.Start(); err != nil {
@@ -78,6 +68,17 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 	m.Input, cmd = input.Update(msg, m.Input)
 	return m, cmd
+}
+
+func subscriptions(model tea.Model) tea.Subs {
+	return tea.Subs{
+		// We just hand off the subscription to the input component, giving
+		// it the model it expects.
+		"input": func(model tea.Model) tea.Msg {
+			m, _ := model.(Model)
+			return input.Blink(m.Input)
+		},
+	}
 }
 
 func view(model tea.Model) string {
