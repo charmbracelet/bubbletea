@@ -64,14 +64,44 @@ var keyNames = map[KeyType]string{
 }
 
 // Control keys. I know we could do this with an iota, but the values are very
-// specific, so we set the values explicitly to avoid any confusion
+// specific, so we set the values explicitly to avoid any confusion.
+//
+// See also:
+// https://en.wikipedia.org/wiki/C0_and_C1_control_codes
 const (
+	keyNUL = 0   // null, \0
+	keySOH = 1   // start of heading
+	keySTX = 2   // start of text
 	keyETX = 3   // break, ctrl+c
+	keyEOT = 4   // end of transmission
+	keyENQ = 5   // enquiry
+	keyACK = 6   // acknowledge
+	keyBEL = 7   // bell, \a
+	keyBS  = 8   /// backspace
 	keyHT  = 9   // horizontal tabulation, \t
 	keyLF  = 10  // line feed, \n
+	keyVT  = 11  // vertical tabulation \v
+	keyFF  = 12  // form feed \f
 	keyCR  = 13  // carriage return, \r
-	keyESC = 27  // escape
+	keySO  = 14  // shift out
+	keySI  = 15  // shift in
+	keyDLE = 16  // data link escape
+	keyDC1 = 17  // device control one
+	keyDC2 = 18  // device control two
+	keyDC3 = 19  // device control three
+	keyDC4 = 20  // device control four
+	keyNAK = 21  // negative acknowledge
+	keySYN = 22  // synchronous idle
+	keyETB = 23  // end of transmission block
+	keyCAN = 24  // cancel
+	keyEM  = 25  // end of medium
+	keySUB = 26  // substitution
+	keyESC = 27  // escape, \e
+	keyFS  = 28  // file separator
+	keyGS  = 29  // group separator
+	keyRS  = 30  // record separator
 	keyUS  = 31  // unit separator
+	keySP  = 32  // space
 	keyDEL = 127 // delete. on most systems this is mapped to backspace, I hear
 )
 
