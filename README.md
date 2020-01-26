@@ -22,18 +22,19 @@ type model int
 type tickMsg struct{}
 
 func main() {
-	err := tea.NewProgram(model(5), update, view, []tea.Sub{tick}).Start()
-	if err != nil {
+	p := tea.NewProgram(init, update, view, subscriptions)
+	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
+// Listen for messages and update the model accordingly
 func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := mdl.(model)
 
 	switch msg.(type) {
 	case tickMsg:
-		m -= 1
+        m--
 		if m <= 0 {
 			return m, tea.Quit
 		}
@@ -41,9 +42,17 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// Render to the terminal
 func view(mdl tea.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("Hi. This program will exit in %d seconds...\n", m)
+}
+
+// Subscribe to events
+func subscriptions(_ tea.Model) tea.Subs {
+    return tea.Subs{
+        "tick": tick,
+    }
 }
 
 func tick(_ tea.Model) tea.Msg {
@@ -54,9 +63,13 @@ func tick(_ tea.Model) tea.Msg {
 
 Hungry for more? See the [other examples][examples].
 
-[examples]: https://github.com/charmbracelet/tea/examples
+[examples]: https://github.com/charmbracelet/tea/tree/master/examples
 
-## Credit
+
+## Authors
+
+* [Christian Rocha](https://github.com/meowgorithm)
+* [Christian Muehlhaeuser](https://github.com/muesli)
 
 Heavily inspired by both [The Elm Architecture][elm] by Evan Czaplicki et al.
 and [go-tea][gotea] by TJ Holowaychuk.
@@ -64,10 +77,20 @@ and [go-tea][gotea] by TJ Holowaychuk.
 [elm]: https://guide.elm-lang.org/architecture/
 [gotea]: https://github.com/tj/go-tea
 
-***
+## Other Resources
 
-Part of [Charm](https://charm.sh). For more info see `ssh charm.sh`. Charm热爱开源!
+* [Termenv](https://github.com/muesli/termenv): advanced ANSI style and color
+  support for your terminal applications. Very useful when rendering in your
+  views!
 
 ## License
 
-[MIT](https://github.com/charmbracelet/brodie/raw/master/LICENSE)
+[MIT](https://github.com/charmbracelet/tea/raw/master/LICENSE)
+
+***
+
+Part of [Charm](https://charm.sh). For more info see `ssh charm.sh`.
+
+<img alt="the Charm logo" src="https://stuff.charm.sh/charm-logotype.png" width="400px">
+
+Charm热爱开源!
