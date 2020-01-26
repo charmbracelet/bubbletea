@@ -16,8 +16,38 @@ type Model interface{}
 // Cmd is an IO operation. If it's nil it's considered a no-op.
 type Cmd func(Model) Msg
 
-// Sub is an event subscription. If it returns nil it's considered a no-op.
+// Sub is an event subscription. If it returns nil it's considered a no-op,
+// but there's really no reason to have a nil subscription.
 type Sub func(Model) Msg
+
+// Subs is a keyed set of subscriptions. The key should be a unique
+// identifier; two different subscriptions should not have the same key
+type Subs map[string]Sub
+
+// Subscriptions returns a map of subscriptions (Subs) our application will
+// subscribe to. If Subscriptions is nil it's considered a no-op.
+type Subscriptions func(Model) Subs
+
+// subscription is an internal reference to a subscription used in subscription
+// management.
+type subscription struct {
+	done chan struct{}
+	sub  Sub
+}
+
+// subManager is used to manage active subscriptions, hence the pointers.
+type subManager map[string]*subscription
+
+// endAll stops all subscriptions and remove subscription references from
+// subManager.
+func (m *subManager) endAll() {
+	if m != nil {
+		for key, sub := range *m {
+			close(sub.done)
+			delete(*m, key)
+		}
+	}
+}
 
 // Init is the first function that will be called. It returns your initial
 // model and runs an optional command
@@ -35,7 +65,8 @@ type Program struct {
 	init          Init
 	update        Update
 	view          View
-	subscriptions []Sub
+	subscriptions Subscriptions
+	model         Model
 }
 
 // ErrMsg is just a regular message containing an error. We handle it in Update
@@ -69,7 +100,7 @@ func Quit(_ Model) Msg {
 type quitMsg struct{}
 
 // NewProgram creates a new Program
-func NewProgram(init Init, update Update, view View, subs []Sub) *Program {
+func NewProgram(init Init, update Update, view View, subs Subscriptions) *Program {
 	return &Program{
 		init:          init,
 		update:        update,
@@ -81,8 +112,8 @@ func NewProgram(init Init, update Update, view View, subs []Sub) *Program {
 // Start initializes the program
 func (p *Program) Start() error {
 	var (
-		model         Model
 		cmd           Cmd
+		subs          = make(subManager)
 		cmds          = make(chan Cmd)
 		msgs          = make(chan Msg)
 		done          = make(chan struct{})
@@ -96,7 +127,7 @@ func (p *Program) Start() error {
 	defer restoreTerminal()
 
 	// Initialize program
-	model, cmd = p.init()
+	p.model, cmd = p.init()
 	if cmd != nil {
 		go func() {
 			cmds <- cmd
@@ -104,7 +135,7 @@ func (p *Program) Start() error {
 	}
 
 	// Render initial view
-	linesRendered = p.render(model, linesRendered)
+	linesRendered = p.render(p.model, linesRendered)
 
 	// Subscribe to user input. We could move this out of here and offer it
 	// as a subscription, but it blocks nicely and seems to be a common enough
@@ -116,18 +147,8 @@ func (p *Program) Start() error {
 		}
 	}()
 
-	// Process subscriptions
-	go func() {
-		if len(p.subscriptions) > 0 {
-			for _, sub := range p.subscriptions {
-				go func(s Sub) {
-					for {
-						msgs <- s(model)
-					}
-				}(sub)
-			}
-		}
-	}()
+	// Initialize subscriptions
+	subs = p.processSubs(msgs, subs)
 
 	// Process commands
 	go func() {
@@ -138,7 +159,7 @@ func (p *Program) Start() error {
 			case cmd := <-cmds:
 				if cmd != nil {
 					go func() {
-						msgs <- cmd(model)
+						msgs <- cmd(p.model)
 					}()
 				}
 			}
@@ -154,9 +175,10 @@ func (p *Program) Start() error {
 				return nil
 			}
 
-			model, cmd = p.update(msg, model)
-			cmds <- cmd // process command (if any)
-			linesRendered = p.render(model, linesRendered)
+			p.model, cmd = p.update(msg, p.model)            // run update
+			cmds <- cmd                                      // process command (if any)
+			subs = p.processSubs(msgs, subs)                 // check for new and outdated subscriptions
+			linesRendered = p.render(p.model, linesRendered) // render to terminal
 		}
 	}
 }
@@ -174,4 +196,74 @@ func (p *Program) render(model Model, linesRendered int) int {
 	}
 	io.WriteString(os.Stdout, view)
 	return strings.Count(view, "\r\n")
+}
+
+// Manage subscriptions. Here we run the program's Subscription function and
+// inspect the functions it returns (a Subs map). If we notice existing
+// subscriptions have disappeared from the map we stop those subscriptions
+// by ending the Goroutines they run on. If we notice new subscriptions which
+// aren't currently running, we run them as loops in a new Goroutine.
+//
+// This function should be called on initialization and after every update.
+func (p *Program) processSubs(msgs chan Msg, activeSubs subManager) subManager {
+
+	// Nothing to do.
+	if p.subscriptions == nil && activeSubs == nil {
+		return activeSubs
+	}
+
+	// There are no subscriptions. Cancel active ones and return.
+	if p.subscriptions == nil && activeSubs != nil {
+		activeSubs.endAll()
+		return activeSubs
+	}
+
+	newSubs := p.subscriptions(p.model)
+
+	// newSubs is an empty map. Cancel any active subscriptions and return.
+	if newSubs == nil {
+		activeSubs.endAll()
+		return activeSubs
+	}
+
+	// Stop subscriptions that don't exist in the new subscription map
+	if len(activeSubs) > 0 {
+		for key, sub := range activeSubs {
+			if _, exists := newSubs[key]; !exists {
+				close(sub.done)
+				delete(activeSubs, key)
+			}
+		}
+	}
+
+	// Start new subscriptions if they don't exist in the active subscription map
+	if len(newSubs) > 0 {
+		for key, sub := range newSubs {
+			if _, exists := activeSubs[key]; !exists {
+
+				if sub == nil {
+					continue
+				}
+
+				activeSubs[key] = &subscription{
+					done: make(chan struct{}),
+					sub:  sub,
+				}
+
+				go func(done chan struct{}, s Sub) {
+					for {
+						select {
+						case <-done:
+							return
+						case msgs <- s(p.model):
+							continue
+						}
+					}
+				}(activeSubs[key].done, activeSubs[key].sub)
+
+			}
+		}
+	}
+
+	return activeSubs
 }
