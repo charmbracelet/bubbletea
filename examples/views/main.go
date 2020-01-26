@@ -105,7 +105,7 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 			fallthrough
 		case "esc":
 			fallthrough
-		case "break":
+		case "ctrl+c":
 			return m, tea.Quit
 		}
 
@@ -128,7 +128,7 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 			fallthrough
 		case "esc":
 			fallthrough
-		case "break":
+		case "ctrl+c":
 			return m, tea.Quit
 		}
 

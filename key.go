@@ -13,7 +13,7 @@ type KeyMsg Key
 func (k *KeyMsg) String() string {
 	if k.Type == KeyRune {
 		return string(k.Rune)
-	} else if s, ok := keyNames[k.Type]; ok {
+	} else if s, ok := keyNames[int(k.Type)]; ok {
 		return s
 	}
 	return ""
@@ -33,36 +33,6 @@ type Key struct {
 // KeyType indicates the key pressed
 type KeyType int
 
-// Possible keys
-const (
-	KeyBreak KeyType = iota
-	KeyTab
-	KeyEnter
-	KeyEscape
-	KeyUp
-	KeyDown
-	KeyRight
-	KeyLeft
-	KeyUnitSeparator
-	KeyBackspace
-	KeyRune = -1
-)
-
-// Friendly key names
-var keyNames = map[KeyType]string{
-	KeyBreak:         "break",
-	KeyTab:           "tab",
-	KeyEnter:         "enter",
-	KeyEscape:        "esc",
-	KeyUp:            "up",
-	KeyDown:          "down",
-	KeyRight:         "right",
-	KeyLeft:          "left",
-	KeyUnitSeparator: "us",
-	KeyBackspace:     "backspace",
-	KeyRune:          "rune",
-}
-
 // Control keys. I know we could do this with an iota, but the values are very
 // specific, so we set the values explicitly to avoid any confusion.
 //
@@ -77,7 +47,7 @@ const (
 	keyENQ = 5   // enquiry
 	keyACK = 6   // acknowledge
 	keyBEL = 7   // bell, \a
-	keyBS  = 8   /// backspace
+	keyBS  = 8   // backspace
 	keyHT  = 9   // horizontal tabulation, \t
 	keyLF  = 10  // line feed, \n
 	keyVT  = 11  // vertical tabulation \v
@@ -105,14 +75,101 @@ const (
 	keyDEL = 127 // delete. on most systems this is mapped to backspace, I hear
 )
 
+// Aliases
+const (
+	KeyBreak     = keyETX
+	KeyEnter     = keyCR
+	KeyBackspace = keyBS
+	KeySpace     = keySP
+	KeyEsc       = keyESC
+	KeyEscape    = keyESC
+	KeyDelete    = keyDEL
+
+	KeyCtrlAt           = keyNUL // ctrl+@
+	KeyCtrlA            = keySOH
+	KeyCtrlB            = keySTX
+	KeyCtrlC            = keyETX
+	KeyCtrlD            = keyEOT
+	KeyCtrlE            = keyENQ
+	KeyCtrlF            = keyACK
+	KeyCtrlG            = keyBEL
+	KeyCtrlH            = keyBS
+	KeyCtrlI            = keyHT
+	KeyCtrlJ            = keyLF
+	KeyCtrlK            = keyVT
+	KeyCtrlL            = keyFF
+	KeyCtrlM            = keyCR
+	KeyCtrlN            = keySO
+	KeyCtrlO            = keySI
+	KeyCtrlP            = keyDLE
+	KeyCtrlQ            = keyDC1
+	KeyCtrlR            = keyDC2
+	KeyCtrlS            = keyDC3
+	KeyCtrlT            = keyDC4
+	KeyCtrlU            = keyNAK
+	KeyCtrlV            = keyETB
+	KeyCtrlW            = keyETB
+	KeyCtrlX            = keyCAN
+	KeyCtrlY            = keyEM
+	KeyCtrlZ            = keySUB
+	KeyCtrlOpenBracket  = keyESC // ctrl+[
+	KeyCtrlBackslash    = keyFS  // ctrl+\
+	KeyCtrlCloseBracket = keyGS  // ctrl+]
+	KeyCtrlCaret        = keyRS  // ctrl+^
+	KeyCtrlUnderscore   = keyUS  // ctrl+_
+	KeyCtrlQuestionMark = keyDEL // ctrl+?
+)
+
+const (
+	KeyRune = -(iota + 1)
+	KeyUp
+	KeyDown
+	KeyRight
+	KeyLeft
+)
+
 // Mapping for control keys to friendly consts
-var controlKeys = map[int]KeyType{
-	keyETX: KeyBreak,
-	keyLF:  KeyEnter,
-	keyCR:  KeyEnter,
-	keyESC: KeyEscape,
-	keyUS:  KeyUnitSeparator,
-	keyDEL: KeyBackspace,
+var keyNames = map[int]string{
+	keyNUL: "ctrl+@", // also ctrl+`
+	keySOH: "ctrl+a",
+	keySTX: "ctrl+b",
+	keyETX: "ctrl+c",
+	keyEOT: "ctrl+d",
+	keyENQ: "ctrl+e",
+	keyACK: "ctrl+f",
+	keyBEL: "ctrl+g",
+	keyBS:  "backspace", // also ctrl+h
+	keyHT:  "tab",       // also ctrl+i
+	keyLF:  "ctrl+j",
+	keyVT:  "ctrl+k",
+	keyFF:  "ctrl+l",
+	keyCR:  "enter",
+	keySO:  "ctrl+n",
+	keySI:  "ctrl+o",
+	keyDLE: "ctrl+p",
+	keyDC1: "ctrl+q",
+	keyDC2: "ctrl+r",
+	keyDC3: "ctrl+s",
+	keyDC4: "ctrl+t",
+	keyNAK: "ctrl+u",
+	keySYN: "ctrl+v",
+	keyETB: "ctrl+w",
+	keyCAN: "ctrl+x",
+	keyEM:  "ctrl+y",
+	keySUB: "ctrl+z",
+	keyESC: "esc",
+	keyFS:  "ctrl+\\",
+	keyGS:  "ctrl+]",
+	keyRS:  "ctrl+^",
+	keyUS:  "ctrl+_",
+	keySP:  "space",
+	keyDEL: "delete",
+
+	KeyRune:  "rune",
+	KeyUp:    "up",
+	KeyDown:  "down",
+	KeyRight: "right",
+	KeyLeft:  "left",
 }
 
 // Mapping for sequences to consts
@@ -142,15 +199,7 @@ func ReadKey(r io.Reader) (Key, error) {
 
 	// Is it a control character?
 	if n == 1 && c <= keyUS || c == keyDEL {
-		if k, ok := controlKeys[int(c)]; ok {
-			return Key{Type: k}, nil
-		}
-	}
-
-	if n == 1 && c <= keyUS {
-		if k, ok := controlKeys[int(c)]; ok {
-			return Key{Type: k}, nil
-		}
+		return Key{Type: KeyType(c)}, nil
 	}
 
 	// Is it a special sequence, like an arrow key?

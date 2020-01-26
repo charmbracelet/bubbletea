@@ -34,7 +34,7 @@ func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "break":
+		case "ctrl+c":
 			fallthrough
 		case "esc":
 			fallthrough

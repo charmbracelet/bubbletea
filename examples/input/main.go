@@ -53,10 +53,10 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "break":
+		switch msg.Type {
+		case tea.KeyCtrlC:
 			fallthrough
-		case "esc":
+		case tea.KeyEsc:
 			return m, tea.Quit
 		}
 
