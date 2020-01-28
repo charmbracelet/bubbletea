@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -18,7 +19,7 @@ type Cmd func(Model) Msg
 
 // Sub is an event subscription. If it returns nil it's considered a no-op,
 // but there's really no reason to have a nil subscription.
-type Sub func(Model) Msg
+type Sub func(context.Context, Model) Msg
 
 // Subs is a keyed set of subscriptions. The key should be a unique
 // identifier; two different subscriptions should not have the same key
