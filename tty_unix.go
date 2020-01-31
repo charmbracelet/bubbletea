@@ -3,6 +3,7 @@
 package tea
 
 import (
+	"github.com/muesli/termenv"
 	"github.com/pkg/term"
 )
 
@@ -18,11 +19,11 @@ func initTerminal() error {
 	}
 
 	tty.SetRaw()
-	hideCursor()
+	termenv.HideCursor()
 	return nil
 }
 
 func restoreTerminal() {
-	showCursor()
+	termenv.ShowCursor()
 	tty.Restore()
 }

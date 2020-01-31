@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/muesli/termenv"
 )
 
 // Msg represents an action. It's used by Update to update the UI.
@@ -192,7 +194,7 @@ func (p *Program) render(model Model, linesRendered int) int {
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
 	if linesRendered > 0 {
-		clearLines(linesRendered)
+		termenv.ClearLines(linesRendered)
 	}
 	io.WriteString(os.Stdout, view)
 	return strings.Count(view, "\r\n")

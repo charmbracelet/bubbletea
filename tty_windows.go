@@ -2,11 +2,13 @@
 
 package tea
 
+import "github.com/muesli/termenv"
+
 func initTerminal() error {
-	hideCursor()
+	termenv.HideCursor()
 	return nil
 }
 
 func restoreTerminal() {
-	showCursor()
+	termenv.ShowCursor()
 }
