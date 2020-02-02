@@ -17,7 +17,6 @@ type tickMsg struct{}
 
 func main() {
 	termenv.AltScreen()
-	termenv.MoveCursor(1, 1)
 	defer termenv.ExitAltScreen()
 	err := tea.NewProgram(initialize, update, view, subscriptions).Start()
 	if err != nil {
