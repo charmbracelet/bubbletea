@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/tea"
-	"github.com/muesli/termenv"
 )
 
 type model int
@@ -16,8 +15,8 @@ type model int
 type tickMsg struct{}
 
 func main() {
-	termenv.AltScreen()
-	defer termenv.ExitAltScreen()
+	tea.AltScreen()
+	defer tea.ExitAltScreen()
 	err := tea.NewProgram(initialize, update, view, subscriptions).Start()
 	if err != nil {
 		log.Fatal(err)
