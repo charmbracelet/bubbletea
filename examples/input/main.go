@@ -34,8 +34,11 @@ func main() {
 }
 
 func initialize() (tea.Model, tea.Cmd) {
+	inputModel := input.DefaultModel()
+	inputModel.Placeholder = "Pikachu"
+
 	return Model{
-		Input: input.DefaultModel(),
+		Input: inputModel,
 		Error: nil,
 	}, nil
 }
