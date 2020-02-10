@@ -270,13 +270,13 @@ func (p *Program) processSubs(msgs chan Msg, activeSubs subManager) subManager {
 	return activeSubs
 }
 
-// AltScreen exits the altscreen. Just is just a wrapper around the termenv
+// AltScreen exits the altscreen. This is just a wrapper around the termenv
 // function
 func AltScreen() {
 	termenv.AltScreen()
 }
 
-// ExitAltScreen exits the altscreen. Just is just a wrapper around the termenv
+// ExitAltScreen exits the altscreen. This is just a wrapper around the termenv
 // function
 func ExitAltScreen() {
 	termenv.ExitAltScreen()
