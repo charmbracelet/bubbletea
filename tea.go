@@ -93,6 +93,9 @@ func NewErrMsgFromErr(e error) ErrMsg {
 	return ErrMsg{e}
 }
 
+// ModelAssertionErr can be used when a model assertion didn't go as planned
+var ModelAssertionErr = NewErrMsg("could not perform assertion on model")
+
 // Quit is a command that tells the program to exit
 func Quit(_ Model) Msg {
 	return quitMsg{}
