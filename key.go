@@ -2,6 +2,7 @@ package tea
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"unicode/utf8"
 )
@@ -127,6 +128,7 @@ const (
 	KeyDown
 	KeyRight
 	KeyLeft
+	KeyShiftTab
 )
 
 // Mapping for control keys to friendly consts
@@ -166,19 +168,21 @@ var keyNames = map[int]string{
 	keySP:  "space",
 	keyDEL: "delete",
 
-	KeyRune:  "rune",
-	KeyUp:    "up",
-	KeyDown:  "down",
-	KeyRight: "right",
-	KeyLeft:  "left",
+	KeyRune:     "rune",
+	KeyUp:       "up",
+	KeyDown:     "down",
+	KeyRight:    "right",
+	KeyLeft:     "left",
+	KeyShiftTab: "shift+tab",
 }
 
 // Mapping for sequences to consts
 var sequences = map[string]KeyType{
-	"\x1b[A": KeyUp,
-	"\x1b[B": KeyDown,
-	"\x1b[C": KeyRight,
-	"\x1b[D": KeyLeft,
+	"\x1b[A":   KeyUp,
+	"\x1b[B":   KeyDown,
+	"\x1b[C":   KeyRight,
+	"\x1b[D":   KeyLeft,
+	"\x1b5B5A": KeyShiftTab,
 }
 
 // ReadKey reads keypress input from a TTY and returns a string representation
@@ -190,6 +194,14 @@ func ReadKey(r io.Reader) (Key, error) {
 	n, err := r.Read(buf[:])
 	if err != nil {
 		return Key{}, err
+	}
+
+	// Hex representation of input sequence
+	hex := fmt.Sprintf("%x", buf[:n])
+
+	switch hex {
+	case "1b5b5a":
+		return Key{Type: KeyShiftTab}, nil
 	}
 
 	// Get rune
