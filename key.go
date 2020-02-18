@@ -78,6 +78,7 @@ const (
 
 // Aliases
 const (
+	KeyNull      = keyNUL
 	KeyBreak     = keyETX
 	KeyEnter     = keyCR
 	KeyBackspace = keyBS
@@ -218,6 +219,12 @@ func ReadKey(r io.Reader) (Key, error) {
 	// Is it a special sequence, like an arrow key?
 	if k, ok := sequences[string(buf[:n])]; ok {
 		return Key{Type: k}, nil
+	}
+
+	// If the first byte is an escape sequence, and we're still here, just
+	// send a null to avoid sending bizarre escape sequences down the line
+	if n > 0 && buf[0] == 0x1b {
+		return Key{Type: KeyNull}, nil
 	}
 
 	// Nope, just a regular, ol' rune
