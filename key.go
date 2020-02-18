@@ -198,7 +198,7 @@ func ReadKey(r io.Reader) (Key, error) {
 	}
 
 	// Is it a control character?
-	if n == 1 && c <= keyUS || c == keyDEL {
+	if /*n == 1 &&*/ c <= keyUS || c == keyDEL {
 		return Key{Type: KeyType(c)}, nil
 	}
 
