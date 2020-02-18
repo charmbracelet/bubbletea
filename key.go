@@ -80,6 +80,7 @@ const (
 	KeyBreak     = keyETX
 	KeyEnter     = keyCR
 	KeyBackspace = keyBS
+	KeyTab       = keyHT
 	KeySpace     = keySP
 	KeyEsc       = keyESC
 	KeyEscape    = keyESC
