@@ -11,11 +11,16 @@ import (
 type KeyMsg Key
 
 // String returns a friendly name for a key
-func (k *KeyMsg) String() string {
+func (k *KeyMsg) String() (str string) {
+	if k.Alt {
+		str += "alt+"
+	}
 	if k.Type == KeyRune {
-		return string(k.Rune)
+		str += string(k.Rune)
+		return str
 	} else if s, ok := keyNames[int(k.Type)]; ok {
-		return s
+		str += s
+		return str
 	}
 	return ""
 }
@@ -29,6 +34,7 @@ func (k *KeyMsg) IsRune() bool {
 type Key struct {
 	Type KeyType
 	Rune rune
+	Alt  bool
 }
 
 // KeyType indicates the key pressed
@@ -179,11 +185,10 @@ var keyNames = map[int]string{
 
 // Mapping for sequences to consts
 var sequences = map[string]KeyType{
-	"\x1b[A":   KeyUp,
-	"\x1b[B":   KeyDown,
-	"\x1b[C":   KeyRight,
-	"\x1b[D":   KeyLeft,
-	"\x1b5B5A": KeyShiftTab,
+	"\x1b[A": KeyUp,
+	"\x1b[B": KeyDown,
+	"\x1b[C": KeyRight,
+	"\x1b[D": KeyLeft,
 }
 
 // ReadKey reads keypress input from a TTY and returns a string representation
@@ -192,41 +197,44 @@ func ReadKey(r io.Reader) (Key, error) {
 	var buf [256]byte
 
 	// Read and block
-	n, err := r.Read(buf[:])
+	numBytes, err := r.Read(buf[:])
 	if err != nil {
 		return Key{}, err
 	}
 
-	// Hex representation of input sequence
-	hex := fmt.Sprintf("%x", buf[:n])
-
-	switch hex {
-	case "1b5b5a":
+	// Shift+tab needs some very special handling
+	if "1b5b5a" == fmt.Sprintf("%x", buf[:numBytes]) {
 		return Key{Type: KeyShiftTab}, nil
 	}
 
-	// Get rune
-	c, _ := utf8.DecodeRune(buf[:])
-	if c == utf8.RuneError {
-		return Key{}, errors.New("no such rune")
+	// Get unicode value
+	char, _ := utf8.DecodeRune(buf[:])
+	if char == utf8.RuneError {
+		return Key{}, errors.New("could not decode rune")
 	}
 
 	// Is it a control character?
-	if n == 1 && c <= keyUS || c == keyDEL {
-		return Key{Type: KeyType(c)}, nil
+	if numBytes == 1 && char <= keyUS || char == keyDEL {
+		return Key{Type: KeyType(char)}, nil
 	}
 
 	// Is it a special sequence, like an arrow key?
-	if k, ok := sequences[string(buf[:n])]; ok {
+	if k, ok := sequences[string(buf[:numBytes])]; ok {
 		return Key{Type: k}, nil
 	}
 
-	// If the first byte is an escape sequence, and we're still here, just
-	// send a null to avoid sending bizarre escape sequences down the line
-	if n > 0 && buf[0] == 0x1b {
-		return Key{Type: KeyNull}, nil
+	// Is the alt key pressed? The buffer will be prefixed with an escape
+	// sequence if so
+	if numBytes > 1 && buf[0] == 0x1b {
+		// Now remove the initial escape sequence and re-process to get the
+		// character.
+		c, _ := utf8.DecodeRune(buf[1:])
+		if c == utf8.RuneError {
+			return Key{}, errors.New("could not decode rune after removing initial escape")
+		}
+		return Key{Alt: true, Type: KeyRune, Rune: c}, nil
 	}
 
-	// Nope, just a regular, ol' rune
-	return Key{Type: KeyRune, Rune: c}, nil
+	// Just a regular, ol' rune
+	return Key{Type: KeyRune, Rune: char}, nil
 }
