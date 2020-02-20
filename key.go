@@ -136,6 +136,10 @@ const (
 	KeyRight
 	KeyLeft
 	KeyShiftTab
+	KeyHome
+	KeyEnd
+	KeyPgUp
+	KeyPgDown
 )
 
 // Mapping for control keys to friendly consts
@@ -181,6 +185,10 @@ var keyNames = map[int]string{
 	KeyRight:    "right",
 	KeyLeft:     "left",
 	KeyShiftTab: "shift+tab",
+	KeyHome:     "home",
+	KeyEnd:      "end",
+	KeyPgUp:     "pgup",
+	KeyPgDown:   "pgdown",
 }
 
 // Mapping for sequences to consts
@@ -189,6 +197,26 @@ var sequences = map[string]KeyType{
 	"\x1b[B": KeyDown,
 	"\x1b[C": KeyRight,
 	"\x1b[D": KeyLeft,
+}
+
+// Mapping for hex codes to consts. Unclear why these won't register as
+// sequences.
+var hexes = map[string]Key{
+	"1b5b5a":       Key{Type: KeyShiftTab},
+	"1b0d":         Key{Alt: true, Type: KeyEnter},
+	"1b7f":         Key{Alt: true, Type: KeyDelete},
+	"1b5b48":       Key{Type: KeyHome},
+	"1b5b313b3348": Key{Alt: true, Type: KeyHome},
+	"1b5b46":       Key{Type: KeyEnd},
+	"1b5b313b3346": Key{Alt: true, Type: KeyEnd},
+	"1b5b357e":     Key{Type: KeyPgUp},
+	"1b5b353b337e": Key{Alt: true, Type: KeyPgUp},
+	"1b5b367e":     Key{Type: KeyPgDown},
+	"1b5b363b337e": Key{Alt: true, Type: KeyPgDown},
+	"1b5b313b3341": Key{Alt: true, Type: KeyUp},
+	"1b5b313b3342": Key{Alt: true, Type: KeyDown},
+	"1b5b313b3343": Key{Alt: true, Type: KeyRight},
+	"1b5b313b3344": Key{Alt: true, Type: KeyLeft},
 }
 
 // ReadKey reads keypress input from a TTY and returns a string representation
@@ -202,9 +230,11 @@ func ReadKey(r io.Reader) (Key, error) {
 		return Key{}, err
 	}
 
-	// Shift+tab needs some very special handling
-	if "1b5b5a" == fmt.Sprintf("%x", buf[:numBytes]) {
-		return Key{Type: KeyShiftTab}, nil
+	hex := fmt.Sprintf("%x", buf[:numBytes])
+
+	// Some of these need special handling
+	if k, ok := hexes[hex]; ok {
+		return k, nil
 	}
 
 	// Get unicode value
