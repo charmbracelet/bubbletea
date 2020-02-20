@@ -203,20 +203,26 @@ var sequences = map[string]KeyType{
 // sequences.
 var hexes = map[string]Key{
 	"1b5b5a":       Key{Type: KeyShiftTab},
-	"1b0d":         Key{Alt: true, Type: KeyEnter},
-	"1b7f":         Key{Alt: true, Type: KeyDelete},
+	"1b0d":         Key{Type: KeyEnter, Alt: true},
+	"1b7f":         Key{Type: KeyDelete, Alt: true},
 	"1b5b48":       Key{Type: KeyHome},
-	"1b5b313b3348": Key{Alt: true, Type: KeyHome},
+	"1b5b377e":     Key{Type: KeyHome}, // urxvt
+	"1b5b313b3348": Key{Type: KeyHome, Alt: true},
+	"1b1b5b377e":   Key{Type: KeyHome, Alt: true}, // ursvt
 	"1b5b46":       Key{Type: KeyEnd},
-	"1b5b313b3346": Key{Alt: true, Type: KeyEnd},
+	"1b5b387e":     Key{Type: KeyEnd}, // urxvt
+	"1b5b313b3346": Key{Type: KeyEnd, Alt: true},
+	"1b1b5b387e":   Key{Type: KeyEnd, Alt: true}, // urxvt
 	"1b5b357e":     Key{Type: KeyPgUp},
-	"1b5b353b337e": Key{Alt: true, Type: KeyPgUp},
+	"1b5b353b337e": Key{Type: KeyPgUp, Alt: true},
+	"1b1b5b357e":   Key{Type: KeyPgUp, Alt: true}, // urxvt
 	"1b5b367e":     Key{Type: KeyPgDown},
-	"1b5b363b337e": Key{Alt: true, Type: KeyPgDown},
-	"1b5b313b3341": Key{Alt: true, Type: KeyUp},
-	"1b5b313b3342": Key{Alt: true, Type: KeyDown},
-	"1b5b313b3343": Key{Alt: true, Type: KeyRight},
-	"1b5b313b3344": Key{Alt: true, Type: KeyLeft},
+	"1b5b363b337e": Key{Type: KeyPgDown, Alt: true},
+	"1b1b5b367e":   Key{Type: KeyPgDown, Alt: true}, // urxvt
+	"1b5b313b3341": Key{Type: KeyUp, Alt: true},
+	"1b5b313b3342": Key{Type: KeyDown, Alt: true},
+	"1b5b313b3343": Key{Type: KeyRight, Alt: true},
+	"1b5b313b3344": Key{Type: KeyLeft, Alt: true},
 }
 
 // ReadKey reads keypress input from a TTY and returns a string representation
