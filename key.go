@@ -129,6 +129,7 @@ const (
 	KeyCtrlQuestionMark = keyDEL // ctrl+?
 )
 
+// Other keys we track
 const (
 	KeyRune = -(iota + 1)
 	KeyUp
@@ -192,6 +193,7 @@ var keyNames = map[int]string{
 }
 
 // Mapping for sequences to consts
+// TODO: should we just move this into the hex table?
 var sequences = map[string]KeyType{
 	"\x1b[A": KeyUp,
 	"\x1b[B": KeyDown,
