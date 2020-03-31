@@ -18,6 +18,13 @@ type Model interface{}
 // Cmd is an IO operation. If it's nil it's considered a no-op.
 type Cmd func(Model) Msg
 
+// CmdMap applies a given model to a command
+func CmdMap(cmd Cmd, model Model) Cmd {
+	return func(_ Model) Msg {
+		return cmd(model)
+	}
+}
+
 // Batch peforms a bunch of commands concurrently with no ordering guarantees
 // about the results.
 func Batch(cmds ...Cmd) Cmd {
@@ -29,6 +36,13 @@ func Batch(cmds ...Cmd) Cmd {
 // Sub is an event subscription. If it returns nil it's considered a no-op,
 // but there's really no reason to have a nil subscription.
 type Sub func(Model) Msg
+
+// SubMap applies a given model to a subscription
+func SubMap(sub Sub, model Model) Sub {
+	return func(_ Model) Msg {
+		return sub(model)
+	}
+}
 
 // Subs is a keyed set of subscriptions. The key should be a unique
 // identifier; two different subscriptions should not have the same key
