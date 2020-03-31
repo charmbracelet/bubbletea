@@ -9,7 +9,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-// Msg represents an action. It's used by Update to update the UI.
+// Msg represents an action. It's used signal Update to update the UI.
 type Msg interface{}
 
 // Model contains the updatable data for an application
@@ -17,6 +17,14 @@ type Model interface{}
 
 // Cmd is an IO operation. If it's nil it's considered a no-op.
 type Cmd func(Model) Msg
+
+// Batch peforms a bunch of commands concurrently with no ordering guarantees
+// about the results.
+func Batch(cmds ...Cmd) Cmd {
+	return func(_ Model) Msg {
+		return batchMsg(cmds)
+	}
+}
 
 // Sub is an event subscription. If it returns nil it's considered a no-op,
 // but there's really no reason to have a nil subscription.
@@ -78,6 +86,7 @@ type ErrMsg struct {
 	error
 }
 
+// String implements String() on the error interface for ErrMsg
 func (e ErrMsg) String() string {
 	return e.Error()
 }
@@ -103,6 +112,9 @@ func Quit(_ Model) Msg {
 
 // Signals that the program should quit
 type quitMsg struct{}
+
+// batchMsg is used to perform a bunch of commands
+type batchMsg []Cmd
 
 // NewProgram creates a new Program
 func NewProgram(init Init, update Update, view View, subs Subscriptions) *Program {
@@ -175,9 +187,18 @@ func (p *Program) Start() error {
 	for {
 		select {
 		case msg := <-msgs:
+
+			// Handle quit message
 			if _, ok := msg.(quitMsg); ok {
 				close(done)
 				return nil
+			}
+
+			// Process batch commands
+			if b, ok := msg.(batchMsg); ok {
+				for _, cmd := range b {
+					cmds <- cmd
+				}
 			}
 
 			p.model, cmd = p.update(msg, p.model)            // run update
