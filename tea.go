@@ -28,6 +28,9 @@ func CmdMap(cmd Cmd, model Model) Cmd {
 // Batch peforms a bunch of commands concurrently with no ordering guarantees
 // about the results.
 func Batch(cmds ...Cmd) Cmd {
+	if len(cmds) == 0 {
+		return nil
+	}
 	return func(_ Model) Msg {
 		return batchMsg(cmds)
 	}
