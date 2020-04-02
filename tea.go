@@ -269,10 +269,12 @@ func (p *Program) processSubs(msgs chan Msg, activeSubs subManager) subManager {
 		return activeSubs
 	}
 
-	// Stop subscriptions that don't exist in the new subscription map
+	// Stop subscriptions that don't exist in the new subscription map and
+	// stop subscriptions where the new subscription is mapped to a nil.
 	if len(activeSubs) > 0 {
 		for key, sub := range activeSubs {
-			if _, exists := newSubs[key]; !exists {
+			_, exists := newSubs[key]
+			if !exists || exists && newSubs[key] == nil {
 				close(sub.done)
 				delete(activeSubs, key)
 			}
