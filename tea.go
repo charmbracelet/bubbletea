@@ -212,10 +212,11 @@ func (p *Program) Start() error {
 			}
 
 			// Process batch commands
-			if b, ok := msg.(batchMsg); ok {
-				for _, cmd := range b {
+			if batchedCmds, ok := msg.(batchMsg); ok {
+				for _, cmd := range batchedCmds {
 					cmds <- cmd
 				}
+				continue
 			}
 
 			p.model, cmd = p.update(msg, p.model)            // run update
