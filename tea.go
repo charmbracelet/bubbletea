@@ -9,7 +9,8 @@ import (
 	"github.com/muesli/termenv"
 )
 
-// Msg represents an action. It's used signal Update to update the UI.
+// Msg represents an action and is usually the result of an IO operation. It's
+// used to signal Update this model, and henceforth, the UI.
 type Msg interface{}
 
 // Model contains the updatable data for an application
@@ -20,6 +21,9 @@ type Cmd func(Model) Msg
 
 // CmdMap applies a given model to a command
 func CmdMap(cmd Cmd, model Model) Cmd {
+	if cmd == nil {
+		return nil
+	}
 	return func(_ Model) Msg {
 		return cmd(model)
 	}
@@ -42,6 +46,9 @@ type Sub func(Model) Msg
 
 // SubMap applies a given model to a subscription
 func SubMap(sub Sub, model Model) Sub {
+	if sub == nil {
+		return nil
+	}
 	return func(_ Model) Msg {
 		return sub(model)
 	}
