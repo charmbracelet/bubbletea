@@ -10,10 +10,10 @@ import (
 )
 
 // Msg represents an action and is usually the result of an IO operation. It's
-// used to signal Update this model, and henceforth, the UI.
+// triggers the  Update function, and henceforth, the UI.
 type Msg interface{}
 
-// Model contains the updatable data for an application
+// Model contains the program's state.
 type Model interface{}
 
 // Cmd is an IO operation. If it's nil it's considered a no-op.
@@ -40,11 +40,12 @@ func Batch(cmds ...Cmd) Cmd {
 	}
 }
 
-// Sub is an event subscription. If it returns nil it's considered a no-op,
-// but there's really no reason to have a nil subscription.
+// Sub is an event subscription; generally a recurring IO operation. If it
+// returns nil it's considered a no-op, but there's really no reason to have
+// a nil subscription.
 type Sub func(Model) Msg
 
-// SubMap applies a given model to a subscription
+// SubMap applies a given model as an argument to a given subscription.
 func SubMap(sub Sub, model Model) Sub {
 	if sub == nil {
 		return nil
@@ -55,7 +56,8 @@ func SubMap(sub Sub, model Model) Sub {
 }
 
 // Subs is a keyed set of subscriptions. The key should be a unique
-// identifier; two different subscriptions should not have the same key
+// identifier: two different subscriptions should not have the same key or
+// weird behavior will occur.
 type Subs map[string]Sub
 
 // Subscriptions returns a map of subscriptions (Subs) our application will
