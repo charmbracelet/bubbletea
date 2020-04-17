@@ -18,12 +18,16 @@ func initTerminal() error {
 		return err
 	}
 
-	tty.SetRaw()
+	err = tty.SetRaw()
+	if err != nil {
+		return err
+	}
+
 	termenv.HideCursor()
 	return nil
 }
 
 func restoreTerminal() {
 	termenv.ShowCursor()
-	tty.Restore()
+	_ = tty.Restore()
 }

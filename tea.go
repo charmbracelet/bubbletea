@@ -245,7 +245,7 @@ func (p *Program) render(model Model, linesRendered int) int {
 	if linesRendered > 0 {
 		termenv.ClearLines(linesRendered)
 	}
-	io.WriteString(os.Stdout, view)
+	_, _ = io.WriteString(os.Stdout, view)
 	return strings.Count(view, "\r\n")
 }
 
