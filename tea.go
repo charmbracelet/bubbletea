@@ -1,7 +1,6 @@
 package tea
 
 import (
-	"errors"
 	"io"
 	"os"
 	"strings"
@@ -93,32 +92,6 @@ type Program struct {
 	view          View
 	subscriptions Subscriptions
 }
-
-// ErrMsg is just a regular message containing an error. We handle it in Update
-// just like a regular message by case switching. Of course, the developer
-// could also define her own errors as well.
-type ErrMsg struct {
-	error
-}
-
-// String implements String() on the error interface for ErrMsg
-func (e ErrMsg) String() string {
-	return e.Error()
-}
-
-// NewErrMsg is a convenience function for creating a generic ErrMsg
-func NewErrMsg(s string) ErrMsg {
-	return ErrMsg{errors.New(s)}
-}
-
-// NewErrMsgFromErr is a convenience function for creating an ErrMsg from an
-// existing error
-func NewErrMsgFromErr(e error) ErrMsg {
-	return ErrMsg{e}
-}
-
-// ModelAssertionErr can be used when a model assertion didn't go as planned
-var ModelAssertionErr = NewErrMsg("could not perform assertion on model")
 
 // Quit is a command that tells the program to exit
 func Quit() Msg {

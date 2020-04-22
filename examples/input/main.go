@@ -12,15 +12,14 @@ import (
 )
 
 type Model struct {
-	Input input.Model
-	Error error
+	textInput input.Model
+	err       error
 }
 
 type tickMsg struct{}
+type errMsg error
 
 func main() {
-	tea.UseSysLog("tea")
-
 	p := tea.NewProgram(
 		initialize,
 		update,
@@ -38,8 +37,8 @@ func initialize() (tea.Model, tea.Cmd) {
 	inputModel.Placeholder = "Pikachu"
 
 	return Model{
-		Input: inputModel,
-		Error: nil,
+		textInput: inputModel,
+		err:       nil,
 	}, nil
 }
 
@@ -50,8 +49,9 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 		// When we encounter errors in Update we simply add the error to the
 		// model so we can handle it in the view. We could also return a command
 		// that does something else with the error, like logs it via IO.
-		m.Error = errors.New("could not perform assertion on model")
-		return m, nil
+		return Model{
+			err: errors.New("could not perform assertion on model in update"),
+		}, nil
 	}
 
 	switch msg := msg.(type) {
@@ -64,12 +64,12 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 		}
 
 	// We handle errors just like any other message
-	case tea.ErrMsg:
-		m.Error = msg
+	case errMsg:
+		m.err = msg
 		return m, nil
 	}
 
-	m.Input, cmd = input.Update(msg, m.Input)
+	m.textInput, cmd = input.Update(msg, m.textInput)
 	return m, cmd
 }
 
@@ -79,7 +79,7 @@ func subscriptions(model tea.Model) tea.Subs {
 		// it the model it expects.
 		"input": func(model tea.Model) tea.Msg {
 			m, _ := model.(Model)
-			return input.Blink(m.Input)
+			return input.Blink(m.textInput)
 		},
 	}
 }
@@ -88,12 +88,12 @@ func view(model tea.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "Oh no: could not perform assertion on model."
-	} else if m.Error != nil {
-		return fmt.Sprintf("Uh oh: %s", m.Error)
+	} else if m.err != nil {
+		return fmt.Sprintf("Uh oh: %s", m.err)
 	}
 	return fmt.Sprintf(
 		"What’s your favorite Pokémon?\n\n%s\n\n%s",
-		input.View(m.Input),
+		input.View(m.textInput),
 		"(esc to quit)",
 	)
 }

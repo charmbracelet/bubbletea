@@ -15,11 +15,12 @@ import (
 const url = "https://charm.sh/"
 
 type Model struct {
-	Status int
-	Error  error
+	status int
+	err    error
 }
 
 type statusMsg int
+type errMsg error
 
 func main() {
 	p := tea.NewProgram(initialize, update, view, nil)
@@ -33,7 +34,10 @@ func initialize() (tea.Model, tea.Cmd) {
 }
 
 func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := model.(Model)
+	m, ok := model.(Model)
+	if !ok {
+		return Model{err: errors.New("could not perform assertion on model during update")}, nil
+	}
 
 	switch msg := msg.(type) {
 
@@ -50,12 +54,11 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 		}
 
 	case statusMsg:
-		m.Status = int(msg)
+		m.status = int(msg)
 		return m, tea.Quit
 
-	case tea.ErrMsg:
-		// TODO: get the error out of tea.ErrMsg less hackily
-		m.Error = errors.New(msg.Error())
+	case errMsg:
+		m.err = msg
 		return m, nil
 
 	default:
@@ -66,10 +69,10 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 func view(model tea.Model) string {
 	m, _ := model.(Model)
 	s := fmt.Sprintf("Checking %s...", url)
-	if m.Error != nil {
-		s += fmt.Sprintf("something went wrong: %s", m.Error)
-	} else if m.Status != 0 {
-		s += fmt.Sprintf("%d %s", m.Status, http.StatusText(m.Status))
+	if m.err != nil {
+		s += fmt.Sprintf("something went wrong: %s", m.err)
+	} else if m.status != 0 {
+		s += fmt.Sprintf("%d %s", m.status, http.StatusText(m.status))
 	}
 	return s
 }
@@ -80,7 +83,7 @@ func checkServer() tea.Msg {
 	}
 	res, err := c.Get(url)
 	if err != nil {
-		return tea.NewErrMsg(err.Error())
+		return errMsg(err)
 	}
 	return statusMsg(res.StatusCode)
 }
