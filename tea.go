@@ -149,6 +149,7 @@ func (p *Program) Start() error {
 		subs          = make(subManager)
 		cmds          = make(chan Cmd)
 		msgs          = make(chan Msg)
+		errs          = make(chan error)
 		done          = make(chan struct{})
 		linesRendered int
 	)
@@ -175,7 +176,10 @@ func (p *Program) Start() error {
 	// need that we're enabling it by default.
 	go func() {
 		for {
-			msg, _ := ReadKey(os.Stdin)
+			msg, err := ReadKey(os.Stdin)
+			if err != nil {
+				errs <- err
+			}
 			msgs <- KeyMsg(msg)
 		}
 	}()
@@ -202,6 +206,9 @@ func (p *Program) Start() error {
 	// Handle updates and draw
 	for {
 		select {
+		case err := <-errs:
+			close(done)
+			return err
 		case msg := <-msgs:
 
 			// Handle quit message
