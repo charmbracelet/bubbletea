@@ -1,4 +1,5 @@
 .DS_Store
+.envrc
 /examples/fullscreen/fullscreen
 /examples/http/http
 /examples/input/input
