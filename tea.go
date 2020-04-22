@@ -92,7 +92,6 @@ type Program struct {
 	update        Update
 	view          View
 	subscriptions Subscriptions
-	model         Model
 }
 
 // ErrMsg is just a regular message containing an error. We handle it in Update
@@ -145,6 +144,7 @@ func NewProgram(init Init, update Update, view View, subs Subscriptions) *Progra
 // Start initializes the program
 func (p *Program) Start() error {
 	var (
+		model         Model
 		cmd           Cmd
 		subs          = make(subManager)
 		cmds          = make(chan Cmd)
@@ -160,7 +160,7 @@ func (p *Program) Start() error {
 	defer restoreTerminal()
 
 	// Initialize program
-	p.model, cmd = p.init()
+	model, cmd = p.init()
 	if cmd != nil {
 		go func() {
 			cmds <- cmd
@@ -168,7 +168,7 @@ func (p *Program) Start() error {
 	}
 
 	// Render initial view
-	linesRendered = p.render(p.model, linesRendered)
+	linesRendered = p.render(model, linesRendered)
 
 	// Subscribe to user input. We could move this out of here and offer it
 	// as a subscription, but it blocks nicely and seems to be a common enough
@@ -181,7 +181,7 @@ func (p *Program) Start() error {
 	}()
 
 	// Initialize subscriptions
-	subs = p.processSubs(msgs, subs)
+	subs = p.processSubs(msgs, model, subs)
 
 	// Process commands
 	go func() {
@@ -218,10 +218,10 @@ func (p *Program) Start() error {
 				continue
 			}
 
-			p.model, cmd = p.update(msg, p.model)            // run update
-			cmds <- cmd                                      // process command (if any)
-			subs = p.processSubs(msgs, subs)                 // check for new and outdated subscriptions
-			linesRendered = p.render(p.model, linesRendered) // render to terminal
+			model, cmd = p.update(msg, model)              // run update
+			cmds <- cmd                                    // process command (if any)
+			subs = p.processSubs(msgs, model, subs)        // check for new and outdated subscriptions
+			linesRendered = p.render(model, linesRendered) // render to terminal
 		}
 	}
 }
@@ -248,7 +248,7 @@ func (p *Program) render(model Model, linesRendered int) int {
 // aren't currently running, we run them as loops in a new Goroutine.
 //
 // This function should be called on initialization and after every update.
-func (p *Program) processSubs(msgs chan Msg, activeSubs subManager) subManager {
+func (p *Program) processSubs(msgs chan Msg, model Model, activeSubs subManager) subManager {
 
 	// Nothing to do.
 	if p.subscriptions == nil && activeSubs == nil {
@@ -261,7 +261,7 @@ func (p *Program) processSubs(msgs chan Msg, activeSubs subManager) subManager {
 		return activeSubs
 	}
 
-	newSubs := p.subscriptions(p.model)
+	newSubs := p.subscriptions(model)
 
 	// newSubs is an empty map. Cancel any active subscriptions and return.
 	if newSubs == nil {
@@ -300,7 +300,7 @@ func (p *Program) processSubs(msgs chan Msg, activeSubs subManager) subManager {
 						select {
 						case <-done:
 							return
-						case msgs <- s(p.model):
+						case msgs <- s(model):
 							continue
 						}
 					}
