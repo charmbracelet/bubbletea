@@ -16,18 +16,8 @@ type Msg interface{}
 // Model contains the program's state.
 type Model interface{}
 
-// Cmd is an IO operation. If it's nil it's considered a no-op.
-type Cmd func(Model) Msg
-
-// CmdMap applies a given model to a command
-func CmdMap(cmd Cmd, model Model) Cmd {
-	if cmd == nil {
-		return nil
-	}
-	return func(_ Model) Msg {
-		return cmd(model)
-	}
-}
+// Cmd is an IO operation that runs once. If it's nil it's considered a no-op.
+type Cmd func() Msg
 
 // Batch peforms a bunch of commands concurrently with no ordering guarantees
 // about the results.
@@ -35,7 +25,7 @@ func Batch(cmds ...Cmd) Cmd {
 	if len(cmds) == 0 {
 		return nil
 	}
-	return func(_ Model) Msg {
+	return func() Msg {
 		return batchMsg(cmds)
 	}
 }
@@ -132,7 +122,7 @@ func NewErrMsgFromErr(e error) ErrMsg {
 var ModelAssertionErr = NewErrMsg("could not perform assertion on model")
 
 // Quit is a command that tells the program to exit
-func Quit(_ Model) Msg {
+func Quit() Msg {
 	return quitMsg{}
 }
 
@@ -202,7 +192,7 @@ func (p *Program) Start() error {
 			case cmd := <-cmds:
 				if cmd != nil {
 					go func() {
-						msgs <- cmd(p.model)
+						msgs <- cmd()
 					}()
 				}
 			}

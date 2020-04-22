@@ -65,15 +65,16 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 func view(model tea.Model) string {
 	m, _ := model.(Model)
+	s := fmt.Sprintf("Checking %s...", url)
 	if m.Error != nil {
-		return fmt.Sprintf("Something went wrong: %s", m.Error)
-	} else if m.Status == 0 {
-		return fmt.Sprintf("Checking %s...", url)
+		s += fmt.Sprintf("something went wrong: %s", m.Error)
+	} else if m.Status != 0 {
+		s += fmt.Sprintf("%d %s", m.Status, http.StatusText(m.Status))
 	}
-	return fmt.Sprintf("The server said: %d %s", m.Status, http.StatusText(m.Status))
+	return s
 }
 
-func checkServer(_ tea.Model) tea.Msg {
+func checkServer() tea.Msg {
 	c := &http.Client{
 		Timeout: 10 * time.Second,
 	}
