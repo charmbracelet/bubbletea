@@ -92,7 +92,7 @@ and [go-tea][gotea] by TJ Holowaychuk.
 
 ***
 
-Part of [Charm](https://charm.sh). For more info see `ssh charm.sh`.
+Part of [Charm](https://charm.sh).
 
 <img alt="the Charm logo" src="https://stuff.charm.sh/charm-logotype.png" width="400px">
 
