@@ -69,9 +69,14 @@ Hungry for more? See the [other examples][examples].
 
 ## Other Resources
 
+* [Tea Party](https://github.com/charmbracelet/teaparty): a collection of Tea
+  components.
 * [Termenv](https://github.com/muesli/termenv): advanced ANSI style and color
   support for your terminal applications. Very useful when rendering your
   views.
+* [Reflow](https://github.com/muesli/reflow): a collection of ANSI-aware text
+  formatting tools. Also useful for view rendering.
+
 
 ## Acknowledgments
 
