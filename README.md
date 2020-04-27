@@ -67,23 +67,19 @@ Hungry for more? See the [other examples][examples].
 
 [examples]: https://github.com/charmbracelet/tea/tree/master/examples
 
+## Other Resources
 
-## Authors
+* [Termenv](https://github.com/muesli/termenv): advanced ANSI style and color
+  support for your terminal applications. Very useful when rendering your
+  views.
 
-* [Christian Rocha](https://github.com/meowgorithm)
-* [Christian Muehlhaeuser](https://github.com/muesli)
+## Acknowledgments
 
 Heavily inspired by both [The Elm Architecture][elm] by Evan Czaplicki et al.
 and [go-tea][gotea] by TJ Holowaychuk.
 
 [elm]: https://guide.elm-lang.org/architecture/
 [gotea]: https://github.com/tj/go-tea
-
-## Other Resources
-
-* [Termenv](https://github.com/muesli/termenv): advanced ANSI style and color
-  support for your terminal applications. Very useful when rendering in your
-  views!
 
 ## License
 
