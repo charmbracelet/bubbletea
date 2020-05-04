@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -15,7 +16,10 @@ var (
 
 type Model struct {
 	spinner spinner.Model
+	err     error
 }
+
+type errMsg error
 
 func main() {
 	p := tea.NewProgram(initialize, update, view, subscriptions)
@@ -53,6 +57,10 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+	case errMsg:
+		m.err = msg
+		return m, nil
+
 	default:
 		m.spinner, _ = spinner.Update(msg, m.spinner)
 		return m, nil
@@ -63,7 +71,10 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 func view(model tea.Model) string {
 	m, ok := model.(Model)
 	if !ok {
-		return tea.ModelAssertionErr.String()
+		return "could not perform assertion on model in view"
+	}
+	if m.err != nil {
+		return m.err.Error()
 	}
 	s := termenv.
 		String(spinner.View(m.spinner)).
@@ -77,7 +88,7 @@ func subscriptions(_ tea.Model) tea.Subs {
 		"tick": func(model tea.Model) tea.Msg {
 			m, ok := model.(Model)
 			if !ok {
-				return tea.ModelAssertionErr
+				return errMsg(errors.New("could perform assertion on model in subscription"))
 			}
 			return spinner.Sub(m.spinner)
 		},
