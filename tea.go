@@ -32,17 +32,7 @@ func Batch(cmds ...Cmd) Cmd {
 // Sub is an event subscription; generally a recurring IO operation. If it
 // returns nil it's considered a no-op, but there's really no reason to have
 // a nil subscription.
-type Sub func(Model) Msg
-
-// SubMap applies a given model as an argument to a given subscription.
-func SubMap(sub Sub, model Model) Sub {
-	if sub == nil {
-		return nil
-	}
-	return func(_ Model) Msg {
-		return sub(model)
-	}
-}
+type Sub func() Msg
 
 // Subs is a keyed set of subscriptions. The key should be a unique
 // identifier: two different subscriptions should not have the same key or
@@ -280,7 +270,7 @@ func (p *Program) processSubs(msgs chan Msg, model Model, activeSubs subManager)
 						select {
 						case <-done:
 							return
-						case msgs <- s(model):
+						case msgs <- s():
 							continue
 						}
 					}

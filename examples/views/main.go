@@ -58,12 +58,12 @@ func subscriptions(model tea.Model) tea.Subs {
 	}
 }
 
-func tick(model tea.Model) tea.Msg {
+func tick() tea.Msg {
 	time.Sleep(time.Second)
 	return tickMsg{}
 }
 
-func frame(model tea.Model) tea.Msg {
+func frame() tea.Msg {
 	time.Sleep(time.Second / 60)
 	return frameMsg{}
 }

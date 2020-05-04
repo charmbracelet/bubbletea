@@ -59,7 +59,7 @@ func view(model tea.Model) string {
 // second, sends a tick, and then restarts.
 func subscriptions(_ tea.Model) tea.Subs {
 	return tea.Subs{
-		"tick": func(_ tea.Model) tea.Msg {
+		"tick": func() tea.Msg {
 			time.Sleep(time.Second)
 			return TickMsg{}
 		},
