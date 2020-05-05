@@ -17,7 +17,7 @@ type Model int
 
 // Messages are events that we respond to in our Update function. This
 // particular one indicates that the timer has ticked.
-type TickMsg struct{}
+type tickMsg time.Time
 
 func main() {
 	// Initialize our program
@@ -41,7 +41,7 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyMsg:
 		return m, tea.Quit
-	case TickMsg:
+	case tickMsg:
 		m -= 1
 		if m <= 0 {
 			return m, tea.Quit
@@ -61,6 +61,8 @@ func view(model tea.Model) string {
 // second, sends a tick, and then restarts.
 func subscriptions(_ tea.Model) tea.Subs {
 	return tea.Subs{
-		"tick": tea.Every(time.Second, TickMsg{}),
+		"tick": tea.Every(time.Second, func(t time.Time) tea.Msg {
+			return tickMsg(t)
+		}),
 	}
 }

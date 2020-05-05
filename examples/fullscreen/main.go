@@ -12,7 +12,11 @@ import (
 
 type model int
 
-type tickMsg struct{}
+type tickMsg time.Time
+
+func newTickMsg(t time.Time) tea.Msg {
+	return tickMsg(t)
+}
 
 func main() {
 	tea.AltScreen()
@@ -55,7 +59,7 @@ func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 
 func subscriptions(_ tea.Model) tea.Subs {
 	return tea.Subs{
-		"tick": tea.Every(time.Second, tickMsg{}),
+		"tick": tea.Every(time.Second, newTickMsg),
 	}
 }
 

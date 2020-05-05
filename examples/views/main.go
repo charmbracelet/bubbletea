@@ -12,20 +12,6 @@ import (
 	"github.com/fogleman/ease"
 )
 
-// Model contains the data for our application.
-type Model struct {
-	Choice   int
-	Chosen   bool
-	Ticks    int
-	Frames   int
-	Progress float64
-	Loaded   bool
-}
-
-type tickMsg struct{}
-
-type frameMsg struct{}
-
 func main() {
 	p := tea.NewProgram(
 		initialize,
@@ -36,6 +22,32 @@ func main() {
 	if err := p.Start(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
+}
+
+// MSG
+
+type tickMsg time.Time
+
+func newTickMsg(t time.Time) tea.Msg {
+	return tickMsg(t)
+}
+
+type frameMsg time.Time
+
+func newFrameMsg(t time.Time) tea.Msg {
+	return frameMsg(t)
+}
+
+// MODEL
+
+// Model contains the data for our application.
+type Model struct {
+	Choice   int
+	Chosen   bool
+	Ticks    int
+	Frames   int
+	Progress float64
+	Loaded   bool
 }
 
 // INIT
@@ -50,15 +62,15 @@ func subscriptions(model tea.Model) tea.Subs {
 	m, _ := model.(Model)
 	if !m.Chosen || m.Loaded {
 		return tea.Subs{
-			"tick": tea.Every(time.Second, tickMsg{}),
+			"tick": tea.Every(time.Second, newTickMsg),
 		}
 	}
 	return tea.Subs{
-		"frame": tea.Every(time.Second/60, frameMsg{}),
+		"frame": tea.Every(time.Second/60, newFrameMsg),
 	}
 }
 
-// UPDATES
+// UPDATE
 
 func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := model.(Model)
@@ -145,7 +157,7 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// VIEWS
+// VIEW
 
 func view(model tea.Model) string {
 	m, _ := model.(Model)
