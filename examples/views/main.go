@@ -50,22 +50,12 @@ func subscriptions(model tea.Model) tea.Subs {
 	m, _ := model.(Model)
 	if !m.Chosen || m.Loaded {
 		return tea.Subs{
-			"tick": tick,
+			"tick": tea.Every(time.Second, tickMsg{}),
 		}
 	}
 	return tea.Subs{
-		"frame": frame,
+		"frame": tea.Every(time.Second/60, frameMsg{}),
 	}
-}
-
-func tick() tea.Msg {
-	time.Sleep(time.Second)
-	return tickMsg{}
-}
-
-func frame() tea.Msg {
-	time.Sleep(time.Second / 60)
-	return frameMsg{}
 }
 
 // UPDATES

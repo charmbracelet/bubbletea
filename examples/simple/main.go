@@ -39,6 +39,8 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := model.(Model)
 
 	switch msg.(type) {
+	case tea.KeyMsg:
+		return m, tea.Quit
 	case TickMsg:
 		m -= 1
 		if m <= 0 {
@@ -52,16 +54,13 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 // to the terminal.
 func view(model tea.Model) string {
 	m, _ := model.(Model)
-	return fmt.Sprintf("Hi. This program will exit in %d seconds...", m)
+	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.", m)
 }
 
 // This is a subscription which we setup in NewProgram(). It waits for one
 // second, sends a tick, and then restarts.
 func subscriptions(_ tea.Model) tea.Subs {
 	return tea.Subs{
-		"tick": func() tea.Msg {
-			time.Sleep(time.Second)
-			return TickMsg{}
-		},
+		"tick": tea.Every(time.Second, TickMsg{}),
 	}
 }

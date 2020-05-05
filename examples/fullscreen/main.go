@@ -55,10 +55,7 @@ func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 
 func subscriptions(_ tea.Model) tea.Subs {
 	return tea.Subs{
-		"tick": func() tea.Msg {
-			time.Sleep(time.Second)
-			return tickMsg{}
-		},
+		"tick": tea.Every(time.Second, tickMsg{}),
 	}
 }
 
