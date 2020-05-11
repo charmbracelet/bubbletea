@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
@@ -83,14 +82,17 @@ func view(model tea.Model) string {
 	return fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
 }
 
-func subscriptions(_ tea.Model) tea.Subs {
+func subscriptions(model tea.Model) tea.Subs {
+	m, ok := model.(Model)
+	if !ok {
+		return nil
+	}
+
+	sub, err := spinner.MakeSub(m.spinner)
+	if err != nil {
+		return nil
+	}
 	return tea.Subs{
-		"tick": func(model tea.Model) tea.Msg {
-			m, ok := model.(Model)
-			if !ok {
-				return errMsg(errors.New("could perform assertion on model in subscription"))
-			}
-			return spinner.Sub(m.spinner)
-		},
+		"tick": sub,
 	}
 }
