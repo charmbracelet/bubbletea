@@ -21,7 +21,7 @@ import (
 
 type model int
 
-type tickMsg struct{}
+type tickMsg time.Time
 
 func main() {
 	p := tea.NewProgram(init, update, view, subscriptions)
@@ -37,7 +37,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tickMsg:
         m--
-		if m <= 0 {
+		if m == 0 {
 			return m, tea.Quit
 		}
 	}
@@ -53,13 +53,10 @@ func view(mdl tea.Model) string {
 // Subscribe to events
 func subscriptions(_ tea.Model) tea.Subs {
     return tea.Subs{
-        "tick": tick,
+        "tick": time.Every(time.Second, func(t time.Time) tea.Msg {
+            return tickMsg(t)
+        },
     }
-}
-
-func tick(_ tea.Model) tea.Msg {
-	time.Sleep(time.Second)
-	return tickMsg{}
 }
 ```
 

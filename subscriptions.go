@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// NewEverMsg is used by Every to create a new message. It contains the time
+// NewEveryMsg is used by Every to create a new message. It contains the time
 // at which the timer finished.
 type NewEveryMsg func(time.Time) Msg
 
