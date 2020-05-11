@@ -256,6 +256,12 @@ func ReadKey(r io.Reader) (Key, error) {
 		return Key{Type: KeyType(char)}, nil
 	}
 
+	// If it's a space treat it like a control character (otherwise it gets
+	// treated as the character " "
+	if string(char) == " " {
+		return Key{Type: KeyType(keySP)}, nil
+	}
+
 	// Is it a special sequence, like an arrow key?
 	if k, ok := sequences[string(buf[:numBytes])]; ok {
 		return Key{Type: k}, nil
