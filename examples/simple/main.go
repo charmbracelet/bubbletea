@@ -54,7 +54,7 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 // to the terminal.
 func view(model boba.Model) string {
 	m, _ := model.(Model)
-	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.", m)
+	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
 }
 
 // This is a subscription which we setup in NewProgram(). It waits for one

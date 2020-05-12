@@ -74,7 +74,7 @@ func view(model boba.Model) string {
 	} else if m.status != 0 {
 		s += fmt.Sprintf("%d %s", m.status, http.StatusText(m.status))
 	}
-	return s
+	return s + "\n"
 }
 
 func checkServer() boba.Msg {

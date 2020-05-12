@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 	"github.com/fogleman/ease"
 )
 
 func main() {
-	p := tea.NewProgram(
+	p := boba.NewProgram(
 		initialize,
 		update,
 		view,
@@ -28,13 +28,13 @@ func main() {
 
 type tickMsg time.Time
 
-func newTickMsg(t time.Time) tea.Msg {
+func newTickMsg(t time.Time) boba.Msg {
 	return tickMsg(t)
 }
 
 type frameMsg time.Time
 
-func newFrameMsg(t time.Time) tea.Msg {
+func newFrameMsg(t time.Time) boba.Msg {
 	return frameMsg(t)
 }
 
@@ -52,27 +52,27 @@ type Model struct {
 
 // INIT
 
-func initialize() (tea.Model, tea.Cmd) {
+func initialize() (boba.Model, boba.Cmd) {
 	return Model{0, false, 10, 0, 0, false}, nil
 }
 
 // SUBSCRIPTIONS
 
-func subscriptions(model tea.Model) tea.Subs {
+func subscriptions(model boba.Model) boba.Subs {
 	m, _ := model.(Model)
 	if !m.Chosen || m.Loaded {
-		return tea.Subs{
-			"tick": tea.Every(time.Second, newTickMsg),
+		return boba.Subs{
+			"tick": boba.Every(time.Second, newTickMsg),
 		}
 	}
-	return tea.Subs{
-		"frame": tea.Every(time.Second/60, newFrameMsg),
+	return boba.Subs{
+		"frame": boba.Every(time.Second/60, newFrameMsg),
 	}
 }
 
 // UPDATE
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
+func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	m, _ := model.(Model)
 
 	if !m.Chosen {
@@ -81,10 +81,10 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	return updateChosen(msg, m)
 }
 
-func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
+func updateChoices(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 	switch msg := msg.(type) {
 
-	case tea.KeyMsg:
+	case boba.KeyMsg:
 		switch msg.String() {
 		case "j":
 			fallthrough
@@ -108,12 +108,12 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 		case "esc":
 			fallthrough
 		case "ctrl+c":
-			return m, tea.Quit
+			return m, boba.Quit
 		}
 
 	case tickMsg:
 		if m.Ticks == 0 {
-			return m, tea.Quit
+			return m, boba.Quit
 		}
 		m.Ticks -= 1
 	}
@@ -121,17 +121,17 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
+func updateChosen(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 	switch msg := msg.(type) {
 
-	case tea.KeyMsg:
+	case boba.KeyMsg:
 		switch msg.String() {
 		case "q":
 			fallthrough
 		case "esc":
 			fallthrough
 		case "ctrl+c":
-			return m, tea.Quit
+			return m, boba.Quit
 		}
 
 	case frameMsg:
@@ -148,7 +148,7 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		if m.Loaded {
 			if m.Ticks == 0 {
-				return m, tea.Quit
+				return m, boba.Quit
 			}
 			m.Ticks -= 1
 		}
@@ -159,12 +159,12 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 
 // VIEW
 
-func view(model tea.Model) string {
+func view(model boba.Model) string {
 	m, _ := model.(Model)
 	if !m.Chosen {
-		return choicesView(m)
+		return choicesView(m) + "\n"
 	}
-	return chosenView(m)
+	return chosenView(m) + "\n"
 }
 
 const choicesTpl = `What to do today?

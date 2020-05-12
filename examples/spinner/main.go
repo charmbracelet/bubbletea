@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/charmbracelet/boba"
-	"github.com/charmbracelet/teaparty/spinner"
+	"github.com/charmbracelet/boba/spinner"
 	"github.com/muesli/termenv"
 )
 
@@ -14,8 +14,9 @@ var (
 )
 
 type Model struct {
-	spinner spinner.Model
-	err     error
+	spinner  spinner.Model
+	quitting bool
+	err      error
 }
 
 type errMsg error
@@ -23,7 +24,8 @@ type errMsg error
 func main() {
 	p := boba.NewProgram(initialize, update, view, subscriptions)
 	if err := p.Start(); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
 
@@ -51,6 +53,7 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 		case "esc":
 			fallthrough
 		case "ctrl+c":
+			m.quitting = true
 			return m, boba.Quit
 		default:
 			return m, nil
@@ -70,7 +73,7 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 func view(model boba.Model) string {
 	m, ok := model.(Model)
 	if !ok {
-		return "could not perform assertion on model in view"
+		return "could not perform assertion on model in view\n"
 	}
 	if m.err != nil {
 		return m.err.Error()
@@ -79,7 +82,11 @@ func view(model boba.Model) string {
 		String(spinner.View(m.spinner)).
 		Foreground(color.Color("205")).
 		String()
-	return fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
+	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
+	if m.quitting {
+		return str + "\n"
+	}
+	return str
 }
 
 func subscriptions(model boba.Model) boba.Subs {

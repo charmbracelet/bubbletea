@@ -1,14 +1,12 @@
 package main
 
-// A simple program that counts down from 5 and then exits.
-
 import (
 	"errors"
 	"fmt"
 	"log"
 
 	"github.com/charmbracelet/boba"
-	"github.com/charmbracelet/teaparty/input"
+	input "github.com/charmbracelet/boba/textinput"
 )
 
 type Model struct {
@@ -33,8 +31,9 @@ func main() {
 }
 
 func initialize() (boba.Model, boba.Cmd) {
-	inputModel := input.DefaultModel()
+	inputModel := input.NewModel()
 	inputModel.Placeholder = "Pikachu"
+	inputModel.Focus()
 
 	return Model{
 		textInput: inputModel,
@@ -60,6 +59,8 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 		case boba.KeyCtrlC:
 			fallthrough
 		case boba.KeyEsc:
+			fallthrough
+		case boba.KeyEnter:
 			return m, boba.Quit
 		}
 
@@ -74,13 +75,16 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 }
 
 func subscriptions(model boba.Model) boba.Subs {
+	m, ok := model.(Model)
+	if !ok {
+		return nil
+	}
+	sub, err := input.MakeSub(m.textInput)
+	if err != nil {
+		return nil
+	}
 	return boba.Subs{
-		// We just hand off the subscription to the input component, giving
-		// it the model it expects.
-		"input": func(model boba.Model) boba.Msg {
-			m, _ := model.(Model)
-			return input.Blink(m.textInput)
-		},
+		"input": sub,
 	}
 }
 
@@ -95,5 +99,5 @@ func view(model boba.Model) string {
 		"What’s your favorite Pokémon?\n\n%s\n\n%s",
 		input.View(m.textInput),
 		"(esc to quit)",
-	)
+	) + "\n"
 }

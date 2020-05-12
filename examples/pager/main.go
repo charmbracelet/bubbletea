@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/charmbracelet/boba"
-	"github.com/charmbracelet/teaparty/pager"
+	"github.com/charmbracelet/boba/pager"
 )
 
 func main() {
