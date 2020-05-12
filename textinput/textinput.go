@@ -1,7 +1,6 @@
 package textinput
 
 import (
-	"errors"
 	"time"
 
 	"github.com/charmbracelet/boba"
@@ -77,8 +76,8 @@ func (m *Model) colorPlaceholder(s string) string {
 		String()
 }
 
-// CursorBlinkMsg is sent when the cursor should alternate it's blinking state
-type CursorBlinkMsg struct{}
+// BlinkMsg is sent when the cursor should alternate it's blinking state
+type BlinkMsg struct{}
 
 // NewModel creates a new model with default settings
 func NewModel() Model {
@@ -164,9 +163,9 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		m.Err = msg
 		return m, nil
 
-	case CursorBlinkMsg:
+	case BlinkMsg:
 		m.blink = !m.blink
-		return m, nil
+		return m, Blink(m)
 
 	default:
 		return m, nil
@@ -230,15 +229,10 @@ func cursorView(s string, m Model) string {
 		String()
 }
 
-// MakeSub return a subscription that lets us know when to alternate the
-// blinking of the cursor.
-func MakeSub(model boba.Model) (boba.Sub, error) {
-	m, ok := model.(Model)
-	if !ok {
-		return nil, errors.New("could not assert given model to the model we expected; make sure you're passing as input model")
-	}
+// Blink is a command used to time the cursor blinking.
+func Blink(model Model) boba.Cmd {
 	return func() boba.Msg {
-		time.Sleep(m.BlinkSpeed)
-		return CursorBlinkMsg{}
-	}, nil
+		time.Sleep(model.BlinkSpeed)
+		return BlinkMsg{}
+	}
 }

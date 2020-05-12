@@ -9,15 +9,6 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func NewProgram(initialContent string) *boba.Program {
-	return boba.NewProgram(
-		Init(initialContent),
-		Update,
-		View,
-		nil,
-	)
-}
-
 // MSG
 
 type terminalSizeMsg struct {

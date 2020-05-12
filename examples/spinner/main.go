@@ -22,7 +22,7 @@ type Model struct {
 type errMsg error
 
 func main() {
-	p := boba.NewProgram(initialize, update, view, subscriptions)
+	p := boba.NewProgram(initialize, update, view)
 	if err := p.Start(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -30,12 +30,12 @@ func main() {
 }
 
 func initialize() (boba.Model, boba.Cmd) {
-	m := spinner.NewModel()
-	m.Type = spinner.Dot
+	s := spinner.NewModel()
+	s.Type = spinner.Dot
 
 	return Model{
-		spinner: m,
-	}, nil
+		spinner: s,
+	}, spinner.Tick(s)
 }
 
 func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
@@ -64,8 +64,9 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 		return m, nil
 
 	default:
-		m.spinner, _ = spinner.Update(msg, m.spinner)
-		return m, nil
+		var cmd boba.Cmd
+		m.spinner, cmd = spinner.Update(msg, m.spinner)
+		return m, cmd
 	}
 
 }
@@ -87,19 +88,4 @@ func view(model boba.Model) string {
 		return str + "\n"
 	}
 	return str
-}
-
-func subscriptions(model boba.Model) boba.Subs {
-	m, ok := model.(Model)
-	if !ok {
-		return nil
-	}
-
-	sub, err := spinner.MakeSub(m.spinner)
-	if err != nil {
-		return nil
-	}
-	return boba.Subs{
-		"tick": sub,
-	}
 }

@@ -23,7 +23,6 @@ func main() {
 		initialize,
 		update,
 		view,
-		subscriptions,
 	).Start(); err != nil {
 		fmt.Printf("could not start program: %s\n", err)
 		os.Exit(1)
@@ -53,7 +52,13 @@ func initialize() (boba.Model, boba.Cmd) {
 	email.Placeholder = "Email"
 	email.Prompt = blurredPrompt
 
-	return Model{0, name, nickName, email, blurredSubmitButton}, nil
+	return Model{0, name, nickName, email, blurredSubmitButton},
+		boba.Batch(
+			input.Blink(name),
+			input.Blink(nickName),
+			input.Blink(email),
+		)
+
 }
 
 func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
@@ -61,6 +66,8 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	if !ok {
 		panic("could not perform assertion on model")
 	}
+
+	var cmd boba.Cmd
 
 	switch msg := msg.(type) {
 
@@ -135,44 +142,29 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 
 		default:
 			// Handle character input
-			m = updateInputs(msg, m)
-			return m, nil
+			m, cmd = updateInputs(msg, m)
+			return m, cmd
 		}
 
 	default:
 		// Handle blinks
-		m = updateInputs(msg, m)
-		return m, nil
+		m, cmd = updateInputs(msg, m)
+		return m, cmd
 	}
 }
 
-func updateInputs(msg boba.Msg, m Model) Model {
-	m.nameInput, _ = input.Update(msg, m.nameInput)
-	m.nickNameInput, _ = input.Update(msg, m.nickNameInput)
-	m.emailInput, _ = input.Update(msg, m.emailInput)
-	return m
-}
-
-func subscriptions(model boba.Model) boba.Subs {
-	m, ok := model.(Model)
-	if !ok {
-		return nil
-	}
-
-	// It's a little hacky, but we're using the subscription from one
-	// input element to handle the blinking for all elements. It doesn't
-	// have to be this way, we're just feeling a bit lazy at the moment.
-	inputSub, err := input.MakeSub(m.nameInput)
-	if err != nil {
-		return nil
-	}
-
-	return boba.Subs{
-		// It's a little hacky, but we're using the subscription from one
-		// input element to handle the blinking for all elements. It doesn't
-		// have to be this way, we're just feeling a bit lazy at the moment.
-		"blink": inputSub,
-	}
+func updateInputs(msg boba.Msg, m Model) (Model, boba.Cmd) {
+	var (
+		cmd  boba.Cmd
+		cmds []boba.Cmd
+	)
+	m.nameInput, cmd = input.Update(msg, m.nameInput)
+	cmds = append(cmds, cmd)
+	m.nickNameInput, cmd = input.Update(msg, m.nickNameInput)
+	cmds = append(cmds, cmd)
+	m.emailInput, cmd = input.Update(msg, m.emailInput)
+	cmds = append(cmds, cmd)
+	return m, boba.Batch(cmds...)
 }
 
 func view(model boba.Model) string {

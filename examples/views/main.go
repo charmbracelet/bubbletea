@@ -1,6 +1,6 @@
 package main
 
-// TODO: This code feels messy. Clean it up.
+// TODO: The views feel messy. Clean 'em up.
 
 import (
 	"fmt"
@@ -17,7 +17,6 @@ func main() {
 		initialize,
 		update,
 		view,
-		subscriptions,
 	)
 	if err := p.Start(); err != nil {
 		fmt.Println("could not start program:", err)
@@ -26,17 +25,9 @@ func main() {
 
 // MSG
 
-type tickMsg time.Time
+type tickMsg struct{}
 
-func newTickMsg(t time.Time) boba.Msg {
-	return tickMsg(t)
-}
-
-type frameMsg time.Time
-
-func newFrameMsg(t time.Time) boba.Msg {
-	return frameMsg(t)
-}
+type frameMsg struct{}
 
 // MODEL
 
@@ -53,21 +44,19 @@ type Model struct {
 // INIT
 
 func initialize() (boba.Model, boba.Cmd) {
-	return Model{0, false, 10, 0, 0, false}, nil
+	return Model{0, false, 10, 0, 0, false}, tick
 }
 
-// SUBSCRIPTIONS
+// CMDS
 
-func subscriptions(model boba.Model) boba.Subs {
-	m, _ := model.(Model)
-	if !m.Chosen || m.Loaded {
-		return boba.Subs{
-			"tick": boba.Every(time.Second, newTickMsg),
-		}
-	}
-	return boba.Subs{
-		"frame": boba.Every(time.Second/60, newFrameMsg),
-	}
+func tick() boba.Msg {
+	time.Sleep(time.Second)
+	return tickMsg{}
+}
+
+func frame() boba.Msg {
+	time.Sleep(time.Second / 60)
+	return frameMsg{}
 }
 
 // UPDATE
@@ -118,7 +107,7 @@ func updateChoices(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 		m.Ticks -= 1
 	}
 
-	return m, nil
+	return m, tick
 }
 
 func updateChosen(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
@@ -137,7 +126,7 @@ func updateChosen(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 	case frameMsg:
 		if !m.Loaded {
 			m.Frames += 1
-			m.Progress = ease.OutBounce(float64(m.Frames) / float64(120))
+			m.Progress = ease.OutBounce(float64(m.Frames) / float64(160))
 			if m.Progress >= 1 {
 				m.Progress = 1
 				m.Loaded = true
@@ -154,7 +143,7 @@ func updateChosen(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 		}
 	}
 
-	return m, nil
+	return m, frame
 }
 
 // VIEW

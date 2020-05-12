@@ -22,7 +22,6 @@ func main() {
 		initialize,
 		update,
 		view,
-		subscriptions,
 	)
 
 	if err := p.Start(); err != nil {
@@ -38,7 +37,7 @@ func initialize() (boba.Model, boba.Cmd) {
 	return Model{
 		textInput: inputModel,
 		err:       nil,
-	}, nil
+	}, input.Blink(inputModel)
 }
 
 func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
@@ -72,20 +71,6 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 
 	m.textInput, cmd = input.Update(msg, m.textInput)
 	return m, cmd
-}
-
-func subscriptions(model boba.Model) boba.Subs {
-	m, ok := model.(Model)
-	if !ok {
-		return nil
-	}
-	sub, err := input.MakeSub(m.textInput)
-	if err != nil {
-		return nil
-	}
-	return boba.Subs{
-		"input": sub,
-	}
 }
 
 func view(model boba.Model) string {

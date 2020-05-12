@@ -18,7 +18,11 @@ func main() {
 
 	boba.AltScreen()
 	defer boba.ExitAltScreen()
-	if err := pager.NewProgram(string(content)).Start(); err != nil {
+	if err := boba.NewProgram(
+		pager.Init(string(content)),
+		pager.Update,
+		pager.View,
+	).Start(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}

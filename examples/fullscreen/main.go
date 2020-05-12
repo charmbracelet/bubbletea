@@ -14,21 +14,17 @@ type model int
 
 type tickMsg time.Time
 
-func newTickMsg(t time.Time) boba.Msg {
-	return tickMsg(t)
-}
-
 func main() {
 	boba.AltScreen()
 	defer boba.ExitAltScreen()
-	err := boba.NewProgram(initialize, update, view, subscriptions).Start()
+	err := boba.NewProgram(initialize, update, view).Start()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func initialize() (boba.Model, boba.Cmd) {
-	return model(5), nil
+	return model(5), tick()
 }
 
 func update(message boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
@@ -51,19 +47,20 @@ func update(message boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
 		if m <= 0 {
 			return m, boba.Quit
 		}
+		return m, tick()
 
 	}
 
 	return m, nil
 }
 
-func subscriptions(_ boba.Model) boba.Subs {
-	return boba.Subs{
-		"tick": boba.Every(time.Second, newTickMsg),
-	}
-}
-
 func view(mdl boba.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
+}
+
+func tick() boba.Cmd {
+	return boba.Tick(time.Second, func(t time.Time) boba.Msg {
+		return tickMsg(t)
+	})
 }

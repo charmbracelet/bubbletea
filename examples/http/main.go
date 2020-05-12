@@ -23,7 +23,7 @@ type statusMsg int
 type errMsg error
 
 func main() {
-	p := boba.NewProgram(initialize, update, view, nil)
+	p := boba.NewProgram(initialize, update, view)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}

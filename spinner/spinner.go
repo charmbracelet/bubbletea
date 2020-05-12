@@ -1,7 +1,6 @@
 package spinner
 
 import (
-	"errors"
 	"time"
 
 	"github.com/charmbracelet/boba"
@@ -23,8 +22,6 @@ var (
 		Line: {"|", "/", "-", "\\"},
 		Dot:  {"⣾ ", "⣽ ", "⣻ ", "⢿ ", "⡿ ", "⣟ ", "⣯ ", "⣷ "},
 	}
-
-	assertionErr = errors.New("could not perform assertion on model to what the spinner expects. are you sure you passed the right value?")
 
 	color = termenv.ColorProfile().Color
 )
@@ -50,7 +47,7 @@ func NewModel() Model {
 }
 
 // TickMsg indicates that the timer has ticked and we should render a frame
-type TickMsg time.Time
+type TickMsg struct{}
 
 // Update is the Boba update function
 func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
@@ -60,7 +57,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		if m.frame >= len(spinners[m.Type]) {
 			m.frame = 0
 		}
-		return m, nil
+		return m, Tick(m)
 	default:
 		return m, nil
 	}
@@ -86,15 +83,10 @@ func View(model Model) string {
 	return str
 }
 
-// GetSub creates the subscription that allows the spinner to spin. Remember
-// that you need to execute this function in order to get the subscription
-// you'll need.
-func MakeSub(model boba.Model) (boba.Sub, error) {
-	m, ok := model.(Model)
-	if !ok {
-		return nil, assertionErr
+// Tick is the command used to advance the spinner one frame.
+func Tick(model Model) boba.Cmd {
+	return func() boba.Msg {
+		time.Sleep(time.Second / time.Duration(model.FPS))
+		return TickMsg{}
 	}
-	return boba.Tick(time.Second/time.Duration(m.FPS), func(t time.Time) boba.Msg {
-		return TickMsg(t)
-	}), nil
 }

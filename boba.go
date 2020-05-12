@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/muesli/termenv"
 )
@@ -29,41 +30,6 @@ func Batch(cmds ...Cmd) Cmd {
 	}
 }
 
-// Sub is an event subscription; generally a recurring IO operation. If it
-// returns nil it's considered a no-op, but there's really no reason to have
-// a nil subscription.
-type Sub func() Msg
-
-// Subs is a keyed set of subscriptions. The key should be a unique
-// identifier: two different subscriptions should not have the same key or
-// weird behavior will occur.
-type Subs map[string]Sub
-
-// Subscriptions returns a map of subscriptions (Subs) our application will
-// subscribe to. If Subscriptions is nil it's considered a no-op.
-type Subscriptions func(Model) Subs
-
-// subscription is an internal reference to a subscription used in subscription
-// management.
-type subscription struct {
-	done chan struct{}
-	sub  Sub
-}
-
-// subManager is used to manage active subscriptions, hence the pointers.
-type subManager map[string]*subscription
-
-// endAll stops all subscriptions and remove subscription references from
-// subManager.
-func (m *subManager) endAll() {
-	if m != nil {
-		for key, sub := range *m {
-			close(sub.done)
-			delete(*m, key)
-		}
-	}
-}
-
 // Init is the first function that will be called. It returns your initial
 // model and runs an optional command
 type Init func() (Model, Cmd)
@@ -77,10 +43,9 @@ type View func(Model) string
 
 // Program is a terminal user interface
 type Program struct {
-	init          Init
-	update        Update
-	view          View
-	subscriptions Subscriptions
+	init   Init
+	update Update
+	view   View
 }
 
 // Quit is a command that tells the program to exit
@@ -95,12 +60,11 @@ type quitMsg struct{}
 type batchMsg []Cmd
 
 // NewProgram creates a new Program
-func NewProgram(init Init, update Update, view View, subs Subscriptions) *Program {
+func NewProgram(init Init, update Update, view View) *Program {
 	return &Program{
-		init:          init,
-		update:        update,
-		view:          view,
-		subscriptions: subs,
+		init:   init,
+		update: update,
+		view:   view,
 	}
 }
 
@@ -109,7 +73,6 @@ func (p *Program) Start() error {
 	var (
 		model         Model
 		cmd           Cmd
-		subs          = make(subManager)
 		cmds          = make(chan Cmd)
 		msgs          = make(chan Msg)
 		errs          = make(chan error)
@@ -134,9 +97,7 @@ func (p *Program) Start() error {
 	// Render initial view
 	linesRendered = p.render(model, linesRendered)
 
-	// Subscribe to user input. We could move this out of here and offer it
-	// as a subscription, but it blocks nicely and seems to be a common enough
-	// need that we're enabling it by default.
+	// Subscribe to user input
 	go func() {
 		for {
 			msg, err := ReadKey(os.Stdin)
@@ -146,9 +107,6 @@ func (p *Program) Start() error {
 			msgs <- KeyMsg(msg)
 		}
 	}()
-
-	// Initialize subscriptions
-	subs = p.processSubs(msgs, model, subs)
 
 	// Process commands
 	go func() {
@@ -190,7 +148,6 @@ func (p *Program) Start() error {
 
 			model, cmd = p.update(msg, model)              // run update
 			cmds <- cmd                                    // process command (if any)
-			subs = p.processSubs(msgs, model, subs)        // check for new and outdated subscriptions
 			linesRendered = p.render(model, linesRendered) // render to terminal
 		}
 	}
@@ -211,78 +168,6 @@ func (p *Program) render(model Model, linesRendered int) int {
 	return strings.Count(view, "\r\n")
 }
 
-// Manage subscriptions. Here we run the program's Subscription function and
-// inspect the functions it returns (a Subs map). If we notice existing
-// subscriptions have disappeared from the map we stop those subscriptions
-// by ending the Goroutines they run on. If we notice new subscriptions which
-// aren't currently running, we run them as loops in a new Goroutine.
-//
-// This function should be called on initialization and after every update.
-func (p *Program) processSubs(msgs chan Msg, model Model, activeSubs subManager) subManager {
-
-	// Nothing to do.
-	if p.subscriptions == nil && activeSubs == nil {
-		return activeSubs
-	}
-
-	// There are no subscriptions. Cancel active ones and return.
-	if p.subscriptions == nil && activeSubs != nil {
-		activeSubs.endAll()
-		return activeSubs
-	}
-
-	newSubs := p.subscriptions(model)
-
-	// newSubs is an empty map. Cancel any active subscriptions and return.
-	if newSubs == nil {
-		activeSubs.endAll()
-		return activeSubs
-	}
-
-	// Stop subscriptions that don't exist in the new subscription map and
-	// stop subscriptions where the new subscription is mapped to a nil.
-	if len(activeSubs) > 0 {
-		for key, sub := range activeSubs {
-			_, exists := newSubs[key]
-			if !exists || exists && newSubs[key] == nil {
-				close(sub.done)
-				delete(activeSubs, key)
-			}
-		}
-	}
-
-	// Start new subscriptions if they don't exist in the active subscription map
-	if len(newSubs) > 0 {
-		for key, sub := range newSubs {
-			if _, exists := activeSubs[key]; !exists {
-
-				if sub == nil {
-					continue
-				}
-
-				activeSubs[key] = &subscription{
-					done: make(chan struct{}),
-					sub:  sub,
-				}
-
-				go func(done chan struct{}, s Sub) {
-					for {
-						select {
-						case <-done:
-							return
-						case msgs <- s():
-							continue
-						}
-					}
-				}(activeSubs[key].done, activeSubs[key].sub)
-
-			}
-		}
-	}
-
-	return activeSubs
-}
-
 // AltScreen exits the altscreen. This is just a wrapper around the termenv
 // function
 func AltScreen() {
@@ -293,4 +178,39 @@ func AltScreen() {
 // function
 func ExitAltScreen() {
 	termenv.ExitAltScreen()
+}
+
+type EveryMsg time.Time
+
+// Every is a command that ticks in sync with the system clock. So, if you
+// wanted to tick with the system clock every second, minute or hour you
+// could use this. It's also handy for having different things tick in sync.
+//
+// Note that because we're ticking with the system clock the tick will likely
+// not run for the entire specified duration. For example, if we're ticking for
+// one minute and the clock is at 12:34:20 then the next tick will happen at
+// 12:35:00, 40 seconds later.
+func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
+	return func() Msg {
+		n := time.Now()
+		d := n.Truncate(duration).Add(duration).Sub(n)
+		t := time.NewTimer(d)
+		select {
+		case now := <-t.C:
+			return fn(now)
+		}
+	}
+}
+
+// Tick is a subscription that at an interval independent of the system clock
+// at the given duration. That is, the timer begins when precisely when invoked,
+// and runs for its entire duration.
+func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
+	return func() Msg {
+		t := time.NewTimer(d)
+		select {
+		case now := <-t.C:
+			return fn(now)
+		}
+	}
 }
