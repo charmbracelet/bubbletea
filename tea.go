@@ -198,7 +198,7 @@ func (p *Program) Start() error {
 
 // Render a view to the terminal. Returns the number of lines rendered.
 func (p *Program) render(model Model, linesRendered int) int {
-	view := p.view(model) + "\n"
+	view := "\n" + p.view(model)
 
 	// We need to add carriage returns to ensure that the cursor travels to the
 	// start of a column after a newline
