@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 )
 
 const url = "https://charm.sh/"
@@ -23,17 +23,17 @@ type statusMsg int
 type errMsg error
 
 func main() {
-	p := tea.NewProgram(initialize, update, view, nil)
+	p := boba.NewProgram(initialize, update, view, nil)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
+func initialize() (boba.Model, boba.Cmd) {
 	return Model{0, nil}, checkServer
 }
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
+func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	m, ok := model.(Model)
 	if !ok {
 		return Model{err: errors.New("could not perform assertion on model during update")}, nil
@@ -41,21 +41,21 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
-	case tea.KeyMsg:
+	case boba.KeyMsg:
 		switch msg.String() {
 		case "esc":
 			fallthrough
 		case "ctrl+c":
 			fallthrough
 		case "q":
-			return m, tea.Quit
+			return m, boba.Quit
 		default:
 			return m, nil
 		}
 
 	case statusMsg:
 		m.status = int(msg)
-		return m, tea.Quit
+		return m, boba.Quit
 
 	case errMsg:
 		m.err = msg
@@ -66,7 +66,7 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	}
 }
 
-func view(model tea.Model) string {
+func view(model boba.Model) string {
 	m, _ := model.(Model)
 	s := fmt.Sprintf("Checking %s...", url)
 	if m.err != nil {
@@ -77,7 +77,7 @@ func view(model tea.Model) string {
 	return s
 }
 
-func checkServer() tea.Msg {
+func checkServer() boba.Msg {
 	c := &http.Client{
 		Timeout: 10 * time.Second,
 	}

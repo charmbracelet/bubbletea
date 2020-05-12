@@ -1,9 +1,11 @@
-# Tea
+# Boba
 
 The fun, functional way to build terminal apps. A Go framework based on
-[The Elm Architecture][elm]. 茶!
+[The Elm Architecture][elm].
 
-⚠️  This project is a pre-release! The API is subject to change a little.
+⚠️  This project is a pre-release so the API is subject to change
+a little. That said, we're using it in production.
+
 
 ## Simple example
 
@@ -16,7 +18,7 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 )
 
 type model int
@@ -24,36 +26,36 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	p := tea.NewProgram(init, update, view, subscriptions)
+	p := boba.NewProgram(init, update, view, subscriptions)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 // Listen for messages and update the model accordingly
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
+func update(msg boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
 	m, _ := mdl.(model)
 
 	switch msg.(type) {
 	case tickMsg:
         m--
 		if m == 0 {
-			return m, tea.Quit
+			return m, boba.Quit
 		}
 	}
 	return m, nil
 }
 
 // Render to the terminal
-func view(mdl tea.Model) string {
+func view(mdl boba.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("Hi. This program will exit in %d seconds...\n", m)
 }
 
 // Subscribe to events
-func subscriptions(_ tea.Model) tea.Subs {
-    return tea.Subs{
-        "tick": time.Every(time.Second, func(t time.Time) tea.Msg {
+func subscriptions(_ boba.Model) boba.Subs {
+    return boba.Subs{
+        "tick": time.Every(time.Second, func(t time.Time) boba.Msg {
             return tickMsg(t)
         },
     }
@@ -62,12 +64,11 @@ func subscriptions(_ tea.Model) tea.Subs {
 
 Hungry for more? See the [other examples][examples].
 
-[examples]: https://github.com/charmbracelet/tea/tree/master/examples
+[examples]: https://github.com/charmbracelet/boba/tree/master/examples
+
 
 ## Other Resources
 
-* [Tea Party](https://github.com/charmbracelet/teaparty): a collection of Tea
-  components.
 * [Termenv](https://github.com/muesli/termenv): advanced ANSI style and color
   support for your terminal applications. Very useful when rendering your
   views.
@@ -83,9 +84,10 @@ and [go-tea][gotea] by TJ Holowaychuk.
 [elm]: https://guide.elm-lang.org/architecture/
 [gotea]: https://github.com/tj/go-tea
 
+
 ## License
 
-[MIT](https://github.com/charmbracelet/tea/raw/master/LICENSE)
+[MIT](https://github.com/charmbracelet/boba/raw/master/LICENSE)
 
 ***
 

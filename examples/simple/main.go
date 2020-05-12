@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 )
 
 // A model can be more or less any type of data. It holds all the data for a
@@ -21,13 +21,13 @@ type tickMsg time.Time
 
 func main() {
 	// Initialize our program
-	p := tea.NewProgram(initialize, update, view, subscriptions)
+	p := boba.NewProgram(initialize, update, view, subscriptions)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
+func initialize() (boba.Model, boba.Cmd) {
 	return Model(5), nil
 }
 
@@ -35,16 +35,16 @@ func initialize() (tea.Model, tea.Cmd) {
 // the message and update the model (or send back a new one) accordingly. You
 // can also return a commmand, which is a function that peforms I/O and
 // returns a message.
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
+func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	m, _ := model.(Model)
 
 	switch msg.(type) {
-	case tea.KeyMsg:
-		return m, tea.Quit
+	case boba.KeyMsg:
+		return m, boba.Quit
 	case tickMsg:
 		m -= 1
 		if m <= 0 {
-			return m, tea.Quit
+			return m, boba.Quit
 		}
 	}
 	return m, nil
@@ -52,16 +52,16 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 // Views take data from the model and return a string which will be rendered
 // to the terminal.
-func view(model tea.Model) string {
+func view(model boba.Model) string {
 	m, _ := model.(Model)
 	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.", m)
 }
 
 // This is a subscription which we setup in NewProgram(). It waits for one
 // second, sends a tick, and then restarts.
-func subscriptions(_ tea.Model) tea.Subs {
-	return tea.Subs{
-		"tick": tea.Every(time.Second, func(t time.Time) tea.Msg {
+func subscriptions(_ boba.Model) boba.Subs {
+	return boba.Subs{
+		"tick": boba.Every(time.Second, func(t time.Time) boba.Msg {
 			return tickMsg(t)
 		}),
 	}

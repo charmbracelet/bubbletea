@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 	"github.com/charmbracelet/teaparty/spinner"
 	"github.com/muesli/termenv"
 )
@@ -21,13 +21,13 @@ type Model struct {
 type errMsg error
 
 func main() {
-	p := tea.NewProgram(initialize, update, view, subscriptions)
+	p := boba.NewProgram(initialize, update, view, subscriptions)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
+func initialize() (boba.Model, boba.Cmd) {
 	m := spinner.NewModel()
 	m.Type = spinner.Dot
 
@@ -36,7 +36,7 @@ func initialize() (tea.Model, tea.Cmd) {
 	}, nil
 }
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
+func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	m, ok := model.(Model)
 	if !ok {
 		return model, nil
@@ -44,14 +44,14 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
-	case tea.KeyMsg:
+	case boba.KeyMsg:
 		switch msg.String() {
 		case "q":
 			fallthrough
 		case "esc":
 			fallthrough
 		case "ctrl+c":
-			return m, tea.Quit
+			return m, boba.Quit
 		default:
 			return m, nil
 		}
@@ -67,7 +67,7 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 }
 
-func view(model tea.Model) string {
+func view(model boba.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "could not perform assertion on model in view"
@@ -82,7 +82,7 @@ func view(model tea.Model) string {
 	return fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
 }
 
-func subscriptions(model tea.Model) tea.Subs {
+func subscriptions(model boba.Model) boba.Subs {
 	m, ok := model.(Model)
 	if !ok {
 		return nil
@@ -92,7 +92,7 @@ func subscriptions(model tea.Model) tea.Subs {
 	if err != nil {
 		return nil
 	}
-	return tea.Subs{
+	return boba.Subs{
 		"tick": sub,
 	}
 }

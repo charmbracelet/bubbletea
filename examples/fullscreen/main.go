@@ -7,49 +7,49 @@ import (
 	"log"
 	"time"
 
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 )
 
 type model int
 
 type tickMsg time.Time
 
-func newTickMsg(t time.Time) tea.Msg {
+func newTickMsg(t time.Time) boba.Msg {
 	return tickMsg(t)
 }
 
 func main() {
-	tea.AltScreen()
-	defer tea.ExitAltScreen()
-	err := tea.NewProgram(initialize, update, view, subscriptions).Start()
+	boba.AltScreen()
+	defer boba.ExitAltScreen()
+	err := boba.NewProgram(initialize, update, view, subscriptions).Start()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
+func initialize() (boba.Model, boba.Cmd) {
 	return model(5), nil
 }
 
-func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
+func update(message boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
 	m, _ := mdl.(model)
 
 	switch msg := message.(type) {
 
-	case tea.KeyMsg:
+	case boba.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			fallthrough
 		case "esc":
 			fallthrough
 		case "q":
-			return m, tea.Quit
+			return m, boba.Quit
 		}
 
 	case tickMsg:
 		m -= 1
 		if m <= 0 {
-			return m, tea.Quit
+			return m, boba.Quit
 		}
 
 	}
@@ -57,13 +57,13 @@ func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func subscriptions(_ tea.Model) tea.Subs {
-	return tea.Subs{
-		"tick": tea.Every(time.Second, newTickMsg),
+func subscriptions(_ boba.Model) boba.Subs {
+	return boba.Subs{
+		"tick": boba.Every(time.Second, newTickMsg),
 	}
 }
 
-func view(mdl tea.Model) string {
+func view(mdl boba.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
 }

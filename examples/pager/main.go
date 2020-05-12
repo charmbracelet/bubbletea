@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 	"github.com/charmbracelet/teaparty/pager"
 )
 
@@ -16,8 +16,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	tea.AltScreen()
-	defer tea.ExitAltScreen()
+	boba.AltScreen()
+	defer boba.ExitAltScreen()
 	if err := pager.NewProgram(string(content)).Start(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)

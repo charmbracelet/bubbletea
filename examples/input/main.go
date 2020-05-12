@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/tea"
+	"github.com/charmbracelet/boba"
 	"github.com/charmbracelet/teaparty/input"
 )
 
@@ -20,7 +20,7 @@ type tickMsg struct{}
 type errMsg error
 
 func main() {
-	p := tea.NewProgram(
+	p := boba.NewProgram(
 		initialize,
 		update,
 		view,
@@ -32,7 +32,7 @@ func main() {
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
+func initialize() (boba.Model, boba.Cmd) {
 	inputModel := input.DefaultModel()
 	inputModel.Placeholder = "Pikachu"
 
@@ -42,8 +42,8 @@ func initialize() (tea.Model, tea.Cmd) {
 	}, nil
 }
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
+	var cmd boba.Cmd
 	m, ok := model.(Model)
 	if !ok {
 		// When we encounter errors in Update we simply add the error to the
@@ -55,12 +55,12 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case boba.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC:
+		case boba.KeyCtrlC:
 			fallthrough
-		case tea.KeyEsc:
-			return m, tea.Quit
+		case boba.KeyEsc:
+			return m, boba.Quit
 		}
 
 	// We handle errors just like any other message
@@ -73,18 +73,18 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func subscriptions(model tea.Model) tea.Subs {
-	return tea.Subs{
+func subscriptions(model boba.Model) boba.Subs {
+	return boba.Subs{
 		// We just hand off the subscription to the input component, giving
 		// it the model it expects.
-		"input": func(model tea.Model) tea.Msg {
+		"input": func(model boba.Model) boba.Msg {
 			m, _ := model.(Model)
 			return input.Blink(m.textInput)
 		},
 	}
 }
 
-func view(model tea.Model) string {
+func view(model boba.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "Oh no: could not perform assertion on model."

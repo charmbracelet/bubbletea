@@ -1,5 +1,11 @@
+github.com/charmbracelet/tea v0.0.0-20200130023737-bb06373836b4 h1:O8IGyYrKQuCwZZ98JP3DvzQCoPiXM5Y2zjwlDY7mOFM=
+github.com/charmbracelet/tea v0.0.0-20200130023737-bb06373836b4/go.mod h1:UsFFdg04MNbcYi1r2FBtdDEFY07bObaYDKHhE1xZUaQ=
+github.com/charmbracelet/tea v0.3.0 h1:W5F1x/IYeSCKpZl3/hM3Mn5v2KAagckabDFhhzh5sIE=
+github.com/charmbracelet/tea v0.3.0/go.mod h1:uA/DUzCuyIZ1NFyAdCz6k+gF8lspujo6ZvoavcSsLCM=
 github.com/charmbracelet/teaparty v0.0.0-20200212224515-b4d35fd52906 h1:kcvv+hjb0dJiqhtMXkql5tczxalWMPvKIqwWo7cyhiQ=
 github.com/charmbracelet/teaparty v0.0.0-20200212224515-b4d35fd52906/go.mod h1:BG6oiwNZL9hB739ZOifRi3ePRGv0nT+kRTfxYLcZj/Y=
+github.com/charmbracelet/teaparty v0.0.0-20200511213328-a72bf9128d83 h1:ivIS4ze0LLG9yl9L8cnYerh6dWnqhmBqh1ohmrA3I/I=
+github.com/charmbracelet/teaparty v0.0.0-20200511213328-a72bf9128d83/go.mod h1:rlnGPwUokLHs2rQBiIYg6fpLM5m4DvtE2LwzdvS1wsk=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776 h1:VRIbnDWRmAh5yBdz+J6yFMF5vso1It6vn+WmM/5l7MA=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776/go.mod h1:9wvnDu3YOfxzWM9Cst40msBF1C2UdQgDv962oTxSuMs=
 github.com/google/goterm v0.0.0-20190703233501-fc88cf888a3f h1:5CjVwnuUcp5adK4gmY6i72gpVFVnZDP2h5TmPScB6u4=
@@ -14,7 +20,10 @@ github.com/muesli/termenv v0.5.2/go.mod h1:O1/I6sw+6KcrgAmcs6uiUVr7Lui+DNVbHTzt9
 github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 h1:A7GG7zcGjl3jqAqGPmcNjd/D9hzL95SuoOQAaFNdLU0=
 github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942/go.mod h1:eCbImbZ95eXtAUIbLAuAVnBnwf83mjf6QIVH8SHYwqQ=
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200120151820-655fe14d7479/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9 h1:1/DFK4b7JH8DmkqhUk48onnSfrPzImPoVxuomtbT2nk=
 golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200430202703-d923437fa56d h1:xmcims+WSpFuY56YEzkKF6IMDxYAVDRipkQRJfXUBZk=
 golang.org/x/sys v0.0.0-20200430202703-d923437fa56d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f h1:mOhmO9WsBaJCNmaZHPtHs9wOcdqdKCjF6OPJlmDM3KI=
+golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
