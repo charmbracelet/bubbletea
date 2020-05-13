@@ -34,33 +34,38 @@ type Model struct {
 	ForegroundColor string
 	BackgroundColor string
 
+	// CustomMsgFunc can be used to a custom message on tick. This can be
+	// useful when you have spinners in different parts of your application and
+	// want to differentiate the messages for clarity. If nil this setting is
+	// ignored.
+	CustomMsgFunc func() boba.Msg
+
 	frame int
 }
 
 // NewModel returns a model with default values
 func NewModel() Model {
 	return Model{
-		Type:  Line,
-		FPS:   9,
-		frame: 0,
+		Type: Line,
+		FPS:  9,
 	}
 }
 
 // TickMsg indicates that the timer has ticked and we should render a frame
 type TickMsg struct{}
 
-// Update is the Boba update function
+// Update is the Boba update function. This will advance the spinner one frame
+// every time it's called, regardless the message passed, so be sure the logic
+// is setup so as not to call this Update needlessly.
 func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
-	switch msg.(type) {
-	case TickMsg:
-		m.frame++
-		if m.frame >= len(spinners[m.Type]) {
-			m.frame = 0
-		}
-		return m, Tick(m)
-	default:
-		return m, nil
+	m.frame++
+	if m.frame >= len(spinners[m.Type]) {
+		m.frame = 0
 	}
+	if m.CustomMsgFunc != nil {
+		return m, Tick(m)
+	}
+	return m, Tick(m)
 }
 
 // View renders the model's view
@@ -87,6 +92,9 @@ func View(model Model) string {
 func Tick(model Model) boba.Cmd {
 	return func() boba.Msg {
 		time.Sleep(time.Second / time.Duration(model.FPS))
+		if model.CustomMsgFunc != nil {
+			return model.CustomMsgFunc()
+		}
 		return TickMsg{}
 	}
 }
