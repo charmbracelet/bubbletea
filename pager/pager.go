@@ -38,6 +38,14 @@ type Model struct {
 	lines []string
 }
 
+func (m *Model) PageUp() {
+	m.Y = max(0, m.Y-m.Height)
+}
+
+func (m *Model) PageDown() {
+	m.Y = min(len(m.lines)-m.Height, m.Y+m.Height)
+}
+
 // Content adds text content to the model
 func (m *Model) Content(s string) {
 	s = strings.TrimSpace(s)

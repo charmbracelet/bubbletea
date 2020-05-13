@@ -7,7 +7,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-// Spinner denotes a type of spinner
+// Spinner is a set of frames used in animating the spinner.
 type Spinner = int
 
 // Available types of spinners
@@ -29,15 +29,29 @@ var (
 // Model contains the state for the spinner. Use NewModel to create new models
 // rather than using Model as a struct literal.
 type Model struct {
-	Type            Spinner
-	FPS             int
+
+	// Type is the set of frames to use. See Spinner.
+	Type Spinner
+
+	// FPS is the speed at which the ticker should tick
+	FPS int
+
+	// ForegroundColor sets the background color of the spinner. It can be a
+	// hex code or one of the 256 ANSI colors. If the terminal emulator can't
+	// doesn't support the color specified it will automatically degrade
+	// (per github.com/muesli/termenv).
 	ForegroundColor string
+
+	// BackgroundColor sets the background color of the spinner. It can be a
+	// hex code or one of the 256 ANSI colors. If the terminal emulator can't
+	// doesn't support the color specified it will automatically degrade
+	// (per github.com/muesli/termenv).
 	BackgroundColor string
 
 	// CustomMsgFunc can be used to a custom message on tick. This can be
 	// useful when you have spinners in different parts of your application and
-	// want to differentiate the messages for clarity. If nil this setting is
-	// ignored.
+	// want to differentiate between the messages for clarity and simplicity.
+	// If nil, this setting is ignored.
 	CustomMsgFunc func() boba.Msg
 
 	frame int
