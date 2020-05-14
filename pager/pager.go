@@ -2,71 +2,33 @@ package pager
 
 import (
 	"errors"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/boba"
-	"golang.org/x/crypto/ssh/terminal"
 )
-
-// MSG
-
-type terminalSizeMsg struct {
-	width  int
-	height int
-}
-
-type errMsg error
 
 // MODEL
 
-type State int
-
-const (
-	StateInit State = iota
-	StateReady
-)
-
 type Model struct {
-	Err        error
-	Standalone bool
-	State      State
-	Width      int
-	Height     int
-	Y          int
+	Err    error
+	Width  int
+	Height int
+	Y      int
 
 	lines []string
 }
 
-func (m *Model) PageUp() {
-	m.Y = max(0, m.Y-m.Height)
-}
-
-func (m *Model) PageDown() {
-	m.Y = min(len(m.lines)-m.Height, m.Y+m.Height)
-}
-
-// Content adds text content to the model
+// Content set the pager's text content
 func (m *Model) Content(s string) {
 	s = strings.TrimSpace(s)
 	s = strings.Replace(s, "\r\n", "\n", -1) // normalize line endings
 	m.lines = strings.Split(s, "\n")
 }
 
-func NewModel() Model {
+func NewModel(width, height int) Model {
 	return Model{
-		State: StateInit,
-	}
-}
-
-// INIT
-
-func Init(initialContent string) func() (boba.Model, boba.Cmd) {
-	m := NewModel()
-	m.Standalone = true
-	m.Content(initialContent)
-	return func() (boba.Model, boba.Cmd) {
-		return m, GetTerminalSize
+		Width:  width,
+		Height: height,
 	}
 }
 
@@ -84,12 +46,6 @@ func Update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 
 	case boba.KeyMsg:
 		switch msg.String() {
-		case "q":
-			fallthrough
-		case "ctrl+c":
-			if m.Standalone {
-				return m, boba.Quit
-			}
 
 		// Up one page
 		case "pgup":
@@ -133,19 +89,9 @@ func Update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 
 		// Re-render
 		case "ctrl+l":
-			return m, GetTerminalSize
+			return m, nil
 
 		}
-
-	case errMsg:
-		m.Err = msg
-		return m, nil
-
-	case terminalSizeMsg:
-		m.Width = msg.width
-		m.Height = msg.height
-		m.State = StateReady
-		return m, nil
 	}
 
 	return model, nil
@@ -164,28 +110,14 @@ func View(model boba.Model) string {
 	}
 
 	if len(m.lines) == 0 {
-		return "(Buffer empty)"
+		return ""
 	}
 
-	if m.State == StateReady {
-		// Render viewport
-		top := max(0, m.Y)
-		bottom := min(len(m.lines), m.Y+m.Height)
-		lines := m.lines[top:bottom]
-		return "\n" + strings.Join(lines, "\n")
-	}
-
-	return ""
-}
-
-// CMD
-
-func GetTerminalSize() boba.Msg {
-	w, h, err := terminal.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		return errMsg(err)
-	}
-	return terminalSizeMsg{w, h}
+	// Render viewport
+	top := max(0, m.Y)
+	bottom := min(len(m.lines), m.Y+m.Height)
+	lines := m.lines[top:bottom]
+	return "\n" + strings.Join(lines, "\n")
 }
 
 // ETC
