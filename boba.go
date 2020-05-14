@@ -180,8 +180,6 @@ func ExitAltScreen() {
 	termenv.ExitAltScreen()
 }
 
-type EveryMsg time.Time
-
 // Every is a command that ticks in sync with the system clock. So, if you
 // wanted to tick with the system clock every second, minute or hour you
 // could use this. It's also handy for having different things tick in sync.
