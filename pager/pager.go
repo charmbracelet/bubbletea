@@ -127,7 +127,15 @@ func View(model boba.Model) string {
 	top := max(0, m.Y)
 	bottom := min(len(m.lines), m.Y+m.Height)
 	lines := m.lines[top:bottom]
-	return "\n" + strings.Join(lines, "\n")
+
+	// Fill emtpy space with newlines
+	extraLines := ""
+	if len(lines) < m.Height {
+		extraLines = strings.Repeat("\n", m.Height-len(lines))
+	}
+
+	s := strings.Join(lines, "\n") + extraLines
+	return s
 }
 
 // ETC
