@@ -18,6 +18,16 @@ type Model struct {
 	lines []string
 }
 
+func (m Model) ScrollPercent() float64 {
+	if m.Height >= len(m.lines) {
+		return 1.0
+	}
+	y := float64(m.Y)
+	h := float64(m.Height)
+	t := float64(len(m.lines))
+	return (y + h) / t
+}
+
 // Content set the pager's text content
 func (m *Model) Content(s string) {
 	s = strings.TrimSpace(s)
