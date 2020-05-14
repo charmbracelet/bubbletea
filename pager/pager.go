@@ -30,7 +30,6 @@ func (m Model) ScrollPercent() float64 {
 
 // Content set the pager's text content
 func (m *Model) Content(s string) {
-	s = strings.TrimSpace(s)
 	s = strings.Replace(s, "\r\n", "\n", -1) // normalize line endings
 	m.lines = strings.Split(s, "\n")
 }
@@ -109,6 +108,7 @@ func Update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 
 // VIEW
 
+// View renders the viewport into a string
 func View(model boba.Model) string {
 	m, ok := model.(Model)
 	if !ok {
@@ -119,14 +119,13 @@ func View(model boba.Model) string {
 		return m.Err.Error()
 	}
 
-	if len(m.lines) == 0 {
-		return ""
-	}
+	var lines []string
 
-	// Render viewport
-	top := max(0, m.Y)
-	bottom := min(len(m.lines), m.Y+m.Height)
-	lines := m.lines[top:bottom]
+	if len(m.lines) > 0 {
+		top := max(0, m.Y)
+		bottom := min(len(m.lines), m.Y+m.Height)
+		lines = m.lines[top:bottom]
+	}
 
 	// Fill empty space with newlines
 	extraLines := ""
@@ -134,8 +133,7 @@ func View(model boba.Model) string {
 		extraLines = strings.Repeat("\n", m.Height-len(lines))
 	}
 
-	s := strings.Join(lines, "\n") + extraLines
-	return s
+	return strings.Join(lines, "\n") + extraLines
 }
 
 // ETC
