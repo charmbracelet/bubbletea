@@ -25,7 +25,7 @@ func (m Model) ScrollPercent() float64 {
 	y := float64(m.Y)
 	h := float64(m.Height)
 	t := float64(len(m.lines))
-	return (y + h) / t
+	return y / (t - h)
 }
 
 // Content set the pager's text content
@@ -128,7 +128,7 @@ func View(model boba.Model) string {
 	bottom := min(len(m.lines), m.Y+m.Height)
 	lines := m.lines[top:bottom]
 
-	// Fill emtpy space with newlines
+	// Fill empty space with newlines
 	extraLines := ""
 	if len(lines) < m.Height {
 		extraLines = strings.Repeat("\n", m.Height-len(lines))
