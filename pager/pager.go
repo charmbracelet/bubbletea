@@ -66,7 +66,7 @@ func Init(initialContent string) func() (boba.Model, boba.Cmd) {
 	m.Standalone = true
 	m.Content(initialContent)
 	return func() (boba.Model, boba.Cmd) {
-		return m, getTerminalSize
+		return m, GetTerminalSize
 	}
 }
 
@@ -92,11 +92,15 @@ func Update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 			}
 
 		// Up one page
+		case "pgup":
+			fallthrough
 		case "b":
 			m.Y = max(0, m.Y-m.Height)
 			return m, nil
 
 		// Down one page
+		case "pgdown":
+			fallthrough
 		case "space":
 			fallthrough
 		case "f":
@@ -129,7 +133,7 @@ func Update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 
 		// Re-render
 		case "ctrl+l":
-			return m, getTerminalSize
+			return m, GetTerminalSize
 
 		}
 
@@ -176,7 +180,7 @@ func View(model boba.Model) string {
 
 // CMD
 
-func getTerminalSize() boba.Msg {
+func GetTerminalSize() boba.Msg {
 	w, h, err := terminal.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		return errMsg(err)
