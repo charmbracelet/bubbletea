@@ -1,7 +1,6 @@
 package pager
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/charmbracelet/boba"
@@ -18,6 +17,7 @@ type Model struct {
 	lines []string
 }
 
+// Scrollpercent returns the amount scrolled as a float between 0 and 1
 func (m Model) ScrollPercent() float64 {
 	if m.Height >= len(m.lines) {
 		return 1.0
@@ -34,6 +34,7 @@ func (m *Model) SetContent(s string) {
 	m.lines = strings.Split(s, "\n")
 }
 
+// NewModel creates a new pager model. Pass the dimensions of the pager.
 func NewModel(width, height int) Model {
 	return Model{
 		Width:  width,
@@ -43,14 +44,7 @@ func NewModel(width, height int) Model {
 
 // UPDATE
 
-func Update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
-	m, ok := model.(Model)
-	if !ok {
-		return Model{
-			Err: errors.New("could not perform assertion on model in update in pager; are you sure you passed the correct model?"),
-		}, nil
-	}
-
+func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	switch msg := msg.(type) {
 
 	case boba.KeyMsg:
@@ -103,18 +97,13 @@ func Update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 		}
 	}
 
-	return model, nil
+	return m, nil
 }
 
 // VIEW
 
 // View renders the viewport into a string
-func View(model boba.Model) string {
-	m, ok := model.(Model)
-	if !ok {
-		return "could not perform assertion on model in view in pager; are you sure you passed the correct model?"
-	}
-
+func View(m Model) string {
 	if m.Err != nil {
 		return m.Err.Error()
 	}
