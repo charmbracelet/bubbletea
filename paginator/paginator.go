@@ -82,9 +82,17 @@ func (m *Model) PrevPage() {
 // NextPage is a helper function for navigating one page forward. It will not
 // page beyond the last page (i.e. totalPages - 1).
 func (m *Model) NextPage() {
-	if m.Page < m.TotalPages-1 {
+	if !m.OnLastPage() {
 		m.Page++
 	}
+}
+
+// LastPage returns whether or not we're on the last page
+func (m Model) OnLastPage() bool {
+	if m.Page == m.TotalPages-1 {
+		return true
+	}
+	return false
 }
 
 // NewModel creates a new model with defaults
