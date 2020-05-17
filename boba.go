@@ -15,7 +15,7 @@ type Msg interface{}
 // Model contains the program's state.
 type Model interface{}
 
-// Cmd is an IO operation that runs once. If it's nil it's considered a no-op.
+// Cmd is an IO operation. If it's nil it's considered a no-op.
 type Cmd func() Msg
 
 // Batch peforms a bunch of commands concurrently with no ordering guarantees

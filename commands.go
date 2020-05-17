@@ -1,7 +1,11 @@
 package boba
 
+// Convenience commands. Note part of the Boba runtime, but potentially handy.
+
 import (
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -56,5 +60,19 @@ func GetTerminalSize(newMsgFunc func(int, int, error) TerminalSizeMsg) Cmd {
 	w, h, err := terminal.GetSize(int(os.Stdout.Fd()))
 	return func() Msg {
 		return newMsgFunc(w, h, err)
+	}
+}
+
+// OnResize is used to listen for window resizes. Use GetTerminalSize to get
+// the windows dimensions. We don't fetch the window size with this command to
+// avoid a potential performance hit making the necessary system calls, since
+// this command could potentially run a lot. On that note, consider debouncing
+// this function.
+func OnResize(newMsgFunc func() Msg) Cmd {
+	return func() Msg {
+		sig := make(chan os.Signal)
+		signal.Notify(sig, syscall.SIGWINCH)
+		<-sig
+		return newMsgFunc()
 	}
 }
