@@ -28,7 +28,7 @@ func (m Model) ScrollPercent() float64 {
 	return y / (t - h)
 }
 
-// Content set the pager's text content
+// SetContent set the pager's text content
 func (m *Model) SetContent(s string) {
 	s = strings.Replace(s, "\r\n", "\n", -1) // normalize line endings
 	m.lines = strings.Split(s, "\n")
