@@ -86,7 +86,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		// Down one page
 		case "pgdown":
 			fallthrough
-		case "space":
+		case " ": // spacebar
 			fallthrough
 		case "f":
 			m.ViewDown()
