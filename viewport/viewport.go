@@ -1,4 +1,4 @@
-package pager
+package viewport
 
 import (
 	"strings"
@@ -42,20 +42,46 @@ func NewModel(width, height int) Model {
 	}
 }
 
+// ViewDown moves the view down by the number of lines in the viewport.
+// Basically, "page down."
+func (m *Model) ViewDown() {
+	m.Y = min(len(m.lines)-m.Height, m.Y+m.Height)
+}
+
+// ViewUp moves the view up by one height of the viewport. Basically, "page up."
+func (m *Model) ViewUp() {
+	m.Y = max(0, m.Y-m.Height)
+}
+
+// HalfViewUp moves the view up by half the height of the viewport
+func (m *Model) HalfViewUp() {
+	m.Y = max(0, m.Y-m.Height/2)
+}
+
+// HalfViewDown moves the view down by half the height of the viewport
+func (m *Model) HalfViewDown() {
+	m.Y = min(len(m.lines)-m.Height, m.Y+m.Height/2)
+}
+
+// LineDown moves the view up by the given number of lines.
+func (m *Model) LineDown(n int) {
+	m.Y = min(len(m.lines)-m.Height, m.Y+n)
+}
+
+// LineDown moves the view down by the given number of lines.
+func (m *Model) LineUp(n int) {
+	m.Y = max(0, m.Y-n)
+}
+
 // UPDATE
 
+// Update runs the update loop with default keybindings. To define your own
+// keybindings use the methods on Model.
 func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	switch msg := msg.(type) {
 
 	case boba.KeyMsg:
 		switch msg.String() {
-
-		// Up one page
-		case "pgup":
-			fallthrough
-		case "b":
-			m.Y = max(0, m.Y-m.Height)
-			return m, nil
 
 		// Down one page
 		case "pgdown":
@@ -63,35 +89,38 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		case "space":
 			fallthrough
 		case "f":
-			m.Y = min(len(m.lines)-m.Height, m.Y+m.Height)
+			m.ViewDown()
 			return m, nil
 
-		// Up half page
-		case "u":
-			m.Y = max(0, m.Y-m.Height/2)
+		// Up one page
+		case "pgup":
+			fallthrough
+		case "b":
+			m.ViewUp()
 			return m, nil
 
 		// Down half page
 		case "d":
-			m.Y = min(len(m.lines)-m.Height, m.Y+m.Height/2)
+			m.HalfViewDown()
 			return m, nil
 
-		// Up one line
-		case "up":
-			fallthrough
-		case "k":
-			m.Y = max(0, m.Y-1)
+		// Up half page
+		case "u":
+			m.HalfViewUp()
 			return m, nil
 
 		// Down one line
 		case "down":
 			fallthrough
 		case "j":
-			m.Y = min(len(m.lines)-m.Height, m.Y+1)
+			m.LineDown(1)
 			return m, nil
 
-		// Re-render
-		case "ctrl+l":
+		// Up one line
+		case "up":
+			fallthrough
+		case "k":
+			m.LineUp(1)
 			return m, nil
 
 		}
