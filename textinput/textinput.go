@@ -26,6 +26,7 @@ type Model struct {
 	BlinkSpeed       time.Duration
 	Placeholder      string
 	TextColor        string
+	BackgroundColor  string
 	PlaceholderColor string
 	CursorColor      string
 
@@ -64,6 +65,7 @@ func (m *Model) colorText(s string) string {
 	return termenv.
 		String(s).
 		Foreground(color(m.TextColor)).
+		Background(color(m.BackgroundColor)).
 		String()
 }
 
@@ -73,6 +75,7 @@ func (m *Model) colorPlaceholder(s string) string {
 	return termenv.
 		String(s).
 		Foreground(color(m.PlaceholderColor)).
+		Background(color(m.BackgroundColor)).
 		String()
 }
 
