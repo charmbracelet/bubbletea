@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/muesli/termenv"
 )
@@ -45,6 +46,8 @@ type Program struct {
 	init   Init
 	update Update
 	view   View
+
+	mutex sync.Mutex
 }
 
 // Quit is a command that tells the program to exit
@@ -64,6 +67,8 @@ func NewProgram(init Init, update Update, view View) *Program {
 		init:   init,
 		update: update,
 		view:   view,
+
+		mutex: sync.Mutex{},
 	}
 }
 
@@ -156,6 +161,8 @@ func (p *Program) Start() error {
 func (p *Program) render(model Model, linesRendered int) int {
 	view := p.view(model)
 
+	p.mutex.Lock()
+
 	// We need to add carriage returns to ensure that the cursor travels to the
 	// start of a column after a newline
 	view = strings.Replace(view, "\n", "\r\n", -1)
@@ -164,6 +171,8 @@ func (p *Program) render(model Model, linesRendered int) int {
 		termenv.ClearLines(linesRendered)
 	}
 	_, _ = io.WriteString(os.Stdout, view)
+
+	p.mutex.Unlock()
 	return strings.Count(view, "\r\n")
 }
 
