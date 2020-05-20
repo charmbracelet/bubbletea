@@ -72,6 +72,13 @@ func (m *Model) Blur() {
 	m.blink = true
 }
 
+// Reset sets the input to its default state with no input.
+func (m *Model) Reset() {
+	m.Value = ""
+	m.offset = 0
+	m.pos = 0
+}
+
 // colorText colorizes a given string according to the TextColor value of the
 // model
 func (m *Model) colorText(s string) string {
