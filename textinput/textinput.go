@@ -22,7 +22,6 @@ type ErrMsg error
 type Model struct {
 	Err              error
 	Prompt           string
-	Value            string
 	Cursor           string
 	BlinkSpeed       time.Duration
 	Placeholder      string
@@ -40,6 +39,9 @@ type Model struct {
 	// viewport. If 0 or less this setting is ignored.
 	Width int
 
+	// Underlying text value
+	value string
+
 	// Focus indicates whether user input focus should be on this input
 	// component. When false, don't blink and ignore keyboard input.
 	focus bool
@@ -53,6 +55,43 @@ type Model struct {
 	// Used to emulate a viewport when width is set and the content is
 	// overflowing
 	offset int
+}
+
+// SetValue sets the value of the text input
+func (m *Model) SetValue(s string) {
+	if m.CharLimit > 0 && len(s) > m.CharLimit {
+		m.value = s[:m.CharLimit]
+	} else {
+		m.value = s
+	}
+	if m.pos > len(m.value) {
+		m.pos = len(m.value)
+	}
+	m.handleOverflow()
+}
+
+// Value returns the value of the text input
+func (m Model) Value() string {
+	return m.value
+}
+
+// Cursor start moves the cursor to the given position. If the position is out
+// of bounds the cursor will be moved to the start or end accordingly.
+func (m *Model) SetCursor(pos int) {
+	m.pos = max(0, min(len(m.value), pos))
+	m.handleOverflow()
+}
+
+// CursorStart moves the cursor to the start of the field
+func (m *Model) CursorStart() {
+	m.pos = 0
+	m.handleOverflow()
+}
+
+// CursorEnd moves the cursor to the end of the field
+func (m *Model) CursorEnd() {
+	m.pos = len(m.value)
+	m.handleOverflow()
 }
 
 // Focused returns the focus state on the model
@@ -74,9 +113,23 @@ func (m *Model) Blur() {
 
 // Reset sets the input to its default state with no input.
 func (m *Model) Reset() {
-	m.Value = ""
+	m.value = ""
 	m.offset = 0
 	m.pos = 0
+}
+
+// If a max width is defined, perform some logic to treat the visible area
+// as a horizontally scrolling viewport.
+func (m *Model) handleOverflow() {
+	if m.Width > 0 {
+		overflow := max(0, len(m.value)-m.Width)
+
+		if overflow > 0 && m.pos < m.offset {
+			m.offset = max(0, min(len(m.value), m.pos))
+		} else if overflow > 0 && m.pos >= m.offset+m.Width {
+			m.offset = max(0, m.pos-m.Width)
+		}
+	}
 }
 
 // colorText colorizes a given string according to the TextColor value of the
@@ -106,7 +159,6 @@ type BlinkMsg struct{}
 func NewModel() Model {
 	return Model{
 		Prompt:           "> ",
-		Value:            "",
 		BlinkSpeed:       time.Millisecond * 600,
 		Placeholder:      "",
 		TextColor:        "",
@@ -114,6 +166,7 @@ func NewModel() Model {
 		CursorColor:      "",
 		CharLimit:        0,
 
+		value: "",
 		focus: false,
 		blink: true,
 		pos:   0,
@@ -134,8 +187,8 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		case boba.KeyBackspace:
 			fallthrough
 		case boba.KeyDelete:
-			if len(m.Value) > 0 {
-				m.Value = m.Value[:m.pos-1] + m.Value[m.pos:]
+			if len(m.value) > 0 {
+				m.value = m.value[:m.pos-1] + m.value[m.pos:]
 				m.pos--
 			}
 		case boba.KeyLeft:
@@ -143,7 +196,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 				m.pos--
 			}
 		case boba.KeyRight:
-			if m.pos < len(m.Value) {
+			if m.pos < len(m.value) {
 				m.pos++
 			}
 		case boba.KeyCtrlF: // ^F, forward one character
@@ -151,23 +204,23 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		case boba.KeyCtrlB: // ^B, back one charcter
 			fallthrough
 		case boba.KeyCtrlA: // ^A, go to beginning
-			m.pos = 0
+			m.CursorStart()
 		case boba.KeyCtrlD: // ^D, delete char under cursor
-			if len(m.Value) > 0 && m.pos < len(m.Value) {
-				m.Value = m.Value[:m.pos] + m.Value[m.pos+1:]
+			if len(m.value) > 0 && m.pos < len(m.value) {
+				m.value = m.value[:m.pos] + m.value[m.pos+1:]
 			}
 		case boba.KeyCtrlE: // ^E, go to end
-			m.pos = len(m.Value)
+			m.CursorEnd()
 		case boba.KeyCtrlK: // ^K, kill text after cursor
-			m.Value = m.Value[:m.pos]
-			m.pos = len(m.Value)
+			m.value = m.value[:m.pos]
+			m.pos = len(m.value)
 		case boba.KeyCtrlU: // ^U, kill text before cursor
-			m.Value = m.Value[m.pos:]
+			m.value = m.value[m.pos:]
 			m.pos = 0
 			m.offset = 0
 		case boba.KeyRune: // input a regular character
-			if m.CharLimit <= 0 || len(m.Value) < m.CharLimit {
-				m.Value = m.Value[:m.pos] + string(msg.Rune) + m.Value[m.pos:]
+			if m.CharLimit <= 0 || len(m.value) < m.CharLimit {
+				m.value = m.value[:m.pos] + string(msg.Rune) + m.value[m.pos:]
 				m.pos++
 			}
 		}
@@ -180,16 +233,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		return m, Blink(m)
 	}
 
-	// If a max width is defined, perform some logic to treat the visible area
-	// as a horizontally scrolling mini viewport.
-	if m.Width > 0 {
-		overflow := max(0, len(m.Value)-m.Width)
-		if overflow > 0 && m.pos < m.offset {
-			m.offset = max(0, min(len(m.Value), m.pos))
-		} else if overflow > 0 && m.pos >= m.offset+m.Width {
-			m.offset = max(0, m.pos-m.Width)
-		}
-	}
+	m.handleOverflow()
 
 	return m, nil
 }
@@ -202,18 +246,18 @@ func View(model boba.Model) string {
 	}
 
 	// Placeholder text
-	if m.Value == "" && m.Placeholder != "" {
+	if m.value == "" && m.Placeholder != "" {
 		return placeholderView(m)
 	}
 
 	left := m.offset
 	right := 0
 	if m.Width > 0 {
-		right = min(len(m.Value), m.offset+m.Width+1)
+		right = min(len(m.value), m.offset+m.Width+1)
 	} else {
-		right = len(m.Value)
+		right = len(m.value)
 	}
-	value := m.Value[left:right]
+	value := m.value[left:right]
 	pos := m.pos - m.offset
 
 	v := m.colorText(value[:pos])
