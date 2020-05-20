@@ -1,6 +1,7 @@
 package textinput
 
 import (
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/boba"
@@ -34,12 +35,24 @@ type Model struct {
 	// accept. If 0 or less, there's no limit.
 	CharLimit int
 
+	// Width is the maximum number of characters that can be displayed at once.
+	// It essentially treats the text field like a horizontally scrolling
+	// viewport. If 0 or less this setting is ignored.
+	Width int
+
 	// Focus indicates whether user input focus should be on this input
 	// component. When false, don't blink and ignore keyboard input.
 	focus bool
 
+	// Cursor blink state
 	blink bool
-	pos   int
+
+	// Cursor position
+	pos int
+
+	// Used to emulate a viewport when width is set and the content is
+	// overflowing
+	offset int
 }
 
 // Focused returns the focus state on the model
@@ -118,61 +131,60 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 				m.Value = m.Value[:m.pos-1] + m.Value[m.pos:]
 				m.pos--
 			}
-			return m, nil
 		case boba.KeyLeft:
 			if m.pos > 0 {
 				m.pos--
 			}
-			return m, nil
 		case boba.KeyRight:
 			if m.pos < len(m.Value) {
 				m.pos++
 			}
-			return m, nil
 		case boba.KeyCtrlF: // ^F, forward one character
 			fallthrough
 		case boba.KeyCtrlB: // ^B, back one charcter
 			fallthrough
 		case boba.KeyCtrlA: // ^A, go to beginning
 			m.pos = 0
-			return m, nil
 		case boba.KeyCtrlD: // ^D, delete char under cursor
 			if len(m.Value) > 0 && m.pos < len(m.Value) {
 				m.Value = m.Value[:m.pos] + m.Value[m.pos+1:]
 			}
-			return m, nil
 		case boba.KeyCtrlE: // ^E, go to end
 			m.pos = len(m.Value)
-			return m, nil
 		case boba.KeyCtrlK: // ^K, kill text after cursor
 			m.Value = m.Value[:m.pos]
 			m.pos = len(m.Value)
-			return m, nil
 		case boba.KeyCtrlU: // ^U, kill text before cursor
 			m.Value = m.Value[m.pos:]
 			m.pos = 0
-			return m, nil
+			m.offset = 0
 		case boba.KeyRune: // input a regular character
 			if m.CharLimit <= 0 || len(m.Value) < m.CharLimit {
 				m.Value = m.Value[:m.pos] + string(msg.Rune) + m.Value[m.pos:]
 				m.pos++
 			}
-			return m, nil
-		default:
-			return m, nil
 		}
 
 	case ErrMsg:
 		m.Err = msg
-		return m, nil
 
 	case BlinkMsg:
 		m.blink = !m.blink
 		return m, Blink(m)
-
-	default:
-		return m, nil
 	}
+
+	// If a max width is defined, perform some logic to treat the visible area
+	// as a horizontally scrolling mini viewport.
+	if m.Width > 0 {
+		overflow := max(0, len(m.Value)-m.Width)
+		if overflow > 0 && m.pos < m.offset {
+			m.offset = max(0, min(len(m.Value), m.pos))
+		} else if overflow > 0 && m.pos >= m.offset+m.Width {
+			m.offset = max(0, m.pos-m.Width)
+		}
+	}
+
+	return m, nil
 }
 
 // View renders the textinput in its current state
@@ -187,14 +199,38 @@ func View(model boba.Model) string {
 		return placeholderView(m)
 	}
 
-	v := m.colorText(m.Value[:m.pos])
+	left := m.offset
+	right := 0
+	if m.Width > 0 {
+		right = min(len(m.Value), m.offset+m.Width+1)
+	} else {
+		right = len(m.Value)
+	}
+	value := m.Value[left:right]
+	pos := m.pos - m.offset
 
-	if m.pos < len(m.Value) {
-		v += cursorView(string(m.Value[m.pos]), m)
-		v += m.colorText(m.Value[m.pos+1:])
+	v := m.colorText(value[:pos])
+
+	if pos < len(value) {
+		v += cursorView(string(value[pos]), m) // cursor and text under it
+		v += m.colorText(value[pos+1:])        // text after cursor
 	} else {
 		v += cursorView(" ", m)
 	}
+
+	// If a max width and background color were set fill the empty spaces with
+	// the background color.
+	if m.Width > 0 && len(m.BackgroundColor) > 0 && len(value) <= m.Width {
+		padding := m.Width - len(value)
+		if len(value)+padding <= m.Width && pos < len(value) {
+			padding++
+		}
+		v += strings.Repeat(
+			termenv.String(" ").Background(color(m.BackgroundColor)).String(),
+			padding,
+		)
+	}
+
 	return m.Prompt + v
 }
 
@@ -221,13 +257,20 @@ func placeholderView(m Model) string {
 	return m.Prompt + v
 }
 
-// cursorView style the cursor
+// cursorView styles the cursor
 func cursorView(s string, m Model) string {
 	if m.blink {
+		if m.TextColor != "" || m.BackgroundColor != "" {
+			return termenv.String(s).
+				Foreground(color(m.TextColor)).
+				Background(color(m.BackgroundColor)).
+				String()
+		}
 		return s
 	}
 	return termenv.String(s).
 		Foreground(color(m.CursorColor)).
+		Background(color(m.BackgroundColor)).
 		Reverse().
 		String()
 }
@@ -238,4 +281,18 @@ func Blink(model Model) boba.Cmd {
 		time.Sleep(model.BlinkSpeed)
 		return BlinkMsg{}
 	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
