@@ -116,6 +116,7 @@ func (m *Model) Reset() {
 	m.value = ""
 	m.offset = 0
 	m.pos = 0
+	m.blink = false
 }
 
 // If a max width is defined, perform some logic to treat the visible area
