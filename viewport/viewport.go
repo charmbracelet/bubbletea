@@ -17,7 +17,7 @@ type Model struct {
 	lines []string
 }
 
-// Scrollpercent returns the amount scrolled as a float between 0 and 1
+// Scrollpercent returns the amount scrolled as a float between 0 and 1.
 func (m Model) ScrollPercent() float64 {
 	if m.Height >= len(m.lines) {
 		return 1.0
@@ -28,7 +28,7 @@ func (m Model) ScrollPercent() float64 {
 	return y / (t - h)
 }
 
-// SetContent set the pager's text content
+// SetContent set the pager's text content.
 func (m *Model) SetContent(s string) {
 	s = strings.Replace(s, "\r\n", "\n", -1) // normalize line endings
 	m.lines = strings.Split(s, "\n")
@@ -43,22 +43,22 @@ func NewModel(width, height int) Model {
 }
 
 // ViewDown moves the view down by the number of lines in the viewport.
-// Basically, "page down."
+// Basically, "page down".
 func (m *Model) ViewDown() {
 	m.Y = min(len(m.lines)-m.Height, m.Y+m.Height)
 }
 
-// ViewUp moves the view up by one height of the viewport. Basically, "page up."
+// ViewUp moves the view up by one height of the viewport. Basically, "page up".
 func (m *Model) ViewUp() {
 	m.Y = max(0, m.Y-m.Height)
 }
 
-// HalfViewUp moves the view up by half the height of the viewport
+// HalfViewUp moves the view up by half the height of the viewport.
 func (m *Model) HalfViewUp() {
 	m.Y = max(0, m.Y-m.Height/2)
 }
 
-// HalfViewDown moves the view down by half the height of the viewport
+// HalfViewDown moves the view down by half the height of the viewport.
 func (m *Model) HalfViewDown() {
 	m.Y = min(len(m.lines)-m.Height, m.Y+m.Height/2)
 }
@@ -131,7 +131,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 
 // VIEW
 
-// View renders the viewport into a string
+// View renders the viewport into a string.
 func View(m Model) string {
 	if m.Err != nil {
 		return m.Err.Error()

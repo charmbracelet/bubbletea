@@ -7,10 +7,10 @@ import (
 	"unicode/utf8"
 )
 
-// KeyPressMsg contains information about a keypress
+// KeyMsg contains information about a keypress.
 type KeyMsg Key
 
-// String returns a friendly name for a key
+// String returns a friendly name for a key.
 func (k *KeyMsg) String() (str string) {
 	if k.Alt {
 		str += "alt+"
@@ -25,19 +25,19 @@ func (k *KeyMsg) String() (str string) {
 	return ""
 }
 
-// IsRune returns weather or not the key is a rune
+// IsRune returns weather or not the key is a rune.
 func (k *KeyMsg) IsRune() bool {
 	return k.Type == KeyRune
 }
 
-// Key contains information about a keypress
+// Key contains information about a keypress.
 type Key struct {
 	Type KeyType
 	Rune rune
 	Alt  bool
 }
 
-// KeyType indicates the key pressed
+// KeyType indicates the key pressed.
 type KeyType int
 
 // Control keys. I know we could do this with an iota, but the values are very
@@ -228,7 +228,7 @@ var hexes = map[string]Key{
 }
 
 // ReadKey reads keypress input from a TTY and returns a string representation
-// of a key
+// of a key.
 func ReadKey(r io.Reader) (Key, error) {
 	var buf [256]byte
 

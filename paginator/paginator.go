@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/boba"
 )
 
-// Type specifies the way we render pagination
+// Type specifies the way we render pagination.
 type Type int
 
 // Pagination rendering options
@@ -19,7 +19,7 @@ const (
 	Dots
 )
 
-// Model is the Boba model for this user interface
+// Model is the Boba model for this user interface.
 type Model struct {
 	Type             Type
 	Page             int
@@ -87,7 +87,7 @@ func (m *Model) NextPage() {
 	}
 }
 
-// LastPage returns whether or not we're on the last page
+// LastPage returns whether or not we're on the last page.
 func (m Model) OnLastPage() bool {
 	if m.Page == m.TotalPages-1 {
 		return true
@@ -95,7 +95,7 @@ func (m Model) OnLastPage() bool {
 	return false
 }
 
-// NewModel creates a new model with defaults
+// NewModel creates a new model with defaults.
 func NewModel() Model {
 	return Model{
 		Type:             Arabic,
@@ -112,7 +112,7 @@ func NewModel() Model {
 	}
 }
 
-// Update is the Boba update function which binds keystrokes to pagination
+// Update is the Boba update function which binds keystrokes to pagination.
 func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	switch msg := msg.(type) {
 	case boba.KeyMsg:
@@ -153,7 +153,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	return m, nil
 }
 
-// View renders the pagination to a string
+// View renders the pagination to a string.
 func View(model boba.Model) string {
 	m, ok := model.(Model)
 	if !ok {

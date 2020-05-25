@@ -18,7 +18,7 @@ var (
 // this text input.
 type ErrMsg error
 
-// Model is the Boba model for this text input element
+// Model is the Boba model for this text input element.
 type Model struct {
 	Err              error
 	Prompt           string
@@ -57,7 +57,7 @@ type Model struct {
 	offset int
 }
 
-// SetValue sets the value of the text input
+// SetValue sets the value of the text input.
 func (m *Model) SetValue(s string) {
 	if m.CharLimit > 0 && len(s) > m.CharLimit {
 		m.value = s[:m.CharLimit]
@@ -70,7 +70,7 @@ func (m *Model) SetValue(s string) {
 	m.handleOverflow()
 }
 
-// Value returns the value of the text input
+// Value returns the value of the text input.
 func (m Model) Value() string {
 	return m.value
 }
@@ -82,30 +82,30 @@ func (m *Model) SetCursor(pos int) {
 	m.handleOverflow()
 }
 
-// CursorStart moves the cursor to the start of the field
+// CursorStart moves the cursor to the start of the field.
 func (m *Model) CursorStart() {
 	m.pos = 0
 	m.handleOverflow()
 }
 
-// CursorEnd moves the cursor to the end of the field
+// CursorEnd moves the cursor to the end of the field.
 func (m *Model) CursorEnd() {
 	m.pos = len(m.value)
 	m.handleOverflow()
 }
 
-// Focused returns the focus state on the model
+// Focused returns the focus state on the model.
 func (m Model) Focused() bool {
 	return m.focus
 }
 
-// Focus sets the focus state on the model
+// Focus sets the focus state on the model.
 func (m *Model) Focus() {
 	m.focus = true
 	m.blink = false
 }
 
-// Blur removes the focus state on the model
+// Blur removes the focus state on the model.
 func (m *Model) Blur() {
 	m.focus = false
 	m.blink = true
@@ -134,7 +134,7 @@ func (m *Model) handleOverflow() {
 }
 
 // colorText colorizes a given string according to the TextColor value of the
-// model
+// model.
 func (m *Model) colorText(s string) string {
 	return termenv.
 		String(s).
@@ -144,7 +144,7 @@ func (m *Model) colorText(s string) string {
 }
 
 // colorPlaceholder colorizes a given string according to the TextColor value
-// of the model
+// of the model.
 func (m *Model) colorPlaceholder(s string) string {
 	return termenv.
 		String(s).
@@ -153,10 +153,10 @@ func (m *Model) colorPlaceholder(s string) string {
 		String()
 }
 
-// BlinkMsg is sent when the cursor should alternate it's blinking state
+// BlinkMsg is sent when the cursor should alternate it's blinking state.
 type BlinkMsg struct{}
 
-// NewModel creates a new model with default settings
+// NewModel creates a new model with default settings.
 func NewModel() Model {
 	return Model{
 		Prompt:           "> ",
@@ -174,7 +174,7 @@ func NewModel() Model {
 	}
 }
 
-// Update is the Boba update loop
+// Update is the Boba update loop.
 func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	if !m.focus {
 		m.blink = true
@@ -239,7 +239,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	return m, nil
 }
 
-// View renders the textinput in its current state
+// View renders the textinput in its current state.
 func View(model boba.Model) string {
 	m, ok := model.(Model)
 	if !ok {
@@ -309,7 +309,7 @@ func placeholderView(m Model) string {
 	return m.Prompt + v
 }
 
-// cursorView styles the cursor
+// cursorView styles the cursor.
 func cursorView(s string, m Model) string {
 	if m.blink {
 		if m.TextColor != "" || m.BackgroundColor != "" {

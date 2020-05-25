@@ -31,17 +31,17 @@ func Batch(cmds ...Cmd) Cmd {
 }
 
 // Init is the first function that will be called. It returns your initial
-// model and runs an optional command
+// model and runs an optional command.
 type Init func() (Model, Cmd)
 
 // Update is called when a message is received. It may update the model and/or
 // send a command.
 type Update func(Msg, Model) (Model, Cmd)
 
-// View produces a string which will be rendered to the terminal
+// View produces a string which will be rendered to the terminal.
 type View func(Model) string
 
-// Program is a terminal user interface
+// Program is a terminal user interface.
 type Program struct {
 	init   Init
 	update Update
@@ -50,18 +50,18 @@ type Program struct {
 	mutex sync.Mutex
 }
 
-// Quit is a command that tells the program to exit
+// Quit is a command that tells the program to exit.
 func Quit() Msg {
 	return quitMsg{}
 }
 
-// Signals that the program should quit
+// Signals that the program should quit.
 type quitMsg struct{}
 
-// batchMsg is used to perform a bunch of commands
+// batchMsg is used to perform a bunch of commands.
 type batchMsg []Cmd
 
-// NewProgram creates a new Program
+// NewProgram creates a new Program.
 func NewProgram(init Init, update Update, view View) *Program {
 	return &Program{
 		init:   init,
@@ -72,7 +72,7 @@ func NewProgram(init Init, update Update, view View) *Program {
 	}
 }
 
-// Start initializes the program
+// Start initializes the program.
 func (p *Program) Start() error {
 	var (
 		model         Model
@@ -164,7 +164,7 @@ func (p *Program) render(model Model, linesRendered int) int {
 	p.mutex.Lock()
 
 	// We need to add carriage returns to ensure that the cursor travels to the
-	// start of a column after a newline
+	// start of a column after a newline.
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
 	if linesRendered > 0 {
@@ -177,13 +177,13 @@ func (p *Program) render(model Model, linesRendered int) int {
 }
 
 // AltScreen exits the altscreen. This is just a wrapper around the termenv
-// function
+// function.
 func AltScreen() {
 	termenv.AltScreen()
 }
 
 // ExitAltScreen exits the altscreen. This is just a wrapper around the termenv
-// function
+// function.
 func ExitAltScreen() {
 	termenv.ExitAltScreen()
 }

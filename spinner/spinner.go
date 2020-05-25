@@ -57,7 +57,7 @@ type Model struct {
 	frame int
 }
 
-// NewModel returns a model with default values
+// NewModel returns a model with default values.
 func NewModel() Model {
 	return Model{
 		Type: Line,
@@ -65,7 +65,7 @@ func NewModel() Model {
 	}
 }
 
-// TickMsg indicates that the timer has ticked and we should render a frame
+// TickMsg indicates that the timer has ticked and we should render a frame.
 type TickMsg struct{}
 
 // Update is the Boba update function. This will advance the spinner one frame
@@ -82,7 +82,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	return m, Tick(m)
 }
 
-// View renders the model's view
+// View renders the model's view.
 func View(model Model) string {
 	s := spinners[model.Type]
 	if model.frame >= len(s) {
