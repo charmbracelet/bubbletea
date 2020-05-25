@@ -204,27 +204,27 @@ var sequences = map[string]KeyType{
 // Mapping for hex codes to consts. Unclear why these won't register as
 // sequences.
 var hexes = map[string]Key{
-	"1b5b5a":       Key{Type: KeyShiftTab},
-	"1b0d":         Key{Type: KeyEnter, Alt: true},
-	"1b7f":         Key{Type: KeyDelete, Alt: true},
-	"1b5b48":       Key{Type: KeyHome},
-	"1b5b377e":     Key{Type: KeyHome}, // urxvt
-	"1b5b313b3348": Key{Type: KeyHome, Alt: true},
-	"1b1b5b377e":   Key{Type: KeyHome, Alt: true}, // ursvt
-	"1b5b46":       Key{Type: KeyEnd},
-	"1b5b387e":     Key{Type: KeyEnd}, // urxvt
-	"1b5b313b3346": Key{Type: KeyEnd, Alt: true},
-	"1b1b5b387e":   Key{Type: KeyEnd, Alt: true}, // urxvt
-	"1b5b357e":     Key{Type: KeyPgUp},
-	"1b5b353b337e": Key{Type: KeyPgUp, Alt: true},
-	"1b1b5b357e":   Key{Type: KeyPgUp, Alt: true}, // urxvt
-	"1b5b367e":     Key{Type: KeyPgDown},
-	"1b5b363b337e": Key{Type: KeyPgDown, Alt: true},
-	"1b1b5b367e":   Key{Type: KeyPgDown, Alt: true}, // urxvt
-	"1b5b313b3341": Key{Type: KeyUp, Alt: true},
-	"1b5b313b3342": Key{Type: KeyDown, Alt: true},
-	"1b5b313b3343": Key{Type: KeyRight, Alt: true},
-	"1b5b313b3344": Key{Type: KeyLeft, Alt: true},
+	"1b5b5a":       {Type: KeyShiftTab},
+	"1b0d":         {Type: KeyEnter, Alt: true},
+	"1b7f":         {Type: KeyDelete, Alt: true},
+	"1b5b48":       {Type: KeyHome},
+	"1b5b377e":     {Type: KeyHome}, // urxvt
+	"1b5b313b3348": {Type: KeyHome, Alt: true},
+	"1b1b5b377e":   {Type: KeyHome, Alt: true}, // ursvt
+	"1b5b46":       {Type: KeyEnd},
+	"1b5b387e":     {Type: KeyEnd}, // urxvt
+	"1b5b313b3346": {Type: KeyEnd, Alt: true},
+	"1b1b5b387e":   {Type: KeyEnd, Alt: true}, // urxvt
+	"1b5b357e":     {Type: KeyPgUp},
+	"1b5b353b337e": {Type: KeyPgUp, Alt: true},
+	"1b1b5b357e":   {Type: KeyPgUp, Alt: true}, // urxvt
+	"1b5b367e":     {Type: KeyPgDown},
+	"1b5b363b337e": {Type: KeyPgDown, Alt: true},
+	"1b1b5b367e":   {Type: KeyPgDown, Alt: true}, // urxvt
+	"1b5b313b3341": {Type: KeyUp, Alt: true},
+	"1b5b313b3342": {Type: KeyDown, Alt: true},
+	"1b5b313b3343": {Type: KeyRight, Alt: true},
+	"1b5b313b3344": {Type: KeyLeft, Alt: true},
 }
 
 // ReadKey reads keypress input from a TTY and returns a string representation
