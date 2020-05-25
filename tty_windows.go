@@ -1,6 +1,6 @@
 // +build windows
 
-package boba
+package tea
 
 import "github.com/muesli/termenv"
 

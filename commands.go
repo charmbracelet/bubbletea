@@ -1,4 +1,4 @@
-package boba
+package tea
 
 // Convenience commands. Note part of the Boba runtime, but potentially handy.
 

@@ -1,6 +1,6 @@
 // +build windows
 
-package boba
+package tea
 
 // OnResize is not supported on Windows at this time as Windows does not
 // support the SIGWINCH signal.

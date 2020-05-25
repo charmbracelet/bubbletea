@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/boba"
-	"github.com/charmbracelet/boba/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbletea/spinner"
 	"github.com/muesli/termenv"
 )
 
@@ -22,14 +22,14 @@ type Model struct {
 type errMsg error
 
 func main() {
-	p := boba.NewProgram(initialize, update, view)
+	p := tea.NewProgram(initialize, update, view)
 	if err := p.Start(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func initialize() (boba.Model, boba.Cmd) {
+func initialize() (tea.Model, tea.Cmd) {
 	s := spinner.NewModel()
 	s.Type = spinner.Dot
 
@@ -38,7 +38,7 @@ func initialize() (boba.Model, boba.Cmd) {
 	}, spinner.Tick(s)
 }
 
-func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
+func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	m, ok := model.(Model)
 	if !ok {
 		return model, nil
@@ -46,7 +46,7 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 
 	switch msg := msg.(type) {
 
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
 			fallthrough
@@ -54,7 +54,7 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 			fallthrough
 		case "ctrl+c":
 			m.quitting = true
-			return m, boba.Quit
+			return m, tea.Quit
 		default:
 			return m, nil
 		}
@@ -64,14 +64,14 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 		return m, nil
 
 	default:
-		var cmd boba.Cmd
+		var cmd tea.Cmd
 		m.spinner, cmd = spinner.Update(msg, m.spinner)
 		return m, cmd
 	}
 
 }
 
-func view(model boba.Model) string {
+func view(model tea.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "could not perform assertion on model in view\n"

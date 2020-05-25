@@ -1,4 +1,4 @@
-# Boba
+# Bubble Tea
 
 The fun, functional way to build terminal apps. A Go framework based on
 [The Elm Architecture][elm].
@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"github.com/charmbracelet/boba"
+	"github.com/charmbracelet/tea"
 )
 
 type model int
@@ -26,36 +26,36 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	p := boba.NewProgram(init, update, view, subscriptions)
+	p := tea.NewProgram(init, update, view, subscriptions)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 // Listen for messages and update the model accordingly
-func update(msg boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
+func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := mdl.(model)
 
 	switch msg.(type) {
 	case tickMsg:
         m--
 		if m == 0 {
-			return m, boba.Quit
+			return m, tea.Quit
 		}
 	}
 	return m, nil
 }
 
 // Render to the terminal
-func view(mdl boba.Model) string {
+func view(mdl tea.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("Hi. This program will exit in %d seconds...\n", m)
 }
 
 // Subscribe to events
-func subscriptions(_ boba.Model) boba.Subs {
-    return boba.Subs{
-        "tick": time.Every(time.Second, func(t time.Time) boba.Msg {
+func subscriptions(_ tea.Model) tea.Subs {
+    return tea.Subs{
+        "tick": time.Every(time.Second, func(t time.Time) tea.Msg {
             return tickMsg(t)
         },
     }
@@ -64,7 +64,7 @@ func subscriptions(_ boba.Model) boba.Subs {
 
 Hungry for more? See the [other examples][examples].
 
-[examples]: https://github.com/charmbracelet/boba/tree/master/examples
+[examples]: https://github.com/charmbracelet/tea/tree/master/examples
 
 
 ## Other Resources
@@ -87,7 +87,7 @@ and [go-tea][gotea] by TJ Holowaychuk.
 
 ## License
 
-[MIT](https://github.com/charmbracelet/boba/raw/master/LICENSE)
+[MIT](https://github.com/charmbracelet/tea/raw/master/LICENSE)
 
 ***
 

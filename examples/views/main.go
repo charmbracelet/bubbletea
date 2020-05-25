@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/boba"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fogleman/ease"
 )
 
 func main() {
-	p := boba.NewProgram(
+	p := tea.NewProgram(
 		initialize,
 		update,
 		view,
@@ -43,25 +43,25 @@ type Model struct {
 
 // INIT
 
-func initialize() (boba.Model, boba.Cmd) {
+func initialize() (tea.Model, tea.Cmd) {
 	return Model{0, false, 10, 0, 0, false}, tick
 }
 
 // CMDS
 
-func tick() boba.Msg {
+func tick() tea.Msg {
 	time.Sleep(time.Second)
 	return tickMsg{}
 }
 
-func frame() boba.Msg {
+func frame() tea.Msg {
 	time.Sleep(time.Second / 60)
 	return frameMsg{}
 }
 
 // UPDATE
 
-func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
+func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := model.(Model)
 
 	if !m.Chosen {
@@ -70,10 +70,10 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	return updateChosen(msg, m)
 }
 
-func updateChoices(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
+func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.String() {
 		case "j":
 			fallthrough
@@ -97,12 +97,12 @@ func updateChoices(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 		case "esc":
 			fallthrough
 		case "ctrl+c":
-			return m, boba.Quit
+			return m, tea.Quit
 		}
 
 	case tickMsg:
 		if m.Ticks == 0 {
-			return m, boba.Quit
+			return m, tea.Quit
 		}
 		m.Ticks -= 1
 	}
@@ -110,17 +110,17 @@ func updateChoices(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 	return m, tick
 }
 
-func updateChosen(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
+func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
 			fallthrough
 		case "esc":
 			fallthrough
 		case "ctrl+c":
-			return m, boba.Quit
+			return m, tea.Quit
 		}
 
 	case frameMsg:
@@ -137,7 +137,7 @@ func updateChosen(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 	case tickMsg:
 		if m.Loaded {
 			if m.Ticks == 0 {
-				return m, boba.Quit
+				return m, tea.Quit
 			}
 			m.Ticks -= 1
 		}
@@ -148,7 +148,7 @@ func updateChosen(msg boba.Msg, m Model) (boba.Model, boba.Cmd) {
 
 // VIEW
 
-func view(model boba.Model) string {
+func view(model tea.Model) string {
 	m, _ := model.(Model)
 	if !m.Chosen {
 		return choicesView(m) + "\n"

@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/charmbracelet/boba"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type model int
@@ -15,37 +15,37 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	boba.AltScreen()
-	defer boba.ExitAltScreen()
-	err := boba.NewProgram(initialize, update, view).Start()
+	tea.AltScreen()
+	defer tea.ExitAltScreen()
+	err := tea.NewProgram(initialize, update, view).Start()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initialize() (boba.Model, boba.Cmd) {
+func initialize() (tea.Model, tea.Cmd) {
 	return model(5), tick()
 }
 
-func update(message boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
+func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := mdl.(model)
 
 	switch msg := message.(type) {
 
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			fallthrough
 		case "esc":
 			fallthrough
 		case "q":
-			return m, boba.Quit
+			return m, tea.Quit
 		}
 
 	case tickMsg:
 		m -= 1
 		if m <= 0 {
-			return m, boba.Quit
+			return m, tea.Quit
 		}
 		return m, tick()
 
@@ -54,13 +54,13 @@ func update(message boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
 	return m, nil
 }
 
-func view(mdl boba.Model) string {
+func view(mdl tea.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
 }
 
-func tick() boba.Cmd {
-	return boba.Tick(time.Second, func(t time.Time) boba.Msg {
+func tick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }

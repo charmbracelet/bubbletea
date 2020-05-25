@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/boba"
-	input "github.com/charmbracelet/boba/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	input "github.com/charmbracelet/bubbletea/textinput"
 )
 
 type Model struct {
@@ -18,7 +18,7 @@ type tickMsg struct{}
 type errMsg error
 
 func main() {
-	p := boba.NewProgram(
+	p := tea.NewProgram(
 		initialize,
 		update,
 		view,
@@ -29,7 +29,7 @@ func main() {
 	}
 }
 
-func initialize() (boba.Model, boba.Cmd) {
+func initialize() (tea.Model, tea.Cmd) {
 	inputModel := input.NewModel()
 	inputModel.Placeholder = "Pikachu"
 	inputModel.Focus()
@@ -40,8 +40,8 @@ func initialize() (boba.Model, boba.Cmd) {
 	}, input.Blink(inputModel)
 }
 
-func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
-	var cmd boba.Cmd
+func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	m, ok := model.(Model)
 	if !ok {
 		// When we encounter errors in Update we simply add the error to the
@@ -53,14 +53,14 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.Type {
-		case boba.KeyCtrlC:
+		case tea.KeyCtrlC:
 			fallthrough
-		case boba.KeyEsc:
+		case tea.KeyEsc:
 			fallthrough
-		case boba.KeyEnter:
-			return m, boba.Quit
+		case tea.KeyEnter:
+			return m, tea.Quit
 		}
 
 	// We handle errors just like any other message
@@ -73,7 +73,7 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	return m, cmd
 }
 
-func view(model boba.Model) string {
+func view(model tea.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "Oh no: could not perform assertion on model."

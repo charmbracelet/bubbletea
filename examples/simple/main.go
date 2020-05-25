@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/charmbracelet/boba"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // A model can be more or less any type of data. It holds all the data for a
@@ -21,13 +21,13 @@ type tickMsg time.Time
 
 func main() {
 	// Initialize our program
-	p := boba.NewProgram(initialize, update, view)
+	p := tea.NewProgram(initialize, update, view)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initialize() (boba.Model, boba.Cmd) {
+func initialize() (tea.Model, tea.Cmd) {
 	return model(5), tick
 }
 
@@ -35,16 +35,16 @@ func initialize() (boba.Model, boba.Cmd) {
 // the message and update the model (or send back a new one) accordingly. You
 // can also return a commmand, which is a function that peforms I/O and
 // returns a message.
-func update(msg boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
+func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := mdl.(model)
 
 	switch msg.(type) {
-	case boba.KeyMsg:
-		return m, boba.Quit
+	case tea.KeyMsg:
+		return m, tea.Quit
 	case tickMsg:
 		m -= 1
 		if m <= 0 {
-			return m, boba.Quit
+			return m, tea.Quit
 		}
 		return m, tick
 	}
@@ -53,12 +53,12 @@ func update(msg boba.Msg, mdl boba.Model) (boba.Model, boba.Cmd) {
 
 // Views take data from the model and return a string which will be rendered
 // to the terminal.
-func view(mdl boba.Model) string {
+func view(mdl tea.Model) string {
 	m, _ := mdl.(model)
 	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
 }
 
-func tick() boba.Msg {
+func tick() tea.Msg {
 	time.Sleep(time.Second)
 	return tickMsg{}
 }

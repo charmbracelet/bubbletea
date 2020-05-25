@@ -3,7 +3,7 @@ package spinner
 import (
 	"time"
 
-	"github.com/charmbracelet/boba"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
 )
 
@@ -56,7 +56,7 @@ type Model struct {
 	// useful when you have spinners in different parts of your application and
 	// want to differentiate between the messages for clarity and simplicity.
 	// If nil, this setting is ignored.
-	CustomMsgFunc func() boba.Msg
+	CustomMsgFunc func() tea.Msg
 
 	frame int
 }
@@ -72,10 +72,10 @@ func NewModel() Model {
 // TickMsg indicates that the timer has ticked and we should render a frame.
 type TickMsg struct{}
 
-// Update is the Boba update function. This will advance the spinner one frame
+// Update is the Tea update function. This will advance the spinner one frame
 // every time it's called, regardless the message passed, so be sure the logic
 // is setup so as not to call this Update needlessly.
-func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
+func Update(msg tea.Msg, m Model) (Model, tea.Cmd) {
 	m.frame++
 	if m.frame >= len(spinners[m.Type]) {
 		m.frame = 0
@@ -107,8 +107,8 @@ func View(model Model) string {
 }
 
 // Tick is the command used to advance the spinner one frame.
-func Tick(model Model) boba.Cmd {
-	return func() boba.Msg {
+func Tick(model Model) tea.Cmd {
+	return func() tea.Msg {
 		time.Sleep(time.Second / time.Duration(model.FPS))
 		if model.CustomMsgFunc != nil {
 			return model.CustomMsgFunc()

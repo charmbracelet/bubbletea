@@ -3,7 +3,7 @@ package viewport
 import (
 	"strings"
 
-	"github.com/charmbracelet/boba"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // MODEL
@@ -77,10 +77,10 @@ func (m *Model) LineUp(n int) {
 
 // Update runs the update loop with default keybindings. To define your own
 // keybindings use the methods on Model.
-func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
+func Update(msg tea.Msg, m Model) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.String() {
 		// Down one page
 		case "pgdown":

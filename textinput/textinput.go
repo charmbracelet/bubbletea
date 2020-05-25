@@ -5,7 +5,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/charmbracelet/boba"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
 )
 
@@ -23,7 +23,7 @@ var (
 // this text input.
 type ErrMsg error
 
-// Model is the Boba model for this text input element.
+// Model is the Tea model for this text input element.
 type Model struct {
 	Err              error
 	Prompt           string
@@ -231,24 +231,24 @@ func NewModel() Model {
 	}
 }
 
-// Update is the Boba update loop.
-func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
+// Update is the Tea update loop.
+func Update(msg tea.Msg, m Model) (Model, tea.Cmd) {
 	if !m.focus {
 		m.blink = true
 		return m, nil
 	}
 
 	switch msg := msg.(type) {
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.Type {
-		case boba.KeyBackspace:
+		case tea.KeyBackspace:
 			fallthrough
-		case boba.KeyDelete:
+		case tea.KeyDelete:
 			if len(m.value) > 0 {
 				m.value = m.value[:m.pos-1] + m.value[m.pos:]
 				m.pos--
 			}
-		case boba.KeyLeft:
+		case tea.KeyLeft:
 			if msg.Alt { // alt+left arrow, back one word
 				m.wordLeft()
 				break
@@ -256,7 +256,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 			if m.pos > 0 {
 				m.pos--
 			}
-		case boba.KeyRight:
+		case tea.KeyRight:
 			if msg.Alt { // alt+right arrow, forward one word
 				m.wordRight()
 				break
@@ -264,26 +264,26 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 			if m.pos < len(m.value) {
 				m.pos++
 			}
-		case boba.KeyCtrlF: // ^F, forward one character
+		case tea.KeyCtrlF: // ^F, forward one character
 			fallthrough
-		case boba.KeyCtrlB: // ^B, back one charcter
+		case tea.KeyCtrlB: // ^B, back one charcter
 			fallthrough
-		case boba.KeyCtrlA: // ^A, go to beginning
+		case tea.KeyCtrlA: // ^A, go to beginning
 			m.CursorStart()
-		case boba.KeyCtrlD: // ^D, delete char under cursor
+		case tea.KeyCtrlD: // ^D, delete char under cursor
 			if len(m.value) > 0 && m.pos < len(m.value) {
 				m.value = m.value[:m.pos] + m.value[m.pos+1:]
 			}
-		case boba.KeyCtrlE: // ^E, go to end
+		case tea.KeyCtrlE: // ^E, go to end
 			m.CursorEnd()
-		case boba.KeyCtrlK: // ^K, kill text after cursor
+		case tea.KeyCtrlK: // ^K, kill text after cursor
 			m.value = m.value[:m.pos]
 			m.pos = len(m.value)
-		case boba.KeyCtrlU: // ^U, kill text before cursor
+		case tea.KeyCtrlU: // ^U, kill text before cursor
 			m.value = m.value[m.pos:]
 			m.pos = 0
 			m.offset = 0
-		case boba.KeyRune: // input a regular character
+		case tea.KeyRune: // input a regular character
 
 			if msg.Alt {
 				if msg.Rune == 'b' { // alt+b, back one word
@@ -317,7 +317,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 }
 
 // View renders the textinput in its current state.
-func View(model boba.Model) string {
+func View(model tea.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "could not perform assertion on model"
@@ -405,8 +405,8 @@ func cursorView(s string, m Model) string {
 }
 
 // Blink is a command used to time the cursor blinking.
-func Blink(model Model) boba.Cmd {
-	return func() boba.Msg {
+func Blink(model Model) tea.Cmd {
+	return func() tea.Msg {
 		time.Sleep(model.BlinkSpeed)
 		return BlinkMsg{}
 	}

@@ -1,5 +1,5 @@
-// package paginator provides a Boba package for calulating pagination and
-// rendering pagination info. Note that this package does not render actual
+// package paginator provides a Bubble Tea package for calulating pagination
+// and rendering pagination info. Note that this package does not render actual
 // pages: it's purely for handling keystrokes related to pagination, and
 // rendering pagination status.
 package paginator
@@ -7,7 +7,7 @@ package paginator
 import (
 	"fmt"
 
-	"github.com/charmbracelet/boba"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // Type specifies the way we render pagination.
@@ -19,7 +19,7 @@ const (
 	Dots
 )
 
-// Model is the Boba model for this user interface.
+// Model is the Tea model for this user interface.
 type Model struct {
 	Type             Type
 	Page             int
@@ -109,10 +109,10 @@ func NewModel() Model {
 	}
 }
 
-// Update is the Boba update function which binds keystrokes to pagination.
-func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
+// Update is the Tea update function which binds keystrokes to pagination.
+func Update(msg tea.Msg, m Model) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		if m.UseLeftRightKeys {
 			switch msg.String() {
 			case "left":
@@ -151,7 +151,7 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 }
 
 // View renders the pagination to a string.
-func View(model boba.Model) string {
+func View(model tea.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "could not perform assertion on model"

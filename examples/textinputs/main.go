@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/boba"
-	input "github.com/charmbracelet/boba/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+	input "github.com/charmbracelet/bubbletea/textinput"
 	te "github.com/muesli/termenv"
 )
 
@@ -19,7 +19,7 @@ var (
 )
 
 func main() {
-	if err := boba.NewProgram(
+	if err := tea.NewProgram(
 		initialize,
 		update,
 		view,
@@ -37,7 +37,7 @@ type Model struct {
 	submitButton  string
 }
 
-func initialize() (boba.Model, boba.Cmd) {
+func initialize() (tea.Model, tea.Cmd) {
 	name := input.NewModel()
 	name.Placeholder = "Name"
 	name.Focus()
@@ -53,7 +53,7 @@ func initialize() (boba.Model, boba.Cmd) {
 	email.Prompt = blurredPrompt
 
 	return Model{0, name, nickName, email, blurredSubmitButton},
-		boba.Batch(
+		tea.Batch(
 			input.Blink(name),
 			input.Blink(nickName),
 			input.Blink(email),
@@ -61,21 +61,21 @@ func initialize() (boba.Model, boba.Cmd) {
 
 }
 
-func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
+func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	m, ok := model.(Model)
 	if !ok {
 		panic("could not perform assertion on model")
 	}
 
-	var cmd boba.Cmd
+	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 
-	case boba.KeyMsg:
+	case tea.KeyMsg:
 		switch msg.String() {
 
 		case "ctrl+c":
-			return m, boba.Quit
+			return m, tea.Quit
 
 		// Cycle between inputs
 		case "tab":
@@ -98,7 +98,7 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 			// Did the user press enter while the submit button was focused?
 			// If so, exit.
 			if s == "enter" && m.index == len(inputs) {
-				return m, boba.Quit
+				return m, tea.Quit
 			}
 
 			// Cycle indexes
@@ -153,10 +153,10 @@ func update(msg boba.Msg, model boba.Model) (boba.Model, boba.Cmd) {
 	}
 }
 
-func updateInputs(msg boba.Msg, m Model) (Model, boba.Cmd) {
+func updateInputs(msg tea.Msg, m Model) (Model, tea.Cmd) {
 	var (
-		cmd  boba.Cmd
-		cmds []boba.Cmd
+		cmd  tea.Cmd
+		cmds []tea.Cmd
 	)
 	m.nameInput, cmd = input.Update(msg, m.nameInput)
 	cmds = append(cmds, cmd)
@@ -164,10 +164,10 @@ func updateInputs(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	cmds = append(cmds, cmd)
 	m.emailInput, cmd = input.Update(msg, m.emailInput)
 	cmds = append(cmds, cmd)
-	return m, boba.Batch(cmds...)
+	return m, tea.Batch(cmds...)
 }
 
-func view(model boba.Model) string {
+func view(model tea.Model) string {
 	m, ok := model.(Model)
 	if !ok {
 		return "[error] could not perform assertion on model"

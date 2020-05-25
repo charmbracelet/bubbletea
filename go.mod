@@ -1,4 +1,4 @@
-module github.com/charmbracelet/boba
+module github.com/charmbracelet/bubbletea
 
 go 1.13
 
