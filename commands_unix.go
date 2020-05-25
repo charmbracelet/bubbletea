@@ -15,7 +15,7 @@ import (
 // this function.
 func OnResize(newMsgFunc func() Msg) Cmd {
 	return func() Msg {
-		sig := make(chan os.Signal)
+		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGWINCH)
 		<-sig
 		return newMsgFunc()
