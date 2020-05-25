@@ -82,7 +82,6 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 
 	case boba.KeyMsg:
 		switch msg.String() {
-
 		// Down one page
 		case "pgdown":
 			fallthrough
@@ -122,7 +121,6 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 		case "k":
 			m.LineUp(1)
 			return m, nil
-
 		}
 	}
 

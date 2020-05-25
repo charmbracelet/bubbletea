@@ -182,7 +182,6 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 	}
 
 	switch msg := msg.(type) {
-
 	case boba.KeyMsg:
 		switch msg.Type {
 		case boba.KeyBackspace:

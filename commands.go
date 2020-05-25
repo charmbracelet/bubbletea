@@ -22,10 +22,7 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 		n := time.Now()
 		d := n.Truncate(duration).Add(duration).Sub(n)
 		t := time.NewTimer(d)
-		select {
-		case now := <-t.C:
-			return fn(now)
-		}
+		return fn(<-t.C)
 	}
 }
 
@@ -35,10 +32,7 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	return func() Msg {
 		t := time.NewTimer(d)
-		select {
-		case now := <-t.C:
-			return fn(now)
-		}
+		return fn(<-t.C)
 	}
 }
 

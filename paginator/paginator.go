@@ -44,7 +44,7 @@ func (m *Model) SetTotalPages(items int) int {
 	}
 	n := items / m.PerPage
 	if items%m.PerPage > 0 {
-		n += 1
+		n++
 	}
 	m.TotalPages = n
 	return n
@@ -89,10 +89,7 @@ func (m *Model) NextPage() {
 
 // LastPage returns whether or not we're on the last page.
 func (m Model) OnLastPage() bool {
-	if m.Page == m.TotalPages-1 {
-		return true
-	}
-	return false
+	return m.Page == m.TotalPages-1
 }
 
 // NewModel creates a new model with defaults.
