@@ -3,6 +3,7 @@ package textinput
 import (
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/charmbracelet/boba"
 	"github.com/muesli/termenv"
@@ -157,6 +158,58 @@ func (m *Model) colorPlaceholder(s string) string {
 		String()
 }
 
+func (m *Model) wordLeft() {
+	if m.pos == 0 || len(m.value) == 0 {
+		return
+	}
+
+	i := m.pos - 1
+
+	for i >= 0 {
+		if unicode.IsSpace(rune(m.value[i])) {
+			m.pos--
+			i--
+		} else {
+			break
+		}
+	}
+
+	for i >= 0 {
+		if !unicode.IsSpace(rune(m.value[i])) {
+			m.pos--
+			i--
+		} else {
+			break
+		}
+	}
+}
+
+func (m *Model) wordRight() {
+	if m.pos >= len(m.value) || len(m.value) == 0 {
+		return
+	}
+
+	i := m.pos
+
+	for i < len(m.value) {
+		if unicode.IsSpace(rune(m.value[i])) {
+			m.pos++
+			i++
+		} else {
+			break
+		}
+	}
+
+	for i < len(m.value) {
+		if !unicode.IsSpace(rune(m.value[i])) {
+			m.pos++
+			i++
+		} else {
+			break
+		}
+	}
+}
+
 // BlinkMsg is sent when the cursor should alternate it's blinking state.
 type BlinkMsg struct{}
 
@@ -196,10 +249,18 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 				m.pos--
 			}
 		case boba.KeyLeft:
+			if msg.Alt { // alt+left arrow, back one word
+				m.wordLeft()
+				break
+			}
 			if m.pos > 0 {
 				m.pos--
 			}
 		case boba.KeyRight:
+			if msg.Alt { // alt+right arrow, forward one word
+				m.wordRight()
+				break
+			}
 			if m.pos < len(m.value) {
 				m.pos++
 			}
@@ -223,6 +284,19 @@ func Update(msg boba.Msg, m Model) (Model, boba.Cmd) {
 			m.pos = 0
 			m.offset = 0
 		case boba.KeyRune: // input a regular character
+
+			if msg.Alt {
+				if msg.Rune == 'b' { // alt+b, back one word
+					m.wordLeft()
+					break
+				}
+				if msg.Rune == 'f' { // alt+f, forward one word
+					m.wordRight()
+					break
+				}
+			}
+
+			// Input a regular character
 			if m.CharLimit <= 0 || len(m.value) < m.CharLimit {
 				m.value = m.value[:m.pos] + string(msg.Rune) + m.value[m.pos:]
 				m.pos++
