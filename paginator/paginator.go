@@ -10,18 +10,18 @@ import (
 	"github.com/charmbracelet/boba"
 )
 
-// PaginatorType specifies the way we render pagination
-type PaginatorType int
+// Type specifies the way we render pagination
+type Type int
 
 // Pagination rendering options
 const (
-	Arabic PaginatorType = iota
+	Arabic Type = iota
 	Dots
 )
 
 // Model is the Boba model for this user interface
 type Model struct {
-	Type             PaginatorType
+	Type             Type
 	Page             int
 	PerPage          int
 	TotalPages       int
