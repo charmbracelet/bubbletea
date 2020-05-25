@@ -8,6 +8,10 @@ import (
 	"github.com/muesli/termenv"
 )
 
+const (
+	defaultBlinkSpeed = time.Millisecond * 600
+)
+
 var (
 	// color is a helper for returning colors
 	color func(s string) termenv.Color = termenv.ColorProfile().Color
@@ -160,7 +164,7 @@ type BlinkMsg struct{}
 func NewModel() Model {
 	return Model{
 		Prompt:           "> ",
-		BlinkSpeed:       time.Millisecond * 600,
+		BlinkSpeed:       defaultBlinkSpeed,
 		Placeholder:      "",
 		TextColor:        "",
 		PlaceholderColor: "240",

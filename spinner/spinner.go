@@ -16,6 +16,10 @@ const (
 	Dot
 )
 
+const (
+	defaultFPS = 9
+)
+
 var (
 	// Spinner frames
 	spinners = map[Spinner][]string{
@@ -61,7 +65,7 @@ type Model struct {
 func NewModel() Model {
 	return Model{
 		Type: Line,
-		FPS:  9,
+		FPS:  defaultFPS,
 	}
 }
 
