@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	input "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	input "github.com/charmbracelet/bubbletea/textinput"
 	te "github.com/muesli/termenv"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	input "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	input "github.com/charmbracelet/bubbletea/textinput"
 )
 
 type Model struct {
