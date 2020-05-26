@@ -67,13 +67,8 @@ func initialize(content string) func() (tea.Model, tea.Cmd) {
 		return model{
 				content: content, // keep content in the model
 			}, tea.Batch(
-
-				// Get terminal size asynchronously
 				getTerminalSize(),
-
-				// We're not doing anything with it in this example, but this
-				// is now you'd listen for resizes.
-				tea.OnResize(func() tea.Msg { return resizeMsg{} }),
+				listenForResize(),
 			)
 	}
 }
@@ -98,10 +93,13 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 			m.viewport = viewport.NewModel(w, h)
 			m.viewport.SetContent(m.content)
 			m.ready = true
+		} else {
+			m.viewport.Width = w
+			m.viewport.Height = h
 		}
 
 	case resizeMsg:
-		return m, getTerminalSize()
+		return m, tea.Batch(getTerminalSize(), listenForResize())
 	}
 
 	return m, nil
@@ -120,5 +118,11 @@ func view(mdl tea.Model) string {
 func getTerminalSize() tea.Cmd {
 	return tea.GetTerminalSize(func(w, h int, err error) tea.TerminalSizeMsg {
 		return terminalSizeMsg{width: w, height: h, err: err}
+	})
+}
+
+func listenForResize() tea.Cmd {
+	return tea.OnResize(func() tea.Msg {
+		return resizeMsg{}
 	})
 }
