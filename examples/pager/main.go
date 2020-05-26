@@ -18,6 +18,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Set PAGER_LOG to a path to log to a file. For example,
+	// export PAGER_LOG=debug.log
+	if os.Getenv("PAGER_LOG") != "" {
+		p := os.Getenv("PAGER_LOG")
+		f, err := tea.LogToFile(p, "pager")
+		if err != nil {
+			fmt.Printf("Could not open file %s: %v", p, err)
+			os.Exit(1)
+		}
+		defer f.Close()
+	}
+
 	// Use the full size of the terminal in its "Alternate Screen Buffer"
 	tea.AltScreen()
 	defer tea.ExitAltScreen()
@@ -41,6 +53,8 @@ type terminalSizeMsg struct {
 func (t terminalSizeMsg) Size() (int, int) { return t.width, t.height }
 func (t terminalSizeMsg) Error() error     { return t.err }
 
+type resizeMsg struct{}
+
 type model struct {
 	err      error
 	content  string
@@ -51,8 +65,16 @@ type model struct {
 func initialize(content string) func() (tea.Model, tea.Cmd) {
 	return func() (tea.Model, tea.Cmd) {
 		return model{
-			content: content,
-		}, getTerminalSize()
+				content: content, // keep content in the model
+			}, tea.Batch(
+
+				// Get terminal size asynchronously
+				getTerminalSize(),
+
+				// We're not doing anything with it in this example, but this
+				// is now you'd listen for resizes.
+				tea.OnResize(func() tea.Msg { return resizeMsg{} }),
+			)
 	}
 }
 
@@ -65,15 +87,21 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 		m.viewport, _ = viewport.Update(msg, m.viewport)
+
 	case terminalSizeMsg:
 		if msg.Error() != nil {
 			m.err = msg.Error()
 			break
 		}
 		w, h := msg.Size()
-		m.viewport = viewport.NewModel(w, h)
-		m.viewport.SetContent(m.content)
-		m.ready = true
+		if !m.ready {
+			m.viewport = viewport.NewModel(w, h)
+			m.viewport.SetContent(m.content)
+			m.ready = true
+		}
+
+	case resizeMsg:
+		return m, getTerminalSize()
 	}
 
 	return m, nil
