@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	tea "github.com/charmbracelet/bubbles"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // A model can be more or less any type of data. It holds all the data for a
