@@ -18,18 +18,23 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"github.com/charmbracelet/tea"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type model int
 
-type tickMsg time.Time
+type tickMsg struct{}
 
 func main() {
-	p := tea.NewProgram(init, update, view, subscriptions)
+	p := tea.NewProgram(initialize, update, view, subscriptions)
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Return the initial model and initial command
+func initialize() (tea.Model, tea.Cmd) {
+    return 5, tick
 }
 
 // Listen for messages and update the model accordingly
@@ -38,7 +43,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 
 	switch msg.(type) {
 	case tickMsg:
-        m--
+		m--
 		if m == 0 {
 			return m, tea.Quit
 		}
@@ -52,13 +57,10 @@ func view(mdl tea.Model) string {
 	return fmt.Sprintf("Hi. This program will exit in %d seconds...\n", m)
 }
 
-// Subscribe to events
-func subscriptions(_ tea.Model) tea.Subs {
-    return tea.Subs{
-        "tick": time.Every(time.Second, func(t time.Time) tea.Msg {
-            return tickMsg(t)
-        },
-    }
+// A simple command which Bubble Tea runs asynchronously.
+func tick() tea.Msg {
+    time.Sleep(time.Second)
+    return tickMsg{}
 }
 ```
 
