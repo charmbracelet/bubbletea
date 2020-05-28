@@ -47,9 +47,8 @@ type Program struct {
 	update Update
 	view   View
 
-	mutex           sync.Mutex
-	linesRendered   int
-	contentRendered string
+	mutex         sync.Mutex
+	currentRender string
 }
 
 // Quit is a command that tells the program to exit.
@@ -163,11 +162,12 @@ func (p *Program) render(model Model) {
 	view := p.view(model)
 
 	// The view hasn't changed; no need to render
-	if view == p.contentRendered {
+	if view == p.currentRender {
 		return
 	}
 
-	p.contentRendered = view
+	p.currentRender = view
+	linesRendered := strings.Count(p.currentRender, "\r\n")
 
 	// Add carriage returns to ensure that the cursor travels to the start of a
 	// column after a newline. Keep in mind that this means that in the rest
@@ -175,13 +175,11 @@ func (p *Program) render(model Model) {
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
 	p.mutex.Lock()
-	if p.linesRendered > 0 {
-		termenv.ClearLines(p.linesRendered)
+	if linesRendered > 0 {
+		termenv.ClearLines(linesRendered)
 	}
 	_, _ = io.WriteString(os.Stdout, view)
 	p.mutex.Unlock()
-
-	p.linesRendered = strings.Count(view, "\r\n")
 }
 
 // AltScreen exits the altscreen. This is just a wrapper around the termenv
