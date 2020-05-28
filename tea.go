@@ -167,7 +167,7 @@ func (p *Program) render(model Model) {
 	}
 
 	p.currentRender = view
-	linesRendered := strings.Count(p.currentRender, "\r\n")
+	linesRendered := strings.Count(p.currentRender, "\n")
 
 	// Add carriage returns to ensure that the cursor travels to the start of a
 	// column after a newline. Keep in mind that this means that in the rest
