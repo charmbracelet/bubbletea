@@ -47,7 +47,9 @@ type Program struct {
 	update Update
 	view   View
 
-	mutex sync.Mutex
+	mutex           sync.Mutex
+	linesRendered   int
+	contentRendered string
 }
 
 // Quit is a command that tells the program to exit.
@@ -75,13 +77,12 @@ func NewProgram(init Init, update Update, view View) *Program {
 // Start initializes the program.
 func (p *Program) Start() error {
 	var (
-		model         Model
-		cmd           Cmd
-		cmds          = make(chan Cmd)
-		msgs          = make(chan Msg)
-		errs          = make(chan error)
-		done          = make(chan struct{})
-		linesRendered int
+		model Model
+		cmd   Cmd
+		cmds  = make(chan Cmd)
+		msgs  = make(chan Msg)
+		errs  = make(chan error)
+		done  = make(chan struct{})
 	)
 
 	err := initTerminal()
@@ -99,7 +100,7 @@ func (p *Program) Start() error {
 	}
 
 	// Render initial view
-	linesRendered = p.render(model, linesRendered)
+	p.render(model)
 
 	// Subscribe to user input
 	go func() {
@@ -150,30 +151,37 @@ func (p *Program) Start() error {
 				continue
 			}
 
-			model, cmd = p.update(msg, model)              // run update
-			cmds <- cmd                                    // process command (if any)
-			linesRendered = p.render(model, linesRendered) // render to terminal
+			model, cmd = p.update(msg, model) // run update
+			cmds <- cmd                       // process command (if any)
+			p.render(model)                   // render to terminal
 		}
 	}
 }
 
 // Render a view to the terminal. Returns the number of lines rendered.
-func (p *Program) render(model Model, linesRendered int) int {
+func (p *Program) render(model Model) {
 	view := p.view(model)
 
-	p.mutex.Lock()
+	// The view hasn't changed; no need to render
+	if view == p.contentRendered {
+		return
+	}
 
-	// We need to add carriage returns to ensure that the cursor travels to the
-	// start of a column after a newline.
+	p.contentRendered = view
+
+	// Add carriage returns to ensure that the cursor travels to the start of a
+	// column after a newline. Keep in mind that this means that in the rest
+	// of the Tea program newlines should be a normal unix newline (\n).
 	view = strings.Replace(view, "\n", "\r\n", -1)
 
-	if linesRendered > 0 {
-		termenv.ClearLines(linesRendered)
+	p.mutex.Lock()
+	if p.linesRendered > 0 {
+		termenv.ClearLines(p.linesRendered)
 	}
 	_, _ = io.WriteString(os.Stdout, view)
-
 	p.mutex.Unlock()
-	return strings.Count(view, "\r\n")
+
+	p.linesRendered = strings.Count(view, "\r\n")
 }
 
 // AltScreen exits the altscreen. This is just a wrapper around the termenv
