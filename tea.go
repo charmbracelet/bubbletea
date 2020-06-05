@@ -2,7 +2,6 @@ package tea
 
 import (
 	"os"
-	"sync"
 
 	"github.com/muesli/termenv"
 )
@@ -44,20 +43,19 @@ type Program struct {
 	init   Init
 	update Update
 	view   View
-
-	mutex         sync.Mutex
-	currentRender string
 }
 
-// Quit is a command that tells the program to exit.
+// Quit is a special command that tells the program to exit.
 func Quit() Msg {
 	return quitMsg{}
 }
 
-// Signals that the program should quit.
+// quitMsg in an internal message signals that the program should quit. You can
+// send a quitMsg with Quit.
 type quitMsg struct{}
 
-// batchMsg is used to perform a bunch of commands.
+// batchMsg is the internal message used to perform a bunch of commands. You
+// can send a batchMsg with Batch.
 type batchMsg []Cmd
 
 // NewProgram creates a new Program.
@@ -66,8 +64,6 @@ func NewProgram(init Init, update Update, view View) *Program {
 		init:   init,
 		update: update,
 		view:   view,
-
-		mutex: sync.Mutex{},
 	}
 }
 
@@ -155,7 +151,7 @@ func (p *Program) Start() error {
 
 			model, cmd = p.update(msg, model) // run update
 			cmds <- cmd                       // process command (if any)
-			mrRenderer.write(p.view(model))   // send to renderer
+			mrRenderer.write(p.view(model))   // send view to renderer
 		}
 	}
 }
