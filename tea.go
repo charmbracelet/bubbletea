@@ -140,6 +140,7 @@ func (p *Program) Start() error {
 
 			// Handle quit message
 			if _, ok := msg.(quitMsg); ok {
+				mrRenderer.stop()
 				close(done)
 				return nil
 			}
