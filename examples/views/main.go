@@ -44,19 +44,21 @@ type Model struct {
 // INIT
 
 func initialize() (tea.Model, tea.Cmd) {
-	return Model{0, false, 10, 0, 0, false}, tick
+	return Model{0, false, 10, 0, 0, false}, tick()
 }
 
 // CMDS
 
-func tick() tea.Msg {
-	time.Sleep(time.Second)
-	return tickMsg{}
+func tick() tea.Cmd {
+	return tea.Tick(time.Second, func(time.Time) tea.Msg {
+		return tickMsg{}
+	})
 }
 
-func frame() tea.Msg {
-	time.Sleep(time.Second / 60)
-	return frameMsg{}
+func frame() tea.Cmd {
+	return tea.Tick(time.Second/60, func(time.Time) tea.Msg {
+		return frameMsg{}
+	})
 }
 
 // UPDATE
@@ -91,7 +93,7 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 			}
 		case "enter":
 			m.Chosen = true
-			return m, nil
+			return m, frame()
 		case "q":
 			fallthrough
 		case "esc":
@@ -105,9 +107,10 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 		m.Ticks -= 1
+		return m, tick()
 	}
 
-	return m, tick
+	return m, nil
 }
 
 func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
@@ -126,12 +129,14 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	case frameMsg:
 		if !m.Loaded {
 			m.Frames += 1
-			m.Progress = ease.OutBounce(float64(m.Frames) / float64(160))
+			m.Progress = ease.OutBounce(float64(m.Frames) / float64(100))
 			if m.Progress >= 1 {
 				m.Progress = 1
 				m.Loaded = true
 				m.Ticks = 3
+				return m, tick()
 			}
+			return m, frame()
 		}
 
 	case tickMsg:
@@ -140,10 +145,11 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			}
 			m.Ticks -= 1
+			return m, tick()
 		}
 	}
 
-	return m, frame
+	return m, nil
 }
 
 // VIEW
