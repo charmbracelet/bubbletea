@@ -95,5 +95,6 @@ func (r *renderer) flush() {
 func (w *renderer) write(s string) {
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
+	w.buf.Reset()
 	w.buf.WriteString(s)
 }
