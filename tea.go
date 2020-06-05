@@ -1,9 +1,7 @@
 package tea
 
 import (
-	"io"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/muesli/termenv"
@@ -76,12 +74,13 @@ func NewProgram(init Init, update Update, view View) *Program {
 // Start initializes the program.
 func (p *Program) Start() error {
 	var (
-		model Model
-		cmd   Cmd
-		cmds  = make(chan Cmd)
-		msgs  = make(chan Msg)
-		errs  = make(chan error)
-		done  = make(chan struct{})
+		model      Model
+		cmd        Cmd
+		cmds       = make(chan Cmd)
+		msgs       = make(chan Msg)
+		errs       = make(chan error)
+		done       = make(chan struct{})
+		mrRenderer = newRenderer(os.Stdout)
 	)
 
 	err := initTerminal()
@@ -98,8 +97,11 @@ func (p *Program) Start() error {
 		}()
 	}
 
+	// Start renderer
+	mrRenderer.start()
+
 	// Render initial view
-	p.render(model)
+	mrRenderer.write(p.view(model))
 
 	// Subscribe to user input
 	go func() {
@@ -152,34 +154,9 @@ func (p *Program) Start() error {
 
 			model, cmd = p.update(msg, model) // run update
 			cmds <- cmd                       // process command (if any)
-			p.render(model)                   // render to terminal
+			mrRenderer.write(p.view(model))   // send to renderer
 		}
 	}
-}
-
-// Render a view to the terminal. Returns the number of lines rendered.
-func (p *Program) render(model Model) {
-	view := p.view(model)
-
-	// The view hasn't changed; no need to render
-	if view == p.currentRender {
-		return
-	}
-
-	p.currentRender = view
-	linesRendered := strings.Count(p.currentRender, "\n")
-
-	// Add carriage returns to ensure that the cursor travels to the start of a
-	// column after a newline. Keep in mind that this means that in the rest
-	// of the Tea program newlines should be a normal unix newline (\n).
-	view = strings.Replace(view, "\n", "\r\n", -1)
-
-	p.mutex.Lock()
-	if linesRendered > 0 {
-		termenv.ClearLines(linesRendered)
-	}
-	_, _ = io.WriteString(os.Stdout, view)
-	p.mutex.Unlock()
 }
 
 // AltScreen exits the altscreen. This is just a wrapper around the termenv
