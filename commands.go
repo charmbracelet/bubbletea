@@ -47,7 +47,9 @@ type TerminalSizeMsg interface {
 	Error() error
 }
 
-// GetTerminalSize is used to get
+// GetTerminalSize is a command used to retrieve the terminal dimensions. Pass
+// a function used to construct your message, which would implement the
+// TerminalSizeMsg interaface.
 func GetTerminalSize(newMsgFunc func(int, int, error) TerminalSizeMsg) Cmd {
 	w, h, err := terminal.GetSize(int(os.Stdout.Fd()))
 	return func() Msg {

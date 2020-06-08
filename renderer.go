@@ -68,6 +68,22 @@ func (r *renderer) flush() {
 		return
 	}
 
+	// We haven an opportunity here to limit the rendering to the terminal width
+	// and height to the width of the terminal, but this would mean a few things:
+	//
+	// 1) We'd need to maintain the terminal dimensions internally and listen
+	// for window size changes.
+	//
+	// 2) We'd need to measure the width of lines, accounting for double-byte
+	// widths. We'd use something like go-runewidth
+	// (http://github.com/mattn/go-runewidth).
+	//
+	// 3) We'd need to measure the width of lines excluding ANSI escape
+	// sequences and break lines in the right places accordingly.
+	//
+	// Because of the way this would complicate the renderer, this may not be
+	// the place to do that.
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -82,7 +98,6 @@ func (r *renderer) flush() {
 			r.linesRendered++
 			out.Write([]byte("\r\n"))
 		} else {
-			// TODO: don't write past the terminal width
 			_, _ = out.Write([]byte{b})
 		}
 	}
