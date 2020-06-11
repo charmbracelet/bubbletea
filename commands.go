@@ -1,6 +1,7 @@
 package tea
 
-// Convenience commands. Note part of the Boba runtime, but potentially handy.
+// Convenience commands. Note part of the Bubble Tea runtime, but potentially
+// handy.
 
 import (
 	"os"
