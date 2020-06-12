@@ -68,8 +68,8 @@ func (r *renderer) flush() {
 		return
 	}
 
-	// We haven an opportunity here to limit the rendering to the terminal width
-	// and height to the width of the terminal, but this would mean a few things:
+	// We have an opportunity here to limit the rendering to the terminal width
+	// and height, but this would mean a few things:
 	//
 	// 1) We'd need to maintain the terminal dimensions internally and listen
 	// for window size changes.
