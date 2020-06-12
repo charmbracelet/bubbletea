@@ -64,18 +64,21 @@ func tick() tea.Msg {
 }
 ```
 
-Hungry for more? See the [other examples][examples].
+Hungry for more? Totally confused? See the [other examples][examples].
 
 [examples]: https://github.com/charmbracelet/tea/tree/master/examples
 
 
 ## Other Resources
 
-* [Termenv](https://github.com/muesli/termenv): advanced ANSI style and color
+* [termenv](https://github.com/muesli/termenv): advanced ANSI style and color
   support for your terminal applications. Very useful when rendering your
   views.
-* [Reflow](https://github.com/muesli/reflow): a collection of ANSI-aware text
+* [reflow](https://github.com/muesli/reflow): a collection of ANSI-aware text
   formatting tools. Also useful for view rendering.
+* [go-runewidth](https://github.com/mattn/go-runewidth): functions to get the
+  physical width of runes in terms of cells. Indispensable when working with
+  fullwidth and zero-width characters.
 
 
 ## Acknowledgments
