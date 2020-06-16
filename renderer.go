@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultFramerate = time.Millisecond * 16
+	defaultFramerate = time.Second / 60
 )
 
 type renderer struct {
