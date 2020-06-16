@@ -10,9 +10,21 @@ import (
 )
 
 const (
+	// BlankSymbol, in this case, is used to signal to the renderer to skip
+	// over a given cell and not perform any rendering on it. The const is
+	// literally the Unicode "BLANK SYMBOL" (U+2422).
+	//
+	// This character becomes useful when handing of portions of the screen to
+	// a separate renderer.
+	BlankSymbol = "␢"
+
+	// defaultFramerate specifies the maximum interval at which we should
+	// update the view.
 	defaultFramerate = time.Second / 60
 )
 
+// renderer is a timer-based renderer, updating the view at a given framerate
+// to avoid overloading the terminal emulator.
 type renderer struct {
 	out           io.Writer
 	buf           bytes.Buffer
@@ -74,8 +86,9 @@ func (r *renderer) flush() {
 	// 1) We'd need to maintain the terminal dimensions internally and listen
 	// for window size changes.
 	//
-	// 2) We'd need to measure the width of lines, accounting for double-byte
-	// widths. We'd use something like go-runewidth
+	// 2) We'd need to measure the width of lines, accounting for multi-cell
+	// rune widths, commonly found in Chinese, Japanese, Korean, emojis and so
+	// on. We'd use something like go-runewidth
 	// (http://github.com/mattn/go-runewidth).
 	//
 	// 3) We'd need to measure the width of lines excluding ANSI escape
