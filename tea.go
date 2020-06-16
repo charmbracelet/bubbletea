@@ -2,8 +2,11 @@ package tea
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/muesli/termenv"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // Msg represents an action and is usually the result of an IO operation. It's
@@ -58,6 +61,13 @@ type quitMsg struct{}
 // can send a batchMsg with Batch.
 type batchMsg []Cmd
 
+// WindowSizeMsg is used to report on the terminal size. It's fired once initially
+// and then on every terminal resize.
+type WindowSizeMsg struct {
+	width  int
+	height int
+}
+
 // NewProgram creates a new Program.
 func NewProgram(init Init, update Update, view View) *Program {
 	return &Program{
@@ -70,13 +80,15 @@ func NewProgram(init Init, update Update, view View) *Program {
 // Start initializes the program.
 func (p *Program) Start() error {
 	var (
-		model      Model
-		cmd        Cmd
-		cmds       = make(chan Cmd)
-		msgs       = make(chan Msg)
-		errs       = make(chan error)
-		done       = make(chan struct{})
-		mrRenderer = newRenderer(os.Stdout)
+		model Model
+		cmd   Cmd
+		cmds  = make(chan Cmd)
+		msgs  = make(chan Msg)
+		errs  = make(chan error)
+		done  = make(chan struct{})
+
+		output     *os.File = os.Stdout
+		mrRenderer          = newRenderer(output)
 	)
 
 	err := initTerminal()
@@ -110,6 +122,29 @@ func (p *Program) Start() error {
 		}
 	}()
 
+	// Get initial terminal size
+	go func() {
+		w, h, err := terminal.GetSize(int(output.Fd()))
+		if err != nil {
+			errs <- err
+		}
+		msgs <- WindowSizeMsg{w, h}
+	}()
+
+	// Listen for window resizes
+	go func() {
+		sig := make(chan os.Signal)
+		signal.Notify(sig, syscall.SIGWINCH)
+		for {
+			<-sig
+			w, h, err := terminal.GetSize(int(output.Fd()))
+			if err != nil {
+				errs <- err
+			}
+			msgs <- WindowSizeMsg{w, h}
+		}
+	}()
+
 	// Process commands
 	go func() {
 		for {
@@ -139,6 +174,23 @@ func (p *Program) Start() error {
 				mrRenderer.stop()
 				close(done)
 				return nil
+			}
+
+			// Report resizes to the renderer. This only matters if we're doing
+			// higher performance scroll-based rendering.
+			if size, ok := msg.(WindowSizeMsg); ok {
+				mrRenderer.width = size.width
+				mrRenderer.height = size.height
+			}
+
+			// Handle messages telling the renderer to ignore ranges of lines
+			if ignore, ok := msg.(IgnoreLinesMsg); ok {
+				mrRenderer.setIgnoredLines(ignore.from, ignore.to)
+			}
+
+			// Handle messages telling the renderer to stop ignoring lines
+			if _, ok := msg.(IgnoreLinesMsg); ok {
+				mrRenderer.clearIgnoredLines()
 			}
 
 			// Process batch commands
