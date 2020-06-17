@@ -16,46 +16,65 @@ const (
 
 // RendererIgnoreLinesMsg tells the renderer to skip rendering for the given
 // range of lines.
-type IgnoreLinesMsg struct {
+type ignoreLinesMsg struct {
+	From int
+	To   int
+}
+
+// IgnoreLines produces command that sets a range of lines to be ignored
+// by the renderer. The general use case here is that those lines would be
+// rendered separately for performance reasons.
+func IgnoreLines(from int, to int) Cmd {
+	return func() Msg {
+		return ignoreLinesMsg{From: from, To: to}
+	}
+}
+
+type resetIgnoreLinesMsg struct {
 	from int
 	to   int
 }
 
-// IgnoreLines is a command that sets a range of lines to be ignored
-// by the renderer. The general use case here is that those lines would be
-// rendered separately for performance reasons.
-func IgnoreLines(from int, to int) IgnoreLinesMsg {
-	return IgnoreLinesMsg{from: from, to: to}
+// ResetIngoredLines produces a command that clears any lines set to be ignored
+// and the sets new ones by the renderer. This is probably a more common use
+// case than the IgnoreLines command.
+func ResetIgnoredLines(from int, to int) Cmd {
+	return func() Msg {
+		return resetIgnoreLinesMsg{from: from, to: to}
+	}
 }
 
 // ClearIgnoredLinesMsg has the renderer allows the renderer to commence rendering
 // any lines previously set to be ignored.
-type ClearIgnoredLinesMsg struct{}
+type clearIgnoredLinesMsg struct{}
 
-// RendererIgnoreLines is a command that sets a range of lines to be ignored
-// by the renderer.
-func ClearIgnoredLines(from int, to int) ClearIgnoredLinesMsg {
-	return ClearIgnoredLinesMsg{}
+// RendererIgnoreLines is a command that sets a range of lines to be
+// ignored by the renderer.
+func ClearIgnoredLines() Msg {
+	return clearIgnoredLinesMsg{}
 }
 
 // ScrollDownMsg is experiemental. There are no guarantees about it persisting
 // in a future API. It's exposed for high performance scrolling.
 type ScrollUpMsg struct {
-	newLines       []string
-	topBoundary    int
-	bottomBoundary int
+	NewLines       []string
+	TopBoundary    int
+	BottomBoundary int
 }
 
 // ScrollDownMsg is experiemental. There are no guarantees about it persisting
 // in a future API. It's exposed for high performance scrolling.
 type ScrollDownMsg struct {
-	newLines       []string
-	topBoundary    int
-	bottomBoundary int
+	NewLines       []string
+	TopBoundary    int
+	BottomBoundary int
 }
 
 // renderer is a timer-based renderer, updating the view at a given framerate
 // to avoid overloading the terminal emulator.
+//
+// In cases where very high performance is needed the renderer can be told
+// to exclude ranges of lines, allowing them to be written to directly.
 type renderer struct {
 	out           io.Writer
 	buf           bytes.Buffer
