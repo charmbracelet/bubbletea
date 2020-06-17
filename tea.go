@@ -176,29 +176,31 @@ func (p *Program) Start() error {
 				return nil
 			}
 
-			// Report resizes to the renderer. This only matters if we're doing
-			// higher performance scroll-based rendering.
-			if size, ok := msg.(WindowSizeMsg); ok {
-				mrRenderer.width = size.width
-				mrRenderer.height = size.height
-			}
-
-			// Handle messages telling the renderer to ignore ranges of lines
-			if ignore, ok := msg.(IgnoreLinesMsg); ok {
-				mrRenderer.setIgnoredLines(ignore.from, ignore.to)
-			}
-
-			// Handle messages telling the renderer to stop ignoring lines
-			if _, ok := msg.(IgnoreLinesMsg); ok {
-				mrRenderer.clearIgnoredLines()
-			}
-
 			// Process batch commands
 			if batchedCmds, ok := msg.(batchMsg); ok {
 				for _, cmd := range batchedCmds {
 					cmds <- cmd
 				}
 				continue
+			}
+
+			// Report resizes to the renderer. Only necessary for special,
+			// performance-based rendering.
+			if size, ok := msg.(WindowSizeMsg); ok {
+				mrRenderer.width = size.width
+				mrRenderer.height = size.height
+			}
+
+			// Handle messages telling the main rendering routine to ignore
+			// ranges of lines. Useful for performance-based rendering.
+			if ignore, ok := msg.(IgnoreLinesMsg); ok {
+				mrRenderer.setIgnoredLines(ignore.from, ignore.to)
+			}
+
+			// Handle messages telling the main rendering to stop ignoring
+			// lines. Useful when disabling any performance-based rendering.
+			if _, ok := msg.(IgnoreLinesMsg); ok {
+				mrRenderer.clearIgnoredLines()
 			}
 
 			model, cmd = p.update(msg, model) // run update
