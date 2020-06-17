@@ -171,32 +171,8 @@ func (p *Program) Start() error {
 				continue
 			}
 
-			// Report resizes to the renderer. Only necessary for special,
-			// performance-based rendering.
-			if size, ok := msg.(WindowSizeMsg); ok {
-				mrRenderer.width = size.Width
-				mrRenderer.height = size.Height
-			}
-
-			// Handle messages telling the main rendering routine to ignore
-			// ranges of lines. Useful for performance-based rendering.
-			if lineRange, ok := msg.(ignoreLinesMsg); ok {
-				mrRenderer.setIgnoredLines(lineRange.from, lineRange.to)
-			}
-
-			// Handle messages telling the main rendering routine to clear
-			// ranges of lines previously ignored and set a new range of
-			// ignored lines. For use in high-performance rendering.
-			if lineRange, ok := msg.(resetIgnoreLinesMsg); ok {
-				mrRenderer.clearIgnoredLines()
-				mrRenderer.setIgnoredLines(lineRange.from, lineRange.to)
-			}
-
-			// Handle messages telling the main rendering to stop ignoring
-			// lines. Useful when disabling any performance-based rendering.
-			if _, ok := msg.(clearIgnoredLinesMsg); ok {
-				mrRenderer.clearIgnoredLines()
-			}
+			// Process any internal messages for the renderer
+			mrRenderer.handleMessages(msg)
 
 			model, cmd = p.update(msg, model) // run update
 			cmds <- cmd                       // process command (if any)

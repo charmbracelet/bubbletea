@@ -14,62 +14,6 @@ const (
 	defaultFramerate = time.Second / 60
 )
 
-// RendererIgnoreLinesMsg tells the renderer to skip rendering for the given
-// range of lines.
-type ignoreLinesMsg struct {
-	From int
-	To   int
-}
-
-// IgnoreLines produces command that sets a range of lines to be ignored
-// by the renderer. The general use case here is that those lines would be
-// rendered separately for performance reasons.
-func IgnoreLines(from int, to int) Cmd {
-	return func() Msg {
-		return ignoreLinesMsg{From: from, To: to}
-	}
-}
-
-type resetIgnoreLinesMsg struct {
-	from int
-	to   int
-}
-
-// ResetIngoredLines produces a command that clears any lines set to be ignored
-// and the sets new ones by the renderer. This is probably a more common use
-// case than the IgnoreLines command.
-func ResetIgnoredLines(from int, to int) Cmd {
-	return func() Msg {
-		return resetIgnoreLinesMsg{from: from, to: to}
-	}
-}
-
-// ClearIgnoredLinesMsg has the renderer allows the renderer to commence rendering
-// any lines previously set to be ignored.
-type clearIgnoredLinesMsg struct{}
-
-// RendererIgnoreLines is a command that sets a range of lines to be
-// ignored by the renderer.
-func ClearIgnoredLines() Msg {
-	return clearIgnoredLinesMsg{}
-}
-
-// ScrollDownMsg is experiemental. There are no guarantees about it persisting
-// in a future API. It's exposed for high performance scrolling.
-type ScrollUpMsg struct {
-	NewLines       []string
-	TopBoundary    int
-	BottomBoundary int
-}
-
-// ScrollDownMsg is experiemental. There are no guarantees about it persisting
-// in a future API. It's exposed for high performance scrolling.
-type ScrollDownMsg struct {
-	NewLines       []string
-	TopBoundary    int
-	BottomBoundary int
-}
-
 // renderer is a timer-based renderer, updating the view at a given framerate
 // to avoid overloading the terminal emulator.
 //
@@ -239,6 +183,8 @@ func (r *renderer) clearIgnoredLines() {
 // area designated to be a scrollable region, pushing everything else down.
 // This is roughly how ncurses does it.
 //
+// To call this function use command ScrollUp().
+//
 // For this to work renderer.ignoreLines must be set to ignore the scrollable
 // region since we are bypassing the normal Bubble Tea renderer here.
 //
@@ -270,13 +216,12 @@ func (r *renderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
 
 // insertBottom effectively scrolls down. It inserts lines at the bottom of
 // a given area designated to be a scrollable region, pushing everything else
-// up.  This is roughly how ncurses does it.
+// up. This is roughly how ncurses does it.
 //
-// For this to work renderer.ignoreLines must be set to ignore the scrollable
-// region since we are bypassing the normal Bubble Tea renderer here.
+// To call this function use the command ScrollDown().
 //
-// See note in insertTop() on how this function only makes sense for
-// full-window applications and how it differs from the noraml way we do
+// See note in insertTop() for caveats, how this function only makes sense for
+// full-window applications, and how it differs from the noraml way we do
 // rendering in Bubble Tea.
 func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int) {
 	r.mtx.Lock()
@@ -292,4 +237,108 @@ func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int)
 	restoreCursorPosition(b)
 
 	r.out.Write(b.Bytes())
+}
+
+// handleMessages handles internal messages for the renderer. It belongs in the
+// main update loop at the program level.
+func (r *renderer) handleMessages(msg Msg) {
+	switch msg := msg.(type) {
+	case WindowSizeMsg:
+		r.width = msg.Width
+		r.height = msg.Height
+
+	case ignoreLinesMsg:
+		r.setIgnoredLines(msg.from, msg.to)
+
+	case replaceIgnoredLinesMsg:
+		r.clearIgnoredLines()
+		r.setIgnoredLines(msg.from, msg.to)
+
+	case clearIgnoredLinesMsg:
+		r.clearIgnoredLines()
+
+	case scrollUpMsg:
+		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
+
+	case scrollDownMsg:
+		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
+	}
+}
+
+// HIGH-PERFORMANCE RENDERING STUFF
+
+// ignoreLinesMsg tells the renderer to skip rendering for the given
+// range of lines.
+type ignoreLinesMsg struct {
+	from int
+	to   int
+}
+
+// IgnoreLines produces command that sets a range of lines to be ignored
+// by the renderer. The general use case here is that those lines would be
+// rendered separately for performance reasons.
+func IgnoreLines(from int, to int) Cmd {
+	return func() Msg {
+		return ignoreLinesMsg{from: from, to: to}
+	}
+}
+
+type replaceIgnoredLinesMsg struct {
+	from int
+	to   int
+}
+
+// ReplaceIngoredLines produces a command that clears any lines set to be ignored
+// and the sets new ones by the renderer. This is probably a more common use
+// case than the IgnoreLines command.
+func ReplaceIgnoredLines(from int, to int) Cmd {
+	return func() Msg {
+		return replaceIgnoredLinesMsg{from: from, to: to}
+	}
+}
+
+// ClearIgnoredLinesMsg has the renderer allows the renderer to commence rendering
+// any lines previously set to be ignored.
+type clearIgnoredLinesMsg struct{}
+
+// RendererIgnoreLines is a command that sets a range of lines to be
+// ignored by the renderer.
+func ClearIgnoredLines() Msg {
+	return clearIgnoredLinesMsg{}
+}
+
+// scrollDownMsg is experiemental. There are no guarantees about it persisting
+// in a future API. It's exposed for high performance scrolling.
+type scrollUpMsg struct {
+	lines          []string
+	topBoundary    int
+	bottomBoundary int
+}
+
+func ScrollUp(newLines []string, topBoundary, bottomBoundary int) Cmd {
+	return func() Msg {
+		return scrollUpMsg{
+			lines:          newLines,
+			topBoundary:    topBoundary,
+			bottomBoundary: bottomBoundary,
+		}
+	}
+}
+
+// scrollDownMsg is experiemental. There are no guarantees about it persisting
+// in a future API. It's exposed for high performance scrolling.
+type scrollDownMsg struct {
+	lines          []string
+	topBoundary    int
+	bottomBoundary int
+}
+
+func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
+	return func() Msg {
+		return scrollDownMsg{
+			lines:          newLines,
+			topBoundary:    topBoundary,
+			bottomBoundary: bottomBoundary,
+		}
+	}
 }
