@@ -9,6 +9,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const (
+	viewportTopMargin    = 2
+	viewportBottomMargin = 2
+)
+
 func main() {
 
 	// Load some text to render
@@ -88,14 +93,17 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 			m.err = msg.Error()
 			break
 		}
+
+		viewportVerticalMargins := viewportTopMargin + viewportBottomMargin
+
 		w, h := msg.Size()
 		if !m.ready {
-			m.viewport = viewport.NewModel(w, h)
+			m.viewport = viewport.NewModel(w, h-viewportVerticalMargins)
 			m.viewport.SetContent(m.content)
 			m.ready = true
 		} else {
 			m.viewport.Width = w
-			m.viewport.Height = h
+			m.viewport.Height = h - viewportVerticalMargins
 		}
 
 	case resizeMsg:
@@ -110,7 +118,12 @@ func view(mdl tea.Model) string {
 	if m.err != nil {
 		return "\nError:" + m.err.Error()
 	} else if m.ready {
-		return "\n" + viewport.View(m.viewport)
+
+		return fmt.Sprintf(
+			"── Mr. Pager ──\n\n%s\n\n── %3.f%% ──",
+			viewport.View(m.viewport),
+			m.viewport.ScrollPercent()*100,
+		)
 	}
 	return "\nInitalizing..."
 }
