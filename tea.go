@@ -197,14 +197,12 @@ func (p *Program) Start() error {
 	}
 }
 
-// AltScreen exits the altscreen. This is just a wrapper around the termenv
-// function.
+// AltScreen enters the alternate screen buffer.
 func AltScreen() {
 	termenv.AltScreen()
 }
 
-// ExitAltScreen exits the altscreen. This is just a wrapper around the termenv
-// function.
+// ExitAltScreen exits the alternate screen buffer.
 func ExitAltScreen() {
 	termenv.ExitAltScreen()
 }

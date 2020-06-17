@@ -146,6 +146,7 @@ func (r *renderer) flush() {
 	defer r.mtx.Unlock()
 
 	if r.linesRendered > 0 {
+
 		// Clear the lines we painted in the last render.
 		for i := r.linesRendered; i > 0; i-- {
 
@@ -160,6 +161,15 @@ func (r *renderer) flush() {
 		}
 
 		if _, exists := r.ignoreLines[0]; !exists {
+			// We need to return to the start of the line here to properly
+			// erase it. Going back the entire width of the terminal will
+			// usually be farther than we need to go, but terminal emulators
+			// will stop the cursor at the start of the line as a rule.
+			//
+			// We use this sequence in particular because it's part of the ANSI
+			// standard (whereas others are proprietary to, say, VT100/VT52).
+			cursorBack(out, r.width)
+
 			clearLine(out)
 		}
 	}

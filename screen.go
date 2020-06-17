@@ -38,3 +38,7 @@ func restoreCursorPosition(w io.Writer) {
 func changeScrollingRegion(w io.Writer, top, bottom int) {
 	fmt.Fprintf(w, te.CSI+te.ChangeScrollingRegionSeq, top, bottom)
 }
+
+func cursorBack(w io.Writer, n int) {
+	fmt.Fprintf(w, te.CSI+te.CursorBackSeq, n)
+}
