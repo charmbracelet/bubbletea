@@ -28,13 +28,13 @@ func moveCursor(w io.Writer, row, col int) {
 }
 
 func saveCursorPosition(w io.Writer) {
-	fmt.Fprint(w, te.CSI+"s")
+	fmt.Fprint(w, te.CSI+te.SaveCursorPositionSeq)
 }
 
 func restoreCursorPosition(w io.Writer) {
-	fmt.Fprint(w, te.CSI+"u")
+	fmt.Fprint(w, te.CSI+te.RestoreCursorPositionSeq)
 }
 
 func changeScrollingRegion(w io.Writer, top, bottom int) {
-	fmt.Fprintf(w, te.CSI+"%d;%dr", top, bottom)
+	fmt.Fprintf(w, te.CSI+te.ChangeScrollingRegionSeq, top, bottom)
 }
