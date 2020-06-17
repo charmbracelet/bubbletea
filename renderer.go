@@ -148,7 +148,6 @@ func (r *renderer) flush() {
 	if r.linesRendered > 0 {
 		// Clear the lines we painted in the last render.
 		for i := r.linesRendered; i > 0; i-- {
-			cursorUp(out)
 
 			// Check and see if we should skip rendering for this line. That
 			// includes clearing the line, which we normally do before a
@@ -156,6 +155,12 @@ func (r *renderer) flush() {
 			if _, exists := r.ignoreLines[i]; !exists {
 				clearLine(out)
 			}
+
+			cursorUp(out)
+		}
+
+		if _, exists := r.ignoreLines[0]; !exists {
+			clearLine(out)
 		}
 	}
 	r.linesRendered = 0
