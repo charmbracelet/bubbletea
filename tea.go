@@ -59,8 +59,8 @@ type quitMsg struct{}
 // can send a batchMsg with Batch.
 type batchMsg []Cmd
 
-// WindowSizeMsg is used to report on the terminal size. It's fired once initially
-// and then on every terminal resize.
+// WindowSizeMsg is used to report on the terminal size. It's fired once
+// initially and then on every terminal resize.
 type WindowSizeMsg struct {
 	Width  int
 	Height int
@@ -171,7 +171,7 @@ func (p *Program) Start() error {
 				continue
 			}
 
-			// Process any internal messages for the renderer
+			// Process internal messages for the renderer
 			mrRenderer.handleMessages(msg)
 
 			model, cmd = p.update(msg, model) // run update
