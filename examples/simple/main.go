@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -20,6 +21,14 @@ type model int
 type tickMsg time.Time
 
 func main() {
+	// Log to a file. Useful in debugging. Not required.
+	logfilePath := os.Getenv("TEA_LOG")
+	if logfilePath != "" {
+		if _, err := tea.LogToFile(logfilePath, "simple"); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	// Initialize our program
 	p := tea.NewProgram(initialize, update, view)
 	if err := p.Start(); err != nil {
