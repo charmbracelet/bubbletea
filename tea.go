@@ -2,8 +2,6 @@ package tea
 
 import (
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/muesli/termenv"
 	"golang.org/x/crypto/ssh/terminal"
@@ -132,18 +130,7 @@ func (p *Program) Start() error {
 	}()
 
 	// Listen for window resizes
-	go func() {
-		sig := make(chan os.Signal)
-		signal.Notify(sig, syscall.SIGWINCH)
-		for {
-			<-sig
-			w, h, err := terminal.GetSize(int(output.Fd()))
-			if err != nil {
-				errs <- err
-			}
-			msgs <- WindowSizeMsg{w, h}
-		}
-	}()
+	go listenForResize(output, msgs, errs)
 
 	// Process commands
 	go func() {
