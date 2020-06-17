@@ -86,7 +86,6 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 		if msg.Type == tea.KeyCtrlC {
 			return m, tea.Quit
 		}
-		m.viewport, _ = viewport.Update(msg, m.viewport)
 
 	case terminalSizeMsg:
 		if msg.Error() != nil {
@@ -99,18 +98,28 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 		w, h := msg.Size()
 		if !m.ready {
 			m.viewport = viewport.NewModel(w, h-viewportVerticalMargins)
+			m.viewport.YPosition = viewportTopMargin
+			m.viewport.HighPerformanceRendering = true
 			m.viewport.SetContent(m.content)
 			m.ready = true
 		} else {
 			m.viewport.Width = w
-			m.viewport.Height = h - viewportVerticalMargins
+			m.viewport.Height = h - viewportBottomMargin
 		}
 
 	case resizeMsg:
 		return m, tea.Batch(getTerminalSize(), listenForResize())
 	}
 
-	return m, nil
+	// Because we're using the viewport's default update function (with pager-
+	// style navigation) it's important that the viewport's update function:
+	//
+	// * Recieves messages from the Bubble Tea runtime
+	// * Returns commands to the Bubble Tea runtime
+	var cmd tea.Cmd
+	m.viewport, cmd = viewport.Update(msg, m.viewport)
+
+	return m, cmd
 }
 
 func view(mdl tea.Model) string {
