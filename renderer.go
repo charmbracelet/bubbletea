@@ -108,14 +108,12 @@ func (r *renderer) flush() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
-
-		// Clear the lines we painted in the last render.
 		for i := r.linesRendered; i > 0; i-- {
 
-			// Check and see if we should skip rendering for this line. That
-			// includes clearing the line, which we normally do before a
-			// render.
+			// Check if we should skip rendering for this line. Clearing the
+			// line before painting is part of the standard rendering routine.
 			if _, exists := r.ignoreLines[i]; !exists {
 				clearLine(out)
 			}
@@ -131,23 +129,27 @@ func (r *renderer) flush() {
 			//
 			// We use this sequence in particular because it's part of the ANSI
 			// standard (whereas others are proprietary to, say, VT100/VT52).
+			// If cursor previous line (ESC[ + <n> + F) were better supported
+			// we could use that above to eliminate this step.
 			cursorBack(out, r.width)
-
 			clearLine(out)
 		}
 	}
-	r.linesRendered = 0
 
-	for _, b := range r.buf.Bytes() {
+	r.linesRendered = 0
+	lines := strings.Split(r.buf.String(), "\n")
+
+	// Paint new lines
+	for i := 0; i < len(lines); i++ {
 		if _, exists := r.ignoreLines[r.linesRendered]; exists {
 			cursorDown(out) // skip rendering for this line.
-			r.linesRendered++
-		} else if b == '\n' {
-			out.Write([]byte("\r\n"))
-			r.linesRendered++
 		} else {
-			_, _ = out.Write([]byte{b})
+			_, _ = io.WriteString(out, lines[i])
+			if i != len(lines)-1 {
+				_, _ = io.WriteString(out, "\r\n")
+			}
 		}
+		r.linesRendered++
 	}
 
 	_, _ = r.out.Write(out.Bytes())
