@@ -231,7 +231,7 @@ func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int)
 
 	saveCursorPosition(b)
 	changeScrollingRegion(b, topBoundary, bottomBoundary)
-	moveCursor(b, topBoundary, 0)
+	moveCursor(b, bottomBoundary, 0)
 	_, _ = io.WriteString(b, "\r\n"+strings.Join(lines, "\r\n"))
 	changeScrollingRegion(b, 0, r.height)
 	restoreCursorPosition(b)
@@ -261,7 +261,7 @@ func (r *renderer) handleMessages(msg Msg) {
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
 
 	case scrollDownMsg:
-		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
+		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
 	}
 }
 
