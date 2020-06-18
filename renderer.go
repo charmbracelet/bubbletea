@@ -167,6 +167,9 @@ func (r *renderer) write(s string) {
 // setIngoredLines speicifies lines not to be touched by the standard Bubble Tea
 // renderer.
 func (r *renderer) setIgnoredLines(from int, to int) {
+	if r.ignoreLines == nil {
+		r.ignoreLines = make(map[int]struct{})
+	}
 	for i := from; i < to; i++ {
 		r.ignoreLines[i] = struct{}{}
 	}
@@ -176,7 +179,7 @@ func (r *renderer) setIgnoredLines(from int, to int) {
 // Tea renderer. Any lines previously set to be ignored can be rendered to
 // again.
 func (r *renderer) clearIgnoredLines() {
-	r.ignoreLines = make(map[int]struct{})
+	r.ignoreLines = nil
 }
 
 // insertTop effectively scrolls up. It inserts lines at the top of a given
@@ -239,8 +242,7 @@ func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int)
 	r.out.Write(b.Bytes())
 }
 
-// handleMessages handles internal messages for the renderer. It belongs in the
-// main update loop at the program level.
+// handleMessages handles internal messages for the renderer.
 func (r *renderer) handleMessages(msg Msg) {
 	switch msg := msg.(type) {
 	case WindowSizeMsg:
