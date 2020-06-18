@@ -259,6 +259,10 @@ func (r *renderer) handleMessages(msg Msg) {
 	case clearIgnoredLinesMsg:
 		r.clearIgnoredLines()
 
+	case syncScrollAreaMsg:
+		r.setIgnoredLines(msg.topBoundary, msg.bottomBoundary)
+		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
+
 	case scrollUpMsg:
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
 
@@ -309,8 +313,6 @@ func ClearIgnoredLines() Msg {
 	return clearIgnoredLinesMsg{}
 }
 
-// scrollDownMsg is experiemental. There are no guarantees about it persisting
-// in a future API. It's exposed for high performance scrolling.
 type scrollUpMsg struct {
 	lines          []string
 	topBoundary    int
@@ -327,8 +329,6 @@ func ScrollUp(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	}
 }
 
-// scrollDownMsg is experiemental. There are no guarantees about it persisting
-// in a future API. It's exposed for high performance scrolling.
 type scrollDownMsg struct {
 	lines          []string
 	topBoundary    int
@@ -339,6 +339,22 @@ func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollDownMsg{
 			lines:          newLines,
+			topBoundary:    topBoundary,
+			bottomBoundary: bottomBoundary,
+		}
+	}
+}
+
+type syncScrollAreaMsg struct {
+	lines          []string
+	topBoundary    int
+	bottomBoundary int
+}
+
+func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
+	return func() Msg {
+		return syncScrollAreaMsg{
+			lines:          lines,
 			topBoundary:    topBoundary,
 			bottomBoundary: bottomBoundary,
 		}
