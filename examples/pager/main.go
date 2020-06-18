@@ -49,19 +49,7 @@ func main() {
 	}
 }
 
-type terminalSizeMsg struct {
-	width  int
-	height int
-	err    error
-}
-
-func (t terminalSizeMsg) Size() (int, int) { return t.width, t.height }
-func (t terminalSizeMsg) Error() error     { return t.err }
-
-type resizeMsg struct{}
-
 type model struct {
-	err      error
 	content  string
 	ready    bool
 	viewport viewport.Model
@@ -70,11 +58,8 @@ type model struct {
 func initialize(content string) func() (tea.Model, tea.Cmd) {
 	return func() (tea.Model, tea.Cmd) {
 		return model{
-				content: content, // keep content in the model
-			}, tea.Batch(
-				getTerminalSize(),
-				listenForResize(),
-			)
+			content: content, // keep content in the model
+		}, nil
 	}
 }
 
@@ -92,31 +77,22 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case terminalSizeMsg:
-		if msg.Error() != nil {
-			m.err = msg.Error()
-			break
-		}
-
+	case tea.WindowSizeMsg:
 		viewportVerticalMargins := viewportTopMargin + viewportBottomMargin
 
-		w, h := msg.Size()
 		if !m.ready {
-			m.viewport = viewport.NewModel(w, h-viewportVerticalMargins)
+			m.viewport = viewport.NewModel(msg.Width, msg.Height-viewportVerticalMargins)
 			m.viewport.YPosition = viewportTopMargin
 			m.viewport.HighPerformanceRendering = true
 			m.viewport.SetContent(m.content)
 			m.ready = true
 		} else {
-			m.viewport.Width = w
-			m.viewport.Height = h - viewportBottomMargin
+			m.viewport.Width = msg.Width
+			m.viewport.Height = msg.Height - viewportBottomMargin
 		}
 
 		// Render (or re-render) the whole viewport
 		cmds = append(cmds, viewport.Sync(m.viewport))
-
-	case resizeMsg:
-		return m, tea.Batch(getTerminalSize(), listenForResize())
 	}
 
 	// Because we're using the viewport's default update function (with pager-
@@ -131,29 +107,18 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 }
 
 func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-	if m.err != nil {
-		return "\nError:" + m.err.Error()
-	} else if m.ready {
-
-		return viewport.View(m.viewport)
-		return fmt.Sprintf(
-			"── Mr. Pager ──\n\n%s\n\n── %3.f%% ──",
-			viewport.View(m.viewport),
-			m.viewport.ScrollPercent()*100,
-		)
+	m, ok := mdl.(model)
+	if !ok {
+		return "\n  Error: could not perform assertion on model in view."
 	}
-	return "\nInitalizing..."
-}
 
-func getTerminalSize() tea.Cmd {
-	return tea.GetTerminalSize(func(w, h int, err error) tea.TerminalSizeMsg {
-		return terminalSizeMsg{width: w, height: h, err: err}
-	})
-}
+	if !m.ready {
+		return "\n  Initalizing..."
+	}
 
-func listenForResize() tea.Cmd {
-	return tea.OnResize(func() tea.Msg {
-		return resizeMsg{}
-	})
+	return fmt.Sprintf(
+		"── Mr. Pager ──\n\n%s\n\n── %3.f%% ──",
+		viewport.View(m.viewport),
+		m.viewport.ScrollPercent()*100,
+	)
 }
