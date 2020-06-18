@@ -81,6 +81,11 @@ func initialize(content string) func() (tea.Model, tea.Cmd) {
 func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := mdl.(model)
 
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyCtrlC {
@@ -107,6 +112,9 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 			m.viewport.Height = h - viewportBottomMargin
 		}
 
+		// Render (or re-render) the whole viewport
+		cmds = append(cmds, viewport.Sync(m.viewport))
+
 	case resizeMsg:
 		return m, tea.Batch(getTerminalSize(), listenForResize())
 	}
@@ -116,10 +124,10 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	//
 	// * Recieves messages from the Bubble Tea runtime
 	// * Returns commands to the Bubble Tea runtime
-	var cmd tea.Cmd
 	m.viewport, cmd = viewport.Update(msg, m.viewport)
+	cmds = append(cmds, cmd)
 
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
 func view(mdl tea.Model) string {
@@ -128,6 +136,7 @@ func view(mdl tea.Model) string {
 		return "\nError:" + m.err.Error()
 	} else if m.ready {
 
+		return viewport.View(m.viewport)
 		return fmt.Sprintf(
 			"── Mr. Pager ──\n\n%s\n\n── %3.f%% ──",
 			viewport.View(m.viewport),
