@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-runewidth"
 )
 
 const (
-	viewportTopMargin    = 2
-	viewportBottomMargin = 2
+	useHighPerformanceRenderer = true
+
+	headerHeight = 3
+	footerHeight = 3
 )
 
 func main() {
@@ -24,7 +28,9 @@ func main() {
 	}
 
 	// Set PAGER_LOG to a path to log to a file. For example,
-	// export PAGER_LOG=debug.log
+	//
+	//     export PAGER_LOG=debug.log
+	//
 	if os.Getenv("PAGER_LOG") != "" {
 		p := os.Getenv("PAGER_LOG")
 		f, err := tea.LogToFile(p, "pager")
@@ -78,21 +84,23 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		viewportVerticalMargins := viewportTopMargin + viewportBottomMargin
+		verticalMargins := headerHeight + footerHeight
 
 		if !m.ready {
-			m.viewport = viewport.NewModel(msg.Width, msg.Height-viewportVerticalMargins)
-			m.viewport.YPosition = viewportTopMargin
-			m.viewport.HighPerformanceRendering = true
+			m.viewport = viewport.NewModel(msg.Width, msg.Height-verticalMargins)
+			m.viewport.YPosition = headerHeight
+			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
 			m.viewport.SetContent(m.content)
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - viewportBottomMargin
+			m.viewport.Height = msg.Height - verticalMargins
 		}
 
 		// Render (or re-render) the whole viewport
-		cmds = append(cmds, viewport.Sync(m.viewport))
+		if useHighPerformanceRenderer {
+			cmds = append(cmds, viewport.Sync(m.viewport))
+		}
 	}
 
 	// Because we're using the viewport's default update function (with pager-
@@ -101,24 +109,39 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	// * Recieves messages from the Bubble Tea runtime
 	// * Returns commands to the Bubble Tea runtime
 	m.viewport, cmd = viewport.Update(msg, m.viewport)
-	cmds = append(cmds, cmd)
+	if useHighPerformanceRenderer {
+		cmds = append(cmds, cmd)
+	}
 
 	return m, tea.Batch(cmds...)
 }
 
 func view(mdl tea.Model) string {
-	m, ok := mdl.(model)
-	if !ok {
-		return "\n  Error: could not perform assertion on model in view."
-	}
+	m, _ := mdl.(model)
 
 	if !m.ready {
 		return "\n  Initalizing..."
 	}
 
+	headerTop := "╭───────────╮"
+	headerMid := "│ Mr. Pager ├"
+	headerBot := "╰───────────╯"
+	headerMid += strings.Repeat("─", m.viewport.Width-runewidth.StringWidth(headerMid))
+	header := fmt.Sprintf("%s\n%s\n%s", headerTop, headerMid, headerBot)
+
+	footerTop := "╭──────╮"
+	footerMid := "┤ %3.f%% │"
+	footerBot := "╰──────╯"
+	space := m.viewport.Width - runewidth.StringWidth(footerMid)
+	footerTop = strings.Repeat(" ", space) + footerTop
+	footerMid = strings.Repeat("─", space) + footerMid
+	footerBot = strings.Repeat(" ", space) + footerBot
+	footer := footerTop + "\n" + footerMid + "\n" + footerBot
+
 	return fmt.Sprintf(
-		"── Mr. Pager ──\n\n%s\n\n── %3.f%% ──",
+		"%s\n%s\n%s",
+		header,
 		viewport.View(m.viewport),
-		m.viewport.ScrollPercent()*100,
+		fmt.Sprintf(footer, m.viewport.ScrollPercent()*100),
 	)
 }
