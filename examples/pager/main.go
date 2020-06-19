@@ -34,12 +34,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Set PAGER_LOG to a path to log to a file. For example,
+	// Set PAGER_LOG to a path to log to a file. For example:
 	//
 	//     export PAGER_LOG=debug.log
 	//
-	if os.Getenv("PAGER_LOG") != "" {
-		p := os.Getenv("PAGER_LOG")
+	// This becomes handy when debugging stuff since you can't debug to stdout
+	// because the UI is occupying it!
+	p := os.Getenv("PAGER_LOG")
+	if p != "" {
 		f, err := tea.LogToFile(p, "pager")
 		if err != nil {
 			fmt.Printf("Could not open file %s: %v", p, err)
@@ -48,7 +50,7 @@ func main() {
 		defer f.Close()
 	}
 
-	// Use the full size of the terminal in its "Alternate Screen Buffer"
+	// Use the full size of the terminal in its "alternate screen buffer"
 	tea.AltScreen()
 	defer tea.ExitAltScreen()
 
@@ -71,7 +73,9 @@ type model struct {
 func initialize(content string) func() (tea.Model, tea.Cmd) {
 	return func() (tea.Model, tea.Cmd) {
 		return model{
-			content: content, // keep content in the model
+			// Store content in the model so we can hand it off to the viewport
+			// later.
+			content: content,
 		}, nil
 	}
 }
@@ -86,6 +90,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// Ctrl+c exits
 		if msg.Type == tea.KeyCtrlC {
 			return m, tea.Quit
 		}
@@ -94,6 +99,11 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 		verticalMargins := headerHeight + footerHeight
 
 		if !m.ready {
+			// Since this program is using the full size of the viewport we need
+			// to wait until we've received the window dimensions before we
+			// can initialize the viewport. The initial dimensions come in
+			// quickly, though asynchronously, which is why we wait for them
+			// here.
 			m.viewport = viewport.NewModel(msg.Width, msg.Height-verticalMargins)
 			m.viewport.YPosition = headerHeight
 			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
@@ -104,8 +114,11 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 			m.viewport.Height = msg.Height - verticalMargins
 		}
 
-		// Render (or re-render) the whole viewport
 		if useHighPerformanceRenderer {
+			// Render (or re-render) the whole viewport. Necessary both to
+			// initialize the viewport and when the window is resized.
+			//
+			// This is needed for high-performance rendering only.
 			cmds = append(cmds, viewport.Sync(m.viewport))
 		}
 	}
@@ -115,6 +128,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	//
 	// * Recieves messages from the Bubble Tea runtime
 	// * Returns commands to the Bubble Tea runtime
+	//
 	m.viewport, cmd = viewport.Update(msg, m.viewport)
 	if useHighPerformanceRenderer {
 		cmds = append(cmds, cmd)
@@ -143,7 +157,7 @@ func view(mdl tea.Model) string {
 	footerTop = strings.Repeat(" ", gapSize) + footerTop
 	footerMid = strings.Repeat("─", gapSize) + footerMid
 	footerBot = strings.Repeat(" ", gapSize) + footerBot
-	footer := footerTop + "\n" + footerMid + "\n" + footerBot
+	footer := fmt.Sprintf("%s\n%s\n%s", footerTop, footerMid, footerBot)
 
 	return fmt.Sprintf("%s\n%s\n%s", header, viewport.View(m.viewport), footer)
 }

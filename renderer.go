@@ -61,6 +61,7 @@ func (r *renderer) stop() {
 	r.done <- struct{}{}
 }
 
+// listen waits for ticks on the ticker, or a signal to stop the renderer.
 func (r *renderer) listen() {
 	for {
 		select {
@@ -279,6 +280,11 @@ type syncScrollAreaMsg struct {
 	bottomBoundary int
 }
 
+// SyncScrollArea performs a paint of the entire scroll area. This is required
+// to initialize the scrollable region and should also be called on resize
+// (WindowSizeMsg).
+//
+// For high-performance, scroll-based rendering only.
 func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
 	return func() Msg {
 		return syncScrollAreaMsg{
@@ -291,6 +297,10 @@ func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
 
 type clearScrollAreaMsg struct{}
 
+// ClearScrollArea deallocates the scrollable region and returns the control of
+// those lines to the main rendering routine.
+//
+// For high-performance, scroll-based rendering only.
 func ClearScrollArea() Msg {
 	return clearScrollAreaMsg{}
 }
@@ -301,6 +311,10 @@ type scrollUpMsg struct {
 	bottomBoundary int
 }
 
+// ScrollUp adds lines to the top of the scrollable region, pushing lines below
+// down. Lines that are pushed out the scrollable region disappear from view.
+//
+// For high-performance, scroll-based rendering only.
 func ScrollUp(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollUpMsg{
@@ -317,6 +331,11 @@ type scrollDownMsg struct {
 	bottomBoundary int
 }
 
+// ScrollDown adds lines to the bottom of the scrollable region, pushing lines
+// above up. Lines that are pushed out of the scrollable region disappear from
+// view.
+//
+// For high-performance, scroll-based rendering only.
 func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollDownMsg{

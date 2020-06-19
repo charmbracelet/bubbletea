@@ -8,13 +8,15 @@ import (
 )
 
 // Msg represents an action and is usually the result of an IO operation. It's
-// triggers the  Update function, and henceforth, the UI.
+// triggers the Update function, and henceforth, the UI.
 type Msg interface{}
 
 // Model contains the program's state.
 type Model interface{}
 
-// Cmd is an IO operation. If it's nil it's considered a no-op.
+// Cmd is an IO operation. If it's nil it's considered a no-op. Keep in mind
+// that there's almost never a need to use a command to send a message to
+// another part of your program.
 type Cmd func() Msg
 
 // Batch peforms a bunch of commands concurrently with no ordering guarantees
