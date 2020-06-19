@@ -22,6 +22,7 @@ func main() {
 
 	// Load some text to render
 	content, err := ioutil.ReadFile("artichoke.md")
+	//content, err := ioutil.ReadFile("menagerie.txt")
 	if err != nil {
 		fmt.Println("could not load file:", err)
 		os.Exit(1)
@@ -130,18 +131,13 @@ func view(mdl tea.Model) string {
 	header := fmt.Sprintf("%s\n%s\n%s", headerTop, headerMid, headerBot)
 
 	footerTop := "╭──────╮"
-	footerMid := "┤ %3.f%% │"
+	footerMid := fmt.Sprintf("┤ %3.f%% │", m.viewport.ScrollPercent()*100)
 	footerBot := "╰──────╯"
-	space := m.viewport.Width - runewidth.StringWidth(footerMid)
-	footerTop = strings.Repeat(" ", space) + footerTop
-	footerMid = strings.Repeat("─", space) + footerMid
-	footerBot = strings.Repeat(" ", space) + footerBot
+	gapSize := m.viewport.Width - runewidth.StringWidth(footerMid)
+	footerTop = strings.Repeat(" ", gapSize) + footerTop
+	footerMid = strings.Repeat("─", gapSize) + footerMid
+	footerBot = strings.Repeat(" ", gapSize) + footerBot
 	footer := footerTop + "\n" + footerMid + "\n" + footerBot
 
-	return fmt.Sprintf(
-		"%s\n%s\n%s",
-		header,
-		viewport.View(m.viewport),
-		fmt.Sprintf(footer, m.viewport.ScrollPercent()*100),
-	)
+	return fmt.Sprintf("%s\n%s\n%s", header, viewport.View(m.viewport), footer)
 }
