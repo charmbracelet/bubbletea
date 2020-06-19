@@ -12,7 +12,14 @@ import (
 )
 
 const (
-	useHighPerformanceRenderer = true
+	// You usually won't need this unless you're processing some pretty stuff
+	// with some pretty complicated ANSI escape sequences. Turn it on if you
+	// notice flickering.
+	//
+	// Also note that high performance rendering only works for programs that
+	// use the full size of the terminal. We're enabling that below with
+	// tea.AltScreen().
+	useHighPerformanceRenderer = false
 
 	headerHeight = 3
 	footerHeight = 3
@@ -22,7 +29,6 @@ func main() {
 
 	// Load some text to render
 	content, err := ioutil.ReadFile("artichoke.md")
-	//content, err := ioutil.ReadFile("menagerie.txt")
 	if err != nil {
 		fmt.Println("could not load file:", err)
 		os.Exit(1)
