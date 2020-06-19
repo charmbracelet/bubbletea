@@ -209,13 +209,11 @@ func (r *renderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
 	topBoundary += 1
 	b := new(bytes.Buffer)
 
-	saveCursorPosition(b)
 	changeScrollingRegion(b, topBoundary, bottomBoundary)
 	moveCursor(b, topBoundary, 0)
 	insertLine(b, len(lines))
 	_, _ = io.WriteString(b, strings.Join(lines, "\r\n"))
 	changeScrollingRegion(b, 0, r.height)
-	restoreCursorPosition(b)
 
 	r.out.Write(b.Bytes())
 }
@@ -236,12 +234,10 @@ func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int)
 	topBoundary += 1
 	b := new(bytes.Buffer)
 
-	saveCursorPosition(b)
 	changeScrollingRegion(b, topBoundary, bottomBoundary)
 	moveCursor(b, bottomBoundary, 0)
 	_, _ = io.WriteString(b, "\r\n"+strings.Join(lines, "\r\n"))
 	changeScrollingRegion(b, 0, r.height)
-	restoreCursorPosition(b)
 
 	r.out.Write(b.Bytes())
 }

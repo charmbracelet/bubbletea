@@ -27,14 +27,6 @@ func moveCursor(w io.Writer, row, col int) {
 	fmt.Fprintf(w, te.CSI+te.CursorPositionSeq, row, col)
 }
 
-func saveCursorPosition(w io.Writer) {
-	fmt.Fprint(w, te.CSI+te.SaveCursorPositionSeq)
-}
-
-func restoreCursorPosition(w io.Writer) {
-	fmt.Fprint(w, te.CSI+te.RestoreCursorPositionSeq)
-}
-
 func changeScrollingRegion(w io.Writer, top, bottom int) {
 	fmt.Fprintf(w, te.CSI+te.ChangeScrollingRegionSeq, top, bottom)
 }
