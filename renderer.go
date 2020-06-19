@@ -253,15 +253,15 @@ func (r *renderer) handleMessages(msg Msg) {
 		r.clearIgnoredLines()
 
 	case syncScrollAreaMsg:
-		// Clear buffer to force non-scrolling stuff to repaint
-		r.mtx.Lock()
-		r.buf.Reset()
-		r.mtx.Unlock()
-
 		// Re-render scrolling area
 		r.clearIgnoredLines()
 		r.setIgnoredLines(msg.topBoundary, msg.bottomBoundary)
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
+
+		// Clear buffer to force non-scrolling stuff to repaint
+		r.mtx.Lock()
+		r.buf.Reset()
+		r.mtx.Unlock()
 
 	case scrollUpMsg:
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
