@@ -59,7 +59,7 @@ type quitMsg struct{}
 // can send a batchMsg with Batch.
 type batchMsg []Cmd
 
-// WindowSizeMsg is used to report on the terminal size. It's fired once
+// WindowSizeMsg is used to report on the terminal size. It's sent once
 // initially and then on every terminal resize.
 type WindowSizeMsg struct {
 	Width  int
