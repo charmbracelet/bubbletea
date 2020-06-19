@@ -249,17 +249,11 @@ func (r *renderer) handleMessages(msg Msg) {
 		r.width = msg.Width
 		r.height = msg.Height
 
-	case ignoreLinesMsg:
-		r.setIgnoredLines(msg.from, msg.to)
-
-	case replaceIgnoredLinesMsg:
-		r.clearIgnoredLines()
-		r.setIgnoredLines(msg.from, msg.to)
-
-	case clearIgnoredLinesMsg:
+	case clearScrollAreaMsg:
 		r.clearIgnoredLines()
 
 	case syncScrollAreaMsg:
+		r.clearIgnoredLines()
 		r.setIgnoredLines(msg.topBoundary, msg.bottomBoundary)
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
 
@@ -273,44 +267,26 @@ func (r *renderer) handleMessages(msg Msg) {
 
 // HIGH-PERFORMANCE RENDERING STUFF
 
-// ignoreLinesMsg tells the renderer to skip rendering for the given
-// range of lines.
-type ignoreLinesMsg struct {
-	from int
-	to   int
+type syncScrollAreaMsg struct {
+	lines          []string
+	topBoundary    int
+	bottomBoundary int
 }
 
-// IgnoreLines produces command that sets a range of lines to be ignored
-// by the renderer. The general use case here is that those lines would be
-// rendered separately for performance reasons.
-func IgnoreLines(from int, to int) Cmd {
+func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
 	return func() Msg {
-		return ignoreLinesMsg{from: from, to: to}
+		return syncScrollAreaMsg{
+			lines:          lines,
+			topBoundary:    topBoundary,
+			bottomBoundary: bottomBoundary,
+		}
 	}
 }
 
-type replaceIgnoredLinesMsg struct {
-	from int
-	to   int
-}
+type clearScrollAreaMsg struct{}
 
-// ReplaceIngoredLines produces a command that clears any lines set to be ignored
-// and the sets new ones by the renderer. This is probably a more common use
-// case than the IgnoreLines command.
-func ReplaceIgnoredLines(from int, to int) Cmd {
-	return func() Msg {
-		return replaceIgnoredLinesMsg{from: from, to: to}
-	}
-}
-
-// ClearIgnoredLinesMsg has the renderer allows the renderer to commence rendering
-// any lines previously set to be ignored.
-type clearIgnoredLinesMsg struct{}
-
-// RendererIgnoreLines is a command that sets a range of lines to be
-// ignored by the renderer.
-func ClearIgnoredLines() Msg {
-	return clearIgnoredLinesMsg{}
+func ClearScrollArea() Msg {
+	return clearScrollAreaMsg{}
 }
 
 type scrollUpMsg struct {
@@ -339,22 +315,6 @@ func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollDownMsg{
 			lines:          newLines,
-			topBoundary:    topBoundary,
-			bottomBoundary: bottomBoundary,
-		}
-	}
-}
-
-type syncScrollAreaMsg struct {
-	lines          []string
-	topBoundary    int
-	bottomBoundary int
-}
-
-func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
-	return func() Msg {
-		return syncScrollAreaMsg{
-			lines:          lines,
 			topBoundary:    topBoundary,
 			bottomBoundary: bottomBoundary,
 		}
