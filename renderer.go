@@ -215,6 +215,9 @@ func (r *renderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
 	_, _ = io.WriteString(b, strings.Join(lines, "\r\n"))
 	changeScrollingRegion(b, 0, r.height)
 
+	// Move cursor back to where the main rendering routine expects it to be
+	moveCursor(b, r.linesRendered, 0)
+
 	r.out.Write(b.Bytes())
 }
 
@@ -237,6 +240,9 @@ func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int)
 	moveCursor(b, bottomBoundary, 0)
 	_, _ = io.WriteString(b, "\r\n"+strings.Join(lines, "\r\n"))
 	changeScrollingRegion(b, 0, r.height)
+
+	// Move cursor back to where the main rendering routine expects it to be
+	moveCursor(b, r.linesRendered, 0)
 
 	r.out.Write(b.Bytes())
 }
