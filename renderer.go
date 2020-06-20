@@ -111,7 +111,7 @@ func (r *renderer) flush() {
 
 	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
-		for i := r.linesRendered; i > 0; i-- {
+		for i := r.linesRendered - 1; i > 0; i-- {
 
 			// Check if we should skip rendering for this line. Clearing the
 			// line before painting is part of the standard rendering routine.
