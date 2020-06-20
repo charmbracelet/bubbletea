@@ -207,7 +207,6 @@ func (r *renderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	topBoundary += 1
 	b := new(bytes.Buffer)
 
 	changeScrollingRegion(b, topBoundary, bottomBoundary)
@@ -232,7 +231,6 @@ func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int)
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	topBoundary += 1
 	b := new(bytes.Buffer)
 
 	changeScrollingRegion(b, topBoundary, bottomBoundary)
