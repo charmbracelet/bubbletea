@@ -1,9 +1,11 @@
 package tea
 
 import (
+	"fmt"
 	"os"
+	"sync"
 
-	"github.com/muesli/termenv"
+	te "github.com/muesli/termenv"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -46,6 +48,9 @@ type Program struct {
 	init   Init
 	update Update
 	view   View
+
+	mtx    sync.Mutex
+	output *os.File // where to send output. this will usually be os.Stdout.
 }
 
 // Quit is a special command that tells the program to exit.
@@ -74,21 +79,21 @@ func NewProgram(init Init, update Update, view View) *Program {
 		init:   init,
 		update: update,
 		view:   view,
+
+		output: os.Stdout,
 	}
 }
 
 // Start initializes the program.
 func (p *Program) Start() error {
 	var (
-		model Model
-		cmd   Cmd
-		cmds  = make(chan Cmd)
-		msgs  = make(chan Msg)
-		errs  = make(chan error)
-		done  = make(chan struct{})
-
-		output     *os.File = os.Stdout
-		mrRenderer          = newRenderer(output)
+		model      Model
+		cmd        Cmd
+		cmds       = make(chan Cmd)
+		msgs       = make(chan Msg)
+		errs       = make(chan error)
+		done       = make(chan struct{})
+		mrRenderer = newRenderer(p.output, &p.mtx)
 	)
 
 	err := initTerminal()
@@ -124,7 +129,7 @@ func (p *Program) Start() error {
 
 	// Get initial terminal size
 	go func() {
-		w, h, err := terminal.GetSize(int(output.Fd()))
+		w, h, err := terminal.GetSize(int(p.output.Fd()))
 		if err != nil {
 			errs <- err
 		}
@@ -132,7 +137,7 @@ func (p *Program) Start() error {
 	}()
 
 	// Listen for window resizes
-	go listenForResize(output, msgs, errs)
+	go listenForResize(p.output, msgs, errs)
 
 	// Process commands
 	go func() {
@@ -183,12 +188,16 @@ func (p *Program) Start() error {
 	}
 }
 
-// AltScreen enters the alternate screen buffer.
-func AltScreen() {
-	termenv.AltScreen()
+// EnterAltScreen enters the alternate screen buffer.
+func (p *Program) EnterAltScreen() {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+	fmt.Fprintf(p.output, te.CSI+te.AltScreenSeq)
 }
 
 // ExitAltScreen exits the alternate screen buffer.
-func ExitAltScreen() {
-	termenv.ExitAltScreen()
+func (p *Program) ExitAltScreen() {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
 }

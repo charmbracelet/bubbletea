@@ -24,7 +24,7 @@ type renderer struct {
 	buf           bytes.Buffer
 	framerate     time.Duration
 	ticker        *time.Ticker
-	mtx           sync.Mutex
+	mtx           *sync.Mutex
 	done          chan struct{}
 	lastRender    string
 	linesRendered int
@@ -39,9 +39,10 @@ type renderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the argument.
-func newRenderer(out io.Writer) *renderer {
+func newRenderer(out io.Writer, mtx *sync.Mutex) *renderer {
 	return &renderer{
 		out:       out,
+		mtx:       mtx,
 		framerate: defaultFramerate,
 	}
 }
