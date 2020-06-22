@@ -155,7 +155,7 @@ func (r *renderer) flush() {
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
-	moveCursor(out, r.linesRendered, 0)
+	cursorBack(out, r.width)
 
 	_, _ = r.out.Write(out.Bytes())
 	r.lastRender = r.buf.String()
