@@ -87,8 +87,6 @@ func NewProgram(init Init, update Update, view View) *Program {
 // Start initializes the program.
 func (p *Program) Start() error {
 	var (
-		model      Model
-		cmd        Cmd
 		cmds       = make(chan Cmd)
 		msgs       = make(chan Msg)
 		errs       = make(chan error)
@@ -103,10 +101,10 @@ func (p *Program) Start() error {
 	defer restoreTerminal()
 
 	// Initialize program
-	model, cmd = p.init()
-	if cmd != nil {
+	model, initCmd := p.init()
+	if initCmd != nil {
 		go func() {
-			cmds <- cmd
+			cmds <- initCmd
 		}()
 	}
 
@@ -180,7 +178,7 @@ func (p *Program) Start() error {
 
 			// Process internal messages for the renderer
 			mrRenderer.handleMessages(msg)
-
+			var cmd Cmd
 			model, cmd = p.update(msg, model) // run update
 			cmds <- cmd                       // process command (if any)
 			mrRenderer.write(p.view(model))   // send view to renderer
