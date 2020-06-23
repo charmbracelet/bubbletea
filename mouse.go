@@ -26,7 +26,8 @@ func (m MouseEvent) String() (s string) {
 type MouseButton int
 
 const (
-	MouseLeft MouseButton = iota
+	MouseUnknown MouseButton = iota
+	MouseLeft
 	MouseRight
 	MouseMiddle
 	MouseRelease
@@ -36,6 +37,7 @@ const (
 )
 
 var mouseButtonNames = map[MouseButton]string{
+	MouseUnknown:   "unknown",
 	MouseLeft:      "left",
 	MouseRight:     "right",
 	MouseMiddle:    "middle",
@@ -47,6 +49,11 @@ var mouseButtonNames = map[MouseButton]string{
 
 // Parse an X10-encoded mouse event. The simplest kind. The last release of
 // X10 was December 1986, by the way.
+//
+// X10 mouse events look like:
+//
+//     ESC [M Cb Cx Cy
+//
 func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 	if len(buf) != 6 || string(buf[:3]) != "\x1b[M" {
 		return m, errors.New("not an X10 mouse event")
@@ -64,9 +71,17 @@ func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 	default:
 		switch e & 3 {
 		case 0:
-			m.Button = MouseLeft
+			if e&64 != 0 {
+				m.Button = MouseWheelUp
+			} else {
+				m.Button = MouseLeft
+			}
 		case 1:
-			m.Button = MouseMiddle
+			if e&64 != 0 {
+				m.Button = MouseWheelDown
+			} else {
+				m.Button = MouseMiddle
+			}
 		case 2:
 			m.Button = MouseRight
 		case 3:
