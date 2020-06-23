@@ -193,6 +193,7 @@ func (p *Program) EnterAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.AltScreenSeq)
+	moveCursor(p.output, 0, 0)
 }
 
 // ExitAltScreen exits the alternate screen buffer.
