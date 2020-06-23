@@ -227,15 +227,22 @@ var hexes = map[string]Key{
 	"1b5b313b3344": {Type: KeyLeft, Alt: true},
 }
 
-// ReadKey reads keypress input from a TTY and returns a string representation
-// of a key.
-func ReadKey(r io.Reader) (Key, error) {
+// ReadInput reads keypress and mouse input from a TTY and returns a message
+// containing information about the key or mouse event accordingly
+func ReadInput(r io.Reader) (Msg, error) {
 	var buf [256]byte
 
 	// Read and block
 	numBytes, err := r.Read(buf[:])
 	if err != nil {
-		return Key{}, err
+		return nil, err
+	}
+
+	// See if it's a mouse event. For now we're parsing X10-type mouse events
+	// only.
+	mouseEvent, err := parseX10MouseEvent(buf[:numBytes])
+	if err == nil {
+		return MouseMsg(mouseEvent), nil
 	}
 
 	hex := fmt.Sprintf("%x", buf[:numBytes])
@@ -248,17 +255,17 @@ func ReadKey(r io.Reader) (Key, error) {
 	// Get unicode value
 	char, _ := utf8.DecodeRune(buf[:])
 	if char == utf8.RuneError {
-		return Key{}, errors.New("could not decode rune")
+		return nil, errors.New("could not decode rune")
 	}
 
 	// Is it a control character?
 	if numBytes == 1 && char <= keyUS || char == keyDEL {
-		return Key{Type: KeyType(char)}, nil
+		return KeyMsg(Key{Type: KeyType(char)}), nil
 	}
 
 	// Is it a special sequence, like an arrow key?
 	if k, ok := sequences[string(buf[:numBytes])]; ok {
-		return Key{Type: k}, nil
+		return KeyMsg(Key{Type: k}), nil
 	}
 
 	// Is the alt key pressed? The buffer will be prefixed with an escape
@@ -268,11 +275,11 @@ func ReadKey(r io.Reader) (Key, error) {
 		// character.
 		c, _ := utf8.DecodeRune(buf[1:])
 		if c == utf8.RuneError {
-			return Key{}, errors.New("could not decode rune after removing initial escape")
+			return nil, errors.New("could not decode rune after removing initial escape")
 		}
-		return Key{Alt: true, Type: KeyRune, Rune: c}, nil
+		return KeyMsg(Key{Alt: true, Type: KeyRune, Rune: c}), nil
 	}
 
 	// Just a regular, ol' rune
-	return Key{Type: KeyRune, Rune: char}, nil
+	return KeyMsg(Key{Type: KeyRune, Rune: char}), nil
 }

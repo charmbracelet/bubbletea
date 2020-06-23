@@ -119,11 +119,11 @@ func (p *Program) Start() error {
 	// Subscribe to user input
 	go func() {
 		for {
-			msg, err := ReadKey(os.Stdin)
+			msg, err := ReadInput(os.Stdin)
 			if err != nil {
 				errs <- err
 			}
-			msgs <- KeyMsg(msg)
+			msgs <- msg
 		}
 	}()
 
@@ -200,4 +200,28 @@ func (p *Program) ExitAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
+}
+
+func (p *Program) EnableMouseCellMotion() {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+	fmt.Fprintf(p.output, te.CSI+"?1002h")
+}
+
+func (p *Program) DisableMouseCellMotion() {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+	fmt.Fprintf(p.output, te.CSI+"?1002l")
+}
+
+func (p *Program) EnableMouseAllMotion() {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+	fmt.Fprintf(p.output, te.CSI+"?1003h")
+}
+
+func (p *Program) DisableMouseAllMotion() {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+	fmt.Fprintf(p.output, te.CSI+"?1003l")
 }
