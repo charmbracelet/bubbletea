@@ -203,24 +203,35 @@ func (p *Program) ExitAltScreen() {
 	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
 }
 
+// EnableMouseCellMotion enables mouse click, release, wheel and motion events if a
+// button is pressed.
 func (p *Program) EnableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+"?1002h")
 }
 
+// DisableMouseCellMotino disables Mouse Cell Motion tracking. If you've
+// enabled Cell Motion mouse trakcing be sure to call this as your program is
+// exiting or your users will be very upset!
 func (p *Program) DisableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+"?1002l")
 }
 
+// EnableMouseAllMotion enables mouse click, release, wheel and motion events,
+// regardless of whether a button is pressed. Many modern terminals support
+// this, but not all.
 func (p *Program) EnableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+"?1003h")
 }
 
+// DisableMouseAllMotion disables All Motion mouse tracking. If you've enabled
+// All Motion mouse tracking be sure you call this as your program is exiting
+// or your users will be very upset!
 func (p *Program) DisableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()

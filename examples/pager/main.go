@@ -40,25 +40,27 @@ func main() {
 	//
 	// This becomes handy when debugging stuff since you can't debug to stdout
 	// because the UI is occupying it!
-	p := os.Getenv("PAGER_LOG")
-	if p != "" {
-		f, err := tea.LogToFile(p, "pager")
+	path := os.Getenv("PAGER_LOG")
+	if path != "" {
+		f, err := tea.LogToFile(path, "pager")
 		if err != nil {
-			fmt.Printf("Could not open file %s: %v", p, err)
+			fmt.Printf("Could not open file %s: %v", path, err)
 			os.Exit(1)
 		}
 		defer f.Close()
 	}
 
-	// Use the full size of the terminal in its "alternate screen buffer"
-	tea.AltScreen()
-	defer tea.ExitAltScreen()
+	p := tea.NewProgram(initialize(string(content)), update, view)
 
-	if err := tea.NewProgram(
-		initialize(string(content)),
-		update,
-		view,
-	).Start(); err != nil {
+	// Use the full size of the terminal in its "alternate screen buffer"
+	p.EnterAltScreen()
+	defer p.ExitAltScreen()
+
+	// We also turn on mouse support so we can track the mouse wheel
+	p.EnableMouseCellMotion()
+	defer p.DisableMouseCellMotion()
+
+	if err := p.Start(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}
