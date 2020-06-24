@@ -16,9 +16,12 @@ type Msg interface{}
 // Model contains the program's state.
 type Model interface{}
 
-// Cmd is an IO operation. If it's nil it's considered a no-op. Keep in mind
-// that there's almost never a need to use a command to send a message to
-// another part of your program.
+// Cmd is an IO operation. If it's nil it's considered a no-op. Use it for
+// things like HTTP requests, timers, saving and loading from disk, and so on.
+//
+// There's almost never a need to use a command to send a message to another
+// part of your program. Instead, it can almost always be done in the update
+// function.
 type Cmd func() Msg
 
 // Batch peforms a bunch of commands concurrently with no ordering guarantees
@@ -36,11 +39,12 @@ func Batch(cmds ...Cmd) Cmd {
 // model and runs an optional command.
 type Init func() (Model, Cmd)
 
-// Update is called when a message is received. It may update the model and/or
-// send a command.
+// Update is called when a message is received. Use it to inspect messages and,
+// in repsonse,  update the model and/or send a command.
 type Update func(Msg, Model) (Model, Cmd)
 
-// View produces a string which will be rendered to the terminal.
+// View renders the program's UI: a string which will be printed to the
+// terminal. The view is rendered after every Update.
 type View func(Model) string
 
 // Program is a terminal user interface.
