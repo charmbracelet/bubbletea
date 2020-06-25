@@ -210,7 +210,7 @@ func (p *Program) ExitAltScreen() {
 func (p *Program) EnableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
-	fmt.Fprintf(p.output, te.CSI+"?1002h")
+	fmt.Fprintf(p.output, te.CSI+te.EnableMouseCellMotionSeq)
 }
 
 // DisableMouseCellMotino disables Mouse Cell Motion tracking. If you've
@@ -219,7 +219,7 @@ func (p *Program) EnableMouseCellMotion() {
 func (p *Program) DisableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
-	fmt.Fprintf(p.output, te.CSI+"?1002l")
+	fmt.Fprintf(p.output, te.CSI+te.DisableMouseCellMotionSeq)
 }
 
 // EnableMouseAllMotion enables mouse click, release, wheel and motion events,
@@ -228,7 +228,7 @@ func (p *Program) DisableMouseCellMotion() {
 func (p *Program) EnableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
-	fmt.Fprintf(p.output, te.CSI+"?1003h")
+	fmt.Fprintf(p.output, te.CSI+te.EnableMouseAllMotionSeq)
 }
 
 // DisableMouseAllMotion disables All Motion mouse tracking. If you've enabled
@@ -237,5 +237,5 @@ func (p *Program) EnableMouseAllMotion() {
 func (p *Program) DisableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
-	fmt.Fprintf(p.output, te.CSI+"?1003l")
+	fmt.Fprintf(p.output, te.CSI+te.DisableMouseAllMotionSeq)
 }
