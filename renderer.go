@@ -175,17 +175,38 @@ func (r *renderer) write(s string) {
 // setIngoredLines speicifies lines not to be touched by the standard Bubble Tea
 // renderer.
 func (r *renderer) setIgnoredLines(from int, to int) {
+	// Lock if we're going to be clearing some lines since we don't want
+	// anything jacking our cursor.
+	if r.linesRendered > 0 {
+		r.mtx.Lock()
+		defer r.mtx.Unlock()
+	}
+
 	if r.ignoreLines == nil {
 		r.ignoreLines = make(map[int]struct{})
 	}
 	for i := from; i < to; i++ {
 		r.ignoreLines[i] = struct{}{}
 	}
+
+	// Erase ignored lines
+	if r.linesRendered > 0 {
+		out := new(bytes.Buffer)
+		for i := r.linesRendered - 1; i >= 0; i-- {
+			if _, exists := r.ignoreLines[i]; exists {
+				clearLine(out)
+			}
+			cursorUp(out)
+		}
+		moveCursor(out, r.linesRendered, 0) // put cursor back
+		r.out.Write(out.Bytes())
+	}
+
 }
 
-// clearIgnoredLines sets all lines to be rendered by the standard Bubble
-// Tea renderer. Any lines previously set to be ignored can be rendered to
-// again.
+// clearIgnoredLines returns control of any ignored lines to the standard
+// Bubble Tea renderer. That is, any lines previously set to be ignored can be
+// rendered to again.
 func (r *renderer) clearIgnoredLines() {
 	r.ignoreLines = nil
 }
