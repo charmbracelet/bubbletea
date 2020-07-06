@@ -29,7 +29,7 @@ type renderer struct {
 	lastRender    string
 	linesRendered int
 
-	// renderer size; usually the size of the window
+	// renderer dimensions; usually the size of the window
 	width  int
 	height int
 
@@ -38,7 +38,7 @@ type renderer struct {
 }
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
-// with os.Stdout as the argument.
+// with os.Stdout as the first argument.
 func newRenderer(out io.Writer, mtx *sync.Mutex) *renderer {
 	return &renderer{
 		out:       out,
