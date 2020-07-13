@@ -29,6 +29,9 @@ type renderer struct {
 	lastRender    string
 	linesRendered int
 
+	// essentially whether or not we're using the full size of the terminal
+	altScreenActive bool
+
 	// renderer dimensions; usually the size of the window
 	width  int
 	height int
@@ -156,7 +159,14 @@ func (r *renderer) flush() {
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
-	cursorBack(out, r.width)
+	if r.altScreenActive {
+		// We need this case to fix a bug in macOS terminal. In other terminals
+		// the below case seems to do the job regardless of whether or not we're
+		// using the full terminal window.
+		moveCursor(out, r.linesRendered, 0)
+	} else {
+		cursorBack(out, r.width)
+	}
 
 	_, _ = r.out.Write(out.Bytes())
 	r.lastRender = r.buf.String()

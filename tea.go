@@ -53,8 +53,10 @@ type Program struct {
 	update Update
 	view   View
 
-	mtx    sync.Mutex
-	output *os.File // where to send output. this will usually be os.Stdout.
+	mtx             sync.Mutex
+	output          *os.File // where to send output. this will usually be os.Stdout.
+	renderer        *renderer
+	altScreenActive bool
 }
 
 // Quit is a special command that tells the program to exit.
@@ -91,12 +93,13 @@ func NewProgram(init Init, update Update, view View) *Program {
 // Start initializes the program.
 func (p *Program) Start() error {
 	var (
-		cmds       = make(chan Cmd)
-		msgs       = make(chan Msg)
-		errs       = make(chan error)
-		done       = make(chan struct{})
-		mrRenderer = newRenderer(p.output, &p.mtx)
+		cmds = make(chan Cmd)
+		msgs = make(chan Msg)
+		errs = make(chan error)
+		done = make(chan struct{})
 	)
+
+	p.renderer = newRenderer(p.output, &p.mtx)
 
 	err := initTerminal()
 	if err != nil {
@@ -113,10 +116,11 @@ func (p *Program) Start() error {
 	}
 
 	// Start renderer
-	mrRenderer.start()
+	p.renderer.start()
+	p.renderer.altScreenActive = p.altScreenActive
 
 	// Render initial view
-	mrRenderer.write(p.view(model))
+	p.renderer.write(p.view(model))
 
 	// Subscribe to user input
 	go func() {
@@ -167,7 +171,7 @@ func (p *Program) Start() error {
 
 			// Handle quit message
 			if _, ok := msg.(quitMsg); ok {
-				mrRenderer.stop()
+				p.renderer.stop()
 				close(done)
 				return nil
 			}
@@ -181,11 +185,11 @@ func (p *Program) Start() error {
 			}
 
 			// Process internal messages for the renderer
-			mrRenderer.handleMessages(msg)
+			p.renderer.handleMessages(msg)
 			var cmd Cmd
 			model, cmd = p.update(msg, model) // run update
 			cmds <- cmd                       // process command (if any)
-			mrRenderer.write(p.view(model))   // send view to renderer
+			p.renderer.write(p.view(model))   // send view to renderer
 		}
 	}
 }
@@ -196,6 +200,11 @@ func (p *Program) EnterAltScreen() {
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.AltScreenSeq)
 	moveCursor(p.output, 0, 0)
+
+	p.altScreenActive = true
+	if p.renderer != nil {
+		p.renderer.altScreenActive = p.altScreenActive
+	}
 }
 
 // ExitAltScreen exits the alternate screen buffer.
@@ -203,6 +212,11 @@ func (p *Program) ExitAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
+
+	p.altScreenActive = false
+	if p.renderer != nil {
+		p.renderer.altScreenActive = p.altScreenActive
+	}
 }
 
 // EnableMouseCellMotion enables mouse click, release, wheel and motion events if a
