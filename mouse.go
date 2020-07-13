@@ -4,6 +4,8 @@ import "errors"
 
 type MouseMsg MouseEvent
 
+// MouseEvent represents a mouse event, which could be a click, a scroll wheel
+// movement, a cursor movement, or a combination.
 type MouseEvent struct {
 	X      int
 	Y      int
@@ -12,6 +14,7 @@ type MouseEvent struct {
 	Ctrl   bool
 }
 
+// String returns a string representation of a mouse event.
 func (m MouseEvent) String() (s string) {
 	if m.Ctrl {
 		s += "ctrl+"
@@ -23,6 +26,7 @@ func (m MouseEvent) String() (s string) {
 	return s
 }
 
+// MouseButton represents a mouse button event.
 type MouseButton int
 
 const (
@@ -47,7 +51,7 @@ var mouseButtonNames = map[MouseButton]string{
 	MouseMotion:    "motion",
 }
 
-// Parse an X10-encoded mouse event. The simplest kind. The last release of
+// Parse an X10-encoded mouse event; the simplest kind. The last release of
 // X10 was December 1986, by the way.
 //
 // X10 mouse events look like:
