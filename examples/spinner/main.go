@@ -31,7 +31,7 @@ func main() {
 
 func initialize() (tea.Model, tea.Cmd) {
 	s := spinner.NewModel()
-	s.Type = spinner.Dot
+	s.Frames = spinner.Dot
 
 	return Model{
 		spinner: s,
