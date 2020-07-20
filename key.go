@@ -249,7 +249,7 @@ func ReadInput(r io.Reader) (Msg, error) {
 
 	// Some of these need special handling
 	if k, ok := hexes[hex]; ok {
-		return k, nil
+		return KeyMsg(k), nil
 	}
 
 	// Get unicode value
