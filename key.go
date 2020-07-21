@@ -116,7 +116,7 @@ const (
 	KeyCtrlS            = keyDC3
 	KeyCtrlT            = keyDC4
 	KeyCtrlU            = keyNAK
-	KeyCtrlV            = keyETB
+	KeyCtrlV            = keySYN
 	KeyCtrlW            = keyETB
 	KeyCtrlX            = keyCAN
 	KeyCtrlY            = keyEM
