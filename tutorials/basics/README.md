@@ -33,12 +33,9 @@ import will be the Bubble Tea, library, which we'll call `tea` for short.
 Bubble Tea programs are comprised of a model that describes the application
 state and three simple functions that are centered around the model:
 
-Initialize
-: A function that returns the model's initial state.
-Update
-: A function that handles incoming events and updates the model accordingly.
-View
-: A function that renders the UI based on the data in the model.
+* **Initialize**, a function that returns the model's initial state.
+* **Update**, a function that handles incoming events and updates the model accordingly.
+* **View**, a function that renders the UI based on the data in the model.
 
 ## The Model
 
