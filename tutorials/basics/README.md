@@ -185,7 +185,7 @@ for you.
         // The footer
         s += "\nPress q to quit.\n"
 
-        // Send off the UI to rendered
+        // Send off the UI for rendering
         return s
     }
 ```
