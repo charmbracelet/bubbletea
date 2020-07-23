@@ -211,8 +211,8 @@ This tutorial covers the basics of building an interactive terminal UI, but
 in the real world you'll also need to perform I/O. To learn about that have a
 look at the [Cmd Tutorial][cmd]. It's pretty simple.
 
-There are also several [examples][examples] available and, of course,
-there are also [Go Docs][docs] for Bubble Tea.
+There are also several [Bubble Tea example][examples] available and, of course,
+there are [Go Docs][docs].
 
 [cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/cmds/
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
@@ -221,7 +221,7 @@ there are also [Go Docs][docs] for Bubble Tea.
 ## Libraries we use with Bubble Tea
 
 * [Bubbles][bubbles] various Bubble Tea components we've built
-* [Termenv][termenv]: Advanced ANSI coloring for terminal applications
+* [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
 * [go-runewidth][runewidth]: Get the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it!
 
