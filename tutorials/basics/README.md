@@ -30,8 +30,8 @@ import will be the Bubble Tea, library, which we'll call `tea` for short.
     )
 ```
 
-Bubble Tea programs are comprised of a model that describes the application
-state and three simple functions that are centered around the model:
+Bubble Tea programs are comprised of a **model** that describes the application
+state and three simple functions that are centered around that model:
 
 * **Initialize**, a function that returns the model's initial state.
 * **Update**, a function that handles incoming events and updates the model accordingly.
@@ -39,9 +39,8 @@ state and three simple functions that are centered around the model:
 
 ## The Model
 
-So let's start by defining our application's model. The model is simply the
-application's state. It can be any type, but a `struct` usually makes the most
-sense.
+So let's start by defining our model which will store our application's state.
+It can be any type, but a `struct` usually makes the most sense.
 
 ```go
     type model struct {
@@ -57,7 +56,7 @@ Next we'll define a function that will initialize our application. An
 initialize function returns a model representing our application's initial
 state, as well as a `Cmd` that could perform some initial I/O. For now, we
 don't need to do any I/O, so for the command we'll just return nil, which
-translate to "no command."
+translates to "no command."
 
 ```go
     func initialize() (tea.Model, tea.Cmd) {
@@ -80,22 +79,22 @@ translate to "no command."
 ## Update
 
 Next we'll define the update function. The update function is called when
-"things happen." It's job is to look at what has happened and return an
-updated model based on whatever happened. It can also return a `Cmd` and make
-more things happen, but we'll get into that later.
+"things happen." It's job is to look at what has happened and return an updated
+model in response to whatever happened. It can also return a `Cmd` and make
+more things happen, but for not don't worry about that part.
 
 In our case, when a user presses the down arrow `update`'s job is to notice
 that the down arrow was pressed and move the cursor accordingly (or not).
 
-The "something happened" comes in as a `Msg`, which can be any type. Messages
-indicate some I/O happened, such as a keypress, timer, or a response from
-a server.
+The "something happened" comes in the form of a `Msg`, which can be any type.
+Messages indicate some I/O happened, such as a keypress, timer tick, or
+a response from a server.
 
 We usually figure out which type of `Msg` we received with a type switch, but
 you could also use a type assertion.
 
-For now, we'll just deal with `tea.KeyMsg`, which are automatically sent to
-the update function when keys are pressed.
+For now, we'll just deal with `tea.KeyMsg` messages, which are automatically
+sent to the update function when keys are pressed.
 
 ```go
     func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
@@ -143,9 +142,9 @@ the update function when keys are pressed.
     }
 ```
 
-You may have noticed that "ctrl+c" and "q" above return a `tea.Quit` with the
-model. That's a special command which instructs the Bubble Tea runtime to exit,
-effectively quitting the program.
+You may have noticed that "ctrl+c" and "q" above return a `tea.Quit` command
+with the model. That's a special command which instructs the Bubble Tea runtime
+to quit, effectively exiting the program.
 
 ## The View
 
@@ -212,21 +211,28 @@ This tutorial covers the basics of building an interactive terminal UI, but
 in the real world you'll also need to perform I/O. To learn about that have a
 look at the [Cmd Tutorial][cmd]. It's pretty simple.
 
-There are also several [examples][examples] available. Many of the examples
-make use of [Bubbles][bubbles], the little Bubble Tea component library which
-includes handy things like a text input component, spinners and a viewport.
-
-Of course, there are also [Go Docs][docs] for Bubble Tea.
+There are also several [examples][examples] available and, of course,
+there are also [Go Docs][docs] for Bubble Tea.
 
 [cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/cmds/
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[bubbles]: https://github.com/charmbracelet/bubbles
 [docs]: https://pkg.go.dev/github.com/charmbracelet/glow?tab=doc
+
+## Libraries we use with Bubble Tea
+
+* [Bubbles][bubbles] various Bubble Tea components we've built
+* [Termenv][termenv]: Advanced ANSI coloring for terminal applications
+* [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
+* [go-runewidth][runewidth]: Get the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it!
+
+[termenv]: https://github.com/muesli/termenv
+[reflow]: https://github.com/muesli/reflow
+[bubbles]: https://github.com/charmbracelet/bubbles
+[runewidth]: https://github.com/mattn/go-runewidth
 
 ## Feedback
 
-We'd love to hear your thoughts on this tutorial. Please feel free to reach out
-anytime.
+We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.technology/@charm)
