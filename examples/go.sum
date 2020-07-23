@@ -1,3 +1,7 @@
+github.com/atotto/clipboard v0.1.2/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
+github.com/charmbracelet/bubbles v0.4.0/go.mod h1:yhk6OKN3haEO3i/vYQVrvbPamvOPo2dVavWfbpsuUjg=
+github.com/charmbracelet/bubbles v0.5.0 h1:pCm4XRZLYTaQGmyByztTUfCMzp7Ks30+9BpXg1gK9zM=
+github.com/charmbracelet/bubbles v0.5.0/go.mod h1:xmZpdK4/Sn3bGgBKK40YPmM9Hf4taFGgKkLqSdAb0FA=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776 h1:VRIbnDWRmAh5yBdz+J6yFMF5vso1It6vn+WmM/5l7MA=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776/go.mod h1:9wvnDu3YOfxzWM9Cst40msBF1C2UdQgDv962oTxSuMs=
 github.com/google/goterm v0.0.0-20190703233501-fc88cf888a3f h1:5CjVwnuUcp5adK4gmY6i72gpVFVnZDP2h5TmPScB6u4=
