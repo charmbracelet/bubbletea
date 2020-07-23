@@ -190,7 +190,7 @@ for you.
     }
 ```
 
-## All togeher now
+## All together now
 
 The last step is to simply run our program. We pass our functions to
 `tea.NewProgram` and let it rip:
