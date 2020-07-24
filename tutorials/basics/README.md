@@ -51,7 +51,7 @@ It can be any type, but a `struct` usually makes the most sense.
     }
 ```
 
-## Initialize
+## The Initialization Function
 
 Next we'll define a function that will initialize our application. An
 initialize function returns a model representing our application's initial
@@ -77,7 +77,7 @@ translates to "no command."
     }
 ```
 
-## Update
+## The Update Function
 
 Next we'll define the update function. The update function is called when
 "things happen." It's job is to look at what has happened and return an updated
@@ -147,7 +147,7 @@ You may have noticed that "ctrl+c" and "q" above return a `tea.Quit` command
 with the model. That's a special command which instructs the Bubble Tea runtime
 to quit, effectively exiting the program.
 
-## The View
+## The View Function
 
 At last, it's time to render our UI. Of all the functions, the view is the
 simplest. A model, in it's current state, comes in and a `string` comes out.
@@ -191,7 +191,7 @@ for you.
     }
 ```
 
-## All together now
+## All Together Now
 
 The last step is to simply run our program. We pass our functions to
 `tea.NewProgram` and let it rip:
@@ -206,7 +206,7 @@ The last step is to simply run our program. We pass our functions to
     }
 ```
 
-## What's next?
+## What's Next?
 
 This tutorial covers the basics of building an interactive terminal UI, but
 in the real world you'll also need to perform I/O. To learn about that have a
