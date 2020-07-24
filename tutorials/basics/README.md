@@ -1,4 +1,5 @@
-# Bubble Tea Tutorial
+Bubble Tea Basics
+=================
 
 Bubble Tea is based on the functional design paradigms of [The Elm
 Architecture][elm]. It might not seem very Go-like at first, but once you get
@@ -185,7 +186,7 @@ for you.
         // The footer
         s += "\nPress q to quit.\n"
 
-        // Send off the UI for rendering
+        // Send the UI for rendering
         return s
     }
 ```
@@ -211,14 +212,21 @@ This tutorial covers the basics of building an interactive terminal UI, but
 in the real world you'll also need to perform I/O. To learn about that have a
 look at the [Cmd Tutorial][cmd]. It's pretty simple.
 
-There are also several [Bubble Tea example][examples] available and, of course,
+There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/cmds/
+[cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/glow?tab=doc
 
-## Libraries we use with Bubble Tea
+### Bubble Tea in the Wild
+
+For some Bubble Tea programs in production, see:
+
+* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
+* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
+
+### Libraries we use with Bubble Tea
 
 * [Bubbles][bubbles] various Bubble Tea components we've built
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
@@ -230,7 +238,7 @@ there are [Go Docs][docs].
 [bubbles]: https://github.com/charmbracelet/bubbles
 [runewidth]: https://github.com/mattn/go-runewidth
 
-## Feedback
+### Feedback
 
 We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
