@@ -36,7 +36,7 @@ a `const`.
 ## The Model
 
 Next we'll define our model. The only things we need to store are the status
-code of HTTP response and a possible error.
+code of the HTTP response and a possible error.
 
 ```go
     type model struct {
@@ -107,17 +107,20 @@ them here. This makes dealing with many asynchronous operations very easy.
 
         case statusMsg:
             // The server returned a status message. Save it to our model. Also
-            // exit because we have nothing else to do.
+            // tell the Bubble Tea runtime we ant to exit because we have
+            // nothing else to do. Don't worry, we'll still be able to render
+            // a final view with our status message.
             m.status = int(msg)
             return m, tea.Quit
 
         case errMsg:
-            // There was an error. Note it in the model. And exit the program.
+            // There was an error. Note it in the model. And tell the runtime
+            // we're done and want to quit.
             m.err = msg
             return m, tea.Quit
 
         case tea.KeyMsg:
-            // Ctrl+c quits. Even with short running programs it's good to have
+            // Ctrl+c exits. Even with short running programs it's good to have
             // a quit key, just incase your logic is off. Users will be very
             // annoyed if they can't exit.
             if msg.Type == tea.KeyCtrlC {
@@ -170,7 +173,7 @@ The only thing left to do is run the program, so let's do that!
     }
 ```
 
-And that's that. There's one more thing you should is helpful to know about
+And that's that. There's one more thing you that is helpful to know about
 `Cmd`s, though.
 
 ## One More Thing About Commands
@@ -195,9 +198,9 @@ that returns a command. For example:
 
 ```
 
-Just make sure you do as much work as you can in the innermost function, because
-that's the one that runs asynchronously.
-n
+Just make sure you do as much stuff as you can in the innermost function,
+because that's the one that runs asynchronously.
+
 ## Anyway, Now What?
 
 After doing this tutorial and [the previous one][basics] you should be ready to

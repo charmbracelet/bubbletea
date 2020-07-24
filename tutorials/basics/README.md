@@ -210,7 +210,7 @@ The last step is to simply run our program. We pass our functions to
 
 This tutorial covers the basics of building an interactive terminal UI, but
 in the real world you'll also need to perform I/O. To learn about that have a
-look at the [Cmd Tutorial][cmd]. It's pretty simple.
+look at the [Command Tutorial][cmd]. It's pretty simple.
 
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
