@@ -80,7 +80,7 @@ translates to "no command."
 ## The Update Function
 
 Next we'll define the update function. The update function is called when
-"things happen." It's job is to look at what has happened and return an updated
+"things happen." Its job is to look at what has happened and return an updated
 model in response to whatever happened. It can also return a `Cmd` and make
 more things happen, but for now don't worry about that part.
 
