@@ -56,7 +56,7 @@ It can be any type, but a `struct` usually makes the most sense.
 Next we'll define a function that will initialize our application. An
 initialize function returns a model representing our application's initial
 state, as well as a `Cmd` that could perform some initial I/O. For now, we
-don't need to do any I/O, so for the command we'll just return nil, which
+don't need to do any I/O, so for the command we'll just return `nil`, which
 translates to "no command."
 
 ```go
@@ -82,14 +82,14 @@ translates to "no command."
 Next we'll define the update function. The update function is called when
 "things happen." It's job is to look at what has happened and return an updated
 model in response to whatever happened. It can also return a `Cmd` and make
-more things happen, but for not don't worry about that part.
+more things happen, but for now don't worry about that part.
 
-In our case, when a user presses the down arrow `update`'s job is to notice
+In our case, when a user presses the down arrow, `update`'s job is to notice
 that the down arrow was pressed and move the cursor accordingly (or not).
 
 The "something happened" comes in the form of a `Msg`, which can be any type.
-Messages indicate some I/O happened, such as a keypress, timer tick, or
-a response from a server.
+Messages are the result of some I/O that took place, such as a keypress, timer
+tick, or a response from a server.
 
 We usually figure out which type of `Msg` we received with a type switch, but
 you could also use a type assertion.
@@ -145,7 +145,7 @@ sent to the update function when keys are pressed.
 
 You may have noticed that "ctrl+c" and "q" above return a `tea.Quit` command
 with the model. That's a special command which instructs the Bubble Tea runtime
-to quit, effectively exiting the program.
+to quit, exiting the program.
 
 ## The View Function
 
