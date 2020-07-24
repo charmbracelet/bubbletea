@@ -13,7 +13,7 @@ You can find the non-annotated version of this program [on GitHub][source].
 ## Let's Go!
 
 For this tutorial we're building a very simple program that makes an HTTP
-request to a server over HTTP and reports the status code of the response.
+request to a server and reports the status code of the response.
 
 We'll import a few necessary packages and put the URL we're going to check in
 a `const`.
@@ -35,8 +35,8 @@ a `const`.
 
 ## The Model
 
-Next we'll define our model. The only things we need to store are the HTTP
-response and a possible error.
+Next we'll define our model. The only things we need to store are the status
+code of HTTP response and a possible error.
 
 ```go
     type model struct {
@@ -76,14 +76,15 @@ result as a `Msg`.
     type errMsg error
 ```
 
-And notice that we've defined two new `Msg` types. They can be any type, even a
-struct. We'll come back to them later later in our update function.
+And notice that we've defined two new `Msg` types. They can be any type, even
+an empty struct. We'll come back to them later later in our update function.
 First, let's write our initialization function.
 
 ## The Initialization Function
 
-The initilization function is incredibly simple. We return an empty model and
-fire off the `Cmd` we made earlier.
+The initilization function is very simple. We return an empty model and the
+the `Cmd` we made earlier. Note that we don't call the function; the Bubble Tea
+runtime will do that when the time is right.
 
 ```go
     func initialize() (tea.Model, tea.Cmd) {
@@ -117,7 +118,7 @@ them here. This makes dealing with many asynchronous operations very easy.
 
         case tea.KeyMsg:
             // Ctrl+c quits. Even with short running programs it's good to have
-            // an quit key, just incase your logic is off. Users will be very
+            // a quit key, just incase your logic is off. Users will be very
             // annoyed if they can't exit.
             if msg.Type == tea.KeyCtrlC {
                 return m, tea.Quit
@@ -169,7 +170,7 @@ The only thing left to do is run the program, so let's do that!
     }
 ```
 
-And that's that! There's one more thing you should is helpful to know about
+And that's that. There's one more thing you should is helpful to know about
 `Cmd`s, though.
 
 ## One More Thing About Commands
@@ -199,11 +200,10 @@ that's the one that runs asynchronously.
 
 ## Anyway, Now What?
 
-After doing this tutorial and [the previous one][basics] you should be ready
-to build a Bubble Tea program of your own.
-
-We also recommend that you look at the Bubble Tea [example programs][examples]
-as well as [Bubbles][bubbles], a component library for Bubble Tea.
+After doing this tutorial and [the previous one][basics] you should be ready to
+build a Bubble Tea program of your own.  We also recommend that you look at the
+Bubble Tea [example programs][examples] as well as [Bubbles][bubbles],
+a component library for Bubble Tea.
 
 And, of course, check out the [Go Docs][docs].
 
