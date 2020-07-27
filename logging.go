@@ -1,10 +1,7 @@
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris
-
 package tea
 
 import (
 	"log"
-	"log/syslog"
 	"os"
 )
 
@@ -27,18 +24,4 @@ func LogToFile(path string, prefix string) (*os.File, error) {
 	}
 	log.SetOutput(f)
 	return f, nil
-}
-
-// UseSysLog sets up logging to log the system log. This becomes helpful when
-// debugging since we can't print to the terminal since our TUI is occupying it.
-//
-// On macOS this is a just a matter of: tail -f /var/log/system.log
-// On Linux this varies depending on distribution.
-func UseSysLog(programName string) error {
-	l, err := syslog.New(syslog.LOG_NOTICE, programName)
-	if err != nil {
-		return err
-	}
-	log.SetOutput(l)
-	return nil
 }
