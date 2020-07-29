@@ -1,5 +1,10 @@
 # Bubble Tea
 
+<p>
+    <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
+    <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/glow/workflows/build/badge.svg" alt="Build Status"></a>
+</p>
+
 The fun, functional and stateful way to build terminal apps. A Go framework
 based on [The Elm Architecture][elm].
 
