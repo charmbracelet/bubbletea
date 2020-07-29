@@ -45,7 +45,8 @@ Inspired by [The Elm Architecture][elm] by Evan Czaplicki et al. and
 
 ## License
 
-[MIT](https://github.com/charmbracelet/tea/raw/master/LICENSE)
+[MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
+
 
 ***
 
