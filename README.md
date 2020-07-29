@@ -1,90 +1,43 @@
 # Bubble Tea
 
-The fun, functional way to build terminal apps. A Go framework based on
-[The Elm Architecture][elm].
+The fun, functional and stateful way to build terminal apps. A Go framework
+based on [The Elm Architecture][elm].
 
-⚠️  This project is a pre-release so the API is subject to change
-a little. That said, we're using it in production.
+Bubble Tea is well-suited for simple and complex terminal applications,
+either inline, full-window, or a mix of both. It's been battle-tested in
+several large projects and is production-ready.
 
+To get started, see the [tutorials][tutorials] and [examples][examples].
 
-## Simple example
-
-```go
-package main
-
-// A simple program that counts down from 5 and then exits.
-
-import (
-	"fmt"
-	"log"
-	"time"
-	tea "github.com/charmbracelet/bubbletea"
-)
-
-type model int
-
-type tickMsg struct{}
-
-func main() {
-	p := tea.NewProgram(initialize, update, view, subscriptions)
-	if err := p.Start(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-// Return the initial model and initial command
-func initialize() (tea.Model, tea.Cmd) {
-    return 5, tick
-}
-
-// Listen for messages and update the model accordingly
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
-
-	switch msg.(type) {
-	case tickMsg:
-		m--
-		if m == 0 {
-			return m, tea.Quit
-		}
-	}
-	return m, nil
-}
-
-// Render to the terminal
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-	return fmt.Sprintf("Hi. This program will exit in %d seconds...\n", m)
-}
-
-// A simple command which Bubble Tea runs asynchronously.
-func tick() tea.Msg {
-    time.Sleep(time.Second)
-    return tickMsg{}
-}
-```
-
-Hungry for more? Totally confused? See the [other examples][examples].
-
+[tutorials]: https://github.com/charmbracelet/tea/tree/master/tutorials
 [examples]: https://github.com/charmbracelet/tea/tree/master/examples
 
 
-## Other Resources
+## Bubble Tea in the Wild
 
-* [termenv](https://github.com/muesli/termenv): advanced ANSI style and color
-  support for your terminal applications. Very useful when rendering your
-  views.
-* [reflow](https://github.com/muesli/reflow): a collection of ANSI-aware text
-  formatting tools. Also useful for view rendering.
-* [go-runewidth](https://github.com/mattn/go-runewidth): functions to get the
-  physical width of runes in terms of cells. Indispensable when working with
-  fullwidth and zero-width characters.
+For some Bubble Tea programs in production, see:
+
+* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
+* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
+
+
+## Libraries we use with Bubble Tea
+
+* [Bubbles][bubbles] various Bubble Tea components we've built
+* [Termenv][termenv]: Advanced ANSI styling for terminal applications
+* [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
+* [go-runewidth][runewidth]: Get the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it!
+
+[termenv]: https://github.com/muesli/termenv
+[reflow]: https://github.com/muesli/reflow
+[bubbles]: https://github.com/charmbracelet/bubbles
+[runewidth]: https://github.com/mattn/go-runewidth
 
 
 ## Acknowledgments
 
-Heavily inspired by both [The Elm Architecture][elm] by Evan Czaplicki et al.
-and [go-tea][gotea] by TJ Holowaychuk.
+Inspired by [The Elm Architecture][elm] by Evan Czaplicki et al. and
+[go-tea][gotea] by TJ Holowaychuk.
 
 [elm]: https://guide.elm-lang.org/architecture/
 [gotea]: https://github.com/tj/go-tea
@@ -96,8 +49,8 @@ and [go-tea][gotea] by TJ Holowaychuk.
 
 ***
 
-Part of [Charm](https://charm.sh).
+A [Charm](https://charm.sh) project.
 
-<img alt="the Charm logo" src="https://stuff.charm.sh/charm-logotype.png" width="400px">
+<img alt="the Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400">
 
 Charm热爱开源!
