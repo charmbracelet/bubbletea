@@ -9,9 +9,12 @@ import (
 	te "github.com/muesli/termenv"
 )
 
+const (
+	focusedTextColor = "205"
+)
+
 var (
 	color               = te.ColorProfile().Color
-	focusedText         = "205"
 	focusedPrompt       = te.String("> ").Foreground(color("205")).String()
 	blurredPrompt       = "> "
 	focusedSubmitButton = "[ " + te.String("Submit").Foreground(color("205")).String() + " ]"
@@ -29,7 +32,7 @@ func main() {
 	}
 }
 
-type Model struct {
+type model struct {
 	index         int
 	nameInput     input.Model
 	nickNameInput input.Model
@@ -42,7 +45,7 @@ func initialize() (tea.Model, tea.Cmd) {
 	name.Placeholder = "Name"
 	name.Focus()
 	name.Prompt = focusedPrompt
-	name.TextColor = focusedText
+	name.TextColor = focusedTextColor
 
 	nickName := input.NewModel()
 	nickName.Placeholder = "Nickname"
@@ -52,7 +55,7 @@ func initialize() (tea.Model, tea.Cmd) {
 	email.Placeholder = "Email"
 	email.Prompt = blurredPrompt
 
-	return Model{0, name, nickName, email, blurredSubmitButton},
+	return model{0, name, nickName, email, blurredSubmitButton},
 		tea.Batch(
 			input.Blink(name),
 			input.Blink(nickName),
@@ -61,8 +64,8 @@ func initialize() (tea.Model, tea.Cmd) {
 
 }
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
-	m, ok := model.(Model)
+func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
+	m, ok := mdl.(model)
 	if !ok {
 		panic("could not perform assertion on model")
 	}
@@ -78,15 +81,8 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		// Cycle between inputs
-		case "tab":
-			fallthrough
-		case "shift+tab":
-			fallthrough
-		case "enter":
-			fallthrough
-		case "up":
-			fallthrough
-		case "down":
+		case "tab", "shift+tab", "enter", "up", "down":
+
 			inputs := []input.Model{
 				m.nameInput,
 				m.nickNameInput,
@@ -116,13 +112,13 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 			for i := 0; i <= len(inputs)-1; i++ {
 				if i == m.index {
-					// Focused input
+					// Set focused state
 					inputs[i].Focus()
 					inputs[i].Prompt = focusedPrompt
-					inputs[i].TextColor = focusedText
+					inputs[i].TextColor = focusedTextColor
 					continue
 				}
-				// Blurred input
+				// Remove focused state
 				inputs[i].Blur()
 				inputs[i].Prompt = blurredPrompt
 				inputs[i].TextColor = ""
@@ -139,38 +135,39 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 			}
 
 			return m, nil
-
-		default:
-			// Handle character input
-			m, cmd = updateInputs(msg, m)
-			return m, cmd
 		}
-
-	default:
-		// Handle blinks
-		m, cmd = updateInputs(msg, m)
-		return m, cmd
 	}
+
+	// Handle character input and blinks
+	m, cmd = updateInputs(msg, m)
+	return m, cmd
 }
 
-func updateInputs(msg tea.Msg, m Model) (Model, tea.Cmd) {
+// Pass messages and models through to text input components. Only text inputs
+// with Focus() set will respond, so it's safe to simply update all of them
+// here without any further logic.
+func updateInputs(msg tea.Msg, m model) (model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
+
 	m.nameInput, cmd = input.Update(msg, m.nameInput)
 	cmds = append(cmds, cmd)
+
 	m.nickNameInput, cmd = input.Update(msg, m.nickNameInput)
 	cmds = append(cmds, cmd)
+
 	m.emailInput, cmd = input.Update(msg, m.emailInput)
 	cmds = append(cmds, cmd)
+
 	return m, tea.Batch(cmds...)
 }
 
-func view(model tea.Model) string {
-	m, ok := model.(Model)
+func view(mdl tea.Model) string {
+	m, ok := mdl.(model)
 	if !ok {
-		return "[error] could not perform assertion on model"
+		return "could not perform assertion on model"
 	}
 
 	s := "\n"
