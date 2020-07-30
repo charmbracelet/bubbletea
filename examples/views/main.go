@@ -1,7 +1,5 @@
 package main
 
-// TODO: The views feel messy. Clean 'em up.
-
 import (
 	"fmt"
 	"math"
@@ -23,16 +21,14 @@ func main() {
 	}
 }
 
-// MSG
+// MESSAGES
 
 type tickMsg struct{}
-
 type frameMsg struct{}
 
 // MODEL
 
-// Model contains the data for our application.
-type Model struct {
+type model struct {
 	Choice   int
 	Chosen   bool
 	Ticks    int
@@ -41,10 +37,8 @@ type Model struct {
 	Loaded   bool
 }
 
-// INIT
-
 func initialize() (tea.Model, tea.Cmd) {
-	return Model{0, false, 10, 0, 0, false}, tick()
+	return model{0, false, 10, 0, 0, false}, tick()
 }
 
 // CMDS
@@ -63,8 +57,10 @@ func frame() tea.Cmd {
 
 // UPDATE
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := model.(Model)
+// Main update function. This just hands off the message and model to the
+// approprate update loop based on the current state.
+func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
+	m, _ := mdl.(model)
 
 	if !m.Chosen {
 		return updateChoices(msg, m)
@@ -72,7 +68,8 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	return updateChosen(msg, m)
 }
 
-func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
+// Update loop for the first view where you're choosing a task
+func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -113,7 +110,8 @@ func updateChoices(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
+// Update loop for the second view after a choice has been made
+func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -154,24 +152,23 @@ func updateChosen(msg tea.Msg, m Model) (tea.Model, tea.Cmd) {
 
 // VIEW
 
-func view(model tea.Model) string {
-	m, _ := model.(Model)
+// The main view, which just calls the approprate sub-view
+func view(mdl tea.Model) string {
+	m, _ := mdl.(model)
 	if !m.Chosen {
 		return choicesView(m) + "\n"
 	}
 	return chosenView(m) + "\n"
 }
 
-const choicesTpl = `What to do today?
-
-%s
-
-Program quits in %d seconds.
-
-(press j/k or up/down to select, enter to choose, and q or esc to quit)`
-
-func choicesView(m Model) string {
+// The first view, where you're choosing a task
+func choicesView(m model) string {
 	c := m.Choice
+
+	tpl := "What to do today?\n\n"
+	tpl += "%s\n\n"
+	tpl += "Program quits in %d seconds\n\n"
+	tpl += "(press j/k or up/down to select, enter to choose, and q or esc to quit)`"
 
 	choices := fmt.Sprintf(
 		"%s\n%s\n%s\n%s",
@@ -181,10 +178,11 @@ func choicesView(m Model) string {
 		checkbox("See friends", c == 3),
 	)
 
-	return fmt.Sprintf(choicesTpl, choices, m.Ticks)
+	return fmt.Sprintf(tpl, choices, m.Ticks)
 }
 
-func chosenView(m Model) string {
+// The second view, after a task has been chosen
+func chosenView(m model) string {
 	var msg string
 
 	switch m.Choice {

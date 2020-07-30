@@ -12,6 +12,9 @@ Bubble Tea is well-suited for simple and complex terminal applications,
 either inline, full-window, or a mix of both. It's been battle-tested in
 several large projects and is production-ready.
 
+It features a standard framerate-based renderer which is used by default as
+well as support for high-performance scrollable regions when needed.
+
 To get started, see the [tutorials][tutorials] and [examples][examples].
 
 [tutorials]: https://github.com/charmbracelet/tea/tree/master/tutorials
