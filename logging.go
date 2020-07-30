@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// LogToFile sets up default logging to log to a file This is helpful as we
+// LogToFile sets up default logging to log to a file. This is helpful as we
 // can't print to the terminal since our TUI is occupying it. If the file
 // doesn't exist it will be created.
 //

@@ -1,3 +1,11 @@
+// Package tea provides an Elm-inspired framework for building rich terminal
+// user interfaces. It's well-suited for simple and complex terminal
+// applications, either inline, full-window, or a mix of both. It's been
+// battle-tested in several large projects and is production-ready.
+//
+// A tutorial is available at https://github.com/charmbracelet/bubbletea/tree/master/tutorials
+//
+// Example programs can be found at https://github.com/charmbracelet/bubbletea/tree/master/examples
 package tea
 
 import (
@@ -59,7 +67,7 @@ type Program struct {
 	altScreenActive bool
 }
 
-// Quit is a special command that tells the program to exit.
+// Quit is a special command that tells the Bubble Tea program to exit.
 func Quit() Msg {
 	return quitMsg{}
 }
@@ -194,7 +202,8 @@ func (p *Program) Start() error {
 	}
 }
 
-// EnterAltScreen enters the alternate screen buffer.
+// EnterAltScreen enters the alternate screen buffer, which consumes the entire
+// terminal window. ExitAltScreen will return the terminal to its former state.
 func (p *Program) EnterAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -219,15 +228,15 @@ func (p *Program) ExitAltScreen() {
 	}
 }
 
-// EnableMouseCellMotion enables mouse click, release, wheel and motion events if a
-// button is pressed.
+// EnableMouseCellMotion enables mouse click, release, wheel and motion events
+// if a button is pressed.
 func (p *Program) EnableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.EnableMouseCellMotionSeq)
 }
 
-// DisableMouseCellMotino disables Mouse Cell Motion tracking. If you've
+// DisableMouseCellMotion disables Mouse Cell Motion tracking. If you've
 // enabled Cell Motion mouse trakcing be sure to call this as your program is
 // exiting or your users will be very upset!
 func (p *Program) DisableMouseCellMotion() {

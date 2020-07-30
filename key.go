@@ -7,10 +7,32 @@ import (
 	"unicode/utf8"
 )
 
-// KeyMsg contains information about a keypress.
+// KeyMsg contains information about a keypress. KeyMsgs are always sent to
+// the program's update function. There are a couple general patterns you could
+// use to check for keypresses:
+//
+//     switch msg := msg.(type) {
+//     case KeyMsg:
+//         switch msg.Type {
+//             case KeyEnter:
+//                 fmt.Println("you pressed enter!")
+//         }
+//     }
+//
+//     switch msg := msg.(type) {
+//     case KeyMsg:
+//         switch msg.String() {
+//             case "enter":
+//                 fmt.Println("you pressed enter!")
+//         }
+//     }
 type KeyMsg Key
 
 // String returns a friendly name for a key.
+//
+//     k := KeyType{Type: KeyEnter}
+//     fmt.Println(k)
+//     // Output: enter
 func (k *KeyMsg) String() (str string) {
 	if k.Alt {
 		str += "alt+"
@@ -25,7 +47,7 @@ func (k *KeyMsg) String() (str string) {
 	return ""
 }
 
-// IsRune returns weather or not the key is a rune.
+// IsRune returns whether or not the key is a rune.
 func (k *KeyMsg) IsRune() bool {
 	return k.Type == KeyRune
 }
@@ -37,7 +59,20 @@ type Key struct {
 	Alt  bool
 }
 
-// KeyType indicates the key pressed.
+// KeyType indicates the key pressed, such as KeyEnter or KeyBreak or
+// KeyCtrlC. All other keys will be type KeyRune. To get the rune value, check
+// the Rune method on a Key struct, or use the Key.String() method:
+//
+//     k := Key{Type: KeyRune, Rune: 'a', Alt: true}
+//     if k.Type == KeyRune {
+//
+//         fmt.Println(k.Rune)
+//         // Output: a
+//
+//         fmt.Println(k.String())
+//         // Output: alt+a
+//
+//     }
 type KeyType int
 
 // Control keys. I know we could do this with an iota, but the values are very
@@ -82,7 +117,7 @@ const (
 	keyDEL = 127 // delete. on most systems this is mapped to backspace, I hear
 )
 
-// Aliases
+// Control key aliases:
 const (
 	KeyNull      = keyNUL
 	KeyBreak     = keyETX
@@ -129,7 +164,7 @@ const (
 	KeyCtrlQuestionMark = keyDEL // ctrl+?
 )
 
-// Other keys we track
+// Other keys:
 const (
 	KeyRune = -(iota + 1)
 	KeyUp
