@@ -262,9 +262,9 @@ var hexes = map[string]Key{
 	"1b5b313b3344": {Type: KeyLeft, Alt: true},
 }
 
-// ReadInput reads keypress and mouse input from a TTY and returns a message
+// readInput reads keypress and mouse input from a TTY and returns a message
 // containing information about the key or mouse event accordingly
-func ReadInput(r io.Reader) (Msg, error) {
+func readInput(r io.Reader) (Msg, error) {
 	var buf [256]byte
 
 	// Read and block

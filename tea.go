@@ -133,7 +133,7 @@ func (p *Program) Start() error {
 	// Subscribe to user input
 	go func() {
 		for {
-			msg, err := ReadInput(os.Stdin)
+			msg, err := readInput(os.Stdin)
 			if err != nil {
 				errs <- err
 			}
