@@ -106,7 +106,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 			// can initialize the viewport. The initial dimensions come in
 			// quickly, though asynchronously, which is why we wait for them
 			// here.
-			m.viewport = viewport.NewModel(msg.Width, msg.Height-verticalMargins)
+			m.viewport = viewport.Model{Width: msg.Width, Height: msg.Height - verticalMargins}
 			m.viewport.YPosition = headerHeight
 			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
 			m.viewport.SetContent(m.content)

@@ -12,3 +12,5 @@ require (
 	github.com/muesli/termenv v0.7.0
 	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1 // indirect
 )
+
+replace github.com/charmbracelet/bubbles => ../../bubbles
