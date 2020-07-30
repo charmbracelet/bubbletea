@@ -15,6 +15,15 @@ import (
 // the entire specified duration. For example, if we're ticking for one minute
 // and the clock is at 12:34:20 then the next tick will happen at 12:35:00, 40
 // seconds later.
+//
+// To produce the command, pass a duration and a fnuction which returns
+// a message containing the time at which the tick occurred.
+//
+//   type TickMsg time.Time
+//
+//   cmd := Every(time.Second, func(t time.Time) Msg {
+//      return TickMsg(t)
+//   })
 func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 	return func() Msg {
 		n := time.Now()
@@ -24,9 +33,18 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 	}
 }
 
-// Tick is a command that at an interval independent of the system clock at the
-// given duration. That is, the timer begins when precisely when invoked, and
-// runs for its entire duration.
+// Tick produces a command that at an interval independent of the system clock
+// at the given duration. That is, the timer begins when precisely when
+// invoked, and runs for its entire duration.
+//
+// To produce the command, pass a duration and a fnuction which returns
+// a message containing the time at which the tick occurred.
+//
+//   type TickMsg time.Time
+//
+//   cmd := Tick(time.Second, func(t time.Time) Msg {
+//      return TickMsg(t)
+//   })
 func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	return func() Msg {
 		t := time.NewTimer(d)

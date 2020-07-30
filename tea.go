@@ -1,7 +1,8 @@
-// Package tea provides an Elm-inspired framework for building rich terminal
-// user interfaces. It's well-suited for simple and complex terminal
-// applications, either inline, full-window, or a mix of both. It's been
-// battle-tested in several large projects and is production-ready.
+// Package tea provides a framework for building rich terminal user interfaces
+// based on the paradigms of The Elm Architecture. It's well-suited for simple
+// and complex terminal applications, either inline, full-window, or a mix of
+// both. It's been battle-tested in several large projects and is
+// production-ready.
 //
 // A tutorial is available at https://github.com/charmbracelet/bubbletea/tree/master/tutorials
 //
