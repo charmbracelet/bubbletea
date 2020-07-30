@@ -48,11 +48,11 @@ func Batch(cmds ...Cmd) Cmd {
 type Init func() (Model, Cmd)
 
 // Update is called when a message is received. Use it to inspect messages and,
-// in repsonse,  update the model and/or send a command.
+// in repsonse, update the model and/or send a command.
 type Update func(Msg, Model) (Model, Cmd)
 
-// View renders the program's UI: a string which will be printed to the
-// terminal. The view is rendered after every Update.
+// View renders the program's UI, which is just a string. The view is rendered
+// after every Update.
 type View func(Model) string
 
 // Program is a terminal user interface.
@@ -80,8 +80,8 @@ type quitMsg struct{}
 // can send a batchMsg with Batch.
 type batchMsg []Cmd
 
-// WindowSizeMsg is used to report on the terminal size. It's sent once
-// initially and then on every terminal resize.
+// WindowSizeMsg is used to report on the terminal size. Its sent to Update
+// once initially and then on every terminal resize.
 type WindowSizeMsg struct {
 	Width  int
 	Height int
