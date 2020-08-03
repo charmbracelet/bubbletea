@@ -2,7 +2,7 @@ Bubble Tea
 ==========
 
 <p>
-    <img src="https://stuff.charm.sh/bubble-tea-header-github.png" width="523" height"225" alt="Bubble Tea Title Treatment"><br>
+    <img src="https://stuff.charm.sh/bubble-tea-header-github.png?hi" width="537" alt="Bubble Tea Title Treatment"><br>
     <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/glow/workflows/build/badge.svg" alt="Build Status"></a>
 </p>
@@ -47,8 +47,8 @@ For some Bubble Tea programs in production, see:
 
 ## Acknowledgments
 
-Based on [The Elm Architecture][elm] by Evan Czaplicki et alia
-and [go-tea][gotea] by TJ Holowaychuk.
+Based on the paradigms of [The Elm Architecture][elm] by Evan Czaplicki et alia
+and the excellent [go-tea][gotea] by TJ Holowaychuk.
 
 [elm]: https://guide.elm-lang.org/architecture/
 [gotea]: https://github.com/tj/go-tea
