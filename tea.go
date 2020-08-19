@@ -49,7 +49,7 @@ func Batch(cmds ...Cmd) Cmd {
 type Init func() (Model, Cmd)
 
 // Update is called when a message is received. Use it to inspect messages and,
-// in repsonse, update the model and/or send a command.
+// in response, update the model and/or send a command.
 type Update func(Msg, Model) (Model, Cmd)
 
 // View renders the program's UI, which is just a string. The view is rendered
