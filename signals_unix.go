@@ -14,7 +14,7 @@ import (
 // Argument output should be the file descriptor for the terminal; usually
 // os.Stdout.
 func listenForResize(output *os.File, msgs chan Msg, errs chan error) {
-	sig := make(chan os.Signal)
+	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGWINCH)
 	for {
 		<-sig
