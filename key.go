@@ -187,7 +187,7 @@ const (
 	KeyPgDown
 )
 
-// Mapping for control keys to friendly consts
+// Mapping for control keys to friendly consts:
 var keyNames = map[int]string{
 	keyNUL: "ctrl+@", // also ctrl+`
 	keySOH: "ctrl+a",
@@ -272,7 +272,7 @@ var hexes = map[string]Key{
 }
 
 // readInput reads keypress and mouse input from a TTY and returns a message
-// containing information about the key or mouse event accordingly
+// containing information about the key or mouse event accordingly.
 func readInput(r io.Reader) (Msg, error) {
 	var buf [256]byte
 
