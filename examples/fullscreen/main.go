@@ -15,9 +15,12 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	tea.AltScreen()
-	defer tea.ExitAltScreen()
-	err := tea.NewProgram(initialize, update, view).Start()
+	p := tea.NewProgram(initialize, update, view)
+
+	p.EnterAltScreen()
+	err := p.Start()
+	p.ExitAltScreen()
+
 	if err != nil {
 		log.Fatal(err)
 	}
