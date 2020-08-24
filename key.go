@@ -126,7 +126,7 @@ const (
 	keyDEL = 127 // delete. on most systems this is mapped to backspace, I hear
 )
 
-// Control key aliases:
+// Control key aliases.
 const (
 	KeyNull      = keyNUL
 	KeyBreak     = keyETX
@@ -173,7 +173,7 @@ const (
 	KeyCtrlQuestionMark = keyDEL // ctrl+?
 )
 
-// Other keys:
+// Other keys.
 const (
 	KeyRune = -(iota + 1)
 	KeyUp
@@ -187,7 +187,7 @@ const (
 	KeyPgDown
 )
 
-// Mapping for control keys to friendly consts:
+// Mapping for control keys to friendly consts.
 var keyNames = map[int]string{
 	keyNUL: "ctrl+@", // also ctrl+`
 	keySOH: "ctrl+a",
@@ -236,8 +236,7 @@ var keyNames = map[int]string{
 	KeyPgDown:   "pgdown",
 }
 
-// Mapping for sequences to consts
-// TODO: should we just move this into the hex table?
+// Mapping for sequences to consts.
 var sequences = map[string]KeyType{
 	"\x1b[A": KeyUp,
 	"\x1b[B": KeyDown,
