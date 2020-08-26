@@ -6,7 +6,7 @@ Architecture][elm]. It might not seem very Go-like at first, but once you get
 used to the general structure you'll find that most of the idomatic Go things
 you know and love are still relevant and useful here.
 
-By the way, the non-annotated version of of this program is available
+By the way, the non-annotated source code for this program is available
 [on GitHub](https://github.com/charmbracelet/bubbletea/master/tutorials/basics).
 
 This tutorial assumes you have a working knowledge of Go.
@@ -18,7 +18,7 @@ This tutorial assumes you have a working knowledge of Go.
 For this tutorial we're making a to-do list.
 
 To start we'll define our package and import some libraries. Our only external
-import will be the Bubble Tea, library, which we'll call `tea` for short.
+import will be the Bubble Tea library, which we'll call `tea` for short.
 
 ```go
     package main
@@ -228,10 +228,10 @@ For some Bubble Tea programs in production, see:
 
 ### Libraries we use with Bubble Tea
 
-* [Bubbles][bubbles] various Bubble Tea components we've built
+* [Bubbles][bubbles] various Bubble Tea components
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
-* [go-runewidth][runewidth]: Get the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it!
+* [go-runewidth][runewidth]: Measure the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it.
 
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow

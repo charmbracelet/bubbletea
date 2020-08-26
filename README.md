@@ -8,15 +8,13 @@ Bubble Tea
 </p>
 
 The fun, functional and stateful way to build terminal apps. A Go framework
-based on [The Elm Architecture][elm].
+based on [The Elm Architecture][elm].  Bubble Tea is well-suited for simple and
+complex terminal applications, either inline, full-window, or a mix of both.
 
-Bubble Tea is well-suited for simple and complex terminal applications,
-either inline, full-window, or a mix of both. It's been battle-tested in
-several large projects and is production-ready.
-
-It features a standard framerate-based renderer which is used by default as
-well as a renderer for high-performance scrollable regions, which works
-alongside the main renderer.
+Bubble Tea has been battle-tested in several large projects and includes
+a number of performance optimizations. Among those is a standard
+framerate-based renderer as well as a renderer for high-performance scrollable
+regions, which works alongside the main renderer.
 
 To get started, see the tutorials below, as well as the [examples][examples].
 
@@ -28,8 +26,8 @@ Architecture][elm]. It might not seem very Go-like at first, but once you get
 used to the general structure you'll find that most of the idomatic Go things
 you know and love are still relevant and useful here.
 
-By the way, the non-annotated version of of this program is available
-[on GitHub](https://github.com/charmbracelet/bubbletea/master/tutorials/basics).
+By the way, the non-annotated source code for this program
+[is also available](https://github.com/charmbracelet/bubbletea/master/tutorials/basics).
 
 This tutorial assumes you have a working knowledge of Go.
 
@@ -39,8 +37,8 @@ This tutorial assumes you have a working knowledge of Go.
 
 For this tutorial we're making a to-do list.
 
-To start we'll define our package and import some libraries. Our only external
-import will be the Bubble Tea, library, which we'll call `tea` for short.
+We'll start by defining our package and import some libraries. Our only external
+import will be the Bubble Tea library, which we'll call `tea` for short.
 
 ```go
     package main
@@ -252,10 +250,10 @@ For some Bubble Tea programs in production, see:
 
 ## Libraries we use with Bubble Tea
 
-* [Bubbles][bubbles] various Bubble Tea components we've built
+* [Bubbles][bubbles] various Bubble Tea components
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
-* [go-runewidth][runewidth]: Get the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it!
+* [go-runewidth][runewidth]: Measure the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it.
 
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
