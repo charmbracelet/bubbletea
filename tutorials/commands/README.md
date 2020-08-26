@@ -112,9 +112,9 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 
     case statusMsg:
         // The server returned a status message. Save it to our model. Also
-        // tell the Bubble Tea runtime we ant to exit because we have
-        // nothing else to do. Don't worry, we'll still be able to render
-        // a final view with our status message.
+        // tell the Bubble Tea runtime we ant to exit because we have nothing
+        // else to do. We'll still be able to render a final view with our
+        // status message.
         m.status = int(msg)
         return m, tea.Quit
 
