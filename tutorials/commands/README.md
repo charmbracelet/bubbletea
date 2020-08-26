@@ -65,7 +65,7 @@ result as a `Msg`.
         if err != nil {
             // There was an error making our request. Wrap the error we received
             // in a message and return it.
-            return errMsg(err)
+            return errMsg{err}
         }
         // We received a response from the server. Return the HTTP status code
         // as a message.
@@ -73,7 +73,12 @@ result as a `Msg`.
     }
 
     type statusMsg int
-    type errMsg error
+
+    type errMsg struct{ err error }
+
+    // For messages that contain errors it's often handy to also implement the
+    // error interface on the message.
+    func (e errMsg) Error() string { return e.err.Error() }
 ```
 
 And notice that we've defined two new `Msg` types. They can be any type, even

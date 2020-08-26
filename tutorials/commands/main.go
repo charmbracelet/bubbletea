@@ -20,13 +20,18 @@ func checkServer() tea.Msg {
 	c := &http.Client{Timeout: 10 * time.Second}
 	res, err := c.Get(url)
 	if err != nil {
-		return errMsg(err)
+		return errMsg{err}
 	}
 	return statusMsg(res.StatusCode)
 }
 
 type statusMsg int
-type errMsg error
+
+type errMsg struct{ err error }
+
+// For messages that contain errors it's often handy to also implement the
+// error interface on the message.
+func (e errMsg) Error() string { return e.err.Error() }
 
 func initialize() (tea.Model, tea.Cmd) {
 	return model{}, checkServer
