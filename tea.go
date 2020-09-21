@@ -12,6 +12,7 @@ package tea
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 	"sync"
 
 	te "github.com/muesli/termenv"
@@ -66,6 +67,12 @@ type Program struct {
 	output          *os.File // where to send output. this will usually be os.Stdout.
 	renderer        *renderer
 	altScreenActive bool
+
+	// CatchPanics is incredibly useful for restoring the terminal to a useable
+	// state after a panic occurs. When this is set, Bubble Tea will recover
+	// from panics, print the stack trace, and disable raw mode. This feature
+	// is on by default.
+	CatchPanics bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -95,7 +102,8 @@ func NewProgram(init Init, update Update, view View) *Program {
 		update: update,
 		view:   view,
 
-		output: os.Stdout,
+		output:      os.Stdout,
+		CatchPanics: true,
 	}
 }
 
@@ -107,6 +115,17 @@ func (p *Program) Start() error {
 		errs = make(chan error)
 		done = make(chan struct{})
 	)
+
+	if p.CatchPanics {
+		defer func() {
+			if r := recover(); r != nil {
+				p.ExitAltScreen()
+				fmt.Print("Caught panic. Restoring terminal...\n\n")
+				debug.PrintStack()
+				return
+			}
+		}()
+	}
 
 	p.renderer = newRenderer(p.output, &p.mtx)
 
