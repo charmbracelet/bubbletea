@@ -2,6 +2,7 @@ package tea
 
 import "errors"
 
+// MouseMsg contains information about a mouse event.
 type MouseMsg MouseEvent
 
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel

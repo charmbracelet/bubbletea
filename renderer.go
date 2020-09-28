@@ -208,7 +208,7 @@ func (r *renderer) setIgnoredLines(from int, to int) {
 			cursorUp(out)
 		}
 		moveCursor(out, r.linesRendered, 0) // put cursor back
-		r.out.Write(out.Bytes())
+		_, _ = r.out.Write(out.Bytes())
 	}
 }
 
@@ -252,7 +252,7 @@ func (r *renderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
 	// Move cursor back to where the main rendering routine expects it to be
 	moveCursor(b, r.linesRendered, 0)
 
-	r.out.Write(b.Bytes())
+	_, _ = r.out.Write(b.Bytes())
 }
 
 // insertBottom effectively scrolls down. It inserts lines at the bottom of
@@ -278,7 +278,7 @@ func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int)
 	// Move cursor back to where the main rendering routine expects it to be
 	moveCursor(b, r.linesRendered, 0)
 
-	r.out.Write(b.Bytes())
+	_, _ = r.out.Write(b.Bytes())
 }
 
 // handleMessages handles internal messages for the renderer.
