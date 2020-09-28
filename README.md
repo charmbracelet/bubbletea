@@ -8,16 +8,20 @@ Bubble Tea
 </p>
 
 The fun, functional and stateful way to build terminal apps. A Go framework
-based on [The Elm Architecture][elm].  Bubble Tea is well-suited for simple and
+based on [The Elm Architecture][elm]. Bubble Tea is well-suited for simple and
 complex terminal applications, either inline, full-window, or a mix of both.
 
-Bubble Tea has been battle-tested in several large projects and includes
-a number of performance optimizations. Among those is a standard
-framerate-based renderer as well as a renderer for high-performance scrollable
-regions, which works alongside the main renderer.
+Bubble Tea is in use in production and includes a number of features and
+performance optimizations we’ve added along the way. Among those is a standard
+framerate-based renderer, a renderer for high-performance scrollable
+regions which works alongside the main renderer, and mouse support.
 
-To get started, see the tutorials below, as well as the [examples][examples].
+To get started, see the tutorial below, the [examples][examples], the
+[docs][docs] and some common [resources](#libraries-we-use-with-bubble-tea).
 
+[docs]: https://github.com/charmbracelet/bubbletea#libraries-we-use-with-bubble-tea
+
+* * *
 
 ## Tutorial
 
@@ -281,4 +285,4 @@ A [Charm](https://charm.sh) project.
 
 <img alt="the Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400">
 
-Charm热爱开源!
+Charm喜爱开源软件！
