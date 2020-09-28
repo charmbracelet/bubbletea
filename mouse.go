@@ -2,17 +2,16 @@ package tea
 
 import "errors"
 
-// MouseMsg contains information about a mouse event.
 type MouseMsg MouseEvent
 
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel
 // movement, a cursor movement, or a combination.
 type MouseEvent struct {
-	X      int
-	Y      int
-	Button MouseButton
-	Alt    bool
-	Ctrl   bool
+	X    int
+	Y    int
+	Type MouseEventType
+	Alt  bool
+	Ctrl bool
 }
 
 // String returns a string representation of a mouse event.
@@ -23,15 +22,15 @@ func (m MouseEvent) String() (s string) {
 	if m.Alt {
 		s += "alt+"
 	}
-	s += mouseButtonNames[m.Button]
+	s += mouseEventTypes[m.Type]
 	return s
 }
 
-// MouseButton represents a mouse button event.
-type MouseButton int
+// MouseEventType indicates the type of mouse event occurring.
+type MouseEventType int
 
 const (
-	MouseUnknown MouseButton = iota
+	MouseUnknown MouseEventType = iota
 	MouseLeft
 	MouseRight
 	MouseMiddle
@@ -41,7 +40,7 @@ const (
 	MouseMotion
 )
 
-var mouseButtonNames = map[MouseButton]string{
+var mouseEventTypes = map[MouseEventType]string{
 	MouseUnknown:   "unknown",
 	MouseLeft:      "left",
 	MouseRight:     "right",
@@ -68,29 +67,29 @@ func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 
 	switch e {
 	case 35:
-		m.Button = MouseMotion
+		m.Type = MouseMotion
 	case 64:
-		m.Button = MouseWheelUp
+		m.Type = MouseWheelUp
 	case 65:
-		m.Button = MouseWheelDown
+		m.Type = MouseWheelDown
 	default:
 		switch e & 3 {
 		case 0:
 			if e&64 != 0 {
-				m.Button = MouseWheelUp
+				m.Type = MouseWheelUp
 			} else {
-				m.Button = MouseLeft
+				m.Type = MouseLeft
 			}
 		case 1:
 			if e&64 != 0 {
-				m.Button = MouseWheelDown
+				m.Type = MouseWheelDown
 			} else {
-				m.Button = MouseMiddle
+				m.Type = MouseMiddle
 			}
 		case 2:
-			m.Button = MouseRight
+			m.Type = MouseRight
 		case 3:
-			m.Button = MouseRelease
+			m.Type = MouseRelease
 		}
 	}
 
