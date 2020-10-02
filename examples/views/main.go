@@ -3,11 +3,33 @@ package main
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fogleman/ease"
+	"github.com/lucasb-eyer/go-colorful"
+	"github.com/muesli/reflow/indent"
+	"github.com/muesli/termenv"
+)
+
+const (
+	progressBarWidth  = 71
+	progressFullChar  = "█"
+	progressEmptyChar = "░"
+)
+
+// General stuff for styling the view
+var (
+	term          = termenv.ColorProfile()
+	keyword       = makeFgStyle("211")
+	subtle        = makeFgStyle("241")
+	progressEmpty = subtle(progressEmptyChar)
+	dot           = colorFg(" • ", "236")
+
+	// Gradient colors we'll use for the progress bar
+	ramp = makeRamp("#B14FFF", "#00FFA3", progressBarWidth)
 )
 
 func main() {
@@ -35,10 +57,11 @@ type model struct {
 	Frames   int
 	Progress float64
 	Loaded   bool
+	Quitting bool
 }
 
 func initialize() (tea.Model, tea.Cmd) {
-	return model{0, false, 10, 0, 0, false}, tick()
+	return model{0, false, 10, 0, 0, false, false}, tick()
 }
 
 // CMDS
@@ -57,33 +80,39 @@ func frame() tea.Cmd {
 
 // UPDATE
 
-// Main update function. This just hands off the message and model to the
-// approprate update loop based on the current state.
+// Main update function.
 func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	m, _ := mdl.(model)
 
+	// Make sure these keys always quit
+	if msg, ok := msg.(tea.KeyMsg); ok {
+		k := msg.String()
+		if k == "q" || k == "esc" || k == "ctrl+c" {
+			m.Quitting = true
+			return m, tea.Quit
+		}
+	}
+
+	// Hand off the message and model to the approprate update function for the
+	// appropriate view based on the current state.
 	if !m.Chosen {
 		return updateChoices(msg, m)
 	}
 	return updateChosen(msg, m)
 }
 
-// Update loop for the first view where you're choosing a task
+// Update loop for the first view where you're choosing a task.
 func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "j":
-			fallthrough
-		case "down":
+		case "j", "down":
 			m.Choice += 1
 			if m.Choice > 3 {
 				m.Choice = 3
 			}
-		case "k":
-			fallthrough
-		case "up":
+		case "k", "up":
 			m.Choice -= 1
 			if m.Choice < 0 {
 				m.Choice = 0
@@ -91,16 +120,11 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "enter":
 			m.Chosen = true
 			return m, frame()
-		case "q":
-			fallthrough
-		case "esc":
-			fallthrough
-		case "ctrl+c":
-			return m, tea.Quit
 		}
 
 	case tickMsg:
 		if m.Ticks == 0 {
+			m.Quitting = true
 			return m, tea.Quit
 		}
 		m.Ticks -= 1
@@ -112,17 +136,7 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 // Update loop for the second view after a choice has been made
 func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q":
-			fallthrough
-		case "esc":
-			fallthrough
-		case "ctrl+c":
-			return m, tea.Quit
-		}
+	switch msg.(type) {
 
 	case frameMsg:
 		if !m.Loaded {
@@ -140,6 +154,7 @@ func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		if m.Loaded {
 			if m.Ticks == 0 {
+				m.Quitting = true
 				return m, tea.Quit
 			}
 			m.Ticks -= 1
@@ -155,10 +170,16 @@ func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 // The main view, which just calls the approprate sub-view
 func view(mdl tea.Model) string {
 	m, _ := mdl.(model)
-	if !m.Chosen {
-		return choicesView(m) + "\n"
+	var s string
+	if m.Quitting {
+		return "\n  See you later!\n\n"
 	}
-	return chosenView(m) + "\n"
+	if !m.Chosen {
+		s = choicesView(m)
+	} else {
+		s = chosenView(m)
+	}
+	return indent.String("\n"+s+"\n\n", 2)
 }
 
 // The first view, where you're choosing a task
@@ -167,8 +188,8 @@ func choicesView(m model) string {
 
 	tpl := "What to do today?\n\n"
 	tpl += "%s\n\n"
-	tpl += "Program quits in %d seconds\n\n"
-	tpl += "(press j/k or up/down to select, enter to choose, and q or esc to quit)`"
+	tpl += "Program quits in %s seconds\n\n"
+	tpl += subtle("j/k, up/down: select") + dot + subtle("enter: choose") + dot + subtle("q, esc: quit")
 
 	choices := fmt.Sprintf(
 		"%s\n%s\n%s\n%s",
@@ -178,7 +199,7 @@ func choicesView(m model) string {
 		checkbox("See friends", c == 3),
 	)
 
-	return fmt.Sprintf(tpl, choices, m.Ticks)
+	return fmt.Sprintf(tpl, choices, colorFg(strconv.Itoa(m.Ticks), "79"))
 }
 
 // The second view, after a task has been chosen
@@ -187,37 +208,88 @@ func chosenView(m model) string {
 
 	switch m.Choice {
 	case 0:
-		msg = "Carrot planting?\n\nCool, we'll need libgarden and vegeutils..."
+		msg = fmt.Sprintf("Carrot planting?\n\nCool, we'll need %s and %s...", keyword("libgarden"), keyword("vegeutils"))
 	case 1:
-		msg = "A trip to the market?\n\nOkay, then we should install marketkit and libshopping..."
+		msg = fmt.Sprintf("A trip to the market?\n\nOkay, then we should install %s and %s...", keyword("marketkit"), keyword("libshopping"))
 	case 2:
-		msg = "Reading time?\n\nOkay, cool, then we’ll need a library. Yes, an actual library."
+		msg = fmt.Sprintf("Reading time?\n\nOkay, cool, then we’ll need a library. Yes, an %s.", keyword("actual library"))
 	default:
-		msg = "It’s always good to see friends.\n\nFetching social-skills and conversationutils..."
+		msg = fmt.Sprintf("It’s always good to see friends.\n\nFetching %s and %s...", keyword("social-skills"), keyword("conversationutils"))
 	}
 
 	label := "Downloading..."
 	if m.Loaded {
-		label = fmt.Sprintf("Downloaded. Exiting in %d...", m.Ticks)
+		label = fmt.Sprintf("Downloaded. Exiting in %s seconds...", colorFg(strconv.Itoa(m.Ticks), "79"))
 	}
 
-	return msg + "\n\n " + label + "\n" + progressbar(80, m.Progress) + "%"
+	return msg + "\n\n" + label + "\n" + progressbar(80, m.Progress) + "%"
 }
 
 func checkbox(label string, checked bool) string {
-	check := " "
 	if checked {
-		check = "x"
+		return colorFg("[x] "+label, "212")
 	}
-	return fmt.Sprintf("[%s] %s", check, label)
+	return fmt.Sprintf("[ ] %s", label)
 }
 
 func progressbar(width int, percent float64) string {
-	metaChars := 7
-	w := float64(width - metaChars)
+	w := float64(progressBarWidth)
+
 	fullSize := int(math.Round(w * percent))
+	var fullCells string
+	for i := 0; i < fullSize; i++ {
+		fullCells += termenv.String(progressFullChar).Foreground(term.Color(ramp[i])).String()
+	}
+
 	emptySize := int(w) - fullSize
-	fullCells := strings.Repeat("#", fullSize)
-	emptyCells := strings.Repeat(".", emptySize)
-	return fmt.Sprintf("|%s%s| %3.0f", fullCells, emptyCells, math.Round(percent*100))
+	emptyCells := strings.Repeat(progressEmpty, emptySize)
+
+	return fmt.Sprintf("%s%s %3.0f", fullCells, emptyCells, math.Round(percent*100))
+}
+
+// UTILS
+
+// Color a string's foreground with the given value.
+func colorFg(val, color string) string {
+	return termenv.String(val).Foreground(term.Color(color)).String()
+}
+
+// Return a function that will colorize the foreground of a given string.
+func makeFgStyle(color string) func(string) string {
+	return termenv.Style{}.Foreground(term.Color(color)).Styled
+}
+
+// Color a string's foreground and background with the given value.
+func makeFgBgStyle(fg, bg string) func(string) string {
+	return termenv.Style{}.
+		Foreground(term.Color(fg)).
+		Background(term.Color(bg)).
+		Styled
+}
+
+// Generate a blend of colors.
+func makeRamp(colorA, colorB string, steps float64) (s []string) {
+	cA, _ := colorful.Hex(colorA)
+	cB, _ := colorful.Hex(colorB)
+
+	for i := 0.0; i < steps; i++ {
+		c := cA.BlendLuv(cB, i/steps)
+		s = append(s, colorToHex(c))
+	}
+	return
+}
+
+// Convert a colorful.Color to a hexidecimal format compatible with termenv.
+func colorToHex(c colorful.Color) string {
+	return fmt.Sprintf("#%s%s%s", colorFloatToHex(c.R), colorFloatToHex(c.G), colorFloatToHex(c.B))
+}
+
+// Helper function for converting colors to hex. Assumes a value between 0 and
+// 1.
+func colorFloatToHex(f float64) string {
+	result := strconv.FormatInt(int64(f*255), 16)
+	if len(result) == 1 {
+		result = "0" + result
+	}
+	return result
 }
