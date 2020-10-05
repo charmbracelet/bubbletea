@@ -2,7 +2,7 @@ Bubble Tea
 ==========
 
 <p>
-    <img src="https://stuff.charm.sh/bubbletea/bubbletea-github-header.png" width="543" alt="Bubble Tea Title Treatment"><br>
+    <img src="https://stuff.charm.sh/bubbletea/bubbletea-github-header-simple.png" width="313" alt="Bubble Tea Title Treatment"><br>
     <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/glow/workflows/build/badge.svg" alt="Build Status"></a>
 </p>
