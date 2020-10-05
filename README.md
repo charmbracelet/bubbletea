@@ -2,7 +2,7 @@ Bubble Tea
 ==========
 
 <p>
-    <img src="https://stuff.charm.sh/bubble-tea-header-github.png" width="543" alt="Bubble Tea Title Treatment"><br>
+    <img src="https://stuff.charm.sh/bubbletea/bubbletea-github-header.png" width="543" alt="Bubble Tea Title Treatment"><br>
     <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/glow/workflows/build/badge.svg" alt="Build Status"></a>
 </p>
@@ -10,6 +10,10 @@ Bubble Tea
 The fun, functional and stateful way to build terminal apps. A Go framework
 based on [The Elm Architecture][elm]. Bubble Tea is well-suited for simple and
 complex terminal applications, either inline, full-window, or a mix of both.
+
+<p>
+    <img src="https://stuff.charm.sh/bubbletea/bubbletea-example.gif" width="800" alt="Bubble Tea Example">
+</p>
 
 Bubble Tea is in use in production and includes a number of features and
 performance optimizations we’ve added along the way. Among those is a standard
