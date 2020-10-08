@@ -120,7 +120,7 @@ func (p *Program) Start() error {
 		defer func() {
 			if r := recover(); r != nil {
 				p.ExitAltScreen()
-				fmt.Print("Caught panic. Restoring terminal...\n\n")
+				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
 				debug.PrintStack()
 				return
 			}
