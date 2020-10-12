@@ -16,7 +16,7 @@ import (
 // and the clock is at 12:34:20 then the next tick will happen at 12:35:00, 40
 // seconds later.
 //
-// To produce the command, pass a duration and a fnuction which returns
+// To produce the command, pass a duration and a function which returns
 // a message containing the time at which the tick occurred.
 //
 //   type TickMsg time.Time
@@ -37,7 +37,7 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 // at the given duration. That is, the timer begins when precisely when
 // invoked, and runs for its entire duration.
 //
-// To produce the command, pass a duration and a fnuction which returns
+// To produce the command, pass a duration and a function which returns
 // a message containing the time at which the tick occurred.
 //
 //   type TickMsg time.Time
