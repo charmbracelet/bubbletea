@@ -1,6 +1,6 @@
 package tea
 
-// Convenience commands. Note part of the Bubble Tea core, but potentially
+// Convenience commands. Not part of the Bubble Tea core, but potentially
 // handy.
 
 import (
