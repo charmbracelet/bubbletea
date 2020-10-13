@@ -13,5 +13,3 @@ require (
 	github.com/muesli/reflow v0.1.0
 	github.com/muesli/termenv v0.7.2
 )
-
-replace github.com/charmbracelet/bubbles => ../../bubbles
