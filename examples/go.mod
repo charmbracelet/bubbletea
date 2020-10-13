@@ -2,8 +2,6 @@ module examples
 
 go 1.13
 
-replace github.com/charmbracelet/bubbletea => ../
-
 require (
 	github.com/charmbracelet/bubbles v0.6.0
 	github.com/charmbracelet/bubbletea v0.10.3
