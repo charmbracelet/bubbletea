@@ -1,17 +1,15 @@
 package tea
 
 import (
-	"os"
-
+	"github.com/containerd/console"
 	"github.com/muesli/termenv"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
-var origTTYState *terminal.State
+var tty console.Console
 
 func initTerminal() error {
-	var err error
-	origTTYState, err = terminal.MakeRaw(int(os.Stdin.Fd())) // enter raw mode
+	tty = console.Current()
+	err := tty.SetRaw()
 	if err != nil {
 		return err
 	}
@@ -23,5 +21,5 @@ func initTerminal() error {
 
 func restoreTerminal() error {
 	termenv.ShowCursor()
-	return terminal.Restore(int(os.Stdin.Fd()), origTTYState) // exit raw mode
+	return tty.Reset()
 }
