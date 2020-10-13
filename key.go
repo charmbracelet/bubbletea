@@ -253,7 +253,7 @@ var hexes = map[string]Key{
 	"1b5b48":       {Type: KeyHome},
 	"1b5b377e":     {Type: KeyHome}, // urxvt
 	"1b5b313b3348": {Type: KeyHome, Alt: true},
-	"1b1b5b377e":   {Type: KeyHome, Alt: true}, // ursvt
+	"1b1b5b377e":   {Type: KeyHome, Alt: true}, // urxvt
 	"1b5b46":       {Type: KeyEnd},
 	"1b5b387e":     {Type: KeyEnd}, // urxvt
 	"1b5b313b3346": {Type: KeyEnd, Alt: true},
@@ -268,6 +268,12 @@ var hexes = map[string]Key{
 	"1b5b313b3342": {Type: KeyDown, Alt: true},
 	"1b5b313b3343": {Type: KeyRight, Alt: true},
 	"1b5b313b3344": {Type: KeyLeft, Alt: true},
+
+	// Powershell
+	"1b4f41": {Type: KeyUp, Alt: false},
+	"1b4f42": {Type: KeyDown, Alt: false},
+	"1b4f43": {Type: KeyRight, Alt: false},
+	"1b4f44": {Type: KeyLeft, Alt: false},
 }
 
 // readInput reads keypress and mouse input from a TTY and returns a message
