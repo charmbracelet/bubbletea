@@ -267,15 +267,13 @@ For some Bubble Tea programs in production, see:
 
 ## Libraries we use with Bubble Tea
 
-* [Bubbles][bubbles] various Bubble Tea components
+* [Bubbles][bubbles]: various Bubble Tea components
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
-* [go-runewidth][runewidth]: Measure the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it.
+* [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text, and ANSI-aware methods for measuring widths of strings. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it. Reflow is particularly nice for this as it measures width the width, ignoring any ANSI sequences present.
 
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 [bubbles]: https://github.com/charmbracelet/bubbles
-[runewidth]: https://github.com/mattn/go-runewidth
 
 
 ## Acknowledgments
