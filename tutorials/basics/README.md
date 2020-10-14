@@ -7,7 +7,7 @@ used to the general structure you'll find that most of the idomatic Go things
 you know and love are still relevant and useful here.
 
 By the way, the non-annotated source code for this program is available
-[on GitHub](https://github.com/charmbracelet/bubbletea/master/tutorials/basics).
+[on GitHub](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics).
 
 This tutorial assumes you have a working knowledge of Go.
 
