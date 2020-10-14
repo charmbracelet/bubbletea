@@ -1,5 +1,8 @@
 package main
 
+// A simple program demonstrating the spinner component from the Bubbles
+// component library.
+
 import (
 	"fmt"
 	"os"

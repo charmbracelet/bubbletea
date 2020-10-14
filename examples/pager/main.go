@@ -1,5 +1,8 @@
 package main
 
+// An example program demonstrating the pager component from the Bubbles
+// component library.
+
 import (
 	"fmt"
 	"io/ioutil"

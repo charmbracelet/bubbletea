@@ -1,5 +1,7 @@
 package main
 
+// An example demonstrating an application with multiple views.
+
 import (
 	"fmt"
 	"math"
