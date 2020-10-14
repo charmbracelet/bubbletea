@@ -1,6 +1,6 @@
 package main
 
-// A simple program that counts down from 5 and then exits.
+// A simple program that makes a GET request and prints the response status.
 
 import (
 	"errors"
