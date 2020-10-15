@@ -35,38 +35,15 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(
-		initialize,
-		update,
-		view,
-	)
+	initialModel := model{0, false, 10, 0, 0, false, false}
+	p := tea.NewProgram(initialModel)
 	if err := p.Start(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
 
-// MESSAGES
-
 type tickMsg struct{}
 type frameMsg struct{}
-
-// MODEL
-
-type model struct {
-	Choice   int
-	Chosen   bool
-	Ticks    int
-	Frames   int
-	Progress float64
-	Loaded   bool
-	Quitting bool
-}
-
-func initialize() (tea.Model, tea.Cmd) {
-	return model{0, false, 10, 0, 0, false, false}, tick()
-}
-
-// CMDS
 
 func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(time.Time) tea.Msg {
@@ -80,12 +57,22 @@ func frame() tea.Cmd {
 	})
 }
 
-// UPDATE
+type model struct {
+	Choice   int
+	Chosen   bool
+	Ticks    int
+	Frames   int
+	Progress float64
+	Loaded   bool
+	Quitting bool
+}
+
+func (m model) Init() tea.Cmd {
+	return tick()
+}
 
 // Main update function.
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
-
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Make sure these keys always quit
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		k := msg.String()
@@ -102,6 +89,22 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	}
 	return updateChosen(msg, m)
 }
+
+// The main view, which just calls the approprate sub-view
+func (m model) View() string {
+	var s string
+	if m.Quitting {
+		return "\n  See you later!\n\n"
+	}
+	if !m.Chosen {
+		s = choicesView(m)
+	} else {
+		s = chosenView(m)
+	}
+	return indent.String("\n"+s+"\n\n", 2)
+}
+
+// Sub-update functions
 
 // Update loop for the first view where you're choosing a task.
 func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
@@ -167,22 +170,7 @@ func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// VIEW
-
-// The main view, which just calls the approprate sub-view
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-	var s string
-	if m.Quitting {
-		return "\n  See you later!\n\n"
-	}
-	if !m.Chosen {
-		s = choicesView(m)
-	} else {
-		s = chosenView(m)
-	}
-	return indent.String("\n"+s+"\n\n", 2)
-}
+// Sub-views
 
 // The first view, where you're choosing a task
 func choicesView(m model) string {
@@ -249,7 +237,7 @@ func progressbar(width int, percent float64) string {
 	return fmt.Sprintf("%s%s %3.0f", fullCells, emptyCells, math.Round(percent*100))
 }
 
-// UTILS
+// Utils
 
 // Color a string's foreground with the given value.
 func colorFg(val, color string) string {
@@ -288,10 +276,10 @@ func colorToHex(c colorful.Color) string {
 
 // Helper function for converting colors to hex. Assumes a value between 0 and
 // 1.
-func colorFloatToHex(f float64) string {
-	result := strconv.FormatInt(int64(f*255), 16)
-	if len(result) == 1 {
-		result = "0" + result
+func colorFloatToHex(f float64) (s string) {
+	s = strconv.FormatInt(int64(f*255), 16)
+	if len(s) == 1 {
+		s = "0" + s
 	}
-	return result
+	return
 }
