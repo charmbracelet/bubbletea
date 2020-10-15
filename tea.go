@@ -23,8 +23,20 @@ import (
 // triggers the Update function, and henceforth, the UI.
 type Msg interface{}
 
-// Model contains the program's state.
-type Model interface{}
+// Model contains the program's state as well as it's core functions.
+type Model interface {
+	// Init is the first function that will be called. It returns your an
+	// optional initial command.
+	Init() Cmd
+
+	// Update is called when a message is received. Use it to inspect messages
+	// and, in response, update the model and/or send a command.
+	Update(Msg) (Model, Cmd)
+
+	// View renders the program's UI, which is just a string. The view is
+	// rendered after every Update.
+	View() string
+}
 
 // Cmd is an IO operation. If it's nil it's considered a no-op. Use it for
 // things like HTTP requests, timers, saving and loading from disk, and so on.
@@ -45,23 +57,9 @@ func Batch(cmds ...Cmd) Cmd {
 	}
 }
 
-// Init is the first function that will be called. It returns your initial
-// model and runs an optional command.
-type Init func() (Model, Cmd)
-
-// Update is called when a message is received. Use it to inspect messages and,
-// in response, update the model and/or send a command.
-type Update func(Msg, Model) (Model, Cmd)
-
-// View renders the program's UI, which is just a string. The view is rendered
-// after every Update.
-type View func(Model) string
-
 // Program is a terminal user interface.
 type Program struct {
-	init   Init
-	update Update
-	view   View
+	initialModel Model
 
 	mtx             sync.Mutex
 	output          *os.File // where to send output. this will usually be os.Stdout.
@@ -96,14 +94,11 @@ type WindowSizeMsg struct {
 }
 
 // NewProgram creates a new Program.
-func NewProgram(init Init, update Update, view View) *Program {
+func NewProgram(model Model) *Program {
 	return &Program{
-		init:   init,
-		update: update,
-		view:   view,
-
-		output:      os.Stdout,
-		CatchPanics: true,
+		initialModel: model,
+		output:       os.Stdout,
+		CatchPanics:  true,
 	}
 }
 
@@ -136,7 +131,8 @@ func (p *Program) Start() error {
 	defer restoreTerminal()
 
 	// Initialize program
-	model, initCmd := p.init()
+	model := p.initialModel
+	initCmd := model.Init()
 	if initCmd != nil {
 		go func() {
 			cmds <- initCmd
@@ -148,7 +144,7 @@ func (p *Program) Start() error {
 	p.renderer.altScreenActive = p.altScreenActive
 
 	// Render initial view
-	p.renderer.write(p.view(model))
+	p.renderer.write(model.View())
 
 	// Subscribe to user input
 	go func() {
@@ -215,9 +211,9 @@ func (p *Program) Start() error {
 			// Process internal messages for the renderer
 			p.renderer.handleMessages(msg)
 			var cmd Cmd
-			model, cmd = p.update(msg, model) // run update
-			cmds <- cmd                       // process command (if any)
-			p.renderer.write(p.view(model))   // send view to renderer
+			model, cmd = model.Update(msg) // run update
+			cmds <- cmd                    // process command (if any)
+			p.renderer.write(model.View()) // send view to renderer
 		}
 	}
 }
