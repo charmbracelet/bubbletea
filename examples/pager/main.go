@@ -53,7 +53,7 @@ func main() {
 		defer f.Close()
 	}
 
-	p := tea.NewProgram(initialize(string(content)), update, view)
+	p := tea.NewProgram(model{content: string(content)})
 
 	// Use the full size of the terminal in its "alternate screen buffer"
 	p.EnterAltScreen()
@@ -75,19 +75,11 @@ type model struct {
 	viewport viewport.Model
 }
 
-func initialize(content string) func() (tea.Model, tea.Cmd) {
-	return func() (tea.Model, tea.Cmd) {
-		return model{
-			// Store content in the model so we can hand it off to the viewport
-			// later.
-			content: content,
-		}, nil
-	}
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
-
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -142,9 +134,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-
+func (m model) View() string {
 	if !m.ready {
 		return "\n  Initalizing..."
 	}

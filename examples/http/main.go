@@ -3,7 +3,6 @@ package main
 // A simple program that makes a GET request and prints the response status.
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,31 +13,29 @@ import (
 
 const url = "https://charm.sh/"
 
-type Model struct {
+type model struct {
 	status int
 	err    error
 }
 
 type statusMsg int
-type errMsg error
+
+type errMsg struct{ error }
+
+func (e errMsg) Error() string { return e.Error() }
 
 func main() {
-	p := tea.NewProgram(initialize, update, view)
+	p := tea.NewProgram(model{})
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
-	return Model{0, nil}, checkServer
+func (m model) Init() tea.Cmd {
+	return checkServer
 }
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
-	m, ok := model.(Model)
-	if !ok {
-		return Model{err: errors.New("could not perform assertion on model during update")}, nil
-	}
-
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -66,8 +63,7 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 	}
 }
 
-func view(model tea.Model) string {
-	m, _ := model.(Model)
+func (m model) View() string {
 	s := fmt.Sprintf("Checking %s...", url)
 	if m.err != nil {
 		s += fmt.Sprintf("something went wrong: %s", m.err)
@@ -83,7 +79,7 @@ func checkServer() tea.Msg {
 	}
 	res, err := c.Get(url)
 	if err != nil {
-		return errMsg(err)
+		return errMsg{err}
 	}
 	return statusMsg(res.StatusCode)
 }

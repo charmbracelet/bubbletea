@@ -16,7 +16,7 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	p := tea.NewProgram(initialize, update, view)
+	p := tea.NewProgram(model(5))
 
 	p.EnterAltScreen()
 	err := p.Start()
@@ -27,13 +27,11 @@ func main() {
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
-	return model(5), tick()
+func (m model) Init() tea.Cmd {
+	return tick()
 }
 
-func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
-
+func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
 
 	case tea.KeyMsg:
@@ -58,8 +56,7 @@ func update(message tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
+func (m model) View() string {
 	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
 }
 

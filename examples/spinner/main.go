@@ -12,41 +12,35 @@ import (
 	"github.com/muesli/termenv"
 )
 
-var (
-	color = termenv.ColorProfile()
-)
+var term = termenv.ColorProfile()
 
-type Model struct {
+type errMsg error
+
+type model struct {
 	spinner  spinner.Model
 	quitting bool
 	err      error
 }
 
-type errMsg error
-
 func main() {
-	p := tea.NewProgram(initialize, update, view)
+	p := tea.NewProgram(initialModel())
 	if err := p.Start(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
+func initialModel() model {
 	s := spinner.NewModel()
 	s.Frames = spinner.Dot
-
-	return Model{
-		spinner: s,
-	}, spinner.Tick(s)
+	return model{spinner: s}
 }
 
-func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
-	m, ok := model.(Model)
-	if !ok {
-		return model, nil
-	}
+func (m model) Init() tea.Cmd {
+	return spinner.Tick(m.spinner)
+}
 
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -74,17 +68,13 @@ func update(msg tea.Msg, model tea.Model) (tea.Model, tea.Cmd) {
 
 }
 
-func view(model tea.Model) string {
-	m, ok := model.(Model)
-	if !ok {
-		return "could not perform assertion on model in view\n"
-	}
+func (m model) View() string {
 	if m.err != nil {
 		return m.err.Error()
 	}
 	s := termenv.
 		String(spinner.View(m.spinner)).
-		Foreground(color.Color("205")).
+		Foreground(term.Color("205")).
 		String()
 	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
 	if m.quitting {

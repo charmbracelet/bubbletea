@@ -29,7 +29,8 @@ func main() {
 
 	// Pass the channel to the initialize function so our Bubble Tea program
 	// can send the final choice along when the time comes.
-	if err := tea.NewProgram(initialize(result), update, view).Start(); err != nil {
+	p := tea.NewProgram(model{cursor: 0, choice: result})
+	if err := p.Start(); err != nil {
 		fmt.Println("Oh no:", err)
 		os.Exit(1)
 	}
@@ -43,15 +44,15 @@ func main() {
 // Pass a channel to the model to listen to the result value. This is a
 // function that returns the initialize function and is typically how you would
 // pass arguments to a tea.Init function.
-func initialize(choice chan string) func() (tea.Model, tea.Cmd) {
-	return func() (tea.Model, tea.Cmd) {
-		return model{cursor: 0, choice: choice}, nil
-	}
+func initialModel(choice chan string) model {
+	return model{cursor: 0, choice: choice}
 }
 
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
+func (m model) Init() tea.Cmd {
+	return nil
+}
 
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -83,9 +84,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-
+func (m model) View() string {
 	s := strings.Builder{}
 	s.WriteString("What kind of Bubble Tea would you like to order?\n\n")
 

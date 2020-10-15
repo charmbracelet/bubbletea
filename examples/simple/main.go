@@ -27,10 +27,6 @@ func main() {
 	}
 }
 
-// Messages are events that we respond to in our Update function. This
-// particular one indicates that the timer has ticked.
-type tickMsg time.Time
-
 // A model can be more or less any type of data. It holds all the data for a
 // program, so often it's a struct. For this simple example, however, all
 // we'll need is a simple integer.
@@ -65,6 +61,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
 }
+
+// Messages are events that we respond to in our Update function. This
+// particular one indicates that the timer has ticked.
+type tickMsg time.Time
 
 func tick() tea.Msg {
 	time.Sleep(time.Second)
