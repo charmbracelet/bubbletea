@@ -36,6 +36,8 @@ type tickMsg time.Time
 // we'll need is a simple integer.
 type model int
 
+// Init optionally return an initial command we should run. In this case we
+// want to start the timer.
 func (m model) Init() tea.Cmd {
 	return tick
 }
