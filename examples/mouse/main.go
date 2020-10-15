@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialize, update, view)
+	p := tea.NewProgram(model{})
 
 	p.EnterAltScreen()
 	defer p.ExitAltScreen()
@@ -28,13 +28,11 @@ type model struct {
 	mouseEvent tea.MouseEvent
 }
 
-func initialize() (tea.Model, tea.Cmd) {
-	return model{}, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
-
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyCtrlC || (msg.Type == tea.KeyRune && msg.Rune == 'q') {
@@ -49,9 +47,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-
+func (m model) View() string {
 	s := "Do mouse stuff. When you're done press q to quit.\n\n"
 
 	if m.init {
