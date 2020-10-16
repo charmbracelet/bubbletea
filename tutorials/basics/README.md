@@ -2,7 +2,8 @@ Bubble Tea Basics
 =================
 
 Bubble Tea is based on the functional design paradigms of [The Elm
-Architecture][elm] which happens work nicely with Go.
+Architecture][elm] which happens work nicely with Go. It's a delightful way to
+build applications.
 
 By the way, the non-annotated source code for this program is available
 [on GitHub](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics).
@@ -19,19 +20,19 @@ To start we'll define our package and import some libraries. Our only external
 import will be the Bubble Tea library, which we'll call `tea` for short.
 
 ```go
-    package main
+package main
 
-    import (
-        "fmt"
-        "os"
+import (
+    "fmt"
+    "os"
 
-        tea "github.com/charmbracelet/bubbletea"
-    )
+    tea "github.com/charmbracelet/bubbletea"
+)
 ```
 
 Bubble Tea programs are comprised of a **model** that describes the application
 state and three simple methods on that model:
-
+We
 * **Init**, a function that returns an initial command for the application to run.
 * **Update**, a function that handles incoming events and updates the model accordingly.
 * **View**, a function that renders the UI based on the data in the model.
@@ -42,11 +43,11 @@ So let's start by defining our model which will store our application's state.
 It can be any type, but a `struct` usually makes the most sense.
 
 ```go
-    type model struct {
-        choices  []string           // items on the to-do list
-        cursor   int                // which to-do list item our cursor is pointing at
-        selected map[int]struct{}   // which to-do items are selected
-    }
+type model struct {
+    choices  []string           // items on the to-do list
+    cursor   int                // which to-do list item our cursor is pointing at
+    selected map[int]struct{}   // which to-do items are selected
+}
 ```
 
 ## Initialization
@@ -58,20 +59,20 @@ do any I/O, so for the command we'll just return `nil`, which translates to "no
 command."
 
 ```go
-    var initialModel = model{
-        // Our to-do list is just a grocery list
-        choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+var initialModel = model{
+    // Our to-do list is just a grocery list
+    choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
-        // A map which indicates which choices are selected. We're using
-        // the  map like a mathematical set. The keys refer to the indexes
-        // of the `choices` slice, above.
-        selected: make(map[int]struct{}),
-    }
+    // A map which indicates which choices are selected. We're using
+    // the  map like a mathematical set. The keys refer to the indexes
+    // of the `choices` slice, above.
+    selected: make(map[int]struct{}),
+}
 
-    func (m model) Init() (tea.Cmd) {
-        // Just return `nil`, which means "no I/O right now, please."
-        return m, nil
-    }
+func (m model) Init() (tea.Cmd) {
+    // Just return `nil`, which means "no I/O right now, please."
+    return m, nil
+}
 ```
 
 ## The Update Method
@@ -95,47 +96,47 @@ For now, we'll just deal with `tea.KeyMsg` messages, which are automatically
 sent to the update function when keys are pressed.
 
 ```go
-    func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-        switch msg := msg.(type) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+    switch msg := msg.(type) {
 
-        // Is it a key press?
-        case tea.KeyMsg:
+    // Is it a key press?
+    case tea.KeyMsg:
 
-            // Cool, what was the actual key pressed?
-            switch msg.String() {
+        // Cool, what was the actual key pressed?
+        switch msg.String() {
 
-            // These keys should exit the program.
-            case "ctrl+c", "q":
-                return m, tea.Quit
+        // These keys should exit the program.
+        case "ctrl+c", "q":
+            return m, tea.Quit
 
-            // The "up" and "k" keys move the cursor up
-            case "up", "k":
-                if m.cursor > 0 {
-                    m.cursor--
-                }
+        // The "up" and "k" keys move the cursor up
+        case "up", "k":
+            if m.cursor > 0 {
+                m.cursor--
+            }
 
-            // The "down" and "j" keys move the cursor down
-            case "down", "j":
-                if m.cursor < len(m.choices)-1 {
-                    m.cursor++
-                }
+        // The "down" and "j" keys move the cursor down
+        case "down", "j":
+            if m.cursor < len(m.choices)-1 {
+                m.cursor++
+            }
 
-            // The "enter" key and the spacebar (a literal space) toggle
-            // the selected state for the item that the cursor is pointing at.
-            case "enter", " ":
-                _, ok := m.selected[m.cursor]
-                if ok {
-                    delete(m.selected, m.cursor)
-                } else {
-                    m.selected[m.cursor] = struct{}{}
-                }
+        // The "enter" key and the spacebar (a literal space) toggle
+        // the selected state for the item that the cursor is pointing at.
+        case "enter", " ":
+            _, ok := m.selected[m.cursor]
+            if ok {
+                delete(m.selected, m.cursor)
+            } else {
+                m.selected[m.cursor] = struct{}{}
             }
         }
-
-        // Return the updated model to the Bubble Tea runtime for processing.
-        // Note that we're not returning a command.
-        return m, nil
     }
+
+    // Return the updated model to the Bubble Tea runtime for processing.
+    // Note that we're not returning a command.
+    return m, nil
+}
 ```
 
 You may have noticed that "ctrl+c" and "q" above return a `tea.Quit` command
@@ -153,35 +154,35 @@ to worry about redraw logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-    func (m model) View() string {
-        // The header
-        s := "What should we buy at the market?\n\n"
+func (m model) View() string {
+    // The header
+    s := "What should we buy at the market?\n\n"
 
-        // Iterate over our choices
-        for i, choice := range m.choices {
+    // Iterate over our choices
+    for i, choice := range m.choices {
 
-            // Is the cursor pointing at this choice?
-            cursor := " " // no cursor
-            if m.cursor == i {
-                cursor = ">" // cursor!
-            }
-
-            // Is this choice selected?
-            checked := " " // not selected
-            if _, ok := m.selected[i]; ok {
-                checked = "x" // selected!
-            }
-
-            // Render the row
-            s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+        // Is the cursor pointing at this choice?
+        cursor := " " // no cursor
+        if m.cursor == i {
+            cursor = ">" // cursor!
         }
 
-        // The footer
-        s += "\nPress q to quit.\n"
+        // Is this choice selected?
+        checked := " " // not selected
+        if _, ok := m.selected[i]; ok {
+            checked = "x" // selected!
+        }
 
-        // Send the UI for rendering
-        return s
+        // Render the row
+        s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
     }
+
+    // The footer
+    s += "\nPress q to quit.\n"
+
+    // Send the UI for rendering
+    return s
+}
 ```
 
 ## All Together Now
@@ -190,13 +191,13 @@ The last step is to simply run our program. We pass our initial model to
 `tea.NewProgram` and let it rip:
 
 ```go
-    func main() {
-        p := tea.NewProgram(initialModel)
-        if err := p.Start(); err != nil {
-            fmt.Printf("Alas, there's been an error: %v", err)
-            os.Exit(1)
-        }
+func main() {
+    p := tea.NewProgram(initialModel)
+    if err := p.Start(); err != nil {
+        fmt.Printf("Alas, there's been an error: %v", err)
+        os.Exit(1)
     }
+}
 ```
 
 ## What's Next?
