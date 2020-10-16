@@ -85,19 +85,19 @@ And notice that we've defined two new `Msg` types. They can be any type, even
 an empty struct. We'll come back to them later later in our update function.
 First, let's write our initialization function.
 
-## The Initialization Function
+## The Initialization Method
 
-The initilization function is very simple. We return an empty model and the
-the `Cmd` we made earlier. Note that we don't call the function; the Bubble Tea
-runtime will do that when the time is right.
+The initilization method is very simple: we return the `Cmd` we made earlier.
+Note that we don't call the function; the Bubble Tea runtime will do that when
+the time is right.
 
 ```go
-func initialize() (tea.Model, tea.Cmd) {
-    return model{}, checkServer
+func (m model) Init() (tea.Cmd) {
+    return checkServer
 }
 ```
 
-## The Update Function
+## The Update Method
 
 Internally, `Cmd`s run asynchronously in a goroutine. The `Msg` they return is
 collected and sent to our update function for handling. Remember those message
@@ -105,9 +105,7 @@ types we made earlier when we were making the `checkServer` command? We handle
 them here. This makes dealing with many asynchronous operations very easy.
 
 ```go
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-    m, _ := mdl.(model)
-
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
 
     case statusMsg:
@@ -144,9 +142,7 @@ Our view is very straightforward. We look at the current model and build a
 string accordingly:
 
 ```go
-func view(mdl tea.Model) string {
-    m, _ := mdl.(model)
-
+func (m model) View() string {
     // If there's an error, print it out and don't do anything else.
     if m.err != nil {
         return fmt.Sprintf("\nWe had some trouble: %v\n\n", m.err)
@@ -167,11 +163,13 @@ func view(mdl tea.Model) string {
 
 ## Run the program
 
-The only thing left to do is run the program, so let's do that!
+The only thing left to do is run the program, so let's do that! Our initial
+model doesn't need any data at all in this case, we just initialize it with
+as a `struct` with defaults.
 
 ```go
 func main() {
-    if err := tea.NewProgram(initialize, update, view).Start(); err != nil {
+    if err := tea.NewProgram(model{}).Start(); err != nil {
         fmt.Printf("Uh oh, there was an error: %v\n", err)
         os.Exit(1)
     }

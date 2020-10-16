@@ -13,16 +13,16 @@ type model struct {
 	selected map[int]struct{}
 }
 
-func initialize() (tea.Model, tea.Cmd) {
-	return model{
-		choices:  []string{"Carrots", "Celery", "Kohlrabi"},
-		selected: make(map[int]struct{}),
-	}, nil
+var initialModel = model{
+	choices:  []string{"Carrots", "Celery", "Kohlrabi"},
+	selected: make(map[int]struct{}),
 }
 
-func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-	m, _ := mdl.(model)
+func (m model) Init() tea.Cmd {
+	return nil
+}
 
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -49,9 +49,7 @@ func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func view(mdl tea.Model) string {
-	m, _ := mdl.(model)
-
+func (m model) View() string {
 	s := "What should we buy at the market?\n\n"
 
 	for i, choice := range m.choices {
@@ -74,7 +72,7 @@ func view(mdl tea.Model) string {
 }
 
 func main() {
-	p := tea.NewProgram(initialize, update, view)
+	p := tea.NewProgram(initialModel)
 	if err := p.Start(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

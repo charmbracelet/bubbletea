@@ -2,9 +2,7 @@ Bubble Tea Basics
 =================
 
 Bubble Tea is based on the functional design paradigms of [The Elm
-Architecture][elm]. It might not seem very Go-like at first, but once you get
-used to the general structure you'll find that most of the idomatic Go things
-you know and love are still relevant and useful here.
+Architecture][elm] which happens work nicely with Go.
 
 By the way, the non-annotated source code for this program is available
 [on GitHub](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics).
@@ -32,9 +30,9 @@ import will be the Bubble Tea library, which we'll call `tea` for short.
 ```
 
 Bubble Tea programs are comprised of a **model** that describes the application
-state and three simple functions that are centered around that model:
+state and three simple methods on that model:
 
-* **Initialize**, a function that returns the model's initial state.
+* **Init**, a function that returns an initial command for the application to run.
 * **Update**, a function that handles incoming events and updates the model accordingly.
 * **View**, a function that renders the UI based on the data in the model.
 
@@ -51,35 +49,34 @@ It can be any type, but a `struct` usually makes the most sense.
     }
 ```
 
-## The Initialization Function
+## Initialization
 
-Next we'll define a function that will initialize our application. An
-initialize function returns a model representing our application's initial
-state, as well as a `Cmd` that could perform some initial I/O. For now, we
-don't need to do any I/O, so for the command we'll just return `nil`, which
-translates to "no command."
+Next we'll define our application’s initial state. We’ll store our initial
+model in a simple variable, and then define the `Init` method.  `Init` can
+return a `Cmd` that could perform some initial I/O. For now, we don't need to
+do any I/O, so for the command we'll just return `nil`, which translates to "no
+command."
 
 ```go
-    func initialize() (tea.Model, tea.Cmd) {
-        m := model{
+    var initialModel = model{
+        // Our to-do list is just a grocery list
+        choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
-            // Our to-do list is just a grocery list
-            choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+        // A map which indicates which choices are selected. We're using
+        // the  map like a mathematical set. The keys refer to the indexes
+        // of the `choices` slice, above.
+        selected: make(map[int]struct{}),
+    }
 
-            // A map which indicates which choices are selected. We're using
-            // the  map like a mathematical set. The keys refer to the indexes
-            // of the `choices` slice, above.
-            selected: make(map[int]struct{}),
-        }
-
-        // Return the model and `nil`, which means "no I/O right now, please."
+    func (m model) Init() (tea.Cmd) {
+        // Just return `nil`, which means "no I/O right now, please."
         return m, nil
     }
 ```
 
-## The Update Function
+## The Update Method
 
-Next we'll define the update function. The update function is called when
+Next we'll define the update method. The update function is called when
 "things happen." Its job is to look at what has happened and return an updated
 model in response to whatever happened. It can also return a `Cmd` and make
 more things happen, but for now don't worry about that part.
@@ -98,9 +95,7 @@ For now, we'll just deal with `tea.KeyMsg` messages, which are automatically
 sent to the update function when keys are pressed.
 
 ```go
-    func update(msg tea.Msg, mdl tea.Model) (tea.Model, tea.Cmd) {
-        m, _ := mdl.(model)
-
+    func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         switch msg := msg.(type) {
 
         // Is it a key press?
@@ -147,20 +142,18 @@ You may have noticed that "ctrl+c" and "q" above return a `tea.Quit` command
 with the model. That's a special command which instructs the Bubble Tea runtime
 to quit, exiting the program.
 
-## The View Function
+## The View Method
 
-At last, it's time to render our UI. Of all the functions, the view is the
-simplest. A model, in it's current state, comes in and a `string` comes out.
-That string is our UI!
+At last, it's time to render our UI. Of all the methods, the view is the
+simplest. We look at the  model in it's current state and use it to return
+a `string`.  That string is our UI!
 
 Because the view describes the entire UI of your application, you don't have
 to worry about redraw logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-    func view(mdl tea.Model) string {
-        m, _ := mdl.(model)
-
+    func (m model) View() string {
         // The header
         s := "What should we buy at the market?\n\n"
 
@@ -193,12 +186,12 @@ for you.
 
 ## All Together Now
 
-The last step is to simply run our program. We pass our functions to
+The last step is to simply run our program. We pass our initial model to
 `tea.NewProgram` and let it rip:
 
 ```go
     func main() {
-        p := tea.NewProgram(initialize, update, view)
+        p := tea.NewProgram(initialModel)
         if err := p.Start(); err != nil {
             fmt.Printf("Alas, there's been an error: %v", err)
             os.Exit(1)
