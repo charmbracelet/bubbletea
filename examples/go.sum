@@ -2,6 +2,8 @@ github.com/atotto/clipboard v0.1.2 h1:YZCtFu5Ie8qX2VmVTBnrqLSiU9XOWwqNRmdT3gIQzb
 github.com/atotto/clipboard v0.1.2/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
 github.com/charmbracelet/bubbles v0.6.1 h1:SnyRY9vJMXW1sjECGUVdbec4O6V425ImAkIdwX3HkK8=
 github.com/charmbracelet/bubbles v0.6.1/go.mod h1:MxySU+YRGbAhZQJavZlW2os+fIeOW69MI3iXqA+2/WA=
+github.com/charmbracelet/bubbles v0.6.2-0.20201015225236-9c10cd058678 h1:np5Ozoieb1iodu8uF4rpVJGIok7t+ZAqFv6gqQxYnMo=
+github.com/charmbracelet/bubbles v0.6.2-0.20201015225236-9c10cd058678/go.mod h1:iDMahsfUjgRIKH+txnq+ed8C39WmfyZYofQht9l9qyA=
 github.com/containerd/console v1.0.1 h1:u7SFAJyRqWcG6ogaMAx3KjSTy1e3hT9QxqX7Jco7dRc=
 github.com/containerd/console v1.0.1/go.mod h1:XUsP6YE/mKtz6bxc+I8UiKKTP04qjQL4qcS3XoQ5xkw=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776 h1:VRIbnDWRmAh5yBdz+J6yFMF5vso1It6vn+WmM/5l7MA=
