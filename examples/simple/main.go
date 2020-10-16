@@ -32,16 +32,15 @@ func main() {
 // we'll need is a simple integer.
 type model int
 
-// Init optionally return an initial command we should run. In this case we
+// Init optionally returns an initial command we should run. In this case we
 // want to start the timer.
 func (m model) Init() tea.Cmd {
 	return tick
 }
 
-// Update is called when messages are recived. The idea is that you inspect
-// the message and update the model (or send back a new one) accordingly. You
-// can also return a commmand, which is a function that peforms I/O and
-// returns a message.
+// Update is called when messages are recived. The idea is that you inspect the
+// message and send back an updated model accordingly. You can also return
+// a commmand, which is a function that peforms I/O and returns a message.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyMsg:
@@ -56,8 +55,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Views take data from the model and return a string which will be rendered
-// to the terminal.
+// Views return a string based on data in the model. That string which will be
+// rendered to the terminal.
 func (m model) View() string {
 	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
 }
