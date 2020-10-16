@@ -236,6 +236,7 @@ func main() {
     }
 }
 ```
+
 ## What's Next?
 
 This tutorial covers the basics of building an interactive terminal UI, but
@@ -249,46 +250,6 @@ there are [Go Docs][docs].
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/glow?tab=doc
 
-### Bubble Tea in the Wild
-
-For some Bubble Tea programs in production, see:
-
-* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
-* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
-
-### Libraries we use with Bubble Tea
-
-* [Bubbles][bubbles] various Bubble Tea components
-* [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
-* [go-runewidth][runewidth]: Measure the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it.
-
-[termenv]: https://github.com/muesli/termenv
-[reflow]: https://github.com/muesli/reflow
-[bubbles]: https://github.com/charmbracelet/bubbles
-[runewidth]: https://github.com/mattn/go-runewidth
-
-### Feedback
-
-We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
-
-* [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.technology/@charm)
-
-### What's Next?
-
-This tutorial covers the basics of building an interactive terminal UI, but
-in the real world you'll also need to perform I/O. To learn about that have a
-look at the [Command Tutorial][cmd]. It's pretty simple.
-
-There are also several [Bubble Tea examples][examples] available and, of course,
-there are [Go Docs][docs].
-
-[cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
-[examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/glow?tab=doc
-
-
 ## Bubble Tea in the Wild
 
 For some Bubble Tea programs in production, see:
@@ -296,17 +257,24 @@ For some Bubble Tea programs in production, see:
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
 * [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
 
-
 ## Libraries we use with Bubble Tea
 
 * [Bubbles][bubbles]: various Bubble Tea components
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: ANSI-aware methods for formatting blocks of text and measuring widths of strings. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it. Reflow is particularly nice for this as it measures character widths while ignoring any ANSI sequences present.
+* [go-runewidth][runewidth]: Measure the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it.
 
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 [bubbles]: https://github.com/charmbracelet/bubbles
+[runewidth]: https://github.com/mattn/go-runewidth
 
+## Feedback
+
+We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
+
+* [Twitter](https://twitter.com/charmcli)
+* [The Fediverse](https://mastodon.technology/@charm)
 
 ## Acknowledgments
 
