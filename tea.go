@@ -25,8 +25,8 @@ type Msg interface{}
 
 // Model contains the program's state as well as it's core functions.
 type Model interface {
-	// Init is the first function that will be called. It returns your an
-	// optional initial command.
+	// Init is the first function that will be called. It returns an optional
+	// initial command. To not perform an initial command return nil.
 	Init() Cmd
 
 	// Update is called when a message is received. Use it to inspect messages
