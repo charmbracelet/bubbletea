@@ -31,6 +31,7 @@ func initialModel() model {
 	inputModel := input.NewModel()
 	inputModel.Placeholder = "Pikachu"
 	inputModel.Focus()
+	inputModel.CharLimit = 20
 
 	return model{
 		textInput: inputModel,

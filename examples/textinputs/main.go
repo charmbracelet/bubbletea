@@ -43,14 +43,17 @@ func initialModel() model {
 	name.Focus()
 	name.Prompt = focusedPrompt
 	name.TextColor = focusedTextColor
+	name.CharLimit = 32
 
 	nickName := input.NewModel()
 	nickName.Placeholder = "Nickname"
 	nickName.Prompt = blurredPrompt
+	nickName.CharLimit = 32
 
 	email := input.NewModel()
 	email.Placeholder = "Email"
 	email.Prompt = blurredPrompt
+	email.CharLimit = 64
 
 	return model{0, name, nickName, email, blurredSubmitButton}
 
