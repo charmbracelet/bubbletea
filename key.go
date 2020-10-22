@@ -131,12 +131,11 @@ const (
 	KeyNull      = keyNUL
 	KeyBreak     = keyETX
 	KeyEnter     = keyCR
-	KeyBackspace = keyBS
+	KeyBackspace = keyDEL
 	KeyTab       = keyHT
 	KeySpace     = keySP
 	KeyEsc       = keyESC
 	KeyEscape    = keyESC
-	KeyDelete    = keyDEL
 
 	KeyCtrlAt           = keyNUL // ctrl+@
 	KeyCtrlA            = keySOH
@@ -185,6 +184,7 @@ const (
 	KeyEnd
 	KeyPgUp
 	KeyPgDown
+	KeyDelete
 )
 
 // Mapping for control keys to friendly consts.
@@ -197,8 +197,8 @@ var keyNames = map[int]string{
 	keyENQ: "ctrl+e",
 	keyACK: "ctrl+f",
 	keyBEL: "ctrl+g",
-	keyBS:  "backspace", // also ctrl+h
-	keyHT:  "tab",       // also ctrl+i
+	keyBS:  "ctrl+h",
+	keyHT:  "tab", // also ctrl+i
 	keyLF:  "ctrl+j",
 	keyVT:  "ctrl+k",
 	keyFF:  "ctrl+l",
@@ -222,7 +222,7 @@ var keyNames = map[int]string{
 	keyRS:  "ctrl+^",
 	keyUS:  "ctrl+_",
 	keySP:  "space",
-	keyDEL: "delete",
+	keyDEL: "backspace",
 
 	KeyRune:     "rune",
 	KeyUp:       "up",
@@ -248,8 +248,9 @@ var sequences = map[string]KeyType{
 // sequences.
 var hexes = map[string]Key{
 	"1b5b5a":       {Type: KeyShiftTab},
+	"1b5b337e":     {Type: KeyDelete},
 	"1b0d":         {Type: KeyEnter, Alt: true},
-	"1b7f":         {Type: KeyDelete, Alt: true},
+	"1b7f":         {Type: KeyBackspace, Alt: true},
 	"1b5b48":       {Type: KeyHome},
 	"1b5b377e":     {Type: KeyHome}, // urxvt
 	"1b5b313b3348": {Type: KeyHome, Alt: true},
