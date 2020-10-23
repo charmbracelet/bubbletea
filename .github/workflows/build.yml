@@ -5,14 +5,14 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [1.12.x, 1.13.x, 1.14.x, 1.15.x]
+        go-version: [~1.13, ^1]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     env:
       GO111MODULE: "on"
     steps:
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go-version }}
 
