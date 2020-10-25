@@ -32,7 +32,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return m.tick()
+	return tick()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -44,7 +44,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 		m.lastTick = t
-		return m, m.tick()
+		return m, tick()
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -63,7 +63,7 @@ func (m model) View() string {
 	return fmt.Sprintf("This program will quit in %02d:%02d\n", secs, millis)
 }
 
-func (m model) tick() tea.Cmd {
+func tick() tea.Cmd {
 	return tea.Tick(time.Duration(interval), func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
