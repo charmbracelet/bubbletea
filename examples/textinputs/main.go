@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	input "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	te "github.com/muesli/termenv"
@@ -32,38 +33,36 @@ func main() {
 type model struct {
 	index         int
 	nameInput     input.Model
-	nickNameInput input.Model
 	emailInput    input.Model
+	passwordInput input.Model
 	submitButton  string
 }
 
 func initialModel() model {
 	name := input.NewModel()
-	name.Placeholder = "Name"
+	name.Placeholder = "Nickname"
 	name.Focus()
 	name.Prompt = focusedPrompt
 	name.TextColor = focusedTextColor
 	name.CharLimit = 32
-
-	nickName := input.NewModel()
-	nickName.Placeholder = "Nickname"
-	nickName.Prompt = blurredPrompt
-	nickName.CharLimit = 32
 
 	email := input.NewModel()
 	email.Placeholder = "Email"
 	email.Prompt = blurredPrompt
 	email.CharLimit = 64
 
-	return model{0, name, nickName, email, blurredSubmitButton}
+	password := input.NewModel()
+	password.Placeholder = "Password"
+	password.Prompt = blurredPrompt
+	password.EchoMode = textinput.EchoPassword
+	password.EchoCharacter = '•'
+	password.CharLimit = 32
+
+	return model{0, name, email, password, blurredSubmitButton}
 
 }
 func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		input.Blink(m.nameInput),
-		input.Blink(m.nickNameInput),
-		input.Blink(m.emailInput),
-	)
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -81,8 +80,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			inputs := []input.Model{
 				m.nameInput,
-				m.nickNameInput,
 				m.emailInput,
+				m.passwordInput,
 			}
 
 			s := msg.String()
@@ -121,8 +120,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.nameInput = inputs[0]
-			m.nickNameInput = inputs[1]
-			m.emailInput = inputs[2]
+			m.emailInput = inputs[1]
+			m.passwordInput = inputs[2]
 
 			if m.index == len(inputs) {
 				m.submitButton = focusedSubmitButton
@@ -148,13 +147,13 @@ func updateInputs(msg tea.Msg, m model) (model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	m.nameInput, cmd = input.Update(msg, m.nameInput)
+	m.nameInput, cmd = m.nameInput.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.nickNameInput, cmd = input.Update(msg, m.nickNameInput)
+	m.emailInput, cmd = m.emailInput.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.emailInput, cmd = input.Update(msg, m.emailInput)
+	m.passwordInput, cmd = m.passwordInput.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -164,9 +163,9 @@ func (m model) View() string {
 	s := "\n"
 
 	inputs := []string{
-		input.View(m.nameInput),
-		input.View(m.nickNameInput),
-		input.View(m.emailInput),
+		m.nameInput.View(),
+		m.emailInput.View(),
+		m.passwordInput.View(),
 	}
 
 	for i := 0; i < len(inputs); i++ {

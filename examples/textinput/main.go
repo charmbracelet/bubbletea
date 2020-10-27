@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	input "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
+	tea.LogToFile("debug.log", "input")
 	p := tea.NewProgram(initialModel())
 
 	if err := p.Start(); err != nil {
@@ -31,7 +33,8 @@ func initialModel() model {
 	inputModel := input.NewModel()
 	inputModel.Placeholder = "Pikachu"
 	inputModel.Focus()
-	inputModel.CharLimit = 20
+	inputModel.CharLimit = 156
+	inputModel.Width = 20
 
 	return model{
 		textInput: inputModel,
@@ -40,7 +43,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return input.Blink(m.textInput)
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -63,14 +66,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.textInput, cmd = input.Update(msg, m.textInput)
+	m.textInput, cmd = m.textInput.Update(msg)
 	return m, cmd
 }
 
 func (m model) View() string {
 	return fmt.Sprintf(
 		"What’s your favorite Pokémon?\n\n%s\n\n%s",
-		input.View(m.textInput),
+		m.textInput.View(),
 		"(esc to quit)",
 	) + "\n"
 }
