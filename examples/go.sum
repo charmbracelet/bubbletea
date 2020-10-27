@@ -9,8 +9,8 @@ github.com/alecthomas/repr v0.0.0-20180818092828-117648cd9897 h1:p9Sln00KOTlrYkx
 github.com/alecthomas/repr v0.0.0-20180818092828-117648cd9897/go.mod h1:xTS7Pm1pD1mvyM075QCDSRqH6qRLXylzS24ZTpRiSzQ=
 github.com/atotto/clipboard v0.1.2 h1:YZCtFu5Ie8qX2VmVTBnrqLSiU9XOWwqNRmdT3gIQzbY=
 github.com/atotto/clipboard v0.1.2/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
-github.com/charmbracelet/bubbles v0.7.1 h1:qvXoIh7ItTA+IA+IO2xxuI9ntp+uVprDAK+IoMzC5OI=
-github.com/charmbracelet/bubbles v0.7.1/go.mod h1:UV3dot0XR45cnQX2d8gtohfUFMepquRG2WE56LPKWNc=
+github.com/charmbracelet/bubbles v0.7.3-0.20201029012715-9b47f26bdd8c h1:sXhe4YmFER1XE+Xl4z5aKmxB1vgYFS35rYHl+SdqStw=
+github.com/charmbracelet/bubbles v0.7.3-0.20201029012715-9b47f26bdd8c/go.mod h1:UV3dot0XR45cnQX2d8gtohfUFMepquRG2WE56LPKWNc=
 github.com/charmbracelet/glamour v0.2.0 h1:mTgaiNiumpqTZp3qVM6DH9UB0NlbY17wejoMf1kM8Pg=
 github.com/charmbracelet/glamour v0.2.0/go.mod h1:UA27Kwj3QHialP74iU6C+Gpc8Y7IOAKupeKMLLBURWM=
 github.com/containerd/console v1.0.1 h1:u7SFAJyRqWcG6ogaMAx3KjSTy1e3hT9QxqX7Jco7dRc=
