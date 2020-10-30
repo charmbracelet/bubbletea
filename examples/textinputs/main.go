@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/charmbracelet/bubbles/textinput"
-	input "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	te "github.com/muesli/termenv"
 )
@@ -32,26 +31,26 @@ func main() {
 
 type model struct {
 	index         int
-	nameInput     input.Model
-	emailInput    input.Model
-	passwordInput input.Model
+	nameInput     textinput.Model
+	emailInput    textinput.Model
+	passwordInput textinput.Model
 	submitButton  string
 }
 
 func initialModel() model {
-	name := input.NewModel()
+	name := textinput.NewModel()
 	name.Placeholder = "Nickname"
 	name.Focus()
 	name.Prompt = focusedPrompt
 	name.TextColor = focusedTextColor
 	name.CharLimit = 32
 
-	email := input.NewModel()
+	email := textinput.NewModel()
 	email.Placeholder = "Email"
 	email.Prompt = blurredPrompt
 	email.CharLimit = 64
 
-	password := input.NewModel()
+	password := textinput.NewModel()
 	password.Placeholder = "Password"
 	password.Prompt = blurredPrompt
 	password.EchoMode = textinput.EchoPassword
@@ -78,7 +77,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Cycle between inputs
 		case "tab", "shift+tab", "enter", "up", "down":
 
-			inputs := []input.Model{
+			inputs := []textinput.Model{
 				m.nameInput,
 				m.emailInput,
 				m.passwordInput,
