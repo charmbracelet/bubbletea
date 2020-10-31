@@ -11,28 +11,28 @@ import (
 // the program's update function. There are a couple general patterns you could
 // use to check for keypresses:
 //
-//     // Switch on the type (safer)
-//     switch msg := msg.(type) {
-//     case KeyMsg:
-//         switch msg.Type {
-//         case KeyEnter:
-//             fmt.Println("you pressed enter!")
-//         case KeyRune:
-//             switch msg.Rune {
-//             case 'a':
-//                 fmt.Println("you pressed a!")
-//             }
-//         }
-//     }
-//
 //     // Switch on the string representation of the key (shorter)
 //     switch msg := msg.(type) {
 //     case KeyMsg:
 //         switch msg.String() {
 //         case "enter":
 //             fmt.Println("you pressed enter!")
-//         case "a':
+//         case "a":
 //             fmt.Println("you pressed a!")
+//         }
+//     }
+//
+//     // Switch on the key type (more foolproof)
+//     switch msg := msg.(type) {
+//     case KeyMsg:
+//         switch msg.Type {
+//         case KeyEnter:
+//             fmt.Println("you pressed enter!")
+//         case KeyRunes:
+//             switch string(msg.Runes) {
+//             case "a":
+//                 fmt.Println("you pressed a!")
+//             }
 //         }
 //     }
 //
