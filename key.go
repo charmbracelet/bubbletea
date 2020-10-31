@@ -61,11 +61,6 @@ func (k *KeyMsg) String() (str string) {
 	return ""
 }
 
-// IsRune returns whether or not the key is a rune.
-func (k *KeyMsg) IsRune() bool {
-	return k.Type == KeyRunes
-}
-
 // Key contains information about a keypress.
 type Key struct {
 	Type  KeyType
