@@ -306,6 +306,18 @@ func readInput(input io.Reader) (Msg, error) {
 		return KeyMsg(k), nil
 	}
 
+	// Is the alt key pressed? The buffer will be prefixed with an escape
+	// sequence if so.
+	if numBytes > 1 && buf[0] == 0x1b {
+		// Now remove the initial escape sequence and re-process to get the
+		// character being pressed in combination with alt.
+		c, _ := utf8.DecodeRune(buf[1:])
+		if c == utf8.RuneError {
+			return nil, errors.New("could not decode rune after removing initial escape")
+		}
+		return KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: []rune{c}}), nil
+	}
+
 	var runes []rune
 	b := buf[:numBytes]
 
@@ -329,24 +341,12 @@ func readInput(input io.Reader) (Msg, error) {
 		return KeyMsg(Key{Type: KeyRunes, Runes: runes}), nil
 	}
 
-	// Is it a control character?
-	char := runes[0]
-	if numBytes == 1 && char <= keyUS || char == keyDEL {
-		return KeyMsg(Key{Type: KeyType(char)}), nil
+	// Is the first rune a control character?
+	r := runes[0]
+	if numBytes == 1 && r <= keyUS || r == keyDEL {
+		return KeyMsg(Key{Type: KeyType(r)}), nil
 	}
 
-	// Is the alt key pressed? The buffer will be prefixed with an escape
-	// sequence if so.
-	if numBytes > 1 && buf[0] == 0x1b {
-		// Now remove the initial escape sequence and re-process to get the
-		// character.
-		c, _ := utf8.DecodeRune(buf[1:])
-		if c == utf8.RuneError {
-			return nil, errors.New("could not decode rune after removing initial escape")
-		}
-		return KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: runes}), nil
-	}
-
-	// Just a regular, ol' rune
+	// Welp, it's just a regular, ol' single rune
 	return KeyMsg(Key{Type: KeyRunes, Runes: runes}), nil
 }
