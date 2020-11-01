@@ -126,7 +126,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// * Recieves messages from the Bubble Tea runtime
 	// * Returns commands to the Bubble Tea runtime
 	//
-	m.viewport, cmd = viewport.Update(msg, m.viewport)
+	m.viewport, cmd = m.viewport.Update(msg)
 	if useHighPerformanceRenderer {
 		cmds = append(cmds, cmd)
 	}
@@ -154,5 +154,5 @@ func (m model) View() string {
 	footerBot = strings.Repeat(" ", gapSize) + footerBot
 	footer := fmt.Sprintf("%s\n%s\n%s", footerTop, footerMid, footerBot)
 
-	return fmt.Sprintf("%s\n%s\n%s", header, viewport.View(m.viewport), footer)
+	return fmt.Sprintf("%s\n%s\n%s", header, m.viewport.View(), footer)
 }

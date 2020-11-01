@@ -89,16 +89,17 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return e, tea.Quit
 		default:
-			vp, _ := viewport.Update(msg, e.viewport)
+			vp, cmd := e.viewport.Update(msg)
 			e.viewport = vp
+			return e, cmd
 		}
+	default:
+		return e, nil
 	}
-
-	return e, nil
 }
 
 func (e example) View() string {
-	return viewport.View(e.viewport) + e.helpView()
+	return e.viewport.View() + e.helpView()
 }
 
 func (e example) helpView() string {

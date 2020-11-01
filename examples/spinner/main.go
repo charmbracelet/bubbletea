@@ -37,7 +37,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return spinner.Tick(m.spinner)
+	return spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -62,7 +62,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	default:
 		var cmd tea.Cmd
-		m.spinner, cmd = spinner.Update(msg, m.spinner)
+		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 	}
 
@@ -73,7 +73,7 @@ func (m model) View() string {
 		return m.err.Error()
 	}
 	s := termenv.
-		String(spinner.View(m.spinner)).
+		String(m.spinner.View()).
 		Foreground(term.Color("205")).
 		String()
 	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
