@@ -35,7 +35,7 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.Type == tea.KeyCtrlC || (msg.Type == tea.KeyRune && msg.Rune == 'q') {
+		if s := msg.String(); s == "ctrl+c" || s == "q" {
 			return m, tea.Quit
 		}
 
