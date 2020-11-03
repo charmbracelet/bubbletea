@@ -24,3 +24,11 @@ jobs:
 
       - name: Build
         run: go build -v ./...
+
+      - name: Build examples
+        run: go build -v ./...
+        working-directory: ./examples
+
+      - name: Build tutorials
+        run: go build -v ./...
+        working-directory: ./tutorials
