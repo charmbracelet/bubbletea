@@ -302,7 +302,7 @@ func TestParseX10MouseEvent(t *testing.T) {
 		// Overflow position.
 		{
 			name: "overflow position",
-			buf:  encode(0b0010_0000, 250, 223), // Because 255 (max uint8) - 32 - 1.
+			buf:  encode(0b0010_0000, 250, 223), // Because 255 (max int8) - 32 - 1.
 			expected: MouseEvent{
 				X:    -6,
 				Y:    -33,
