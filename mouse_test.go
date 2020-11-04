@@ -146,6 +146,15 @@ func TestParseX10MouseEvent(t *testing.T) {
 		// Simple.
 		{
 			name: "left",
+			buf:  encode(0b0000_0000, 32, 16),
+			expected: MouseEvent{
+				X:    32,
+				Y:    16,
+				Type: MouseLeft,
+			},
+		},
+		{
+			name: "left in motion",
 			buf:  encode(0b0010_0000, 32, 16),
 			expected: MouseEvent{
 				X:    32,
@@ -155,6 +164,15 @@ func TestParseX10MouseEvent(t *testing.T) {
 		},
 		{
 			name: "middle",
+			buf:  encode(0b0000_0001, 32, 16),
+			expected: MouseEvent{
+				X:    32,
+				Y:    16,
+				Type: MouseMiddle,
+			},
+		},
+		{
+			name: "middle in motion",
 			buf:  encode(0b0010_0001, 32, 16),
 			expected: MouseEvent{
 				X:    32,
@@ -164,6 +182,15 @@ func TestParseX10MouseEvent(t *testing.T) {
 		},
 		{
 			name: "right",
+			buf:  encode(0b0000_0010, 32, 16),
+			expected: MouseEvent{
+				X:    32,
+				Y:    16,
+				Type: MouseRight,
+			},
+		},
+		{
+			name: "right in motion",
 			buf:  encode(0b0010_0010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
@@ -272,15 +299,6 @@ func TestParseX10MouseEvent(t *testing.T) {
 		},
 		// Unknown.
 		{
-			name: "all zero",
-			buf:  encode(0b0000_0000, 32, 16),
-			expected: MouseEvent{
-				X:    32,
-				Y:    16,
-				Type: MouseUnknown,
-			},
-		},
-		{
 			name: "wheel with unknown bit",
 			buf:  encode(0b0100_0010, 32, 16),
 			expected: MouseEvent{
@@ -342,7 +360,7 @@ func TestParseX10MouseEvent_error(t *testing.T) {
 			buf:  nil,
 		},
 		{
-			name: "wrong a high bit",
+			name: "wrong high bit",
 			buf:  []byte("\x1a[M@A1"),
 		},
 		{

@@ -70,35 +70,21 @@ func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 		bitShift  = 0b0000_0100
 		bitAlt    = 0b0000_1000
 		bitCtrl   = 0b0001_0000
-		bitButton = 0b0010_0000
+		bitMotion = 0b0010_0000
 		bitWheel  = 0b0100_0000
-
-		bitsRelease = 0b0000_0011
 
 		bitsMask = 0b0000_0011
 
-		bitsLeft   = 0b0000_0000
-		bitsMiddle = 0b0000_0001
-		bitsRight  = 0b0000_0010
-		bitsMotion = 0b0000_0011
+		bitsLeft    = 0b0000_0000
+		bitsMiddle  = 0b0000_0001
+		bitsRight   = 0b0000_0010
+		bitsRelease = 0b0000_0011
 
 		bitsWheelUp   = 0b0000_0000
 		bitsWheelDown = 0b0000_0001
 	)
 
-	if e&bitButton != 0 {
-		// Check the low two bits.
-		switch e & bitsMask {
-		case bitsLeft:
-			m.Type = MouseLeft
-		case bitsMiddle:
-			m.Type = MouseMiddle
-		case bitsRight:
-			m.Type = MouseRight
-		case bitsMotion:
-			m.Type = MouseMotion
-		}
-	} else if e&bitWheel != 0 {
+	if e&bitWheel != 0 {
 		// Check the low two bits.
 		switch e & bitsMask {
 		case bitsWheelUp:
@@ -106,8 +92,23 @@ func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 		case bitsWheelDown:
 			m.Type = MouseWheelDown
 		}
-	} else if e&bitsRelease == bitsRelease {
-		m.Type = MouseRelease
+	} else {
+		// Check the low two bits.
+		// We do not separate clicking and dragging.
+		switch e & bitsMask {
+		case bitsLeft:
+			m.Type = MouseLeft
+		case bitsMiddle:
+			m.Type = MouseMiddle
+		case bitsRight:
+			m.Type = MouseRight
+		case bitsRelease:
+			if e&bitMotion != 0 {
+				m.Type = MouseMotion
+			} else {
+				m.Type = MouseRelease
+			}
+		}
 	}
 
 	if e&bitAlt != 0 {
