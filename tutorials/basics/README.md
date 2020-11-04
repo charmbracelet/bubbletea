@@ -211,7 +211,7 @@ there are [Go Docs][docs].
 
 [cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/glow?tab=doc
+[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
 ### Bubble Tea in the Wild
 

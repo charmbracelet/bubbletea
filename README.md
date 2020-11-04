@@ -33,8 +33,6 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
-[docs]: https://github.com/charmbracelet/bubbletea#libraries-we-use-with-bubble-tea
-
 * * *
 
 ## Tutorial
@@ -249,7 +247,7 @@ there are [Go Docs][docs].
 
 [cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/glow?tab=doc
+[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
 ## Bubble Tea in the Wild
 

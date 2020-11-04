@@ -219,7 +219,7 @@ For some Bubble Tea programs in production, see:
 * [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
 
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/glow?tab=doc
+[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 [bubbles]: https://github.com/charmbracelet/bubbles
 
 ### Libraries we use with Bubble Tea
