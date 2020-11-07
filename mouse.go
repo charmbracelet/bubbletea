@@ -58,6 +58,7 @@ var mouseEventTypes = map[MouseEventType]string{
 //
 //     ESC [M Cb Cx Cy
 //
+// See: http://www.xfree86.org/current/ctlseqs.html#Mouse%20Tracking
 func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 	if len(buf) != 6 || string(buf[:3]) != "\x1b[M" {
 		return m, errors.New("not an X10 mouse event")
@@ -65,38 +66,55 @@ func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 
 	e := buf[3] - 32
 
-	switch e {
-	case 35:
-		m.Type = MouseMotion
-	case 64:
-		m.Type = MouseWheelUp
-	case 65:
-		m.Type = MouseWheelDown
-	default:
-		switch e & 3 {
-		case 0:
-			if e&64 != 0 {
-				m.Type = MouseWheelUp
-			} else {
-				m.Type = MouseLeft
-			}
-		case 1:
-			if e&64 != 0 {
-				m.Type = MouseWheelDown
-			} else {
-				m.Type = MouseMiddle
-			}
-		case 2:
+	const (
+		bitShift  = 0b0000_0100
+		bitAlt    = 0b0000_1000
+		bitCtrl   = 0b0001_0000
+		bitMotion = 0b0010_0000
+		bitWheel  = 0b0100_0000
+
+		bitsMask = 0b0000_0011
+
+		bitsLeft    = 0b0000_0000
+		bitsMiddle  = 0b0000_0001
+		bitsRight   = 0b0000_0010
+		bitsRelease = 0b0000_0011
+
+		bitsWheelUp   = 0b0000_0000
+		bitsWheelDown = 0b0000_0001
+	)
+
+	if e&bitWheel != 0 {
+		// Check the low two bits.
+		switch e & bitsMask {
+		case bitsWheelUp:
+			m.Type = MouseWheelUp
+		case bitsWheelDown:
+			m.Type = MouseWheelDown
+		}
+	} else {
+		// Check the low two bits.
+		// We do not separate clicking and dragging.
+		switch e & bitsMask {
+		case bitsLeft:
+			m.Type = MouseLeft
+		case bitsMiddle:
+			m.Type = MouseMiddle
+		case bitsRight:
 			m.Type = MouseRight
-		case 3:
-			m.Type = MouseRelease
+		case bitsRelease:
+			if e&bitMotion != 0 {
+				m.Type = MouseMotion
+			} else {
+				m.Type = MouseRelease
+			}
 		}
 	}
 
-	if e&8 != 0 {
+	if e&bitAlt != 0 {
 		m.Alt = true
 	}
-	if e&16 != 0 {
+	if e&bitCtrl != 0 {
 		m.Ctrl = true
 	}
 
