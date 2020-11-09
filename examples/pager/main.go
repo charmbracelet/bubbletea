@@ -88,7 +88,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Ctrl+c exits
-		if msg.Type == tea.KeyCtrlC {
+		if k := msg.String(); k == "ctrl+c" || k == "q" {
 			return m, tea.Quit
 		}
 
