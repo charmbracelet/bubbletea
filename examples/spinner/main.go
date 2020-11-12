@@ -12,7 +12,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-var term = termenv.ColorProfile()
+var color = termenv.ColorProfile().Color
 
 type errMsg error
 
@@ -32,7 +32,7 @@ func main() {
 
 func initialModel() model {
 	s := spinner.NewModel()
-	s.Frames = spinner.Dot
+	s.Spinner = spinner.Dot
 	return model{spinner: s}
 }
 
@@ -72,10 +72,7 @@ func (m model) View() string {
 	if m.err != nil {
 		return m.err.Error()
 	}
-	s := termenv.
-		String(m.spinner.View()).
-		Foreground(term.Color("205")).
-		String()
+	s := termenv.String(m.spinner.View()).Foreground(color("205")).String()
 	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
 	if m.quitting {
 		return str + "\n"
