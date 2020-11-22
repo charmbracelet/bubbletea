@@ -23,5 +23,6 @@ func LogToFile(path string, prefix string) (*os.File, error) {
 		return nil, err
 	}
 	log.SetOutput(f)
+	log.SetPrefix(prefix)
 	return f, nil
 }
