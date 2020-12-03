@@ -7,6 +7,14 @@ import (
 	te "github.com/muesli/termenv"
 )
 
+func hideCursor(w io.Writer) {
+	fmt.Fprintf(w, te.CSI+te.HideCursorSeq)
+}
+
+func showCursor(w io.Writer) {
+	fmt.Fprintf(w, te.CSI+te.ShowCursorSeq)
+}
+
 func clearLine(w io.Writer) {
 	fmt.Fprintf(w, te.CSI+te.EraseLineSeq, 2)
 }

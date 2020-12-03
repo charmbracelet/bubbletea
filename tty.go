@@ -1,13 +1,14 @@
 package tea
 
 import (
+	"io"
+
 	"github.com/containerd/console"
-	"github.com/muesli/termenv"
 )
 
 var tty console.Console
 
-func initTerminal() error {
+func initTerminal(w io.Writer) error {
 	tty = console.Current()
 	err := tty.SetRaw()
 	if err != nil {
@@ -15,11 +16,11 @@ func initTerminal() error {
 	}
 
 	enableAnsiColors()
-	termenv.HideCursor()
+	hideCursor(w)
 	return nil
 }
 
-func restoreTerminal() error {
-	termenv.ShowCursor()
+func restoreTerminal(w io.Writer) error {
+	showCursor(w)
 	return tty.Reset()
 }
