@@ -93,6 +93,18 @@ type WindowSizeMsg struct {
 	Height int
 }
 
+// HideCursor is a special command for manually instructing Bubble Tea to hide
+// the cursor. In some rare cases, certain operations will cause the terminal
+// to show the cursor, which is normally hidden for the duration of a Bubble
+// Tea program's lifetime. You most likely will not need to use this command.
+func HideCursor() Msg {
+	return hideCursorMsg{}
+}
+
+// hideCursorMsg is an internal command used to hide the cursor. You can send
+// this message with HideCursor.
+type hideCursorMsg struct{}
+
 // NewProgram creates a new Program.
 func NewProgram(model Model) *Program {
 	return &Program{
@@ -193,11 +205,14 @@ func (p *Program) Start() error {
 			return err
 		case msg := <-msgs:
 
-			// Handle quit message
-			if _, ok := msg.(quitMsg); ok {
+			// Handle special messages
+			switch msg.(type) {
+			case quitMsg:
 				p.renderer.stop()
 				close(done)
 				return nil
+			case hideCursorMsg:
+				hideCursor(p.output)
 			}
 
 			// Process batch commands
