@@ -124,11 +124,11 @@ func (p *Program) Start() error {
 
 	p.renderer = newRenderer(p.output, &p.mtx)
 
-	err := initTerminal()
+	err := initTerminal(p.output)
 	if err != nil {
 		return err
 	}
-	defer restoreTerminal()
+	defer restoreTerminal(p.output)
 
 	// Initialize program
 	model := p.initialModel
