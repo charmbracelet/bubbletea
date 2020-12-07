@@ -94,6 +94,6 @@ func (m model) View() (s string) {
 		gap = " "
 	}
 	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
-	s += helpStyle("j/k, ←/→: change spinner • q: exit\n")
+	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
 	return
 }
