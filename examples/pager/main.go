@@ -15,13 +15,13 @@ import (
 )
 
 const (
-	// You usually won't need this unless you're processing some pretty stuff
-	// with some pretty complicated ANSI escape sequences. Turn it on if you
-	// notice flickering.
+	// You generally won't need this unless you're processing stuff with some
+	// pretty complicated ANSI escape sequences. Turn it on if you notice
+	// flickering.
 	//
 	// Also note that high performance rendering only works for programs that
 	// use the full size of the terminal. We're enabling that below with
-	// tea.AltScreen().
+	// tea.EnterAltScreen().
 	useHighPerformanceRenderer = false
 
 	headerHeight = 3
