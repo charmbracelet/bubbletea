@@ -11,10 +11,12 @@ package tea
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"runtime/debug"
 	"sync"
 
+	isatty "github.com/mattn/go-isatty"
 	te "github.com/muesli/termenv"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -57,12 +59,56 @@ func Batch(cmds ...Cmd) Cmd {
 	}
 }
 
+// ProgramOption is used to set options when intializing a Program. Program can
+// accept a variable number of options.
+//
+// Example usage:
+//
+//     p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
+type ProgramOption func(*Program)
+
+// WithOutput sets the output which, by default, is stdout. In most cases you
+// won't need to use this.
+func WithOutput(output *os.File) ProgramOption {
+	return func(m *Program) {
+		m.output = output
+	}
+}
+
+// WithInput sets the input which, by default, is stdin. In most cases you
+// won't need to use this.
+func WithInput(input io.Reader) ProgramOption {
+	return func(m *Program) {
+		m.input = input
+	}
+}
+
+// WithInputDisables disables input. Use this with caution: if you disable
+// input users will not be able to exit your program until it exits itself.
+func WithInputDisabled() ProgramOption {
+	return func(m *Program) {
+		m.input = nil
+	}
+}
+
+// WithoutCatchPanics disables the panic catching that Bubble Tea does by
+// default. Note that if panic catching is disabled the terminal will be in a
+// fairly unusable state after a panic because Bubble Tea will not perform its
+// usual cleanup on exit.
+func WithoutCatchPanics() ProgramOption {
+	return func(m *Program) {
+		m.CatchPanics = false
+	}
+}
+
 // Program is a terminal user interface.
 type Program struct {
 	initialModel Model
 
-	mtx             sync.Mutex
-	output          *os.File // where to send output. this will usually be os.Stdout.
+	mtx sync.Mutex
+
+	output          *os.File  // where to send output. this will usually be os.Stdout.
+	input           io.Reader // this will usually be os.Stdin.
 	renderer        *renderer
 	altScreenActive bool
 
@@ -106,12 +152,20 @@ func HideCursor() Msg {
 type hideCursorMsg struct{}
 
 // NewProgram creates a new Program.
-func NewProgram(model Model) *Program {
-	return &Program{
+func NewProgram(model Model, opts ...ProgramOption) *Program {
+	p := &Program{
 		initialModel: model,
 		output:       os.Stdout,
+		input:        os.Stdin,
 		CatchPanics:  true,
 	}
+
+	// Apply all options to program
+	for _, opt := range opts {
+		opt(p)
+	}
+
+	return p
 }
 
 // Start initializes the program.
@@ -136,11 +190,15 @@ func (p *Program) Start() error {
 
 	p.renderer = newRenderer(p.output, &p.mtx)
 
-	err := initTerminal(p.output)
-	if err != nil {
-		return err
+	// Check if output is a TTY before entering raw mode, hiding the cursor and
+	// so on.
+	if isatty.IsTerminal(p.output.Fd()) {
+		err := initTerminal(p.output)
+		if err != nil {
+			return err
+		}
+		defer restoreTerminal(p.output)
 	}
-	defer restoreTerminal(p.output)
 
 	// Initialize program
 	model := p.initialModel
@@ -159,15 +217,21 @@ func (p *Program) Start() error {
 	p.renderer.write(model.View())
 
 	// Subscribe to user input
-	go func() {
-		for {
-			msg, err := readInput(os.Stdin)
-			if err != nil {
-				errs <- err
+	if p.input != nil {
+		go func() {
+			for {
+				msg, err := readInput(p.input)
+				if err != nil {
+					// If we get EOF just stop listening for input
+					if err == io.EOF {
+						break
+					}
+					errs <- err
+				}
+				msgs <- msg
 			}
-			msgs <- msg
-		}
-	}()
+		}()
+	}
 
 	// Get initial terminal size
 	go func() {
