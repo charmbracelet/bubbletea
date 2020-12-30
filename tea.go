@@ -83,18 +83,10 @@ func WithInput(input io.Reader) ProgramOption {
 	}
 }
 
-// WithInputDisables disables input. Use this with caution: if you disable
-// input users will not be able to exit your program until it exits itself.
-func WithInputDisabled() ProgramOption {
-	return func(m *Program) {
-		m.input = nil
-	}
-}
-
 // WithoutCatchPanics disables the panic catching that Bubble Tea does by
-// default. Note that if panic catching is disabled the terminal will be in a
-// fairly unusable state after a panic because Bubble Tea will not perform its
-// usual cleanup on exit.
+// default. If panic catching is disabled the terminal will be in a fairly
+// unusable state after a panic because Bubble Tea will not perform its usual
+// cleanup on exit.
 func WithoutCatchPanics() ProgramOption {
 	return func(m *Program) {
 		m.CatchPanics = false
@@ -107,7 +99,7 @@ type Program struct {
 
 	mtx sync.Mutex
 
-	output          *os.File  // where to send output. this will usually be os.Stdout.
+	output          io.Writer // where to send output. this will usually be os.Stdout.
 	input           io.Reader // this will usually be os.Stdin.
 	renderer        *renderer
 	altScreenActive bool
@@ -177,6 +169,15 @@ func (p *Program) Start() error {
 		done = make(chan struct{})
 	)
 
+	// Is output a file?
+	outputAsFile, outputIsFile := p.output.(*os.File)
+
+	// Is output a TTY?
+	var isTTY bool
+	if outputIsFile {
+		isTTY = isatty.IsTerminal(outputAsFile.Fd())
+	}
+
 	if p.CatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
@@ -192,7 +193,7 @@ func (p *Program) Start() error {
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
-	if isatty.IsTerminal(p.output.Fd()) {
+	if isTTY {
 		err := initTerminal(p.output)
 		if err != nil {
 			return err
@@ -233,17 +234,19 @@ func (p *Program) Start() error {
 		}()
 	}
 
-	// Get initial terminal size
-	go func() {
-		w, h, err := terminal.GetSize(int(p.output.Fd()))
-		if err != nil {
-			errs <- err
-		}
-		msgs <- WindowSizeMsg{w, h}
-	}()
+	if isTTY {
+		// Get initial terminal size
+		go func() {
+			w, h, err := terminal.GetSize(int(outputAsFile.Fd()))
+			if err != nil {
+				errs <- err
+			}
+			msgs <- WindowSizeMsg{w, h}
+		}()
 
-	// Listen for window resizes
-	go listenForResize(p.output, msgs, errs)
+		// Listen for window resizes
+		go listenForResize(outputAsFile, msgs, errs)
+	}
 
 	// Process commands
 	go func() {
