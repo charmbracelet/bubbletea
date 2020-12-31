@@ -15,7 +15,7 @@ func initTerminal(w io.Writer) error {
 		return err
 	}
 
-	enableAnsiColors()
+	enableAnsiColors(w)
 	hideCursor(w)
 	return nil
 }
