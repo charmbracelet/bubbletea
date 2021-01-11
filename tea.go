@@ -176,7 +176,6 @@ func (p *Program) Start() error {
 	var (
 		cmds = make(chan Cmd)
 		errs = make(chan error)
-		done = make(chan struct{})
 
 		// If output is a file (e.g. os.Stdout) then this will be set
 		// accordingly. Most of the time you should refer to p.outputIsTTY
@@ -266,6 +265,13 @@ func (p *Program) Start() error {
 					errs <- err
 				}
 				msgs <- msg
+
+				// If the TUI program has finished running, exit this goroutine
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 			}
 		}()
 	}
@@ -288,7 +294,7 @@ func (p *Program) Start() error {
 	go func() {
 		for {
 			select {
-			case <-done:
+			case <-ctx.Done():
 				return
 			case cmd := <-cmds:
 				if cmd != nil {
@@ -304,7 +310,7 @@ func (p *Program) Start() error {
 	for {
 		select {
 		case err := <-errs:
-			close(done)
+			cancel()
 			return err
 		case msg := <-msgs:
 
@@ -312,7 +318,7 @@ func (p *Program) Start() error {
 			switch msg.(type) {
 			case quitMsg:
 				p.renderer.stop()
-				close(done)
+				cancel()
 				return nil
 			case hideCursorMsg:
 				hideCursor(p.output)
