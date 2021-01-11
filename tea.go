@@ -10,11 +10,14 @@
 package tea
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"runtime/debug"
 	"sync"
+	"syscall"
 
 	isatty "github.com/mattn/go-isatty"
 	te "github.com/muesli/termenv"
@@ -109,6 +112,9 @@ type Program struct {
 	// from panics, print the stack trace, and disable raw mode. This feature
 	// is on by default.
 	CatchPanics bool
+
+	inputIsTTY  bool
+	outputIsTTY bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -167,16 +173,42 @@ func (p *Program) Start() error {
 		msgs = make(chan Msg)
 		errs = make(chan error)
 		done = make(chan struct{})
+
+		// If output is a file (e.g. os.Stdout) then this will be set
+		// accordingly. Most of the time you should refer to p.outputIsTTY
+		// rather than do a nil check against the value here.
+		outputAsFile *os.File
 	)
 
-	// Is output a file?
-	outputAsFile, outputIsFile := p.output.(*os.File)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// Is output a TTY?
-	var isTTY bool
-	if outputIsFile {
-		isTTY = isatty.IsTerminal(outputAsFile.Fd())
+	// Is output a terminal?
+	if f, ok := p.output.(*os.File); ok {
+		outputAsFile = f
+		p.outputIsTTY = isatty.IsTerminal(f.Fd())
 	}
+
+	// Is input a terminal?
+	if f, ok := p.input.(*os.File); ok {
+		p.inputIsTTY = isatty.IsTerminal(f.Fd())
+	}
+
+	// Listen for SIGINT. Note that in most cases ^C will not send an
+	// interrupt because the terminal will be in raw mode and thus capture
+	// that keystroke and send it along to Program.Update. If input is not a
+	// TTY, however, ^C will be caught here.
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, syscall.SIGINT)
+		defer signal.Stop(sig)
+
+		select {
+		case <-ctx.Done():
+		case <-sig:
+			msgs <- quitMsg{}
+		}
+	}()
 
 	if p.CatchPanics {
 		defer func() {
@@ -193,12 +225,12 @@ func (p *Program) Start() error {
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
-	if isTTY {
-		err := initTerminal(p.output)
+	{
+		err := p.initTerminal()
 		if err != nil {
 			return err
 		}
-		defer restoreTerminal(p.output)
+		defer p.restoreTerminal()
 	}
 
 	// Initialize program
@@ -218,7 +250,7 @@ func (p *Program) Start() error {
 	p.renderer.write(model.View())
 
 	// Subscribe to user input
-	if p.input != nil {
+	if p.inputIsTTY {
 		go func() {
 			for {
 				msg, err := readInput(p.input)
@@ -234,7 +266,7 @@ func (p *Program) Start() error {
 		}()
 	}
 
-	if isTTY {
+	if p.outputIsTTY {
 		// Get initial terminal size
 		go func() {
 			w, h, err := terminal.GetSize(int(outputAsFile.Fd()))

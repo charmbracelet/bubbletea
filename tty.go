@@ -1,26 +1,35 @@
 package tea
 
 import (
-	"io"
-
 	"github.com/containerd/console"
 )
 
 var tty console.Console
 
-func initTerminal(w io.Writer) error {
-	tty = console.Current()
-	err := tty.SetRaw()
-	if err != nil {
-		return err
+func (p Program) initTerminal() error {
+	if p.outputIsTTY {
+		tty = console.Current()
 	}
 
-	enableAnsiColors(w)
-	hideCursor(w)
+	if p.inputIsTTY {
+		err := tty.SetRaw()
+		if err != nil {
+			return err
+		}
+	}
+
+	if p.outputIsTTY {
+		enableAnsiColors(p.output)
+		hideCursor(p.output)
+	}
+
 	return nil
 }
 
-func restoreTerminal(w io.Writer) error {
-	showCursor(w)
+func (p Program) restoreTerminal() error {
+	if !p.outputIsTTY {
+		return nil
+	}
+	showCursor(p.output)
 	return tty.Reset()
 }
