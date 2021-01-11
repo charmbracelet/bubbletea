@@ -166,11 +166,15 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	return p
 }
 
+// msgs is a message channel with buffer.
+// When the TUI program is run repeatedly, msgs will buffer the stdin input.
+// see also https://github.com/charmbracelet/bubbletea/issues/24
+var msgs = make(chan Msg)
+
 // Start initializes the program.
 func (p *Program) Start() error {
 	var (
 		cmds = make(chan Cmd)
-		msgs = make(chan Msg)
 		errs = make(chan error)
 		done = make(chan struct{})
 
