@@ -310,7 +310,6 @@ func (p *Program) Start() error {
 	for {
 		select {
 		case err := <-errs:
-			cancel()
 			return err
 		case msg := <-msgs:
 
@@ -318,7 +317,6 @@ func (p *Program) Start() error {
 			switch msg.(type) {
 			case quitMsg:
 				p.renderer.stop()
-				cancel()
 				return nil
 			case hideCursorMsg:
 				hideCursor(p.output)
