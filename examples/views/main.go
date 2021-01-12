@@ -1,6 +1,10 @@
 package main
 
 // An example demonstrating an application with multiple views.
+//
+// Note that this example was produced before the Bubbles progress component
+// was available (github.com/charmbracelet/bubbles/progress) and thus, we're
+// implementing a progress bar from scratch here.
 
 import (
 	"fmt"
