@@ -255,6 +255,8 @@ For some Bubble Tea programs in production, see:
 
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
 * [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
+* [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool (中文)
 
 ## Libraries we use with Bubble Tea
 
