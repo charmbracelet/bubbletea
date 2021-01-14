@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/muesli/reflow/truncate"
 )
 
 const (
@@ -148,7 +150,20 @@ func (r *renderer) flush() {
 		if _, exists := r.ignoreLines[r.linesRendered]; exists {
 			cursorDown(out) // skip rendering for this line.
 		} else {
-			_, _ = io.WriteString(out, lines[i])
+			line := lines[i]
+
+			// Truncate lines wider than the width of the window to avoid
+			// rendering troubles. If we don't have the width of the window
+			// this will be ignored.
+			//
+			// Note that on Windows we can't get the width of the window
+			// (signal SIGWINCH is not supported), so this will be ignored.
+			if r.width > 0 {
+				line = truncate.String(line, uint(r.width))
+			}
+
+			_, _ = io.WriteString(out, line)
+
 			if i != len(lines)-1 {
 				_, _ = io.WriteString(out, "\r\n")
 			}
