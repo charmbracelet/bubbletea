@@ -257,7 +257,7 @@ For some Bubble Tea programs in production, see:
 * [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
-* [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool (中文)
+* [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 
 ## Libraries we use with Bubble Tea
 
@@ -295,6 +295,6 @@ Czaplicki et alia and the excellent [go-tea][gotea] by TJ Holowaychuk.
 
 Part of [Charm](https://charm.sh).
 
-<a href="https://charm.sh/"><img alt="the Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
 
 Charm热爱开源! / Charm loves open source!
