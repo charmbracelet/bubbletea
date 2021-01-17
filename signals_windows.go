@@ -6,4 +6,4 @@ import "os"
 
 // listenForResize is not available on windows because windows does not
 // implement syscall.SIGWINCH.
-func listenForResize(output *os.File, msgs chan Msg, errs chan error) {}
+func listenForResize(_ *os.File, _ chan Msg, _ chan error) {}
