@@ -196,7 +196,7 @@ func (r *renderer) write(s string) {
 	_, _ = r.buf.WriteString(s)
 }
 
-// setIngoredLines speicifies lines not to be touched by the standard Bubble Tea
+// setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
 // renderer.
 func (r *renderer) setIgnoredLines(from int, to int) {
 	// Lock if we're going to be clearing some lines since we don't want
@@ -247,7 +247,7 @@ func (r *renderer) clearIgnoredLines() {
 // full-window applications (generally those that use the alternate screen
 // buffer).
 //
-// This method bypasses the normal rendering buffer and is philisophically
+// This method bypasses the normal rendering buffer and is philosophically
 // different than the normal way we approach rendering in Bubble Tea. It's for
 // use in high-performance rendering, such as a pager that could potentially
 // be rendering very complicated ansi. In cases where the content is simpler
@@ -277,7 +277,7 @@ func (r *renderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
 // To call this function use the command ScrollDown().
 //
 // See note in insertTop() for caveats, how this function only makes sense for
-// full-window applications, and how it differs from the noraml way we do
+// full-window applications, and how it differs from the normal way we do
 // rendering in Bubble Tea.
 func (r *renderer) insertBottom(lines []string, topBoundary, bottomBoundary int) {
 	r.mtx.Lock()
