@@ -51,7 +51,7 @@ type Model interface {
 // function.
 type Cmd func() Msg
 
-// Batch peforms a bunch of commands concurrently with no ordering guarantees
+// Batch performs a bunch of commands concurrently with no ordering guarantees
 // about the results.
 func Batch(cmds ...Cmd) Cmd {
 	if len(cmds) == 0 {
@@ -62,7 +62,7 @@ func Batch(cmds ...Cmd) Cmd {
 	}
 }
 
-// ProgramOption is used to set options when intializing a Program. Program can
+// ProgramOption is used to set options when initializing a Program. Program can
 // accept a variable number of options.
 //
 // Example usage:
@@ -107,7 +107,7 @@ type Program struct {
 	renderer        *renderer
 	altScreenActive bool
 
-	// CatchPanics is incredibly useful for restoring the terminal to a useable
+	// CatchPanics is incredibly useful for restoring the terminal to a usable
 	// state after a panic occurs. When this is set, Bubble Tea will recover
 	// from panics, print the stack trace, and disable raw mode. This feature
 	// is on by default.
@@ -367,7 +367,7 @@ func (p *Program) EnableMouseCellMotion() {
 }
 
 // DisableMouseCellMotion disables Mouse Cell Motion tracking. If you've
-// enabled Cell Motion mouse trakcing be sure to call this as your program is
+// enabled Cell Motion mouse tracking be sure to call this as your program is
 // exiting or your users will be very upset!
 func (p *Program) DisableMouseCellMotion() {
 	p.mtx.Lock()
