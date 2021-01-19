@@ -256,7 +256,9 @@ For some Bubble Tea programs in production, see:
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
 * [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
+* [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 
 ## Libraries we use with Bubble Tea
