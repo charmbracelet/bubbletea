@@ -260,6 +260,7 @@ For some Bubble Tea programs in production, see:
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
 * [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
+* [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
 
 ## Libraries we use with Bubble Tea
 
