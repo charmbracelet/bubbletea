@@ -3,6 +3,7 @@ package tea
 import (
 	"log"
 	"os"
+	"unicode"
 )
 
 // LogToFile sets up default logging to log to a file. This is helpful as we
@@ -23,6 +24,16 @@ func LogToFile(path string, prefix string) (*os.File, error) {
 		return nil, err
 	}
 	log.SetOutput(f)
+
+	// Add a space after the prefix if a prefix is being specified and it
+	// doesn't already have a trailing space.
+	if len(prefix) > 0 {
+		finalChar := prefix[len(prefix)-1]
+		if unicode.IsSpace(rune(finalChar)) {
+			prefix += " "
+		}
+	}
 	log.SetPrefix(prefix)
+
 	return f, nil
 }
