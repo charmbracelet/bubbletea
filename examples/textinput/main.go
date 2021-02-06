@@ -8,7 +8,6 @@ import (
 	"log"
 
 	"github.com/charmbracelet/bubbles/textinput"
-	input "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -25,19 +24,19 @@ type tickMsg struct{}
 type errMsg error
 
 type model struct {
-	textInput input.Model
+	textInput textinput.Model
 	err       error
 }
 
 func initialModel() model {
-	inputModel := input.NewModel()
-	inputModel.Placeholder = "Pikachu"
-	inputModel.Focus()
-	inputModel.CharLimit = 156
-	inputModel.Width = 20
+	ti := textinput.NewModel()
+	ti.Placeholder = "Pikachu"
+	ti.Focus()
+	ti.CharLimit = 156
+	ti.Width = 20
 
 	return model{
-		textInput: inputModel,
+		textInput: ti,
 		err:       nil,
 	}
 }
