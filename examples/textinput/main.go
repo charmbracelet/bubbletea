@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-	tea.LogToFile("debug.log", "input")
 	p := tea.NewProgram(initialModel())
 
 	if err := p.Start(); err != nil {
