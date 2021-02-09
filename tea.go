@@ -98,6 +98,20 @@ func WithoutCatchPanics() ProgramOption {
 	}
 }
 
+// WithoutRenderer disables the renderer. When this is set output and log
+// statements will be plainly sent to stdout (or another output if one is set)
+// without any rendering and redrawing logic. In other words, printing and
+// logging will behave the same way it would in a non-TUI commandline tool.
+// This can be useful if you want to use the Bubble Tea framework for a non-TUI
+// application, or to provide an additional non-TUI mode to your Bubble Tea
+// programs. For example, your program could behave like a daemon if output is
+// not a TTY.
+func WithoutRenderer() ProgramOption {
+	return func(m *Program) {
+		m.renderer = &nilRenderer{}
+	}
+}
+
 // inputStatus indicates the current state of the input. By default, input is
 // stdin, however we'll change this if input's not a TTY. The user can also set
 // the input.
@@ -125,7 +139,7 @@ type Program struct {
 
 	output          io.Writer // where to send output. this will usually be os.Stdout.
 	input           io.Reader // this will usually be os.Stdin.
-	renderer        *renderer
+	renderer        renderer
 	altScreenActive bool
 
 	// CatchPanics is incredibly useful for restoring the terminal to a usable
@@ -263,7 +277,10 @@ func (p *Program) Start() error {
 		}()
 	}
 
-	p.renderer = newRenderer(p.output, p.mtx)
+	// If no renderer is set use the standard one.
+	if p.renderer == nil {
+		p.renderer = newRenderer(p.output, p.mtx)
+	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
@@ -286,7 +303,7 @@ func (p *Program) Start() error {
 
 	// Start renderer
 	p.renderer.start()
-	p.renderer.altScreenActive = p.altScreenActive
+	p.renderer.setAltScreen(p.altScreenActive)
 
 	// Render initial view
 	p.renderer.write(model.View())
@@ -365,7 +382,10 @@ func (p *Program) Start() error {
 			}
 
 			// Process internal messages for the renderer
-			p.renderer.handleMessages(msg)
+			if r, ok := p.renderer.(*standardRenderer); ok {
+				r.handleMessages(msg)
+			}
+
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
 			cmds <- cmd                    // process command (if any)
@@ -384,7 +404,7 @@ func (p *Program) EnterAltScreen() {
 
 	p.altScreenActive = true
 	if p.renderer != nil {
-		p.renderer.altScreenActive = p.altScreenActive
+		p.renderer.setAltScreen(p.altScreenActive)
 	}
 }
 
@@ -396,7 +416,7 @@ func (p *Program) ExitAltScreen() {
 
 	p.altScreenActive = false
 	if p.renderer != nil {
-		p.renderer.altScreenActive = p.altScreenActive
+		p.renderer.setAltScreen(p.altScreenActive)
 	}
 }
 
