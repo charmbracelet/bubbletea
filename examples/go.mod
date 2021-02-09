@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/glamour v0.2.0
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.0.3
+	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-runewidth v0.0.10
 	github.com/muesli/reflow v0.2.1-0.20210115123740-9e1d0d53df68
 	github.com/muesli/termenv v0.7.4
