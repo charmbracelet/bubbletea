@@ -14,29 +14,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mattn/go-runewidth"
 )
-
-type model string
-
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if _, ok := msg.(tea.KeyMsg); ok {
-		return m, tea.Quit
-	}
-	return m, nil
-}
-
-func (m model) View() string {
-	return fmt.Sprintf(
-		"You piped in: %s\n\nPress any key to exit.\n",
-		runewidth.Truncate(string(m), 48, "…"),
-	)
-}
 
 func main() {
 	stat, err := os.Stdin.Stat()
@@ -64,10 +44,48 @@ func main() {
 		}
 	}
 
-	model := model(strings.TrimSpace(b.String()))
+	model := newModel(strings.TrimSpace(b.String()))
 
 	if err := tea.NewProgram(model).Start(); err != nil {
 		fmt.Println("Couldn't start program:", err)
 		os.Exit(1)
 	}
+}
+
+type model struct {
+	userInput textinput.Model
+}
+
+func newModel(initialValue string) (m model) {
+	i := textinput.NewModel()
+	i.Prompt = ""
+	i.CursorColor = "63"
+	i.Width = 48
+	i.SetValue(initialValue)
+	i.CursorEnd()
+	i.Focus()
+
+	m.userInput = i
+	return
+}
+
+func (m model) Init() tea.Cmd {
+	return textinput.Blink
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyCtrlC {
+		return m, tea.Quit
+	}
+
+	var cmd tea.Cmd
+	m.userInput, cmd = m.userInput.Update(msg)
+	return m, cmd
+}
+
+func (m model) View() string {
+	return fmt.Sprintf(
+		"\nYou piped in: %s\n\nPress ^C to exit",
+		m.userInput.View(),
+	)
 }
