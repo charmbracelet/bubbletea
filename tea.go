@@ -20,6 +20,7 @@ import (
 	"syscall"
 
 	isatty "github.com/mattn/go-isatty"
+	tty "github.com/mattn/go-tty"
 	te "github.com/muesli/termenv"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -83,6 +84,7 @@ func WithOutput(output *os.File) ProgramOption {
 func WithInput(input io.Reader) ProgramOption {
 	return func(m *Program) {
 		m.input = input
+		m.customInput = true
 	}
 }
 
@@ -104,6 +106,7 @@ type Program struct {
 
 	output          io.Writer // where to send output. this will usually be os.Stdout.
 	input           io.Reader // this will usually be os.Stdin.
+	customInput     bool      // has the user specifically set the input?
 	renderer        *renderer
 	altScreenActive bool
 
@@ -192,6 +195,21 @@ func (p *Program) Start() error {
 	// Is input a terminal?
 	if f, ok := p.input.(*os.File); ok {
 		p.inputIsTTY = isatty.IsTerminal(f.Fd())
+	}
+
+	// If input is not a terminal, and the user has not set a custom input,
+	// open a TTY so we can listen for input like keystrokes and mouse events.
+	// This will allow Bubble Tea to "just work" in cases where data has been
+	// piped or redirected into the application (because in those cases input
+	// is not a TTY).
+	if !p.customInput && !p.inputIsTTY {
+		t, err := tty.Open()
+		if err != nil {
+			return err
+		}
+		p.input = t.Input()
+		p.inputIsTTY = true
+		defer t.Close()
 	}
 
 	// Listen for SIGINT. Note that in most cases ^C will not send an

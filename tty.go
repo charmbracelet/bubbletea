@@ -4,15 +4,15 @@ import (
 	"github.com/containerd/console"
 )
 
-var tty console.Console
+var outputTTY console.Console
 
 func (p Program) initTerminal() error {
 	if p.outputIsTTY {
-		tty = console.Current()
+		outputTTY = console.Current()
 	}
 
 	if p.inputIsTTY {
-		err := tty.SetRaw()
+		err := outputTTY.SetRaw()
 		if err != nil {
 			return err
 		}
@@ -31,5 +31,5 @@ func (p Program) restoreTerminal() error {
 		return nil
 	}
 	showCursor(p.output)
-	return tty.Reset()
+	return outputTTY.Reset()
 }
