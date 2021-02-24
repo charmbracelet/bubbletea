@@ -19,6 +19,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
 	tty "github.com/mattn/go-tty"
 	te "github.com/muesli/termenv"
@@ -118,6 +119,11 @@ type Program struct {
 
 	inputIsTTY  bool
 	outputIsTTY bool
+
+	// Containerd/console instances for managing some intricacies around input
+	// and output.
+	inputConsole  console.Console
+	outputConsole console.Console
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.

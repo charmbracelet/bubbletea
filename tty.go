@@ -1,25 +1,54 @@
 package tea
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/containerd/console"
 )
 
-var outputTTY console.Console
-
 func (p Program) initTerminal() error {
-	if p.outputIsTTY {
-		outputTTY = console.Current()
+	var err error
+
+	const assertionErrTpl = "could not create console for %s; could not perform file assertion"
+
+	// Setup input console
+	if p.inputIsTTY {
+		f, ok := p.input.(*os.File)
+		if ok {
+			p.inputConsole, err = console.ConsoleFromFile(f)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf(assertionErrTpl, "input")
+		}
 	}
 
-	if p.inputIsTTY {
-		err := outputTTY.SetRaw()
+	// Setup output console
+	if p.outputIsTTY {
+		f, ok := p.output.(*os.File)
+		if ok {
+			p.outputConsole, err = console.ConsoleFromFile(f)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf(assertionErrTpl, "output")
+		}
+	}
+
+	// Enter raw mode
+	if p.inputConsole != nil {
+		err := p.inputConsole.SetRaw()
 		if err != nil {
 			return err
 		}
 	}
 
+	// Prep terminal for TUI output
 	if p.outputIsTTY {
-		enableAnsiColors(p.output)
+		enableAnsiColors(p.output) // windows only, no-op otherwise
 		hideCursor(p.output)
 	}
 
@@ -30,6 +59,11 @@ func (p Program) restoreTerminal() error {
 	if !p.outputIsTTY {
 		return nil
 	}
+
 	showCursor(p.output)
-	return outputTTY.Reset()
+
+	if p.outputConsole != nil {
+		return p.outputConsole.Reset() // in particular, exit RAW mode
+	}
+	return nil
 }
