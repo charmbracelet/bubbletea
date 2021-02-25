@@ -96,23 +96,6 @@ func (r *renderer) flush() {
 		return
 	}
 
-	// We have an opportunity here to limit the rendering to the terminal width
-	// and height, but this would mean a few things:
-	//
-	// 1) We'd need to maintain the terminal dimensions internally and listen
-	// for window size changes. [done]
-	//
-	// 2) We'd need to measure the width of lines, accounting for multi-cell
-	// rune widths, commonly found in Chinese, Japanese, Korean, emojis and so
-	// on. We'd use something like go-runewidth
-	// (http://github.com/mattn/go-runewidth).
-	//
-	// 3) We'd need to measure the width of lines excluding ANSI escape
-	// sequences and break lines in the right places accordingly.
-	//
-	// Because of the way this would complicate the renderer, this may not be
-	// the place to do that.
-
 	out := new(bytes.Buffer)
 
 	// Clear any lines we painted in the last render.
