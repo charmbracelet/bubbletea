@@ -88,6 +88,9 @@ func (r *renderer) listen() {
 
 // flush renders the buffer.
 func (r *renderer) flush() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	if r.buf.Len() == 0 || r.buf.String() == r.lastRender {
 		// Nothing to do
 		return
@@ -111,9 +114,6 @@ func (r *renderer) flush() {
 	// the place to do that.
 
 	out := new(bytes.Buffer)
-
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
 
 	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
