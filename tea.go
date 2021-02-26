@@ -100,7 +100,7 @@ func WithoutCatchPanics() ProgramOption {
 type Program struct {
 	initialModel Model
 
-	mtx sync.Mutex
+	mtx *sync.Mutex
 
 	output          io.Writer // where to send output. this will usually be os.Stdout.
 	input           io.Reader // this will usually be os.Stdin.
@@ -152,6 +152,7 @@ type hideCursorMsg struct{}
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
+		mtx:          &sync.Mutex{},
 		initialModel: model,
 		output:       os.Stdout,
 		input:        os.Stdin,
@@ -221,7 +222,7 @@ func (p *Program) Start() error {
 		}()
 	}
 
-	p.renderer = newRenderer(p.output, &p.mtx)
+	p.renderer = newRenderer(p.output, p.mtx)
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
