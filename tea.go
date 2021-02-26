@@ -19,6 +19,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
 	te "github.com/muesli/termenv"
 	"golang.org/x/crypto/ssh/terminal"
@@ -83,6 +84,7 @@ func WithOutput(output *os.File) ProgramOption {
 func WithInput(input io.Reader) ProgramOption {
 	return func(m *Program) {
 		m.input = input
+		m.inputStatus = customInput
 	}
 }
 
@@ -94,6 +96,25 @@ func WithoutCatchPanics() ProgramOption {
 	return func(m *Program) {
 		m.CatchPanics = false
 	}
+}
+
+// inputStatus indicates the current state of the input. By default, input is
+// stdin, however we'll change this if input's not a TTY. The user can also set
+// the input.
+type inputStatus int
+
+const (
+	defaultInput = iota // generally, this will be stdin
+	customInput         // the user explicitly set the input
+	managedInput        // we've opened a TTY for input
+)
+
+func (i inputStatus) String() string {
+	return [...]string{
+		"default input",
+		"custom input",
+		"managed input",
+	}[i]
 }
 
 // Program is a terminal user interface.
@@ -113,8 +134,15 @@ type Program struct {
 	// is on by default.
 	CatchPanics bool
 
+	inputStatus inputStatus
 	inputIsTTY  bool
 	outputIsTTY bool
+	console     console.Console
+
+	// Stores the original reference to stdin for cases where input is not a
+	// TTY on windows and we've automatically opened CONIN$ to receive input.
+	// When the program exits this will be restored.
+	windowsStdin *os.File
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -193,6 +221,19 @@ func (p *Program) Start() error {
 	// Is input a terminal?
 	if f, ok := p.input.(*os.File); ok {
 		p.inputIsTTY = isatty.IsTerminal(f.Fd())
+	}
+
+	// If input is not a terminal, and the user hasn't set a custom input, open
+	// a TTY so we can capture input as normal. This will allow things to "just
+	// work" in cases where data was piped or redirected into this application.
+	if !p.inputIsTTY && p.inputStatus != customInput {
+		f, err := openInputTTY()
+		if err != nil {
+			return err
+		}
+		p.input = f
+		p.inputIsTTY = true
+		p.inputStatus = managedInput
 	}
 
 	// Listen for SIGINT. Note that in most cases ^C will not send an
