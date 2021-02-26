@@ -1,18 +1,22 @@
 package tea
 
 import (
-	"github.com/containerd/console"
+	"errors"
 )
 
-var tty console.Console
+var errInputIsNotAFile = errors.New("input is not a file")
 
-func (p Program) initTerminal() error {
-	if p.outputIsTTY {
-		tty = console.Current()
+func (p *Program) initTerminal() error {
+	err := p.initInput()
+	if err != nil {
+		return err
 	}
 
 	if p.inputIsTTY {
-		err := tty.SetRaw()
+		if p.console == nil {
+			return errors.New("no console")
+		}
+		err = p.console.SetRaw()
 		if err != nil {
 			return err
 		}
@@ -27,9 +31,21 @@ func (p Program) initTerminal() error {
 }
 
 func (p Program) restoreTerminal() error {
-	if !p.outputIsTTY {
-		return nil
+	if p.outputIsTTY {
+		showCursor(p.output)
 	}
-	showCursor(p.output)
-	return tty.Reset()
+
+	if err := p.restoreInput(); err != nil {
+		return err
+	}
+
+	// Console will only be set if input is a TTY.
+	if p.console != nil {
+		err := p.console.Reset()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
