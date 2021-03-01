@@ -29,7 +29,7 @@ func LogToFile(path string, prefix string) (*os.File, error) {
 	// doesn't already have a trailing space.
 	if len(prefix) > 0 {
 		finalChar := prefix[len(prefix)-1]
-		if unicode.IsSpace(rune(finalChar)) {
+		if !unicode.IsSpace(rune(finalChar)) {
 			prefix += " "
 		}
 	}
