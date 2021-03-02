@@ -42,23 +42,10 @@ import (
 // IMEs) can input multiple runes at once.
 type KeyMsg Key
 
-// String returns a friendly name for a key.
-//
-//     k := KeyType{Type: KeyEnter}
-//     fmt.Println(k)
-//     // Output: enter
-func (k *KeyMsg) String() (str string) {
-	if k.Alt {
-		str += "alt+"
-	}
-	if k.Type == KeyRunes {
-		str += string(k.Runes)
-		return str
-	} else if s, ok := keyNames[int(k.Type)]; ok {
-		str += s
-		return str
-	}
-	return ""
+// String returns a string representation for a key message. It's safe (and
+// encouraged) for use in key comparison.
+func (k KeyMsg) String() (str string) {
+	return Key(k).String()
 }
 
 // Key contains information about a keypress.
@@ -68,9 +55,30 @@ type Key struct {
 	Alt   bool
 }
 
-// KeyType indicates the key pressed, such as KeyEnter or KeyBreak or
-// KeyCtrlC. All other keys will be type KeyRunes. To get the rune value, check
-// the Rune method on a Key struct, or use the Key.String() method:
+// String returns a friendly string representation for a key. It's safe (and
+// encouraged) for use in key comparison.
+//
+//     k := Key{Type: KeyEnter}
+//     fmt.Println(k)
+//     // Output: enter
+//
+func (k Key) String() (str string) {
+	if k.Alt {
+		str += "alt+"
+	}
+	if k.Type == KeyRunes {
+		str += string(k.Runes)
+		return str
+	} else if s, ok := keyNames[k.Type]; ok {
+		str += s
+		return str
+	}
+	return ""
+}
+
+// KeyType indicates the key pressed, such as KeyEnter or KeyBreak or KeyCtrlC.
+// All other keys will be type KeyRunes. To get the rune value, check the Rune
+// method on a Key struct, or use the Key.String() method:
 //
 //     k := Key{Type: KeyRunes, Runes: []rune{'a'}, Alt: true}
 //     if k.Type == KeyRunes {
@@ -84,97 +92,104 @@ type Key struct {
 //     }
 type KeyType int
 
+func (k KeyType) String() (str string) {
+	if s, ok := keyNames[k]; ok {
+		return s
+	}
+	return ""
+}
+
 // Control keys. I know we could do this with an iota, but the values are very
 // specific, so we set the values explicitly to avoid any confusion.
 //
 // See also:
 // https://en.wikipedia.org/wiki/C0_and_C1_control_codes
 const (
-	keyNUL = 0   // null, \0
-	keySOH = 1   // start of heading
-	keySTX = 2   // start of text
-	keyETX = 3   // break, ctrl+c
-	keyEOT = 4   // end of transmission
-	keyENQ = 5   // enquiry
-	keyACK = 6   // acknowledge
-	keyBEL = 7   // bell, \a
-	keyBS  = 8   // backspace
-	keyHT  = 9   // horizontal tabulation, \t
-	keyLF  = 10  // line feed, \n
-	keyVT  = 11  // vertical tabulation \v
-	keyFF  = 12  // form feed \f
-	keyCR  = 13  // carriage return, \r
-	keySO  = 14  // shift out
-	keySI  = 15  // shift in
-	keyDLE = 16  // data link escape
-	keyDC1 = 17  // device control one
-	keyDC2 = 18  // device control two
-	keyDC3 = 19  // device control three
-	keyDC4 = 20  // device control four
-	keyNAK = 21  // negative acknowledge
-	keySYN = 22  // synchronous idle
-	keyETB = 23  // end of transmission block
-	keyCAN = 24  // cancel
-	keyEM  = 25  // end of medium
-	keySUB = 26  // substitution
-	keyESC = 27  // escape, \e
-	keyFS  = 28  // file separator
-	keyGS  = 29  // group separator
-	keyRS  = 30  // record separator
-	keyUS  = 31  // unit separator
-	keySP  = 32  // space
-	keyDEL = 127 // delete. on most systems this is mapped to backspace, I hear
+	keyNUL KeyType = 0   // null, \0
+	keySOH KeyType = 1   // start of heading
+	keySTX KeyType = 2   // start of text
+	keyETX KeyType = 3   // break, ctrl+c
+	keyEOT KeyType = 4   // end of transmission
+	keyENQ KeyType = 5   // enquiry
+	keyACK KeyType = 6   // acknowledge
+	keyBEL KeyType = 7   // bell, \a
+	keyBS  KeyType = 8   // backspace
+	keyHT  KeyType = 9   // horizontal tabulation, \t
+	keyLF  KeyType = 10  // line feed, \n
+	keyVT  KeyType = 11  // vertical tabulation \v
+	keyFF  KeyType = 12  // form feed \f
+	keyCR  KeyType = 13  // carriage return, \r
+	keySO  KeyType = 14  // shift out
+	keySI  KeyType = 15  // shift in
+	keyDLE KeyType = 16  // data link escape
+	keyDC1 KeyType = 17  // device control one
+	keyDC2 KeyType = 18  // device control two
+	keyDC3 KeyType = 19  // device control three
+	keyDC4 KeyType = 20  // device control four
+	keyNAK KeyType = 21  // negative acknowledge
+	keySYN KeyType = 22  // synchronous idle
+	keyETB KeyType = 23  // end of transmission block
+	keyCAN KeyType = 24  // cancel
+	keyEM  KeyType = 25  // end of medium
+	keySUB KeyType = 26  // substitution
+	keyESC KeyType = 27  // escape, \e
+	keyFS  KeyType = 28  // file separator
+	keyGS  KeyType = 29  // group separator
+	keyRS  KeyType = 30  // record separator
+	keyUS  KeyType = 31  // unit separator
+	keySP  KeyType = 32  // space
+	keyDEL KeyType = 127 // delete. on most systems this is mapped to backspace, I hear
 )
 
 // Control key aliases.
 const (
-	KeyNull      = keyNUL
-	KeyBreak     = keyETX
-	KeyEnter     = keyCR
-	KeyBackspace = keyDEL
-	KeyTab       = keyHT
-	KeySpace     = keySP
-	KeyEsc       = keyESC
-	KeyEscape    = keyESC
+	KeyNull      KeyType = keyNUL
+	KeyBreak     KeyType = keyETX
+	KeyEnter     KeyType = keyCR
+	KeyBackspace KeyType = keyDEL
+	KeyTab       KeyType = keyHT
+	KeySpace     KeyType = keySP
+	KeyEsc       KeyType = keyESC
+	KeyEscape    KeyType = keyESC
 
-	KeyCtrlAt           = keyNUL // ctrl+@
-	KeyCtrlA            = keySOH
-	KeyCtrlB            = keySTX
-	KeyCtrlC            = keyETX
-	KeyCtrlD            = keyEOT
-	KeyCtrlE            = keyENQ
-	KeyCtrlF            = keyACK
-	KeyCtrlG            = keyBEL
-	KeyCtrlH            = keyBS
-	KeyCtrlI            = keyHT
-	KeyCtrlJ            = keyLF
-	KeyCtrlK            = keyVT
-	KeyCtrlL            = keyFF
-	KeyCtrlM            = keyCR
-	KeyCtrlN            = keySO
-	KeyCtrlO            = keySI
-	KeyCtrlP            = keyDLE
-	KeyCtrlQ            = keyDC1
-	KeyCtrlR            = keyDC2
-	KeyCtrlS            = keyDC3
-	KeyCtrlT            = keyDC4
-	KeyCtrlU            = keyNAK
-	KeyCtrlV            = keySYN
-	KeyCtrlW            = keyETB
-	KeyCtrlX            = keyCAN
-	KeyCtrlY            = keyEM
-	KeyCtrlZ            = keySUB
-	KeyCtrlOpenBracket  = keyESC // ctrl+[
-	KeyCtrlBackslash    = keyFS  // ctrl+\
-	KeyCtrlCloseBracket = keyGS  // ctrl+]
-	KeyCtrlCaret        = keyRS  // ctrl+^
-	KeyCtrlUnderscore   = keyUS  // ctrl+_
-	KeyCtrlQuestionMark = keyDEL // ctrl+?
+	KeyCtrlAt           KeyType = keyNUL // ctrl+@
+	KeyCtrlA            KeyType = keySOH
+	KeyCtrlB            KeyType = keySTX
+	KeyCtrlC            KeyType = keyETX
+	KeyCtrlD            KeyType = keyEOT
+	KeyCtrlE            KeyType = keyENQ
+	KeyCtrlF            KeyType = keyACK
+	KeyCtrlG            KeyType = keyBEL
+	KeyCtrlH            KeyType = keyBS
+	KeyCtrlI            KeyType = keyHT
+	KeyCtrlJ            KeyType = keyLF
+	KeyCtrlK            KeyType = keyVT
+	KeyCtrlL            KeyType = keyFF
+	KeyCtrlM            KeyType = keyCR
+	KeyCtrlN            KeyType = keySO
+	KeyCtrlO            KeyType = keySI
+	KeyCtrlP            KeyType = keyDLE
+	KeyCtrlQ            KeyType = keyDC1
+	KeyCtrlR            KeyType = keyDC2
+	KeyCtrlS            KeyType = keyDC3
+	KeyCtrlT            KeyType = keyDC4
+	KeyCtrlU            KeyType = keyNAK
+	KeyCtrlV            KeyType = keySYN
+	KeyCtrlW            KeyType = keyETB
+	KeyCtrlX            KeyType = keyCAN
+	KeyCtrlY            KeyType = keyEM
+	KeyCtrlZ            KeyType = keySUB
+	KeyCtrlOpenBracket  KeyType = keyESC // ctrl+[
+	KeyCtrlBackslash    KeyType = keyFS  // ctrl+\
+	KeyCtrlCloseBracket KeyType = keyGS  // ctrl+]
+	KeyCtrlCaret        KeyType = keyRS  // ctrl+^
+	KeyCtrlUnderscore   KeyType = keyUS  // ctrl+_
+	KeyCtrlQuestionMark KeyType = keyDEL // ctrl+?
 )
 
 // Other keys.
 const (
-	KeyRunes = -(iota + 1)
+	KeyRunes KeyType = -(iota + 1)
 	KeyUp
 	KeyDown
 	KeyRight
@@ -188,7 +203,7 @@ const (
 )
 
 // Mapping for control keys to friendly consts.
-var keyNames = map[int]string{
+var keyNames = map[KeyType]string{
 	keyNUL: "ctrl+@", // also ctrl+`
 	keySOH: "ctrl+a",
 	keySTX: "ctrl+b",
@@ -342,9 +357,9 @@ func readInput(input io.Reader) (Msg, error) {
 	}
 
 	// Is the first rune a control character?
-	r := runes[0]
+	r := KeyType(runes[0])
 	if numBytes == 1 && r <= keyUS || r == keyDEL {
-		return KeyMsg(Key{Type: KeyType(r)}), nil
+		return KeyMsg(Key{Type: r}), nil
 	}
 
 	// Welp, it's just a regular, ol' single rune
