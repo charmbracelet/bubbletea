@@ -57,14 +57,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.index = len(spinners) - 1
 			}
 			m.resetSpinner()
-			return m, nil
+			return m, spinner.Tick
 		case "l", "right":
 			m.index++
 			if m.index >= len(spinners) {
 				m.index = 0
 			}
 			m.resetSpinner()
-			return m, nil
+			return m, spinner.Tick
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		default:
