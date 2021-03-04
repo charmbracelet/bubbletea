@@ -2,6 +2,7 @@
 .envrc
 
 examples/fullscreen/fullscreen
+examples/help/help
 examples/http/http
 examples/mouse/mouse
 examples/pager/pager
