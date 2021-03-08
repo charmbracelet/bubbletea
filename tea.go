@@ -168,6 +168,26 @@ func Quit() Msg {
 // send a quitMsg with Quit.
 type quitMsg struct{}
 
+// EnterAltScreen is a special command that tells the Bubble Tea program to enter
+// alternate screen buffer.
+func EnterAltScreen() Msg {
+	return enterAltScreenMsg{}
+}
+
+// enterAltScreenMsg in an internal message signals that the program should enter
+// alternate screen buffer. You can send a enterAltScreenMsg with EnterAltScreen.
+type enterAltScreenMsg struct{}
+
+// ExitAltScreen is a special command that tells the Bubble Tea program to exit
+// alternate screen buffer.
+func ExitAltScreen() Msg {
+	return exitAltScreenMsg{}
+}
+
+// exitAltScreenMsg in an internal message signals that the program should exit
+// alternate screen buffer. You can send a exitAltScreenMsg with ExitAltScreen.
+type exitAltScreenMsg struct{}
+
 // batchMsg is the internal message used to perform a bunch of commands. You
 // can send a batchMsg with Batch.
 type batchMsg []Cmd
@@ -366,9 +386,14 @@ func (p *Program) Start() error {
 			// Handle special messages
 			switch msg.(type) {
 			case quitMsg:
+				p.ExitAltScreen()
 				p.renderer.stop()
 				close(done)
 				return nil
+			case enterAltScreenMsg:
+				p.EnterAltScreen()
+			case exitAltScreenMsg:
+				p.ExitAltScreen()
 			case hideCursorMsg:
 				hideCursor(p.output)
 			}
@@ -399,6 +424,11 @@ func (p *Program) Start() error {
 func (p *Program) EnterAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
+
+	if p.altScreenActive {
+		return
+	}
+
 	fmt.Fprintf(p.output, te.CSI+te.AltScreenSeq)
 	moveCursor(p.output, 0, 0)
 
@@ -412,6 +442,11 @@ func (p *Program) EnterAltScreen() {
 func (p *Program) ExitAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
+
+	if !p.altScreenActive {
+		return
+	}
+
 	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
 
 	p.altScreenActive = false
