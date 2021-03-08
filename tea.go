@@ -386,6 +386,7 @@ func (p *Program) Start() error {
 			// Handle special messages
 			switch msg.(type) {
 			case quitMsg:
+				p.ExitAltScreen()
 				p.renderer.stop()
 				close(done)
 				return nil

@@ -18,9 +18,9 @@ type tickMsg time.Time
 func main() {
 	p := tea.NewProgram(model(5))
 
+	// Bubble Tea will automatically exit the alternate screen buffer.
 	p.EnterAltScreen()
 	err := p.Start()
-	p.ExitAltScreen()
 
 	if err != nil {
 		log.Fatal(err)
