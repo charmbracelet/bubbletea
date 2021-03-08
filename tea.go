@@ -421,6 +421,10 @@ func (p *Program) Start() error {
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 func (p *Program) EnterAltScreen() {
+	if p.altScreenActive {
+		return
+	}
+
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.AltScreenSeq)
@@ -434,6 +438,10 @@ func (p *Program) EnterAltScreen() {
 
 // ExitAltScreen exits the alternate screen buffer.
 func (p *Program) ExitAltScreen() {
+	if !p.altScreenActive {
+		return
+	}
+
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
