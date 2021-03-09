@@ -73,7 +73,7 @@ type ProgramOption func(*Program)
 
 // WithOutput sets the output which, by default, is stdout. In most cases you
 // won't need to use this.
-func WithOutput(output *os.File) ProgramOption {
+func WithOutput(output io.Writer) ProgramOption {
 	return func(m *Program) {
 		m.output = output
 	}
