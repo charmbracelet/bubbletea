@@ -262,6 +262,7 @@ For some Bubble Tea programs in production, see:
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
+* [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 
 ## Libraries we use with Bubble Tea
 
