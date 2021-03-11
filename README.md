@@ -263,6 +263,7 @@ For some Bubble Tea programs in production, see:
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
+* [gembro](https://git.sr.ht/~rafael/gembro): a Gemini browser
 
 ## Libraries we use with Bubble Tea
 
