@@ -11,6 +11,7 @@ import (
 var (
 	color   = termenv.ColorProfile().Color
 	keyword = termenv.Style{}.Foreground(color("204")).Background(color("235")).Styled
+	help    = termenv.Style{}.Foreground(color("241")).Styled
 )
 
 type model struct {
@@ -53,19 +54,15 @@ func (m model) View() string {
 		inlineMode    = " inline mode "
 	)
 
-	var mode, otherMode string
+	var mode string
 	if m.altscreen {
 		mode = altscreenMode
-		otherMode = inlineMode
 	} else {
 		mode = inlineMode
-		otherMode = altscreenMode
 	}
 
-	return fmt.Sprintf(
-		"\n  You're in %s. Press %s to swich to %s.\n\n  To exit press %s.\n",
-		keyword(mode), keyword(" space "), keyword(otherMode), keyword(" q "),
-	)
+	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keyword(mode)) +
+		help("  space: switch modes • q: exit\n")
 }
 
 func main() {
