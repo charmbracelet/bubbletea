@@ -13,6 +13,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/muesli/reflow/indent"
+	"github.com/muesli/termenv"
+)
+
+var (
+	color = termenv.ColorProfile().Color
 )
 
 func main() {
@@ -48,9 +53,14 @@ func main() {
 	}
 }
 
+type result struct {
+	duration time.Duration
+	emoji    string
+}
+
 type model struct {
 	spinner  spinner.Model
-	results  []time.Duration
+	results  []result
 	quitting bool
 }
 
@@ -59,7 +69,7 @@ func newModel() model {
 
 	return model{
 		spinner: spinner.NewModel(),
-		results: make([]time.Duration, showLastResults),
+		results: make([]result, showLastResults),
 	}
 }
 
@@ -82,8 +92,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case processFinishedMsg:
 		d := time.Duration(msg)
-		log.Printf("Finished job in %s", d)
-		m.results = append(m.results[1:], d)
+		res := result{emoji: randomEmoji(), duration: d}
+		log.Printf("%s Job finished in %s", res.emoji, res.duration)
+		m.results = append(m.results[1:], res)
 		return m, runPretendProcess
 	default:
 		return m, nil
@@ -91,17 +102,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "\n" + m.spinner.View() + " Doing some work...\n\n"
+	s := "\n" +
+		termenv.String(m.spinner.View()).Foreground(color("206")).String() +
+		" Doing some work...\n\n"
 
-	for _, dur := range m.results {
-		if dur == 0 {
-			s += ".....................\n"
+	for _, res := range m.results {
+		if res.duration == 0 {
+			s += "........................\n"
 		} else {
-			s += fmt.Sprintf("Job finished in %s\n", dur)
+			s += fmt.Sprintf("%s Job finished in %s\n", res.emoji, res.duration)
 		}
 	}
 
-	s += "\nPress any key to exit\n"
+	s += termenv.String("\nPress any key to exit\n").Foreground(color("240")).String()
 
 	if m.quitting {
 		s += "\n"
@@ -118,4 +131,9 @@ func runPretendProcess() tea.Msg {
 	pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond
 	time.Sleep(pause)
 	return processFinishedMsg(pause)
+}
+
+func randomEmoji() string {
+	emojis := []rune("🍦🧋🍡🤠👾😭🦊🐯🦆🥨🎏🍔🍒🍥🎮📦🦁🐶🐸🍕🥐🧲🚒🥇🏆🌽")
+	return string(emojis[rand.Intn(len(emojis))])
 }
