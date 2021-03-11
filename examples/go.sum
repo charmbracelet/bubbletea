@@ -25,8 +25,9 @@ github.com/dlclark/regexp2 v1.2.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55k
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776 h1:VRIbnDWRmAh5yBdz+J6yFMF5vso1It6vn+WmM/5l7MA=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776/go.mod h1:9wvnDu3YOfxzWM9Cst40msBF1C2UdQgDv962oTxSuMs=
 github.com/google/goterm v0.0.0-20190703233501-fc88cf888a3f/go.mod h1:nOFQdrUlIlx6M6ODdSpBj1NVA+VgLC6kmw60mkw34H4=
-github.com/lucasb-eyer/go-colorful v1.0.3 h1:QIbQXiugsb+q10B+MI+7DI1oQLdmnep86tWFlaaUAac=
 github.com/lucasb-eyer/go-colorful v1.0.3/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
+github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
+github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/mattn/go-colorable v0.1.6/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
@@ -42,8 +43,9 @@ github.com/muesli/reflow v0.2.1-0.20210115123740-9e1d0d53df68 h1:y1p/ycavWjGT9Fn
 github.com/muesli/reflow v0.2.1-0.20210115123740-9e1d0d53df68/go.mod h1:Xk+z4oIWdQqJzsxyjgl3P22oYZnHdZ8FFTHAQQt5BMQ=
 github.com/muesli/termenv v0.6.0/go.mod h1:SohX91w6swWA4AYU+QmPx+aSgXhWO0juiyID9UZmbpA=
 github.com/muesli/termenv v0.7.2/go.mod h1:ct2L5N2lmix82RaY3bMWwVu/jUFc9Ule0KGDCiKYPh8=
-github.com/muesli/termenv v0.7.4 h1:/pBqvU5CpkY53tU0vVn+xgs2ZTX63aH5nY+SSps5Xa8=
 github.com/muesli/termenv v0.7.4/go.mod h1:pZ7qY9l3F7e5xsAOS0zCew2tME+p7bWeBkotCEcIIcc=
+github.com/muesli/termenv v0.8.0 h1:HxhDOZbpf9nSUhOiMUNk5jsL3XaKWAbHucoGYZf+nag=
+github.com/muesli/termenv v0.8.0/go.mod h1:kzt/D/4a88RoheZmwfqorY3A+tnsSMA9HJC/fQSFKo0=
 github.com/olekukonko/tablewriter v0.0.4 h1:vHD/YYe1Wolo78koG299f7V/VAS08c6IpCLn+Ejf/w8=
 github.com/olekukonko/tablewriter v0.0.4/go.mod h1:zq6QwlOf5SlnkVbMSr5EoBv3636FWnp+qbPhuoO21uA=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
