@@ -123,7 +123,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Because we're using the viewport's default update function (with pager-
 	// style navigation) it's important that the viewport's update function:
 	//
-	// * Recieves messages from the Bubble Tea runtime
+	// * Receives messages from the Bubble Tea runtime
 	// * Returns commands to the Bubble Tea runtime
 	//
 	m.viewport, cmd = m.viewport.Update(msg)
@@ -136,7 +136,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	if !m.ready {
-		return "\n  Initalizing..."
+		return "\n  Initializing..."
 	}
 
 	headerTop := "╭───────────╮"
