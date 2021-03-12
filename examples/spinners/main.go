@@ -86,13 +86,14 @@ func (m *model) resetSpinner() {
 }
 
 func (m model) View() (s string) {
-	gap := " "
+	var gap string
 	switch m.index {
 	case 1:
 		gap = ""
 	default:
 		gap = " "
 	}
+
 	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
 	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
 	return
