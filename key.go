@@ -349,7 +349,7 @@ func readInput(input io.Reader) (Msg, error) {
 	}
 
 	if len(runes) == 0 {
-		return nil, errors.New("receied 0 runes from input")
+		return nil, errors.New("received 0 runes from input")
 	} else if len(runes) > 1 {
 		// We received multiple runes, so we know this isn't a control
 		// character, sequence, and so on.
