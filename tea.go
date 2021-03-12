@@ -309,7 +309,9 @@ func (p *Program) Start() error {
 		if err != nil {
 			return err
 		}
-		defer p.restoreTerminal()
+		defer func() {
+			_ = p.restoreTerminal()
+		}()
 	}
 
 	// Initialize program
