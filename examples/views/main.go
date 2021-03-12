@@ -86,7 +86,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// Hand off the message and model to the approprate update function for the
+	// Hand off the message and model to the appropriate update function for the
 	// appropriate view based on the current state.
 	if !m.Chosen {
 		return updateChoices(msg, m)
@@ -94,7 +94,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return updateChosen(msg, m)
 }
 
-// The main view, which just calls the approprate sub-view
+// The main view, which just calls the appropriate sub-view
 func (m model) View() string {
 	var s string
 	if m.Quitting {
@@ -273,7 +273,7 @@ func makeRamp(colorA, colorB string, steps float64) (s []string) {
 	return
 }
 
-// Convert a colorful.Color to a hexidecimal format compatible with termenv.
+// Convert a colorful.Color to a hexadecimal format compatible with termenv.
 func colorToHex(c colorful.Color) string {
 	return fmt.Sprintf("#%s%s%s", colorFloatToHex(c.R), colorFloatToHex(c.G), colorFloatToHex(c.B))
 }

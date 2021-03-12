@@ -13,7 +13,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// A message used to indicate that activity has occured. In the real world (for
+// A message used to indicate that activity has occurred. In the real world (for
 // example, chat) this would contain actual data.
 type responseMsg struct{}
 
