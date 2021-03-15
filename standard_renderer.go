@@ -64,6 +64,7 @@ func (r *standardRenderer) start() {
 // stop permanently halts the renderer.
 func (r *standardRenderer) stop() {
 	r.flush()
+	clearLine(r.out)
 	r.done <- struct{}{}
 }
 
