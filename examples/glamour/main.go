@@ -37,7 +37,7 @@ Desserts
 | Cream Puff   | $3    | Pretty creamy!        |
 
 All our dishes are made in-house by Karen, our chef. Most of our ingredients
-are from are our garden, or the fish market down the street.
+are from our garden or the fish market down the street.
 
 Some famous people that have eaten here lately:
 
