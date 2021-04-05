@@ -292,8 +292,10 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 func (r *standardRenderer) handleMessages(msg Msg) {
 	switch msg := msg.(type) {
 	case WindowSizeMsg:
+		r.mtx.Lock()
 		r.width = msg.Width
 		r.height = msg.Height
+		r.mtx.Unlock()
 
 	case clearScrollAreaMsg:
 		r.clearIgnoredLines()
