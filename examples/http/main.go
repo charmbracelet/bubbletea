@@ -22,7 +22,7 @@ type statusMsg int
 
 type errMsg struct{ error }
 
-func (e errMsg) Error() string { return e.Error() }
+func (e errMsg) Error() string { return e.error.Error() }
 
 func main() {
 	p := tea.NewProgram(model{})
