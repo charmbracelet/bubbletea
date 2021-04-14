@@ -249,6 +249,18 @@ there are [Go Docs][docs].
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
+## Libraries we use with Bubble Tea
+
+* [Bubbles][bubbles]: various Bubble Tea components
+* [Lip Gloss][lipgloss]: Style definitions for nice terminal layouts
+* [Termenv][termenv]: Advanced ANSI styling for terminal applications
+* [Reflow][reflow]: ANSI-aware methods for formatting and generally working with text. Of particular note is `PrintableRuneWidth` in the `ansi` sub-package which measures the physical widths of strings. Many runes, such as East Asian characters, emojis, and various unicode symbols are two cells wide, so measuring a layout with `len()` often won't cut it. Reflow is particularly nice for this as it measures character widths while ignoring any ANSI sequences present.
+
+[bubbles]: https://github.com/charmbracelet/bubbles
+[lipgloss]: https://github.com/charmbracelet/lipgloss
+[termenv]: https://github.com/muesli/termenv
+[reflow]: https://github.com/muesli/reflow
+
 ## Bubble Tea in the Wild
 
 For some Bubble Tea programs in production, see:
@@ -264,17 +276,6 @@ For some Bubble Tea programs in production, see:
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [gembro](https://git.sr.ht/~rafael/gembro): a Gemini browser
-
-## Libraries we use with Bubble Tea
-
-* [Bubbles][bubbles]: various Bubble Tea components
-* [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: ANSI-aware methods for formatting and generally working with text. Of particular note is `PrintableRuneWidth` in the `ansi` sub-package which measures the physical widths of strings. Many runes, such as East Asian characters, emojis, and various unicode symbols are two cells wide, so measuring a layout with `len()` often won't cut it. Reflow is particularly nice for this as it measures character widths while ignoring any ANSI sequences present.
-
-[termenv]: https://github.com/muesli/termenv
-[reflow]: https://github.com/muesli/reflow
-[bubbles]: https://github.com/charmbracelet/bubbles
-[runewidth]: https://github.com/mattn/go-runewidth
 
 ## Feedback
 
