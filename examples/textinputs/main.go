@@ -9,17 +9,16 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	te "github.com/muesli/termenv"
+	"github.com/charmbracelet/lipgloss"
 )
 
-const focusedTextColor = "205"
-
 var (
-	color               = te.ColorProfile().Color
-	focusedPrompt       = te.String("> ").Foreground(color("205")).String()
-	blurredPrompt       = "> "
-	focusedSubmitButton = "[ " + te.String("Submit").Foreground(color("205")).String() + " ]"
-	blurredSubmitButton = "[ " + te.String("Submit").Foreground(color("240")).String() + " ]"
+	focusedStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	blurredButtonStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	noStyle            = lipgloss.NewStyle()
+
+	focusedSubmitButton = "[ " + focusedStyle.Render("Submit") + " ]"
+	blurredSubmitButton = "[ " + blurredButtonStyle.Render("Submit") + " ]"
 )
 
 func main() {
@@ -41,18 +40,16 @@ func initialModel() model {
 	name := textinput.NewModel()
 	name.Placeholder = "Nickname"
 	name.Focus()
-	name.Prompt = focusedPrompt
-	name.TextColor = focusedTextColor
+	name.PromptStyle = focusedStyle
+	name.TextStyle = focusedStyle
 	name.CharLimit = 32
 
 	email := textinput.NewModel()
 	email.Placeholder = "Email"
-	email.Prompt = blurredPrompt
 	email.CharLimit = 64
 
 	password := textinput.NewModel()
 	password.Placeholder = "Password"
-	password.Prompt = blurredPrompt
 	password.EchoMode = textinput.EchoPassword
 	password.EchoCharacter = '•'
 	password.CharLimit = 32
@@ -108,14 +105,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if i == m.index {
 					// Set focused state
 					inputs[i].Focus()
-					inputs[i].Prompt = focusedPrompt
-					inputs[i].TextColor = focusedTextColor
+					inputs[i].PromptStyle = focusedStyle
+					inputs[i].TextStyle = focusedStyle
 					continue
 				}
 				// Remove focused state
 				inputs[i].Blur()
-				inputs[i].Prompt = blurredPrompt
-				inputs[i].TextColor = ""
+				inputs[i].PromptStyle = noStyle
+				inputs[i].TextStyle = noStyle
 			}
 
 			m.nameInput = inputs[0]

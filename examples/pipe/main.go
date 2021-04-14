@@ -16,6 +16,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func main() {
@@ -59,7 +60,7 @@ type model struct {
 func newModel(initialValue string) (m model) {
 	i := textinput.NewModel()
 	i.Prompt = ""
-	i.CursorColor = "63"
+	i.CursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	i.Width = 48
 	i.SetValue(initialValue)
 	i.CursorEnd()

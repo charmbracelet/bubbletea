@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var (
@@ -23,9 +23,9 @@ var (
 		spinner.Monkey,
 	}
 
-	color     = termenv.ColorProfile().Color
-	textStyle = termenv.Style{}.Foreground(color("252")).Styled
-	helpStyle = termenv.Style{}.Foreground(color("241")).Styled
+	textStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Render
+	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
+	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
 func main() {
@@ -81,7 +81,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *model) resetSpinner() {
 	m.spinner = spinner.NewModel()
-	m.spinner.ForegroundColor = "69"
+	m.spinner.Style = spinnerStyle
 	m.spinner.Spinner = spinners[m.index]
 }
 

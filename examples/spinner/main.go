@@ -9,6 +9,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
 
@@ -33,6 +34,7 @@ func main() {
 func initialModel() model {
 	s := spinner.NewModel()
 	s.Spinner = spinner.Dot
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	return model{spinner: s}
 }
 
