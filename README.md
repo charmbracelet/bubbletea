@@ -251,10 +251,10 @@ there are [Go Docs][docs].
 
 ## Libraries we use with Bubble Tea
 
-* [Bubbles][bubbles]: various Bubble Tea components
-* [Lip Gloss][lipgloss]: Style definitions for nice terminal layouts
+* [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
+* [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications. Built on [Termenv][termenv] and [Reflow][reflow] below
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: ANSI-aware methods for formatting and generally working with text. Of particular note is `PrintableRuneWidth` in the `ansi` sub-package which measures the physical widths of strings. Many runes, such as East Asian characters, emojis, and various unicode symbols are two cells wide, so measuring a layout with `len()` often won't cut it. Reflow is particularly nice for this as it measures character widths while ignoring any ANSI sequences present.
+* [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
 [bubbles]: https://github.com/charmbracelet/bubbles
 [lipgloss]: https://github.com/charmbracelet/lipgloss
