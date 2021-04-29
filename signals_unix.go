@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 // listenForResize sends messages (or errors) when the terminal resizes.
@@ -18,7 +18,7 @@ func listenForResize(output *os.File, msgs chan Msg, errs chan error) {
 	signal.Notify(sig, syscall.SIGWINCH)
 	for {
 		<-sig
-		w, h, err := terminal.GetSize(int(output.Fd()))
+		w, h, err := term.GetSize(int(output.Fd()))
 		if err != nil {
 			errs <- err
 		}

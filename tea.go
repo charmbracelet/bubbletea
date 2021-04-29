@@ -22,7 +22,7 @@ import (
 	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
 	te "github.com/muesli/termenv"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 // Msg represents an action and is usually the result of an IO operation. It's
@@ -350,7 +350,7 @@ func (p *Program) Start() error {
 	if p.outputIsTTY {
 		// Get initial terminal size
 		go func() {
-			w, h, err := terminal.GetSize(int(outputAsFile.Fd()))
+			w, h, err := term.GetSize(int(outputAsFile.Fd()))
 			if err != nil {
 				errs <- err
 			}
