@@ -12,7 +12,8 @@ import (
 )
 
 func main() {
-	// Log to a file. Useful in debugging. Not required.
+	// Log to a file. Useful in debugging since you can't really log to stdout.
+	// Not required.
 	logfilePath := os.Getenv("BUBBLETEA_LOG")
 	if logfilePath != "" {
 		if _, err := tea.LogToFile(logfilePath, "simple"); err != nil {
