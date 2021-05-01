@@ -51,6 +51,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+c", "q", "esc":
+			return m, tea.Quit
 		case "h", "left":
 			m.index--
 			if m.index <= 0 {
@@ -65,8 +67,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.resetSpinner()
 			return m, spinner.Tick
-		case "ctrl+c", "q":
-			return m, tea.Quit
 		default:
 			return m, nil
 		}

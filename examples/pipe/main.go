@@ -1,11 +1,9 @@
 package main
 
-// An example of how to pipe in data to a Bubble Tea application. It's actually
-// more of a proof that Bubble Tea will automatically listen for keystrokes
-// when input is not a TTY, such as when data is piped or redirected in.
-//
-// In the case of this example we're listing for a single keystroke used to
-// exit the program.
+// An example illustating how to pipe in data to a Bubble Tea application.
+// Moreso, this serves as proof that Bubble Tea will automatically listen for
+// keystrokes when input is not a TTY, such as when data is piped or redirected
+// in.
 
 import (
 	"bufio"

@@ -86,7 +86,7 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "ctrl+c":
+		case "q", "ctrl+c", "esc":
 			return e, tea.Quit
 		default:
 			vp, cmd := e.viewport.Update(msg)

@@ -23,14 +23,6 @@ type model struct {
 	err      error
 }
 
-func main() {
-	p := tea.NewProgram(initialModel())
-	if err := p.Start(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
 func initialModel() model {
 	s := spinner.NewModel()
 	s.Spinner = spinner.Dot
@@ -47,11 +39,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q":
-			fallthrough
-		case "esc":
-			fallthrough
-		case "ctrl+c":
+		case "q", "esc", "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
 		default:
@@ -80,4 +68,12 @@ func (m model) View() string {
 		return str + "\n"
 	}
 	return str
+}
+
+func main() {
+	p := tea.NewProgram(initialModel())
+	if err := p.Start(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

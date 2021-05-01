@@ -67,8 +67,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-
-		case "ctrl+c":
+		case "ctrl+c", "esc":
 			return m, tea.Quit
 
 		// Cycle between inputs
