@@ -168,14 +168,15 @@ func Quit() Msg {
 // send a quitMsg with Quit.
 type quitMsg struct{}
 
-// EnterAltScreen is a special command that tells the Bubble Tea program to enter
-// alternate screen buffer.
+// EnterAltScreen is a special command that tells the Bubble Tea program to
+// enter alternate screen buffer.
 func EnterAltScreen() Msg {
 	return enterAltScreenMsg{}
 }
 
-// enterAltScreenMsg in an internal message signals that the program should enter
-// alternate screen buffer. You can send a enterAltScreenMsg with EnterAltScreen.
+// enterAltScreenMsg in an internal message signals that the program should
+// enter alternate screen buffer. You can send a enterAltScreenMsg with
+// EnterAltScreen.
 type enterAltScreenMsg struct{}
 
 // ExitAltScreen is a special command that tells the Bubble Tea program to exit
@@ -472,6 +473,8 @@ func (p *Program) Start() error {
 
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
+//
+// Deprecated. Use the EnterAltScreen() command instead.
 func (p *Program) EnterAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -490,6 +493,8 @@ func (p *Program) EnterAltScreen() {
 }
 
 // ExitAltScreen exits the alternate screen buffer.
+//
+// Deprecated. Use the ExitAltScreen() command instead.
 func (p *Program) ExitAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
