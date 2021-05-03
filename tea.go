@@ -184,6 +184,40 @@ func ExitAltScreen() Msg {
 	return exitAltScreenMsg{}
 }
 
+// enableMouseCellMotionMsg is a special command that signals to start
+// listening for "cell motion" type mouse events (ESC[?1002l). To send an
+// enableMouseCellMotionMsg, use the EnableMouseCellMotion command.
+type enableMouseCellMotionMsg struct{}
+
+// EnableMouseCellMotion is a special command that enables mouse click,
+// release, wheel, events. Mouse movement events are also captured if a mouse
+// button is pressed (i.e., drag events).
+func EnableMouseCellMotion() Msg {
+	return enableMouseCellMotionMsg{}
+}
+
+// enableMouseAllMotionMsg is a special command that signals to start listening
+// for "all motion" type mouse events (ESC[?1003l). To send an
+// enableMouseAllMotionMsg, use the EnableMouseAllMotion command.
+type enableMouseAllMotionMsg struct{}
+
+// EnableMouseAllMotion is a special command that enables mouse click, release,
+// and wheel events. Mouse movement events are delivered regardless of whether
+// a button is pressed. Many modern terminals support this, but not all. If in
+// doubt, use EnableMouseCellMotion instead.
+func EnableMouseAllMotion() Msg {
+	return enableMouseAllMotionMsg{}
+}
+
+// disableMouseMsg is an internal message that that signals to stop listening
+// for mouse events. To send a disableMouseMsg, use the DisableMouse command.
+type disableMouseMsg struct{}
+
+// DisableMouse is a special command that stops listening for mouse events.
+func DisableMouse() Msg {
+	return disableMouseMsg{}
+}
+
 // exitAltScreenMsg in an internal message signals that the program should exit
 // alternate screen buffer. You can send a exitAltScreenMsg with ExitAltScreen.
 type exitAltScreenMsg struct{}
@@ -202,7 +236,7 @@ type WindowSizeMsg struct {
 // HideCursor is a special command for manually instructing Bubble Tea to hide
 // the cursor. In some rare cases, certain operations will cause the terminal
 // to show the cursor, which is normally hidden for the duration of a Bubble
-// Tea program's lifetime. You most likely will not need to use this command.
+// Tea program's lifetime. You will most likely not need to use this command.
 func HideCursor() Msg {
 	return hideCursorMsg{}
 }
@@ -389,13 +423,28 @@ func (p *Program) Start() error {
 			switch msg.(type) {
 			case quitMsg:
 				p.ExitAltScreen()
+				p.DisableMouseCellMotion()
+				p.DisableMouseAllMotion()
 				p.renderer.stop()
 				close(done)
 				return nil
+
 			case enterAltScreenMsg:
 				p.EnterAltScreen()
+
 			case exitAltScreenMsg:
 				p.ExitAltScreen()
+
+			case enableMouseCellMotionMsg:
+				p.EnableMouseCellMotion()
+
+			case enableMouseAllMotionMsg:
+				p.EnableMouseAllMotion()
+
+			case disableMouseMsg:
+				p.DisableMouseCellMotion()
+				p.DisableMouseAllMotion()
+
 			case hideCursorMsg:
 				hideCursor(p.output)
 			}
@@ -458,16 +507,19 @@ func (p *Program) ExitAltScreen() {
 }
 
 // EnableMouseCellMotion enables mouse click, release, wheel and motion events
-// if a button is pressed.
+// if a mouse button is pressed (i.e., drag events).
+//
+// Deprecated. Use the EnableMouseCellMotion() command instead.
 func (p *Program) EnableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.EnableMouseCellMotionSeq)
 }
 
-// DisableMouseCellMotion disables Mouse Cell Motion tracking. If you've
-// enabled Cell Motion mouse tracking be sure to call this as your program is
-// exiting or your users will be very upset!
+// DisableMouseCellMotion disables Mouse Cell Motion tracking. This will be
+// called automatically when exiting a Bubble Tea program.
+//
+// Deprecated. Use the DisableMouse() command instead.
 func (p *Program) DisableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -475,17 +527,20 @@ func (p *Program) DisableMouseCellMotion() {
 }
 
 // EnableMouseAllMotion enables mouse click, release, wheel and motion events,
-// regardless of whether a button is pressed. Many modern terminals support
-// this, but not all.
+// regardless of whether a mouse button is pressed. Many modern terminals
+// support this, but not all.
+//
+// Deprecated. Use the EnableMouseAllMotion() command instead.
 func (p *Program) EnableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.EnableMouseAllMotionSeq)
 }
 
-// DisableMouseAllMotion disables All Motion mouse tracking. If you've enabled
-// All Motion mouse tracking be sure you call this as your program is exiting
-// or your users will be very upset!
+// DisableMouseAllMotion disables All Motion mouse tracking. This will be
+// called automatically when exiting a Bubble Tea program.
+//
+// Deprecated. Use the DisableMouse() command instead.
 func (p *Program) DisableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()

@@ -11,14 +11,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(model{})
-
-	p.EnterAltScreen()
-	defer p.ExitAltScreen()
-	p.EnableMouseAllMotion()
-	defer p.DisableMouseAllMotion()
-
-	if err := p.Start(); err != nil {
+	if err := tea.NewProgram(model{}).Start(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -29,7 +22,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.Batch(tea.EnterAltScreen, tea.EnableMouseAllMotion)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
