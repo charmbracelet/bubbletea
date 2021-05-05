@@ -325,6 +325,8 @@ func (p *Program) Start() error {
 		defer func() {
 			if r := recover(); r != nil {
 				p.ExitAltScreen()
+				p.DisableMouseCellMotion()
+				p.DisableMouseAllMotion()
 				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
 				debug.PrintStack()
 				return
