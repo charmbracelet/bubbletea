@@ -422,8 +422,8 @@ func (p *Program) Start() error {
 			return err
 		case msg := <-msgs:
 
-			// Handle special messages
-			switch msg.(type) {
+			// Handle special internal messages
+			switch msg := msg.(type) {
 			case quitMsg:
 				p.ExitAltScreen()
 				p.DisableMouseCellMotion()
@@ -431,6 +431,12 @@ func (p *Program) Start() error {
 				p.renderer.stop()
 				close(done)
 				return nil
+
+			case batchMsg:
+				for _, cmd := range msg {
+					cmds <- cmd
+				}
+				continue
 
 			case enterAltScreenMsg:
 				p.EnterAltScreen()
@@ -450,14 +456,6 @@ func (p *Program) Start() error {
 
 			case hideCursorMsg:
 				hideCursor(p.output)
-			}
-
-			// Process batch commands
-			if batchedCmds, ok := msg.(batchMsg); ok {
-				for _, cmd := range batchedCmds {
-					cmds <- cmd
-				}
-				continue
 			}
 
 			// Process internal messages for the renderer
