@@ -16,8 +16,8 @@ const (
 	defaultFramerate = time.Second / 60
 )
 
-// renderer is a timer-based renderer, updating the view at a given framerate
-// to avoid overloading the terminal emulator.
+// standardRenderer is a framerate-based terminal renderer, updating the view
+// at a given framerate to avoid overloading the terminal emulator.
 //
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
@@ -38,7 +38,7 @@ type standardRenderer struct {
 	width  int
 	height int
 
-	// lines not to render
+	// lines explicitly set not to render
 	ignoreLines map[int]struct{}
 }
 
@@ -94,21 +94,36 @@ func (r *standardRenderer) flush() {
 		return
 	}
 
+	// Output buffer
 	out := new(bytes.Buffer)
+
+	newLines := strings.Split(r.buf.String(), "\n")
+	oldLines := strings.Split(r.lastRender, "\n")
+	skipLines := make(map[int]struct{})
 
 	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
 		for i := r.linesRendered - 1; i > 0; i-- {
-			// Check if we should skip rendering for this line. Clearing the
-			// line before painting is part of the standard rendering routine.
-			if _, exists := r.ignoreLines[i]; !exists {
+			// Determine if we should skip rendering for this line. We can skip
+			// for two reasons:
+			//
+			// 1. We've explicitly set this line to be ignored so we can render
+			// it elsewhere (for example, via the performance scroll methods
+			// like insertTop and insertBottom).
+			//
+			// 2. The new line is the same as the old line, in which case we
+			// can skip rendering for this line as a performance optimization.
+			_, ignoreLine := r.ignoreLines[i]
+			if ignoreLine || (len(newLines) > i && len(oldLines) > i && newLines[i] == oldLines[i]) {
+				skipLines[i] = struct{}{}
+			} else {
 				clearLine(out)
 			}
 
 			cursorUp(out)
 		}
 
-		if _, exists := r.ignoreLines[0]; !exists {
+		if _, exists := skipLines[0]; !exists {
 			// We need to return to the start of the line here to properly
 			// erase it. Going back the entire width of the terminal will
 			// usually be farther than we need to go, but terminal emulators
@@ -124,28 +139,31 @@ func (r *standardRenderer) flush() {
 	}
 
 	r.linesRendered = 0
-	lines := strings.Split(r.buf.String(), "\n")
 
 	// Paint new lines
-	for i := 0; i < len(lines); i++ {
-		if _, exists := r.ignoreLines[r.linesRendered]; exists {
-			cursorDown(out) // skip rendering for this line.
+	for i := 0; i < len(newLines); i++ {
+		if _, skip := skipLines[r.linesRendered]; skip {
+			// Unless this is the last line, move the cursor down.
+			if i < len(newLines)-1 {
+				cursorDown(out)
+			}
 		} else {
-			line := lines[i]
+			line := newLines[i]
 
 			// Truncate lines wider than the width of the window to avoid
-			// rendering troubles. If we don't have the width of the window
-			// this will be ignored.
+			// wrapping, which will mess up rendering. If we don't have the
+			// width of the window this will be ignored.
 			//
-			// Note that on Windows we can't get the width of the window
-			// (signal SIGWINCH is not supported), so this will be ignored.
+			// Note that on Windows we only get the width of the window on
+			// program initialization, so after a resize this won't perform
+			// correctly (signal SIGWINCH is not supported on Windows).
 			if r.width > 0 {
 				line = truncate.String(line, uint(r.width))
 			}
 
 			_, _ = io.WriteString(out, line)
 
-			if i != len(lines)-1 {
+			if i != len(newLines)-1 {
 				_, _ = io.WriteString(out, "\r\n")
 			}
 		}
@@ -155,8 +173,8 @@ func (r *standardRenderer) flush() {
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
 	if r.altScreenActive {
-		// We need this case to fix a bug in macOS terminal. In other terminals
-		// the below case seems to do the job regardless of whether or not we're
+		// This case fixes a bug in macOS terminal. In other terminals the
+		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
 		moveCursor(out, r.linesRendered, 0)
 	} else {
