@@ -114,7 +114,14 @@ func (r *standardRenderer) flush() {
 			// 2. The new line is the same as the old line, in which case we
 			// can skip rendering for this line as a performance optimization.
 			_, ignoreLine := r.ignoreLines[i]
-			if ignoreLine || (len(newLines) > i && len(oldLines) > i && newLines[i] == oldLines[i]) {
+
+			if ignoreLine ||
+				// Number of lines did not increase
+				(len(newLines) <= len(oldLines) &&
+					// Indexes available for lookup (guard against panics)
+					len(newLines) > i && len(oldLines) > i &&
+					// Lines are identical
+					(newLines[i] == oldLines[i])) {
 				skipLines[i] = struct{}{}
 			} else {
 				clearLine(out)
@@ -163,7 +170,7 @@ func (r *standardRenderer) flush() {
 
 			_, _ = io.WriteString(out, line)
 
-			if i != len(newLines)-1 {
+			if i < len(newLines)-1 {
 				_, _ = io.WriteString(out, "\r\n")
 			}
 		}
