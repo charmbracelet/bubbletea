@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
-	"github.com/muesli/termenv"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const content = `
@@ -48,7 +48,7 @@ Some famous people that have eaten here lately:
 Bon appétit!
 `
 
-var term = termenv.ColorProfile()
+var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 type example struct {
 	viewport viewport.Model
@@ -103,7 +103,7 @@ func (e example) View() string {
 }
 
 func (e example) helpView() string {
-	return termenv.String("\n  ↑/↓: Navigate • q: Quit\n").Foreground(term.Color("241")).String()
+	return helpStyle("\n  ↑/↓: Navigate • q: Quit\n")
 }
 
 func main() {
