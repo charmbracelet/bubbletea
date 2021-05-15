@@ -10,10 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
-
-var color = termenv.ColorProfile().Color
 
 type errMsg error
 
@@ -62,8 +59,7 @@ func (m model) View() string {
 	if m.err != nil {
 		return m.err.Error()
 	}
-	s := termenv.String(m.spinner.View()).Foreground(color("205")).String()
-	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", s)
+	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", m.spinner.View())
 	if m.quitting {
 		return str + "\n"
 	}

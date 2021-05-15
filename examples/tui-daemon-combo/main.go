@@ -11,14 +11,12 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-isatty"
 	"github.com/muesli/reflow/indent"
-	"github.com/muesli/termenv"
 )
 
-var (
-	color = termenv.ColorProfile().Color
-)
+var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -67,8 +65,11 @@ type model struct {
 func newModel() model {
 	const showLastResults = 5
 
+	sp := spinner.NewModel()
+	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("206"))
+
 	return model{
-		spinner: spinner.NewModel(),
+		spinner: sp,
 		results: make([]result, showLastResults),
 	}
 }
@@ -103,8 +104,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	s := "\n" +
-		termenv.String(m.spinner.View()).Foreground(color("206")).String() +
-		" Doing some work...\n\n"
+		m.spinner.View() + " Doing some work...\n\n"
 
 	for _, res := range m.results {
 		if res.duration == 0 {
@@ -114,7 +114,7 @@ func (m model) View() string {
 		}
 	}
 
-	s += termenv.String("\nPress any key to exit\n").Foreground(color("240")).String()
+	s += helpStyle("\nPress any key to exit\n")
 
 	if m.quitting {
 		s += "\n"
