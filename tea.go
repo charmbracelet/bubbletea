@@ -212,7 +212,8 @@ type Program struct {
 	// treated as bits.  These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
-	mtx *sync.Mutex
+	mtx  *sync.Mutex
+	done chan struct{}
 
 	output          io.Writer // where to send output. this will usually be os.Stdout.
 	input           io.Reader // this will usually be os.Stdin.
@@ -370,6 +371,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		output:       os.Stdout,
 		input:        os.Stdin,
+		done:         make(chan struct{}),
 		CatchPanics:  true,
 	}
 
@@ -387,7 +389,6 @@ func (p *Program) Start() error {
 		cmds = make(chan Cmd)
 		msgs = make(chan Msg)
 		errs = make(chan error)
-		done = make(chan struct{})
 
 		// If output is a file (e.g. os.Stdout) then this will be set
 		// accordingly. Most of the time you should refer to p.outputIsTTY
@@ -441,9 +442,7 @@ func (p *Program) Start() error {
 	if p.CatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
-				p.ExitAltScreen()
-				p.DisableMouseCellMotion()
-				p.DisableMouseAllMotion()
+				p.shutdown(true)
 				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
 				debug.PrintStack()
 				return
@@ -458,9 +457,6 @@ func (p *Program) Start() error {
 		if err != nil {
 			return err
 		}
-		defer func() {
-			_ = p.restoreTerminal()
-		}()
 	}
 
 	// If no renderer is set use the standard one.
@@ -529,7 +525,7 @@ func (p *Program) Start() error {
 	go func() {
 		for {
 			select {
-			case <-done:
+			case <-p.done:
 				return
 			case cmd := <-cmds:
 				if cmd != nil {
@@ -545,18 +541,14 @@ func (p *Program) Start() error {
 	for {
 		select {
 		case err := <-errs:
-			close(done)
+			p.shutdown(false)
 			return err
 		case msg := <-msgs:
 
 			// Handle special internal messages
 			switch msg := msg.(type) {
 			case quitMsg:
-				p.ExitAltScreen()
-				p.DisableMouseCellMotion()
-				p.DisableMouseAllMotion()
-				p.renderer.stop()
-				close(done)
+				p.shutdown(false)
 				return nil
 
 			case batchMsg:
@@ -599,6 +591,21 @@ func (p *Program) Start() error {
 			p.renderer.write(model.View()) // send view to renderer
 		}
 	}
+}
+
+// shutdown performs operations to free up resources and restore the terminal
+// to its original state.
+func (p *Program) shutdown(kill bool) {
+	if kill {
+		p.renderer.kill()
+	} else {
+		p.renderer.stop()
+	}
+	close(p.done)
+	p.ExitAltScreen()
+	p.DisableMouseCellMotion()
+	p.DisableMouseAllMotion()
+	_ = p.restoreTerminal()
 }
 
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
