@@ -16,7 +16,8 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	if err := tea.NewProgram(model(5)).Start(); err != nil {
+	p := tea.NewProgram(model(5), tea.WithAltScreen())
+	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
