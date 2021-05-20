@@ -61,9 +61,15 @@ func (r *standardRenderer) start() {
 	go r.listen()
 }
 
-// stop permanently halts the renderer.
+// stop permanently halts the renderer, rendering the final frame.
 func (r *standardRenderer) stop() {
 	r.flush()
+	clearLine(r.out)
+	close(r.done)
+}
+
+// kill halts the renderer. The final frame will not be rendered.
+func (r *standardRenderer) kill() {
 	clearLine(r.out)
 	close(r.done)
 }
