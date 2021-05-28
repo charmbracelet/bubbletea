@@ -109,7 +109,7 @@ func (e example) helpView() string {
 func main() {
 	model, err := newExample()
 	if err != nil {
-		fmt.Println("Could not intialize Bubble Tea model:", err)
+		fmt.Println("Could not initialize Bubble Tea model:", err)
 		os.Exit(1)
 	}
 

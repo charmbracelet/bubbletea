@@ -20,7 +20,7 @@ type responseMsg struct{}
 // Simulate a process that sends events at an irregular interval in real time.
 // In this case, we'll send events on the channel at a random interval between
 // 100 to 1000 milliseconds. As a command, Bubble Tea will run this
-// asyncronously.
+// asynchronously.
 func listenForActivity(sub chan struct{}) tea.Cmd {
 	return func() tea.Msg {
 		for {
