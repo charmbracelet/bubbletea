@@ -41,7 +41,7 @@ func (m model) Init() tea.Cmd {
 
 // Update is called when messages are received. The idea is that you inspect the
 // message and send back an updated model accordingly. You can also return
-// a command, which is a function that peforms I/O and returns a message.
+// a command, which is a function that performs I/O and returns a message.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyMsg:
