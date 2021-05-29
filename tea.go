@@ -438,6 +438,9 @@ func (p *Program) Start() error {
 				}
 				continue
 
+			case WindowSizeMsg:
+				p.renderer.repaint()
+
 			case enterAltScreenMsg:
 				p.EnterAltScreen()
 
