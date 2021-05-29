@@ -5,6 +5,7 @@ type renderer interface {
 	start()
 	stop()
 	write(string)
+	repaint()
 	altScreen() bool
 	setAltScreen(bool)
 }

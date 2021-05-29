@@ -202,6 +202,10 @@ func (r *standardRenderer) write(s string) {
 	_, _ = r.buf.WriteString(s)
 }
 
+func (r *standardRenderer) repaint() {
+	r.lastRender = ""
+}
+
 func (r *standardRenderer) altScreen() bool {
 	return r.altScreenActive
 }
