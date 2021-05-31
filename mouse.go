@@ -64,7 +64,9 @@ func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 		return m, errors.New("not an X10 mouse event")
 	}
 
-	e := buf[3] - 32
+	const byteOffset = 32
+
+	e := buf[3] - byteOffset
 
 	const (
 		bitShift  = 0b0000_0100
@@ -119,8 +121,8 @@ func parseX10MouseEvent(buf []byte) (m MouseEvent, err error) {
 	}
 
 	// (1,1) is the upper left. We subtract 1 to normalize it to (0,0).
-	m.X = int(buf[4]) - 32 - 1
-	m.Y = int(buf[5]) - 32 - 1
+	m.X = int(buf[4]) - byteOffset - 1
+	m.Y = int(buf[5]) - byteOffset - 1
 
 	return m, nil
 }
