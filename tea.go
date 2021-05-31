@@ -118,9 +118,18 @@ func WithoutRenderer() ProgramOption {
 type inputStatus int
 
 const (
-	defaultInput = iota // generally, this will be stdin
-	customInput         // the user explicitly set the input
-	managedInput        // we've opened a TTY for input
+	// Generally this will be stdin.
+	//
+	// Lint ignore note: this is the implicit default value. While it's not
+	// checked explicitly, it's presence nullifies the other possible values
+	// of this type in logical statements.
+	defaultInput inputStatus = iota // nolint:golint,deadcode,unused,varcheck
+
+	// The user explicitly set the input.
+	customInput
+
+	// We've opened a TTY for input.
+	managedInput
 )
 
 func (i inputStatus) String() string {
