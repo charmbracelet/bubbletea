@@ -156,7 +156,11 @@ type Program struct {
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
 	// When the program exits this will be restored.
-	windowsStdin *os.File
+	//
+	// Lint ignore note: the linter will find false positive on unix systems
+	// as this value only comes into play on Windows, hence the ignore comment
+	// below.
+	windowsStdin *os.File //nolint:golint,structcheck,unused
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
