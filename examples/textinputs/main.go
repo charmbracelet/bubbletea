@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,163 +14,163 @@ import (
 )
 
 var (
-	focusedStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurredButtonStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	noStyle            = lipgloss.NewStyle()
+	focusedStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	blurredStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	cursorStyle         = focusedStyle.Copy()
+	noStyle             = lipgloss.NewStyle()
+	helpStyle           = blurredStyle.Copy()
+	cursorModeHelpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
 
-	focusedSubmitButton = "[ " + focusedStyle.Render("Submit") + " ]"
-	blurredSubmitButton = "[ " + blurredButtonStyle.Render("Submit") + " ]"
+	focusedButton = focusedStyle.Copy().Render("[ Submit ]")
+	blurredButton = fmt.Sprintf("[ %s ]", blurredStyle.Render("Submit"))
 )
 
-func main() {
-	if err := tea.NewProgram(initialModel()).Start(); err != nil {
-		fmt.Printf("could not start program: %s\n", err)
-		os.Exit(1)
-	}
-}
-
 type model struct {
-	index         int
-	nameInput     textinput.Model
-	emailInput    textinput.Model
-	passwordInput textinput.Model
-	submitButton  string
+	focusIndex int
+	inputs     []textinput.Model
+	cursorMode textinput.CursorMode
 }
 
 func initialModel() model {
-	name := textinput.NewModel()
-	name.Placeholder = "Nickname"
-	name.Focus()
-	name.PromptStyle = focusedStyle
-	name.TextStyle = focusedStyle
-	name.CharLimit = 32
+	m := model{
+		inputs: make([]textinput.Model, 3),
+	}
 
-	email := textinput.NewModel()
-	email.Placeholder = "Email"
-	email.CharLimit = 64
+	var t textinput.Model
+	for i := range m.inputs {
+		t = textinput.NewModel()
+		t.CursorStyle = cursorStyle
+		t.CharLimit = 32
 
-	password := textinput.NewModel()
-	password.Placeholder = "Password"
-	password.EchoMode = textinput.EchoPassword
-	password.EchoCharacter = '•'
-	password.CharLimit = 32
+		switch i {
+		case 0:
+			t.Placeholder = "Nickname"
+			t.Focus()
+			t.PromptStyle = focusedStyle
+			t.TextStyle = focusedStyle
+		case 1:
+			t.Placeholder = "Email"
+			t.CharLimit = 64
+		case 2:
+			t.Placeholder = "Password"
+			t.EchoMode = textinput.EchoPassword
+			t.EchoCharacter = '•'
+		}
 
-	return model{0, name, email, password, blurredSubmitButton}
+		m.inputs[i] = t
+	}
 
+	return m
 }
 func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
 
-		// Cycle between inputs
-		case "tab", "shift+tab", "enter", "up", "down":
-
-			inputs := []textinput.Model{
-				m.nameInput,
-				m.emailInput,
-				m.passwordInput,
+		// Change cursor mode
+		case "ctrl+r":
+			m.cursorMode++
+			if m.cursorMode > textinput.CursorHide {
+				m.cursorMode = textinput.CursorBlink
 			}
+			cmds := make([]tea.Cmd, len(m.inputs))
+			for i := range m.inputs {
+				cmds[i] = m.inputs[i].SetCursorMode(m.cursorMode)
+			}
+			return m, tea.Batch(cmds...)
 
+		// Set focus to next input
+		case "tab", "shift+tab", "enter", "up", "down":
 			s := msg.String()
 
 			// Did the user press enter while the submit button was focused?
 			// If so, exit.
-			if s == "enter" && m.index == len(inputs) {
+			if s == "enter" && m.focusIndex == len(m.inputs) {
 				return m, tea.Quit
 			}
 
 			// Cycle indexes
 			if s == "up" || s == "shift+tab" {
-				m.index--
+				m.focusIndex--
 			} else {
-				m.index++
+				m.focusIndex++
 			}
 
-			if m.index > len(inputs) {
-				m.index = 0
-			} else if m.index < 0 {
-				m.index = len(inputs)
+			if m.focusIndex > len(m.inputs) {
+				m.focusIndex = 0
+			} else if m.focusIndex < 0 {
+				m.focusIndex = len(m.inputs)
 			}
 
-			for i := 0; i <= len(inputs)-1; i++ {
-				if i == m.index {
+			cmds := make([]tea.Cmd, len(m.inputs))
+			for i := 0; i <= len(m.inputs)-1; i++ {
+				if i == m.focusIndex {
 					// Set focused state
-					inputs[i].Focus()
-					inputs[i].PromptStyle = focusedStyle
-					inputs[i].TextStyle = focusedStyle
+					cmds[i] = m.inputs[i].Focus()
+					m.inputs[i].PromptStyle = focusedStyle
+					m.inputs[i].TextStyle = focusedStyle
 					continue
 				}
 				// Remove focused state
-				inputs[i].Blur()
-				inputs[i].PromptStyle = noStyle
-				inputs[i].TextStyle = noStyle
+				m.inputs[i].Blur()
+				m.inputs[i].PromptStyle = noStyle
+				m.inputs[i].TextStyle = noStyle
 			}
 
-			m.nameInput = inputs[0]
-			m.emailInput = inputs[1]
-			m.passwordInput = inputs[2]
-
-			if m.index == len(inputs) {
-				m.submitButton = focusedSubmitButton
-			} else {
-				m.submitButton = blurredSubmitButton
-			}
-
-			return m, nil
+			return m, tea.Batch(cmds...)
 		}
 	}
 
-	// Handle character input and blinks
-	m, cmd = updateInputs(msg, m)
+	// Handle character input and blinking
+	cmd := m.updateInputs(msg)
+
 	return m, cmd
 }
 
-// Pass messages and models through to text input components. Only text inputs
-// with Focus() set will respond, so it's safe to simply update all of them
-// here without any further logic.
-func updateInputs(msg tea.Msg, m model) (model, tea.Cmd) {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
+func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
+	var cmds = make([]tea.Cmd, len(m.inputs))
 
-	m.nameInput, cmd = m.nameInput.Update(msg)
-	cmds = append(cmds, cmd)
+	// Only text inputs with Focus() set will respond, so it's safe to simply
+	// update all of them here without any further logic.
+	for i := range m.inputs {
+		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
+	}
 
-	m.emailInput, cmd = m.emailInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.passwordInput, cmd = m.passwordInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	return m, tea.Batch(cmds...)
+	return tea.Batch(cmds...)
 }
 
 func (m model) View() string {
-	s := "\n"
+	var b strings.Builder
 
-	inputs := []string{
-		m.nameInput.View(),
-		m.emailInput.View(),
-		m.passwordInput.View(),
-	}
-
-	for i := 0; i < len(inputs); i++ {
-		s += inputs[i]
-		if i < len(inputs)-1 {
-			s += "\n"
+	for i := range m.inputs {
+		b.WriteString(m.inputs[i].View())
+		if i < len(m.inputs)-1 {
+			b.WriteRune('\n')
 		}
 	}
 
-	s += "\n\n" + m.submitButton + "\n"
-	return s
+	button := &blurredButton
+	if m.focusIndex == len(m.inputs) {
+		button = &focusedButton
+	}
+	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
+
+	b.WriteString(helpStyle.Render("cursor mode is "))
+	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
+	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
+
+	return b.String()
+}
+
+func main() {
+	if err := tea.NewProgram(initialModel()).Start(); err != nil {
+		fmt.Printf("could not start program: %s\n", err)
+		os.Exit(1)
+	}
 }
