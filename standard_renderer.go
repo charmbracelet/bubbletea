@@ -205,6 +205,15 @@ func (r *standardRenderer) write(s string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
+
+	// If an empty string was passed we should clear existing output and
+	// rendering nothing. Rather than introduce additional state to manage
+	// this, we render a single space as a simple (albeit less correct)
+	// solution.
+	if s == "" {
+		s = " "
+	}
+
 	_, _ = r.buf.WriteString(s)
 }
 
