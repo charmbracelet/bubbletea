@@ -278,6 +278,8 @@ For some Bubble Tea programs in production, see:
 * [gembro](https://git.sr.ht/~rafael/gembro): a Gemini browser
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [StormForge Optimize – Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
+* [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
+* [Typer](https://github.com/maaslalani/typer): a typing test
 
 ## Feedback
 
