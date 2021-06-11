@@ -116,7 +116,11 @@ func (r *standardRenderer) flush() {
 			if (len(newLines) <= len(oldLines)) && (len(newLines) > i && len(oldLines) > i) && (newLines[i] == oldLines[i]) {
 				skipLines[i] = struct{}{}
 			} else if _, exists := r.ignoreLines[i]; !exists {
-				clearLine(out)
+                // But only clear the line if it's shorter than the old one,
+                // otherwise it gets overwritten by the new line anyway.
+                if len(newLines[i]) < len(oldLines[i]) {
+                    clearLine(out)
+                }
 			}
 
 			cursorUp(out)
