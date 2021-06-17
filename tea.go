@@ -215,6 +215,8 @@ type Program struct {
 	mtx  *sync.Mutex
 	done chan struct{}
 
+	msgs chan Msg
+
 	output          io.Writer // where to send output. this will usually be os.Stdout.
 	input           io.Reader // this will usually be os.Stdin.
 	renderer        renderer
@@ -371,7 +373,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		output:       os.Stdout,
 		input:        os.Stdin,
-		done:         make(chan struct{}),
 		CatchPanics:  true,
 	}
 
@@ -385,9 +386,11 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 // Start initializes the program.
 func (p *Program) Start() error {
+	p.msgs = make(chan Msg)
+	p.done = make(chan struct{})
+
 	var (
 		cmds = make(chan Cmd)
-		msgs = make(chan Msg)
 		errs = make(chan error)
 
 		// If output is a file (e.g. os.Stdout) then this will be set
@@ -435,7 +438,7 @@ func (p *Program) Start() error {
 		select {
 		case <-ctx.Done():
 		case <-sig:
-			msgs <- quitMsg{}
+			p.msgs <- quitMsg{}
 		}
 	}()
 
@@ -502,7 +505,7 @@ func (p *Program) Start() error {
 					}
 					errs <- err
 				}
-				msgs <- msg
+				p.msgs <- msg
 			}
 		}()
 	}
@@ -514,11 +517,11 @@ func (p *Program) Start() error {
 			if err != nil {
 				errs <- err
 			}
-			msgs <- WindowSizeMsg{w, h}
+			p.msgs <- WindowSizeMsg{w, h}
 		}()
 
 		// Listen for window resizes
-		go listenForResize(outputAsFile, msgs, errs)
+		go listenForResize(outputAsFile, p.msgs, errs)
 	}
 
 	// Process commands
@@ -530,7 +533,7 @@ func (p *Program) Start() error {
 			case cmd := <-cmds:
 				if cmd != nil {
 					go func() {
-						msgs <- cmd()
+						p.msgs <- cmd()
 					}()
 				}
 			}
@@ -543,7 +546,7 @@ func (p *Program) Start() error {
 		case err := <-errs:
 			p.shutdown(false)
 			return err
-		case msg := <-msgs:
+		case msg := <-p.msgs:
 
 			// Handle special internal messages
 			switch msg := msg.(type) {
@@ -593,6 +596,21 @@ func (p *Program) Start() error {
 	}
 }
 
+// Send sends a message to the main update function, effectively allowing
+// messages to be injected from outside the program for interoperability
+// purposes.
+//
+// If the program is not running this this will be a no-op, so it's safe to
+// send messages if the program is unstarted, or has exited.
+//
+// This method is currently provisional. The method signature may alter
+// slightly, or it may be removed in a future version of this package.
+func (p *Program) Send(msg Msg) {
+	if p.msgs != nil {
+		p.msgs <- msg
+	}
+}
+
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
@@ -602,6 +620,8 @@ func (p *Program) shutdown(kill bool) {
 		p.renderer.stop()
 	}
 	close(p.done)
+	close(p.msgs)
+	p.msgs = nil
 	p.ExitAltScreen()
 	p.DisableMouseCellMotion()
 	p.DisableMouseAllMotion()
