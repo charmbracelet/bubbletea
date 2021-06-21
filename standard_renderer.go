@@ -110,33 +110,19 @@ func (r *standardRenderer) flush() {
 	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
 		for i := r.linesRendered - 1; i > 0; i-- {
-			// Determine if we should skip rendering for this line. We can skip
-			// for two reasons:
-			//
-			// 1. We've explicitly set this line to be ignored so we can render
-			// it elsewhere (for example, via the performance scroll methods
-			// like insertTop and insertBottom).
-			//
-			// 2. The new line is the same as the old line, in which case we
-			// can skip rendering for this line as a performance optimization.
-			_, ignoreLine := r.ignoreLines[i]
-
-			if ignoreLine ||
-				// Number of lines did not increase
-				(len(newLines) <= len(oldLines) &&
-					// Indexes available for lookup (guard against panics)
-					len(newLines) > i && len(oldLines) > i &&
-					// Lines are identical
-					(newLines[i] == oldLines[i])) {
+			// If the number of lines we want to render hasn't increased and
+			// new line is the same as the old line we can skip rendering for
+			// this line as a performance optimization.
+			if (len(newLines) <= len(oldLines)) && (len(newLines) > i && len(oldLines) > i) && (newLines[i] == oldLines[i]) {
 				skipLines[i] = struct{}{}
-			} else {
+			} else if _, exists := r.ignoreLines[i]; !exists {
 				clearLine(out)
 			}
 
 			cursorUp(out)
 		}
 
-		if _, exists := skipLines[0]; !exists {
+		if _, exists := r.ignoreLines[0]; !exists {
 			// We need to return to the start of the line here to properly
 			// erase it. Going back the entire width of the terminal will
 			// usually be farther than we need to go, but terminal emulators
@@ -148,6 +134,14 @@ func (r *standardRenderer) flush() {
 			// we could use that above to eliminate this step.
 			cursorBack(out, r.width)
 			clearLine(out)
+		}
+	}
+
+	// Merge the set of lines we're skipping as a rendering optimization with
+	// the set of lines we've explicitly asked the renderer to ignore.
+	if r.ignoreLines != nil {
+		for k, v := range r.ignoreLines {
+			skipLines[k] = v
 		}
 	}
 
