@@ -24,13 +24,13 @@ func Batch(cmds ...Cmd) Cmd {
 		return nil
 	}
 	return func() Msg {
-		return batchMsg(validCmds)
+		return BatchMsg(validCmds)
 	}
 }
 
-// batchMsg is the internal message used to perform a bunch of commands. You
-// can send a batchMsg with Batch.
-type batchMsg []Cmd
+// BatchMsg is a message used to perform a bunch of commands concurrently with
+// no ordering guarantees. You can send a BatchMsg with Batch.
+type BatchMsg []Cmd
 
 // Sequence runs the given commands one at a time, in order. Contrast this with
 // Batch, which runs commands concurrently.

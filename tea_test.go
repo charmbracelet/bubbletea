@@ -108,7 +108,7 @@ func TestTeaBatchMsg(t *testing.T) {
 	m := &testModel{}
 	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
 	go func() {
-		p.Send(batchMsg{inc, inc})
+		p.Send(BatchMsg{inc, inc})
 
 		for {
 			time.Sleep(time.Millisecond)
