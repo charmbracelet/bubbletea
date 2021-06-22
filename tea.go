@@ -295,7 +295,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
 
-			case batchMsg:
+			case BatchMsg:
 				for _, cmd := range msg {
 					cmds <- cmd
 				}
