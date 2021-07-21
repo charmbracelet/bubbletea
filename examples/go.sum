@@ -9,10 +9,12 @@ github.com/alecthomas/repr v0.0.0-20180818092828-117648cd9897 h1:p9Sln00KOTlrYkx
 github.com/alecthomas/repr v0.0.0-20180818092828-117648cd9897/go.mod h1:xTS7Pm1pD1mvyM075QCDSRqH6qRLXylzS24ZTpRiSzQ=
 github.com/atotto/clipboard v0.1.2 h1:YZCtFu5Ie8qX2VmVTBnrqLSiU9XOWwqNRmdT3gIQzbY=
 github.com/atotto/clipboard v0.1.2/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
-github.com/charmbracelet/bubbles v0.8.0 h1:+l2op90Ag37Vn+30O1hbg/0wBl+e+sxHhgY1F/rvdHs=
-github.com/charmbracelet/bubbles v0.8.0/go.mod h1:5WX1sSSjNCgCrzvRMN/z23HxvWaa+AI16Ch0KPZPeDs=
+github.com/charmbracelet/bubbles v0.8.1-0.20210726164137-e723cfd15ee9 h1:Ud8eC8EStC58Eq6lX7jC1rcY+m9TEQJ7elyLZ6SQ3Pc=
+github.com/charmbracelet/bubbles v0.8.1-0.20210726164137-e723cfd15ee9/go.mod h1:ajGUot5oksQSKxAATWfJU6STm4B0Pb1+e36bdkXrxsc=
 github.com/charmbracelet/glamour v0.2.0 h1:mTgaiNiumpqTZp3qVM6DH9UB0NlbY17wejoMf1kM8Pg=
 github.com/charmbracelet/glamour v0.2.0/go.mod h1:UA27Kwj3QHialP74iU6C+Gpc8Y7IOAKupeKMLLBURWM=
+github.com/charmbracelet/harmonica v0.1.0 h1:lFKeSd6OAckQ/CEzPVd2mqj+YMEubQ/3FM2IYY3xNm0=
+github.com/charmbracelet/harmonica v0.1.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
 github.com/charmbracelet/lipgloss v0.1.2 h1:D+LUMg34W7n2pkuMrevKVxT7HXqnoRHm7IoomkX3/ZU=
 github.com/charmbracelet/lipgloss v0.1.2/go.mod h1:5D8zradw52m7QmxRF6QgwbwJi9je84g8MkWiGN07uKg=
 github.com/containerd/console v1.0.1 h1:u7SFAJyRqWcG6ogaMAx3KjSTy1e3hT9QxqX7Jco7dRc=
@@ -36,8 +38,8 @@ github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Ky
 github.com/mattn/go-runewidth v0.0.7/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
 github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
 github.com/mattn/go-runewidth v0.0.10/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=
-github.com/mattn/go-runewidth v0.0.12 h1:Y41i/hVW3Pgwr8gV+J23B9YEY0zxjptBuCWEaxmAOow=
-github.com/mattn/go-runewidth v0.0.12/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=
+github.com/mattn/go-runewidth v0.0.13 h1:lTGmDsbAYt5DmK6OnoV7EuIF1wEIFAcxld6ypU4OSgU=
+github.com/mattn/go-runewidth v0.0.13/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/microcosm-cc/bluemonday v1.0.2 h1:5lPfLTTAvAbtS0VqT+94yOtFnGfUWYyx0+iToC3Os3s=
 github.com/microcosm-cc/bluemonday v1.0.2/go.mod h1:iVP4YcDBq+n/5fb23BhYFvIMq/leAFZyRl6bYmGDlGc=
 github.com/muesli/reflow v0.1.0/go.mod h1:I9bWAt7QTg/que/qmUCJBGlj7wEq8OAFBjPNjc6xK4I=
