@@ -58,11 +58,16 @@ type Cmd func() Msg
 // The options here are treated as bits.
 type startupOptions byte
 
+func (s startupOptions) has(option startupOptions) bool {
+	return s&option != 0
+}
+
 // Available startup options.
 const (
 	withAltScreen startupOptions = 1 << iota
 	withMouseCellMotion
 	withMouseAllMotion
+	withInputTTY
 )
 
 // inputStatus indicates the current state of the input. By default, input is
@@ -295,6 +300,15 @@ func (p *Program) Start() error {
 	if f, ok := p.output.(*os.File); ok {
 		outputAsFile = f
 		p.outputIsTTY = isatty.IsTerminal(f.Fd())
+	}
+
+	// Open a new TTY, by request
+	if p.startupOptions.has(withInputTTY) {
+		f, err := openInputTTY()
+		if err != nil {
+			return err
+		}
+		p.input = f
 	}
 
 	// Is input a terminal?
