@@ -455,11 +455,8 @@ func (p *Program) Start() error {
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
-	{
-		err := p.initTerminal()
-		if err != nil {
-			return err
-		}
+	if err := p.initTerminal(); err != nil {
+		return err
 	}
 
 	// If no renderer is set use the standard one.
