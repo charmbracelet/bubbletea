@@ -94,8 +94,7 @@ type Program struct {
 	// is on by default.
 	CatchPanics bool
 
-	outputIsTTY bool
-	console     console.Console
+	console console.Console
 
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
@@ -256,21 +255,10 @@ func (p *Program) Start() error {
 	var (
 		cmds = make(chan Cmd)
 		errs = make(chan error)
-
-		// If output is a file (e.g. os.Stdout) then this will be set
-		// accordingly. Most of the time you should refer to p.outputIsTTY
-		// rather than do a nil check against the value here.
-		outputAsFile *os.File
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	// Is output a terminal?
-	if f, ok := p.output.(*os.File); ok {
-		outputAsFile = f
-		p.outputIsTTY = isatty.IsTerminal(f.Fd())
-	}
 
 	switch {
 	case p.startupOptions.has(withInputTTY):
@@ -383,10 +371,11 @@ func (p *Program) Start() error {
 		}()
 	}
 
-	if p.outputIsTTY {
+	// Is output a terminal?
+	if f, ok := p.output.(*os.File); ok {
 		// Get initial terminal size
 		go func() {
-			w, h, err := term.GetSize(int(outputAsFile.Fd()))
+			w, h, err := term.GetSize(int(f.Fd()))
 			if err != nil {
 				errs <- err
 			}
@@ -394,7 +383,7 @@ func (p *Program) Start() error {
 		}()
 
 		// Listen for window resizes
-		go listenForResize(outputAsFile, p.msgs, errs)
+		go listenForResize(f, p.msgs, errs)
 	}
 
 	// Process commands
