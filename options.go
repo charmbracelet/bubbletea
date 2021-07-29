@@ -28,6 +28,13 @@ func WithInput(input io.Reader) ProgramOption {
 	}
 }
 
+// WithInputTTY open a new TTY for input (or console input device on Windows).
+func WithInputTTY() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withInputTTY
+	}
+}
+
 // WithoutCatchPanics disables the panic catching that Bubble Tea does by
 // default. If panic catching is disabled the terminal will be in a fairly
 // unusable state after a panic because Bubble Tea will not perform its usual
