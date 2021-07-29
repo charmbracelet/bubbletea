@@ -34,6 +34,8 @@ func (p *Program) initInput() error {
 	c := console.Current()
 	p.console = c
 
+	enableAnsiColors(p.output)
+
 	return nil
 }
 

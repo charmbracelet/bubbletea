@@ -3,7 +3,6 @@
 package tea
 
 import (
-	"io"
 	"os"
 
 	"github.com/containerd/console"
@@ -40,7 +39,3 @@ func openInputTTY() (*os.File, error) {
 	}
 	return f, nil
 }
-
-// enableAnsiColors is only needed for Windows, so for other systems this is
-// a no-op.
-func enableAnsiColors(_ io.Writer) {}
