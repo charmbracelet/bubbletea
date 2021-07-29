@@ -272,28 +272,34 @@ func (p *Program) Start() error {
 		p.outputIsTTY = isatty.IsTerminal(f.Fd())
 	}
 
-	// Open a new TTY, by request
-	if p.startupOptions.has(withInputTTY) {
+	switch {
+	case p.startupOptions.has(withInputTTY):
+		// Open a new TTY, by request
 		f, err := openInputTTY()
 		if err != nil {
 			return err
 		}
 		p.input = f
-	}
 
-	// If input is not a terminal, and the user hasn't set a custom input, open
-	// a TTY so we can capture input as normal. This will allow things to "just
-	// work" in cases where data was piped or redirected into this application.
-	if f, ok := p.input.(*os.File); ok {
-		inputIsTTY := isatty.IsTerminal(f.Fd())
-
-		if !inputIsTTY && !p.startupOptions.has(withCustomInput) {
-			f, err := openInputTTY()
-			if err != nil {
-				return err
-			}
-			p.input = f
+	case !p.startupOptions.has(withCustomInput):
+		// If the user hasn't set a custom input, and input's not a terminal,
+		// open a TTY so we can capture input as normal. This will allow things
+		// to "just work" in cases where data was piped or redirected into this
+		// application.
+		f, isFile := p.input.(*os.File)
+		if !isFile {
+			break
 		}
+
+		if isatty.IsTerminal(f.Fd()) {
+			break
+		}
+
+		f, err := openInputTTY()
+		if err != nil {
+			return err
+		}
+		p.input = f
 	}
 
 	// Listen for SIGINT. Note that in most cases ^C will not send an
