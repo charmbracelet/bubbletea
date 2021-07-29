@@ -19,17 +19,12 @@ func (p *Program) initTerminal() error {
 		}
 	}
 
-	if p.outputIsTTY {
-		hideCursor(p.output)
-	}
-
+	hideCursor(p.output)
 	return nil
 }
 
 func (p Program) restoreTerminal() error {
-	if p.outputIsTTY {
-		showCursor(p.output)
-	}
+	showCursor(p.output)
 
 	if p.console != nil {
 		err := p.console.Reset()
