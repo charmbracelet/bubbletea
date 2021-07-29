@@ -20,7 +20,6 @@ func (p *Program) initTerminal() error {
 	}
 
 	if p.outputIsTTY {
-		enableAnsiColors(p.output)
 		hideCursor(p.output)
 	}
 
