@@ -47,6 +47,7 @@ func (p *Program) restoreInput() error {
 	return nil
 }
 
+// Open the Windows equivalent of a TTY.
 func openInputTTY() (*os.File, error) {
 	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0644)
 	if err != nil {

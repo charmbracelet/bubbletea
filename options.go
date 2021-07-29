@@ -24,7 +24,7 @@ func WithOutput(output io.Writer) ProgramOption {
 func WithInput(input io.Reader) ProgramOption {
 	return func(m *Program) {
 		m.input = input
-		m.inputStatus = customInput
+		m.startupOptions |= withCustomInput
 	}
 }
 
