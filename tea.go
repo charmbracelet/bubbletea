@@ -371,9 +371,8 @@ func (p *Program) Start() error {
 		}()
 	}
 
-	// Is output a terminal?
 	if f, ok := p.output.(*os.File); ok {
-		// Get initial terminal size
+		// Get initial terminal size and send it to the program
 		go func() {
 			w, h, err := term.GetSize(int(f.Fd()))
 			if err != nil {
