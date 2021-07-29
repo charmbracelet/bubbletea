@@ -1,11 +1,5 @@
 package tea
 
-import (
-	"errors"
-)
-
-var errInputIsNotAFile = errors.New("input is not a file")
-
 func (p *Program) initTerminal() error {
 	err := p.initInput()
 	if err != nil {
