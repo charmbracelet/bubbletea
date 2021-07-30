@@ -481,8 +481,6 @@ func (p *Program) shutdown(kill bool) {
 		p.renderer.stop()
 	}
 	close(p.done)
-	close(p.msgs)
-	p.msgs = nil
 	p.ExitAltScreen()
 	p.DisableMouseCellMotion()
 	p.DisableMouseAllMotion()
