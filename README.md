@@ -252,12 +252,14 @@ there are [Go Docs][docs].
 ## Libraries we use with Bubble Tea
 
 * [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
-* [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications. Built on [Termenv][termenv] and [Reflow][reflow] below
+* [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
+* [Harmonica][harmonica]: A spring animation library for smooth, natural motion
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
 [bubbles]: https://github.com/charmbracelet/bubbles
 [lipgloss]: https://github.com/charmbracelet/lipgloss
+[harmonica]: https://github.com/charmbracelet/harmonica
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 
@@ -275,11 +277,13 @@ For some Bubble Tea programs in production, see:
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
-* [gembro](https://git.sr.ht/~rafael/gembro): a Gemini browser
+* [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [StormForge Optimize – Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
 * [Typer](https://github.com/maaslalani/typer): a typing test
+* [AT CLI](https://github.com/daskycodes/at_cli): a utility to for executing AT Commands via serial port connections
+* [Canard](https://github.com/mrusme/canard): an RSS client
 
 ## Feedback
 
