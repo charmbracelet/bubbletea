@@ -11,6 +11,7 @@ package tea
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -257,8 +258,26 @@ func (p *Program) Start() error {
 		errs = make(chan error)
 	)
 
+	var (
+		readLoopDone   = make(chan struct{}, 1)
+		sigintLoopDone = make(chan struct{}, 1)
+		cmdLoopDone    = make(chan struct{}, 1)
+		resizeLoopDone = make(chan struct{}, 1)
+
+		waitForLoops = func(withReadLoop bool) {
+			if withReadLoop {
+				<-readLoopDone
+			}
+			<-cmdLoopDone
+			<-resizeLoopDone
+			<-sigintLoopDone
+		}
+	)
+
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	defer func() {
+		cancel()
+	}()
 
 	switch {
 	case p.startupOptions.has(withInputTTY):
@@ -295,6 +314,8 @@ func (p *Program) Start() error {
 	// that keystroke and send it along to Program.Update. If input is not a
 	// TTY, however, ^C will be caught here.
 	go func() {
+		defer func() { sigintLoopDone <- struct{}{} }()
+
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT)
 		defer signal.Stop(sig)
@@ -338,6 +359,13 @@ func (p *Program) Start() error {
 		p.EnableMouseAllMotion()
 	}
 
+	cancelReader, cancelRead, err := newCancelReader(p.input)
+	if err != nil {
+		return err
+	}
+
+	p.input = cancelReader
+
 	// Initialize program
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
@@ -356,15 +384,25 @@ func (p *Program) Start() error {
 	// Subscribe to user input
 	if p.input != nil {
 		go func() {
+			defer func() {
+				readLoopDone <- struct{}{}
+			}()
+
 			for {
+				if ctx.Err() != nil {
+					return
+				}
+
 				msg, err := readInput(p.input)
 				if err != nil {
 					// If we get EOF just stop listening for input
-					if err == io.EOF {
-						break
+					if errors.Is(err, io.EOF) || errors.Is(err, errAborted) {
+						return
 					}
+
 					errs <- err
 				}
+
 				p.msgs <- msg
 			}
 		}()
@@ -377,17 +415,25 @@ func (p *Program) Start() error {
 			if err != nil {
 				errs <- err
 			}
-			p.msgs <- WindowSizeMsg{w, h}
+
+			select {
+			case <-ctx.Done():
+			case p.msgs <- WindowSizeMsg{w, h}:
+			}
 		}()
 
 		// Listen for window resizes
-		go listenForResize(f, p.msgs, errs)
+		go listenForResize(ctx, f, p.msgs, errs, resizeLoopDone)
 	}
 
 	// Process commands
 	go func() {
+		defer func() { cmdLoopDone <- struct{}{} }()
+
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case <-p.done:
 				return
 			case cmd := <-cmds:
@@ -404,13 +450,18 @@ func (p *Program) Start() error {
 	for {
 		select {
 		case err := <-errs:
+			cancel()
+			waitForLoops(cancelRead())
 			p.shutdown(false)
+
 			return err
 		case msg := <-p.msgs:
 
 			// Handle special internal messages
 			switch msg := msg.(type) {
 			case quitMsg:
+				cancel()
+				waitForLoops(cancelRead())
 				p.shutdown(false)
 				return nil
 
