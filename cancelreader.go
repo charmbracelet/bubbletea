@@ -3,7 +3,6 @@ package tea
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -51,7 +50,7 @@ func (r *ctxReader) Read(data []byte) (int, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	for {
-		err := WaitForRead(r.file, r.rStop)
+		err := waitForRead(r.file, r.rStop)
 		if err != nil {
 			if errors.Is(err, unix.EINTR) && !r.cancelled {
 				continue
@@ -84,39 +83,4 @@ func (r *ctxReader) cancel() bool {
 	defer r.mutex.Unlock()
 
 	return true
-}
-
-var errAborted = fmt.Errorf("select aborted")
-
-func WaitForRead(reader *os.File, abort *os.File) error {
-	readerFd := int(reader.Fd())
-	abortFd := int(abort.Fd())
-
-	maxFd := readerFd
-	if abortFd > maxFd {
-		maxFd = abortFd
-	}
-
-	if maxFd >= 1024 {
-		return fmt.Errorf("cannot select on file descriptor %d which is larger than 1024", maxFd)
-	}
-
-	fdSet := &unix.FdSet{}
-	fdSet.Set(int(reader.Fd()))
-	fdSet.Set(int(abort.Fd()))
-
-	_, err := unix.Select(maxFd+1, fdSet, nil, nil, nil)
-	if err != nil {
-		return fmt.Errorf("select: %w", err)
-	}
-
-	if fdSet.IsSet(abortFd) {
-		return errAborted
-	}
-
-	if fdSet.IsSet(readerFd) {
-		return nil
-	}
-
-	return fmt.Errorf("select returned without setting a file descriptor")
 }

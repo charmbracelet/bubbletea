@@ -28,7 +28,7 @@ func (p *Program) initInput() error {
 // program exits.
 func (p *Program) restoreInput() error {
 	if p.console != nil {
-		// return p.console.Close()
+		return p.console.Reset()
 	}
 	return nil
 }
