@@ -21,7 +21,7 @@ func listenForResize(ctx context.Context, output *os.File, msgs chan Msg, errs c
 
 	defer func() {
 		signal.Stop(sig)
-		done <- struct{}{}
+		close(done)
 	}()
 
 	for {
