@@ -2,7 +2,10 @@
 
 package tea
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 var errCanceled = fmt.Errorf("read cancelled")
 

@@ -2,7 +2,10 @@
 
 package tea
 
-import "os"
+import (
+	"context"
+	"os"
+)
 
 // listenForResize is not available on windows because windows does not
 // implement syscall.SIGWINCH.
