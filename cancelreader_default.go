@@ -1,4 +1,4 @@
-// +build !linux,!darwin,!windows
+// +build !darwin,!windows,!linux,!solaris,!freebsd,!netbsd,!openbsd
 
 package tea
 

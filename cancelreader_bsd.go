@@ -1,4 +1,4 @@
-// +build linux solaris
+// +build darwin freebsd netbsd openbsd
 
 // nolint:revive
 package tea
@@ -23,14 +23,24 @@ func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
 	if !ok {
 		return newFallbackCancelReader(reader)
 	}
-	r := &cancelReader{file: file}
 
-	var err error
+	kQueue, err := unix.Kqueue()
+	if err != nil {
+		return nil, nil, fmt.Errorf("create kqueue: %w", err)
+	}
+
+	r := &cancelReader{
+		file:   file,
+		kQueue: kQueue,
+	}
 
 	r.cancelSignalReader, r.cancelSignalWriter, err = os.Pipe()
 	if err != nil {
 		return nil, nil, err
 	}
+
+	unix.SetKevent(&r.kQueueEvents[0], int(file.Fd()), unix.EVFILT_READ, unix.EV_ADD)
+	unix.SetKevent(&r.kQueueEvents[1], int(r.cancelSignalReader.Fd()), unix.EVFILT_READ, unix.EV_ADD)
 
 	return r, r.cancel, nil
 }
@@ -40,6 +50,8 @@ type cancelReader struct {
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
 	cancelled          bool
+	kQueue             int
+	kQueueEvents       [2]unix.Kevent_t
 	sync.Mutex
 }
 
@@ -50,27 +62,22 @@ func (r *cancelReader) Read(data []byte) (int, error) {
 
 	r.Lock()
 	defer r.Unlock()
-	for {
-		err := waitForRead(r.file, r.cancelSignalReader)
-		if err != nil {
-			if errors.Is(err, unix.EINTR) && !r.cancelled {
-				continue // try again if syscall was interrupted
-			}
 
-			if errors.Is(err, errCanceled) {
-				// remove signal from pipe
-				var b [1]byte
-				_, _ = r.cancelSignalReader.Read(b[:])
-				// close pipe
-				_ = r.cancelSignalReader.Close()
-				_ = r.cancelSignalWriter.Close()
-			}
-
-			return 0, err
+	err := r.wait()
+	if err != nil {
+		if errors.Is(err, errCanceled) {
+			// remove signal from pipe
+			var b [1]byte
+			_, _ = r.cancelSignalReader.Read(b[:])
+			// close pipe
+			_ = r.cancelSignalReader.Close()
+			_ = r.cancelSignalWriter.Close()
 		}
 
-		return r.file.Read(data)
+		return 0, err
 	}
+
+	return r.file.Read(data)
 }
 
 func (r *cancelReader) cancel() bool {
@@ -89,36 +96,21 @@ func (r *cancelReader) cancel() bool {
 	return true
 }
 
-func waitForRead(reader *os.File, abort *os.File) error {
-	readerFd := int(reader.Fd())
-	abortFd := int(abort.Fd())
-
-	maxFd := readerFd
-	if abortFd > maxFd {
-		maxFd = abortFd
-	}
-
-	// this is a limitation of the select syscall
-	if maxFd >= 1024 {
-		return fmt.Errorf("cannot select on file descriptor %d which is larger than 1024", maxFd)
-	}
-
-	fdSet := &unix.FdSet{}
-	fdSet.Set(int(reader.Fd()))
-	fdSet.Set(int(abort.Fd()))
-
-	_, err := unix.Select(maxFd+1, fdSet, nil, nil, nil)
+func (r *cancelReader) wait() error {
+	events := make([]unix.Kevent_t, 1)
+	n, err := unix.Kevent(r.kQueue, r.kQueueEvents[:], events, nil)
 	if err != nil {
-		return fmt.Errorf("select: %w", err)
+		return fmt.Errorf("kevent: %w", err)
 	}
 
-	if fdSet.IsSet(abortFd) {
-		return errCanceled
+	for i := 0; i < n; i++ {
+		switch events[i].Ident {
+		case uint64(r.file.Fd()):
+			return nil
+		case uint64(r.cancelSignalReader.Fd()):
+			return errCanceled
+		}
 	}
 
-	if fdSet.IsSet(readerFd) {
-		return nil
-	}
-
-	return fmt.Errorf("select returned without setting a file descriptor")
+	return fmt.Errorf("unknown error")
 }
