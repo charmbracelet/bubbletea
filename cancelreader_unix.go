@@ -1,4 +1,4 @@
-// +build !windows
+// +build linux darwin
 
 // nolint:revive
 package tea
@@ -18,26 +18,24 @@ import (
 // read call. In this case, the cancel function returns true if the call was
 // cancelled successfully. If the input reader is not a *os.File, the cancel
 // function does nothing and always returns false.
-func newCancelReader(reader io.Reader) (*cancelReader, func() bool, error) {
-	r := &cancelReader{
-		file:           reader.(*os.File),
-		fallbackReader: reader,
+func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
+	file, ok := reader.(*os.File)
+	if !ok {
+		return newFallbackCancelReader(reader)
 	}
+	r := &cancelReader{file: file}
 
-	if r.file != nil {
-		var err error
+	var err error
 
-		r.cancelSignalReader, r.cancelSignalWriter, err = os.Pipe()
-		if err != nil {
-			return nil, nil, err
-		}
+	r.cancelSignalReader, r.cancelSignalWriter, err = os.Pipe()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return r, r.cancel, nil
 }
 
 type cancelReader struct {
-	fallbackReader     io.Reader // only used when the reader is not a *os.File
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
@@ -48,10 +46,6 @@ type cancelReader struct {
 func (r *cancelReader) Read(data []byte) (int, error) {
 	if r.cancelled {
 		return 0, errCanceled
-	}
-
-	if r.file == nil {
-		return r.fallbackReader.Read(data)
 	}
 
 	r.Lock()
@@ -82,14 +76,8 @@ func (r *cancelReader) Read(data []byte) (int, error) {
 func (r *cancelReader) cancel() bool {
 	r.cancelled = true
 
-	// if the underlying reader is not a *os.File, read calls cannot be
-	// cancelled
-	if r.file == nil {
-		return false
-	}
-
 	// send cancel signal
-	_, err := r.cancelSignalWriter.Write([]byte{'q'})
+	_, err := r.cancelSignalWriter.Write([]byte{'c'})
 	if err != nil {
 		return false
 	}
@@ -100,8 +88,6 @@ func (r *cancelReader) cancel() bool {
 
 	return true
 }
-
-var errCanceled = fmt.Errorf("read cancelled")
 
 func waitForRead(reader *os.File, abort *os.File) error {
 	readerFd := int(reader.Fd())
