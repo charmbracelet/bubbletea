@@ -1,4 +1,4 @@
-// +build darwin freebsd netbsd openbsd
+// +build linux
 
 // nolint:revive
 package tea
@@ -17,22 +17,22 @@ import (
 // is an *os.File, the cancel function can be used to interrupt a blocking call
 // read call. In this case, the cancel function returns true if the call was
 // cancelled successfully. If the input reader is not a *os.File, the cancel
-// function does nothing and always returns false. The BSD and macOS
-// implementation is based on the kqueue mechanism.
+// function does nothing and always returns false. The linux implementation is
+// based on the epoll mechanism.
 func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
 	file, ok := reader.(*os.File)
 	if !ok {
 		return newFallbackCancelReader(reader)
 	}
 
-	kQueue, err := unix.Kqueue()
+	epoll, err := unix.EpollCreate1(0)
 	if err != nil {
-		return nil, nil, fmt.Errorf("create kqueue: %w", err)
+		return nil, nil, fmt.Errorf("create epoll: %w", err)
 	}
 
 	r := &cancelReader{
-		file:   file,
-		kQueue: kQueue,
+		file:  file,
+		epoll: epoll,
 	}
 
 	r.cancelSignalReader, r.cancelSignalWriter, err = os.Pipe()
@@ -40,8 +40,21 @@ func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
 		return nil, nil, err
 	}
 
-	unix.SetKevent(&r.kQueueEvents[0], int(file.Fd()), unix.EVFILT_READ, unix.EV_ADD)
-	unix.SetKevent(&r.kQueueEvents[1], int(r.cancelSignalReader.Fd()), unix.EVFILT_READ, unix.EV_ADD)
+	err = unix.EpollCtl(epoll, unix.EPOLL_CTL_ADD, int(file.Fd()), &unix.EpollEvent{
+		Events: unix.EPOLLIN,
+		Fd:     int32(file.Fd()),
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("add reader to epoll interrest list")
+	}
+
+	err = unix.EpollCtl(epoll, unix.EPOLL_CTL_ADD, int(r.cancelSignalReader.Fd()), &unix.EpollEvent{
+		Events: unix.EPOLLIN,
+		Fd:     int32(r.cancelSignalReader.Fd()),
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("add reader to epoll interrest list")
+	}
 
 	return r, r.cancel, nil
 }
@@ -51,8 +64,7 @@ type cancelReader struct {
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
 	cancelled          bool
-	kQueue             int
-	kQueueEvents       [2]unix.Kevent_t
+	epoll              int
 	sync.Mutex
 }
 
@@ -98,17 +110,17 @@ func (r *cancelReader) cancel() bool {
 }
 
 func (r *cancelReader) wait() error {
-	events := make([]unix.Kevent_t, 1)
-	n, err := unix.Kevent(r.kQueue, r.kQueueEvents[:], events, nil)
+	events := make([]unix.EpollEvent, 1)
+	n, err := unix.EpollWait(r.epoll, events, -1)
 	if err != nil {
 		return fmt.Errorf("kevent: %w", err)
 	}
 
 	for i := 0; i < n; i++ {
-		switch events[i].Ident {
-		case uint64(r.file.Fd()):
+		switch events[i].Fd {
+		case int32(r.file.Fd()):
 			return nil
-		case uint64(r.cancelSignalReader.Fd()):
+		case int32(r.cancelSignalReader.Fd()):
 			return errCanceled
 		}
 	}

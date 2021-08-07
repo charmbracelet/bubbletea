@@ -1,4 +1,4 @@
-// +build linux solaris
+// +build solaris
 
 // nolint:revive
 package tea
@@ -13,14 +13,18 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+var selectMaxFd = 1024
+
 // newCancelReader returns a reader and a cancel function. If the input reader
 // is an *os.File, the cancel function can be used to interrupt a blocking call
 // read call. In this case, the cancel function returns true if the call was
-// cancelled successfully. If the input reader is not a *os.File, the cancel
-// function does nothing and always returns false.
+// cancelled successfully. If the input reader is not a *os.File or the file
+// descriptor is 1024 or larger, the cancel function does nothing and always
+// returns false. The generic unix implementation is based on the posix select
+// syscall.
 func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
 	file, ok := reader.(*os.File)
-	if !ok {
+	if !ok || file.Fd() >= uintptr(selectMaxFd) {
 		return newFallbackCancelReader(reader)
 	}
 	r := &cancelReader{file: file}
@@ -99,7 +103,7 @@ func waitForRead(reader *os.File, abort *os.File) error {
 	}
 
 	// this is a limitation of the select syscall
-	if maxFd >= 1024 {
+	if maxFd >= selectMaxFd {
 		return fmt.Errorf("cannot select on file descriptor %d which is larger than 1024", maxFd)
 	}
 
