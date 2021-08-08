@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -22,38 +22,35 @@ var selectMaxFd = 1024
 // descriptor is 1024 or larger, the cancel function does nothing and always
 // returns false. The generic unix implementation is based on the posix select
 // syscall.
-func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
+func newCancelReader(reader io.Reader) (cancelReader, error) {
 	file, ok := reader.(*os.File)
 	if !ok || file.Fd() >= uintptr(selectMaxFd) {
 		return newFallbackCancelReader(reader)
 	}
-	r := &cancelReader{file: file}
+	r := &selectCancelReader{file: file}
 
 	var err error
 
 	r.cancelSignalReader, r.cancelSignalWriter, err = os.Pipe()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return r, r.cancel, nil
+	return r, nil
 }
 
-type cancelReader struct {
+type selectCancelReader struct {
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
 	cancelled          bool
-	sync.Mutex
 }
 
-func (r *cancelReader) Read(data []byte) (int, error) {
+func (r *selectCancelReader) Read(data []byte) (int, error) {
 	if r.cancelled {
 		return 0, errCanceled
 	}
 
-	r.Lock()
-	defer r.Unlock()
 	for {
 		err := waitForRead(r.file, r.cancelSignalReader)
 		if err != nil {
@@ -64,10 +61,10 @@ func (r *cancelReader) Read(data []byte) (int, error) {
 			if errors.Is(err, errCanceled) {
 				// remove signal from pipe
 				var b [1]byte
-				_, _ = r.cancelSignalReader.Read(b[:])
-				// close pipe
-				_ = r.cancelSignalReader.Close()
-				_ = r.cancelSignalWriter.Close()
+				_, readErr := r.cancelSignalReader.Read(b[:])
+				if readErr != nil {
+					return 0, fmt.Errorf("reading cancel signal: %w", readErr)
+				}
 			}
 
 			return 0, err
@@ -77,7 +74,7 @@ func (r *cancelReader) Read(data []byte) (int, error) {
 	}
 }
 
-func (r *cancelReader) cancel() bool {
+func (r *selectCancelReader) Cancel() bool {
 	r.cancelled = true
 
 	// send cancel signal
@@ -86,11 +83,28 @@ func (r *cancelReader) cancel() bool {
 		return false
 	}
 
-	r.Lock()
-	// don't return until Read call exited
-	defer r.Unlock()
-
 	return true
+}
+
+func (r *selectCancelReader) Close() error {
+	var errMsgs []string
+
+	// close pipe
+	err := r.cancelSignalWriter.Close()
+	if err != nil {
+		errMsgs = append(errMsgs, fmt.Sprintf("closing cancel signal writer: %v", err))
+	}
+
+	err = r.cancelSignalReader.Close()
+	if err != nil {
+		errMsgs = append(errMsgs, fmt.Sprintf("closing cancel signal reader: %v", err))
+	}
+
+	if len(errMsgs) > 0 {
+		return fmt.Errorf(strings.Join(errMsgs, ", "))
+	}
+
+	return nil
 }
 
 func waitForRead(reader *os.File, abort *os.File) error {

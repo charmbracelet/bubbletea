@@ -361,12 +361,12 @@ func (p *Program) Start() error {
 		p.EnableMouseAllMotion()
 	}
 
-	cancelReader, cancelRead, err := newCancelReader(p.input)
+	cancelReader, err := newCancelReader(p.input)
 	if err != nil {
 		return err
 	}
 
-	p.input = cancelReader
+	defer cancelReader.Close()
 
 	// Initialize program
 	model := p.initialModel
@@ -397,7 +397,7 @@ func (p *Program) Start() error {
 					return
 				}
 
-				msg, err := readInput(p.input)
+				msg, err := readInput(cancelReader)
 				if err != nil {
 					// If we get EOF or the read is cancelled just stop listening for input
 					if errors.Is(err, io.EOF) || errors.Is(err, errCanceled) {
@@ -453,7 +453,7 @@ func (p *Program) Start() error {
 		select {
 		case err := <-errs:
 			cancelInputRead()
-			waitForGoroutines(cancelRead())
+			waitForGoroutines(cancelReader.Cancel())
 			p.shutdown(false)
 
 			return err
@@ -463,7 +463,7 @@ func (p *Program) Start() error {
 			switch msg := msg.(type) {
 			case quitMsg:
 				cancelInputRead()
-				waitForGoroutines(cancelRead())
+				waitForGoroutines(cancelReader.Cancel())
 				p.shutdown(false)
 				return nil
 

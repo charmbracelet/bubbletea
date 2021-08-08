@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -19,7 +19,7 @@ import (
 // cancelled successfully. If the input reader is not a *os.File, the cancel
 // function does nothing and always returns false. The linux implementation is
 // based on the epoll mechanism.
-func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
+func newCancelReader(reader io.Reader) (cancelReader, error) {
 	file, ok := reader.(*os.File)
 	if !ok {
 		return newFallbackCancelReader(reader)
@@ -27,17 +27,17 @@ func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
 
 	epoll, err := unix.EpollCreate1(0)
 	if err != nil {
-		return nil, nil, fmt.Errorf("create epoll: %w", err)
+		return nil, fmt.Errorf("create epoll: %w", err)
 	}
 
-	r := &cancelReader{
+	r := &epollCancelReader{
 		file:  file,
 		epoll: epoll,
 	}
 
 	r.cancelSignalReader, r.cancelSignalWriter, err = os.Pipe()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	err = unix.EpollCtl(epoll, unix.EPOLL_CTL_ADD, int(file.Fd()), &unix.EpollEvent{
@@ -45,7 +45,7 @@ func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
 		Fd:     int32(file.Fd()),
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("add reader to epoll interrest list")
+		return nil, fmt.Errorf("add reader to epoll interrest list")
 	}
 
 	err = unix.EpollCtl(epoll, unix.EPOLL_CTL_ADD, int(r.cancelSignalReader.Fd()), &unix.EpollEvent{
@@ -53,38 +53,34 @@ func newCancelReader(reader io.Reader) (io.Reader, func() bool, error) {
 		Fd:     int32(r.cancelSignalReader.Fd()),
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("add reader to epoll interrest list")
+		return nil, fmt.Errorf("add reader to epoll interrest list")
 	}
 
-	return r, r.cancel, nil
+	return r, nil
 }
 
-type cancelReader struct {
+type epollCancelReader struct {
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
 	cancelled          bool
 	epoll              int
-	sync.Mutex
 }
 
-func (r *cancelReader) Read(data []byte) (int, error) {
+func (r *epollCancelReader) Read(data []byte) (int, error) {
 	if r.cancelled {
 		return 0, errCanceled
 	}
-
-	r.Lock()
-	defer r.Unlock()
 
 	err := r.wait()
 	if err != nil {
 		if errors.Is(err, errCanceled) {
 			// remove signal from pipe
 			var b [1]byte
-			_, _ = r.cancelSignalReader.Read(b[:])
-			// close pipe
-			_ = r.cancelSignalReader.Close()
-			_ = r.cancelSignalWriter.Close()
+			_, readErr := r.cancelSignalReader.Read(b[:])
+			if readErr != nil {
+				return 0, fmt.Errorf("reading cancel signal: %w", readErr)
+			}
 		}
 
 		return 0, err
@@ -93,7 +89,7 @@ func (r *cancelReader) Read(data []byte) (int, error) {
 	return r.file.Read(data)
 }
 
-func (r *cancelReader) cancel() bool {
+func (r *epollCancelReader) Cancel() bool {
 	r.cancelled = true
 
 	// send cancel signal
@@ -102,27 +98,48 @@ func (r *cancelReader) cancel() bool {
 		return false
 	}
 
-	r.Lock()
-	// don't return until Read call exited
-	defer r.Unlock()
-
 	return true
 }
 
-func (r *cancelReader) wait() error {
+func (r *epollCancelReader) Close() error {
+	var errMsgs []string
+
+	// close kqueue
+	err := unix.Close(r.epoll)
+	if err != nil {
+		errMsgs = append(errMsgs, fmt.Sprintf("closing epoll: %v", err))
+	}
+
+	// close pipe
+	err = r.cancelSignalWriter.Close()
+	if err != nil {
+		errMsgs = append(errMsgs, fmt.Sprintf("closing cancel signal writer: %v", err))
+	}
+
+	err = r.cancelSignalReader.Close()
+	if err != nil {
+		errMsgs = append(errMsgs, fmt.Sprintf("closing cancel signal reader: %v", err))
+	}
+
+	if len(errMsgs) > 0 {
+		return fmt.Errorf(strings.Join(errMsgs, ", "))
+	}
+
+	return nil
+}
+
+func (r *epollCancelReader) wait() error {
 	events := make([]unix.EpollEvent, 1)
-	n, err := unix.EpollWait(r.epoll, events, -1)
+	_, err := unix.EpollWait(r.epoll, events, -1)
 	if err != nil {
 		return fmt.Errorf("kevent: %w", err)
 	}
 
-	for i := 0; i < n; i++ {
-		switch events[i].Fd {
-		case int32(r.file.Fd()):
-			return nil
-		case int32(r.cancelSignalReader.Fd()):
-			return errCanceled
-		}
+	switch events[0].Fd {
+	case int32(r.file.Fd()):
+		return nil
+	case int32(r.cancelSignalReader.Fd()):
+		return errCanceled
 	}
 
 	return fmt.Errorf("unknown error")
