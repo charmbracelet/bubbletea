@@ -50,13 +50,13 @@ type kqueueCancelReader struct {
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
-	cancelled          bool
-	kQueue             int
-	kQueueEvents       [2]unix.Kevent_t
+	cancelMixin
+	kQueue       int
+	kQueueEvents [2]unix.Kevent_t
 }
 
 func (r *kqueueCancelReader) Read(data []byte) (int, error) {
-	if r.cancelled {
+	if r.isCancelled() {
 		return 0, errCanceled
 	}
 
@@ -78,7 +78,7 @@ func (r *kqueueCancelReader) Read(data []byte) (int, error) {
 }
 
 func (r *kqueueCancelReader) Cancel() bool {
-	r.cancelled = true
+	r.setCancelled()
 
 	// send cancel signal
 	_, err := r.cancelSignalWriter.Write([]byte{'c'})

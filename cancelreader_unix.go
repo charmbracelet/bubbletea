@@ -43,18 +43,18 @@ type selectCancelReader struct {
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
-	cancelled          bool
+	cancelMixin
 }
 
 func (r *selectCancelReader) Read(data []byte) (int, error) {
-	if r.cancelled {
+	if r.isCancelled() {
 		return 0, errCanceled
 	}
 
 	for {
 		err := waitForRead(r.file, r.cancelSignalReader)
 		if err != nil {
-			if errors.Is(err, unix.EINTR) && !r.cancelled {
+			if errors.Is(err, unix.EINTR) && !r.isCancelled() {
 				continue // try again if syscall was interrupted
 			}
 
@@ -75,7 +75,7 @@ func (r *selectCancelReader) Read(data []byte) (int, error) {
 }
 
 func (r *selectCancelReader) Cancel() bool {
-	r.cancelled = true
+	r.setCancelled()
 
 	// send cancel signal
 	_, err := r.cancelSignalWriter.Write([]byte{'c'})

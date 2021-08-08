@@ -6,8 +6,8 @@ import (
 	"io"
 )
 
-// newCancelReader returns a reader that can NOT be canceled on Windows. The
-// cancel function will always return false.
+// newCancelReader returns a fallbackCancelReader that satisfies the
+// cancelReader but does not actually support cancelation.
 func newCancelReader(reader io.Reader) (cancelReader, error) {
 	return newFallbackCancelReader(reader)
 }
