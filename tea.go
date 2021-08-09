@@ -366,13 +366,6 @@ func (p *Program) Start() error {
 		p.EnableMouseAllMotion()
 	}
 
-	cancelReader, err := newCancelReader(p.input)
-	if err != nil {
-		return err
-	}
-
-	defer cancelReader.Close()
-
 	// Initialize program
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
@@ -393,6 +386,13 @@ func (p *Program) Start() error {
 
 	// Render initial view
 	p.renderer.write(model.View())
+
+	cancelReader, err := newCancelReader(p.input)
+	if err != nil {
+		return err
+	}
+
+	defer cancelReader.Close()
 
 	// Subscribe to user input
 	if p.input != nil {
