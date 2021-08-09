@@ -270,7 +270,7 @@ func (p *Program) Start() error {
 				select {
 				case <-readLoopDone:
 				case <-time.After(1 * time.Second):
-					panic("read loop hangs")
+					fmt.Println("read loop hangs") // TODO: remove debug message
 				}
 			}
 			<-cmdLoopDone
@@ -404,12 +404,11 @@ func (p *Program) Start() error {
 
 				msg, err := readInput(cancelReader)
 				if err != nil {
-					// If we get EOF or the read is cancelled just stop listening for input
-					if errors.Is(err, io.EOF) || errors.Is(err, errCanceled) {
-						return
+					if !errors.Is(err, io.EOF) && !errors.Is(err, errCanceled) {
+						errs <- err
 					}
 
-					errs <- err
+					return
 				}
 
 				p.msgs <- msg
