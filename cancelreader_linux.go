@@ -94,11 +94,7 @@ func (r *epollCancelReader) Cancel() bool {
 
 	// send cancel signal
 	_, err := r.cancelSignalWriter.Write([]byte{'c'})
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func (r *epollCancelReader) Close() error {

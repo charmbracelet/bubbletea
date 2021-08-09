@@ -25,6 +25,11 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 		return newFallbackCancelReader(reader)
 	}
 
+	// kqueue returns instantly when polling /dev/tty so fallback to select
+	if file.Name() == "/dev/tty" {
+		return newSelectCancelReader(reader)
+	}
+
 	kQueue, err := unix.Kqueue()
 	if err != nil {
 		return nil, fmt.Errorf("create kqueue: %w", err)
