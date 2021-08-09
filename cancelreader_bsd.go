@@ -114,9 +114,18 @@ func (r *kqueueCancelReader) Close() error {
 
 func (r *kqueueCancelReader) wait() error {
 	events := make([]unix.Kevent_t, 1)
-	_, err := unix.Kevent(r.kQueue, r.kQueueEvents[:], events, nil)
-	if err != nil {
-		return fmt.Errorf("kevent: %w", err)
+
+	for {
+		_, err := unix.Kevent(r.kQueue, r.kQueueEvents[:], events, nil)
+		if errors.Is(err, unix.EINTR) {
+			continue // try again if the syscall was interrupted
+		}
+
+		if err != nil {
+			return fmt.Errorf("kevent: %w", err)
+		}
+
+		break
 	}
 
 	switch events[0].Ident {

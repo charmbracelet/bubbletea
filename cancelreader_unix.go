@@ -54,8 +54,8 @@ func (r *selectCancelReader) Read(data []byte) (int, error) {
 	for {
 		err := waitForRead(r.file, r.cancelSignalReader)
 		if err != nil {
-			if errors.Is(err, unix.EINTR) && !r.isCancelled() {
-				continue // try again if syscall was interrupted
+			if errors.Is(err, unix.EINTR) {
+				continue // try again if the syscall was interrupted
 			}
 
 			if errors.Is(err, errCanceled) {

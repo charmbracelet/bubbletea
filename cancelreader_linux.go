@@ -130,9 +130,18 @@ func (r *epollCancelReader) Close() error {
 
 func (r *epollCancelReader) wait() error {
 	events := make([]unix.EpollEvent, 1)
-	_, err := unix.EpollWait(r.epoll, events, -1)
-	if err != nil {
-		return fmt.Errorf("kevent: %w", err)
+
+	for {
+		_, err := unix.EpollWait(r.epoll, events, -1)
+		if errors.Is(err, unix.EINTR) {
+			continue // try again if the syscall was interrupted
+		}
+
+		if err != nil {
+			return fmt.Errorf("kevent: %w", err)
+		}
+
+		break
 	}
 
 	switch events[0].Fd {
