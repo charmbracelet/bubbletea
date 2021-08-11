@@ -13,8 +13,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-var selectMaxFd = 1024
-
 // newSelectCancelReader returns a reader and a cancel function. If the input
 // reader is an *os.File, the cancel function can be used to interrupt a
 // blocking call read call. In this case, the cancel function returns true if
@@ -24,7 +22,7 @@ var selectMaxFd = 1024
 // select syscall.
 func newSelectCancelReader(reader io.Reader) (cancelReader, error) {
 	file, ok := reader.(*os.File)
-	if !ok || file.Fd() >= uintptr(selectMaxFd) {
+	if !ok || file.Fd() >= unix.FD_SETSIZE {
 		return newFallbackCancelReader(reader)
 	}
 	r := &selectCancelReader{file: file}
@@ -113,7 +111,7 @@ func waitForRead(reader *os.File, abort *os.File) error {
 	}
 
 	// this is a limitation of the select syscall
-	if maxFd >= selectMaxFd {
+	if maxFd >= unix.FD_SETSIZE {
 		return fmt.Errorf("cannot select on file descriptor %d which is larger than 1024", maxFd)
 	}
 
