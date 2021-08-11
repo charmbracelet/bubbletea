@@ -292,6 +292,9 @@ func (p *Program) Start() error {
 		if err != nil {
 			return err
 		}
+
+		defer f.Close() // nolint:errcheck
+
 		p.input = f
 
 	case !p.startupOptions.has(withCustomInput):
@@ -312,6 +315,9 @@ func (p *Program) Start() error {
 		if err != nil {
 			return err
 		}
+
+		defer f.Close() // nolint:errcheck
+
 		p.input = f
 	}
 
