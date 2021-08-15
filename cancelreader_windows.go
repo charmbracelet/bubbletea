@@ -32,6 +32,9 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 	conin, err := windows.CreateFile(
 		&(utf16.Encode([]rune("CONIN$\x00"))[0]), windows.GENERIC_READ, fileShareValidFlags,
 		nil, windows.OPEN_EXISTING, windows.FILE_FLAG_OVERLAPPED, 0)
+	if err != nil {
+		return nil, fmt.Errorf("open CONIN$ in overlapping mode: %w", err)
+	}
 
 	cancelEvent, err := windows.CreateEvent(nil, 0, 0, nil)
 	if err != nil {
@@ -41,8 +44,8 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 	return &winCancelReader{
 		conin:        conin,
 		cancelEvent:  cancelEvent,
-		blockingRead: make(chan struct{}, 1)}, nil
-
+		blockingRead: make(chan struct{}, 1),
+	}, nil
 }
 
 type winCancelReader struct {
@@ -141,7 +144,7 @@ func (r *winCancelReader) readAsync(data []byte) (int, error) {
 		return 0, fmt.Errorf("create event: %w", err)
 	}
 
-	var overlapped = windows.Overlapped{
+	overlapped := windows.Overlapped{
 		HEvent: hevent,
 	}
 
