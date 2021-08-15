@@ -455,11 +455,16 @@ func (p *Program) Start() error {
 			case <-ctx.Done():
 				return
 			case cmd := <-cmds:
-				if cmd != nil {
-					go func() {
-						p.msgs <- cmd()
-					}()
+				if cmd == nil {
+					continue
 				}
+
+				go func() {
+					select {
+					case p.msgs <- cmd():
+					case <-ctx.Done():
+					}
+				}()
 			}
 		}
 	}()

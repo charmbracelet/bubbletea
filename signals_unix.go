@@ -41,6 +41,5 @@ func listenForResize(ctx context.Context, output *os.File, msgs chan Msg, errs c
 			return
 		case msgs <- WindowSizeMsg{w, h}:
 		}
-
 	}
 }
