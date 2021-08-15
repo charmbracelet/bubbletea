@@ -450,16 +450,23 @@ func (p *Program) Start() error {
 	go func() {
 		defer close(cmdLoopDone)
 
+		var wg sync.WaitGroup
+
 		for {
 			select {
 			case <-ctx.Done():
+				wg.Wait()
+
 				return
 			case cmd := <-cmds:
 				if cmd == nil {
 					continue
 				}
 
+				wg.Add(1)
 				go func() {
+					defer wg.Done()
+
 					select {
 					case p.msgs <- cmd():
 					case <-ctx.Done():
