@@ -259,11 +259,11 @@ func (p *Program) Start() error {
 
 	// channels for managing goroutine lifecycles
 	var (
-		readLoopDone   = make(chan struct{}, 1)
-		sigintLoopDone = make(chan struct{}, 1)
-		cmdLoopDone    = make(chan struct{}, 1)
-		resizeLoopDone = make(chan struct{}, 1)
-		initSignalDone = make(chan struct{}, 1)
+		readLoopDone   = make(chan struct{})
+		sigintLoopDone = make(chan struct{})
+		cmdLoopDone    = make(chan struct{})
+		resizeLoopDone = make(chan struct{})
+		initSignalDone = make(chan struct{})
 
 		waitForGoroutines = func(withReadLoop bool) {
 			if withReadLoop {
