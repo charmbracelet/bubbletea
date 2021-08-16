@@ -296,7 +296,7 @@ We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 Bubble Tea is based on the paradigms of [The Elm Architecture][elm] by Evan
 Czaplicki et alia and the excellent [go-tea][gotea] by TJ Holowaychuk. It’s
-inspired by the many great [_Zeichenorientierte Benutzerschnittstelle_][zb]
+inspired by the many great [_Zeichenorientierte Benutzerschnittstellen_][zb]
 of days past.
 
 [elm]: https://guide.elm-lang.org/architecture/
