@@ -460,9 +460,11 @@ func (p *Program) Start() error {
 					continue
 				}
 
-				// don't wait on these goroutines, otherwise the shutdown
-				// latency would get too large and they terminate on context
-				// cancelation anyway
+				// Don't wait on these goroutines, otherwise the shutdown
+				// latency would get too large as a Cmd can run for some time
+				// (e.g. tick commands that sleep for half a second). It's not
+				// possible to cancel them so we'll have to leak the goroutine
+				// until Cmd returns.
 				go func() {
 					select {
 					case p.msgs <- cmd():
