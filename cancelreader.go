@@ -59,12 +59,14 @@ type cancelMixin struct {
 
 func (c *cancelMixin) isCancelled() bool {
 	c.lock.Lock()
-	c.lock.Unlock()
+	defer c.lock.Unlock()
+
 	return c.unsafeCancelled
 }
 
 func (c *cancelMixin) setCancelled() {
 	c.lock.Lock()
-	c.lock.Unlock()
+	defer c.lock.Unlock()
+
 	c.unsafeCancelled = true
 }

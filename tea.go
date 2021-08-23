@@ -398,7 +398,7 @@ func (p *Program) Start() error {
 		return err
 	}
 
-	defer cancelReader.Close()
+	defer cancelReader.Close() // nolint:errcheck
 
 	// Subscribe to user input
 	if p.input != nil {
