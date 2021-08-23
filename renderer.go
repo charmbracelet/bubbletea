@@ -11,8 +11,8 @@ type renderer interface {
 	// Stop the renderer without doing any final rendering.
 	kill()
 
-	// Write a frame to the renderer. The renderer can write this data to ouput
-	// at its discretion.
+	// Write a frame to the renderer. The renderer can write this data to
+	// output at its discretion.
 	write(string)
 
 	// Request a full re-render.
@@ -21,7 +21,7 @@ type renderer interface {
 	// Whether or not the alternate screen buffer is enabled.
 	altScreen() bool
 
-	// Record internally that the alternate screen buffer is enabled. This does
-	// should not actually toggle the alternate screen buffer.
+	// Record internally that the alternate screen buffer is enabled. This
+	// does not actually toggle the alternate screen buffer.
 	setAltScreen(bool)
 }
