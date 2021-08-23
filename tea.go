@@ -450,12 +450,9 @@ func (p *Program) Start() error {
 	go func() {
 		defer close(cmdLoopDone)
 
-		var wg sync.WaitGroup
-
 		for {
 			select {
 			case <-ctx.Done():
-				wg.Wait()
 
 				return
 			case cmd := <-cmds:
@@ -463,10 +460,10 @@ func (p *Program) Start() error {
 					continue
 				}
 
-				wg.Add(1)
+				// don't wait on these goroutines, otherwise the shutdown
+				// latency would get too large and they terminate on context
+				// cancelation anyway
 				go func() {
-					defer wg.Done()
-
 					select {
 					case p.msgs <- cmd():
 					case <-ctx.Done():
