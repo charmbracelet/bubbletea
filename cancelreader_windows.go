@@ -228,8 +228,8 @@ var (
 )
 
 func flushConsoleInputBuffer(consoleInput windows.Handle) error {
-	r, _, e := syscall.Syscall6(procFlushConsoleInputBuffer.Addr(), 1,
-		uintptr(consoleInput), 0, 0, 0, 0, 0)
+	r, _, e := syscall.Syscall(procFlushConsoleInputBuffer.Addr(), 1,
+		uintptr(consoleInput), 0, 0)
 	if r == 0 {
 		return error(e)
 	}
