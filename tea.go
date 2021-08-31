@@ -269,8 +269,10 @@ func (p *Program) Start() error {
 			if withReadLoop {
 				select {
 				case <-readLoopDone:
-				case <-time.After(1 * time.Second):
-					fmt.Println("read loop hangs") // TODO: remove debug message
+				case <-time.After(500 * time.Millisecond):
+					// the read loop hangs, which means the input cancelReader's
+					// cancel function has returned true even though it was not
+					// able to cancel the read
 				}
 			}
 			<-cmdLoopDone
