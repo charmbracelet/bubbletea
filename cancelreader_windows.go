@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"syscall"
 	"time"
 	"unicode/utf16"
 
@@ -30,10 +31,23 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 	// it is neccessary to open CONIN$ (NOT windows.STD_INPUT_HANDLE) in
 	// overlapped mode to be able to use it with WaitForMultipleObjects.
 	conin, err := windows.CreateFile(
-		&(utf16.Encode([]rune("CONIN$\x00"))[0]), windows.GENERIC_READ, fileShareValidFlags,
-		nil, windows.OPEN_EXISTING, windows.FILE_FLAG_OVERLAPPED, 0)
+		&(utf16.Encode([]rune("CONIN$\x00"))[0]), windows.GENERIC_READ|windows.GENERIC_WRITE,
+		fileShareValidFlags, nil, windows.OPEN_EXISTING, windows.FILE_FLAG_OVERLAPPED, 0)
 	if err != nil {
 		return nil, fmt.Errorf("open CONIN$ in overlapping mode: %w", err)
+	}
+
+	resetConsole, err := prepareConsole(conin)
+	if err != nil {
+		return nil, fmt.Errorf("prepare console: %w", err)
+	}
+
+	// flush input, otherwise it can contain events which trigger
+	// WaitForMultipleObjects but which ReadFile cannot read, resulting in an
+	// un-cancelable read
+	err = flushConsoleInputBuffer(conin)
+	if err != nil {
+		return nil, fmt.Errorf("flush console input buffer: %w", err)
 	}
 
 	cancelEvent, err := windows.CreateEvent(nil, 0, 0, nil)
@@ -42,9 +56,10 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 	}
 
 	return &winCancelReader{
-		conin:        conin,
-		cancelEvent:  cancelEvent,
-		blockingRead: make(chan struct{}, 1),
+		conin:              conin,
+		cancelEvent:        cancelEvent,
+		resetConsole:       resetConsole,
+		blockingReadSignal: make(chan struct{}, 1),
 	}, nil
 }
 
@@ -53,7 +68,8 @@ type winCancelReader struct {
 	cancelEvent windows.Handle
 	cancelMixin
 
-	blockingRead chan struct{}
+	resetConsole       func() error
+	blockingReadSignal chan struct{}
 }
 
 func (r *winCancelReader) Read(data []byte) (int, error) {
@@ -83,12 +99,12 @@ func (r *winCancelReader) Cancel() bool {
 	r.setCancelled()
 
 	select {
-	case r.blockingRead <- struct{}{}:
+	case r.blockingReadSignal <- struct{}{}:
 		err := windows.SetEvent(r.cancelEvent)
 		if err != nil {
 			return false
 		}
-		<-r.blockingRead
+		<-r.blockingReadSignal
 	case <-time.After(100 * time.Millisecond):
 		// Read() hangs in a GetOverlappedResult which is likely due to
 		// WaitForMultipleObjects returning without input being available
@@ -103,6 +119,11 @@ func (r *winCancelReader) Close() error {
 	err := windows.CloseHandle(r.cancelEvent)
 	if err != nil {
 		return fmt.Errorf("closing cancel event handle: %w", err)
+	}
+
+	err = r.resetConsole()
+	if err != nil {
+		return err
 	}
 
 	err = windows.Close(r.conin)
@@ -155,12 +176,63 @@ func (r *winCancelReader) readAsync(data []byte) (int, error) {
 		return int(n), err
 	}
 
-	r.blockingRead <- struct{}{}
+	r.blockingReadSignal <- struct{}{}
 	err = windows.GetOverlappedResult(r.conin, &overlapped, &n, true)
 	if err != nil {
 		return int(n), nil
 	}
-	<-r.blockingRead
+	<-r.blockingReadSignal
 
 	return int(n), nil
+}
+
+func prepareConsole(input windows.Handle) (reset func() error, err error) {
+	var originalMode uint32
+
+	err = windows.GetConsoleMode(input, &originalMode)
+	if err != nil {
+		return nil, fmt.Errorf("get console mode: %w", err)
+	}
+
+	var newMode uint32
+	newMode &^= windows.ENABLE_ECHO_INPUT
+	newMode &^= windows.ENABLE_LINE_INPUT
+	newMode &^= windows.ENABLE_MOUSE_INPUT
+	newMode &^= windows.ENABLE_WINDOW_INPUT
+	newMode &^= windows.ENABLE_PROCESSED_INPUT
+
+	newMode |= windows.ENABLE_EXTENDED_FLAGS
+	newMode |= windows.ENABLE_INSERT_MODE
+	newMode |= windows.ENABLE_QUICK_EDIT_MODE
+
+	newMode &^= windows.ENABLE_VIRTUAL_TERMINAL_INPUT
+
+	err = windows.SetConsoleMode(input, newMode)
+	if err != nil {
+		return nil, fmt.Errorf("set console mode: %w", err)
+	}
+
+	return func() error {
+		err := windows.SetConsoleMode(input, originalMode)
+		if err != nil {
+			return fmt.Errorf("reset console mode: %w", err)
+		}
+
+		return nil
+	}, nil
+}
+
+var (
+	modkernel32                 = windows.NewLazySystemDLL("kernel32.dll")
+	procFlushConsoleInputBuffer = modkernel32.NewProc("FlushConsoleInputBuffer")
+)
+
+func flushConsoleInputBuffer(consoleInput windows.Handle) error {
+	r, _, e := syscall.Syscall6(procFlushConsoleInputBuffer.Addr(), 1,
+		uintptr(consoleInput), 0, 0, 0, 0, 0)
+	if r == 0 {
+		return error(e)
+	}
+
+	return nil
 }
