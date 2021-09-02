@@ -5,13 +5,13 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mattn/go-runewidth"
 )
 
 // You generally won't need this unless you're processing stuff with
@@ -22,25 +22,19 @@ import (
 // tea.EnterAltScreen().
 const useHighPerformanceRenderer = false
 
-func main() {
-	// Load some text for our viewport
-	content, err := os.ReadFile("artichoke.md")
-	if err != nil {
-		fmt.Println("could not load file:", err)
-		os.Exit(1)
-	}
+var (
+	titleStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Right = "├"
+		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
+	}()
 
-	p := tea.NewProgram(
-		model{content: string(content)},
-		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
-		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
-	)
-
-	if err := p.Start(); err != nil {
-		fmt.Println("could not run program:", err)
-		os.Exit(1)
-	}
-}
+	infoStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Left = "┤"
+		return titleStyle.Copy().BorderStyle(b)
+	}()
+)
 
 type model struct {
 	content  string
@@ -75,7 +69,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// we can initialize the viewport. The initial dimensions come in
 			// quickly, though asynchronously, which is why we wait for them
 			// here.
-			m.viewport = viewport.NewModel(msg.Width, msg.Height-verticalMarginHeight)
+			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.viewport.YPosition = headerHeight
 			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
 			m.viewport.SetContent(m.content)
@@ -115,22 +109,15 @@ func (m model) View() string {
 }
 
 func (m model) headerView() string {
-	headerTop := "╭───────────╮"
-	headerMid := "│ Mr. Pager ├"
-	headerBot := "╰───────────╯"
-	headerMid += strings.Repeat("─", max(0, m.viewport.Width-runewidth.StringWidth(headerMid)))
-	return fmt.Sprintf("%s\n%s\n%s", headerTop, headerMid, headerBot)
+	title := titleStyle.Render("Mr. Pager")
+	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(title)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
 
 func (m model) footerView() string {
-	footerTop := "╭──────╮"
-	footerMid := fmt.Sprintf("┤ %3.f%% │", m.viewport.ScrollPercent()*100)
-	footerBot := "╰──────╯"
-	gapSize := max(0, m.viewport.Width-runewidth.StringWidth(footerMid))
-	footerTop = strings.Repeat(" ", gapSize) + footerTop
-	footerMid = strings.Repeat("─", gapSize) + footerMid
-	footerBot = strings.Repeat(" ", gapSize) + footerBot
-	return fmt.Sprintf("%s\n%s\n%s", footerTop, footerMid, footerBot)
+	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100))
+	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(info)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
 
 func max(a, b int) int {
@@ -138,4 +125,24 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func main() {
+	// Load some text for our viewport
+	content, err := ioutil.ReadFile("artichoke.md")
+	if err != nil {
+		fmt.Println("could not load file:", err)
+		os.Exit(1)
+	}
+
+	p := tea.NewProgram(
+		model{content: string(content)},
+		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
+		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
+	)
+
+	if err := p.Start(); err != nil {
+		fmt.Println("could not run program:", err)
+		os.Exit(1)
+	}
 }
