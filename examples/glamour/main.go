@@ -55,7 +55,7 @@ type example struct {
 }
 
 func newExample() (*example, error) {
-	vp := viewport.Model{Width: 78, Height: 20}
+	vp := viewport.NewModel(78, 20)
 
 	renderer, err := glamour.NewTermRenderer(glamour.WithStylePath("notty"))
 	if err != nil {
@@ -89,8 +89,8 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c", "esc":
 			return e, tea.Quit
 		default:
-			vp, cmd := e.viewport.Update(msg)
-			e.viewport = vp
+			newModel, cmd := e.viewport.Update(msg)
+			e.viewport = newModel.(viewport.Model)
 			return e, cmd
 		}
 	default:
