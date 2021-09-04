@@ -59,14 +59,16 @@ do any I/O, so for the command we'll just return `nil`, which translates to "no
 command."
 
 ```go
-var initialModel = model{
-    // Our to-do list is just a grocery list
-    choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+func main() {
+    initialModel := model{
+        // Our to-do list is just a grocery list
+        choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
-    // A map which indicates which choices are selected. We're using
-    // the  map like a mathematical set. The keys refer to the indexes
-    // of the `choices` slice, above.
-    selected: make(map[int]struct{}),
+        // A map which indicates which choices are selected. We're using
+        // the  map like a mathematical set. The keys refer to the indexes
+        // of the `choices` slice, above.
+        selected: make(map[int]struct{}),
+	}
 }
 
 func (m model) Init() tea.Cmd {
@@ -192,6 +194,11 @@ The last step is to simply run our program. We pass our initial model to
 
 ```go
 func main() {
+    initialModel := model{
+       choices:  []string{"Carrots", "Celery", "Kohlrabi"},
+       selected: make(map[int]struct{}),
+    }
+
     p := tea.NewProgram(initialModel)
     if err := p.Start(); err != nil {
         fmt.Printf("Alas, there's been an error: %v", err)
