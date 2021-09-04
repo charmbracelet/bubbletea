@@ -14,7 +14,7 @@ This tutorial assumes you have a working knowledge of Go.
 
 ## Enough! Let's get to it.
 
-For this tutorial we're making a to-do list.
+For this tutorial we're making a shopping list.
 
 To start we'll define our package and import some libraries. Our only external
 import will be the Bubble Tea library, which we'll call `tea` for short.
@@ -52,25 +52,29 @@ type model struct {
 
 ## Initialization
 
-Next we'll define our application’s initial state. We’ll store our initial
-model in a simple variable, and then define the `Init` method.  `Init` can
-return a `Cmd` that could perform some initial I/O. For now, we don't need to
-do any I/O, so for the command we'll just return `nil`, which translates to "no
-command."
+Next we’ll define our application’s initial state. In this case we’re defining
+a function to return our initial model, however we could just as easily define
+the initial model as a variable elsewhere, too.
 
 ```go
-func main() {
-    initialModel := model{
-        // Our to-do list is just a grocery list
-        choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+func initialModel() model {
+	return model{
+		// Our shopping list is a grocery list
+		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
-        // A map which indicates which choices are selected. We're using
-        // the  map like a mathematical set. The keys refer to the indexes
-        // of the `choices` slice, above.
-        selected: make(map[int]struct{}),
+		// A map which indicates which choices are selected. We're using
+		// the  map like a mathematical set. The keys refer to the indexes
+		// of the `choices` slice, above.
+		selected: make(map[int]struct{}),
 	}
 }
+```
 
+Next we define the `Init` method. `Init` can return a `Cmd` that could perform
+some initial I/O. For now, we don't need to do any I/O, so for the command
+we'll just return `nil`, which translates to "no command."
+
+```go
 func (m model) Init() tea.Cmd {
     // Just return `nil`, which means "no I/O right now, please."
     return nil
@@ -79,15 +83,15 @@ func (m model) Init() tea.Cmd {
 
 ## The Update Method
 
-Next we'll define the update method. The update function is called when
-"things happen." Its job is to look at what has happened and return an updated
-model in response to whatever happened. It can also return a `Cmd` and make
-more things happen, but for now don't worry about that part.
+Next up is the update method. The update function is called when ”things
+happen.” Its job is to look at what has happened and return an updated model in
+response. It can also return a `Cmd` to make more things happen, but for now
+don't worry about that part.
 
-In our case, when a user presses the down arrow, `update`'s job is to notice
+In our case, when a user presses the down arrow, `Update`’s job is to notice
 that the down arrow was pressed and move the cursor accordingly (or not).
 
-The "something happened" comes in the form of a `Msg`, which can be any type.
+The “something happened” comes in the form of a `Msg`, which can be any type.
 Messages are the result of some I/O that took place, such as a keypress, timer
 tick, or a response from a server.
 
@@ -141,18 +145,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 ```
 
-You may have noticed that "ctrl+c" and "q" above return a `tea.Quit` command
-with the model. That's a special command which instructs the Bubble Tea runtime
-to quit, exiting the program.
+You may have noticed that <kbd>ctrl+c</kbd> and <kbd>q</kbd> above return
+a `tea.Quit` command with the model. That’s a special command which instructs
+the Bubble Tea runtime to quit, exiting the program.
 
 ## The View Method
 
-At last, it's time to render our UI. Of all the methods, the view is the
+At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the  model in it's current state and use it to return
 a `string`.  That string is our UI!
 
-Because the view describes the entire UI of your application, you don't have
-to worry about redraw logic and stuff like that. Bubble Tea takes care of it
+Because the view describes the entire UI of your application, you don’t have to
+worry about redrawing logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
@@ -194,12 +198,7 @@ The last step is to simply run our program. We pass our initial model to
 
 ```go
 func main() {
-    initialModel := model{
-       choices:  []string{"Carrots", "Celery", "Kohlrabi"},
-       selected: make(map[int]struct{}),
-    }
-
-    p := tea.NewProgram(initialModel)
+    p := tea.NewProgram(initialModel())
     if err := p.Start(); err != nil {
         fmt.Printf("Alas, there's been an error: %v", err)
         os.Exit(1)
@@ -207,7 +206,7 @@ func main() {
 }
 ```
 
-## What's Next?
+## What’s Next?
 
 This tutorial covers the basics of building an interactive terminal UI, but
 in the real world you'll also need to perform I/O. To learn about that have a
@@ -220,22 +219,10 @@ there are [Go Docs][docs].
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
-### Bubble Tea in the Wild
+## Additional Resources
 
-For some Bubble Tea programs in production, see:
-
-* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
-* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
-
-### Libraries we use with Bubble Tea
-
-* [Bubbles][bubbles]: various Bubble Tea components
-* [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: ANSI-aware methods for formatting and generally working with text. Of particular note is `PrintableRuneWidth` in the `ansi` sub-package which measures the physical widths of strings. Many runes, such as East Asian characters, emojis, and various unicode symbols are two cells wide, so measuring a layout with `len()` often won't cut it. Reflow is particularly nice for this as it measures character widths while ignoring any ANSI sequences present.
-
-[termenv]: https://github.com/muesli/termenv
-[reflow]: https://github.com/muesli/reflow
-[bubbles]: https://github.com/charmbracelet/bubbles
+* [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
+* [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
 
 ### Feedback
 
@@ -243,3 +230,11 @@ We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.technology/@charm)
+
+***
+
+Part of [Charm](https://charm.sh).
+
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
+
+Charm热爱开源 • Charm loves open source

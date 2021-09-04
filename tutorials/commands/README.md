@@ -183,8 +183,18 @@ And that's that. There's one more thing you that is helpful to know about
 
 `Cmd`s are defined in Bubble Tea as `type Cmd func() Msg`. So they're just
 functions that don't take any arguments and return a `Msg`, which can be
-anything. If you need to pass arguments to a command, you just make a function
+any type. If you need to pass arguments to a command, you just make a function
 that returns a command. For example:
+
+```go
+func cmdWithArg(id int) tea.Cmd {
+    return func() tea.Msg {
+        return someMsg{id: int}
+    }
+}
+```
+
+A more real-world example looks like:
 
 ```go
 func checkSomeUrl(url string) tea.Cmd {
@@ -199,40 +209,22 @@ func checkSomeUrl(url string) tea.Cmd {
 }
 ```
 
-Just make sure you do as much stuff as you can in the innermost function,
-because that's the one that runs asynchronously.
+Anyway, just make sure you do as much stuff as you can in the innermost
+function, because that's the one that runs asynchronously.
 
-## Anyway, Now What?
+## Now What?
 
 After doing this tutorial and [the previous one][basics] you should be ready to
-build a Bubble Tea program of your own.  We also recommend that you look at the
+build a Bubble Tea program of your own. We also recommend that you look at the
 Bubble Tea [example programs][examples] as well as [Bubbles][bubbles],
 a component library for Bubble Tea.
 
 And, of course, check out the [Go Docs][docs].
 
-### Bubble Tea in the Wild
+## Additional Resources
 
-For some Bubble Tea programs in production, see:
-
-* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
-* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
-
-[examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
-[bubbles]: https://github.com/charmbracelet/bubbles
-
-### Libraries we use with Bubble Tea
-
-* [Bubbles][bubbles] various Bubble Tea components we've built
-* [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: ANSI-aware methods for reflowing blocks of text
-* [go-runewidth][runewidth]: Get the physical width of strings in terms of terminal cells. Many runes, such as East Asian charcters and emojis, are two cells wide, so measuring a layout with `len()` often won't cut it!
-
-[termenv]: https://github.com/muesli/termenv
-[reflow]: https://github.com/muesli/reflow
-[bubbles]: https://github.com/charmbracelet/bubbles
-[runewidth]: https://github.com/mattn/go-runewidth
+* [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
+* [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
 
 ### Feedback
 
@@ -240,3 +232,11 @@ We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.technology/@charm)
+
+***
+
+Part of [Charm](https://charm.sh).
+
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
+
+Charm热爱开源 • Charm loves open source
