@@ -13,11 +13,6 @@ type model struct {
 	selected map[int]struct{}
 }
 
-var initialModel = model{
-	choices:  []string{"Carrots", "Celery", "Kohlrabi"},
-	selected: make(map[int]struct{}),
-}
-
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -72,6 +67,11 @@ func (m model) View() string {
 }
 
 func main() {
+	initialModel := model{
+		choices:  []string{"Carrots", "Celery", "Kohlrabi"},
+		selected: make(map[int]struct{}),
+	}
+
 	p := tea.NewProgram(initialModel)
 	if err := p.Start(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
