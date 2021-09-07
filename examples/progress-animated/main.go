@@ -70,8 +70,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// FrameMsg is sent when the progress bar wants to animate itself
 	case progress.FrameMsg:
-		var cmd tea.Cmd
-		m.progress, cmd = m.progress.Update(msg)
+		progressModel, cmd := m.progress.Update(msg)
+		m.progress = progressModel.(progress.Model)
 		return m, cmd
 
 	default:
@@ -87,7 +87,7 @@ func (e model) View() string {
 }
 
 func tickCmd() tea.Cmd {
-	return tea.Tick(time.Second*2, func(t time.Time) tea.Msg {
+	return tea.Tick(time.Second*1, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }
