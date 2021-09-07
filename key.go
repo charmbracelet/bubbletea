@@ -99,7 +99,7 @@ func (k KeyType) String() (str string) {
 	return ""
 }
 
-// Control keys. I know we could do this with an iota, but the values are very
+// Control keys. We could do this with an iota, but the values are very
 // specific, so we set the values explicitly to avoid any confusion.
 //
 // See also:

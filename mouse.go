@@ -2,6 +2,9 @@ package tea
 
 import "errors"
 
+// MouseMsg contains information about a mouse event and are sent to a programs
+// update function when mouse activity occurs. Note that the mouse must first
+// be enabled via in order the mouse events to be received.
 type MouseMsg MouseEvent
 
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel
@@ -29,6 +32,7 @@ func (m MouseEvent) String() (s string) {
 // MouseEventType indicates the type of mouse event occurring.
 type MouseEventType int
 
+// Mouse event types.
 const (
 	MouseUnknown MouseEventType = iota
 	MouseLeft
