@@ -340,8 +340,7 @@ func (p *Program) Start() error {
 
 	// Initialize program
 	model := p.initialModel
-	initCmd := model.Init()
-	if initCmd != nil {
+	if initCmd := model.Init(); initCmd != nil {
 		go func() {
 			cmds <- initCmd
 		}()
