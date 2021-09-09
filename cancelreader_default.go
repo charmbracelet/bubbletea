@@ -1,3 +1,4 @@
+//go:build !darwin && !windows && !linux && !solaris && !freebsd && !netbsd && !openbsd
 // +build !darwin,!windows,!linux,!solaris,!freebsd,!netbsd,!openbsd
 
 package tea

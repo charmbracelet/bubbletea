@@ -1,3 +1,4 @@
+//go:build solaris || darwin
 // +build solaris darwin
 
 // nolint:revive
