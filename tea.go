@@ -247,8 +247,8 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	return p
 }
 
-// Start initializes the program.
-func (p *Program) Start() error {
+// StartM initializes the program. Returns the final model.
+func (p *Program) StartM() (Model, error) {
 	p.msgs = make(chan Msg)
 	p.done = make(chan struct{})
 
@@ -265,7 +265,7 @@ func (p *Program) Start() error {
 		// Open a new TTY, by request
 		f, err := openInputTTY()
 		if err != nil {
-			return err
+			return p.initialModel, err
 		}
 		p.input = f
 
@@ -285,7 +285,7 @@ func (p *Program) Start() error {
 
 		f, err := openInputTTY()
 		if err != nil {
-			return err
+			return p.initialModel, err
 		}
 		p.input = f
 	}
@@ -320,7 +320,7 @@ func (p *Program) Start() error {
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
-		return err
+		return p.initialModel, err
 	}
 
 	// If no renderer is set use the standard one.
@@ -405,14 +405,14 @@ func (p *Program) Start() error {
 		select {
 		case err := <-errs:
 			p.shutdown(false)
-			return err
+			return model, err
 		case msg := <-p.msgs:
 
 			// Handle special internal messages
 			switch msg := msg.(type) {
 			case quitMsg:
 				p.shutdown(false)
-				return nil
+				return model, nil
 
 			case batchMsg:
 				for _, cmd := range msg {
@@ -454,6 +454,12 @@ func (p *Program) Start() error {
 			p.renderer.write(model.View()) // send view to renderer
 		}
 	}
+}
+
+// Start initializes the program. Ignores the final model.
+func (p *Program) Start() error {
+	_, err := p.StartM()
+	return err
 }
 
 // Send sends a message to the main update function, effectively allowing
