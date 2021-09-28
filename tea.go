@@ -11,6 +11,7 @@ package tea
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"runtime/debug"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
@@ -78,8 +80,7 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
-	mtx  *sync.Mutex
-	done chan struct{}
+	mtx *sync.Mutex
 
 	msgs chan Msg
 
@@ -250,15 +251,39 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 // Start initializes the program.
 func (p *Program) Start() error {
 	p.msgs = make(chan Msg)
-	p.done = make(chan struct{})
 
 	var (
 		cmds = make(chan Cmd)
 		errs = make(chan error)
 	)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// channels for managing goroutine lifecycles
+	var (
+		readLoopDone   = make(chan struct{})
+		sigintLoopDone = make(chan struct{})
+		cmdLoopDone    = make(chan struct{})
+		resizeLoopDone = make(chan struct{})
+		initSignalDone = make(chan struct{})
+
+		waitForGoroutines = func(withReadLoop bool) {
+			if withReadLoop {
+				select {
+				case <-readLoopDone:
+				case <-time.After(500 * time.Millisecond):
+					// the read loop hangs, which means the input cancelReader's
+					// cancel function has returned true even though it was not
+					// able to cancel the read
+				}
+			}
+			<-cmdLoopDone
+			<-resizeLoopDone
+			<-sigintLoopDone
+			<-initSignalDone
+		}
+	)
+
+	ctx, cancelContext := context.WithCancel(context.Background())
+	defer cancelContext()
 
 	switch {
 	case p.startupOptions.has(withInputTTY):
@@ -267,6 +292,9 @@ func (p *Program) Start() error {
 		if err != nil {
 			return err
 		}
+
+		defer f.Close() // nolint:errcheck
+
 		p.input = f
 
 	case !p.startupOptions.has(withCustomInput):
@@ -287,6 +315,9 @@ func (p *Program) Start() error {
 		if err != nil {
 			return err
 		}
+
+		defer f.Close() // nolint:errcheck
+
 		p.input = f
 	}
 
@@ -297,7 +328,10 @@ func (p *Program) Start() error {
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT)
-		defer signal.Stop(sig)
+		defer func() {
+			signal.Stop(sig)
+			close(sigintLoopDone)
+		}()
 
 		select {
 		case <-ctx.Done():
@@ -342,8 +376,14 @@ func (p *Program) Start() error {
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
 		go func() {
-			cmds <- initCmd
+			defer close(initSignalDone)
+			select {
+			case cmds <- initCmd:
+			case <-ctx.Done():
+			}
 		}()
+	} else {
+		close(initSignalDone)
 	}
 
 	// Start renderer
@@ -353,21 +393,37 @@ func (p *Program) Start() error {
 	// Render initial view
 	p.renderer.write(model.View())
 
+	cancelReader, err := newCancelReader(p.input)
+	if err != nil {
+		return err
+	}
+
+	defer cancelReader.Close() // nolint:errcheck
+
 	// Subscribe to user input
 	if p.input != nil {
 		go func() {
+			defer close(readLoopDone)
+
 			for {
-				msg, err := readInput(p.input)
-				if err != nil {
-					// If we get EOF just stop listening for input
-					if err == io.EOF {
-						break
-					}
-					errs <- err
+				if ctx.Err() != nil {
+					return
 				}
+
+				msg, err := readInput(cancelReader)
+				if err != nil {
+					if !errors.Is(err, io.EOF) && !errors.Is(err, errCanceled) {
+						errs <- err
+					}
+
+					return
+				}
+
 				p.msgs <- msg
 			}
 		}()
+	} else {
+		defer close(readLoopDone)
 	}
 
 	if f, ok := p.output.(*os.File); ok {
@@ -377,25 +433,44 @@ func (p *Program) Start() error {
 			if err != nil {
 				errs <- err
 			}
-			p.msgs <- WindowSizeMsg{w, h}
+
+			select {
+			case <-ctx.Done():
+			case p.msgs <- WindowSizeMsg{w, h}:
+			}
 		}()
 
 		// Listen for window resizes
-		go listenForResize(f, p.msgs, errs)
+		go listenForResize(ctx, f, p.msgs, errs, resizeLoopDone)
+	} else {
+		close(resizeLoopDone)
 	}
 
 	// Process commands
 	go func() {
+		defer close(cmdLoopDone)
+
 		for {
 			select {
-			case <-p.done:
+			case <-ctx.Done():
+
 				return
 			case cmd := <-cmds:
-				if cmd != nil {
-					go func() {
-						p.msgs <- cmd()
-					}()
+				if cmd == nil {
+					continue
 				}
+
+				// Don't wait on these goroutines, otherwise the shutdown
+				// latency would get too large as a Cmd can run for some time
+				// (e.g. tick commands that sleep for half a second). It's not
+				// possible to cancel them so we'll have to leak the goroutine
+				// until Cmd returns.
+				go func() {
+					select {
+					case p.msgs <- cmd():
+					case <-ctx.Done():
+					}
+				}()
 			}
 		}
 	}()
@@ -404,13 +479,18 @@ func (p *Program) Start() error {
 	for {
 		select {
 		case err := <-errs:
+			cancelContext()
+			waitForGoroutines(cancelReader.Cancel())
 			p.shutdown(false)
+
 			return err
 		case msg := <-p.msgs:
 
 			// Handle special internal messages
 			switch msg := msg.(type) {
 			case quitMsg:
+				cancelContext()
+				waitForGoroutines(cancelReader.Cancel())
 				p.shutdown(false)
 				return nil
 
@@ -479,7 +559,6 @@ func (p *Program) shutdown(kill bool) {
 	} else {
 		p.renderer.stop()
 	}
-	close(p.done)
 	p.ExitAltScreen()
 	p.DisableMouseCellMotion()
 	p.DisableMouseAllMotion()
