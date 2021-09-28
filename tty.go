@@ -27,9 +27,5 @@ func (p Program) restoreTerminal() error {
 		}
 	}
 
-	if err := p.restoreInput(); err != nil {
-		return err
-	}
-
-	return nil
+	return p.restoreInput()
 }
