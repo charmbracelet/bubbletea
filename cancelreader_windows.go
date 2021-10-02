@@ -206,7 +206,13 @@ func prepareConsole(input windows.Handle) (reset func() error, err error) {
 	newMode |= windows.ENABLE_INSERT_MODE
 	newMode |= windows.ENABLE_QUICK_EDIT_MODE
 
-	newMode &^= windows.ENABLE_VIRTUAL_TERMINAL_INPUT
+	// Enabling virutal terminal input is necessary for processing certain
+	// types of input like X10 mouse events and arrows keys with the current
+	// bytes-based input reader. It does, however, prevent cancelReader from
+	// being able to cancel input. The planned solution for this is to read
+	// Windows events in a more native fashion, rather than the current simple
+	// bytes-based input reader which works well on unix systems.
+	newMode |= windows.ENABLE_VIRTUAL_TERMINAL_INPUT
 
 	err = windows.SetConsoleMode(input, newMode)
 	if err != nil {
