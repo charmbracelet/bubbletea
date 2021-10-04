@@ -552,6 +552,20 @@ func (p *Program) Send(msg Msg) {
 	}
 }
 
+// Quit is a convenience function for quitting Bubble Tea programs. Use it
+// when you need to shut down a Bubble Tea program from the outside.
+//
+// If you wish to quit from within a Bubble Tea program use the Quit command.
+//
+// If the program is not running this will be a no-op, so it's safe to call
+// if the program is unstarted or has already exited.
+//
+// This method is currently provisional. The method signature may alter
+// slightly, or it may be removed in a future version of this package.
+func (p *Program) Quit() {
+	p.Send(Quit())
+}
+
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
