@@ -14,21 +14,23 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// newkqueueCancelReader returns a reader and a cancel function. If the input reader
-// is an *os.File, the cancel function can be used to interrupt a blocking call
-// read call. In this case, the cancel function returns true if the call was
-// cancelled successfully. If the input reader is not a *os.File, the cancel
-// function does nothing and always returns false. The BSD and macOS
-// implementation is based on the kqueue mechanism.
-func newCancelReader(reader io.Reader) (cancelReader, error) {
+// newInputReader returns a cancelable reader. If the input reader is an
+// *os.File, the cancel method can be used to interrupt a blocking call read
+// call. In this case, the cancel method returns true if the call was cancelled
+// successfully. If the input reader is not a *os.File, the cancel function does
+// nothing and always returns false. The BSD and macOS implementation is based
+// on the kqueue mechanism, but if falls back to using the POSIX select syscall
+// when the input reader is /dev/tty which is not supported by kqueue (in this
+// case, only file descriptors < 1024 are supported).
+func newInputReader(reader io.Reader) (inputReader, error) {
 	file, ok := reader.(*os.File)
 	if !ok {
-		return newFallbackCancelReader(reader)
+		return newFallbackInputReader(reader)
 	}
 
 	// kqueue returns instantly when polling /dev/tty so fallback to select
 	if file.Name() == "/dev/tty" {
-		return newSelectCancelReader(reader)
+		return newSelectInputReader(reader)
 	}
 
 	kQueue, err := unix.Kqueue()
@@ -36,7 +38,7 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 		return nil, fmt.Errorf("create kqueue: %w", err)
 	}
 
-	r := &kqueueCancelReader{
+	r := &kqueueInputReader{
 		file:   file,
 		kQueue: kQueue,
 	}
@@ -52,7 +54,7 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 	return r, nil
 }
 
-type kqueueCancelReader struct {
+type kqueueInputReader struct {
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
@@ -61,9 +63,9 @@ type kqueueCancelReader struct {
 	kQueueEvents [2]unix.Kevent_t
 }
 
-func (r *kqueueCancelReader) Read(data []byte) (int, error) {
+func (r *kqueueInputReader) ReadInput() ([]Msg, error) {
 	if r.isCancelled() {
-		return 0, errCanceled
+		return nil, errCanceled
 	}
 
 	err := r.wait()
@@ -73,17 +75,22 @@ func (r *kqueueCancelReader) Read(data []byte) (int, error) {
 			var b [1]byte
 			_, errRead := r.cancelSignalReader.Read(b[:])
 			if errRead != nil {
-				return 0, fmt.Errorf("reading cancel signal: %w", errRead)
+				return nil, fmt.Errorf("reading cancel signal: %w", errRead)
 			}
 		}
 
-		return 0, err
+		return nil, err
 	}
 
-	return r.file.Read(data)
+	msg, err := parseInputMsgFromReader(r.file)
+	if err != nil {
+		return nil, err
+	}
+
+	return []Msg{msg}, nil
 }
 
-func (r *kqueueCancelReader) Cancel() bool {
+func (r *kqueueInputReader) Cancel() bool {
 	r.setCancelled()
 
 	// send cancel signal
@@ -91,7 +98,7 @@ func (r *kqueueCancelReader) Cancel() bool {
 	return err == nil
 }
 
-func (r *kqueueCancelReader) Close() error {
+func (r *kqueueInputReader) Close() error {
 	var errMsgs []string
 
 	// close kqueue
@@ -118,7 +125,7 @@ func (r *kqueueCancelReader) Close() error {
 	return nil
 }
 
-func (r *kqueueCancelReader) wait() error {
+func (r *kqueueInputReader) wait() error {
 	events := make([]unix.Kevent_t, 1)
 
 	for {

@@ -1,6 +1,10 @@
 package tea
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/erikgeiser/coninput"
+)
 
 // MouseMsg contains information about a mouse event and are sent to a programs
 // update function when mouse activity occurs. Note that the mouse must first
@@ -10,11 +14,12 @@ type MouseMsg MouseEvent
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel
 // movement, a cursor movement, or a combination.
 type MouseEvent struct {
-	X    int
-	Y    int
-	Type MouseEventType
-	Alt  bool
-	Ctrl bool
+	X                   int
+	Y                   int
+	Type                MouseEventType
+	Alt                 bool
+	Ctrl                bool
+	WinMouseEventRecord *coninput.MouseEventRecord
 }
 
 // String returns a string representation of a mouse event.

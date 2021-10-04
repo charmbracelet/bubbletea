@@ -17,6 +17,13 @@ func main() {
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
 	}
+
+	p = tea.NewProgram(initialModel())
+
+	if err := p.Start(); err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 type tickMsg struct{}

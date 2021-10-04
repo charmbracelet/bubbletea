@@ -14,16 +14,16 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// newCancelReader returns a reader and a cancel function. If the input reader
-// is an *os.File, the cancel function can be used to interrupt a blocking call
-// read call. In this case, the cancel function returns true if the call was
-// cancelled successfully. If the input reader is not a *os.File, the cancel
-// function does nothing and always returns false. The linux implementation is
-// based on the epoll mechanism.
-func newCancelReader(reader io.Reader) (cancelReader, error) {
+// newInputReader returns a cancelable input reader. If the passed reader is an
+// *os.File, the cancel method can be used to interrupt a blocking call read
+// call. In this case, the cancel method returns true if the call was cancelled
+// successfully. If the input reader is not a *os.File, the cancel function does
+// nothing and always returns false. The Linux implementation is based on the
+// epoll mechanism.
+func newInputReader(reader io.Reader) (inputReader, error) {
 	file, ok := reader.(*os.File)
 	if !ok {
-		return newFallbackCancelReader(reader)
+		return newFallbackInputReader(reader)
 	}
 
 	epoll, err := unix.EpollCreate1(0)
@@ -31,7 +31,7 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 		return nil, fmt.Errorf("create epoll: %w", err)
 	}
 
-	r := &epollCancelReader{
+	r := &epollInputReader{
 		file:  file,
 		epoll: epoll,
 	}
@@ -60,7 +60,7 @@ func newCancelReader(reader io.Reader) (cancelReader, error) {
 	return r, nil
 }
 
-type epollCancelReader struct {
+type epollInputReader struct {
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
@@ -68,9 +68,9 @@ type epollCancelReader struct {
 	epoll int
 }
 
-func (r *epollCancelReader) Read(data []byte) (int, error) {
+func (r *epollInputReader) ReadInput() ([]Msg, error) {
 	if r.isCancelled() {
-		return 0, errCanceled
+		return nil, errCanceled
 	}
 
 	err := r.wait()
@@ -80,17 +80,22 @@ func (r *epollCancelReader) Read(data []byte) (int, error) {
 			var b [1]byte
 			_, readErr := r.cancelSignalReader.Read(b[:])
 			if readErr != nil {
-				return 0, fmt.Errorf("reading cancel signal: %w", readErr)
+				return nil, fmt.Errorf("reading cancel signal: %w", readErr)
 			}
 		}
 
-		return 0, err
+		return nil, err
 	}
 
-	return r.file.Read(data)
+	msg, err := parseInputMsgFromReader(r.file)
+	if err != nil {
+		return nil, err
+	}
+
+	return []Msg{msg}, nil
 }
 
-func (r *epollCancelReader) Cancel() bool {
+func (r *epollInputReader) Cancel() bool {
 	r.setCancelled()
 
 	// send cancel signal
@@ -98,7 +103,7 @@ func (r *epollCancelReader) Cancel() bool {
 	return err == nil
 }
 
-func (r *epollCancelReader) Close() error {
+func (r *epollInputReader) Close() error {
 	var errMsgs []string
 
 	// close kqueue
@@ -125,7 +130,7 @@ func (r *epollCancelReader) Close() error {
 	return nil
 }
 
-func (r *epollCancelReader) wait() error {
+func (r *epollInputReader) wait() error {
 	events := make([]unix.EpollEvent, 1)
 
 	for {

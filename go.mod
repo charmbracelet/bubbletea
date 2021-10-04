@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/containerd/console v1.0.2
+	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f
 	github.com/mattn/go-isatty v0.0.13
 	github.com/muesli/ansi v0.0.0-20211018074035-2e021307bc4b
 	github.com/muesli/reflow v0.3.0

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"unicode/utf8"
+
+	"github.com/erikgeiser/coninput"
 )
 
 // KeyMsg contains information about a keypress. KeyMsgs are always sent to
@@ -50,9 +52,10 @@ func (k KeyMsg) String() (str string) {
 
 // Key contains information about a keypress.
 type Key struct {
-	Type  KeyType
-	Runes []rune
-	Alt   bool
+	Type              KeyType
+	Runes             []rune
+	Alt               bool
+	WinKeyEventRecord *coninput.KeyEventRecord
 }
 
 // String returns a friendly string representation for a key. It's safe (and
@@ -292,41 +295,44 @@ var hexes = map[string]Key{
 	"1b4f44": {Type: KeyLeft, Alt: false},
 }
 
-// readInput reads keypress and mouse input from a TTY and returns a message
-// containing information about the key or mouse event accordingly.
-func readInput(input io.Reader) (Msg, error) {
+// parseInputMsgsFromReader reads keypress and mouse input from a TTY and
+// returns a message containing information about the key or mouse event
+// accordingly.
+func parseInputMsgFromReader(reader io.Reader) (Msg, error) {
 	var buf [256]byte
 
 	// Read and block
-	numBytes, err := input.Read(buf[:])
+	numBytes, err := reader.Read(buf[:])
 	if err != nil {
 		return nil, err
 	}
 
+	inputBuffer := buf[:numBytes]
+
 	// See if it's a mouse event. For now we're parsing X10-type mouse events
 	// only.
-	mouseEvent, err := parseX10MouseEvent(buf[:numBytes])
+	mouseEvent, err := parseX10MouseEvent(inputBuffer)
 	if err == nil {
 		return MouseMsg(mouseEvent), nil
 	}
 
 	// Is it a special sequence, like an arrow key?
-	if k, ok := sequences[string(buf[:numBytes])]; ok {
+	if k, ok := sequences[string(inputBuffer)]; ok {
 		return KeyMsg(Key{Type: k}), nil
 	}
 
 	// Some of these need special handling
-	hex := fmt.Sprintf("%x", buf[:numBytes])
+	hex := fmt.Sprintf("%x", inputBuffer)
 	if k, ok := hexes[hex]; ok {
 		return KeyMsg(k), nil
 	}
 
 	// Is the alt key pressed? The buffer will be prefixed with an escape
 	// sequence if so.
-	if numBytes > 1 && buf[0] == 0x1b {
+	if len(inputBuffer) > 1 && inputBuffer[0] == 0x1b {
 		// Now remove the initial escape sequence and re-process to get the
 		// character being pressed in combination with alt.
-		c, _ := utf8.DecodeRune(buf[1:])
+		c, _ := utf8.DecodeRune(inputBuffer[1:])
 		if c == utf8.RuneError {
 			return nil, errors.New("could not decode rune after removing initial escape")
 		}
@@ -334,7 +340,7 @@ func readInput(input io.Reader) (Msg, error) {
 	}
 
 	var runes []rune
-	b := buf[:numBytes]
+	b := inputBuffer
 
 	// Translate input into runes. In most cases we'll receive exactly one
 	// rune, but there are cases, particularly when an input method editor is
@@ -358,7 +364,7 @@ func readInput(input io.Reader) (Msg, error) {
 
 	// Is the first rune a control character?
 	r := KeyType(runes[0])
-	if numBytes == 1 && r <= keyUS || r == keyDEL {
+	if len(inputBuffer) == 1 && r <= keyUS || r == keyDEL {
 		return KeyMsg(Key{Type: r}), nil
 	}
 

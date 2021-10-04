@@ -14,19 +14,18 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// newSelectCancelReader returns a reader and a cancel function. If the input
-// reader is an *os.File, the cancel function can be used to interrupt a
-// blocking call read call. In this case, the cancel function returns true if
-// the call was cancelled successfully. If the input reader is not a *os.File or
-// the file descriptor is 1024 or larger, the cancel function does nothing and
-// always returns false. The generic unix implementation is based on the posix
-// select syscall.
-func newSelectCancelReader(reader io.Reader) (cancelReader, error) {
+// newSelectInputReader returns a cancelable reader. If the passed reader is an
+// *os.File, the cancel method can be used to interrupt a blocking call read
+// call. In this case, the cancel method returns true if the call was cancelled
+// successfully. If the input reader is not a *os.File or the file descriptor is
+// 1024 or larger, the cancel method does nothing and always returns false. The
+// generic Unix implementation is based on the POSIX select syscall.
+func newSelectInputReader(reader io.Reader) (inputReader, error) {
 	file, ok := reader.(*os.File)
 	if !ok || file.Fd() >= unix.FD_SETSIZE {
-		return newFallbackCancelReader(reader)
+		return newFallbackInputReader(reader)
 	}
-	r := &selectCancelReader{file: file}
+	r := &selectInputReader{file: file}
 
 	var err error
 
@@ -38,16 +37,16 @@ func newSelectCancelReader(reader io.Reader) (cancelReader, error) {
 	return r, nil
 }
 
-type selectCancelReader struct {
+type selectInputReader struct {
 	file               *os.File
 	cancelSignalReader *os.File
 	cancelSignalWriter *os.File
 	cancelMixin
 }
 
-func (r *selectCancelReader) Read(data []byte) (int, error) {
+func (r *selectInputReader) ReadInput() ([]Msg, error) {
 	if r.isCancelled() {
-		return 0, errCanceled
+		return nil, errCanceled
 	}
 
 	for {
@@ -62,18 +61,23 @@ func (r *selectCancelReader) Read(data []byte) (int, error) {
 				var b [1]byte
 				_, readErr := r.cancelSignalReader.Read(b[:])
 				if readErr != nil {
-					return 0, fmt.Errorf("reading cancel signal: %w", readErr)
+					return nil, fmt.Errorf("reading cancel signal: %w", readErr)
 				}
 			}
 
-			return 0, err
+			return nil, err
 		}
 
-		return r.file.Read(data)
+		msg, err := parseInputMsgFromReader(r.file)
+		if err != nil {
+			return nil, err
+		}
+
+		return []Msg{msg}, nil
 	}
 }
 
-func (r *selectCancelReader) Cancel() bool {
+func (r *selectInputReader) Cancel() bool {
 	r.setCancelled()
 
 	// send cancel signal
@@ -81,7 +85,7 @@ func (r *selectCancelReader) Cancel() bool {
 	return err == nil
 }
 
-func (r *selectCancelReader) Close() error {
+func (r *selectInputReader) Close() error {
 	var errMsgs []string
 
 	// close pipe

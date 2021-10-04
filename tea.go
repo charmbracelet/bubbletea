@@ -27,11 +27,11 @@ import (
 	"golang.org/x/term"
 )
 
-// Msg contain data from the result of a IO operation. Msgs trigger the update
-// function and, henceforth, the UI.
+// Msg represents an action and is usually the result of an IO operation. It
+// triggers the Update function, and henceforth, the UI.
 type Msg interface{}
 
-// Model contains the program's state as well as its core functions.
+// Model contains the program's state as well as it's core functions.
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
@@ -46,13 +46,12 @@ type Model interface {
 	View() string
 }
 
-// Cmd is an IO operation that returns a message when it's complete. If it's
-// nil it's considered a no-op. Use it for things like HTTP requests, timers,
-// saving and loading from disk, and so on.
+// Cmd is an IO operation. If it's nil it's considered a no-op. Use it for
+// things like HTTP requests, timers, saving and loading from disk, and so on.
 //
-// Note that there's almost never a reason to use a command to send a message
-// to another part of your program. That can almost always be done in the
-// update function.
+// There's almost never a need to use a command to send a message to another
+// part of your program. Instead, it can almost always be done in the update
+// function.
 type Cmd func() Msg
 
 // Options to customize the program during its initialization. These are
@@ -141,7 +140,7 @@ func Quit() Msg {
 type quitMsg struct{}
 
 // EnterAltScreen is a special command that tells the Bubble Tea program to
-// enter the alternate screen buffer.
+// enter alternate screen buffer.
 //
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. To initialize your program with the altscreen enabled
@@ -242,7 +241,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		CatchPanics:  true,
 	}
 
-	// Apply all options to the program.
+	// Apply all options to program
 	for _, opt := range opts {
 		opt(p)
 	}
@@ -259,7 +258,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		errs = make(chan error)
 	)
 
-	// Channels for managing goroutine lifecycles.
+	// channels for managing goroutine lifecycles
 	var (
 		readLoopDone   = make(chan struct{})
 		sigintLoopDone = make(chan struct{})
@@ -272,9 +271,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 				select {
 				case <-readLoopDone:
 				case <-time.After(500 * time.Millisecond):
-					// The read loop hangs, which means the input
-					// cancelReader's cancel function has returned true even
-					// though it was not able to cancel the read.
+					// the read loop hangs, which means the input inputReader's
+					// cancel function has returned true even though it was not
+					// able to cancel the read
 				}
 			}
 			<-cmdLoopDone
@@ -285,7 +284,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 	)
 
 	ctx, cancelContext := context.WithCancel(context.Background())
-	defer cancelContext()
+	defer func() {
+		cancelContext()
+	}()
 
 	switch {
 	case p.startupOptions.has(withInputTTY):
@@ -374,7 +375,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		p.EnableMouseAllMotion()
 	}
 
-	// Initialize the program.
+	// Initialize program
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
 		go func() {
@@ -388,21 +389,21 @@ func (p *Program) StartReturningModel() (Model, error) {
 		close(initSignalDone)
 	}
 
-	// Start the renderer.
+	// Start renderer
 	p.renderer.start()
 	p.renderer.setAltScreen(p.altScreenActive)
 
-	// Render the initial view.
+	// Render initial view
 	p.renderer.write(model.View())
 
-	cancelReader, err := newCancelReader(p.input)
+	inputReader, err := newInputReader(p.input)
 	if err != nil {
 		return model, err
 	}
 
-	defer cancelReader.Close() // nolint:errcheck
+	defer inputReader.Close() // nolint:errcheck
 
-	// Subscribe to user input.
+	// Subscribe to user input
 	if p.input != nil {
 		go func() {
 			defer close(readLoopDone)
@@ -412,7 +413,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 					return
 				}
 
-				msg, err := readInput(cancelReader)
+				msgs, err := inputReader.ReadInput()
 				if err != nil {
 					if !errors.Is(err, io.EOF) && !errors.Is(err, errCanceled) {
 						errs <- err
@@ -421,7 +422,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 					return
 				}
 
-				p.msgs <- msg
+				for _, msg := range msgs {
+					p.msgs <- msg
+				}
 			}
 		}()
 	} else {
@@ -429,7 +432,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}
 
 	if f, ok := p.output.(*os.File); ok {
-		// Get the initial terminal size and send it to the program.
+		// Get initial terminal size and send it to the program
 		go func() {
 			w, h, err := term.GetSize(int(f.Fd()))
 			if err != nil {
@@ -442,13 +445,13 @@ func (p *Program) StartReturningModel() (Model, error) {
 			}
 		}()
 
-		// Listen for window resizes.
+		// Listen for window resizes
 		go listenForResize(ctx, f, p.msgs, errs, resizeLoopDone)
 	} else {
 		close(resizeLoopDone)
 	}
 
-	// Process commands.
+	// Process commands
 	go func() {
 		defer close(cmdLoopDone)
 
@@ -477,22 +480,22 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}
 	}()
 
-	// Handle updates and draw.
+	// Handle updates and draw
 	for {
 		select {
 		case err := <-errs:
 			cancelContext()
-			waitForGoroutines(cancelReader.Cancel())
+			waitForGoroutines(inputReader.Cancel())
 			p.shutdown(false)
 			return model, err
 
 		case msg := <-p.msgs:
 
-			// Handle special internal messages.
+			// Handle special internal messages
 			switch msg := msg.(type) {
 			case quitMsg:
 				cancelContext()
-				waitForGoroutines(cancelReader.Cancel())
+				waitForGoroutines(inputReader.Cancel())
 				p.shutdown(false)
 				return model, nil
 
@@ -525,7 +528,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 				hideCursor(p.output)
 			}
 
-			// Process internal messages for the renderer.
+			// Process internal messages for the renderer
 			if r, ok := p.renderer.(*standardRenderer); ok {
 				r.handleMessages(msg)
 			}
