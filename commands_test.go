@@ -3,7 +3,28 @@ package tea
 import (
 	"fmt"
 	"testing"
+	"time"
 )
+
+func TestEvery(t *testing.T) {
+	expected := "every ms"
+	msg := Every(time.Millisecond, func(t time.Time) Msg {
+		return expected
+	})()
+	if expected != msg {
+		t.Fatalf("expected a msg %v but got %v", expected, msg)
+	}
+}
+
+func TestTick(t *testing.T) {
+	expected := "tick"
+	msg := Tick(time.Millisecond, func(t time.Time) Msg {
+		return expected
+	})()
+	if expected != msg {
+		t.Fatalf("expected a msg %v but got %v", expected, msg)
+	}
+}
 
 func TestSequentially(t *testing.T) {
 	var expectedErrMsg = fmt.Errorf("some err")
