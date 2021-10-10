@@ -17,3 +17,4 @@ examples/views/views
 tutorials/basics/basics
 tutorials/commands/commands
 .idea
+coverage.txt
