@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/muesli/ansi/compressor"
 	"github.com/muesli/reflow/truncate"
 )
 
@@ -22,7 +23,7 @@ const (
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
 type standardRenderer struct {
-	out           io.Writer
+	out           io.WriteCloser
 	buf           bytes.Buffer
 	framerate     time.Duration
 	ticker        *time.Ticker
@@ -46,7 +47,7 @@ type standardRenderer struct {
 // with os.Stdout as the first argument.
 func newRenderer(out io.Writer, mtx *sync.Mutex) renderer {
 	return &standardRenderer{
-		out:       out,
+		out:       &compressor.Writer{Forward: out},
 		mtx:       mtx,
 		framerate: defaultFramerate,
 	}
@@ -66,6 +67,7 @@ func (r *standardRenderer) stop() {
 	r.flush()
 	clearLine(r.out)
 	close(r.done)
+	r.out.Close()
 }
 
 // kill halts the renderer. The final frame will not be rendered.
