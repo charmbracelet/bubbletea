@@ -71,6 +71,7 @@ const (
 	withMouseAllMotion
 	withInputTTY
 	withCustomInput
+	withANSICompressor
 )
 
 // Program is a terminal user interface.
@@ -360,7 +361,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.mtx)
+		p.renderer = newRenderer(p.output, p.mtx, p.startupOptions.has(withANSICompressor))
 	}
 
 	// Honor program startup options.
