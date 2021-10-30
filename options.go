@@ -119,3 +119,14 @@ func WithoutRenderer() ProgramOption {
 		m.renderer = &nilRenderer{}
 	}
 }
+
+// WithANSICompressor removes redundant ANSI sequences to produce potentially
+// smaller output, at the cost of some processing overhead.
+//
+// This feature is provisional, and may be changed removed in a future version
+// of this package.
+func WithANSICompressor() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withANSICompressor
+	}
+}
