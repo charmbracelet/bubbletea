@@ -23,7 +23,7 @@ var (
 
 type item string
 
-func (i item) FilterValue() string { return string(i) }
+func (i item) FilterValue() string { return "" }
 
 type itemDelegate struct{}
 
@@ -77,21 +77,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.choice = string(i)
 			}
 			return m, tea.Quit
-
-		default:
-			if !m.list.SettingFilter() && (keypress == "q" || keypress == "esc") {
-				m.quitting = true
-				return m, tea.Quit
-			}
-
-			var cmd tea.Cmd
-			m.list, cmd = m.list.Update(msg)
-			return m, cmd
 		}
-
-	default:
-		return m, nil
 	}
+
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
 }
 
 func (m model) View() string {
