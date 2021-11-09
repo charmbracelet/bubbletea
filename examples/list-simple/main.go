@@ -90,7 +90,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	default:
-		return m, nil
+		var cmd tea.Cmd
+		m.list, cmd = m.list.Update(msg)
+		return m, cmd
 	}
 }
 
@@ -123,7 +125,7 @@ func main() {
 	l := list.NewModel(items, itemDelegate{}, defaultWidth, listHeight)
 	l.Title = "What do you want for dinner?"
 	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
+	l.SetFilteringEnabled(true)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
