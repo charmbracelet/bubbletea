@@ -1,2 +1,3 @@
-#http Example
- ![http Recording](recording-http.gif)
+# http Example
+
+![http Recording](recording-http.gif)

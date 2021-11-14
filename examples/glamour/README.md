@@ -1,2 +1,3 @@
-#glamour Example
- ![glamour Recording](recording-glamour.gif)
+# glamour Example
+
+![glamour Recording](recording-glamour.gif)

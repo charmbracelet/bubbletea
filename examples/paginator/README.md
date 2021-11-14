@@ -1,2 +1,3 @@
-#paginator Example
- ![paginator Recording](recording-paginator.gif)
+# paginator Example
+
+![paginator Recording](recording-paginator.gif)

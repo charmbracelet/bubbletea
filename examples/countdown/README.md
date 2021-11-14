@@ -1,2 +1,3 @@
-#countdown Example
- ![countdown Recording](recording-countdown.gif)
+# countdown Example
+
+![countdown Recording](recording-countdown.gif)

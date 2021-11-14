@@ -1,2 +1,3 @@
-#mouse Example
- ![mouse Recording](recording-mouse.gif)
+# mouse Example
+
+![mouse Recording](recording-mouse.gif)

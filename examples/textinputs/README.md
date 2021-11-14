@@ -1,2 +1,3 @@
-#textinputs Example
- ![textinputs Recording](recording-textinputs.gif)
+# textinputs Example
+
+![textinputs Recording](recording-textinputs.gif)

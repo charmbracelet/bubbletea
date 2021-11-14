@@ -1,2 +1,3 @@
-#send-msg Example
- ![send-msg Recording](recording-send-msg.gif)
+# send-msg Example
+
+![send-msg Recording](recording-send-msg.gif)
