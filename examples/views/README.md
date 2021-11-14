@@ -1,3 +1,2 @@
 #views Example
-![views Recording](recording-views.gif)
-
+ ![views Recording](recording-views.gif)

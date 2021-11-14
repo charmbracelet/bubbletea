@@ -1,2 +1,2 @@
 #countdown Example
-![countdown Recording](recording-countdown.gif)
+ ![countdown Recording](recording-countdown.gif)

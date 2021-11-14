@@ -1,2 +1,2 @@
 #spinners Example
-![spinners Recording](recording-spinners.gif)
+ ![spinners Recording](recording-spinners.gif)

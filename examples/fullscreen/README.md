@@ -1,2 +1,2 @@
 #fullscreen Example
-![fullscreen Recording](recording-fullscreen.gif)
+ ![fullscreen Recording](recording-fullscreen.gif)

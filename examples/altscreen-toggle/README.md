@@ -1,2 +1,2 @@
 #altscreen-toggle Example
-![altscreen-toggle Recording](recording-altscreen-toggle.gif)
+ ![altscreen-toggle Recording](recording-altscreen-toggle.gif)

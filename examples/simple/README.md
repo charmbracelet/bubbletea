@@ -1,2 +1,2 @@
 #simple Example
-![simple Recording](recording-simple.gif)
+ ![simple Recording](recording-simple.gif)

@@ -1,2 +1,2 @@
 #pipe Example
-![pipe Recording](recording-pipe.gif)
+ ![pipe Recording](recording-pipe.gif)

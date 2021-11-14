@@ -1,2 +1,2 @@
 #http Example
-![http Recording](recording-http.gif)
+ ![http Recording](recording-http.gif)

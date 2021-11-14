@@ -1,2 +1,2 @@
 #help Example
-![help Recording](recording-help.gif)
+ ![help Recording](recording-help.gif)

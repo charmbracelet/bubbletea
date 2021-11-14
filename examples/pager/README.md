@@ -1,2 +1,2 @@
 #pager Example
-![pager Recording](recording-pager.gif)
+ ![pager Recording](recording-pager.gif)
