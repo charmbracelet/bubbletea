@@ -1,5 +1,5 @@
-//go:build solaris || darwin
-// +build solaris darwin
+//go:build solaris || darwin || freebsd || netbsd || openbsd
+// +build solaris darwin freebsd netbsd openbsd
 
 // nolint:revive
 package tea
