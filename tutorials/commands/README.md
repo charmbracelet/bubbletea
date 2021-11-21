@@ -82,7 +82,7 @@ func (e errMsg) Error() string { return e.err.Error() }
 ```
 
 And notice that we've defined two new `Msg` types. They can be any type, even
-an empty struct. We'll come back to them later later in our update function.
+an empty struct. We'll come back to them later in our update function.
 First, let's write our initialization function.
 
 ## The Initialization Method
