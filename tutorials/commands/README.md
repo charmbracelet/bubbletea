@@ -3,9 +3,9 @@ Commands in Bubble Tea
 
 This is the second tutorial for Bubble Tea covering commands, which deal with
 I/O. The tutorial assumes you have a working knowlege of Go and a decent
-understanding of [the first tutorial][basics].
+understanding of [the first tutorial](/tutorials/basics)
 
-You can find the non-annotated version of this program [on GitHub][source].
+You can find the non-annotated version of this program [on GitHub](/examples/http/main.go).
 
 [basics]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
 [source]: https://github.com/charmbracelet/bubbletea/master/tutorials/commands
@@ -214,12 +214,12 @@ function, because that's the one that runs asynchronously.
 
 ## Now What?
 
-After doing this tutorial and [the previous one][basics] you should be ready to
+After doing this tutorial and [the previous one](/tutorials/basics) you should be ready to
 build a Bubble Tea program of your own. We also recommend that you look at the
-Bubble Tea [example programs][examples] as well as [Bubbles][bubbles],
+Bubble Tea [example programs](/examples) as well as [Bubbles](https://github.com/charmbracelet/bubbles),
 a component library for Bubble Tea.
 
-And, of course, check out the [Go Docs][docs].
+And, of course, check out the [Go Docs](https://go.dev/doc/).
 
 ## Additional Resources
 
