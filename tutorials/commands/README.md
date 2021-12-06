@@ -3,7 +3,7 @@ Commands in Bubble Tea
 
 This is the second tutorial for Bubble Tea covering commands, which deal with
 I/O. The tutorial assumes you have a working knowlege of Go and a decent
-understanding of [the first tutorial](/tutorials/basics)
+understanding of [the first tutorial](/tutorials/basics).
 
 You can find the non-annotated version of this program [on GitHub](/examples/http/main.go).
 
