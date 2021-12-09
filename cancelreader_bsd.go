@@ -1,3 +1,4 @@
+//go:build darwin || freebsd || netbsd || openbsd
 // +build darwin freebsd netbsd openbsd
 
 // nolint:revive
@@ -133,7 +134,8 @@ func (r *kqueueCancelReader) wait() error {
 		break
 	}
 
-	switch events[0].Ident {
+	ident := uint64(events[0].Ident)
+	switch ident {
 	case uint64(r.file.Fd()):
 		return nil
 	case uint64(r.cancelSignalReader.Fd()):
