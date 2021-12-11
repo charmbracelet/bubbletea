@@ -1,5 +1,5 @@
-//go:build darwin || freebsd || netbsd || openbsd
-// +build darwin freebsd netbsd openbsd
+//go:build darwin || freebsd || netbsd || openbsd || dragonfly
+// +build darwin freebsd netbsd openbsd dragonfly
 
 // nolint:revive
 package tea
