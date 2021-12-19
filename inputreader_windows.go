@@ -32,9 +32,9 @@ func newInputReader(reader io.Reader) (inputReader, error) {
 		return nil, fmt.Errorf("get std input handle: %w", err)
 	}
 
-	// If data was piped to the standard input, it does not emit events anymore.
-	// We can detect this if the console mode cannot be set anymore, in this
-	// case, we use the compatibility reader.
+	// If data was piped to the standard input, it does not emit events
+	// anymore. We can detect this if the console mode cannot be set anymore,
+	// in this case, we use the compatibility reader.
 	var dummy uint32
 	err = windows.GetConsoleMode(conin, &dummy)
 	if err != nil {
@@ -77,8 +77,8 @@ type winInputRecordReader struct {
 
 	// inputEvent holds the input event that was read in order to avoid
 	// unneccessary allocations. This re-use is possible because
-	// InputRecord.Unwarp which is called inparseInputMsgFromInputRecord returns
-	// an data structure that is independent of the passed InputRecord.
+	// InputRecord.Unwarp which is called inparseInputMsgFromInputRecord
+	// returns an data structure that is independent of the passed InputRecord.
 	inputEvent []coninput.InputRecord
 }
 
@@ -149,8 +149,8 @@ func newCompatibilityInputReader() (*winCompatibilityInputReader, error) {
 		windows.ENABLE_INSERT_MODE,
 		windows.ENABLE_QUICK_EDIT_MODE,
 		// ENABLE_VIRTUAL_TERMINAL_INPUT causes unreadable inputs that trigger
-		// WaitForMultipleObjects but it's necessary to receive special keys and
-		// mouse events.
+		// WaitForMultipleObjects but it's necessary to receive special keys
+		// and mouse events.
 		windows.ENABLE_VIRTUAL_TERMINAL_INPUT,
 	)
 

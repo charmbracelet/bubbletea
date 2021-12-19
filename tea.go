@@ -27,11 +27,11 @@ import (
 	"golang.org/x/term"
 )
 
-// Msg represents an action and is usually the result of an IO operation. It
-// triggers the Update function, and henceforth, the UI.
+// Msg contain the result from an I/O operation. Msgs trigger the update
+// function and, henceforth, the UI.
 type Msg interface{}
 
-// Model contains the program's state as well as it's core functions.
+// Model contains the program's state as well as its core functions.
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
@@ -46,12 +46,13 @@ type Model interface {
 	View() string
 }
 
-// Cmd is an IO operation. If it's nil it's considered a no-op. Use it for
-// things like HTTP requests, timers, saving and loading from disk, and so on.
+// Cmd is used to perform I/O operations, returning a message when it's
+// complete. If it's nil it's considered a no-op. Use it for things like HTTP
+// requests, timers, saving and loading from disk, and so on.
 //
-// There's almost never a need to use a command to send a message to another
-// part of your program. Instead, it can almost always be done in the update
-// function.
+// You should avoid using commands to merely send messages to other parts of
+// your program. That can almost always be done entirely in the update function
+// by simply updating the appropriate parts of your model.
 type Cmd func() Msg
 
 // Options to customize the program during its initialization. These are
@@ -140,7 +141,7 @@ func Quit() Msg {
 type quitMsg struct{}
 
 // EnterAltScreen is a special command that tells the Bubble Tea program to
-// enter alternate screen buffer.
+// enter the alternate screen buffer.
 //
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. To initialize your program with the altscreen enabled
@@ -241,7 +242,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		CatchPanics:  true,
 	}
 
-	// Apply all options to program
+	// Apply all options to the program.
 	for _, opt := range opts {
 		opt(p)
 	}
@@ -258,7 +259,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		errs = make(chan error)
 	)
 
-	// channels for managing goroutine lifecycles
+	// Channels for managing goroutine lifecycles.
 	var (
 		readLoopDone   = make(chan struct{})
 		sigintLoopDone = make(chan struct{})
@@ -271,9 +272,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 				select {
 				case <-readLoopDone:
 				case <-time.After(500 * time.Millisecond):
-					// the read loop hangs, which means the input inputReader's
-					// cancel function has returned true even though it was not
-					// able to cancel the read
+					// The read loop hangs, which means the input
+					// cancelReader's cancel function has returned true even
+					// though it was not able to cancel the read.
 				}
 			}
 			<-cmdLoopDone
@@ -375,7 +376,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		p.EnableMouseAllMotion()
 	}
 
-	// Initialize program
+	// Initialize the program.
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
 		go func() {
@@ -389,11 +390,11 @@ func (p *Program) StartReturningModel() (Model, error) {
 		close(initSignalDone)
 	}
 
-	// Start renderer
+	// Start the renderer.
 	p.renderer.start()
 	p.renderer.setAltScreen(p.altScreenActive)
 
-	// Render initial view
+	// Render the initial view.
 	p.renderer.write(model.View())
 
 	inputReader, err := newInputReader(p.input)
@@ -403,7 +404,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 	defer inputReader.Close() // nolint:errcheck
 
-	// Subscribe to user input
+	// Subscribe to user input.
 	if p.input != nil {
 		go func() {
 			defer close(readLoopDone)
@@ -432,7 +433,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}
 
 	if f, ok := p.output.(*os.File); ok {
-		// Get initial terminal size and send it to the program
+		// Get the initial terminal size and send it to the program.
 		go func() {
 			w, h, err := term.GetSize(int(f.Fd()))
 			if err != nil {
@@ -445,7 +446,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			}
 		}()
 
-		// Listen for window resizes
+		// Listen for window resizes.
 		go listenForResize(ctx, f, p.msgs, errs, resizeLoopDone)
 	} else {
 		close(resizeLoopDone)
@@ -480,7 +481,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}
 	}()
 
-	// Handle updates and draw
+	// Handle updates and draw.
 	for {
 		select {
 		case err := <-errs:
@@ -491,7 +492,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 		case msg := <-p.msgs:
 
-			// Handle special internal messages
+			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case quitMsg:
 				cancelContext()
@@ -528,7 +529,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 				hideCursor(p.output)
 			}
 
-			// Process internal messages for the renderer
+			// Process internal messages for the renderer.
 			if r, ok := p.renderer.(*standardRenderer); ok {
 				r.handleMessages(msg)
 			}

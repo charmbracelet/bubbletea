@@ -17,9 +17,9 @@ import (
 // newSelectInputReader returns a cancelable reader. If the passed reader is an
 // *os.File, the cancel method can be used to interrupt a blocking call read
 // call. In this case, the cancel method returns true if the call was cancelled
-// successfully. If the input reader is not a *os.File or the file descriptor is
-// 1024 or larger, the cancel method does nothing and always returns false. The
-// generic Unix implementation is based on the POSIX select syscall.
+// successfully. If the input reader is not a *os.File or the file descriptor
+// is 1024 or larger, the cancel method does nothing and always returns false.
+// The generic Unix implementation is based on the POSIX select syscall.
 func newSelectInputReader(reader io.Reader) (inputReader, error) {
 	file, ok := reader.(*os.File)
 	if !ok || file.Fd() >= unix.FD_SETSIZE {
