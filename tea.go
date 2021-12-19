@@ -285,9 +285,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 	)
 
 	ctx, cancelContext := context.WithCancel(context.Background())
-	defer func() {
-		cancelContext()
-	}()
+	defer cancelContext()
 
 	switch {
 	case p.startupOptions.has(withInputTTY):
