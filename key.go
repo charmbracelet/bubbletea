@@ -52,9 +52,16 @@ func (k KeyMsg) String() (str string) {
 
 // Key contains information about a keypress.
 type Key struct {
-	Type              KeyType
-	Runes             []rune
-	Alt               bool
+	Type  KeyType
+	Runes []rune
+	Alt   bool
+
+	// WinKeyEventRecord contains additional metadata about key events in
+	// Windows. If the program is not running on Windows this value will be
+	// nil.
+	//
+	// This member is provisional and may not appear in future versions of the
+	// library.
 	WinKeyEventRecord *coninput.KeyEventRecord
 }
 

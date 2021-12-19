@@ -14,11 +14,17 @@ type MouseMsg MouseEvent
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel
 // movement, a cursor movement, or a combination.
 type MouseEvent struct {
-	X                   int
-	Y                   int
-	Type                MouseEventType
-	Alt                 bool
-	Ctrl                bool
+	X    int
+	Y    int
+	Type MouseEventType
+	Alt  bool
+	Ctrl bool
+
+	// WinMouseEventRecord contains additional metadata about mouse events in
+	// Windows. If the program is not running on Windows this value will be
+	// nil.
+	//
+	// This member is provisional and may not appear in future of the library.
 	WinMouseEventRecord *coninput.MouseEventRecord
 }
 
