@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-// newInputReader returns a allbackInputReader that satisfies the inputReader
+// newInputReader returns a fallbackInputReader that satisfies the inputReader
 // but does not actually support cancelation.
 func newInputReader(reader io.Reader) (inputReader, error) {
 	return newFallbackInputReader(reader)
