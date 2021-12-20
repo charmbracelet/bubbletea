@@ -5,25 +5,17 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
-
-	if err := p.Start(); err != nil {
-		log.Fatal(err)
+	if err := tea.NewProgram(newModel()).Start(); err != nil {
+		fmt.Println("Oh no, we encountered an error:", err)
+		os.Exit(1)
 	}
-
-	p = tea.NewProgram(initialModel())
-
-	if err := p.Start(); err != nil {
-		log.Fatal(err)
-	}
-
 }
 
 type tickMsg struct{}
@@ -34,7 +26,7 @@ type model struct {
 	err       error
 }
 
-func initialModel() model {
+func newModel() model {
 	ti := textinput.NewModel()
 	ti.Placeholder = "Pikachu"
 	ti.Focus()
