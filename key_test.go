@@ -58,7 +58,7 @@ func TestReadInput(t *testing.T) {
 		"shift+tab": {'\x1b', '[', 'Z'},
 	} {
 		t.Run(out, func(t *testing.T) {
-			msg, err := readInput(bytes.NewReader(in))
+			msg, err := parseInputMsgFromReader(bytes.NewReader(in))
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
