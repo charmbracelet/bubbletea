@@ -7,8 +7,8 @@ understanding of [the first tutorial][basics].
 
 You can find the non-annotated version of this program [on GitHub][source].
 
-[basics]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
-[source]: https://github.com/charmbracelet/bubbletea/master/tutorials/commands
+[basics]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[source]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
 
 ## Let's Go!
 
@@ -220,6 +220,10 @@ Bubble Tea [example programs][examples] as well as [Bubbles][bubbles],
 a component library for Bubble Tea.
 
 And, of course, check out the [Go Docs][docs].
+
+[bubbles]: https://github.com/charmbracelet/bubbles
+[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
+[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
 
 ## Additional Resources
 
