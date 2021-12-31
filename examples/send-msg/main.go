@@ -128,11 +128,6 @@ func main() {
 	<-done
 }
 
-func randomEmoji() string {
-	emojis := []rune("🍦🧋🍡🤠👾😭🦊🐯🦆🥨🎏🍔🍒🍥🎮📦🦁🐶🐸🍕🥐🧲🚒🥇🏆🌽")
-	return string(emojis[rand.Intn(len(emojis))])
-}
-
 func randomFood() string {
 	food := []string{"an apple", "a pear", "a gherkin", "a party gherkin",
 		"a kohlrabi", "some spaghetti", "tacos", "a currywurst", "some curry",
