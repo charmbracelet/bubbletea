@@ -239,6 +239,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		output:       os.Stdout,
 		input:        os.Stdin,
+		msgs:         make(chan Msg),
 		CatchPanics:  true,
 	}
 
@@ -252,8 +253,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 // StartReturningModel initializes the program. Returns the final model.
 func (p *Program) StartReturningModel() (Model, error) {
-	p.msgs = make(chan Msg)
-
 	var (
 		cmds = make(chan Cmd)
 		errs = make(chan error)
@@ -554,9 +553,7 @@ func (p *Program) Start() error {
 // This method is currently provisional. The method signature may alter
 // slightly, or it may be removed in a future version of this package.
 func (p *Program) Send(msg Msg) {
-	if p.msgs != nil {
-		p.msgs <- msg
-	}
+	p.msgs <- msg
 }
 
 // Quit is a convenience function for quitting Bubble Tea programs. Use it
