@@ -234,6 +234,7 @@ func (r *standardRenderer) altScreen() bool {
 
 func (r *standardRenderer) setAltScreen(v bool) {
 	r.altScreenActive = v
+	r.repaint()
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
