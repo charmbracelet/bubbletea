@@ -1,11 +1,11 @@
-name: lint
+name: lint-soft
 on:
   push:
   pull_request:
 
 jobs:
   golangci:
-    name: lint
+    name: lint-soft
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -13,6 +13,6 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           # Optional: golangci-lint command line arguments.
-          #args:
+          args: --config .golangci-soft.yml --issues-exit-code=0
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           only-new-issues: true
