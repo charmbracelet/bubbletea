@@ -14,7 +14,7 @@ func (p *Program) initInput() error {
 	if f, ok := p.input.(*os.File); ok {
 		c, err := console.ConsoleFromFile(f)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // ignore error, this was just a test
 		}
 		p.console = c
 	}
