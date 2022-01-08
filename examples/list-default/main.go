@@ -31,7 +31,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
-			return m, nil
+			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		top, right, bottom, left := docStyle.GetMargin()
