@@ -77,8 +77,7 @@ func main() {
 	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0)}
 	m.list.Title = "My Fave Things"
 
-	p := tea.NewProgram(m)
-	p.EnterAltScreen()
+	p := tea.NewProgram(m, tea.WithAltScreen())
 
 	if err := p.Start(); err != nil {
 		fmt.Println("Error running program:", err)
