@@ -44,7 +44,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return spinner.Tick
+	return m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -59,14 +59,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.index = len(spinners) - 1
 			}
 			m.resetSpinner()
-			return m, spinner.Tick
+			return m, m.spinner.Tick
 		case "l", "right":
 			m.index++
 			if m.index >= len(spinners) {
 				m.index = 0
 			}
 			m.resetSpinner()
-			return m, spinner.Tick
+			return m, m.spinner.Tick
 		default:
 			return m, nil
 		}
