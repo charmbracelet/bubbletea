@@ -74,7 +74,7 @@ func main() {
 		item{title: "Terrycloth", desc: "In other words, towel fabric"},
 	}
 
-	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0)}
+	m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 	m.list.Title = "My Fave Things"
 
 	p := tea.NewProgram(m, tea.WithAltScreen())

@@ -82,7 +82,7 @@ func main() {
 
 	p := tea.NewProgram(model{
 		sub:     make(chan struct{}),
-		spinner: spinner.NewModel(),
+		spinner: spinner.New(),
 	})
 
 	if p.Start() != nil {

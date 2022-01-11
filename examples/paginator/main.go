@@ -21,7 +21,7 @@ func newModel() model {
 		items = append(items, text)
 	}
 
-	p := paginator.NewModel()
+	p := paginator.New()
 	p.Type = paginator.Dots
 	p.PerPage = 10
 	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")

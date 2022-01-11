@@ -45,7 +45,7 @@ type model struct {
 
 func newModel() model {
 	const numLastResults = 5
-	s := spinner.NewModel()
+	s := spinner.New()
 	s.Style = spinnerStyle
 	return model{
 		spinner: s,

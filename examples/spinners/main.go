@@ -80,7 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) resetSpinner() {
-	m.spinner = spinner.NewModel()
+	m.spinner = spinner.New()
 	m.spinner.Style = spinnerStyle
 	m.spinner.Spinner = spinners[m.index]
 }

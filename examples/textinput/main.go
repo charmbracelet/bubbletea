@@ -28,7 +28,7 @@ type model struct {
 }
 
 func initialModel() model {
-	ti := textinput.NewModel()
+	ti := textinput.New()
 	ti.Placeholder = "Pikachu"
 	ti.Focus()
 	ti.CharLimit = 156
