@@ -65,7 +65,7 @@ type model struct {
 func newModel() model {
 	const showLastResults = 5
 
-	sp := spinner.NewModel()
+	sp := spinner.New()
 	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("206"))
 
 	return model{

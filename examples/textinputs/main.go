@@ -38,7 +38,7 @@ func initialModel() model {
 
 	var t textinput.Model
 	for i := range m.inputs {
-		t = textinput.NewModel()
+		t = textinput.New()
 		t.CursorStyle = cursorStyle
 		t.CharLimit = 32
 

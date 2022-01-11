@@ -27,7 +27,7 @@ var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 func main() {
 	m := model{
-		progress: progress.NewModel(progress.WithDefaultGradient()),
+		progress: progress.New(progress.WithDefaultGradient()),
 	}
 
 	if err := tea.NewProgram(m).Start(); err != nil {

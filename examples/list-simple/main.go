@@ -111,7 +111,7 @@ func main() {
 
 	const defaultWidth = 20
 
-	l := list.NewModel(items, itemDelegate{}, defaultWidth, listHeight)
+	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
 	l.Title = "What do you want for dinner?"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)

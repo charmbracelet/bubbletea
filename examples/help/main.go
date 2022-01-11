@@ -75,7 +75,7 @@ type model struct {
 func newModel() model {
 	return model{
 		keys:       keys,
-		help:       help.NewModel(),
+		help:       help.New(),
 		inputStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FF75B7")),
 	}
 }

@@ -95,7 +95,7 @@ func newModel() model {
 
 	// Setup list
 	delegate := newItemDelegate(delegateKeys)
-	groceryList := list.NewModel(items, delegate, 0, 0)
+	groceryList := list.New(items, delegate, 0, 0)
 	groceryList.Title = "Groceries"
 	groceryList.Styles.Title = titleStyle
 	groceryList.AdditionalFullHelpKeys = func() []key.Binding {

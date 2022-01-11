@@ -56,7 +56,7 @@ type model struct {
 }
 
 func newModel(initialValue string) (m model) {
-	i := textinput.NewModel()
+	i := textinput.New()
 	i.Prompt = ""
 	i.CursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	i.Width = 48
