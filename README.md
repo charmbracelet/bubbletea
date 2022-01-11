@@ -290,7 +290,8 @@ For some Bubble Tea programs in production, see:
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [AT CLI](https://github.com/daskycodes/at_cli): a utility to for executing AT Commands via serial port connections
 * [Canard](https://github.com/mrusme/canard): an RSS client
-* [sqlite-tui](https://github.com/mathaou/sqlite-tui): an keyboard and mouse driven SQLite database browser
+* [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
+* [gh-prs](https://www.github.com/dlvhdr/gh-prs): gh cli extension to display a dashboard of PRs
 
 ## Feedback
 
