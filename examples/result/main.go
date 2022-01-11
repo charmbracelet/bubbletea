@@ -2,8 +2,6 @@ package main
 
 // A simple example that shows how to retrieve a value from a Bubble Tea
 // program after the Bubble Tea has exited.
-//
-// Thanks to Treilik for this one.
 
 import (
 	"fmt"
@@ -17,7 +15,7 @@ var choices = []string{"Taro", "Coffee", "Lychee"}
 
 type model struct {
 	cursor int
-	choice chan string
+	choice string
 }
 
 func (m model) Init() tea.Cmd {
@@ -29,12 +27,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
-			close(m.choice) // If we're quitting just close the channel.
 			return m, tea.Quit
 
 		case "enter":
 			// Send the choice on the channel and exit.
-			m.choice <- choices[m.cursor]
+			m.choice = choices[m.cursor]
 			return m, tea.Quit
 
 		case "down", "j":
@@ -74,20 +71,17 @@ func (m model) View() string {
 }
 
 func main() {
-	// This is where we'll listen for the choice the user makes in the Bubble
-	// Tea program.
-	result := make(chan string, 1)
+	p := tea.NewProgram(model{})
 
-	// Pass the channel to the initialize function so our Bubble Tea program
-	// can send the final choice along when the time comes.
-	p := tea.NewProgram(model{cursor: 0, choice: result})
-	if err := p.Start(); err != nil {
+	// StartReturningModel returns the model as a tea.Model.
+	m, err := p.StartReturningModel()
+	if err != nil {
 		fmt.Println("Oh no:", err)
 		os.Exit(1)
 	}
 
-	// Print out the final choice.
-	if r := <-result; r != "" {
-		fmt.Printf("\n---\nYou chose %s!\n", r)
+	// Assert the final tea.Model to our local model and print the choice.
+	if m, ok := m.(model); ok && m.choice != "" {
+		fmt.Printf("\n---\nYou chose %s!\n", m.choice)
 	}
 }
