@@ -26,7 +26,9 @@ jobs:
         run: go build -v ./...
 
       - name: Build examples
-        run: go build -v ./...
+        run: |-
+          go mod download
+          go build -v ./...
         working-directory: ./examples
 
       - name: Build tutorials
