@@ -27,12 +27,12 @@ jobs:
 
       - name: Build examples
         run: |-
-          go mod download
+          go mod tidy
           go build -v ./...
         working-directory: ./examples
 
       - name: Build tutorials
         run: |-
-          go mod download
+          go mod tidy
           go build -v ./...
         working-directory: ./tutorials
