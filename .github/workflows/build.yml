@@ -32,5 +32,7 @@ jobs:
         working-directory: ./examples
 
       - name: Build tutorials
-        run: go build -v ./...
+        run: |-
+          go mod download
+          go build -v ./...
         working-directory: ./tutorials
