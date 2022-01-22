@@ -122,6 +122,17 @@ func Batch(cmds ...Cmd) Cmd {
 	if len(cmds) == 0 {
 		return nil
 	}
+
+	nilCount := 0
+	for _, cmd := range cmds {
+		if cmd == nil {
+			nilCount++
+		}
+	}
+	if nilCount == len(cmds) {
+		return nil
+	}
+
 	return func() Msg {
 		return batchMsg(cmds)
 	}
