@@ -111,6 +111,8 @@ type Program struct {
 
 // Batch performs a bunch of commands concurrently with no ordering guarantees
 // about the results. Use a Batch to return several commands.
+// If the slice of commands has a length of 0 or only contains nil commands,
+// the function itself returns nil.
 //
 // Example:
 //
