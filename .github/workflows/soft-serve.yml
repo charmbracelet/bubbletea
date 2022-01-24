@@ -1,0 +1,12 @@
+name: soft-serve
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  soft-serve:
+    uses: charmbracelet/meta/.github/workflows/soft-serve.yml@main
+    secrets:
+      ssh-key: "${{ secrets.CHARM_SOFT_SERVE_KEY }}"
