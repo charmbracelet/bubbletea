@@ -8,7 +8,7 @@ understanding of [the first tutorial][basics].
 You can find the non-annotated version of this program [on GitHub][source].
 
 [basics]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
-[source]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
+[source]: https://github.com/charmbracelet/bubbletea/blob/master/tutorials/commands/main.go
 
 ## Let's Go!
 
