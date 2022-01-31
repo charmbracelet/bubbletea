@@ -11,7 +11,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mattn/go-isatty v0.0.14
 	github.com/muesli/reflow v0.3.0
-	github.com/muesli/termenv v0.9.0
+	github.com/muesli/termenv v0.10.0
 )
 
 replace github.com/charmbracelet/bubbletea => ../
