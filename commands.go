@@ -68,6 +68,9 @@ func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 func Sequentially(cmds ...Cmd) Cmd {
 	return func() Msg {
 		for _, cmd := range cmds {
+			if cmd == nil {
+				continue
+			}
 			if msg := cmd(); msg != nil {
 				return msg
 			}
