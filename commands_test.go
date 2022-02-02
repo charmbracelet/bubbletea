@@ -45,6 +45,11 @@ func TestSequentially(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name:     "null cmds",
+			cmds:     []Cmd{nil, nil},
+			expected: nil,
+		},
+		{
 			name: "one error",
 			cmds: []Cmd{
 				nilReturnCmd,
