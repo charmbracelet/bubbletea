@@ -292,9 +292,9 @@ var hexes = map[string]Key{
 	"1b4f44": {Type: KeyLeft, Alt: false},
 }
 
-// readInput reads keypress and mouse input from a TTY and returns a message
-// containing information about the key or mouse event accordingly.
-func readInput(input io.Reader) (Msg, error) {
+// readInputs reads keypress and mouse inputs from a TTY and returns messages
+// containing information about the key or mouse events accordingly.
+func readInputs(input io.Reader) ([]Msg, error) {
 	var buf [256]byte
 
 	// Read and block
@@ -305,20 +305,28 @@ func readInput(input io.Reader) (Msg, error) {
 
 	// See if it's a mouse event. For now we're parsing X10-type mouse events
 	// only.
-	mouseEvent, err := parseX10MouseEvent(buf[:numBytes])
+	mouseEvent, err := parseX10MouseEvents(buf[:numBytes])
 	if err == nil {
-		return MouseMsg(mouseEvent), nil
+		var m []Msg
+		for _, v := range mouseEvent {
+			m = append(m, MouseMsg(v))
+		}
+		return m, nil
 	}
 
 	// Is it a special sequence, like an arrow key?
 	if k, ok := sequences[string(buf[:numBytes])]; ok {
-		return KeyMsg(Key{Type: k}), nil
+		return []Msg{
+			KeyMsg(Key{Type: k}),
+		}, nil
 	}
 
 	// Some of these need special handling
 	hex := fmt.Sprintf("%x", buf[:numBytes])
 	if k, ok := hexes[hex]; ok {
-		return KeyMsg(k), nil
+		return []Msg{
+			KeyMsg(k),
+		}, nil
 	}
 
 	// Is the alt key pressed? The buffer will be prefixed with an escape
@@ -330,7 +338,9 @@ func readInput(input io.Reader) (Msg, error) {
 		if c == utf8.RuneError {
 			return nil, errors.New("could not decode rune after removing initial escape")
 		}
-		return KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: []rune{c}}), nil
+		return []Msg{
+			KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: []rune{c}}),
+		}, nil
 	}
 
 	var runes []rune
@@ -353,15 +363,21 @@ func readInput(input io.Reader) (Msg, error) {
 	} else if len(runes) > 1 {
 		// We received multiple runes, so we know this isn't a control
 		// character, sequence, and so on.
-		return KeyMsg(Key{Type: KeyRunes, Runes: runes}), nil
+		return []Msg{
+			KeyMsg(Key{Type: KeyRunes, Runes: runes}),
+		}, nil
 	}
 
 	// Is the first rune a control character?
 	r := KeyType(runes[0])
 	if numBytes == 1 && r <= keyUS || r == keyDEL {
-		return KeyMsg(Key{Type: r}), nil
+		return []Msg{
+			KeyMsg(Key{Type: r}),
+		}, nil
 	}
 
 	// Welp, it's just a regular, ol' single rune
-	return KeyMsg(Key{Type: KeyRunes, Runes: runes}), nil
+	return []Msg{
+		KeyMsg(Key{Type: KeyRunes, Runes: runes}),
+	}, nil
 }

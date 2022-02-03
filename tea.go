@@ -411,7 +411,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 					return
 				}
 
-				msg, err := readInput(cancelReader)
+				msgs, err := readInputs(cancelReader)
 				if err != nil {
 					if !errors.Is(err, io.EOF) && !errors.Is(err, errCanceled) {
 						errs <- err
@@ -420,7 +420,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 					return
 				}
 
-				p.msgs <- msg
+				for _, msg := range msgs {
+					p.msgs <- msg
+				}
 			}
 		}()
 	} else {
