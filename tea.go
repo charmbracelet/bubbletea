@@ -119,11 +119,18 @@ type Program struct {
 //     }
 //
 func Batch(cmds ...Cmd) Cmd {
-	if len(cmds) == 0 {
+	var validCmds []Cmd
+	for _, c := range cmds {
+		if c == nil {
+			continue
+		}
+		validCmds = append(validCmds, c)
+	}
+	if len(validCmds) == 0 {
 		return nil
 	}
 	return func() Msg {
-		return batchMsg(cmds)
+		return batchMsg(validCmds)
 	}
 }
 
