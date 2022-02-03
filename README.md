@@ -292,6 +292,7 @@ For some Bubble Tea programs in production, see:
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [gh-prs](https://www.github.com/dlvhdr/gh-prs): gh cli extension to display a dashboard of PRs
+* [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
 
 ## Feedback
 
