@@ -58,14 +58,18 @@ func TestReadInput(t *testing.T) {
 		"shift+tab": {'\x1b', '[', 'Z'},
 	} {
 		t.Run(out, func(t *testing.T) {
-			msg, err := readInput(bytes.NewReader(in))
+			msgs, err := readInputs(bytes.NewReader(in))
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if m, ok := msg.(KeyMsg); ok && m.String() != out {
+			if len(msgs) == 0 {
+				t.Fatalf("unexpected empty message list")
+			}
+
+			if m, ok := msgs[0].(KeyMsg); ok && m.String() != out {
 				t.Fatalf(`expected a keymsg %q, got %q`, out, m)
 			}
-			if m, ok := msg.(MouseMsg); ok && mouseEventTypes[m.Type] != out {
+			if m, ok := msgs[0].(MouseMsg); ok && mouseEventTypes[m.Type] != out {
 				t.Fatalf(`expected a mousemsg %q, got %q`, out, mouseEventTypes[m.Type])
 			}
 		})
