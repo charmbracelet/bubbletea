@@ -32,6 +32,7 @@ type standardRenderer struct {
 	lastRender        string
 	linesRendered     int
 	useANSICompressor bool
+	once              sync.Once
 
 	// essentially whether or not we're using the full size of the terminal
 	altScreenActive bool
@@ -72,7 +73,9 @@ func (r *standardRenderer) start() {
 func (r *standardRenderer) stop() {
 	r.flush()
 	clearLine(r.out)
-	close(r.done)
+	r.once.Do(func() {
+		close(r.done)
+	})
 
 	if r.useANSICompressor {
 		if w, ok := r.out.(io.WriteCloser); ok {
@@ -84,7 +87,9 @@ func (r *standardRenderer) stop() {
 // kill halts the renderer. The final frame will not be rendered.
 func (r *standardRenderer) kill() {
 	clearLine(r.out)
-	close(r.done)
+	r.once.Do(func() {
+		close(r.done)
+	})
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.
