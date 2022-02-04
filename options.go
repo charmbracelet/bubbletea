@@ -130,3 +130,11 @@ func WithANSICompressor() ProgramOption {
 		p.startupOptions |= withANSICompressor
 	}
 }
+
+// WithPanicHandler sets the program's panic handler. This won't have any effect
+// if the WithoutCatchPanics option was enabled.
+func WithPanicHandler(f func(*Program)) ProgramOption {
+	return func(p *Program) {
+		p.panicHandler = f
+	}
+}

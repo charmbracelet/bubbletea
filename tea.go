@@ -97,6 +97,8 @@ type Program struct {
 	// is on by default.
 	CatchPanics bool
 
+	panicHandler func(*Program)
+
 	console console.Console
 
 	// Stores the original reference to stdin for cases where input is not a
@@ -248,6 +250,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		input:        os.Stdin,
 		msgs:         make(chan Msg),
 		CatchPanics:  true,
+		panicHandler: defaultPanicHandler(),
 	}
 
 	// Apply all options to the program.
@@ -349,14 +352,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}()
 
 	if p.CatchPanics {
-		defer func() {
-			if r := recover(); r != nil {
-				p.shutdown(true)
-				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-				debug.PrintStack()
-				return
-			}
-		}()
+		defer p.panicHandler(p)
 	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
@@ -670,4 +666,15 @@ func (p *Program) DisableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.DisableMouseAllMotionSeq)
+}
+
+func defaultPanicHandler() func(*Program) {
+	return func(p *Program) {
+		if r := recover(); r != nil {
+			p.shutdown(true)
+			fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+			debug.PrintStack()
+			return
+		}
+	}
 }
