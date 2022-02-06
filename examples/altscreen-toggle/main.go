@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	color   = termenv.ColorProfile().Color
+	color   = termenv.EnvColorProfile().Color
 	keyword = termenv.Style{}.Foreground(color("204")).Background(color("235")).Styled
 	help    = termenv.Style{}.Foreground(color("241")).Styled
 )

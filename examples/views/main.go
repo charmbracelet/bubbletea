@@ -28,7 +28,7 @@ const (
 
 // General stuff for styling the view
 var (
-	term          = termenv.ColorProfile()
+	term          = termenv.EnvColorProfile()
 	keyword       = makeFgStyle("211")
 	subtle        = makeFgStyle("241")
 	progressEmpty = subtle(progressEmptyChar)
