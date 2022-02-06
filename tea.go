@@ -23,6 +23,7 @@ import (
 
 	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
+	"github.com/muesli/cancelreader"
 	te "github.com/muesli/termenv"
 	"golang.org/x/term"
 )
@@ -404,7 +405,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 	// Render the initial view.
 	p.renderer.write(model.View())
 
-	cancelReader, err := newCancelReader(p.input)
+	cancelReader, err := cancelreader.NewReader(p.input)
 	if err != nil {
 		return model, err
 	}
@@ -423,7 +424,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 				msgs, err := readInputs(cancelReader)
 				if err != nil {
-					if !errors.Is(err, io.EOF) && !errors.Is(err, errCanceled) {
+					if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 						errs <- err
 					}
 
