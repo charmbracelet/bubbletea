@@ -103,16 +103,7 @@ func (m model) View() string {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	done := make(chan struct{})
-
 	p := tea.NewProgram(newModel())
-	go func() {
-		if err := p.Start(); err != nil {
-			fmt.Println("Error running program:", err)
-			os.Exit(1)
-		}
-		close(done)
-	}()
 
 	// Simulate activity
 	go func() {
@@ -120,12 +111,17 @@ func main() {
 			pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond
 			time.Sleep(pause)
 
-			// Send the Bubble Tea program a message from outside the program.
+			// Send the Bubble Tea program a message from outside the
+			// tea.Program. This will block until it is ready to receive
+			// messages.
 			p.Send(resultMsg{food: randomFood(), duration: pause})
 		}
 	}()
 
-	<-done
+	if err := p.Start(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
 }
 
 func randomFood() string {
