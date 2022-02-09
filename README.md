@@ -13,7 +13,7 @@ based on [The Elm Architecture][elm]. Bubble Tea is well-suited for simple and
 complex terminal applications, either inline, full-window, or a mix of both.
 
 <p>
-    <img src="https://stuff.charm.sh/bubbletea/bubbletea-example.gif" width="800" alt="Bubble Tea Example">
+    <img src="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0" width="800" alt="Bubble Tea Example">
 </p>
 
 Bubble Tea is in use in production and includes a number of features and
@@ -293,6 +293,11 @@ For some Bubble Tea programs in production, see:
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [gh-prs](https://www.github.com/dlvhdr/gh-prs): gh cli extension to display a dashboard of PRs
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
+* [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+* [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
+* [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
+* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers
+* [wishlist](https://github.com/charmbracelet/wishlist): and SSH directory
 
 ## Feedback
 
@@ -317,6 +322,6 @@ Czaplicki et alia and the excellent [go-tea][gotea] by TJ Holowaychuk.
 
 Part of [Charm](https://charm.sh).
 
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
 
 Charm热爱开源 • Charm loves open source
