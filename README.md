@@ -288,7 +288,7 @@ For some Bubble Tea programs in production, see:
 * [StormForge Optimize – Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
 * [Typer](https://github.com/maaslalani/typer): a typing test
-* [AT CLI](https://github.com/daskycodes/at_cli): a utility to for executing AT Commands via serial port connections
+* [AT CLI](https://github.com/daskycodes/at_cli): a utility for executing AT Commands via serial port connections
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [gh-prs](https://www.github.com/dlvhdr/gh-prs): gh cli extension to display a dashboard of PRs
@@ -297,7 +297,7 @@ For some Bubble Tea programs in production, see:
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers
-* [wishlist](https://github.com/charmbracelet/wishlist): and SSH directory
+* [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
 ## Feedback
 
