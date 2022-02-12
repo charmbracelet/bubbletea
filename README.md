@@ -298,6 +298,7 @@ For some Bubble Tea programs in production, see:
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+* [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
 
 ## Feedback
 
