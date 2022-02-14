@@ -439,7 +439,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		defer close(readLoopDone)
 	}
 
-	if f, ok := p.output.(*os.File); ok {
+	if f, ok := p.output.(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
 		go func() {
 			w, h, err := term.GetSize(int(f.Fd()))
