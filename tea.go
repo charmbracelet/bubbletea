@@ -11,7 +11,6 @@ package tea
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -83,12 +82,17 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
+	ctx context.Context
 	mtx *sync.Mutex
 
-	msgs chan Msg
+	msgs         chan Msg
+	errs         chan error
+	readLoopDone chan struct{}
 
-	output          io.Writer // where to send output. this will usually be os.Stdout.
-	input           io.Reader // this will usually be os.Stdin.
+	output       io.Writer // where to send output. this will usually be os.Stdout.
+	input        io.Reader // this will usually be os.Stdin.
+	cancelReader cancelreader.CancelReader
+
 	renderer        renderer
 	altScreenActive bool
 
@@ -264,14 +268,11 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 // StartReturningModel initializes the program. Returns the final model.
 func (p *Program) StartReturningModel() (Model, error) {
-	var (
-		cmds = make(chan Cmd)
-		errs = make(chan error)
-	)
+	cmds := make(chan Cmd)
+	p.errs = make(chan error)
 
 	// Channels for managing goroutine lifecycles.
 	var (
-		readLoopDone   = make(chan struct{})
 		sigintLoopDone = make(chan struct{})
 		cmdLoopDone    = make(chan struct{})
 		resizeLoopDone = make(chan struct{})
@@ -280,7 +281,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		waitForGoroutines = func(withReadLoop bool) {
 			if withReadLoop {
 				select {
-				case <-readLoopDone:
+				case <-p.readLoopDone:
 				case <-time.After(500 * time.Millisecond):
 					// The read loop hangs, which means the input
 					// cancelReader's cancel function has returned true even
@@ -294,7 +295,8 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}
 	)
 
-	ctx, cancelContext := context.WithCancel(context.Background())
+	var cancelContext context.CancelFunc
+	p.ctx, cancelContext = context.WithCancel(context.Background())
 	defer cancelContext()
 
 	switch {
@@ -346,7 +348,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}()
 
 		select {
-		case <-ctx.Done():
+		case <-p.ctx.Done():
 		case <-sig:
 			p.msgs <- quitMsg{}
 		}
@@ -391,7 +393,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			defer close(initSignalDone)
 			select {
 			case cmds <- initCmd:
-			case <-ctx.Done():
+			case <-p.ctx.Done():
 			}
 		}()
 	} else {
@@ -405,57 +407,32 @@ func (p *Program) StartReturningModel() (Model, error) {
 	// Render the initial view.
 	p.renderer.write(model.View())
 
-	cancelReader, err := cancelreader.NewReader(p.input)
-	if err != nil {
-		return model, err
-	}
-
-	defer cancelReader.Close() // nolint:errcheck
-
 	// Subscribe to user input.
 	if p.input != nil {
-		go func() {
-			defer close(readLoopDone)
-
-			for {
-				if ctx.Err() != nil {
-					return
-				}
-
-				msgs, err := readInputs(cancelReader)
-				if err != nil {
-					if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
-						errs <- err
-					}
-
-					return
-				}
-
-				for _, msg := range msgs {
-					p.msgs <- msg
-				}
-			}
-		}()
+		if err := p.initCancelReader(); err != nil {
+			return model, err
+		}
 	} else {
-		defer close(readLoopDone)
+		defer close(p.readLoopDone)
 	}
+	defer p.cancelReader.Close() // nolint:errcheck
 
 	if f, ok := p.output.(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
 		go func() {
 			w, h, err := term.GetSize(int(f.Fd()))
 			if err != nil {
-				errs <- err
+				p.errs <- err
 			}
 
 			select {
-			case <-ctx.Done():
+			case <-p.ctx.Done():
 			case p.msgs <- WindowSizeMsg{w, h}:
 			}
 		}()
 
 		// Listen for window resizes.
-		go listenForResize(ctx, f, p.msgs, errs, resizeLoopDone)
+		go listenForResize(p.ctx, f, p.msgs, p.errs, resizeLoopDone)
 	} else {
 		close(resizeLoopDone)
 	}
@@ -466,7 +443,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 		for {
 			select {
-			case <-ctx.Done():
+			case <-p.ctx.Done():
 
 				return
 			case cmd := <-cmds:
@@ -482,7 +459,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 				go func() {
 					select {
 					case p.msgs <- cmd():
-					case <-ctx.Done():
+					case <-p.ctx.Done():
 					}
 				}()
 			}
@@ -494,9 +471,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 		select {
 		case <-p.killc:
 			return nil, nil
-		case err := <-errs:
+		case err := <-p.errs:
 			cancelContext()
-			waitForGoroutines(cancelReader.Cancel())
+			waitForGoroutines(p.cancelReader.Cancel())
 			p.shutdown(false)
 			return model, err
 
@@ -506,7 +483,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			switch msg := msg.(type) {
 			case quitMsg:
 				cancelContext()
-				waitForGoroutines(cancelReader.Cancel())
+				waitForGoroutines(p.cancelReader.Cancel())
 				p.shutdown(false)
 				return model, nil
 
@@ -681,4 +658,25 @@ func (p *Program) DisableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.DisableMouseAllMotionSeq)
+}
+
+// ReleaseTerminal restores the original terminal state and cancels the input
+// reader.
+func (p *Program) ReleaseTerminal() error {
+	p.cancelInput()
+	return p.restoreTerminal()
+}
+
+// RestoreTerminal sets up the input reader & terminal state and triggers a
+// repaint.
+func (p *Program) RestoreTerminal() error {
+	if err := p.initTerminal(); err != nil {
+		return err
+	}
+	if err := p.initCancelReader(); err != nil {
+		return err
+	}
+
+	p.renderer.repaint()
+	return nil
 }
