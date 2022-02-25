@@ -13,9 +13,14 @@ jobs:
     name: lint-soft
     runs-on: ubuntu-latest
     steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1
+
       - uses: actions/checkout@v2
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           # Optional: golangci-lint command line arguments.
           args: --config .golangci-soft.yml --issues-exit-code=0
