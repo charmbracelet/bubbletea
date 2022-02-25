@@ -287,17 +287,24 @@ For some Bubble Tea programs in production, see:
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+* [portal][portal]: securely send transfer between computers
+* [redis-viewer](https://github.com/SaltFishPr/redis-viewer): browse Redis databases
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
+* [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
 * [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
+* [sttr](https://github.com/abhimanyu003/sttr): run various text transformations
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
-* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers
+* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal][portal])
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+
+[portal]: https://github.com/ZinoKader/portal
 
 ## Feedback
 
