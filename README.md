@@ -255,6 +255,23 @@ there are [Go Docs][docs].
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
+## Debugging with Delve
+
+Since Bubble Tea apps assume control of of stdin and stdout, you’ll need to run
+delve in headless mode and then connect to it:
+
+```bash
+# Start the debugger
+$ dlv debug --headless .
+API server listening at: 127.0.0.1:34241
+
+# Connect to it from another terminal
+$ dlv connect 127.0.0.1:34241
+```
+
+Note that the default port used will vary on your system and per run, so
+actually watch out what address the first `dlv` run tells you to connect to.
+
 ## Libraries we use with Bubble Tea
 
 * [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
