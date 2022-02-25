@@ -273,32 +273,31 @@ there are [Go Docs][docs].
 
 For some Bubble Tea programs in production, see:
 
-* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
-* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
-* [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
-* [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
-* [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
-* [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
-* [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
-* [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
-* [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
-* [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
-* [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
-* [fm](https://github.com/knipferrc/fm): a terminal-based file manager
-* [StormForge Optimize – Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
-* [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
-* [Typer](https://github.com/maaslalani/typer): a typing test
 * [AT CLI](https://github.com/daskycodes/at_cli): a utility for executing AT Commands via serial port connections
 * [Canard](https://github.com/mrusme/canard): an RSS client
-* [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
-* [gh-prs](https://www.github.com/dlvhdr/gh-prs): gh cli extension to display a dashboard of PRs
+* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
-* [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+* [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
+* [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
+* [gh-prs](https://www.github.com/dlvhdr/gh-prs): gh cli extension to display a dashboard of PRs
+* [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
+* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
-* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers
-* [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+* [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
+* [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+* [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
+* [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
+* [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
+* [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
+* [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
+* [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
+* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers
+* [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
+* [Typer](https://github.com/maaslalani/typer): a typing test
+* [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
 ## Feedback
 
