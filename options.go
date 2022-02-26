@@ -120,6 +120,16 @@ func WithoutRenderer() ProgramOption {
 	}
 }
 
+// WithRenderer overrides the standard renderer with a user-provided one.
+//
+// For advanced usage only, when trying to override rendering / redrawing
+// logic or extend the renderer
+func WithRenderer(renderer Renderer) ProgramOption {
+	return func(m *Program) {
+		m.renderer = renderer
+	}
+}
+
 // WithANSICompressor removes redundant ANSI sequences to produce potentially
 // smaller output, at the cost of some processing overhead.
 //

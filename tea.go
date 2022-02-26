@@ -88,7 +88,7 @@ type Program struct {
 
 	output          io.Writer // where to send output. this will usually be os.Stdout.
 	input           io.Reader // this will usually be os.Stdin.
-	renderer        renderer
+	renderer        Renderer
 	altScreenActive bool
 
 	// CatchPanics is incredibly useful for restoring the terminal to a usable

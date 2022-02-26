@@ -47,7 +47,7 @@ type standardRenderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out io.Writer, mtx *sync.Mutex, useANSICompressor bool) renderer {
+func newRenderer(out io.Writer, mtx *sync.Mutex, useANSICompressor bool) Renderer {
 	r := &standardRenderer{
 		out:               out,
 		mtx:               mtx,
