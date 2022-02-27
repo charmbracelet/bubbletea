@@ -398,11 +398,11 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}
 
 	// Start the renderer.
-	p.renderer.start()
-	p.renderer.setAltScreen(p.altScreenActive)
+	p.renderer.Start()
+	p.renderer.SetAltScreen(p.altScreenActive)
 
 	// Render the initial view.
-	p.renderer.write(model.View())
+	p.renderer.Write(model.View())
 
 	cancelReader, err := newCancelReader(p.input)
 	if err != nil {
@@ -516,7 +516,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 				continue
 
 			case WindowSizeMsg:
-				p.renderer.repaint()
+				p.renderer.Repaint()
 
 			case enterAltScreenMsg:
 				p.EnterAltScreen()
@@ -538,15 +538,13 @@ func (p *Program) StartReturningModel() (Model, error) {
 				hideCursor(p.output)
 			}
 
-			// Process internal messages for the renderer.
-			if r, ok := p.renderer.(*standardRenderer); ok {
-				r.handleMessages(msg)
-			}
+			// Process messages for the renderer.
+			p.renderer.HandleMessages(msg)
 
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
 			cmds <- cmd                    // process command (if any)
-			p.renderer.write(model.View()) // send view to renderer
+			p.renderer.Write(model.View()) // send view to renderer
 		}
 	}
 }
@@ -599,9 +597,9 @@ func (p *Program) Kill() {
 func (p *Program) shutdown(kill bool) {
 	if p.renderer != nil {
 		if kill {
-			p.renderer.kill()
+			p.renderer.Kill()
 		} else {
-			p.renderer.stop()
+			p.renderer.Stop()
 		}
 	}
 	p.ExitAltScreen()
@@ -627,7 +625,7 @@ func (p *Program) EnterAltScreen() {
 
 	p.altScreenActive = true
 	if p.renderer != nil {
-		p.renderer.setAltScreen(p.altScreenActive)
+		p.renderer.SetAltScreen(p.altScreenActive)
 	}
 }
 
@@ -646,7 +644,7 @@ func (p *Program) ExitAltScreen() {
 
 	p.altScreenActive = false
 	if p.renderer != nil {
-		p.renderer.setAltScreen(p.altScreenActive)
+		p.renderer.SetAltScreen(p.altScreenActive)
 	}
 }
 

@@ -2,10 +2,11 @@ package tea
 
 type nilRenderer struct{}
 
-func (n nilRenderer) start()              {}
-func (n nilRenderer) stop()               {}
-func (n nilRenderer) kill()               {}
-func (n nilRenderer) write(v string)      {}
-func (n nilRenderer) repaint()            {}
-func (n nilRenderer) altScreen() bool     { return false }
-func (n nilRenderer) setAltScreen(v bool) {}
+func (n nilRenderer) Start()                 {}
+func (n nilRenderer) Stop()                  {}
+func (n nilRenderer) Kill()                  {}
+func (n nilRenderer) Write(v string)         {}
+func (n nilRenderer) Repaint()               {}
+func (n nilRenderer) AltScreen() bool        { return false }
+func (n nilRenderer) SetAltScreen(v bool)    {}
+func (n nilRenderer) HandleMessages(msg Msg) {}

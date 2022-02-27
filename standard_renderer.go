@@ -61,7 +61,7 @@ func newRenderer(out io.Writer, mtx *sync.Mutex, useANSICompressor bool) Rendere
 }
 
 // start starts the renderer.
-func (r *standardRenderer) start() {
+func (r *standardRenderer) Start() {
 	if r.ticker == nil {
 		r.ticker = time.NewTicker(r.framerate)
 	}
@@ -70,7 +70,7 @@ func (r *standardRenderer) start() {
 }
 
 // stop permanently halts the renderer, rendering the final frame.
-func (r *standardRenderer) stop() {
+func (r *standardRenderer) Stop() {
 	r.flush()
 	clearLine(r.out)
 	r.once.Do(func() {
@@ -85,7 +85,7 @@ func (r *standardRenderer) stop() {
 }
 
 // kill halts the renderer. The final frame will not be rendered.
-func (r *standardRenderer) kill() {
+func (r *standardRenderer) Kill() {
 	clearLine(r.out)
 	r.once.Do(func() {
 		close(r.done)
@@ -213,7 +213,7 @@ func (r *standardRenderer) flush() {
 
 // write writes to the internal buffer. The buffer will be outputted via the
 // ticker which calls flush().
-func (r *standardRenderer) write(s string) {
+func (r *standardRenderer) Write(s string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
@@ -229,17 +229,17 @@ func (r *standardRenderer) write(s string) {
 	_, _ = r.buf.WriteString(s)
 }
 
-func (r *standardRenderer) repaint() {
+func (r *standardRenderer) Repaint() {
 	r.lastRender = ""
 }
 
-func (r *standardRenderer) altScreen() bool {
+func (r *standardRenderer) AltScreen() bool {
 	return r.altScreenActive
 }
 
-func (r *standardRenderer) setAltScreen(v bool) {
+func (r *standardRenderer) SetAltScreen(v bool) {
 	r.altScreenActive = v
-	r.repaint()
+	r.Repaint()
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
@@ -343,7 +343,7 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 }
 
 // handleMessages handles internal messages for the renderer.
-func (r *standardRenderer) handleMessages(msg Msg) {
+func (r *standardRenderer) HandleMessages(msg Msg) {
 	switch msg := msg.(type) {
 	case WindowSizeMsg:
 		r.mtx.Lock()
