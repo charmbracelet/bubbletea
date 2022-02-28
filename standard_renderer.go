@@ -138,22 +138,23 @@ func (r *standardRenderer) flush() {
 
 	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
-		skippedLines := 0
+		jumpedLines := 0
 		for i := r.linesRendered - 1; i > 0; i-- {
 			// If the number of lines we want to render hasn't increased and
 			// new line is the same as the old line we can skip rendering for
 			// this line as a performance optimization.
 			if (len(newLines) <= len(oldLines)) && (len(newLines) > i && len(oldLines) > i) && (newLines[i] == oldLines[i]) {
-				skippedLines++
+				skipLines[i] = struct{}{}
+				jumpedLines++
 			} else {
-				cursorUpBy(out, skippedLines+1)
-				skippedLines = 0
+				cursorUpBy(out, jumpedLines+1)
+				jumpedLines = 0
 				// otherwise, clear the line so the new rendering can write into it
 				clearLine(out)
 			}
 		}
-		if skippedLines >= 1 {
-			cursorUpBy(out, skippedLines)
+		if jumpedLines >= 1 {
+			cursorUpBy(out, jumpedLines)
 		}
 
 		if _, exists := r.ignoreLines[0]; !exists {
