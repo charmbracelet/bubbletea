@@ -27,10 +27,6 @@ func cursorDown(w io.Writer) {
 	fmt.Fprintf(w, te.CSI+te.CursorDownSeq, 1)
 }
 
-func cursorUpBy(w io.Writer, count int) {
-	fmt.Fprintf(w, te.CSI+te.CursorUpSeq, count)
-}
-
 func insertLine(w io.Writer, numLines int) {
 	fmt.Fprintf(w, te.CSI+"%dL", numLines)
 }
