@@ -147,14 +147,14 @@ func (r *standardRenderer) flush() {
 				skipLines[i] = struct{}{}
 				jumpedLines++
 			} else {
-				cursorUpBy(out, jumpedLines+1)
-				jumpedLines = 0
-				// otherwise, clear the line so the new rendering can write into it
+				cursorUpBy(out, jumpedLines)
 				clearLine(out)
+
+				jumpedLines = 0
 			}
 		}
 		if jumpedLines >= 1 {
-			cursorUpBy(out, jumpedLines)
+			cursorUpBy(out, jumpedLines+1)
 		}
 
 		if _, exists := r.ignoreLines[0]; !exists {
