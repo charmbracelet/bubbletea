@@ -24,17 +24,17 @@ const (
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
 type standardRenderer struct {
-	out               io.Writer
-	buf               bytes.Buffer
-	queuedMessages    []string
-	framerate         time.Duration
-	ticker            *time.Ticker
-	mtx               *sync.Mutex
-	done              chan struct{}
-	lastRender        string
-	linesRendered     int
-	useANSICompressor bool
-	once              sync.Once
+	out                io.Writer
+	buf                bytes.Buffer
+	queuedMessageLines []string
+	framerate          time.Duration
+	ticker             *time.Ticker
+	mtx                *sync.Mutex
+	done               chan struct{}
+	lastRender         string
+	linesRendered      int
+	useANSICompressor  bool
+	once               sync.Once
 
 	// essentially whether or not we're using the full size of the terminal
 	altScreenActive bool
@@ -51,11 +51,11 @@ type standardRenderer struct {
 // with os.Stdout as the first argument.
 func newRenderer(out io.Writer, mtx *sync.Mutex, useANSICompressor bool) renderer {
 	r := &standardRenderer{
-		out:               out,
-		mtx:               mtx,
-		framerate:         defaultFramerate,
-		useANSICompressor: useANSICompressor,
-		queuedMessages:    []string{},
+		out:                out,
+		mtx:                mtx,
+		framerate:          defaultFramerate,
+		useANSICompressor:  useANSICompressor,
+		queuedMessageLines: []string{},
 	}
 	if r.useANSICompressor {
 		r.out = &compressor.Writer{Forward: out}
@@ -128,12 +128,12 @@ func (r *standardRenderer) flush() {
 	numLinesThisFlush := len(newLines)
 	oldLines := strings.Split(r.lastRender, "\n")
 	skipLines := make(map[int]struct{})
-	flushQueuedMessages := len(r.queuedMessages) > 0 && !r.altScreenActive
+	flushQueuedMessages := len(r.queuedMessageLines) > 0 && !r.altScreenActive
 
 	// Add any queued messages to this render
 	if flushQueuedMessages {
-		newLines = append(r.queuedMessages, newLines...)
-		r.queuedMessages = []string{}
+		newLines = append(r.queuedMessageLines, newLines...)
+		r.queuedMessageLines = []string{}
 	}
 
 	// Clear any lines we painted in the last render.
@@ -400,8 +400,9 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 	case printLineMessage:
 		if !r.altScreenActive {
+			lines := strings.Split(msg.messageBody, "\n")
 			r.mtx.Lock()
-			r.queuedMessages = append(r.queuedMessages, msg.messageBody)
+			r.queuedMessageLines = append(r.queuedMessageLines, lines...)
 			r.mtx.Unlock()
 		}
 	}
