@@ -512,7 +512,7 @@ func Println(args ...interface{}) Cmd {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func Printf(format string, args ...interface{}) Cmd {
+func Printf(template string, args ...interface{}) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprintf(template, args...),
