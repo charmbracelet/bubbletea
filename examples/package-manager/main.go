@@ -130,7 +130,7 @@ func max(a, b int) int {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixMicro())
+	rand.Seed(time.Now().Unix())
 
 	if err := tea.NewProgram(newModel()).Start(); err != nil {
 		fmt.Println("Error running program:", err)
