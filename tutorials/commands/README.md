@@ -202,7 +202,7 @@ func checkSomeUrl(url string) tea.Cmd {
         c := &http.Client{Timeout: 10 * time.Second}
         res, err := c.Get(url)
         if err != nil {
-            return errMsg(err)
+            return errMsg{err}
         }
         return statusMsg(res.StatusCode)
     }
