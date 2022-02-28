@@ -144,7 +144,7 @@ func (r *standardRenderer) flush() {
 			// new line is the same as the old line we can skip rendering for
 			// this line as a performance optimization.
 			if (len(newLines) <= len(oldLines)) && (len(newLines) > i && len(oldLines) > i) && (newLines[i] == oldLines[i]) {
-				skippedLines += 1
+				skippedLines++
 			} else {
 				cursorUpBy(out, skippedLines+1)
 				skippedLines = 0
