@@ -404,6 +404,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 			lines := strings.Split(msg.messageBody, "\n")
 			r.mtx.Lock()
 			r.queuedMessageLines = append(r.queuedMessageLines, lines...)
+			r.repaint()
 			r.mtx.Unlock()
 		}
 	}
