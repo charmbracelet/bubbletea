@@ -489,30 +489,33 @@ type printLineMessage struct {
 	messageBody string
 }
 
-// Println writes a message above your application on the next flush.
+// Printf prints above the Program. This output is unmanaged by the program and
+// will persist across renders by the Program.
 //
-// The message is not added to the area bubbletea controls, so it can be
-// used to log messages to the terminal without making them a persistent
-// part of application model.
+// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
+// its own line.
 //
-// Does not work with altScreenMode
-func Println(args ...interface{}) Msg {
-	return printLineMessage{
-		messageBody: fmt.Sprint(args...),
+// If the altscreen is active no output will be printed.
+func Println(args ...interface{}) Cmd {
+	return func() Msg {
+		return printLineMessage{
+			messageBody: fmt.Sprint(args...),
+		}
 	}
 }
 
-// Println writes a message at the top of the next flush.
+// Printf prints above the Program. It takes a format template followed by
+// values similar to fmt.Printf. This output is unmanaged by the program and
+// will persist across renders by the Program.
 //
-// The message is not added to the area bubbletea controls, so it can be
-// used to log messages to the terminal without making them a persistent
-// part of application model.
+// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
+// its own line.
 //
-// Note that unlike fmt.Printf, the message will be put on its own line.
-//
-// Does not work with altScreenMode
-func Printf(template string, args ...interface{}) Msg {
-	return printLineMessage{
-		messageBody: fmt.Sprintf(template, args...),
+// If the altscreen is active no output will be printed.
+func Printf(format string, args ...interface{}) Cmd {
+	return func() Msg {
+		return printLineMessage{
+			messageBody: fmt.Sprintf(template, args...),
+		}
 	}
 }
