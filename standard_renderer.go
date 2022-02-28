@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -25,6 +26,7 @@ const (
 type standardRenderer struct {
 	out               io.Writer
 	buf               bytes.Buffer
+	queuedMessages    []string
 	framerate         time.Duration
 	ticker            *time.Ticker
 	mtx               *sync.Mutex
@@ -53,6 +55,7 @@ func newRenderer(out io.Writer, mtx *sync.Mutex, useANSICompressor bool) rendere
 		mtx:               mtx,
 		framerate:         defaultFramerate,
 		useANSICompressor: useANSICompressor,
+		queuedMessages:    []string{},
 	}
 	if r.useANSICompressor {
 		r.out = &compressor.Writer{Forward: out}
@@ -122,22 +125,35 @@ func (r *standardRenderer) flush() {
 	out := new(bytes.Buffer)
 
 	newLines := strings.Split(r.buf.String(), "\n")
+	numLinesThisFlush := len(newLines)
 	oldLines := strings.Split(r.lastRender, "\n")
 	skipLines := make(map[int]struct{})
+	flushQueuedMessages := len(r.queuedMessages) > 0 && !r.altScreenActive
+
+	// Add any queued messages to this render
+	if flushQueuedMessages {
+		newLines = append(r.queuedMessages, newLines...)
+		r.queuedMessages = []string{}
+	}
 
 	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
+		skippedLines := 0
 		for i := r.linesRendered - 1; i > 0; i-- {
 			// If the number of lines we want to render hasn't increased and
 			// new line is the same as the old line we can skip rendering for
 			// this line as a performance optimization.
 			if (len(newLines) <= len(oldLines)) && (len(newLines) > i && len(oldLines) > i) && (newLines[i] == oldLines[i]) {
-				skipLines[i] = struct{}{}
-			} else if _, exists := r.ignoreLines[i]; !exists {
+				skippedLines += 1
+			} else {
+				cursorUpBy(out, skippedLines+1)
+				skippedLines = 0
+				// otherwise, clear the line so the new rendering can write into it
 				clearLine(out)
 			}
-
-			cursorUp(out)
+		}
+		if skippedLines >= 1 {
+			cursorUpBy(out, skippedLines)
 		}
 
 		if _, exists := r.ignoreLines[0]; !exists {
@@ -163,11 +179,9 @@ func (r *standardRenderer) flush() {
 		}
 	}
 
-	r.linesRendered = 0
-
 	// Paint new lines
 	for i := 0; i < len(newLines); i++ {
-		if _, skip := skipLines[r.linesRendered]; skip {
+		if _, skip := skipLines[i]; skip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
 				cursorDown(out)
@@ -192,8 +206,8 @@ func (r *standardRenderer) flush() {
 				_, _ = io.WriteString(out, "\r\n")
 			}
 		}
-		r.linesRendered++
 	}
+	r.linesRendered = numLinesThisFlush
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
@@ -383,6 +397,13 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
+
+	case printLineMessage:
+		if !r.altScreenActive {
+			r.mtx.Lock()
+			r.queuedMessages = append(r.queuedMessages, msg.messageBody)
+			r.mtx.Unlock()
+		}
 	}
 }
 
@@ -458,5 +479,37 @@ func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 			topBoundary:    topBoundary,
 			bottomBoundary: bottomBoundary,
 		}
+	}
+}
+
+type printLineMessage struct {
+	messageBody string
+}
+
+// Println writes a message above your application on the next flush.
+//
+// The message is not added to the area bubbletea controls, so it can be
+// used to log messages to the terminal without making them a persistent
+// part of application model.
+//
+// Does not work with altScreenMode
+func Println(args ...interface{}) Msg {
+	return printLineMessage{
+		messageBody: fmt.Sprint(args...),
+	}
+}
+
+// Println writes a message at the top of the next flush.
+//
+// The message is not added to the area bubbletea controls, so it can be
+// used to log messages to the terminal without making them a persistent
+// part of application model.
+//
+// Note that unlike fmt.Printf, the message will be put on its own line.
+//
+// Does not work with altScreenMode
+func Printf(template string, args ...interface{}) Msg {
+	return printLineMessage{
+		messageBody: fmt.Sprintf(template, args...),
 	}
 }

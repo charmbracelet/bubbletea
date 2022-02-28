@@ -47,6 +47,18 @@ func TestScreen(t *testing.T) {
 		})
 
 		t.Run("down", func(t *testing.T) {
+			exercise(t, func(w io.Writer) {
+				cursorDownBy(w, 3)
+			}, []byte("\x1b[3B"))
+		})
+
+		t.Run("upBy", func(t *testing.T) {
+			exercise(t, func(w io.Writer) {
+				cursorUpBy(w, 3)
+			}, []byte("\x1b[3A"))
+		})
+
+		t.Run("downBy", func(t *testing.T) {
 			exercise(t, cursorDown, []byte("\x1b[1B"))
 		})
 
