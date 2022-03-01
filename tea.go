@@ -599,8 +599,7 @@ func (p *Program) EnterAltScreen() {
 		return
 	}
 
-	fmt.Fprintf(p.output, te.CSI+te.AltScreenSeq)
-	moveCursor(p.output, 0, 0)
+	enterAltScreen(p.output)
 
 	p.altScreenActive = true
 	if p.renderer != nil {
@@ -619,7 +618,7 @@ func (p *Program) ExitAltScreen() {
 		return
 	}
 
-	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
+	exitAltScreen(p.output)
 
 	p.altScreenActive = false
 	if p.renderer != nil {

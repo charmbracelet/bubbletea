@@ -42,3 +42,12 @@ func changeScrollingRegion(w io.Writer, top, bottom int) {
 func cursorBack(w io.Writer, n int) {
 	fmt.Fprintf(w, te.CSI+te.CursorBackSeq, n)
 }
+
+func enterAltScreen(w io.Writer) {
+	fmt.Fprintf(w, te.CSI+te.AltScreenSeq)
+	moveCursor(w, 0, 0)
+}
+
+func exitAltScreen(w io.Writer) {
+	fmt.Fprintf(w, te.CSI+te.ExitAltScreenSeq)
+}
