@@ -677,6 +677,9 @@ func (p *Program) RestoreTerminal() error {
 		return err
 	}
 
-	p.renderer.repaint()
+	go func() {
+		p.msgs <- repaintMsg{}
+	}()
+
 	return nil
 }
