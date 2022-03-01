@@ -660,14 +660,15 @@ func (p *Program) DisableMouseAllMotion() {
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
-// reader.
+// reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
 	p.cancelInput()
 	return p.restoreTerminal()
 }
 
-// RestoreTerminal sets up the input reader & terminal state and triggers a
-// repaint.
+// RestoreTerminal reinitializes the Program's input reader, restores the
+// terminal to the former state when the program was running, and repaints.
+// Use it to reinitialize a Program after running ReleaseTerminal.
 func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
