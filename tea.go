@@ -93,8 +93,9 @@ type Program struct {
 	input        io.Reader // this will usually be os.Stdin.
 	cancelReader cancelreader.CancelReader
 
-	renderer        renderer
-	altScreenActive bool
+	renderer           renderer
+	altScreenActive    bool
+	altScreenWasActive bool // was the altscreen active before releasing the terminal?
 
 	// CatchPanics is incredibly useful for restoring the terminal to a usable
 	// state after a panic occurs. When this is set, Bubble Tea will recover
@@ -663,6 +664,8 @@ func (p *Program) DisableMouseAllMotion() {
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
 	p.cancelInput()
+	p.altScreenWasActive = p.altScreenActive
+	p.ExitAltScreen() // no-op if not active
 	return p.restoreTerminal()
 }
 
@@ -673,8 +676,13 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
+
 	if err := p.initCancelReader(); err != nil {
 		return err
+	}
+
+	if p.altScreenWasActive {
+		p.EnterAltScreen()
 	}
 
 	go func() {
