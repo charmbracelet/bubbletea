@@ -13,7 +13,8 @@ var (
 )
 
 type model struct {
-	err error
+	altscreenActive bool
+	err             error
 }
 
 func (m model) Init() tea.Cmd {
@@ -24,6 +25,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "a":
+			m.altscreenActive = !m.altscreenActive
+			cmd := tea.EnterAltScreen
+			if !m.altscreenActive {
+				cmd = tea.ExitAltScreen
+			}
+			return m, cmd
 		case "e":
 			if err := p.ReleaseTerminal(); err != nil {
 				m.err = err
@@ -52,7 +60,7 @@ func (m model) View() string {
 	if m.err != nil {
 		return "Error: " + m.err.Error()
 	}
-	return "Press e to open Vim. Press q to quit."
+	return "Press 'e' to open your EDITOR.\nPress 'a' to toggle the altscreen\nPress 'q' to quit.\n"
 }
 
 func main() {
