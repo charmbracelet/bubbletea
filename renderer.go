@@ -15,7 +15,10 @@ type renderer interface {
 	// output at its discretion.
 	write(string)
 
-	// Request a full re-render.
+	// Request a full re-render. Note that this will not trigger a render
+	// immediately. Rather, this method causes the next render to be a full
+	// repaint. Because of this, it's safe to call this method multiple times
+	// in succession.
 	repaint()
 
 	// Whether or not the alternate screen buffer is enabled.
@@ -25,3 +28,6 @@ type renderer interface {
 	// does not actually toggle the alternate screen buffer.
 	setAltScreen(bool)
 }
+
+// repaintMsg forces a full repaint.
+type repaintMsg struct{}
