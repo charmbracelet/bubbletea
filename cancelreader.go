@@ -30,6 +30,9 @@ type fallbackCancelReader struct {
 // actually cancel an ongoing read but will immediately return on future reads
 // if it has been cancelled.
 func newFallbackCancelReader(reader io.Reader) (cancelReader, error) {
+	if cancelReader, ok := reader.(cancelReader); ok {
+		return cancelReader, nil
+	}
 	return &fallbackCancelReader{r: reader}, nil
 }
 
