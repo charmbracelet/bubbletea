@@ -143,6 +143,7 @@ For some Bubble Tea programs in production, see:
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+* [Noted](https://github.com/torbratsberg/noted): Note viewer and manager
 
 [portal]: https://github.com/ZinoKader/portal
 
