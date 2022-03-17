@@ -321,6 +321,7 @@ For some Bubble Tea programs in production, see:
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+* [Noted](https://github.com/torbratsberg/noted): Note viewer and manager
 
 [portal]: https://github.com/ZinoKader/portal
 
