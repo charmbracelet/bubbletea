@@ -34,8 +34,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		top, right, bottom, left := docStyle.GetMargin()
-		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom)
+		h, v := docStyle.GetFrameSize()
+		m.list.SetSize(msg.Width-h, msg.Height-v)
 	}
 
 	var cmd tea.Cmd
