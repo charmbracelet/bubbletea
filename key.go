@@ -293,58 +293,72 @@ var keyNames = map[KeyType]string{
 }
 
 // Mapping for sequences to consts.
-var sequences = map[string]KeyType{
-	"\x1b[A": KeyUp,
-	"\x1b[B": KeyDown,
-	"\x1b[C": KeyRight,
-	"\x1b[D": KeyLeft,
+var sequences = map[string]Key{
+	"\x1b[A": {Type: KeyUp},
+	"\x1b[B": {Type: KeyDown},
+	"\x1b[C": {Type: KeyRight},
+	"\x1b[D": {Type: KeyLeft},
 
 	// Function keys
-	"\x1bOP":     KeyF1,
-	"\x1bOQ":     KeyF2,
-	"\x1bOR":     KeyF3,
-	"\x1bOS":     KeyF4,
-	"\x1b[15~":   KeyF5,
-	"\x1b[17~":   KeyF6,
-	"\x1b[18~":   KeyF7,
-	"\x1b[19~":   KeyF8,
-	"\x1b[20~":   KeyF9,
-	"\x1b[21~":   KeyF10,
-	"\x1b[23~":   KeyF11,
-	"\x1b[24~":   KeyF12,
-	"\x1b[1;2P":  KeyF13,
-	"\x1b[1;2Q":  KeyF14,
-	"\x1b[1;2R":  KeyF15,
-	"\x1b[1;2S":  KeyF16,
-	"\x1b[15;2~": KeyF17,
-	"\x1b[17;2~": KeyF18,
-	"\x1b[18;2~": KeyF19,
-	"\x1b[19;2~": KeyF20,
+	"\x1bOP":     {Type: KeyF1}, // vt100
+	"\x1bOQ":     {Type: KeyF2}, // vt100
+	"\x1bOR":     {Type: KeyF3}, // vt100
+	"\x1bOS":     {Type: KeyF4}, // vt100
+	"\x1b[15~":   {Type: KeyF5},
+	"\x1b[17~":   {Type: KeyF6},
+	"\x1b[18~":   {Type: KeyF7},
+	"\x1b[19~":   {Type: KeyF8},
+	"\x1b[20~":   {Type: KeyF9},
+	"\x1b[21~":   {Type: KeyF10},
+	"\x1b[23~":   {Type: KeyF11},
+	"\x1b[24~":   {Type: KeyF12},
+	"\x1b[1;2P":  {Type: KeyF13},
+	"\x1b[1;2Q":  {Type: KeyF14},
+	"\x1b[1;2R":  {Type: KeyF15},
+	"\x1b[1;2S":  {Type: KeyF16},
+	"\x1b[15;2~": {Type: KeyF17},
+	"\x1b[17;2~": {Type: KeyF18},
+	"\x1b[18;2~": {Type: KeyF19},
+	"\x1b[19;2~": {Type: KeyF20},
+
+	// Function keys with the alt modifier
+	"\x1b[1;3P":  {Type: KeyF1, Alt: true},
+	"\x1b[1;3Q":  {Type: KeyF2, Alt: true},
+	"\x1b[1;3R":  {Type: KeyF3, Alt: true},
+	"\x1b[1;3S":  {Type: KeyF4, Alt: true},
+	"\x1b[15;3~": {Type: KeyF5, Alt: true},
+	"\x1b[17;3~": {Type: KeyF6, Alt: true},
+	"\x1b[18;3~": {Type: KeyF7, Alt: true},
+	"\x1b[19;3~": {Type: KeyF8, Alt: true},
+	"\x1b[20;3~": {Type: KeyF9, Alt: true},
+	"\x1b[21;3~": {Type: KeyF10, Alt: true},
+	"\x1b[23;3~": {Type: KeyF11, Alt: true},
+	"\x1b[24;3~": {Type: KeyF12, Alt: true},
 
 	// Function keys, urxvt
-	"\x1b[11": KeyF1,
-	"\x1b[12": KeyF2,
-	"\x1b[13": KeyF3,
-	"\x1b[14": KeyF4,
-	"\x1b[15": KeyF5,
-	"\x1b[17": KeyF6,
-	"\x1b[18": KeyF7,
-	"\x1b[19": KeyF8,
-	"\x1b[20": KeyF9,
-	"\x1b[21": KeyF10,
-	"\x1b[23": KeyF11,
-	"\x1b[24": KeyF12,
-	"\x1b[25": KeyF13,
-	"\x1b[26": KeyF14,
-	"\x1b[28": KeyF15,
-	"\x1b[29": KeyF16,
-	"\x1b[31": KeyF17,
-	"\x1b[32": KeyF18,
-	"\x1b[33": KeyF19,
-	"\x1b[34": KeyF20,
+	"\x1b[11": {Type: KeyF1},
+	"\x1b[12": {Type: KeyF2},
+	"\x1b[13": {Type: KeyF3},
+	"\x1b[14": {Type: KeyF4},
+	"\x1b[15": {Type: KeyF5},
+	"\x1b[17": {Type: KeyF6},
+	"\x1b[18": {Type: KeyF7},
+	"\x1b[19": {Type: KeyF8},
+	"\x1b[20": {Type: KeyF9},
+	"\x1b[21": {Type: KeyF10},
+	"\x1b[23": {Type: KeyF11},
+	"\x1b[24": {Type: KeyF12},
+	"\x1b[25": {Type: KeyF13},
+	"\x1b[26": {Type: KeyF14},
+	"\x1b[28": {Type: KeyF15},
+	"\x1b[29": {Type: KeyF16},
+	"\x1b[31": {Type: KeyF17},
+	"\x1b[32": {Type: KeyF18},
+	"\x1b[33": {Type: KeyF19},
+	"\x1b[34": {Type: KeyF20},
 }
 
-// Mapping for hex codes to consts.
+// Mappings for hex codes to keys.
 var hexes = map[string]Key{
 	"1b5b5a":       {Type: KeyShiftTab},
 	"1b5b337e":     {Type: KeyDelete},
@@ -368,20 +382,6 @@ var hexes = map[string]Key{
 	"1b5b313b3342": {Type: KeyDown, Alt: true},
 	"1b5b313b3343": {Type: KeyRight, Alt: true},
 	"1b5b313b3344": {Type: KeyLeft, Alt: true},
-
-	// Function keys
-	"1b5b313b3350":   {Type: KeyF1, Alt: true},
-	"1b5b313b3351":   {Type: KeyF2, Alt: true},
-	"1b5b313b3352":   {Type: KeyF3, Alt: true},
-	"1b5b313b3353":   {Type: KeyF4, Alt: true},
-	"1b5b31353b337e": {Type: KeyF5, Alt: true},
-	"1b5b31373b337e": {Type: KeyF6, Alt: true},
-	"1b5b31383b337e": {Type: KeyF7, Alt: true},
-	"1b5b31393b337e": {Type: KeyF8, Alt: true},
-	"1b5b32303b337e": {Type: KeyF9, Alt: true},
-	"1b5b32313b337e": {Type: KeyF10, Alt: true},
-	"1b5b32333b337e": {Type: KeyF11, Alt: true},
-	"1b5b32343b337e": {Type: KeyF12, Alt: true},
 
 	// Powershell
 	"1b4f41": {Type: KeyUp, Alt: false},
@@ -413,9 +413,10 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	}
 
 	// Is it a special sequence, like an arrow key?
-	if k, ok := sequences[string(buf[:numBytes])]; ok {
+	seq := string(buf[:numBytes])
+	if k, ok := sequences[seq]; ok {
 		return []Msg{
-			KeyMsg(Key{Type: k}),
+			KeyMsg(k),
 		}, nil
 	}
 
