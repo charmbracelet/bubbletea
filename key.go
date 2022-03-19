@@ -212,6 +212,14 @@ const (
 	KeyF10
 	KeyF11
 	KeyF12
+	KeyF13
+	KeyF14
+	KeyF15
+	KeyF16
+	KeyF17
+	KeyF18
+	KeyF19
+	KeyF20
 )
 
 // Mapping for control keys to friendly consts.
@@ -274,14 +282,42 @@ var keyNames = map[KeyType]string{
 	KeyF10:      "f10",
 	KeyF11:      "f11",
 	KeyF12:      "f12",
+	KeyF13:      "f13",
+	KeyF14:      "f14",
+	KeyF15:      "f15",
+	KeyF16:      "f16",
+	KeyF17:      "f17",
+	KeyF18:      "f18",
+	KeyF19:      "f19",
+	KeyF20:      "f20",
 }
 
 // Mapping for sequences to consts.
 var sequences = map[string]KeyType{
-	"\x1b[A": KeyUp,
-	"\x1b[B": KeyDown,
-	"\x1b[C": KeyRight,
-	"\x1b[D": KeyLeft,
+	"\x1b[A":     KeyUp,
+	"\x1b[B":     KeyDown,
+	"\x1b[C":     KeyRight,
+	"\x1b[D":     KeyLeft,
+	"\x1bOP":     KeyF1,
+	"\x1bOQ":     KeyF2,
+	"\x1bOR":     KeyF3,
+	"\x1bOS":     KeyF4,
+	"\x1b[15~":   KeyF5,
+	"\x1b[17~":   KeyF6,
+	"\x1b[18~":   KeyF7,
+	"\x1b[19~":   KeyF8,
+	"\x1b[20~":   KeyF9,
+	"\x1b[21~":   KeyF10,
+	"\x1b[23~":   KeyF11,
+	"\x1b[24~":   KeyF12,
+	"\x1b[1;2P":  KeyF13,
+	"\x1b[1;2Q":  KeyF14,
+	"\x1b[1;2R":  KeyF15,
+	"\x1b[1;2S":  KeyF16,
+	"\x1b[15;2~": KeyF17,
+	"\x1b[17;2~": KeyF18,
+	"\x1b[18;2~": KeyF19,
+	"\x1b[19;2~": KeyF20,
 }
 
 // Mapping for hex codes to consts.
@@ -310,29 +346,17 @@ var hexes = map[string]Key{
 	"1b5b313b3344": {Type: KeyLeft, Alt: true},
 
 	// Function keys
-	"1b4f50":         {Type: KeyF1},
 	"1b5b313b3350":   {Type: KeyF1, Alt: true},
-	"1b4f51":         {Type: KeyF2},
 	"1b5b313b3351":   {Type: KeyF2, Alt: true},
-	"1b4f52":         {Type: KeyF3},
 	"1b5b313b3352":   {Type: KeyF3, Alt: true},
-	"1b4f53":         {Type: KeyF4},
 	"1b5b313b3353":   {Type: KeyF4, Alt: true},
-	"1b5b31357e":     {Type: KeyF5},
 	"1b5b31353b337e": {Type: KeyF5, Alt: true},
-	"1b5b31377e":     {Type: KeyF6},
 	"1b5b31373b337e": {Type: KeyF6, Alt: true},
-	"1b5b31387e":     {Type: KeyF7},
 	"1b5b31383b337e": {Type: KeyF7, Alt: true},
-	"1b5b31397e":     {Type: KeyF8},
 	"1b5b31393b337e": {Type: KeyF8, Alt: true},
-	"1b5b32307e":     {Type: KeyF9},
 	"1b5b32303b337e": {Type: KeyF9, Alt: true},
-	"1b5b32317e":     {Type: KeyF10},
 	"1b5b32313b337e": {Type: KeyF10, Alt: true},
-	"1b5b32337e":     {Type: KeyF11},
 	"1b5b32333b337e": {Type: KeyF11, Alt: true},
-	"1b5b32347e":     {Type: KeyF12},
 	"1b5b32343b337e": {Type: KeyF12, Alt: true},
 
 	// Powershell
