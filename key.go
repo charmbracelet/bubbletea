@@ -294,10 +294,12 @@ var keyNames = map[KeyType]string{
 
 // Mapping for sequences to consts.
 var sequences = map[string]KeyType{
-	"\x1b[A":     KeyUp,
-	"\x1b[B":     KeyDown,
-	"\x1b[C":     KeyRight,
-	"\x1b[D":     KeyLeft,
+	"\x1b[A": KeyUp,
+	"\x1b[B": KeyDown,
+	"\x1b[C": KeyRight,
+	"\x1b[D": KeyLeft,
+
+	// Function keys
 	"\x1bOP":     KeyF1,
 	"\x1bOQ":     KeyF2,
 	"\x1bOR":     KeyF3,
@@ -318,6 +320,28 @@ var sequences = map[string]KeyType{
 	"\x1b[17;2~": KeyF18,
 	"\x1b[18;2~": KeyF19,
 	"\x1b[19;2~": KeyF20,
+
+	// Function keys, urxvt
+	"\x1b[11": KeyF1,
+	"\x1b[12": KeyF2,
+	"\x1b[13": KeyF3,
+	"\x1b[14": KeyF4,
+	"\x1b[15": KeyF5,
+	"\x1b[17": KeyF6,
+	"\x1b[18": KeyF7,
+	"\x1b[19": KeyF8,
+	"\x1b[20": KeyF9,
+	"\x1b[21": KeyF10,
+	"\x1b[23": KeyF11,
+	"\x1b[24": KeyF12,
+	"\x1b[25": KeyF13,
+	"\x1b[26": KeyF14,
+	"\x1b[28": KeyF15,
+	"\x1b[29": KeyF16,
+	"\x1b[31": KeyF17,
+	"\x1b[32": KeyF18,
+	"\x1b[33": KeyF19,
+	"\x1b[34": KeyF20,
 }
 
 // Mapping for hex codes to consts.
