@@ -413,8 +413,7 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	}
 
 	// Is it a special sequence, like an arrow key?
-	seq := string(buf[:numBytes])
-	if k, ok := sequences[seq]; ok {
+	if k, ok := sequences[string(buf[:numBytes])]; ok {
 		return []Msg{
 			KeyMsg(k),
 		}, nil
