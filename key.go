@@ -292,7 +292,7 @@ var keyNames = map[KeyType]string{
 	KeyF20:      "f20",
 }
 
-// Mapping for sequences to consts.
+// Sequence mappings.
 var sequences = map[string]Key{
 	"\x1b[A": {Type: KeyUp},
 	"\x1b[B": {Type: KeyDown},
@@ -350,7 +350,7 @@ var sequences = map[string]Key{
 	"\x1b[24;3~": {Type: KeyF12, Alt: true},
 }
 
-// Mappings for hex codes to keys.
+// Hex code mappings.
 var hexes = map[string]Key{
 	"1b5b5a":       {Type: KeyShiftTab},
 	"1b5b337e":     {Type: KeyDelete},
