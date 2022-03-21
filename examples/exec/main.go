@@ -8,9 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var (
-	p *tea.Program
-)
+type editorFinishedMsg struct{ err error }
 
 type model struct {
 	altscreenActive bool
@@ -34,13 +32,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case "e":
 			c := exec.Command(os.Getenv("EDITOR")) //nolint:gosec
-			return m, tea.Exec("editor", c)
+			return m, tea.Exec(c, func(err error) tea.Msg {
+				return editorFinishedMsg{err}
+			})
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
-	case tea.ExecFinishedMsg:
-		if msg.Err != nil {
-			m.err = msg.Err
+	case editorFinishedMsg:
+		if msg.err != nil {
+			m.err = msg.err
 			return m, tea.Quit
 		}
 	}
@@ -56,8 +56,7 @@ func (m model) View() string {
 
 func main() {
 	m := model{}
-	p = tea.NewProgram(m)
-	if err := p.Start(); err != nil {
+	if err := tea.NewProgram(m).Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

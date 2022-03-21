@@ -248,29 +248,33 @@ func HideCursor() Msg {
 // resumes. It's useful for spawning other interactive applications such as
 // editors and shells from within a Program.
 //
+// To produce the command, pass an *exec.Command and a function which returns
+// a message containing the error which may have occured when running the
+// *exec.Command.
+//
+//     type VimFinishedMsg struct { err error }
+//
+//     c := exec.Command("vim file.txt")
+//
+//     cmd := Exec(c, func(err error) Msg {
+//         return VimFinishedMsg{err: error}
+//     })
+//
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
-func Exec(id string, cmd *exec.Cmd) Cmd {
+func Exec(c *exec.Cmd, fn execCallback) Cmd {
 	return func() Msg {
-		return execMsg{id: id, cmd: cmd}
+		return execMsg{cmd: c, fn: fn}
 	}
 }
 
+// execCallback is used when executing an *exec.Command to return a message
+// with an error, which may or may not be nil.
+type execCallback func(error) Msg
+
 // execMsg is used internally to run an *exec.Cmd sent with Exec.
 type execMsg struct {
-	id  string
 	cmd *exec.Cmd
-}
-
-// ExecFinishedMsg is sent afer executing an *exec.Cmd with the Exec command.
-// If an error
-type ExecFinishedMsg struct {
-	ID  string
-	Err error
-}
-
-// Error implements the Error interface.
-func (e ExecFinishedMsg) Error() string {
-	return e.Err.Error()
+	fn  execCallback
 }
 
 // hideCursorMsg is an internal command used to hide the cursor. You can send
@@ -548,7 +552,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 			case execMsg:
 				// Note: this blocks.
-				p.exec(msg.cmd, msg.id)
+				p.exec(msg.cmd, msg.fn)
 			}
 
 			// Process internal messages for the renderer.
@@ -734,10 +738,10 @@ func (p *Program) RestoreTerminal() error {
 }
 
 // exec runs an *exec.Cmd and delivers the results to the program.
-func (p *Program) exec(c *exec.Cmd, id string) {
+func (p *Program) exec(c *exec.Cmd, fn execCallback) {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
-		go p.Send(ExecFinishedMsg{ID: id, Err: err})
+		go p.Send(fn(err))
 		return
 	}
 
@@ -758,11 +762,11 @@ func (p *Program) exec(c *exec.Cmd, id string) {
 	// Execute system command.
 	if err := c.Run(); err != nil {
 		_ = p.RestoreTerminal() // also try to restore the terminal.
-		go p.Send(ExecFinishedMsg{ID: id, Err: err})
+		go p.Send(fn(err))
 		return
 	}
 
 	// Have the program re-capture input.
 	err := p.RestoreTerminal()
-	go p.Send(ExecFinishedMsg{ID: id, Err: err})
+	go p.Send(fn(err))
 }
