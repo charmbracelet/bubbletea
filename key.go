@@ -199,6 +199,14 @@ const (
 	KeyPgDown
 	KeyDelete
 	KeySpace
+	KeyCtrlUp
+	KeyCtrlDown
+	KeyCtrlRight
+	KeyCtrlLeft
+	KeyShiftUp
+	KeyShiftDown
+	KeyShiftRight
+	KeyShiftLeft
 	KeyF1
 	KeyF2
 	KeyF3
@@ -259,38 +267,46 @@ var keyNames = map[KeyType]string{
 	keyDEL: "backspace",
 
 	// Other keys.
-	KeyRunes:    "runes",
-	KeyUp:       "up",
-	KeyDown:     "down",
-	KeyRight:    "right",
-	KeySpace:    " ", // for backwards compatibility
-	KeyLeft:     "left",
-	KeyShiftTab: "shift+tab",
-	KeyHome:     "home",
-	KeyEnd:      "end",
-	KeyPgUp:     "pgup",
-	KeyPgDown:   "pgdown",
-	KeyDelete:   "delete",
-	KeyF1:       "f1",
-	KeyF2:       "f2",
-	KeyF3:       "f3",
-	KeyF4:       "f4",
-	KeyF5:       "f5",
-	KeyF6:       "f6",
-	KeyF7:       "f7",
-	KeyF8:       "f8",
-	KeyF9:       "f9",
-	KeyF10:      "f10",
-	KeyF11:      "f11",
-	KeyF12:      "f12",
-	KeyF13:      "f13",
-	KeyF14:      "f14",
-	KeyF15:      "f15",
-	KeyF16:      "f16",
-	KeyF17:      "f17",
-	KeyF18:      "f18",
-	KeyF19:      "f19",
-	KeyF20:      "f20",
+	KeyRunes:      "runes",
+	KeyUp:         "up",
+	KeyDown:       "down",
+	KeyRight:      "right",
+	KeySpace:      " ", // for backwards compatibility
+	KeyLeft:       "left",
+	KeyShiftTab:   "shift+tab",
+	KeyHome:       "home",
+	KeyEnd:        "end",
+	KeyPgUp:       "pgup",
+	KeyPgDown:     "pgdown",
+	KeyDelete:     "delete",
+	KeyCtrlUp:     "ctrl+up",
+	KeyCtrlDown:   "ctrl+down",
+	KeyCtrlRight:  "ctrl+right",
+	KeyCtrlLeft:   "ctrl+left",
+	KeyShiftUp:    "shift+up",
+	KeyShiftDown:  "shift+down",
+	KeyShiftRight: "shift+right",
+	KeyShiftLeft:  "shift+left",
+	KeyF1:         "f1",
+	KeyF2:         "f2",
+	KeyF3:         "f3",
+	KeyF4:         "f4",
+	KeyF5:         "f5",
+	KeyF6:         "f6",
+	KeyF7:         "f7",
+	KeyF8:         "f8",
+	KeyF9:         "f9",
+	KeyF10:        "f10",
+	KeyF11:        "f11",
+	KeyF12:        "f12",
+	KeyF13:        "f13",
+	KeyF14:        "f14",
+	KeyF15:        "f15",
+	KeyF16:        "f16",
+	KeyF17:        "f17",
+	KeyF18:        "f18",
+	KeyF19:        "f19",
+	KeyF20:        "f20",
 }
 
 // Sequence mappings.
@@ -389,6 +405,14 @@ var hexes = map[string]Key{
 	"1b5b313b3342": {Type: KeyDown, Alt: true},
 	"1b5b313b3343": {Type: KeyRight, Alt: true},
 	"1b5b313b3344": {Type: KeyLeft, Alt: true},
+	"1b5b313b3541": {Type: KeyCtrlUp},
+	"1b5b313b3542": {Type: KeyCtrlDown},
+	"1b5b313b3543": {Type: KeyCtrlRight},
+	"1b5b313b3544": {Type: KeyCtrlLeft},
+	"1b5b313b3241": {Type: KeyShiftUp},
+	"1b5b313b3242": {Type: KeyShiftDown},
+	"1b5b313b3243": {Type: KeyShiftRight},
+	"1b5b313b3244": {Type: KeyShiftLeft},
 
 	// Powershell
 	"1b4f41": {Type: KeyUp, Alt: false},
