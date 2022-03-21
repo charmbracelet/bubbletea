@@ -200,6 +200,26 @@ const (
 	KeyPgUp
 	KeyPgDown
 	KeyDelete
+	KeyF1
+	KeyF2
+	KeyF3
+	KeyF4
+	KeyF5
+	KeyF6
+	KeyF7
+	KeyF8
+	KeyF9
+	KeyF10
+	KeyF11
+	KeyF12
+	KeyF13
+	KeyF14
+	KeyF15
+	KeyF16
+	KeyF17
+	KeyF18
+	KeyF19
+	KeyF20
 )
 
 // Mapping for control keys to friendly consts.
@@ -249,18 +269,102 @@ var keyNames = map[KeyType]string{
 	KeyEnd:      "end",
 	KeyPgUp:     "pgup",
 	KeyPgDown:   "pgdown",
+	KeyDelete:   "delete",
+	KeyF1:       "f1",
+	KeyF2:       "f2",
+	KeyF3:       "f3",
+	KeyF4:       "f4",
+	KeyF5:       "f5",
+	KeyF6:       "f6",
+	KeyF7:       "f7",
+	KeyF8:       "f8",
+	KeyF9:       "f9",
+	KeyF10:      "f10",
+	KeyF11:      "f11",
+	KeyF12:      "f12",
+	KeyF13:      "f13",
+	KeyF14:      "f14",
+	KeyF15:      "f15",
+	KeyF16:      "f16",
+	KeyF17:      "f17",
+	KeyF18:      "f18",
+	KeyF19:      "f19",
+	KeyF20:      "f20",
 }
 
-// Mapping for sequences to consts.
-var sequences = map[string]KeyType{
-	"\x1b[A": KeyUp,
-	"\x1b[B": KeyDown,
-	"\x1b[C": KeyRight,
-	"\x1b[D": KeyLeft,
+// Sequence mappings.
+var sequences = map[string]Key{
+	"\x1b[A": {Type: KeyUp},
+	"\x1b[B": {Type: KeyDown},
+	"\x1b[C": {Type: KeyRight},
+	"\x1b[D": {Type: KeyLeft},
+
+	// Function keys, X11
+	"\x1bOP":     {Type: KeyF1},  // vt100
+	"\x1bOQ":     {Type: KeyF2},  // vt100
+	"\x1bOR":     {Type: KeyF3},  // vt100
+	"\x1bOS":     {Type: KeyF4},  // vt100
+	"\x1b[15~":   {Type: KeyF5},  // also urxvt
+	"\x1b[17~":   {Type: KeyF6},  // also urxvt
+	"\x1b[18~":   {Type: KeyF7},  // also urxvt
+	"\x1b[19~":   {Type: KeyF8},  // also urxvt
+	"\x1b[20~":   {Type: KeyF9},  // also urxvt
+	"\x1b[21~":   {Type: KeyF10}, // also urxvt
+	"\x1b[23~":   {Type: KeyF11}, // also urxvt
+	"\x1b[24~":   {Type: KeyF12}, // also urxvt
+	"\x1b[1;2P":  {Type: KeyF13},
+	"\x1b[1;2Q":  {Type: KeyF14},
+	"\x1b[1;2R":  {Type: KeyF15},
+	"\x1b[1;2S":  {Type: KeyF16},
+	"\x1b[15;2~": {Type: KeyF17},
+	"\x1b[17;2~": {Type: KeyF18},
+	"\x1b[18;2~": {Type: KeyF19},
+	"\x1b[19;2~": {Type: KeyF20},
+
+	// Function keys with the alt modifier, X11
+	"\x1b[1;3P":  {Type: KeyF1, Alt: true},
+	"\x1b[1;3Q":  {Type: KeyF2, Alt: true},
+	"\x1b[1;3R":  {Type: KeyF3, Alt: true},
+	"\x1b[1;3S":  {Type: KeyF4, Alt: true},
+	"\x1b[15;3~": {Type: KeyF5, Alt: true},
+	"\x1b[17;3~": {Type: KeyF6, Alt: true},
+	"\x1b[18;3~": {Type: KeyF7, Alt: true},
+	"\x1b[19;3~": {Type: KeyF8, Alt: true},
+	"\x1b[20;3~": {Type: KeyF9, Alt: true},
+	"\x1b[21;3~": {Type: KeyF10, Alt: true},
+	"\x1b[23;3~": {Type: KeyF11, Alt: true},
+	"\x1b[24;3~": {Type: KeyF12, Alt: true},
+
+	// Function keys, urxvt
+	"\x1b[11~": {Type: KeyF1},
+	"\x1b[12~": {Type: KeyF2},
+	"\x1b[13~": {Type: KeyF3},
+	"\x1b[14~": {Type: KeyF4},
+	"\x1b[25~": {Type: KeyF13},
+	"\x1b[26~": {Type: KeyF14},
+	"\x1b[28~": {Type: KeyF15},
+	"\x1b[29~": {Type: KeyF16},
+	"\x1b[31~": {Type: KeyF17},
+	"\x1b[32~": {Type: KeyF18},
+	"\x1b[33~": {Type: KeyF19},
+	"\x1b[34~": {Type: KeyF20},
+
+	// Function keys with the alt modifier, urxvt
+	"\x1b\x1b[11~": {Type: KeyF1, Alt: true},
+	"\x1b\x1b[12~": {Type: KeyF2, Alt: true},
+	"\x1b\x1b[13~": {Type: KeyF3, Alt: true},
+	"\x1b\x1b[14~": {Type: KeyF4, Alt: true},
+	"\x1b\x1b[25~": {Type: KeyF13, Alt: true},
+	"\x1b\x1b[26~": {Type: KeyF14, Alt: true},
+	"\x1b\x1b[28~": {Type: KeyF15, Alt: true},
+	"\x1b\x1b[29~": {Type: KeyF16, Alt: true},
+	"\x1b\x1b[31~": {Type: KeyF17, Alt: true},
+	"\x1b\x1b[32~": {Type: KeyF18, Alt: true},
+	"\x1b\x1b[33~": {Type: KeyF19, Alt: true},
+	"\x1b\x1b[34~": {Type: KeyF20, Alt: true},
 }
 
-// Mapping for hex codes to consts. Unclear why these won't register as
-// sequences.
+// Hex code mappings.
 var hexes = map[string]Key{
 	"1b5b5a":       {Type: KeyShiftTab},
 	"1b5b337e":     {Type: KeyDelete},
@@ -317,7 +421,7 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	// Is it a special sequence, like an arrow key?
 	if k, ok := sequences[string(buf[:numBytes])]; ok {
 		return []Msg{
-			KeyMsg(Key{Type: k}),
+			KeyMsg(k),
 		}, nil
 	}
 
