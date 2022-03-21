@@ -254,7 +254,7 @@ func HideCursor() Msg {
 //
 //     type VimFinishedMsg struct { err error }
 //
-//     c := exec.Command("vim file.txt")
+//     c := exec.Command("vim", "file.txt")
 //
 //     cmd := Exec(c, func(err error) Msg {
 //         return VimFinishedMsg{err: error}
@@ -262,7 +262,7 @@ func HideCursor() Msg {
 //
 // Or, if you don't care about errors you could simply:
 //
-//     cmd := Exec(exec.Command(vim file.txt"), nil)
+//     cmd := Exec(exec.Command("vim", "file.txt"), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
 func Exec(c *exec.Cmd, fn execCallback) Cmd {
