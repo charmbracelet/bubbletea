@@ -33,23 +33,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, cmd
 		case "e":
-			if err := p.ReleaseTerminal(); err != nil {
-				m.err = err
-				return m, nil
-			}
-
 			c := exec.Command(os.Getenv("EDITOR")) //nolint:gosec
-			c.Stdin = os.Stdin
-			c.Stdout = os.Stdout
-			c.Stderr = os.Stderr
-			m.err = c.Run()
-
-			if err := p.RestoreTerminal(); err != nil {
-				m.err = err
-			}
-
-			return m, nil
+			return m, tea.Exec("editor", c)
 		case "ctrl+c", "q":
+			return m, tea.Quit
+		}
+	case tea.ExecFinishedMsg:
+		if msg.Err != nil {
+			m.err = msg.Err
 			return m, tea.Quit
 		}
 	}

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"sync"
@@ -241,6 +242,36 @@ type WindowSizeMsg struct {
 // Tea program's lifetime. You will most likely not need to use this command.
 func HideCursor() Msg {
 	return hideCursorMsg{}
+}
+
+// Exec runs the given *exec.Cmd in a blocking fashion, effectively pausing the
+// Program while the command is running. After the *exec.Cmd exists the Program
+// resumes. It's useful for spawning other interactive applications such as
+// editors and shells from within a Program.
+//
+// For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
+func Exec(id string, cmd *exec.Cmd) Cmd {
+	return func() Msg {
+		return execMsg{id: id, cmd: cmd}
+	}
+}
+
+// execMsg is used internally to run an *exec.Cmd sent with Exec.
+type execMsg struct {
+	id  string
+	cmd *exec.Cmd
+}
+
+// ExecFinishedMsg is sent afer executing an *exec.Cmd with the Exec command.
+// If an error
+type ExecFinishedMsg struct {
+	ID  string
+	Err error
+}
+
+// Error implements the Error interface.
+func (e ExecFinishedMsg) Error() string {
+	return e.Err.Error()
 }
 
 // hideCursorMsg is an internal command used to hide the cursor. You can send
@@ -515,6 +546,10 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 			case hideCursorMsg:
 				hideCursor(p.output)
+
+			case execMsg:
+				// Note: this blocks.
+				p.exec(msg.cmd, msg.id)
 			}
 
 			// Process internal messages for the renderer.
@@ -685,9 +720,41 @@ func (p *Program) RestoreTerminal() error {
 		p.EnterAltScreen()
 	}
 
-	go func() {
-		p.msgs <- repaintMsg{}
-	}()
+	go p.Send(repaintMsg{})
 
 	return nil
+}
+
+// exec runs an *exec.Cmd and delivers the results to the program.
+func (p *Program) exec(c *exec.Cmd, id string) {
+	if err := p.ReleaseTerminal(); err != nil {
+		// If we can't release input, abort.
+		go p.Send(ExecFinishedMsg{ID: id, Err: err})
+		return
+	}
+
+	// If unset, have the command use the same input and output
+	// as the terminal.
+	if c.Stdin == nil {
+		c.Stdin = p.input
+	}
+	if c.Stdout == nil {
+		c.Stdout = p.output
+	}
+
+	// If unset, use stderr for the command's stderr
+	if c.Stderr == nil {
+		c.Stderr = os.Stderr
+	}
+
+	// Execute system command.
+	if err := c.Run(); err != nil {
+		_ = p.RestoreTerminal() // also try to restore the terminal.
+		go p.Send(ExecFinishedMsg{ID: id, Err: err})
+		return
+	}
+
+	// Have the program re-capture input.
+	err := p.RestoreTerminal()
+	go p.Send(ExecFinishedMsg{ID: id, Err: err})
 }
