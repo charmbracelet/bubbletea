@@ -250,7 +250,7 @@ func HideCursor() Msg {
 // editors and shells from within a Program.
 //
 // To produce the command, pass an *exec.Command and a function which returns
-// a message containing the error which may have occured when running the
+// a message containing the error which may have occurred when running the
 // *exec.Command.
 //
 //     type VimFinishedMsg struct { err error }
