@@ -260,6 +260,10 @@ func HideCursor() Msg {
 //         return VimFinishedMsg{err: error}
 //     })
 //
+// Or, if you don't care about errors you could simply:
+//
+//     cmd := Exec(exec.Command(vim file.txt"), nil)
+//
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
 func Exec(c *exec.Cmd, fn execCallback) Cmd {
 	return func() Msg {
@@ -741,7 +745,9 @@ func (p *Program) RestoreTerminal() error {
 func (p *Program) exec(c *exec.Cmd, fn execCallback) {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
-		go p.Send(fn(err))
+		if fn != nil {
+			go p.Send(fn(err))
+		}
 		return
 	}
 
@@ -762,11 +768,15 @@ func (p *Program) exec(c *exec.Cmd, fn execCallback) {
 	// Execute system command.
 	if err := c.Run(); err != nil {
 		_ = p.RestoreTerminal() // also try to restore the terminal.
-		go p.Send(fn(err))
+		if fn != nil {
+			go p.Send(fn(err))
+		}
 		return
 	}
 
 	// Have the program re-capture input.
 	err := p.RestoreTerminal()
-	go p.Send(fn(err))
+	if fn != nil {
+		go p.Send(fn(err))
+	}
 }
