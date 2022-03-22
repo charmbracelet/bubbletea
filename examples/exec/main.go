@@ -49,7 +49,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	if m.err != nil {
-		return "Error: " + m.err.Error()
+		return "Error: " + m.err.Error() + "\n"
 	}
 	return "Press 'e' to open your EDITOR.\nPress 'a' to toggle the altscreen\nPress 'q' to quit.\n"
 }
