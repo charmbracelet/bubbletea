@@ -111,6 +111,14 @@ type Program struct {
 	windowsStdin *os.File //nolint:golint,structcheck,unused
 }
 
+// Write gives direct access to the underlying Writer. Useful for an inline
+// program that wants to print things to the terminal during its execution.
+func (p Program) Write(b []byte) (n int, err error) {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+	return p.output.Write(b)
+}
+
 // Batch performs a bunch of commands concurrently with no ordering guarantees
 // about the results. Use a Batch to return several commands.
 //
