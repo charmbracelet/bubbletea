@@ -24,6 +24,19 @@ regions which works alongside the main renderer, and mouse support.
 To get started, see the tutorial below, the [examples][examples], the
 [docs][docs] and some common [resources](#libraries-we-use-with-bubble-tea).
 
+Note: If you're working with submodels, you don't need to worry about using commands to send data to your main model as the data flows downward. 
+This means that the parent knows about the children. 
+
+### So, when do things run?
+
+**Init** - `Init()` is called when the program starts, its role is to fire off initial Commands  
+
+**Update** - `Update()` runs when a command is triggered, this is any function that returns a `tea.Msg`  
+
+**View** - `View()` is called automatically after `Update()` to redraw the program with the updated state.  
+
+Definitely check out the ELM architecture resource above to learn more about how ELM works. Also, hop into our [slack](https://charm.sh/slack) if you have any questions or want to be part of the community!
+
 ## By the way
 
 Be sure to check out [Bubbles][bubbles], a library of common UI components for Bubble Tea.
