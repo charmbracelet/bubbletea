@@ -52,7 +52,8 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
 
 We recommend starting with our [basics tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics) followed by our [commands tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands) to understand what you can do with `tea.Cmd` and how they're used in BubbleTea. 
 
-Additionally, we have have [documentation](https://github.com/charmbracelet/bubbletea/tree/master/docs) that include frequently asked questions, issues, and more in-depth explanations on specific topics. 
+Additionally, we have have [documentation](https://github.com/charmbracelet/bubbletea/tree/master/docs) that include frequently asked questions, issues, and more in-depth explanations on specific topics.
+Don't forget about our [examples](https://github.com/charmbracelet/bubbletea/tree/master/examples).
 
 ## Debugging with Delve
 
