@@ -563,9 +563,6 @@ func (p *Program) Start() error {
 //
 // If the program is not running this this will be a no-op, so it's safe to
 // send messages if the program is unstarted, or has exited.
-//
-// This method is currently provisional. The method signature may alter
-// slightly, or it may be removed in a future version of this package.
 func (p *Program) Send(msg Msg) {
 	p.msgs <- msg
 }
@@ -577,18 +574,12 @@ func (p *Program) Send(msg Msg) {
 //
 // If the program is not running this will be a no-op, so it's safe to call
 // if the program is unstarted or has already exited.
-//
-// This method is currently provisional. The method signature may alter
-// slightly, or it may be removed in a future version of this package.
 func (p *Program) Quit() {
 	p.Send(Quit())
 }
 
 // Kill stops the program immediately and restores the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
-//
-// This method is currently provisional. The method signature may alter
-// slightly, or it may be removed in a future version of this package.
 func (p *Program) Kill() {
 	p.killc <- true
 	p.shutdown(true)
