@@ -104,6 +104,8 @@ type Program struct {
 	// is on by default.
 	CatchPanics bool
 
+	ignoreSignals bool
+
 	killc chan bool
 
 	console console.Console
@@ -387,10 +389,16 @@ func (p *Program) StartReturningModel() (Model, error) {
 			close(sigintLoopDone)
 		}()
 
-		select {
-		case <-p.ctx.Done():
-		case <-sig:
-			p.msgs <- quitMsg{}
+		for {
+			select {
+			case <-p.ctx.Done():
+				return
+			case <-sig:
+				if !p.ignoreSignals {
+					p.msgs <- quitMsg{}
+					return
+				}
+			}
 		}
 	}()
 
@@ -706,6 +714,7 @@ func (p *Program) DisableMouseAllMotion() {
 // ReleaseTerminal restores the original terminal state and cancels the input
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
+	p.ignoreSignals = true
 	p.cancelInput()
 	p.altScreenWasActive = p.altScreenActive
 	p.ExitAltScreen() // no-op if not active
@@ -716,6 +725,8 @@ func (p *Program) ReleaseTerminal() error {
 // terminal to the former state when the program was running, and repaints.
 // Use it to reinitialize a Program after running ReleaseTerminal.
 func (p *Program) RestoreTerminal() error {
+	p.ignoreSignals = false
+
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
