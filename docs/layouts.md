@@ -75,4 +75,4 @@ func (m model) View() string {
 }
 ```
 
-If course, in a real-world scenario there would be more logic in your Update and View, but this is the gist of it.
+Of course, in a real-world scenario there would be more logic in your `Update` and `View`, but this is the gist of it.
