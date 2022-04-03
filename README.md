@@ -257,7 +257,7 @@ there are [Go Docs][docs].
 
 ## Debugging with Delve
 
-Since Bubble Tea apps assume control of of stdin and stdout, you’ll need to run
+Since Bubble Tea apps assume control of stdin and stdout, you’ll need to run
 delve in headless mode and then connect to it:
 
 ```bash
