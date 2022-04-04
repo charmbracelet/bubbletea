@@ -32,7 +32,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case "e":
 			c := exec.Command(os.Getenv("EDITOR")) //nolint:gosec
-			return m, tea.Exec(c, func(err error) tea.Msg {
+			return m, tea.Exec(tea.WrapExecCommand(c), func(err error) tea.Msg {
 				return editorFinishedMsg{err}
 			})
 		case "ctrl+c", "q":

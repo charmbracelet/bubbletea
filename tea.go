@@ -268,7 +268,7 @@ func HideCursor() Msg {
 //     cmd := Exec(exec.Command("vim", "file.txt"), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
-func Exec(c *exec.Cmd, fn execCallback) Cmd {
+func Exec(c ExecCommand, fn execCallback) Cmd {
 	return func() Msg {
 		return execMsg{cmd: c, fn: fn}
 	}
@@ -280,7 +280,7 @@ type execCallback func(error) Msg
 
 // execMsg is used internally to run an *exec.Cmd sent with Exec.
 type execMsg struct {
-	cmd *exec.Cmd
+	cmd ExecCommand
 	fn  execCallback
 }
 
@@ -744,8 +744,45 @@ func (p *Program) RestoreTerminal() error {
 	return nil
 }
 
-// exec runs an *exec.Cmd and delivers the results to the program.
-func (p *Program) exec(c *exec.Cmd, fn execCallback) {
+// ExecCommand can be implemented to execute things in the current
+// terminal using the Exec message.
+type ExecCommand interface {
+	Run() error
+	SetStdin(io.Reader)
+	SetStdout(io.Writer)
+	SetStderr(io.Writer)
+}
+
+// WrapExecCommand wraps a exec.Cmd to be compatible with the Command interface.
+func WrapExecCommand(c *exec.Cmd) ExecCommand {
+	return &osExecCommand{Cmd: c}
+}
+
+type osExecCommand struct{ *exec.Cmd }
+
+// SetStdin to comply with the Command interface.
+func (c *osExecCommand) SetStdin(r io.Reader) {
+	if c.Stdin == nil {
+		c.Stdin = r
+	}
+}
+
+// SetStdout to comply with the Command interface.
+func (c *osExecCommand) SetStdout(w io.Writer) {
+	if c.Stdout == nil {
+		c.Stdout = w
+	}
+}
+
+// SetStderr to comply with the Command interface.
+func (c *osExecCommand) SetStderr(w io.Writer) {
+	if c.Stderr == nil {
+		c.Stderr = w
+	}
+}
+
+// exec runs a Command and delivers the results to the program.
+func (p *Program) exec(c ExecCommand, fn execCallback) {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
 		if fn != nil {
@@ -756,17 +793,10 @@ func (p *Program) exec(c *exec.Cmd, fn execCallback) {
 
 	// If unset, have the command use the same input and output
 	// as the terminal.
-	if c.Stdin == nil {
-		c.Stdin = p.input
-	}
-	if c.Stdout == nil {
-		c.Stdout = p.output
-	}
-
+	c.SetStdin(p.input)
+	c.SetStdout(p.output)
 	// If unset, use stderr for the command's stderr
-	if c.Stderr == nil {
-		c.Stderr = os.Stderr
-	}
+	c.SetStderr(os.Stderr)
 
 	// Execute system command.
 	if err := c.Run(); err != nil {
