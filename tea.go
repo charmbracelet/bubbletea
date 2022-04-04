@@ -267,7 +267,7 @@ func HideCursor() Msg {
 //     cmd := Exec(exec.Command("vim", "file.txt"), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
-func Exec(c Command, fn execCallback) Cmd {
+func Exec(c ExecCommand, fn execCallback) Cmd {
 	return func() Msg {
 		return execMsg{cmd: c, fn: fn}
 	}
@@ -279,7 +279,7 @@ type execCallback func(error) Msg
 
 // execMsg is used internally to run an *exec.Cmd sent with Exec.
 type execMsg struct {
-	cmd Command
+	cmd ExecCommand
 	fn  execCallback
 }
 
@@ -752,43 +752,45 @@ func (p *Program) RestoreTerminal() error {
 	return nil
 }
 
-// Command can be implemented to execute things in the current terminal using
-// the Exec message.
-type Command interface {
+// ExecCommand can be implemented to execute things in the current
+// terminal using the Exec message.
+type ExecCommand interface {
 	Run() error
 	SetStdin(io.Reader)
 	SetStdout(io.Writer)
 	SetStderr(io.Writer)
 }
 
-var _ Command = &ExecCmd{}
+// WrapExecCommand wraps a exec.Cmd to be compatible with the Command interface.
+func WrapExecCommand(c *exec.Cmd) ExecCommand {
+	return &osExecCommand{Cmd: c}
+}
 
-// ExecCmd wraps a exec.Cmd to be compatible with the Command interface.
-type ExecCmd struct{ *exec.Cmd }
+type osExecCommand struct{ *exec.Cmd }
 
 // SetStdin to comply with the Command interface.
-func (c *ExecCmd) SetStdin(r io.Reader) {
+func (c *osExecCommand) SetStdin(r io.Reader) {
 	if c.Stdin == nil {
 		c.Stdin = r
 	}
 }
 
 // SetStdout to comply with the Command interface.
-func (c *ExecCmd) SetStdout(w io.Writer) {
+func (c *osExecCommand) SetStdout(w io.Writer) {
 	if c.Stdout == nil {
 		c.Stdout = w
 	}
 }
 
 // SetStderr to comply with the Command interface.
-func (c *ExecCmd) SetStderr(w io.Writer) {
+func (c *osExecCommand) SetStderr(w io.Writer) {
 	if c.Stderr == nil {
 		c.Stderr = w
 	}
 }
 
 // exec runs a Command and delivers the results to the program.
-func (p *Program) exec(c Command, fn execCallback) {
+func (p *Program) exec(c ExecCommand, fn execCallback) {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
 		if fn != nil {
