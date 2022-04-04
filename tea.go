@@ -268,20 +268,20 @@ func HideCursor() Msg {
 //     cmd := Exec(exec.Command("vim", "file.txt"), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
-func Exec(c ExecCommand, fn execCallback) Cmd {
+func Exec(c ExecCommand, fn ExecCallback) Cmd {
 	return func() Msg {
 		return execMsg{cmd: c, fn: fn}
 	}
 }
 
-// execCallback is used when executing an *exec.Command to return a message
+// ExecCallback is used when executing an *exec.Command to return a message
 // with an error, which may or may not be nil.
-type execCallback func(error) Msg
+type ExecCallback func(error) Msg
 
 // execMsg is used internally to run an *exec.Cmd sent with Exec.
 type execMsg struct {
 	cmd ExecCommand
-	fn  execCallback
+	fn  ExecCallback
 }
 
 // hideCursorMsg is an internal command used to hide the cursor. You can send
@@ -782,7 +782,7 @@ func (c *osExecCommand) SetStderr(w io.Writer) {
 }
 
 // exec runs a Command and delivers the results to the program.
-func (p *Program) exec(c ExecCommand, fn execCallback) {
+func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
 		if fn != nil {
