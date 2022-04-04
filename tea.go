@@ -764,22 +764,23 @@ type Command interface {
 var _ Command = &ExecCmd{}
 
 // ExecCmd wraps a exec.Cmd to be compatible with the Command interface.
-type ExecCmd struct {
-	*exec.Cmd
-}
+type ExecCmd struct{ *exec.Cmd }
 
+// SetStdin to comply with the Command interface.
 func (c *ExecCmd) SetStdin(r io.Reader) {
 	if c.Stdin == nil {
 		c.Stdin = r
 	}
 }
 
+// SetStdout to comply with the Command interface.
 func (c *ExecCmd) SetStdout(w io.Writer) {
 	if c.Stdout == nil {
 		c.Stdout = w
 	}
 }
 
+// SetStderr to comply with the Command interface.
 func (c *ExecCmd) SetStderr(w io.Writer) {
 	if c.Stderr == nil {
 		c.Stderr = w
