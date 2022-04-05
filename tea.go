@@ -246,7 +246,7 @@ func HideCursor() Msg {
 	return hideCursorMsg{}
 }
 
-// Exec runs the given *exec.Cmd in a blocking fashion, effectively pausing the
+// Exec runs the given ExecCommand in a blocking fashion, effectively pausing the
 // Program while the command is running. After the *exec.Cmd exists the Program
 // resumes. It's useful for spawning other interactive applications such as
 // editors and shells from within a Program.
@@ -259,13 +259,13 @@ func HideCursor() Msg {
 //
 //     c := exec.Command("vim", "file.txt")
 //
-//     cmd := Exec(c, func(err error) Msg {
+//     cmd := Exec(WrapExecCommand(c), func(err error) Msg {
 //         return VimFinishedMsg{err: error}
 //     })
 //
 // Or, if you don't care about errors you could simply:
 //
-//     cmd := Exec(exec.Command("vim", "file.txt"), nil)
+//     cmd := Exec(WrapExecCommand(exec.Command("vim", "file.txt")), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
 func Exec(c ExecCommand, fn ExecCallback) Cmd {
@@ -278,7 +278,7 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 // with an error, which may or may not be nil.
 type ExecCallback func(error) Msg
 
-// execMsg is used internally to run an *exec.Cmd sent with Exec.
+// execMsg is used internally to run an ExecCommand sent with Exec.
 type execMsg struct {
 	cmd ExecCommand
 	fn  ExecCallback
@@ -762,6 +762,7 @@ type osExecCommand struct{ *exec.Cmd }
 
 // SetStdin to comply with the Command interface.
 func (c *osExecCommand) SetStdin(r io.Reader) {
+	// If unset, have the command use the same input as the terminal.
 	if c.Stdin == nil {
 		c.Stdin = r
 	}
@@ -769,6 +770,7 @@ func (c *osExecCommand) SetStdin(r io.Reader) {
 
 // SetStdout to comply with the Command interface.
 func (c *osExecCommand) SetStdout(w io.Writer) {
+	// If unset, have the command use the same output as the terminal.
 	if c.Stdout == nil {
 		c.Stdout = w
 	}
@@ -776,6 +778,7 @@ func (c *osExecCommand) SetStdout(w io.Writer) {
 
 // SetStderr to comply with the Command interface.
 func (c *osExecCommand) SetStderr(w io.Writer) {
+	// If unset, use stderr for the command's stderr
 	if c.Stderr == nil {
 		c.Stderr = w
 	}
@@ -791,11 +794,8 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 		return
 	}
 
-	// If unset, have the command use the same input and output
-	// as the terminal.
 	c.SetStdin(p.input)
 	c.SetStdout(p.output)
-	// If unset, use stderr for the command's stderr
 	c.SetStderr(os.Stderr)
 
 	// Execute system command.
