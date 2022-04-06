@@ -246,10 +246,10 @@ func HideCursor() Msg {
 	return hideCursorMsg{}
 }
 
-// Exec runs the given ExecCommand in a blocking fashion, effectively pausing the
-// Program while the command is running. After the *exec.Cmd exists the Program
-// resumes. It's useful for spawning other interactive applications such as
-// editors and shells from within a Program.
+// Exec runs the given ExecCommand in a blocking fashion, effectively pausing
+// the Program while the command is running. After the *exec.Cmd exists the
+// Program resumes. It's useful for spawning other interactive applications
+// such as editors and shells from within a Program.
 //
 // To produce the command, pass an *exec.Command and a function which returns
 // a message containing the error which may have occurred when running the
@@ -756,14 +756,17 @@ type ExecCommand interface {
 	SetStderr(io.Writer)
 }
 
-// WrapExecCommand wraps a exec.Cmd to be compatible with the Command interface.
+// WrapExecCommand wraps an exec.Cmd so that it satisfies the ExecCommand
+// interface.
 func WrapExecCommand(c *exec.Cmd) ExecCommand {
 	return &osExecCommand{Cmd: c}
 }
 
+// osExecCommand is a layer over an exec.Cmd that satisfies the ExecCommand
+// interface.
 type osExecCommand struct{ *exec.Cmd }
 
-// SetStdin to comply with the Command interface.
+// SetStdin sets stdin on underlying exec.Cmd to the given io.Reader.
 func (c *osExecCommand) SetStdin(r io.Reader) {
 	// If unset, have the command use the same input as the terminal.
 	if c.Stdin == nil {
@@ -771,7 +774,7 @@ func (c *osExecCommand) SetStdin(r io.Reader) {
 	}
 }
 
-// SetStdout to comply with the Command interface.
+// SetStdout sets stdout on underlying exec.Cmd to the given io.Writer.
 func (c *osExecCommand) SetStdout(w io.Writer) {
 	// If unset, have the command use the same output as the terminal.
 	if c.Stdout == nil {
@@ -779,7 +782,7 @@ func (c *osExecCommand) SetStdout(w io.Writer) {
 	}
 }
 
-// SetStderr to comply with the Command interface.
+// SetStderr sets stderr on the underlying exec.Cmd to the given io.Writer.
 func (c *osExecCommand) SetStderr(w io.Writer) {
 	// If unset, use stderr for the command's stderr
 	if c.Stderr == nil {
@@ -787,7 +790,7 @@ func (c *osExecCommand) SetStderr(w io.Writer) {
 	}
 }
 
-// exec runs a Command and delivers the results to the program.
+// exec runs an ExecCommand and delivers the results to the program as a Msg.
 func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
