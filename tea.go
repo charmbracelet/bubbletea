@@ -745,7 +745,7 @@ func (p *Program) RestoreTerminal() error {
 }
 
 // ExecCommand can be implemented to execute things in the current
-// terminal using the Exec message.
+// terminal using the Exec Cmd.
 type ExecCommand interface {
 	Run() error
 	SetStdin(io.Reader)
