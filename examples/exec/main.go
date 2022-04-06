@@ -10,6 +10,13 @@ import (
 
 type editorFinishedMsg struct{ err error }
 
+func openEditor() tea.Cmd {
+	c := exec.Command(os.Getenv("EDITOR")) //nolint:gosec
+	return tea.Exec(tea.WrapExecCommand(c), func(err error) tea.Msg {
+		return editorFinishedMsg{err}
+	})
+}
+
 type model struct {
 	altscreenActive bool
 	err             error
@@ -31,10 +38,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, cmd
 		case "e":
-			c := exec.Command(os.Getenv("EDITOR")) //nolint:gosec
-			return m, tea.Exec(tea.WrapExecCommand(c), func(err error) tea.Msg {
-				return editorFinishedMsg{err}
-			})
+			return m, openEditor()
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
