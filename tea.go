@@ -717,7 +717,10 @@ func (p *Program) ReleaseTerminal() error {
 	p.ignoreSignals = true
 	p.cancelInput()
 	p.altScreenWasActive = p.altScreenActive
-	p.ExitAltScreen() // no-op if not active
+	if p.altScreenActive {
+		p.ExitAltScreen()
+		time.Sleep(time.Millisecond * 10) // give the terminal a moment to catch up
+	}
 	return p.restoreTerminal()
 }
 
