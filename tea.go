@@ -628,7 +628,7 @@ func (p *Program) shutdown(kill bool) {
 	p.ExitAltScreen()
 	p.DisableMouseCellMotion()
 	p.DisableMouseAllMotion()
-	_ = p.restoreTerminal()
+	_ = p.restoreTerminalState()
 }
 
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
@@ -721,7 +721,7 @@ func (p *Program) ReleaseTerminal() error {
 		p.ExitAltScreen()
 		time.Sleep(time.Millisecond * 10) // give the terminal a moment to catch up
 	}
-	return p.restoreTerminal()
+	return p.restoreTerminalState()
 }
 
 // RestoreTerminal reinitializes the Program's input reader, restores the
