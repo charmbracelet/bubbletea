@@ -24,6 +24,9 @@ regions which works alongside the main renderer, and mouse support.
 To get started, see the tutorial below, the [examples][examples], the
 [docs][docs] and some common [resources](#libraries-we-use-with-bubble-tea).
 
+[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
+[docs]: https://github.com/charmbracelet/bubbletea/tree/master/docs
+
 Note: If you're working with submodels, you don't need to worry about using commands to send data to your main model as the data flows downward. 
 This means that the parent knows about the children. 
 
