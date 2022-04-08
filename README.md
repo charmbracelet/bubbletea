@@ -21,24 +21,12 @@ performance optimizations we’ve added along the way. Among those is a standard
 framerate-based renderer, a renderer for high-performance scrollable
 regions which works alongside the main renderer, and mouse support.
 
-To get started, see the tutorial below, the [examples][examples], the
-[docs][docs] and some common [resources](#libraries-we-use-with-bubble-tea).
+## Getting Started
 
-[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://github.com/charmbracelet/bubbletea/tree/master/docs
+We recommend starting with our [basics tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics) followed by our [commands tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands) to understand what you can do with `tea.Cmd` and how they're used in BubbleTea. 
 
-Note: If you're working with submodels, you don't need to worry about using commands to send data to your main model as the data flows downward. 
-This means that the parent knows about the children. 
-
-### So, when do things run?
-
-**Init** - `Init()` is called when the program starts, its role is to fire off initial Commands  
-
-**Update** - `Update()` runs when a command is triggered, this is any function that returns a `tea.Msg`  
-
-**View** - `View()` is called automatically after `Update()` to redraw the program with the updated state.  
-
-Definitely check out the Elm architecture resource above to learn more about how ELM works. Also, hop into our [Slack](https://charm.sh/slack) if you have any questions or want to be part of the community!
+Additionally, we have have [documentation](https://github.com/charmbracelet/bubbletea/tree/master/docs) that include frequently asked questions, issues, and more in-depth explanations on specific topics.
+Don't forget about our [examples](https://github.com/charmbracelet/bubbletea/tree/master/examples).
 
 ## By the way
 
@@ -48,13 +36,6 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles/bubbles-badge.png" width="174" alt="Bubbles Badge"></a>&nbsp;&nbsp;
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
-
-## Getting Started
-
-We recommend starting with our [basics tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics) followed by our [commands tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands) to understand what you can do with `tea.Cmd` and how they're used in BubbleTea. 
-
-Additionally, we have have [documentation](https://github.com/charmbracelet/bubbletea/tree/master/docs) that include frequently asked questions, issues, and more in-depth explanations on specific topics.
-Don't forget about our [examples](https://github.com/charmbracelet/bubbletea/tree/master/examples).
 
 ## Debugging with Delve
 
