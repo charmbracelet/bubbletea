@@ -49,8 +49,6 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
-* * *
-
 ## Getting Started
 
 We recommend starting with our [basics tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics) followed by our [commands tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands) to understand what you can do with `tea.Cmd` and how they're used in BubbleTea. 
