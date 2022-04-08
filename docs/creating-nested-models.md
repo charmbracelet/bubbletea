@@ -1,9 +1,9 @@
-# Creating Bubbles
+# Creating Nested Models
 
-There may be situations where you want to have your own sub-models for your project. 
+There may be situations where you want to have your own nested models for your project. 
 This can allow you to toggle between different views and organize your logic for `Update`.
 
-## Showing Specific UI Components (Bubbles)
+## Showing Specific Nested Models
 In Bubble Tea programs, you can decide which components are shown by holding a `state` field in your main model struct. 
 For example:
 

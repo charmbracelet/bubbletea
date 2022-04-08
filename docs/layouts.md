@@ -1,6 +1,6 @@
 # Custom Layouts
 
-You can create your own layouts built-up of sub-components in Bubble Tea. 
+You can create your own layouts built-up of nested models in Bubble Tea. 
 To stack them horizontally or vertically, you can use [lipgloss](https://github.com/charmbracelet/lipgloss/)
 
 You can use `lipgloss.JoinVertical` or `lipgloss.JoinHorizontal` to join sub-components in your TUI.
@@ -16,21 +16,21 @@ func (m model) View() string {
 ```
 You can learn more about what you can do with Lipgloss in our [Go Docs](https://pkg.go.dev/github.com/charmbracelet/lipgloss)
 
-## Bubble Tea Sub-Components
+## Bubble Tea Nested Models
 
-Implementing sub-components is super common in Bubble Tea. In fact, all of the packages in [Bubbles](https://github.com/charmbracelet/bubbles), the component library, are merely sub-components.
+Implementing nested models is super common in Bubble Tea. In fact, all of the packages in [Bubbles](https://github.com/charmbracelet/bubbles), the component library, are merely reusable models.
 
 Nesting components in your model will be easier to manage than replacing the entire model in `Update`. It would look something like this:
 
 ```go
 type model struct {
-	// Sub-models
+	// nested models
 	a tea.Model
 	b tea.Model
 }
 
 func (m model) Init() tea.Cmd {
-	// Initialize sub-models
+	// Initialize models
 	return tea.Batch(
 		m.a.Init(),
 		m.b.Init(),
@@ -49,17 +49,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "ctrl+c":
 			// Send the quit command. But also notice that we're not returning
-			// here because in this example case we also want the sub-models to
+			// here because in this example case we also want the nested models to
 			// do their updates too.
 			cmds = append(cmds, tea.Quit)
 		}
 	}
 
-	// Handle updates for sub-model A
+	// Handle updates for nested model A
 	m.a, cmd = m.a.Update(msg)
 	cmds = append(cmds, cmd)
 
-	// Handle updates for sub-model B
+	// Handle updates for nested model B
 	m.b, cmd = m.b.Update(msg)
 	cmds = append(cmds, cmd)
 
@@ -68,7 +68,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	// Render sub model views
+	// Render nested model views
 	s := m.a.View()
 	s += m.b.View()
 	return s
