@@ -16,9 +16,9 @@ func (m model) View() string {
 ```
 You can learn more about what you can do with Lipgloss in our [Go Docs](https://pkg.go.dev/github.com/charmbracelet/lipgloss)
 
-## Bubbletea Sub-Components
+## Bubble Tea Sub-Components
 
-Implementing sub-components is super common in Bubble Tea. In fact, all of the packages in Bubbles, the component library, are merely sub-components.
+Implementing sub-components is super common in Bubble Tea. In fact, all of the packages in [Bubbles](https://github.com/charmbracelet/bubbles), the component library, are merely sub-components.
 
 Nesting components in your model will be easier to manage than replacing the entire model in `Update`. It would look something like this:
 

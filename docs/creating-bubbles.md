@@ -4,7 +4,7 @@ There may be situations where you want to have your own sub-models for your proj
 This can allow you to toggle between different views and organize your logic for `Update`.
 
 ## Showing Specific UI Components (Bubbles)
-In Bubbletea programs, you can decide which components are shown by holding a `state` field in your main model struct. 
+In Bubble Tea programs, you can decide which components are shown by holding a `state` field in your main model struct. 
 For example:
 
 ```go
