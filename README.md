@@ -35,7 +35,7 @@ This means that the parent knows about the children.
 
 **View** - `View()` is called automatically after `Update()` to redraw the program with the updated state.  
 
-Definitely check out the ELM architecture resource above to learn more about how ELM works. Also, hop into our [slack](https://charm.sh/slack) if you have any questions or want to be part of the community!
+Definitely check out the Elm architecture resource above to learn more about how ELM works. Also, hop into our [Slack](https://charm.sh/slack) if you have any questions or want to be part of the community!
 
 ## By the way
 
