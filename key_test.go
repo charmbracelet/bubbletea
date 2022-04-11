@@ -10,8 +10,8 @@ func TestKeyString(t *testing.T) {
 		if got := KeyMsg(Key{
 			Type: KeySpace,
 			Alt:  true,
-		}).String(); got != "alt+space" {
-			t.Fatalf(`expected a "alt+space", got %q`, got)
+		}).String(); got != "alt+ " {
+			t.Fatalf(`expected a "alt+ ", got %q`, got)
 		}
 	})
 
