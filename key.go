@@ -137,7 +137,6 @@ const (
 	keyGS  KeyType = 29  // group separator
 	keyRS  KeyType = 30  // record separator
 	keyUS  KeyType = 31  // unit separator
-	keySP  KeyType = 32  // space
 	keyDEL KeyType = 127 // delete. on most systems this is mapped to backspace, I hear
 )
 
@@ -148,7 +147,6 @@ const (
 	KeyEnter     KeyType = keyCR
 	KeyBackspace KeyType = keyDEL
 	KeyTab       KeyType = keyHT
-	KeySpace     KeyType = keySP
 	KeyEsc       KeyType = keyESC
 	KeyEscape    KeyType = keyESC
 
@@ -200,6 +198,7 @@ const (
 	KeyPgUp
 	KeyPgDown
 	KeyDelete
+	KeySpace
 	KeyF1
 	KeyF2
 	KeyF3
@@ -256,13 +255,13 @@ var keyNames = map[KeyType]string{
 	keyGS:  "ctrl+]",
 	keyRS:  "ctrl+^",
 	keyUS:  "ctrl+_",
-	keySP:  "space",
 	keyDEL: "backspace",
 
 	KeyRunes:    "runes",
 	KeyUp:       "up",
 	KeyDown:     "down",
 	KeyRight:    "right",
+	KeySpace:    " ",
 	KeyLeft:     "left",
 	KeyShiftTab: "shift+tab",
 	KeyHome:     "home",
