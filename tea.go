@@ -274,6 +274,26 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 	}
 }
 
+func RestoreTerminal(fn ExecCallback) Cmd {
+	return func() Msg {
+		return restoreTerminalMsg{fn: fn}
+	}
+}
+
+type restoreTerminalMsg struct {
+	fn ExecCallback
+}
+
+func ReleaseTerminal(fn ExecCallback) Cmd {
+	return func() Msg {
+		return releaseTerminalMsg{fn: fn}
+	}
+}
+
+type releaseTerminalMsg struct {
+	fn ExecCallback
+}
+
 // ExecCallback is used when executing an *exec.Command to return a message
 // with an error, which may or may not be nil.
 type ExecCallback func(error) Msg
@@ -562,6 +582,20 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 			case hideCursorMsg:
 				hideCursor(p.output)
+
+			case restoreTerminalMsg:
+				if err := p.RestoreTerminal(); err != nil {
+					if msg.fn != nil {
+						go p.Send(msg.fn(err))
+					}
+				}
+
+			case releaseTerminalMsg:
+				if err := p.ReleaseTerminal(); err != nil {
+					if msg.fn != nil {
+						go p.Send(msg.fn(err))
+					}
+				}
 
 			case execMsg:
 				// Note: this blocks.
