@@ -323,6 +323,10 @@ var sequences = map[string]Key{
 	"\x1b[B":    {Type: KeyDown},
 	"\x1b[C":    {Type: KeyRight},
 	"\x1b[D":    {Type: KeyLeft},
+	"\x1b[1;3A": {Type: KeyUp, Alt: true},
+	"\x1b[1;3B": {Type: KeyDown, Alt: true},
+	"\x1b[1;3C": {Type: KeyRight, Alt: true},
+	"\x1b[1;3D": {Type: KeyLeft, Alt: true},
 	"\x1b[1;5A": {Type: KeyCtrlUp},
 	"\x1b[1;5B": {Type: KeyCtrlDown},
 	"\x1b[1;5C": {Type: KeyCtrlRight},
@@ -421,10 +425,6 @@ var hexes = map[string]Key{
 	"1b5b367e":     {Type: KeyPgDown},
 	"1b5b363b337e": {Type: KeyPgDown, Alt: true},
 	"1b1b5b367e":   {Type: KeyPgDown, Alt: true}, // urxvt
-	"1b5b313b3341": {Type: KeyUp, Alt: true},
-	"1b5b313b3342": {Type: KeyDown, Alt: true},
-	"1b5b313b3343": {Type: KeyRight, Alt: true},
-	"1b5b313b3344": {Type: KeyLeft, Alt: true},
 
 	// Powershell
 	"1b4f41": {Type: KeyUp, Alt: false},
