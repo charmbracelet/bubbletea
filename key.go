@@ -327,6 +327,10 @@ var sequences = map[string]Key{
 	"\x1b[1;2B":  {Type: KeyShiftDown},
 	"\x1b[1;2C":  {Type: KeyShiftRight},
 	"\x1b[1;2D":  {Type: KeyShiftLeft},
+	"\x1b[OA":    {Type: KeyShiftUp},    // DECCKM
+	"\x1b[OB":    {Type: KeyShiftDown},  // DECCKM
+	"\x1b[OC":    {Type: KeyShiftRight}, // DECCKM
+	"\x1b[OD":    {Type: KeyShiftLeft},  // DECCKM
 	"\x1b[a":     {Type: KeyShiftUp},    // urxvt
 	"\x1b[b":     {Type: KeyShiftDown},  // urxvt
 	"\x1b[c":     {Type: KeyShiftRight}, // urxvt
