@@ -221,8 +221,9 @@ const (
 	KeyF20
 )
 
-// Mapping for control keys to friendly consts.
+// Mappings for control keys and other special keys to friendly consts.
 var keyNames = map[KeyType]string{
+	// Control keys.
 	keyNUL: "ctrl+@", // also ctrl+`
 	keySOH: "ctrl+a",
 	keySTX: "ctrl+b",
@@ -257,11 +258,12 @@ var keyNames = map[KeyType]string{
 	keyUS:  "ctrl+_",
 	keyDEL: "backspace",
 
+	// Other keys.
 	KeyRunes:    "runes",
 	KeyUp:       "up",
 	KeyDown:     "down",
 	KeyRight:    "right",
-	KeySpace:    " ",
+	KeySpace:    " ", // for backwards compatibility
 	KeyLeft:     "left",
 	KeyShiftTab: "shift+tab",
 	KeyHome:     "home",
