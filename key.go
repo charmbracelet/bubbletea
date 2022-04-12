@@ -319,6 +319,7 @@ var keyNames = map[KeyType]string{
 
 // Sequence mappings.
 var sequences = map[string]Key{
+	// Arrow keys
 	"\x1b[A":     {Type: KeyUp},
 	"\x1b[B":     {Type: KeyDown},
 	"\x1b[C":     {Type: KeyRight},
@@ -371,6 +372,26 @@ var sequences = map[string]Key{
 	"\x1b[1;8B":  {Type: KeyCtrlShiftDown, Alt: true},
 	"\x1b[1;8C":  {Type: KeyCtrlShiftRight, Alt: true},
 	"\x1b[1;8D":  {Type: KeyCtrlShiftLeft, Alt: true},
+
+	// Miscellaneous keys
+	"\x1b[Z":      {Type: KeyShiftTab},
+	"\x1b[3~":     {Type: KeyDelete},
+	"\x1b[3;3~":   {Type: KeyDelete, Alt: true},
+	"\x1b[1~":     {Type: KeyHome},
+	"\x1b[1;3H~":  {Type: KeyHome, Alt: true},
+	"\x1b[4~":     {Type: KeyEnd},
+	"\x1b[1;3F~":  {Type: KeyEnd, Alt: true},
+	"\x1b[5~":     {Type: KeyPgUp},
+	"\x1b[5;3~":   {Type: KeyPgUp, Alt: true},
+	"\x1b[6~":     {Type: KeyPgDown},
+	"\x1b[6;3~":   {Type: KeyPgDown, Alt: true},
+	"\x1b[7~":     {Type: KeyHome},              // urxvt
+	"\x1b[8~":     {Type: KeyEnd},               // urxvt
+	"\x1b\x1b[3~": {Type: KeyDelete, Alt: true}, // urxvt
+	"\x1b\x1b[5~": {Type: KeyPgUp, Alt: true},   // urxvt
+	"\x1b\x1b[6~": {Type: KeyPgDown, Alt: true}, // urxvt
+	"\x1b\x1b[7~": {Type: KeyHome, Alt: true},   // urxvt
+	"\x1b\x1b[8~": {Type: KeyEnd, Alt: true},    // urxvt
 
 	// Function keys, X11
 	"\x1bOP":     {Type: KeyF1},  // vt100
@@ -439,24 +460,8 @@ var sequences = map[string]Key{
 
 // Hex code mappings.
 var hexes = map[string]Key{
-	"1b5b5a":       {Type: KeyShiftTab},
-	"1b5b337e":     {Type: KeyDelete},
-	"1b0d":         {Type: KeyEnter, Alt: true},
-	"1b7f":         {Type: KeyBackspace, Alt: true},
-	"1b5b48":       {Type: KeyHome},
-	"1b5b377e":     {Type: KeyHome}, // urxvt
-	"1b5b313b3348": {Type: KeyHome, Alt: true},
-	"1b1b5b377e":   {Type: KeyHome, Alt: true}, // urxvt
-	"1b5b46":       {Type: KeyEnd},
-	"1b5b387e":     {Type: KeyEnd}, // urxvt
-	"1b5b313b3346": {Type: KeyEnd, Alt: true},
-	"1b1b5b387e":   {Type: KeyEnd, Alt: true}, // urxvt
-	"1b5b357e":     {Type: KeyPgUp},
-	"1b5b353b337e": {Type: KeyPgUp, Alt: true},
-	"1b1b5b357e":   {Type: KeyPgUp, Alt: true}, // urxvt
-	"1b5b367e":     {Type: KeyPgDown},
-	"1b5b363b337e": {Type: KeyPgDown, Alt: true},
-	"1b1b5b367e":   {Type: KeyPgDown, Alt: true}, // urxvt
+	"1b0d": {Type: KeyEnter, Alt: true},
+	"1b7f": {Type: KeyBackspace, Alt: true},
 
 	// Powershell
 	"1b4f41": {Type: KeyUp, Alt: false},
