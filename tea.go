@@ -11,10 +11,10 @@ package tea
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"sync"
@@ -83,20 +83,28 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
+	ctx context.Context
 	mtx *sync.Mutex
 
-	msgs chan Msg
+	msgs         chan Msg
+	errs         chan error
+	readLoopDone chan struct{}
 
-	output          io.Writer // where to send output. this will usually be os.Stdout.
-	input           io.Reader // this will usually be os.Stdin.
-	renderer        renderer
-	altScreenActive bool
+	output       io.Writer // where to send output. this will usually be os.Stdout.
+	input        io.Reader // this will usually be os.Stdin.
+	cancelReader cancelreader.CancelReader
+
+	renderer           renderer
+	altScreenActive    bool
+	altScreenWasActive bool // was the altscreen active before releasing the terminal?
 
 	// CatchPanics is incredibly useful for restoring the terminal to a usable
 	// state after a panic occurs. When this is set, Bubble Tea will recover
 	// from panics, print the stack trace, and disable raw mode. This feature
 	// is on by default.
 	CatchPanics bool
+
+	ignoreSignals bool
 
 	killc chan bool
 
@@ -238,6 +246,44 @@ func HideCursor() Msg {
 	return hideCursorMsg{}
 }
 
+// Exec runs the given ExecCommand in a blocking fashion, effectively pausing
+// the Program while the command is running. After the *exec.Cmd exists the
+// Program resumes. It's useful for spawning other interactive applications
+// such as editors and shells from within a Program.
+//
+// To produce the command, pass an *exec.Command and a function which returns
+// a message containing the error which may have occurred when running the
+// *exec.Command.
+//
+//     type VimFinishedMsg struct { err error }
+//
+//     c := exec.Command("vim", "file.txt")
+//
+//     cmd := Exec(WrapExecCommand(c), func(err error) Msg {
+//         return VimFinishedMsg{err: error}
+//     })
+//
+// Or, if you don't care about errors you could simply:
+//
+//     cmd := Exec(WrapExecCommand(exec.Command("vim", "file.txt")), nil)
+//
+// For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
+func Exec(c ExecCommand, fn ExecCallback) Cmd {
+	return func() Msg {
+		return execMsg{cmd: c, fn: fn}
+	}
+}
+
+// ExecCallback is used when executing an *exec.Command to return a message
+// with an error, which may or may not be nil.
+type ExecCallback func(error) Msg
+
+// execMsg is used internally to run an ExecCommand sent with Exec.
+type execMsg struct {
+	cmd ExecCommand
+	fn  ExecCallback
+}
+
 // hideCursorMsg is an internal command used to hide the cursor. You can send
 // this message with HideCursor.
 type hideCursorMsg struct{}
@@ -264,14 +310,11 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 // StartReturningModel initializes the program. Returns the final model.
 func (p *Program) StartReturningModel() (Model, error) {
-	var (
-		cmds = make(chan Cmd)
-		errs = make(chan error)
-	)
+	cmds := make(chan Cmd)
+	p.errs = make(chan error)
 
 	// Channels for managing goroutine lifecycles.
 	var (
-		readLoopDone   = make(chan struct{})
 		sigintLoopDone = make(chan struct{})
 		cmdLoopDone    = make(chan struct{})
 		resizeLoopDone = make(chan struct{})
@@ -280,7 +323,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		waitForGoroutines = func(withReadLoop bool) {
 			if withReadLoop {
 				select {
-				case <-readLoopDone:
+				case <-p.readLoopDone:
 				case <-time.After(500 * time.Millisecond):
 					// The read loop hangs, which means the input
 					// cancelReader's cancel function has returned true even
@@ -294,7 +337,8 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}
 	)
 
-	ctx, cancelContext := context.WithCancel(context.Background())
+	var cancelContext context.CancelFunc
+	p.ctx, cancelContext = context.WithCancel(context.Background())
 	defer cancelContext()
 
 	switch {
@@ -345,10 +389,16 @@ func (p *Program) StartReturningModel() (Model, error) {
 			close(sigintLoopDone)
 		}()
 
-		select {
-		case <-ctx.Done():
-		case <-sig:
-			p.msgs <- quitMsg{}
+		for {
+			select {
+			case <-p.ctx.Done():
+				return
+			case <-sig:
+				if !p.ignoreSignals {
+					p.msgs <- quitMsg{}
+					return
+				}
+			}
 		}
 	}()
 
@@ -391,7 +441,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			defer close(initSignalDone)
 			select {
 			case cmds <- initCmd:
-			case <-ctx.Done():
+			case <-p.ctx.Done():
 			}
 		}()
 	} else {
@@ -405,57 +455,32 @@ func (p *Program) StartReturningModel() (Model, error) {
 	// Render the initial view.
 	p.renderer.write(model.View())
 
-	cancelReader, err := cancelreader.NewReader(p.input)
-	if err != nil {
-		return model, err
-	}
-
-	defer cancelReader.Close() // nolint:errcheck
-
 	// Subscribe to user input.
 	if p.input != nil {
-		go func() {
-			defer close(readLoopDone)
-
-			for {
-				if ctx.Err() != nil {
-					return
-				}
-
-				msgs, err := readInputs(cancelReader)
-				if err != nil {
-					if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
-						errs <- err
-					}
-
-					return
-				}
-
-				for _, msg := range msgs {
-					p.msgs <- msg
-				}
-			}
-		}()
+		if err := p.initCancelReader(); err != nil {
+			return model, err
+		}
 	} else {
-		defer close(readLoopDone)
+		defer close(p.readLoopDone)
 	}
+	defer p.cancelReader.Close() // nolint:errcheck
 
 	if f, ok := p.output.(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
 		go func() {
 			w, h, err := term.GetSize(int(f.Fd()))
 			if err != nil {
-				errs <- err
+				p.errs <- err
 			}
 
 			select {
-			case <-ctx.Done():
+			case <-p.ctx.Done():
 			case p.msgs <- WindowSizeMsg{w, h}:
 			}
 		}()
 
 		// Listen for window resizes.
-		go listenForResize(ctx, f, p.msgs, errs, resizeLoopDone)
+		go listenForResize(p.ctx, f, p.msgs, p.errs, resizeLoopDone)
 	} else {
 		close(resizeLoopDone)
 	}
@@ -466,7 +491,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 		for {
 			select {
-			case <-ctx.Done():
+			case <-p.ctx.Done():
 
 				return
 			case cmd := <-cmds:
@@ -482,7 +507,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 				go func() {
 					select {
 					case p.msgs <- cmd():
-					case <-ctx.Done():
+					case <-p.ctx.Done():
 					}
 				}()
 			}
@@ -494,9 +519,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 		select {
 		case <-p.killc:
 			return nil, nil
-		case err := <-errs:
+		case err := <-p.errs:
 			cancelContext()
-			waitForGoroutines(cancelReader.Cancel())
+			waitForGoroutines(p.cancelReader.Cancel())
 			p.shutdown(false)
 			return model, err
 
@@ -506,7 +531,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			switch msg := msg.(type) {
 			case quitMsg:
 				cancelContext()
-				waitForGoroutines(cancelReader.Cancel())
+				waitForGoroutines(p.cancelReader.Cancel())
 				p.shutdown(false)
 				return model, nil
 
@@ -537,6 +562,10 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 			case hideCursorMsg:
 				hideCursor(p.output)
+
+			case execMsg:
+				// Note: this blocks.
+				p.exec(msg.cmd, msg.fn)
 			}
 
 			// Process internal messages for the renderer.
@@ -599,7 +628,7 @@ func (p *Program) shutdown(kill bool) {
 	p.ExitAltScreen()
 	p.DisableMouseCellMotion()
 	p.DisableMouseAllMotion()
-	_ = p.restoreTerminal()
+	_ = p.restoreTerminalState()
 }
 
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
@@ -614,8 +643,7 @@ func (p *Program) EnterAltScreen() {
 		return
 	}
 
-	fmt.Fprintf(p.output, te.CSI+te.AltScreenSeq)
-	moveCursor(p.output, 0, 0)
+	enterAltScreen(p.output)
 
 	p.altScreenActive = true
 	if p.renderer != nil {
@@ -634,7 +662,7 @@ func (p *Program) ExitAltScreen() {
 		return
 	}
 
-	fmt.Fprintf(p.output, te.CSI+te.ExitAltScreenSeq)
+	exitAltScreen(p.output)
 
 	p.altScreenActive = false
 	if p.renderer != nil {
@@ -681,4 +709,113 @@ func (p *Program) DisableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 	fmt.Fprintf(p.output, te.CSI+te.DisableMouseAllMotionSeq)
+}
+
+// ReleaseTerminal restores the original terminal state and cancels the input
+// reader. You can return control to the Program with RestoreTerminal.
+func (p *Program) ReleaseTerminal() error {
+	p.ignoreSignals = true
+	p.cancelInput()
+	p.altScreenWasActive = p.altScreenActive
+	if p.altScreenActive {
+		p.ExitAltScreen()
+		time.Sleep(time.Millisecond * 10) // give the terminal a moment to catch up
+	}
+	return p.restoreTerminalState()
+}
+
+// RestoreTerminal reinitializes the Program's input reader, restores the
+// terminal to the former state when the program was running, and repaints.
+// Use it to reinitialize a Program after running ReleaseTerminal.
+func (p *Program) RestoreTerminal() error {
+	p.ignoreSignals = false
+
+	if err := p.initTerminal(); err != nil {
+		return err
+	}
+
+	if err := p.initCancelReader(); err != nil {
+		return err
+	}
+
+	if p.altScreenWasActive {
+		p.EnterAltScreen()
+	}
+
+	go p.Send(repaintMsg{})
+
+	return nil
+}
+
+// ExecCommand can be implemented to execute things in the current
+// terminal using the Exec Cmd.
+type ExecCommand interface {
+	Run() error
+	SetStdin(io.Reader)
+	SetStdout(io.Writer)
+	SetStderr(io.Writer)
+}
+
+// WrapExecCommand wraps an exec.Cmd so that it satisfies the ExecCommand
+// interface.
+func WrapExecCommand(c *exec.Cmd) ExecCommand {
+	return &osExecCommand{Cmd: c}
+}
+
+// osExecCommand is a layer over an exec.Cmd that satisfies the ExecCommand
+// interface.
+type osExecCommand struct{ *exec.Cmd }
+
+// SetStdin sets stdin on underlying exec.Cmd to the given io.Reader.
+func (c *osExecCommand) SetStdin(r io.Reader) {
+	// If unset, have the command use the same input as the terminal.
+	if c.Stdin == nil {
+		c.Stdin = r
+	}
+}
+
+// SetStdout sets stdout on underlying exec.Cmd to the given io.Writer.
+func (c *osExecCommand) SetStdout(w io.Writer) {
+	// If unset, have the command use the same output as the terminal.
+	if c.Stdout == nil {
+		c.Stdout = w
+	}
+}
+
+// SetStderr sets stderr on the underlying exec.Cmd to the given io.Writer.
+func (c *osExecCommand) SetStderr(w io.Writer) {
+	// If unset, use stderr for the command's stderr
+	if c.Stderr == nil {
+		c.Stderr = w
+	}
+}
+
+// exec runs an ExecCommand and delivers the results to the program as a Msg.
+func (p *Program) exec(c ExecCommand, fn ExecCallback) {
+	if err := p.ReleaseTerminal(); err != nil {
+		// If we can't release input, abort.
+		if fn != nil {
+			go p.Send(fn(err))
+		}
+		return
+	}
+
+	c.SetStdin(p.input)
+	c.SetStdout(p.output)
+	c.SetStderr(os.Stderr)
+
+	// Execute system command.
+	if err := c.Run(); err != nil {
+		_ = p.RestoreTerminal() // also try to restore the terminal.
+		if fn != nil {
+			go p.Send(fn(err))
+		}
+		return
+	}
+
+	// Have the program re-capture input.
+	err := p.RestoreTerminal()
+	if fn != nil {
+		go p.Send(fn(err))
+	}
 }

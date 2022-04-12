@@ -345,6 +345,11 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 // handleMessages handles internal messages for the renderer.
 func (r *standardRenderer) handleMessages(msg Msg) {
 	switch msg := msg.(type) {
+	case repaintMsg:
+		// Force a repaint by clearing the render cache as we slide into a
+		// render.
+		r.repaint()
+
 	case WindowSizeMsg:
 		r.mtx.Lock()
 		r.width = msg.Width
