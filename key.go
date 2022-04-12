@@ -311,10 +311,18 @@ var keyNames = map[KeyType]string{
 
 // Sequence mappings.
 var sequences = map[string]Key{
-	"\x1b[A": {Type: KeyUp},
-	"\x1b[B": {Type: KeyDown},
-	"\x1b[C": {Type: KeyRight},
-	"\x1b[D": {Type: KeyLeft},
+	"\x1b[A":    {Type: KeyUp},
+	"\x1b[B":    {Type: KeyDown},
+	"\x1b[C":    {Type: KeyRight},
+	"\x1b[D":    {Type: KeyLeft},
+	"\x1b[1;5A": {Type: KeyCtrlUp},
+	"\x1b[1;5B": {Type: KeyCtrlDown},
+	"\x1b[1;5C": {Type: KeyCtrlRight},
+	"\x1b[1;5D": {Type: KeyCtrlLeft},
+	"\x1b[1;2A": {Type: KeyShiftUp},
+	"\x1b[1;2B": {Type: KeyShiftDown},
+	"\x1b[1;2C": {Type: KeyShiftRight},
+	"\x1b[1;2D": {Type: KeyShiftLeft},
 
 	// Function keys, X11
 	"\x1bOP":     {Type: KeyF1},  // vt100
@@ -405,14 +413,6 @@ var hexes = map[string]Key{
 	"1b5b313b3342": {Type: KeyDown, Alt: true},
 	"1b5b313b3343": {Type: KeyRight, Alt: true},
 	"1b5b313b3344": {Type: KeyLeft, Alt: true},
-	"1b5b313b3541": {Type: KeyCtrlUp},
-	"1b5b313b3542": {Type: KeyCtrlDown},
-	"1b5b313b3543": {Type: KeyCtrlRight},
-	"1b5b313b3544": {Type: KeyCtrlLeft},
-	"1b5b313b3241": {Type: KeyShiftUp},
-	"1b5b313b3242": {Type: KeyShiftDown},
-	"1b5b313b3243": {Type: KeyShiftRight},
-	"1b5b313b3244": {Type: KeyShiftLeft},
 
 	// Powershell
 	"1b4f41": {Type: KeyUp, Alt: false},
