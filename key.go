@@ -479,7 +479,15 @@ func readInputs(input io.Reader) ([]Msg, error) {
 		}, nil
 	}
 
-	// Welp, it's just a regular, ol' single rune
+	// If it's a space, override the type with KeySpace (but still include the
+	// rune).
+	if len(runes) == 1 && runes[0] == ' ' {
+		return []Msg{
+			KeyMsg(Key{Type: KeySpace, Runes: runes}),
+		}, nil
+	}
+
+	// Welp, it's just a regular, ol' single rune.
 	return []Msg{
 		KeyMsg(Key{Type: KeyRunes, Runes: runes}),
 	}, nil
