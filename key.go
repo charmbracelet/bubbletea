@@ -137,7 +137,6 @@ const (
 	keyGS  KeyType = 29  // group separator
 	keyRS  KeyType = 30  // record separator
 	keyUS  KeyType = 31  // unit separator
-	keySP  KeyType = 32  // space
 	keyDEL KeyType = 127 // delete. on most systems this is mapped to backspace, I hear
 )
 
@@ -148,7 +147,6 @@ const (
 	KeyEnter     KeyType = keyCR
 	KeyBackspace KeyType = keyDEL
 	KeyTab       KeyType = keyHT
-	KeySpace     KeyType = keySP
 	KeyEsc       KeyType = keyESC
 	KeyEscape    KeyType = keyESC
 
@@ -200,6 +198,7 @@ const (
 	KeyPgUp
 	KeyPgDown
 	KeyDelete
+	KeySpace
 	KeyF1
 	KeyF2
 	KeyF3
@@ -222,8 +221,9 @@ const (
 	KeyF20
 )
 
-// Mapping for control keys to friendly consts.
+// Mappings for control keys and other special keys to friendly consts.
 var keyNames = map[KeyType]string{
+	// Control keys.
 	keyNUL: "ctrl+@", // also ctrl+`
 	keySOH: "ctrl+a",
 	keySTX: "ctrl+b",
@@ -256,13 +256,14 @@ var keyNames = map[KeyType]string{
 	keyGS:  "ctrl+]",
 	keyRS:  "ctrl+^",
 	keyUS:  "ctrl+_",
-	keySP:  "space",
 	keyDEL: "backspace",
 
+	// Other keys.
 	KeyRunes:    "runes",
 	KeyUp:       "up",
 	KeyDown:     "down",
 	KeyRight:    "right",
+	KeySpace:    " ", // for backwards compatibility
 	KeyLeft:     "left",
 	KeyShiftTab: "shift+tab",
 	KeyHome:     "home",
@@ -480,7 +481,15 @@ func readInputs(input io.Reader) ([]Msg, error) {
 		}, nil
 	}
 
-	// Welp, it's just a regular, ol' single rune
+	// If it's a space, override the type with KeySpace (but still include the
+	// rune).
+	if len(runes) == 1 && runes[0] == ' ' {
+		return []Msg{
+			KeyMsg(Key{Type: KeySpace, Runes: runes}),
+		}, nil
+	}
+
+	// Welp, it's just a regular, ol' single rune.
 	return []Msg{
 		KeyMsg(Key{Type: KeyRunes, Runes: runes}),
 	}, nil
