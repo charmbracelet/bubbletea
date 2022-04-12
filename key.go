@@ -319,38 +319,54 @@ var keyNames = map[KeyType]string{
 
 // Sequence mappings.
 var sequences = map[string]Key{
-	"\x1b[A":    {Type: KeyUp},
-	"\x1b[B":    {Type: KeyDown},
-	"\x1b[C":    {Type: KeyRight},
-	"\x1b[D":    {Type: KeyLeft},
-	"\x1b[1;2A": {Type: KeyShiftUp},
-	"\x1b[1;2B": {Type: KeyShiftDown},
-	"\x1b[1;2C": {Type: KeyShiftRight},
-	"\x1b[1;2D": {Type: KeyShiftLeft},
-	"\x1b[1;3A": {Type: KeyUp, Alt: true},
-	"\x1b[1;3B": {Type: KeyDown, Alt: true},
-	"\x1b[1;3C": {Type: KeyRight, Alt: true},
-	"\x1b[1;3D": {Type: KeyLeft, Alt: true},
-	"\x1b[1;4A": {Type: KeyShiftUp, Alt: true},
-	"\x1b[1;4B": {Type: KeyShiftDown, Alt: true},
-	"\x1b[1;4C": {Type: KeyShiftRight, Alt: true},
-	"\x1b[1;4D": {Type: KeyShiftLeft, Alt: true},
-	"\x1b[1;5A": {Type: KeyCtrlUp},
-	"\x1b[1;5B": {Type: KeyCtrlDown},
-	"\x1b[1;5C": {Type: KeyCtrlRight},
-	"\x1b[1;5D": {Type: KeyCtrlLeft},
-	"\x1b[1;6A": {Type: KeyCtrlShiftUp},
-	"\x1b[1;6B": {Type: KeyCtrlShiftDown},
-	"\x1b[1;6C": {Type: KeyCtrlShiftRight},
-	"\x1b[1;6D": {Type: KeyCtrlShiftLeft},
-	"\x1b[1;7A": {Type: KeyCtrlUp, Alt: true},
-	"\x1b[1;7B": {Type: KeyCtrlDown, Alt: true},
-	"\x1b[1;7C": {Type: KeyCtrlRight, Alt: true},
-	"\x1b[1;7D": {Type: KeyCtrlLeft, Alt: true},
-	"\x1b[1;8A": {Type: KeyCtrlShiftUp, Alt: true},
-	"\x1b[1;8B": {Type: KeyCtrlShiftDown, Alt: true},
-	"\x1b[1;8C": {Type: KeyCtrlShiftRight, Alt: true},
-	"\x1b[1;8D": {Type: KeyCtrlShiftLeft, Alt: true},
+	"\x1b[A":     {Type: KeyUp},
+	"\x1b[B":     {Type: KeyDown},
+	"\x1b[C":     {Type: KeyRight},
+	"\x1b[D":     {Type: KeyLeft},
+	"\x1b[1;2A":  {Type: KeyShiftUp},
+	"\x1b[1;2B":  {Type: KeyShiftDown},
+	"\x1b[1;2C":  {Type: KeyShiftRight},
+	"\x1b[1;2D":  {Type: KeyShiftLeft},
+	"\x1b[a":     {Type: KeyShiftUp},    // urxvt
+	"\x1b[b":     {Type: KeyShiftDown},  // urxvt
+	"\x1b[c":     {Type: KeyShiftRight}, // urxvt
+	"\x1b[d":     {Type: KeyShiftLeft},  // urxvt
+	"\x1b[1;3A":  {Type: KeyUp, Alt: true},
+	"\x1b[1;3B":  {Type: KeyDown, Alt: true},
+	"\x1b[1;3C":  {Type: KeyRight, Alt: true},
+	"\x1b[1;3D":  {Type: KeyLeft, Alt: true},
+	"\x1b\x1b[A": {Type: KeyUp, Alt: true},    // urxvt
+	"\x1b\x1b[B": {Type: KeyDown, Alt: true},  // urxvt
+	"\x1b\x1b[C": {Type: KeyRight, Alt: true}, // urxvt
+	"\x1b\x1b[D": {Type: KeyLeft, Alt: true},  // urxvt
+	"\x1b[1;4A":  {Type: KeyShiftUp, Alt: true},
+	"\x1b[1;4B":  {Type: KeyShiftDown, Alt: true},
+	"\x1b[1;4C":  {Type: KeyShiftRight, Alt: true},
+	"\x1b[1;4D":  {Type: KeyShiftLeft, Alt: true},
+	"\x1b\x1b[a": {Type: KeyShiftUp, Alt: true},    // urxvt
+	"\x1b\x1b[b": {Type: KeyShiftDown, Alt: true},  // urxvt
+	"\x1b\x1b[c": {Type: KeyShiftRight, Alt: true}, // urxvt
+	"\x1b\x1b[d": {Type: KeyShiftLeft, Alt: true},  // urxvt
+	"\x1b[1;5A":  {Type: KeyCtrlUp},
+	"\x1b[1;5B":  {Type: KeyCtrlDown},
+	"\x1b[1;5C":  {Type: KeyCtrlRight},
+	"\x1b[1;5D":  {Type: KeyCtrlLeft},
+	"\x1b[Oa":    {Type: KeyCtrlUp, Alt: true},    // urxvt
+	"\x1b[Ob":    {Type: KeyCtrlDown, Alt: true},  // urxvt
+	"\x1b[Oc":    {Type: KeyCtrlRight, Alt: true}, // urxvt
+	"\x1b[Od":    {Type: KeyCtrlLeft, Alt: true},  // urxvt
+	"\x1b[1;6A":  {Type: KeyCtrlShiftUp},
+	"\x1b[1;6B":  {Type: KeyCtrlShiftDown},
+	"\x1b[1;6C":  {Type: KeyCtrlShiftRight},
+	"\x1b[1;6D":  {Type: KeyCtrlShiftLeft},
+	"\x1b[1;7A":  {Type: KeyCtrlUp, Alt: true},
+	"\x1b[1;7B":  {Type: KeyCtrlDown, Alt: true},
+	"\x1b[1;7C":  {Type: KeyCtrlRight, Alt: true},
+	"\x1b[1;7D":  {Type: KeyCtrlLeft, Alt: true},
+	"\x1b[1;8A":  {Type: KeyCtrlShiftUp, Alt: true},
+	"\x1b[1;8B":  {Type: KeyCtrlShiftDown, Alt: true},
+	"\x1b[1;8C":  {Type: KeyCtrlShiftRight, Alt: true},
+	"\x1b[1;8D":  {Type: KeyCtrlShiftLeft, Alt: true},
 
 	// Function keys, X11
 	"\x1bOP":     {Type: KeyF1},  // vt100
