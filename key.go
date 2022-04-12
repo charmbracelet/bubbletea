@@ -207,6 +207,10 @@ const (
 	KeyShiftDown
 	KeyShiftRight
 	KeyShiftLeft
+	KeyCtrlShiftUp
+	KeyCtrlShiftDown
+	KeyCtrlShiftLeft
+	KeyCtrlShiftRight
 	KeyF1
 	KeyF2
 	KeyF3
@@ -267,46 +271,50 @@ var keyNames = map[KeyType]string{
 	keyDEL: "backspace",
 
 	// Other keys.
-	KeyRunes:      "runes",
-	KeyUp:         "up",
-	KeyDown:       "down",
-	KeyRight:      "right",
-	KeySpace:      " ", // for backwards compatibility
-	KeyLeft:       "left",
-	KeyShiftTab:   "shift+tab",
-	KeyHome:       "home",
-	KeyEnd:        "end",
-	KeyPgUp:       "pgup",
-	KeyPgDown:     "pgdown",
-	KeyDelete:     "delete",
-	KeyCtrlUp:     "ctrl+up",
-	KeyCtrlDown:   "ctrl+down",
-	KeyCtrlRight:  "ctrl+right",
-	KeyCtrlLeft:   "ctrl+left",
-	KeyShiftUp:    "shift+up",
-	KeyShiftDown:  "shift+down",
-	KeyShiftRight: "shift+right",
-	KeyShiftLeft:  "shift+left",
-	KeyF1:         "f1",
-	KeyF2:         "f2",
-	KeyF3:         "f3",
-	KeyF4:         "f4",
-	KeyF5:         "f5",
-	KeyF6:         "f6",
-	KeyF7:         "f7",
-	KeyF8:         "f8",
-	KeyF9:         "f9",
-	KeyF10:        "f10",
-	KeyF11:        "f11",
-	KeyF12:        "f12",
-	KeyF13:        "f13",
-	KeyF14:        "f14",
-	KeyF15:        "f15",
-	KeyF16:        "f16",
-	KeyF17:        "f17",
-	KeyF18:        "f18",
-	KeyF19:        "f19",
-	KeyF20:        "f20",
+	KeyRunes:          "runes",
+	KeyUp:             "up",
+	KeyDown:           "down",
+	KeyRight:          "right",
+	KeySpace:          " ", // for backwards compatibility
+	KeyLeft:           "left",
+	KeyShiftTab:       "shift+tab",
+	KeyHome:           "home",
+	KeyEnd:            "end",
+	KeyPgUp:           "pgup",
+	KeyPgDown:         "pgdown",
+	KeyDelete:         "delete",
+	KeyCtrlUp:         "ctrl+up",
+	KeyCtrlDown:       "ctrl+down",
+	KeyCtrlRight:      "ctrl+right",
+	KeyCtrlLeft:       "ctrl+left",
+	KeyShiftUp:        "shift+up",
+	KeyShiftDown:      "shift+down",
+	KeyShiftRight:     "shift+right",
+	KeyShiftLeft:      "shift+left",
+	KeyCtrlShiftUp:    "ctrl+shift+up",
+	KeyCtrlShiftDown:  "ctrl+shift+down",
+	KeyCtrlShiftLeft:  "ctrl+shift+left",
+	KeyCtrlShiftRight: "ctrl+shift+right",
+	KeyF1:             "f1",
+	KeyF2:             "f2",
+	KeyF3:             "f3",
+	KeyF4:             "f4",
+	KeyF5:             "f5",
+	KeyF6:             "f6",
+	KeyF7:             "f7",
+	KeyF8:             "f8",
+	KeyF9:             "f9",
+	KeyF10:            "f10",
+	KeyF11:            "f11",
+	KeyF12:            "f12",
+	KeyF13:            "f13",
+	KeyF14:            "f14",
+	KeyF15:            "f15",
+	KeyF16:            "f16",
+	KeyF17:            "f17",
+	KeyF18:            "f18",
+	KeyF19:            "f19",
+	KeyF20:            "f20",
 }
 
 // Sequence mappings.
@@ -323,6 +331,10 @@ var sequences = map[string]Key{
 	"\x1b[1;2B": {Type: KeyShiftDown},
 	"\x1b[1;2C": {Type: KeyShiftRight},
 	"\x1b[1;2D": {Type: KeyShiftLeft},
+	"\x1b[1;6A": {Type: KeyCtrlShiftUp},
+	"\x1b[1;6B": {Type: KeyCtrlShiftDown},
+	"\x1b[1;6C": {Type: KeyCtrlShiftLeft},
+	"\x1b[1;6D": {Type: KeyCtrlShiftRight},
 
 	// Function keys, X11
 	"\x1bOP":     {Type: KeyF1},  // vt100
