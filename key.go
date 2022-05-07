@@ -148,7 +148,6 @@ const (
 	KeyEnter     KeyType = keyCR
 	KeyBackspace KeyType = keyDEL
 	KeyTab       KeyType = keyHT
-	KeySpace     KeyType = keySP
 	KeyEsc       KeyType = keyESC
 	KeyEscape    KeyType = keyESC
 
