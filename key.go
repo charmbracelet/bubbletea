@@ -481,7 +481,7 @@ func readInputs(input io.Reader) ([]Msg, error) {
 		return nil, err
 	}
 
-	// See if it's a mouse event. For now we're parsing X10-type mouse events
+	// Check if it's a mouse event. For now we're parsing X10-type mouse events
 	// only.
 	mouseEvent, err := parseX10MouseEvents(buf[:numBytes])
 	if err == nil {
@@ -492,14 +492,14 @@ func readInputs(input io.Reader) ([]Msg, error) {
 		return m, nil
 	}
 
-	// Is it a special sequence, like an arrow key?
+	// Is it a sequence, like an arrow key?
 	if k, ok := sequences[string(buf[:numBytes])]; ok {
 		return []Msg{
 			KeyMsg(k),
 		}, nil
 	}
 
-	// Some of these need special handling
+	// Some of these need special handling.
 	hex := fmt.Sprintf("%x", buf[:numBytes])
 	if k, ok := hexes[hex]; ok {
 		return []Msg{
@@ -507,8 +507,8 @@ func readInputs(input io.Reader) ([]Msg, error) {
 		}, nil
 	}
 
-	// Is the alt key pressed? The buffer will be prefixed with an escape
-	// sequence if so.
+	// Is the alt key pressed? If so, the buffer will be prefixed with an
+	// escape.
 	if numBytes > 1 && buf[0] == 0x1b {
 		// Now remove the initial escape sequence and re-process to get the
 		// character being pressed in combination with alt.
