@@ -8,8 +8,9 @@ import (
 func TestKeyString(t *testing.T) {
 	t.Run("alt+space", func(t *testing.T) {
 		if got := KeyMsg(Key{
-			Type: KeySpace,
-			Alt:  true,
+			Type:  KeyRunes,
+			Runes: []rune{' '},
+			Alt:   true,
 		}).String(); got != "alt+ " {
 			t.Fatalf(`expected a "alt+ ", got %q`, got)
 		}
@@ -35,7 +36,10 @@ func TestKeyString(t *testing.T) {
 
 func TestKeyTypeString(t *testing.T) {
 	t.Run("space", func(t *testing.T) {
-		if got := KeySpace.String(); got != " " {
+		if got := KeyMsg(Key{
+			Type:  KeyRunes,
+			Runes: []rune{' '},
+		}).String(); got != " " {
 			t.Fatalf(`expected a " ", got %q`, got)
 		}
 	})
