@@ -198,6 +198,7 @@ const (
 	KeyPgUp
 	KeyPgDown
 	KeyDelete
+	KeySpace
 	KeyCtrlUp
 	KeyCtrlDown
 	KeyCtrlRight
@@ -274,6 +275,7 @@ var keyNames = map[KeyType]string{
 	KeyUp:             "up",
 	KeyDown:           "down",
 	KeyRight:          "right",
+	KeySpace:          " ", // for backwards compatibility
 	KeyLeft:           "left",
 	KeyShiftTab:       "shift+tab",
 	KeyHome:           "home",
@@ -549,6 +551,14 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	if numBytes == 1 && r <= keyUS || r == keyDEL {
 		return []Msg{
 			KeyMsg(Key{Type: r}),
+		}, nil
+	}
+
+	// If it's a space, override the type with KeySpace (but still include the
+	// rune).
+	if runes[0] == ' ' {
+		return []Msg{
+			KeyMsg(Key{Type: KeySpace, Runes: runes}),
 		}, nil
 	}
 
