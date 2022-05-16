@@ -251,9 +251,9 @@ func HideCursor() Msg {
 // Program resumes. It's useful for spawning other interactive applications
 // such as editors and shells from within a Program.
 //
-// To produce the command, pass an *exec.Command and a function which returns
+// To produce the command, pass an ExecCommand and a function which returns
 // a message containing the error which may have occurred when running the
-// *exec.Command.
+// ExecCommand.
 //
 //     type VimFinishedMsg struct { err error }
 //
