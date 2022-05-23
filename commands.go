@@ -24,6 +24,12 @@ import (
 //   cmd := Every(time.Second, func(t time.Time) Msg {
 //      return TickMsg(t)
 //   })
+//
+// Notice that you'll need to keep calling Every after handling every
+// TickMsg on update if you'd want to, for example, do something every X time.
+// To clarify: Every will not loop and dispatch a message every given interval.
+//
+// Every is analogous to Tick in the Elm Architecture.
 func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 	return func() Msg {
 		n := time.Now()
@@ -45,6 +51,13 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 //   cmd := Tick(time.Second, func(t time.Time) Msg {
 //      return TickMsg(t)
 //   })
+//
+// Notice that you'll need to keep calling Tick after handling every
+// TickMsg on update if you'd want to, for example, do something every X time.
+// To clarify: Tick will not loop and dispatch a message every given interval.
+//
+//
+// Tick is analogous to Tick in the Elm Architecture.
 func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	return func() Msg {
 		t := time.NewTimer(d)
