@@ -246,12 +246,26 @@ func HideCursor() Msg {
 	return hideCursorMsg{}
 }
 
-// Exec runs the given ExecCommand in a blocking fashion, effectively pausing
+// Exec is used to perform arbitrary I/O in a blocking fashion, effectively
+// pausing the Program while execution is runnning and resuming it when
+// execution has completed.
+//
+// To run operating-system-level applications like vim and htop from within
+// a Program use OSExec.
+//
+// For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
+func Exec(c ExecCommand, fn ExecCallback) Cmd {
+	return func() Msg {
+		return execMsg{cmd: c, fn: fn}
+	}
+}
+
+// OSExec runs the given *exec.Cmd in a blocking fashion, effectively pausing
 // the Program while the command is running. After the *exec.Cmd exists the
 // Program resumes. It's useful for spawning other interactive applications
 // such as editors and shells from within a Program.
 //
-// To produce the command, pass an ExecCommand and a function which returns
+// To produce the command, pass an *exec.Cmd and a function which returns
 // a message containing the error which may have occurred when running the
 // ExecCommand.
 //
@@ -259,19 +273,17 @@ func HideCursor() Msg {
 //
 //     c := exec.Command("vim", "file.txt")
 //
-//     cmd := Exec(WrapExecCommand(c), func(err error) Msg {
+//     cmd := OSExec(c, func(err error) Msg {
 //         return VimFinishedMsg{err: error}
 //     })
 //
-// Or, if you don't care about errors you could simply:
+// Or, if you don't care about errors, you could simply:
 //
-//     cmd := Exec(WrapExecCommand(exec.Command("vim", "file.txt")), nil)
+//     cmd := OSExec(exec.Command("vim", "file.txt"), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
-func Exec(c ExecCommand, fn ExecCallback) Cmd {
-	return func() Msg {
-		return execMsg{cmd: c, fn: fn}
-	}
+func OSExec(c *exec.Cmd, fn ExecCallback) Cmd {
+	return Exec(WrapExecCommand(c), fn)
 }
 
 // ExecCallback is used when executing an *exec.Command to return a message
@@ -747,8 +759,8 @@ func (p *Program) RestoreTerminal() error {
 	return nil
 }
 
-// ExecCommand can be implemented to execute things in the current
-// terminal using the Exec Cmd.
+// ExecCommand can be implemented to execute things in a blocking fashion in
+// the current terminal.
 type ExecCommand interface {
 	Run() error
 	SetStdin(io.Reader)
@@ -757,7 +769,7 @@ type ExecCommand interface {
 }
 
 // WrapExecCommand wraps an exec.Cmd so that it satisfies the ExecCommand
-// interface.
+// interface so it can be used with Exec.
 func WrapExecCommand(c *exec.Cmd) ExecCommand {
 	return &osExecCommand{Cmd: c}
 }
