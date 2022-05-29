@@ -25,9 +25,32 @@ import (
 //      return TickMsg(t)
 //   })
 //
-// Notice that you'll need to keep calling Every after handling every
-// TickMsg on update if you'd want to, for example, do something every X time.
-// To clarify: Every will not loop and dispatch a new message every given interval.
+// Beginners' note: Every sends a single message and won't automatically
+// dispatch messages at a given interval. To do that, you'll want to return
+// another Every command after receiving your tick message. For example:
+//
+//   type TickMsg time.Time
+//
+//   // Send a message every second.
+//   func tickEvery() Cmd {
+//       return Every(time.Second, func(t time.Time) Msg {
+//           return TickMsg(t)
+//       })
+//   }
+//
+//   func (m model) Init() Cmd {
+//       // Start ticking.
+//       return tickEvery()
+//   }
+//
+//   func (m model) Update(msg Msg) (Model, Cmd) {
+//       switch msg.(type) {
+//       case TickMsg:
+//           // Call your Every command again to loop.
+//           return m, tickEvery()
+//       }
+//       return m, nil
+//   }
 //
 // Every is analogous to Tick in the Elm Architecture.
 func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
@@ -52,11 +75,32 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 //      return TickMsg(t)
 //   })
 //
-// Notice that you'll need to keep calling Tick after handling every
-// TickMsg on update if you'd want to, for example, do something every X time.
-// To clarify: Tick will not loop and dispatch a new message every given interval.
+// Beginners' note: Tick sends a single message and won't automatically
+// dispatch messages at a given interval. To do that, you'll want to return
+// another Tick command after receiving your tick message. For example:
 //
-// Tick is analogous to Tick in the Elm Architecture.
+//   type TickMsg time.Time
+//
+//   func doTick() Cmd {
+//       return Tick(time.Second, func(t time.Time) Msg {
+//           return TickMsg(t)
+//       })
+//   }
+//
+//   func (m model) Init() Cmd {
+//       // Start ticking.
+//       return doTick()
+//   }
+//
+//   func (m model) Update(msg Msg) (Model, Cmd) {
+//       switch msg.(type) {
+//       case TickMsg:
+//           // Call your Tick command again to loop.
+//           return m, doTick()
+//       }
+//       return m, nil
+//   }
+//
 func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	return func() Msg {
 		t := time.NewTimer(d)
@@ -69,10 +113,10 @@ func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 // The Msg returned is the first non-nil message returned by a Cmd.
 //
 //   func saveStateCmd() Msg {
-//   	if err := save(); err != nil {
-//    		return errMsg{err}
-//    	}
-//   	return nil
+//      if err := save(); err != nil {
+//          return errMsg{err}
+//      }
+//      return nil
 //   }
 //
 //   cmd := Sequentially(saveStateCmd, Quit)
