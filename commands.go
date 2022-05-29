@@ -26,8 +26,8 @@ import (
 //   })
 //
 // Beginners' note: Every sends a single message and won't automatically
-// dispatch messages at a given interval. To do that, you'll want to return
-// another Every command after receiving your tick message. For example:
+// dispatch messages at an interval. To do that, you'll want to return another
+// Every command after receiving your tick message. For example:
 //
 //   type TickMsg time.Time
 //
@@ -76,8 +76,8 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 //   })
 //
 // Beginners' note: Tick sends a single message and won't automatically
-// dispatch messages at a given interval. To do that, you'll want to return
-// another Tick command after receiving your tick message. For example:
+// dispatch messages at an interval. To do that, you'll want to return another
+// Tick command after receiving your tick message. For example:
 //
 //   type TickMsg time.Time
 //
