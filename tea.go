@@ -283,7 +283,7 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
 func OSExec(c *exec.Cmd, fn ExecCallback) Cmd {
-	return Exec(WrapExecCommand(c), fn)
+	return Exec(wrapExecCommand(c), fn)
 }
 
 // ExecCallback is used when executing an *exec.Command to return a message
@@ -576,7 +576,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 				hideCursor(p.output)
 
 			case execMsg:
-				// Note: this blocks.
+				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
 			}
 
@@ -768,9 +768,9 @@ type ExecCommand interface {
 	SetStderr(io.Writer)
 }
 
-// WrapExecCommand wraps an exec.Cmd so that it satisfies the ExecCommand
+// wrapExecCommand wraps an exec.Cmd so that it satisfies the ExecCommand
 // interface so it can be used with Exec.
-func WrapExecCommand(c *exec.Cmd) ExecCommand {
+func wrapExecCommand(c *exec.Cmd) ExecCommand {
 	return &osExecCommand{Cmd: c}
 }
 
