@@ -48,29 +48,119 @@ func TestKeyTypeString(t *testing.T) {
 }
 
 func TestReadInput(t *testing.T) {
-	for out, in := range map[string][]byte{
-		"a":         {'a'},
-		"ctrl+a":    {byte(keySOH)},
-		"alt+a":     {0x1b, 'a'},
-		"abcd":      {'a', 'b', 'c', 'd'},
-		"up":        []byte("\x1b[A"),
-		"wheel up":  {'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
-		"shift+tab": {'\x1b', '[', 'Z'},
+	type test struct {
+		in  []byte
+		out []Msg
+	}
+	for out, td := range map[string]test{
+		"a": {
+			[]byte{'a'},
+			[]Msg{
+				KeyMsg{
+					Type:  KeyRunes,
+					Runes: []rune{'a'},
+				},
+			},
+		},
+		" ": {
+			[]byte{' '},
+			[]Msg{
+				KeyMsg{
+					Type:  KeySpace,
+					Runes: []rune{' '},
+				},
+			},
+		},
+		"ctrl+a": {
+			[]byte{byte(keySOH)},
+			[]Msg{
+				KeyMsg{
+					Type: KeyCtrlA,
+				},
+			},
+		},
+		"alt+a": {
+			[]byte{byte(0x1b), 'a'},
+			[]Msg{
+				KeyMsg{
+					Type:  KeyRunes,
+					Alt:   true,
+					Runes: []rune{'a'},
+				},
+			},
+		},
+		"abcd": {
+			[]byte{'a', 'b', 'c', 'd'},
+			[]Msg{
+				KeyMsg{
+					Type:  KeyRunes,
+					Runes: []rune{'a'},
+				},
+				KeyMsg{
+					Type:  KeyRunes,
+					Runes: []rune{'b'},
+				},
+				KeyMsg{
+					Type:  KeyRunes,
+					Runes: []rune{'c'},
+				},
+				KeyMsg{
+					Type:  KeyRunes,
+					Runes: []rune{'d'},
+				},
+			},
+		},
+		"up": {
+			[]byte("\x1b[A"),
+			[]Msg{
+				KeyMsg{
+					Type: KeyUp,
+				},
+			},
+		},
+		"wheel up": {
+			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
+			[]Msg{
+				MouseMsg{
+					Type: MouseWheelUp,
+				},
+			},
+		},
+		"shift+tab": {
+			[]byte{'\x1b', '[', 'Z'},
+			[]Msg{
+				KeyMsg{
+					Type: KeyShiftTab,
+				},
+			},
+		},
 	} {
 		t.Run(out, func(t *testing.T) {
-			msgs, err := readInputs(bytes.NewReader(in))
+			msgs, err := readInputs(bytes.NewReader(td.in))
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if len(msgs) == 0 {
-				t.Fatalf("unexpected empty message list")
+			if len(msgs) != len(td.out) {
+				t.Fatalf("unexpected message list length")
 			}
 
-			if m, ok := msgs[0].(KeyMsg); ok && m.String() != out {
-				t.Fatalf(`expected a keymsg %q, got %q`, out, m)
+			if len(msgs) == 1 {
+				if m, ok := msgs[0].(KeyMsg); ok && m.String() != out {
+					t.Fatalf(`expected a keymsg %q, got %q`, out, m)
+				}
 			}
-			if m, ok := msgs[0].(MouseMsg); ok && mouseEventTypes[m.Type] != out {
-				t.Fatalf(`expected a mousemsg %q, got %q`, out, mouseEventTypes[m.Type])
+
+			for i, v := range msgs {
+				if m, ok := v.(KeyMsg); ok &&
+					m.String() != td.out[i].(KeyMsg).String() {
+					t.Fatalf(`expected a keymsg %q, got %q`, td.out[i].(KeyMsg), m)
+				}
+				if m, ok := v.(MouseMsg); ok &&
+					(mouseEventTypes[m.Type] != out || m.Type != td.out[i].(MouseMsg).Type) {
+					t.Fatalf(`expected a mousemsg %q, got %q`,
+						out,
+						mouseEventTypes[td.out[i].(MouseMsg).Type])
+				}
 			}
 		})
 	}
