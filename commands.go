@@ -46,7 +46,7 @@ import (
 //   func (m model) Update(msg Msg) (Model, Cmd) {
 //       switch msg.(type) {
 //       case TickMsg:
-//           // Call your Every command again to loop.
+//           // Return your Every command again to loop.
 //           return m, tickEvery()
 //       }
 //       return m, nil
@@ -95,7 +95,7 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 //   func (m model) Update(msg Msg) (Model, Cmd) {
 //       switch msg.(type) {
 //       case TickMsg:
-//           // Call your Tick command again to loop.
+//           // Return your Tick command again to loop.
 //           return m, doTick()
 //       }
 //       return m, nil
