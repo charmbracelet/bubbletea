@@ -16,8 +16,7 @@ type execMsg struct {
 // pausing the Program while execution is runnning and resuming it when
 // execution has completed.
 //
-// To run operating-system-level applications like vim and htop from within
-// a Program use OSExec.
+// Most of the time you'll want to use ExecProcess, which runs an exec.Cmd.
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
 func Exec(c ExecCommand, fn ExecCallback) Cmd {
@@ -26,9 +25,9 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 	}
 }
 
-// OSExec runs the given *exec.Cmd in a blocking fashion, effectively pausing
-// the Program while the command is running. After the *exec.Cmd exists the
-// Program resumes. It's useful for spawning other interactive applications
+// ExecProcess runs the given *exec.Cmd in a blocking fashion, effectively
+// pausing the Program while the command is running. After the *exec.Cmd exists
+// the Program resumes. It's useful for spawning other interactive applications
 // such as editors and shells from within a Program.
 //
 // To produce the command, pass an *exec.Cmd and a function which returns
@@ -39,16 +38,16 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 //
 //     c := exec.Command("vim", "file.txt")
 //
-//     cmd := OSExec(c, func(err error) Msg {
+//     cmd := ExecProcess(c, func(err error) Msg {
 //         return VimFinishedMsg{err: error}
 //     })
 //
 // Or, if you don't care about errors, you could simply:
 //
-//     cmd := OSExec(exec.Command("vim", "file.txt"), nil)
+//     cmd := ExecProcess(exec.Command("vim", "file.txt"), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
-func OSExec(c *exec.Cmd, fn ExecCallback) Cmd {
+func ExecProcess(c *exec.Cmd, fn ExecCallback) Cmd {
 	return Exec(wrapExecCommand(c), fn)
 }
 

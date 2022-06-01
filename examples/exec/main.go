@@ -12,7 +12,7 @@ type editorFinishedMsg struct{ err error }
 
 func openEditor() tea.Cmd {
 	c := exec.Command(os.Getenv("EDITOR")) //nolint:gosec
-	return tea.OSExec(c, func(err error) tea.Msg {
+	return tea.ExecProcess(c, func(err error) tea.Msg {
 		return editorFinishedMsg{err}
 	})
 }
