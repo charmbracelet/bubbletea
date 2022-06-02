@@ -16,7 +16,7 @@ func TestModel(
 	tb testing.TB,
 	m tea.Model,
 	interact func(p Sender, in io.Writer),
-	assert func(tb testing.TB, out io.Reader),
+	assert func(out io.Reader),
 ) {
 	var in bytes.Buffer
 	var out bytes.Buffer
@@ -33,5 +33,5 @@ func TestModel(
 
 	interact(p, &in)
 	<-done
-	assert(tb, &out)
+	assert(&out)
 }

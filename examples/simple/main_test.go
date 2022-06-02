@@ -22,7 +22,7 @@ func TestApp(t *testing.T) {
 				Type: tea.KeyEnter,
 			})
 		},
-		func(tb testing.TB, out io.Reader) {
+		func(out io.Reader) {
 			bts, err := io.ReadAll(out)
 			if err != nil {
 				t.Fatal(err)
