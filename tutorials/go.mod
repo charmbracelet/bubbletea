@@ -2,6 +2,6 @@ module tutorial
 
 go 1.14
 
-require github.com/charmbracelet/bubbletea v0.19.3
+require github.com/charmbracelet/bubbletea v0.21.0
 
 replace github.com/charmbracelet/bubbletea => ../
