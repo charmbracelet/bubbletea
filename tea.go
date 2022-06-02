@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"sync"
@@ -244,44 +243,6 @@ type WindowSizeMsg struct {
 // Tea program's lifetime. You will most likely not need to use this command.
 func HideCursor() Msg {
 	return hideCursorMsg{}
-}
-
-// Exec runs the given ExecCommand in a blocking fashion, effectively pausing
-// the Program while the command is running. After the *exec.Cmd exists the
-// Program resumes. It's useful for spawning other interactive applications
-// such as editors and shells from within a Program.
-//
-// To produce the command, pass an ExecCommand and a function which returns
-// a message containing the error which may have occurred when running the
-// ExecCommand.
-//
-//     type VimFinishedMsg struct { err error }
-//
-//     c := exec.Command("vim", "file.txt")
-//
-//     cmd := Exec(WrapExecCommand(c), func(err error) Msg {
-//         return VimFinishedMsg{err: error}
-//     })
-//
-// Or, if you don't care about errors you could simply:
-//
-//     cmd := Exec(WrapExecCommand(exec.Command("vim", "file.txt")), nil)
-//
-// For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
-func Exec(c ExecCommand, fn ExecCallback) Cmd {
-	return func() Msg {
-		return execMsg{cmd: c, fn: fn}
-	}
-}
-
-// ExecCallback is used when executing an *exec.Command to return a message
-// with an error, which may or may not be nil.
-type ExecCallback func(error) Msg
-
-// execMsg is used internally to run an ExecCommand sent with Exec.
-type execMsg struct {
-	cmd ExecCommand
-	fn  ExecCallback
 }
 
 // hideCursorMsg is an internal command used to hide the cursor. You can send
@@ -564,7 +525,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 				hideCursor(p.output)
 
 			case execMsg:
-				// Note: this blocks.
+				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
 			}
 
@@ -745,77 +706,4 @@ func (p *Program) RestoreTerminal() error {
 	go p.Send(repaintMsg{})
 
 	return nil
-}
-
-// ExecCommand can be implemented to execute things in the current
-// terminal using the Exec Cmd.
-type ExecCommand interface {
-	Run() error
-	SetStdin(io.Reader)
-	SetStdout(io.Writer)
-	SetStderr(io.Writer)
-}
-
-// WrapExecCommand wraps an exec.Cmd so that it satisfies the ExecCommand
-// interface.
-func WrapExecCommand(c *exec.Cmd) ExecCommand {
-	return &osExecCommand{Cmd: c}
-}
-
-// osExecCommand is a layer over an exec.Cmd that satisfies the ExecCommand
-// interface.
-type osExecCommand struct{ *exec.Cmd }
-
-// SetStdin sets stdin on underlying exec.Cmd to the given io.Reader.
-func (c *osExecCommand) SetStdin(r io.Reader) {
-	// If unset, have the command use the same input as the terminal.
-	if c.Stdin == nil {
-		c.Stdin = r
-	}
-}
-
-// SetStdout sets stdout on underlying exec.Cmd to the given io.Writer.
-func (c *osExecCommand) SetStdout(w io.Writer) {
-	// If unset, have the command use the same output as the terminal.
-	if c.Stdout == nil {
-		c.Stdout = w
-	}
-}
-
-// SetStderr sets stderr on the underlying exec.Cmd to the given io.Writer.
-func (c *osExecCommand) SetStderr(w io.Writer) {
-	// If unset, use stderr for the command's stderr
-	if c.Stderr == nil {
-		c.Stderr = w
-	}
-}
-
-// exec runs an ExecCommand and delivers the results to the program as a Msg.
-func (p *Program) exec(c ExecCommand, fn ExecCallback) {
-	if err := p.ReleaseTerminal(); err != nil {
-		// If we can't release input, abort.
-		if fn != nil {
-			go p.Send(fn(err))
-		}
-		return
-	}
-
-	c.SetStdin(p.input)
-	c.SetStdout(p.output)
-	c.SetStderr(os.Stderr)
-
-	// Execute system command.
-	if err := c.Run(); err != nil {
-		_ = p.RestoreTerminal() // also try to restore the terminal.
-		if fn != nil {
-			go p.Send(fn(err))
-		}
-		return
-	}
-
-	// Have the program re-capture input.
-	err := p.RestoreTerminal()
-	if fn != nil {
-		go p.Send(fn(err))
-	}
 }
