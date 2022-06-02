@@ -15,7 +15,7 @@ type Sender interface {
 func TestModel(
 	tb testing.TB,
 	m tea.Model,
-	interact func(p Sender, in io.Writer) error,
+	interact func(p Sender, in io.Writer),
 	assert func(tb testing.TB, out io.Reader),
 ) {
 	var in bytes.Buffer
@@ -31,11 +31,7 @@ func TestModel(
 		done <- true
 	}()
 
-	if err := interact(p, &in); err != nil {
-		tb.Fatalf("interaction failed: %s", err)
-	}
-
+	interact(p, &in)
 	<-done
-
 	assert(tb, &out)
 }

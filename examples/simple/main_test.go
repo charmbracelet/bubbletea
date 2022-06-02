@@ -15,13 +15,12 @@ func TestApp(t *testing.T) {
 
 	teatest.TestModel(
 		t, m,
-		func(p teatest.Sender, in io.Writer) error {
+		func(p teatest.Sender, in io.Writer) {
 			time.Sleep(time.Second)
 			p.Send("ignored msg")
 			p.Send(tea.KeyMsg{
 				Type: tea.KeyEnter,
 			})
-			return nil
 		},
 		func(tb testing.TB, out io.Reader) {
 			bts, err := io.ReadAll(out)
