@@ -15,3 +15,4 @@ require (
 )
 
 replace github.com/charmbracelet/bubbletea => ../
+replace github.com/charmbracelet/bubbles => ../../bubbles
