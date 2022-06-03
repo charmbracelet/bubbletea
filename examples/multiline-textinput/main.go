@@ -33,9 +33,9 @@ func initialModel() model {
 	ti.Focus()
 	ti.Prompt = "┃ "
 	ti.CharLimit = 400
-	ti.Width = 60
-	ti.LineLimit = 10
-	ti.Height = 10
+	ti.Width = 20
+	ti.Height = 5
+	ti.LineLimit = 20
 
 	return model{
 		textInput: ti,
@@ -70,11 +70,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"Tell me a story.\n\n%s\nColumn: %d\nRow: %d\nLength: %d\n\n%s",
+		"Tell me a story.\n\n%s\n\nColumn: %d\nRow: %d\nLength: %d\nOffset: %d\n\n%s",
 		m.textInput.View(),
 		m.textInput.Cursor(),
 		m.textInput.Line(),
 		m.textInput.Length(),
+		m.textInput.Viewport.YOffset,
 		"(esc to quit)",
 	) + "\n\n"
 }
