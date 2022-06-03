@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"strings"
 	"testing"
 	"time"
 
@@ -16,20 +15,14 @@ func TestApp(t *testing.T) {
 	teatest.TestModel(
 		t, m,
 		func(p teatest.Sender, in io.Writer) {
-			time.Sleep(time.Second)
+			time.Sleep(time.Second + time.Millisecond*200)
 			p.Send("ignored msg")
 			p.Send(tea.KeyMsg{
 				Type: tea.KeyEnter,
 			})
 		},
 		func(out io.Reader) {
-			bts, err := io.ReadAll(out)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !strings.Contains(string(bts), "9 seconds") {
-				t.Errorf("expected to exit immediately, seems like it waited: %q", string(bts))
-			}
+			teatest.RequireEqualOutput(t, out)
 		},
 	)
 }
