@@ -4,11 +4,9 @@
 package tea
 
 import (
-	"io"
 	"os"
 
 	"github.com/containerd/console"
-	"golang.org/x/sys/windows"
 )
 
 func (p *Program) initInput() error {
@@ -25,8 +23,6 @@ func (p *Program) initInput() error {
 		c := console.Current()
 		p.console = c
 	}
-
-	enableAnsiColors(p.output)
 
 	return nil
 }
@@ -48,19 +44,4 @@ func openInputTTY() (*os.File, error) {
 		return nil, err
 	}
 	return f, nil
-}
-
-// enableAnsiColors enables support for ANSI color sequences in Windows
-// default console. Note that this only works with Windows 10.
-func enableAnsiColors(w io.Writer) {
-	f, ok := w.(*os.File)
-	if !ok {
-		return
-	}
-
-	stdout := windows.Handle(f.Fd())
-	var originalMode uint32
-
-	_ = windows.GetConsoleMode(stdout, &originalMode)
-	_ = windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 }

@@ -1,6 +1,10 @@
 package tea
 
-import "io"
+import (
+	"io"
+
+	"github.com/muesli/termenv"
+)
 
 // ProgramOption is used to set options when initializing a Program. Program can
 // accept a variable number of options.
@@ -13,17 +17,17 @@ type ProgramOption func(*Program)
 // WithOutput sets the output which, by default, is stdout. In most cases you
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
-	return func(m *Program) {
-		m.output = output
+	return func(p *Program) {
+		p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
 	}
 }
 
 // WithInput sets the input which, by default, is stdin. In most cases you
 // won't need to use this.
 func WithInput(input io.Reader) ProgramOption {
-	return func(m *Program) {
-		m.input = input
-		m.startupOptions |= withCustomInput
+	return func(p *Program) {
+		p.input = input
+		p.startupOptions |= withCustomInput
 	}
 }
 
@@ -39,8 +43,8 @@ func WithInputTTY() ProgramOption {
 // unusable state after a panic because Bubble Tea will not perform its usual
 // cleanup on exit.
 func WithoutCatchPanics() ProgramOption {
-	return func(m *Program) {
-		m.CatchPanics = false
+	return func(p *Program) {
+		p.CatchPanics = false
 	}
 }
 
@@ -114,8 +118,8 @@ func WithMouseAllMotion() ProgramOption {
 // programs. For example, your program could behave like a daemon if output is
 // not a TTY.
 func WithoutRenderer() ProgramOption {
-	return func(m *Program) {
-		m.renderer = &nilRenderer{}
+	return func(p *Program) {
+		p.renderer = &nilRenderer{}
 	}
 }
 
