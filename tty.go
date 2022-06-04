@@ -20,14 +20,14 @@ func (p *Program) initTerminal() error {
 		}
 	}
 
-	hideCursor(p.output)
+	p.output.HideCursor()
 	return nil
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p Program) restoreTerminalState() error {
-	showCursor(p.output)
+	p.output.ShowCursor()
 
 	if p.console != nil {
 		err := p.console.Reset()
