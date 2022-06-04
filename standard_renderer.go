@@ -230,7 +230,9 @@ func (r *standardRenderer) write(s string) {
 }
 
 func (r *standardRenderer) repaint() {
+	r.mtx.Lock()
 	r.lastRender = ""
+	r.mtx.Unlock()
 }
 
 func (r *standardRenderer) altScreen() bool {
@@ -361,9 +363,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 		// Force a repaint on the area where the scrollable stuff was in this
 		// update cycle
-		r.mtx.Lock()
-		r.lastRender = ""
-		r.mtx.Unlock()
+		r.repaint()
 
 	case syncScrollAreaMsg:
 		// Re-render scrolling area
@@ -372,9 +372,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
 
 		// Force non-scrolling stuff to repaint in this update cycle
-		r.mtx.Lock()
-		r.lastRender = ""
-		r.mtx.Unlock()
+		r.repaint()
 
 	case scrollUpMsg:
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
