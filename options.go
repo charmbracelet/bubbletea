@@ -130,3 +130,16 @@ func WithANSICompressor() ProgramOption {
 		p.startupOptions |= withANSICompressor
 	}
 }
+
+// WithWindowSizeSource sets the file descriptor to be used when determining
+// the window size. By the default, it's the program's stdout.
+// In most cases you won't need to use this. It's useful in situations where
+// the program's output file descriptor is not a terminal but the program's
+// stdin might be. Then it's useful to use the stdin instead as a source of
+// information for the window size. If the stdin is not a terminal either there
+// isn't much that can be done and WindowSizeMsg events won't be sent.
+func WithWindowSizeSource(s WindowSizeSource) ProgramOption {
+	return func(p *Program) {
+		p.windowSizeSource = s
+	}
+}

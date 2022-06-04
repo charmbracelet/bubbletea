@@ -117,6 +117,9 @@ type Program struct {
 	// as this value only comes into play on Windows, hence the ignore comment
 	// below.
 	windowsStdin *os.File //nolint:golint,structcheck,unused
+
+	// which file descriptor to use for window size events
+	windowSizeSource WindowSizeSource
 }
 
 // Batch performs a bunch of commands concurrently with no ordering guarantees
@@ -252,13 +255,14 @@ type hideCursorMsg struct{}
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
-		mtx:          &sync.Mutex{},
-		initialModel: model,
-		output:       os.Stdout,
-		input:        os.Stdin,
-		msgs:         make(chan Msg),
-		CatchPanics:  true,
-		killc:        make(chan bool, 1),
+		mtx:              &sync.Mutex{},
+		initialModel:     model,
+		output:           os.Stdout,
+		input:            os.Stdin,
+		msgs:             make(chan Msg),
+		CatchPanics:      true,
+		killc:            make(chan bool, 1),
+		windowSizeSource: WindowSizeSourceOutput,
 	}
 
 	// Apply all options to the program.
@@ -426,10 +430,23 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}
 	defer p.cancelReader.Close() // nolint:errcheck
 
-	if f, ok := p.output.(*os.File); ok && isatty.IsTerminal(f.Fd()) {
+	var winSizeFd *os.File
+	switch p.windowSizeSource {
+	case WindowSizeSourceOutput:
+		if f, ok := p.output.(*os.File); ok && isatty.IsTerminal(f.Fd()) {
+			winSizeFd = f
+		}
+
+	case WindowSizeSourceInput:
+		if f, ok := p.input.(*os.File); ok && isatty.IsTerminal(f.Fd()) {
+			winSizeFd = f
+		}
+	}
+
+	if winSizeFd != nil {
 		// Get the initial terminal size and send it to the program.
 		go func() {
-			w, h, err := term.GetSize(int(f.Fd()))
+			w, h, err := term.GetSize(int(winSizeFd.Fd()))
 			if err != nil {
 				p.errs <- err
 			}
@@ -441,7 +458,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}()
 
 		// Listen for window resizes.
-		go listenForResize(p.ctx, f, p.msgs, p.errs, resizeLoopDone)
+		go listenForResize(p.ctx, winSizeFd, p.msgs, p.errs, resizeLoopDone)
 	} else {
 		close(resizeLoopDone)
 	}

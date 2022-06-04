@@ -13,9 +13,9 @@ import (
 )
 
 // listenForResize sends messages (or errors) when the terminal resizes.
-// Argument output should be the file descriptor for the terminal; usually
+// Argument source should be the file descriptor for the terminal; usually
 // os.Stdout.
-func listenForResize(ctx context.Context, output *os.File, msgs chan Msg, errs chan error, done chan struct{}) {
+func listenForResize(ctx context.Context, source *os.File, msgs chan Msg, errs chan error, done chan struct{}) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGWINCH)
 
@@ -31,7 +31,7 @@ func listenForResize(ctx context.Context, output *os.File, msgs chan Msg, errs c
 		case <-sig:
 		}
 
-		w, h, err := term.GetSize(int(output.Fd()))
+		w, h, err := term.GetSize(int(source.Fd()))
 		if err != nil {
 			errs <- err
 		}

@@ -91,4 +91,20 @@ func TestOptions(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("window size source default", func(t *testing.T) {
+		expected := WindowSizeSourceOutput
+		p := NewProgram(nil)
+		if expected != p.windowSizeSource {
+			t.Errorf("expected windowSizeSource to be %s, got %s", expected, p.windowSizeSource)
+		}
+	})
+
+	t.Run("window size source custom", func(t *testing.T) {
+		expected := WindowSizeSourceInput
+		p := NewProgram(nil, WithWindowSizeSource(expected))
+		if expected != p.windowSizeSource {
+			t.Errorf("expected windowSizeSource to be %s, got %s", expected, p.windowSizeSource)
+		}
+	})
 }
