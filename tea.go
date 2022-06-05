@@ -503,7 +503,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 				continue
 
 			case WindowSizeMsg:
+				p.mtx.Lock()
 				p.renderer.repaint()
+				p.mtx.Unlock()
 
 			case enterAltScreenMsg:
 				p.EnterAltScreen()
