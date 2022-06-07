@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func main() {
@@ -23,28 +24,28 @@ type tickMsg struct{}
 type errMsg error
 
 type model struct {
-	textInput textinput.Model
-	err       error
+	textarea textarea.Model
+	err      error
 }
 
 func initialModel() model {
-	ti := textinput.New()
+	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
 	ti.Focus()
-	ti.Prompt = "┃ "
 	ti.CharLimit = 400
 	ti.Width = 20
-	ti.Height = 5
-	ti.LineLimit = 20
+	ti.Height = 3
+	ti.LineLimit = 10
+	ti.CursorLineStyle = lipgloss.NewStyle().Background(lipgloss.Color("0"))
 
 	return model{
-		textInput: ti,
-		err:       nil,
+		textarea: ti,
+		err:      nil,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return textinput.Blink
+	return textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -54,7 +55,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			fmt.Println(m.textInput.Value())
+			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
 		}
 
@@ -64,18 +65,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.textInput, cmd = m.textInput.Update(msg)
+	m.textarea, cmd = m.textarea.Update(msg)
 	return m, cmd
 }
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"Tell me a story.\n\n%s\n\nColumn: %d\nRow: %d\nLength: %d\nOffset: %d\n\n%s",
-		m.textInput.View(),
-		m.textInput.Cursor(),
-		m.textInput.Line(),
-		m.textInput.Length(),
-		m.textInput.Viewport.YOffset,
+		"Tell me a story.\n\n%s\n\nColumn: %d\n\n\n%s",
+		m.textarea.View(),
+		m.textarea.Cursor(),
 		"(esc to quit)",
 	) + "\n\n"
 }
