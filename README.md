@@ -129,6 +129,7 @@ For some Bubble Tea programs in production, see:
 * [pathos](https://github.com/chip/pathos): pathos - CLI for editing a PATH env variable
 * [portal][portal]: securely send transfer between computers
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): browse Redis databases
+* [sku](https://github.com/fedeztk/sku): a simple TUI for playing sudoku inside the terminal
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
 * [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
