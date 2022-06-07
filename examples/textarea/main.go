@@ -37,6 +37,7 @@ func initialModel() model {
 	ti.Height = 3
 	ti.LineLimit = 10
 	ti.CursorLineStyle = lipgloss.NewStyle().Background(lipgloss.Color("0"))
+	ti.ShowLineNumbers = true
 
 	return model{
 		textarea: ti,
