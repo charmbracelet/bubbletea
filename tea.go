@@ -597,7 +597,7 @@ func (p *Program) shutdown(kill bool) {
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
-// Deprecated. Use the WithAltScreen ProgramOption instead.
+// Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -616,7 +616,7 @@ func (p *Program) EnterAltScreen() {
 
 // ExitAltScreen exits the alternate screen buffer.
 //
-// Deprecated. The altscreen will exited automatically when the program exits.
+// Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -636,7 +636,7 @@ func (p *Program) ExitAltScreen() {
 // EnableMouseCellMotion enables mouse click, release, wheel and motion events
 // if a mouse button is pressed (i.e., drag events).
 //
-// Deprecated. Use the WithMouseCellMotion ProgramOption instead.
+// Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -646,7 +646,7 @@ func (p *Program) EnableMouseCellMotion() {
 // DisableMouseCellMotion disables Mouse Cell Motion tracking. This will be
 // called automatically when exiting a Bubble Tea program.
 //
-// Deprecated. The mouse will automatically be disabled when the program exits.
+// Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -657,7 +657,7 @@ func (p *Program) DisableMouseCellMotion() {
 // regardless of whether a mouse button is pressed. Many modern terminals
 // support this, but not all.
 //
-// Deprecated. Use the WithMouseAllMotion ProgramOption instead.
+// Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
@@ -667,7 +667,7 @@ func (p *Program) EnableMouseAllMotion() {
 // DisableMouseAllMotion disables All Motion mouse tracking. This will be
 // called automatically when exiting a Bubble Tea program.
 //
-// Deprecated. The mouse will automatically be disabled when the program exits.
+// Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
