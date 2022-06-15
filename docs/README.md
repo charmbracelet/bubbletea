@@ -2,7 +2,7 @@
 
 ### When do things run?
 
-The `tea.Model` interface defines `Init`, `Update`, and `View` functions as seen in the Elm architecture.
+The `tea.Model` interface defines `Init`, `Update`, and `View` functions as seen in the [Elm architecture](https://guide.elm-lang.org/architecture/).
 
 **Init** — `Init()` is called when the program starts, its role is to fire off initial Commands  
 
@@ -10,7 +10,7 @@ The `tea.Model` interface defines `Init`, `Update`, and `View` functions as seen
 
 **View** — `View()` is called automatically after `Update()` to redraw the program with the updated state.  
 
-Definitely check out the Elm architecture resource above to learn more about how ELM works. Also, hop into our [Slack](https://charm.sh/slack) if you have any questions or want to be part of the community!
+Definitely check out the Elm architecture resource above to learn more about how Elm works. Also, hop into our [Slack](https://charm.sh/slack) if you have any questions or want to be part of the community!
 
 ## Nested Models
 

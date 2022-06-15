@@ -37,7 +37,9 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
-## Debugging with Delve
+## Debugging
+
+### Debugging with Delve
 
 Since Bubble Tea apps assume control of stdin and stdout, you’ll need to run
 delve in headless mode and then connect to it:
@@ -53,6 +55,24 @@ $ dlv connect 127.0.0.1:34241
 
 Note that the default port used will vary on your system and per run, so
 actually watch out what address the first `dlv` run tells you to connect to.
+
+### Print Debugging
+
+You can `log` to a debug file to print debug Bubble Tea applications.
+To do so, include something like: 
+
+```go
+if len(os.Getenv("DEBUG")) > 0 {
+	f, err := tea.LogToFile("debug.log", "debug")
+	if err != nil {
+		fmt.Println("fatal:", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+}
+```
+before you start your Bubble Tea program. 
+To see what's printed in real time, run `tail -f debug.go` while you run your program in another window. 
 
 ## Libraries we use with Bubble Tea
 
