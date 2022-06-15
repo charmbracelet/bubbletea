@@ -1,11 +1,34 @@
 # Download Progress
-This example was built based on [this](https://github.com/charmbracelet/bubbles/discussions/127) discussion.
-This example demonstrates how to download a file from a given URL, and show its progress with a [progress Bubble](https://github.com/charmbracelet/bubbles/).
-The status of the download is updated with [`io.TeeReader`](https://pkg.go.dev/io#TeeReader).
-This calls `Write` which is where we send the updated status with `Program#Send()` 
+
+This example demonstrates how to download a file from a URL and show its
+progress with a [Progress Bubble][progress].
+
+In this case we're getting download progress with an [`io.TeeReader`][tee] and
+sending progress `Msg`s to the `Program` with `Program.Send()`.
 
 ## How to Run
-`go build .` in this directory on your machine (in examples/download-progress)
-then run `./download-progress --url="https://download.blender.org/demo/color_vortex.blend"` this can be whatever file you'd like to download. 
-Note: the current version will not show a TUI for downloads that do not provide the ContentLength header field.
 
+Build the application with `go build .`, then run with a `--url` argument
+specifying the URL of the file to download. For example:
+
+```
+./download-progress --url="https://download.blender.org/demo/color_vortex.blend"
+```
+
+Note that in this example a TUI will not be shown for URLs that do not respond
+with a ContentLength header.
+
+* * *
+
+This example originally came from [this discussion][discussion].
+
+* * *
+
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
+
+Charm热爱开源 • Charm loves open source
+
+
+[progress]: https://github.com/charmbracelet/bubbles/
+[tee]: https://pkg.go.dev/io#TeeReader
+[discussion]: https://github.com/charmbracelet/bubbles/discussions/127
