@@ -6,6 +6,7 @@ import (
 	"flag"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -46,10 +47,22 @@ func TestModel(
 	assert(out.Bytes())
 }
 
+// TypeText types the given text into the given program.
+func TypeText(p Program, s string) {
+	for _, c := range []byte(s) {
+		p.Send(tea.KeyMsg{
+			Runes: []rune{rune(c)},
+			Type:  tea.KeyRunes,
+		})
+	}
+}
+
 var update = flag.Bool("update", false, "update .golden files")
 
-// RequireEqualOutput is a helper function to assert the given output is the
-// the expected from the golden files.
+// RequireEqualOutput is a helper function to assert the given output is
+// the expected from the golden files, printing its diff in case it is not.
+//
+// Important: this uses the system `diff` tool.
 //
 // You can update the golden files by running your tests with the -update flag.
 func RequireEqualOutput(tb testing.TB, out []byte) {
@@ -65,12 +78,14 @@ func RequireEqualOutput(tb testing.TB, out []byte) {
 		}
 	}
 
-	gbts, err := os.ReadFile(golden)
-	if err != nil {
+	path := filepath.Join(tb.TempDir(), tb.Name()+".out")
+	if err := os.WriteFile(path, out, 0o600); err != nil {
 		tb.Fatal(err)
 	}
 
-	if bytes.Equal(gbts, out) {
-		tb.Fatalf("output do not match:\ngot:\n%s\n\nexpected:\n%s\n\n", out, gbts)
+	// inspired by https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/cmd/internal/diff/diff.go;l=18
+	diff, err := exec.Command("diff", path, golden).CombinedOutput()
+	if err != nil {
+		tb.Fatalf("output does not match, diff:\n\n%s", string(diff))
 	}
 }
