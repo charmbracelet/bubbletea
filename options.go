@@ -45,6 +45,13 @@ func WithoutCatchPanics() ProgramOption {
 	}
 }
 
+// WithoutSignals will ignore OS signals, useful for testing.
+func WithoutSignals() ProgramOption {
+	return func(p *Program) {
+		p.ignoreSignals = true
+	}
+}
+
 // WithAltScreen starts the program with the alternate screen buffer enabled
 // (i.e. the program starts in full window mode). Note that the altscreen will
 // be automatically exited when the program quits.

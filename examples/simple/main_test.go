@@ -14,14 +14,14 @@ func TestApp(t *testing.T) {
 
 	teatest.TestModel(
 		t, m,
-		func(p teatest.Sender, in io.Writer) {
+		func(p teatest.Program, in io.Writer) {
 			time.Sleep(time.Second + time.Millisecond*200)
 			p.Send("ignored msg")
 			p.Send(tea.KeyMsg{
 				Type: tea.KeyEnter,
 			})
 		},
-		func(out io.Reader) {
+		func(out []byte) {
 			teatest.RequireEqualOutput(t, out)
 		},
 	)
