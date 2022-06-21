@@ -73,16 +73,16 @@ func RequireEqualOutput(tb testing.TB, out []byte) {
 
 	golden := filepath.Join("testdata", tb.Name()+".golden")
 	if *update {
-		if err := os.MkdirAll(filepath.Dir(golden), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(golden), 0o755); err != nil { // nolint: gomnd
 			tb.Fatal(err)
 		}
-		if err := os.WriteFile(golden, out, 0o600); err != nil {
+		if err := os.WriteFile(golden, out, 0o600); err != nil { // nolint: gomnd
 			tb.Fatal(err)
 		}
 	}
 
 	path := filepath.Join(tb.TempDir(), tb.Name()+".out")
-	if err := os.WriteFile(path, out, 0o600); err != nil {
+	if err := os.WriteFile(path, out, 0o600); err != nil { // nolint: gomnd
 		tb.Fatal(err)
 	}
 
