@@ -492,35 +492,7 @@ func readInputs(input io.Reader) ([]Msg, error) {
 		return m, nil
 	}
 
-	// Is it a sequence, like an arrow key?
-	if k, ok := sequences[string(buf[:numBytes])]; ok {
-		return []Msg{
-			KeyMsg(k),
-		}, nil
-	}
-
-	// Some of these need special handling.
-	hex := fmt.Sprintf("%x", buf[:numBytes])
-	if k, ok := hexes[hex]; ok {
-		return []Msg{
-			KeyMsg(k),
-		}, nil
-	}
-
-	// Is the alt key pressed? If so, the buffer will be prefixed with an
-	// escape.
-	if numBytes > 1 && buf[0] == 0x1b {
-		// Now remove the initial escape sequence and re-process to get the
-		// character being pressed in combination with alt.
-		c, _ := utf8.DecodeRune(buf[1:])
-		if c == utf8.RuneError {
-			return nil, errors.New("could not decode rune after removing initial escape")
-		}
-		return []Msg{
-			KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: []rune{c}}),
-		}, nil
-	}
-
+	var runeSets [][]rune
 	var runes []rune
 	b := buf[:numBytes]
 
@@ -532,38 +504,64 @@ func readInputs(input io.Reader) ([]Msg, error) {
 		if r == utf8.RuneError {
 			return nil, errors.New("could not decode rune")
 		}
+
+		if r == '\x1b' && len(runes) > 1 {
+			// a new key sequence has started
+			runeSets = append(runeSets, runes)
+			runes = []rune{}
+		}
+
 		runes = append(runes, r)
 		w = width
 	}
+	// add the final set of runes we decoded
+	runeSets = append(runeSets, runes)
 
-	if len(runes) == 0 {
+	if len(runeSets) == 0 {
 		return nil, errors.New("received 0 runes from input")
-	} else if len(runes) > 1 {
-		// We received multiple runes, so we know this isn't a control
-		// character, sequence, and so on.
-		return []Msg{
-			KeyMsg(Key{Type: KeyRunes, Runes: runes}),
-		}, nil
 	}
 
-	// Is the first rune a control character?
-	r := KeyType(runes[0])
-	if numBytes == 1 && r <= keyUS || r == keyDEL {
-		return []Msg{
-			KeyMsg(Key{Type: r}),
-		}, nil
+	var msgs []Msg
+	for _, runes := range runeSets {
+		// Is it a sequence, like an arrow key?
+		if k, ok := sequences[string(runes)]; ok {
+			msgs = append(msgs, KeyMsg(k))
+			continue
+		}
+
+		// Some of these need special handling.
+		hex := fmt.Sprintf("%x", runes)
+		if k, ok := hexes[hex]; ok {
+			msgs = append(msgs, KeyMsg(k))
+			continue
+		}
+
+		// Is the alt key pressed? If so, the buffer will be prefixed with an
+		// escape.
+		if len(runes) > 1 && runes[0] == 0x1b {
+			msgs = append(msgs, KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: runes[1:]}))
+			continue
+		}
+
+		for _, v := range runes {
+			// Is the first rune a control character?
+			r := KeyType(v)
+			if r <= keyUS || r == keyDEL {
+				msgs = append(msgs, KeyMsg(Key{Type: r}))
+				continue
+			}
+
+			// If it's a space, override the type with KeySpace (but still include
+			// the rune).
+			if r == ' ' {
+				msgs = append(msgs, KeyMsg(Key{Type: KeySpace, Runes: []rune{v}}))
+				continue
+			}
+
+			// Welp, just regular, ol' runes.
+			msgs = append(msgs, KeyMsg(Key{Type: KeyRunes, Runes: []rune{v}}))
+		}
 	}
 
-	// If it's a space, override the type with KeySpace (but still include the
-	// rune).
-	if runes[0] == ' ' {
-		return []Msg{
-			KeyMsg(Key{Type: KeySpace, Runes: runes}),
-		}, nil
-	}
-
-	// Welp, it's just a regular, ol' single rune.
-	return []Msg{
-		KeyMsg(Key{Type: KeyRunes, Runes: runes}),
-	}, nil
+	return msgs, nil
 }

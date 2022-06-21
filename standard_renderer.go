@@ -348,7 +348,9 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 	case repaintMsg:
 		// Force a repaint by clearing the render cache as we slide into a
 		// render.
+		r.mtx.Lock()
 		r.repaint()
+		r.mtx.Unlock()
 
 	case WindowSizeMsg:
 		r.mtx.Lock()
@@ -362,7 +364,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		// Force a repaint on the area where the scrollable stuff was in this
 		// update cycle
 		r.mtx.Lock()
-		r.lastRender = ""
+		r.repaint()
 		r.mtx.Unlock()
 
 	case syncScrollAreaMsg:
@@ -373,7 +375,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 		// Force non-scrolling stuff to repaint in this update cycle
 		r.mtx.Lock()
-		r.lastRender = ""
+		r.repaint()
 		r.mtx.Unlock()
 
 	case scrollUpMsg:

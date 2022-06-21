@@ -18,10 +18,10 @@ func TestOptions(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithInput(&b))
 		if p.input != &b {
-			t.Errorf("expected input to custom, got %v", p.output)
+			t.Errorf("expected input to custom, got %v", p.input)
 		}
 		if p.startupOptions&withCustomInput == 0 {
-			t.Errorf("expected startup options to have custom input set, got %v", p.output)
+			t.Errorf("expected startup options to have custom input set, got %v", p.input)
 		}
 	})
 
