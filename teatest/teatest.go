@@ -41,6 +41,9 @@ func TestModel(
 	// run the user interactions and then force a quit
 	interact(p, &in)
 	p.Quit()
+	if err := p.ReleaseTerminal(); err != nil {
+		tb.Fatalf("could not restore terminal: %v", err)
+	}
 
 	// wait for the program to quit and assert
 	<-done
