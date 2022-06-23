@@ -23,10 +23,14 @@ regions which works alongside the main renderer, and mouse support.
 
 ## Getting Started
 
-We recommend starting with our [basics tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics) followed by our [commands tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands) to understand what you can do with `tea.Cmd` and how they're used in BubbleTea. 
+We recommend starting with the [basics tutorial][basics] followed by our [commands tutorial][commands] to understand what you can do with `tea.Cmd` and how they're used in BubbleTea. 
 
-Additionally, we have have [documentation](https://github.com/charmbracelet/bubbletea/tree/master/docs) that include frequently asked questions, issues, and more in-depth explanations on specific topics.
-Don't forget about our [examples](https://github.com/charmbracelet/bubbletea/tree/master/examples).
+Additionally, we have have [documentation][documentation] that include frequently asked questions, issues, and more in-depth explanations on specific topics. Don't forget about our [examples][examples].
+
+[basics]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[commands]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
+[documentation]: https://github.com/charmbracelet/bubbletea/tree/master/docs
+[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
 
 ## By the way
 
