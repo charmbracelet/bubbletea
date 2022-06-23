@@ -23,9 +23,14 @@ regions which works alongside the main renderer, and mouse support.
 
 ## Getting Started
 
-We recommend starting with the [basics tutorial][basics] followed by our [commands tutorial][commands] to understand what you can do with `tea.Cmd` and how they're used in BubbleTea. 
+We recommend starting with the [basics tutorial][basics] followed by the
+[commands tutorial][commands].
 
-Additionally, we have have [documentation][documentation] that include frequently asked questions, issues, and more in-depth explanations on specific topics. Don't forget about our [examples][examples].
+Additionally, there is [documentation][documentation] that includes
+frequently asked questions, issues, and more in-depth explanations on specific
+topics. 
+
+Don't forget to check out the [examples][examples].
 
 [basics]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
 [commands]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
@@ -34,7 +39,8 @@ Additionally, we have have [documentation][documentation] that include frequentl
 
 ## By the way
 
-Be sure to check out [Bubbles][bubbles], a library of common UI components for Bubble Tea.
+Be sure to check out [Bubbles][bubbles], a library of common UI components for
+Bubble Tea.
 
 <p>
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles/bubbles-badge.png" width="174" alt="Bubbles Badge"></a>&nbsp;&nbsp;
@@ -62,7 +68,8 @@ actually watch out what address the first `dlv` run tells you to connect to.
 
 ### Print Debugging
 
-You can log to a debug file to print debug Bubble Tea applications. To do so, include something like:
+You can log to a debug file to print debug Bubble Tea applications. To do so,
+include something like:
 
 ```go
 if len(os.Getenv("DEBUG")) > 0 {
@@ -75,7 +82,8 @@ if len(os.Getenv("DEBUG")) > 0 {
 }
 ```
 
-before you start your Bubble Tea program. To see what's printed in real time, run `tail -f debug.go` while you run your program in another window.
+before you start your Bubble Tea program. To see what's printed in real time,
+run `tail -f debug.go` while you run your program in another window.
 
 ## Libraries we use with Bubble Tea
 
@@ -106,7 +114,7 @@ For some Bubble Tea programs in production, see:
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
 * [gh-b](https://github.com/joaom00/gh-b): GitHub CLI extension to easily manage your branches
-* [gh-dash](https://www.github.com/dlvhdr/gh-dash): GitHub cli extension to display a dashboard of PRs and issues
+* [gh-dash](https://www.github.com/dlvhdr/gh-dash): GitHub CLI extension to display a dashboard of PRs and issues
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
