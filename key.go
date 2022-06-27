@@ -41,6 +41,9 @@ import (
 // one character, though certain input method editors (most notably Chinese
 // IMEs) can input multiple runes at once.
 type KeyMsg Key
+//000000000000000
+var RuneDecoderFunc func(p []byte) (r rune, size int) = utf8.DecodeRune
+//00000000000000
 
 // String returns a string representation for a key message. It's safe (and
 // encouraged) for use in key comparison.
@@ -500,7 +503,7 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	// rune, but there are cases, particularly when an input method editor is
 	// used, where we can receive multiple runes at once.
 	for i, w := 0, 0; i < len(b); i += w {
-		r, width := utf8.DecodeRune(b[i:])
+		r, width := RuneDecoderFunc(b[i:])
 		if r == utf8.RuneError {
 			return nil, errors.New("could not decode rune")
 		}

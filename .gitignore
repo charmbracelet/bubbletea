@@ -18,3 +18,5 @@ tutorials/basics/basics
 tutorials/commands/commands
 .idea
 coverage.txt
+coverage.out
+

@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestKeyString(t *testing.T) {
@@ -47,11 +48,24 @@ func TestKeyTypeString(t *testing.T) {
 	})
 }
 
+func TestReadInputErrors(t *testing.T){
+	RuneDecoderFunc = func(p []byte) (r rune, size int) {
+		return utf8.RuneError,0
+	}
+	_, err := readInputs(bytes.NewReader([]byte{'a','b','c'}))
+	if err.Error() != "could not decode rune"{
+		t.Fatalf("expected rune decoder error, got %q",err)
+	}
+
+	RuneDecoderFunc = utf8.DecodeRune
+}
+
 func TestReadInput(t *testing.T) {
 	type test struct {
 		in  []byte
 		out []Msg
 	}
+
 	for out, td := range map[string]test{
 		"a": {
 			[]byte{'a'},
@@ -134,6 +148,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
+
 	} {
 		t.Run(out, func(t *testing.T) {
 			msgs, err := readInputs(bytes.NewReader(td.in))
