@@ -710,11 +710,8 @@ func (p *Program) RestoreTerminal() error {
 	return nil
 }
 
-// Printf prints above the Program. This output is unmanaged by the program and
-// will persist across renders by the Program.
-//
-// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
-// its own line.
+// Println prints above the Program. This output is unmanaged by the program
+// and will persist across renders by the Program.
 //
 // If the altscreen is active no output will be printed.
 func (p *Program) Println(args ...interface{}) {
