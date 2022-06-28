@@ -36,11 +36,13 @@ type model struct {
 func initialModel() model {
 	ta := textarea.New()
 	ta.Placeholder = "Send a message..."
-	ta.Focus()
 	ta.Prompt = "┃ "
 	ta.CharLimit = 280
-	ta.Width = 30
-	ta.Height = 3
+	ta.ShowLineNumbers = false
+	ta.Focus()
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	ta.SetWidth(30)
+	ta.SetHeight(3)
 
 	vp := viewport.New(30, 10)
 	vp.SetContent(`Welcome to the Bubbles multi-line text input!
