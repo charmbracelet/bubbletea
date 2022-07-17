@@ -294,6 +294,7 @@ For some Bubble Tea programs in production, see:
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
+* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
