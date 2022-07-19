@@ -24,7 +24,8 @@ regions which works alongside the main renderer, and mouse support.
 ## Getting Started
 
 We recommend starting with the [basics tutorial][basics] followed by the
-[commands tutorial][commands].
+[commands tutorial][commands], both of which should give you a good
+understanding of how things work.
 
 There are a bunch of [examples][examples], too!
 
