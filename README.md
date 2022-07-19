@@ -277,18 +277,19 @@ actually watch out what address the first `dlv` run tells you to connect to.
 * [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
 * [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
 * [Harmonica][harmonica]: A spring animation library for smooth, natural motion
+* [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
 [bubbles]: https://github.com/charmbracelet/bubbles
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [harmonica]: https://github.com/charmbracelet/harmonica
+[bubblezone]: https://twitter.com/charmcli/status/1541772151660761088https://github.com/lrstanley/bubblezone
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 
 ## Additional utility libraries to use with Bubble Tea
 
-* [BubbleZone](https://github.com/lrstanley/bubblezone): easy mouse event tracking for Bubble Tea components
 
 ## Bubble Tea in the Wild
 
