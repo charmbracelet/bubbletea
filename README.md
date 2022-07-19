@@ -284,7 +284,7 @@ actually watch out what address the first `dlv` run tells you to connect to.
 [bubbles]: https://github.com/charmbracelet/bubbles
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [harmonica]: https://github.com/charmbracelet/harmonica
-[bubblezone]: https://twitter.com/charmcli/status/1541772151660761088https://github.com/lrstanley/bubblezone
+[bubblezone]: https://github.com/lrstanley/bubblezone
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 
