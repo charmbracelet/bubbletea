@@ -26,21 +26,17 @@ regions which works alongside the main renderer, and mouse support.
 We recommend starting with the [basics tutorial][basics] followed by the
 [commands tutorial][commands].
 
-Additionally, there is [documentation][documentation] that includes
-frequently asked questions, issues, and more in-depth explanations on specific
-topics. 
-
-Don't forget to check out the [examples][examples].
+There are a bunch of [examples][examples], too!
 
 [basics]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
 [commands]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
 [documentation]: https://github.com/charmbracelet/bubbletea/tree/master/docs
 [examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
 
-## By the way
+## Components
 
-Be sure to check out [Bubbles][bubbles], a library of common UI components for
-Bubble Tea.
+For a bunch of basic user interface components check out [Bubbles][bubbles],
+the official Bubble Tea component library.
 
 <p>
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles/bubbles-badge.png" width="174" alt="Bubbles Badge"></a>&nbsp;&nbsp;
@@ -66,10 +62,10 @@ $ dlv connect 127.0.0.1:34241
 Note that the default port used will vary on your system and per run, so
 actually watch out what address the first `dlv` run tells you to connect to.
 
-### Print Debugging
+### Logging Stuff
 
 You can log to a debug file to print debug Bubble Tea applications. To do so,
-include something like:
+include something like…
 
 ```go
 if len(os.Getenv("DEBUG")) > 0 {
@@ -82,7 +78,7 @@ if len(os.Getenv("DEBUG")) > 0 {
 }
 ```
 
-before you start your Bubble Tea program. To see what's printed in real time,
+…before you start your Bubble Tea program. To see what’s printed in real time,
 run `tail -f debug.go` while you run your program in another window.
 
 ## Libraries we use with Bubble Tea
@@ -146,6 +142,7 @@ We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.technology/@charm)
+* [Slack](https://charm.sh/slack)
 
 ## Acknowledgments
 
