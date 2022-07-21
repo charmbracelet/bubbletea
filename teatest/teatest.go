@@ -7,7 +7,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"sync"
+	"syscall"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,8 +31,10 @@ func TestModel(
 	var in bytes.Buffer
 	var out bytes.Buffer
 
-	p := tea.NewProgram(m, tea.WithInput(&in), tea.WithOutput(&out), tea.WithoutSignals())
+	p := tea.NewProgram(m, tea.WithInput(&in), tea.WithOutput(safe(&out)), tea.WithoutSignals())
 
+	ints := make(chan os.Signal, 1)
+	signal.Notify(ints, syscall.SIGINT)
 	done := make(chan bool, 1)
 	go func() {
 		if err := p.Start(); err != nil {
@@ -37,9 +42,15 @@ func TestModel(
 		}
 		done <- true
 	}()
+	go func() {
+		<-ints
+		signal.Stop(ints)
+		tb.Log("interrupted")
+		p.Quit()
+	}()
 
 	// run the user interactions and then force a quit
-	interact(p, &in)
+	interact(p, safe(&in))
 	p.Quit()
 	if err := p.ReleaseTerminal(); err != nil {
 		tb.Fatalf("could not restore terminal: %v", err)
@@ -82,6 +93,9 @@ func RequireEqualOutput(tb testing.TB, out []byte) {
 	}
 
 	path := filepath.Join(tb.TempDir(), tb.Name()+".out")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { // nolint: gomnd
+		tb.Fatal(err)
+	}
 	if err := os.WriteFile(path, out, 0o600); err != nil { // nolint: gomnd
 		tb.Fatal(err)
 	}
@@ -91,4 +105,19 @@ func RequireEqualOutput(tb testing.TB, out []byte) {
 	if err != nil {
 		tb.Fatalf("output does not match, diff:\n\n%s", string(diff))
 	}
+}
+
+func safe(w io.Writer) io.Writer {
+	return &safeWriter{w: w}
+}
+
+type safeWriter struct {
+	w io.Writer
+	m sync.Mutex
+}
+
+func (s *safeWriter) Write(p []byte) (int, error) {
+	s.m.Lock()
+	defer s.m.Unlock()
+	return s.w.Write(p)
 }
