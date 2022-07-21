@@ -709,3 +709,27 @@ func (p *Program) RestoreTerminal() error {
 
 	return nil
 }
+
+// Println prints above the Program. This output is unmanaged by the program
+// and will persist across renders by the Program.
+//
+// If the altscreen is active no output will be printed.
+func (p *Program) Println(args ...interface{}) {
+	p.msgs <- printLineMessage{
+		messageBody: fmt.Sprint(args...),
+	}
+}
+
+// Printf prints above the Program. It takes a format template followed by
+// values similar to fmt.Printf. This output is unmanaged by the program and
+// will persist across renders by the Program.
+//
+// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
+// its own line.
+//
+// If the altscreen is active no output will be printed.
+func (p *Program) Printf(template string, args ...interface{}) {
+	p.msgs <- printLineMessage{
+		messageBody: fmt.Sprintf(template, args...),
+	}
+}

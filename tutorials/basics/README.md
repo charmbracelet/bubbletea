@@ -14,7 +14,7 @@ This tutorial assumes you have a working knowledge of Go.
 
 ## Enough! Let's get to it.
 
-For this tutorial we're making a shopping list.
+For this tutorial, we're making a shopping list.
 
 To start we'll define our package and import some libraries. Our only external
 import will be the Bubble Tea library, which we'll call `tea` for short.
@@ -52,8 +52,8 @@ type model struct {
 
 ## Initialization
 
-Next we’ll define our application’s initial state. In this case we’re defining
-a function to return our initial model, however we could just as easily define
+Next, we’ll define our application’s initial state. In this case, we’re defining
+a function to return our initial model, however, we could just as easily define
 the initial model as a variable elsewhere, too.
 
 ```go
@@ -70,8 +70,8 @@ func initialModel() model {
 }
 ```
 
-Next we define the `Init` method. `Init` can return a `Cmd` that could perform
-some initial I/O. For now, we don't need to do any I/O, so for the command
+Next, we define the `Init` method. `Init` can return a `Cmd` that could perform
+some initial I/O. For now, we don't need to do any I/O, so for the command,
 we'll just return `nil`, which translates to "no command."
 
 ```go
@@ -152,7 +152,7 @@ the Bubble Tea runtime to quit, exiting the program.
 ## The View Method
 
 At last, it’s time to render our UI. Of all the methods, the view is the
-simplest. We look at the  model in it's current state and use it to return
+simplest. We look at the model in its current state and use it to return
 a `string`.  That string is our UI!
 
 Because the view describes the entire UI of your application, you don’t have to
@@ -230,11 +230,12 @@ We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.technology/@charm)
+* [Slack](https://charm.sh/slack)
 
 ***
 
 Part of [Charm](https://charm.sh).
 
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
 
 Charm热爱开源 • Charm loves open source

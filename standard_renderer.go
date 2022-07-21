@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -23,16 +24,17 @@ const (
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
 type standardRenderer struct {
-	out               io.Writer
-	buf               bytes.Buffer
-	framerate         time.Duration
-	ticker            *time.Ticker
-	mtx               *sync.Mutex
-	done              chan struct{}
-	lastRender        string
-	linesRendered     int
-	useANSICompressor bool
-	once              sync.Once
+	out                io.Writer
+	buf                bytes.Buffer
+	queuedMessageLines []string
+	framerate          time.Duration
+	ticker             *time.Ticker
+	mtx                *sync.Mutex
+	done               chan struct{}
+	lastRender         string
+	linesRendered      int
+	useANSICompressor  bool
+	once               sync.Once
 
 	// essentially whether or not we're using the full size of the terminal
 	altScreenActive bool
@@ -49,10 +51,11 @@ type standardRenderer struct {
 // with os.Stdout as the first argument.
 func newRenderer(out io.Writer, mtx *sync.Mutex, useANSICompressor bool) renderer {
 	r := &standardRenderer{
-		out:               out,
-		mtx:               mtx,
-		framerate:         defaultFramerate,
-		useANSICompressor: useANSICompressor,
+		out:                out,
+		mtx:                mtx,
+		framerate:          defaultFramerate,
+		useANSICompressor:  useANSICompressor,
+		queuedMessageLines: []string{},
 	}
 	if r.useANSICompressor {
 		r.out = &compressor.Writer{Forward: out}
@@ -122,8 +125,16 @@ func (r *standardRenderer) flush() {
 	out := new(bytes.Buffer)
 
 	newLines := strings.Split(r.buf.String(), "\n")
+	numLinesThisFlush := len(newLines)
 	oldLines := strings.Split(r.lastRender, "\n")
 	skipLines := make(map[int]struct{})
+	flushQueuedMessages := len(r.queuedMessageLines) > 0 && !r.altScreenActive
+
+	// Add any queued messages to this render
+	if flushQueuedMessages {
+		newLines = append(r.queuedMessageLines, newLines...)
+		r.queuedMessageLines = []string{}
+	}
 
 	// Clear any lines we painted in the last render.
 	if r.linesRendered > 0 {
@@ -163,11 +174,9 @@ func (r *standardRenderer) flush() {
 		}
 	}
 
-	r.linesRendered = 0
-
 	// Paint new lines
 	for i := 0; i < len(newLines); i++ {
-		if _, skip := skipLines[r.linesRendered]; skip {
+		if _, skip := skipLines[i]; skip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
 				cursorDown(out)
@@ -192,8 +201,8 @@ func (r *standardRenderer) flush() {
 				_, _ = io.WriteString(out, "\r\n")
 			}
 		}
-		r.linesRendered++
 	}
+	r.linesRendered = numLinesThisFlush
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
@@ -383,6 +392,15 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
+
+	case printLineMessage:
+		if !r.altScreenActive {
+			lines := strings.Split(msg.messageBody, "\n")
+			r.mtx.Lock()
+			r.queuedMessageLines = append(r.queuedMessageLines, lines...)
+			r.repaint()
+			r.mtx.Unlock()
+		}
 	}
 }
 
@@ -457,6 +475,41 @@ func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 			lines:          newLines,
 			topBoundary:    topBoundary,
 			bottomBoundary: bottomBoundary,
+		}
+	}
+}
+
+type printLineMessage struct {
+	messageBody string
+}
+
+// Println prints above the Program. This output is unmanaged by the program and
+// will persist across renders by the Program.
+//
+// Unlike fmt.Println (but similar to log.Println) the message will be print on
+// its own line.
+//
+// If the altscreen is active no output will be printed.
+func Println(args ...interface{}) Cmd {
+	return func() Msg {
+		return printLineMessage{
+			messageBody: fmt.Sprint(args...),
+		}
+	}
+}
+
+// Printf prints above the Program. It takes a format template followed by
+// values similar to fmt.Printf. This output is unmanaged by the program and
+// will persist across renders by the Program.
+//
+// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
+// its own line.
+//
+// If the altscreen is active no output will be printed.
+func Printf(template string, args ...interface{}) Cmd {
+	return func() Msg {
+		return printLineMessage{
+			messageBody: fmt.Sprintf(template, args...),
 		}
 	}
 }
