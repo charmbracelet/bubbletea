@@ -80,7 +80,7 @@ if len(os.Getenv("DEBUG")) > 0 {
 ```
 
 …before you start your Bubble Tea program. To see what’s printed in real time,
-run `tail -f debug.go` while you run your program in another window.
+run `tail -f debug.log` while you run your program in another window.
 
 ## Libraries we use with Bubble Tea
 
