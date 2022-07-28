@@ -103,11 +103,15 @@ run `tail -f debug.log` while you run your program in another window.
 For some Bubble Tea programs in production, see:
 
 * [AT CLI](https://github.com/daskycodes/at_cli): a utility for executing AT Commands via serial port connections
+* [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [Canard](https://github.com/mrusme/canard): an RSS client
-* [The Charm Tool](https://github.com/charmbracelet/charm): the Charm user account manager
+* [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
+* [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
+* [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
+* [flipperzero-tea](https://github.com/jon4hz/flipperzero-tea): connect to your Flipper Zero over serial and SSH
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
@@ -134,6 +138,7 @@ For some Bubble Tea programs in production, see:
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal][portal])
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
+* [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
