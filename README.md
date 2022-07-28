@@ -121,6 +121,7 @@ For some Bubble Tea programs in production, see:
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+* [pathos](https://github.com/chip/pathos): pathos - CLI for editing a PATH env variable
 * [portal][portal]: securely send transfer between computers
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): browse Redis databases
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
