@@ -111,7 +111,7 @@ For some Bubble Tea programs in production, see:
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
-* [flipperzero-tea](https://github.com/jon4hz/flipperzero-tea): connect to your Flipper Zero over serial and SSH
+* [fztea](https://github.com/jon4hz/fztea): connect to your Flipper's UI over serial or make it accessible via SSH 
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
