@@ -102,6 +102,7 @@ run `tail -f debug.log` while you run your program in another window.
 
 For some Bubble Tea programs in production, see:
 
+* [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): Multiplatform terminal mandelbrot set explorer
 * [AT CLI](https://github.com/daskycodes/at_cli): a utility for executing AT Commands via serial port connections
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [Canard](https://github.com/mrusme/canard): an RSS client
