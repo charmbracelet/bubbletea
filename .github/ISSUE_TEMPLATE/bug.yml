@@ -20,7 +20,7 @@ body:
       description: |
         Please share a public repository that reproduces the issue.
         Make sure to make the reproducible as concise as possible,
-        with only the minumum required code to reproduce the issue.
+        with only the minimum required code to reproduce the issue.
     validations:
       required: true
   - type: textarea
