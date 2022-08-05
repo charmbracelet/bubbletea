@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -10,7 +11,17 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// this is an enum for Go
+/*
+This example assumes an existing understanding of commands and messages. If you
+haven't already read our tutorials on the basics of Bubble Tea and working
+with commands, we recommend reading those first.
+
+Find them at:
+https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
+https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+*/
+
+// sessionState is used to track which model is focused
 type sessionState uint
 
 const (
@@ -32,8 +43,13 @@ var (
 		spinner.Moon,
 		spinner.Monkey,
 	}
+	modelStyle = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder())
+	focusedModelStyle = lipgloss.NewStyle().
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderForeground(lipgloss.Color("69"))
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
-	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
 type mainModel struct {
@@ -43,9 +59,7 @@ type mainModel struct {
 	index   int
 }
 
-// New: Create a new main model
-func New(timeout time.Duration) mainModel {
-	// initialize your model; timerView is the first "view" we want to see
+func newModel(timeout time.Duration) mainModel {
 	m := mainModel{state: timerView}
 	m.timer = timer.New(timeout)
 	m.spinner = spinner.New()
@@ -61,7 +75,6 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	// Handle IO -> keypress, WindowSizeMSg
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -88,20 +101,13 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.spinner, cmd = m.spinner.Update(msg)
 			cmds = append(cmds, cmd)
 		default:
-			// another way to do it
-			newModel, cmd := m.timer.Update(msg)
-			m.timer = newModel
-			// if this were your own model, you would need to wrap the type
-			// before assignment because its type would be tea.Model
-			// i.e. m.list = newModel.(list.Model)
+			m.timer, cmd = m.timer.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 	case spinner.TickMsg:
-		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		cmds = append(cmds, cmd)
 	case timer.TickMsg:
-		var cmd tea.Cmd
 		m.timer, cmd = m.timer.Update(msg)
 		cmds = append(cmds, cmd)
 	}
@@ -110,14 +116,21 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m mainModel) View() string {
 	var s string
-	switch m.state {
-	case spinnerView:
-		s += m.spinner.View() + "\n"
-	default:
-		s += m.timer.View() + "\n"
+	model := m.currentFocusedModel()
+	if m.state == timerView {
+		s += lipgloss.JoinHorizontal(lipgloss.Top, focusedModelStyle.Render(m.timer.View()), modelStyle.Render(m.spinner.View()))
+	} else {
+		s += lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(m.timer.View()), focusedModelStyle.Render(m.spinner.View()))
 	}
-	s += helpStyle("enter: change view • n: new spinner/timer • q: exit\n")
+	s += helpStyle.Render(fmt.Sprintf("\nenter: change focused model • n: new %s • q: exit\n", model))
 	return s
+}
+
+func (m mainModel) currentFocusedModel() string {
+	if m.state == timerView {
+		return "timer"
+	}
+	return "spinner"
 }
 
 func (m *mainModel) Next() {
@@ -135,7 +148,7 @@ func (m *mainModel) resetSpinner() {
 }
 
 func main() {
-	p := tea.NewProgram(New(defaultTime))
+	p := tea.NewProgram(newModel(defaultTime))
 
 	if err := p.Start(); err != nil {
 		log.Fatal(err)
