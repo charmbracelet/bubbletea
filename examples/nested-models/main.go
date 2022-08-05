@@ -58,6 +58,8 @@ func (m mainModel) Init() tea.Cmd {
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	// Handle IO -> keypress, WindowSizeMSg
 	case tea.KeyMsg:
@@ -70,25 +72,21 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.state = timerView
 			}
-			return m, nil
 		case "n":
-			var cmd tea.Cmd
 			if m.state == timerView {
 				m.timer = timer.New(defaultTime)
-				cmd = m.timer.Init()
+				cmds = append(cmds, m.timer.Init())
 			} else {
 				m.Next()
 				m.resetSpinner()
-				cmd = spinner.Tick
+				cmds = append(cmds, spinner.Tick)
 			}
-			return m, cmd
 		}
 		switch m.state {
 		// update whichever model is focused
 		case spinnerView:
-			var cmd tea.Cmd
 			m.spinner, cmd = m.spinner.Update(msg)
-			return m, cmd
+			cmds = append(cmds, cmd)
 		default:
 			// another way to do it
 			newModel, cmd := m.timer.Update(msg)
@@ -96,18 +94,18 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// if this were your own model, you would need to wrap the type
 			// before assignment because its type would be tea.Model
 			// i.e. m.list = newModel.(list.Model)
-			return m, cmd
+			cmds = append(cmds, cmd)
 		}
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
-		return m, cmd
+		cmds = append(cmds, cmd)
 	case timer.TickMsg:
 		var cmd tea.Cmd
 		m.timer, cmd = m.timer.Update(msg)
-		return m, cmd
+		cmds = append(cmds, cmd)
 	}
-	return m, nil
+	return m, tea.Batch(cmds...)
 }
 
 func (m mainModel) View() string {
