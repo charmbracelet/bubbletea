@@ -102,7 +102,6 @@ run `tail -f debug.log` while you run your program in another window.
 
 For some Bubble Tea programs in production, see:
 
-* [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): Multiplatform terminal mandelbrot set explorer
 * [AT CLI](https://github.com/daskycodes/at_cli): a utility for executing AT Commands via serial port connections
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [Canard](https://github.com/mrusme/canard): an RSS client
@@ -124,6 +123,7 @@ For some Bubble Tea programs in production, see:
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): Multiplatform terminal mandelbrot set explorer
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [pathos](https://github.com/chip/pathos): pathos - CLI for editing a PATH env variable
