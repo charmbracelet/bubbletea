@@ -106,6 +106,7 @@ For some Bubble Tea programs in production, see:
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
+* [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in your terminal
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
