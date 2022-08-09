@@ -124,6 +124,7 @@ For some Bubble Tea programs in production, see:
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [mangal](https://github.com/metafates/mangal): a manga/comics downloader
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [pathos](https://github.com/chip/pathos): pathos - CLI for editing a PATH env variable
