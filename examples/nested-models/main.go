@@ -9,11 +9,12 @@ import (
 )
 
 // this is an enum for Go
-type sessionState uint
+type sessionState int
+
+const defaultTime = time.Minute
 
 const (
-	defaultTime              = time.Minute
-	timerModel  sessionState = iota
+	timerModel sessionState = iota
 	spinnerModel
 )
 
@@ -23,59 +24,30 @@ var (
 	models    []tea.Model
 )
 
-type MainModel struct{}
-
-// New: Create a new main model
-func New(timeout time.Duration) MainModel {
-	// initialize your model; timerView is the first "view" we want to see
-	models = []tea.Model{}
-	models = append(models, NewTimer(timeout))
-	models = append(models, NewSpinner())
-	m := MainModel{}
-	return m
-}
-
-func (m MainModel) Init() tea.Cmd {
-	// start the timer and spinner on program start
-	return tea.Batch(models[current].Init())
-}
-
-func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			return m, tea.Quit
-		}
-	}
-	return models[current].Update(msg)
-}
-
-func (m MainModel) View() string {
-	var s string
-	s += models[current].View() + "\n"
-	s += helpStyle("right: next - left: prev - enter: new spinner")
-	return s
-}
-
-func NextModel() {
+func NextModel() (tea.Model, tea.Cmd) {
 	if int(current) == len(models)-1 {
 		current = 0
 	} else {
 		current++
 	}
+	return models[current], models[current].Init()
 }
 
-func PrevModel() {
+func PrevModel() (tea.Model, tea.Cmd) {
 	if int(current) == 0 {
 		current = sessionState(len(models) - 1)
 	} else {
 		current--
 	}
+	return models[current], models[current].Init()
 }
 
 func main() {
-	p := tea.NewProgram(New(defaultTime))
+	models = []tea.Model{}
+	models = append(models, NewTimer(defaultTime))
+	models = append(models, NewSpinner())
+
+	p := tea.NewProgram(models[current])
 
 	if err := p.Start(); err != nil {
 		log.Fatal(err)

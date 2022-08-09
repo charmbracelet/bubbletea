@@ -27,11 +27,9 @@ func (m Timer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "right", "l":
-			NextModel()
-			return models[current].Update(nil)
+			return NextModel()
 		case "left", "h":
-			PrevModel()
-			return models[current].Update(nil)
+			return PrevModel()
 		}
 	}
 	m.timer, cmd = m.timer.Update(msg)

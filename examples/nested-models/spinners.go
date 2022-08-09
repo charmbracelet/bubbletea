@@ -31,7 +31,7 @@ func NewSpinner() *Spinner {
 }
 
 func (m Spinner) Init() tea.Cmd {
-	return nil
+	return m.spinner.Tick
 }
 
 func (m Spinner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -44,12 +44,11 @@ func (m Spinner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			m.Next()
 			m.resetSpinner()
+			return m, m.spinner.Tick
 		case "right", "l":
-			NextModel()
-			return models[current].Update(nil)
+			return NextModel()
 		case "left", "h":
-			PrevModel()
-			return models[current].Update(nil)
+			return PrevModel()
 		}
 	}
 	m.spinner, cmd = m.spinner.Update(msg)
@@ -57,7 +56,7 @@ func (m Spinner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Spinner) View() string {
-	return spinnerStyle.Render(m.spinner.View())
+	return lipgloss.JoinVertical(lipgloss.Left, spinnerStyle.Render(m.spinner.View()), helpStyle("right: next - left: prev - enter: new spinner"))
 }
 
 func (m *Spinner) resetSpinner() {
