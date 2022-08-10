@@ -56,7 +56,7 @@ func (m Spinner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Spinner) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, spinnerStyle.Render(m.spinner.View()), helpStyle("right: next - left: prev - enter: new spinner"))
+	return lipgloss.JoinVertical(lipgloss.Left, spinnerStyle.Render(m.spinner.View()), HelpMenu("spinner"))
 }
 
 func (m *Spinner) resetSpinner() {
