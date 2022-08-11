@@ -9,6 +9,8 @@ examples/list-fancy/list-fancy
 examples/list-simple/list-simple
 examples/mouse/mouse
 examples/pager/pager
+examples/progress-download/color_vortex.blend
+examples/progress-download/progress-download
 examples/simple/simple
 examples/spinner/spinner
 examples/textinput/textinput
