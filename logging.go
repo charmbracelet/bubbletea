@@ -12,12 +12,12 @@ import (
 //
 // Don't forget to close the file when you're done with it.
 //
-//   f, err := LogToFile("debug.log", "debug")
-//   if err != nil {
-//		fmt.Println("fatal:", err)
-//		os.Exit(1)
-//   }
-//   defer f.Close()
+//	  f, err := LogToFile("debug.log", "debug")
+//	  if err != nil {
+//			fmt.Println("fatal:", err)
+//			os.Exit(1)
+//	  }
+//	  defer f.Close()
 func LogToFile(path string, prefix string) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {

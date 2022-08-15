@@ -63,7 +63,7 @@ var mouseEventTypes = map[MouseEventType]string{
 //
 // X10 mouse events look like:
 //
-//     ESC [M Cb Cx Cy
+//	ESC [M Cb Cx Cy
 //
 // See: http://www.xfree86.org/current/ctlseqs.html#Mouse%20Tracking
 func parseX10MouseEvents(buf []byte) ([]MouseEvent, error) {
