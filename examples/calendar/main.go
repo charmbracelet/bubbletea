@@ -30,6 +30,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 
+		case "+":
+			m.cal.NbMonthDisplayed += 1
+			if m.cal.NbMonthDisplayed > 7 {
+				m.cal.NbMonthDisplayed = 7
+			}
+		case "-":
+			m.cal.NbMonthDisplayed -= 1
+			if m.cal.NbMonthDisplayed < 1 {
+				m.cal.NbMonthDisplayed = 1
+			}
+
 		case "n":
 			m.cal.CurrentDate = m.cal.CurrentDate.AddDate(0, -1, 0)
 		case "p":
@@ -45,28 +56,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "l":
 			m.cal.CurrentDate = m.cal.CurrentDate.AddDate(0, 0, 1)
 
-		case "enter":
-			m.chosenDate = &m.cal.CurrentDate
-
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
 	}
 
+	m.chosenDate = &m.cal.CurrentDate
 	m.cal.Update(msg)
 
 	return m, nil
 }
 
 func (m model) View() string {
-	s := fmt.Sprintf("Date Picker:\n%s %d\n\n", m.cal.CurrentDate.Month(), m.cal.CurrentDate.Year())
+	s := fmt.Sprintf("Date Picker:\n%d\n", m.cal.CurrentDate.Year())
 	s += m.cal.View()
 
 	if m.chosenDate != nil {
-		s += fmt.Sprintf("You chose %s.\n", m.chosenDate.Format("02 January 2006"))
+		s += fmt.Sprintf("You chose %s.\n\n", m.chosenDate.Format("02 January 2006"))
 	}
 
-	s += "\nPress hjkl to move around.\n"
+	s += "Press hjkl to move around.\n"
+	s += "Press +/- to add/remove a month (mininum 1, maximum 7).\n"
 	s += "Press q to quit.\n"
 
 	return s
