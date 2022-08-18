@@ -15,6 +15,7 @@ const (
 	initialInputs = 2
 	maxInputs     = 6
 	minInputs     = 1
+	helpHeight    = 5
 )
 
 var (
@@ -44,7 +45,6 @@ type keymap = struct {
 
 func newTextarea() textarea.Model {
 	t := textarea.New()
-	t.SetHeight(20)
 	t.Prompt = ""
 	t.Placeholder = "Type something"
 	t.ShowLineNumbers = true
@@ -63,6 +63,7 @@ func newTextarea() textarea.Model {
 
 type model struct {
 	width  int
+	height int
 	keymap keymap
 	help   help.Model
 	inputs []textarea.Model
@@ -144,6 +145,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case tea.WindowSizeMsg:
+		m.height = msg.Height
 		m.width = msg.Width
 	}
 
@@ -163,6 +165,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) sizeInputs() {
 	for i := range m.inputs {
 		m.inputs[i].SetWidth(m.width / len(m.inputs))
+		m.inputs[i].SetHeight(m.height - helpHeight)
 	}
 }
 
@@ -189,7 +192,7 @@ func (m model) View() string {
 }
 
 func main() {
-	if err := tea.NewProgram(newModel()).Start(); err != nil {
+	if err := tea.NewProgram(newModel(), tea.WithAltScreen()).Start(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}
