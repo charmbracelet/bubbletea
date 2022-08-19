@@ -124,10 +124,9 @@ type Program struct {
 //
 // Example:
 //
-//     func (m model) Init() Cmd {
-//	       return tea.Batch(someCommand, someOtherCommand)
-//     }
-//
+//	    func (m model) Init() Cmd {
+//		       return tea.Batch(someCommand, someOtherCommand)
+//	    }
 func Batch(cmds ...Cmd) Cmd {
 	var validCmds []Cmd
 	for _, c := range cmds {
