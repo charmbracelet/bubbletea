@@ -205,14 +205,20 @@ const (
 	KeyCtrlDown
 	KeyCtrlRight
 	KeyCtrlLeft
+	KeyCtrlHome
+	KeyCtrlEnd
 	KeyShiftUp
 	KeyShiftDown
 	KeyShiftRight
 	KeyShiftLeft
+	KeyShiftHome
+	KeyShiftEnd
 	KeyCtrlShiftUp
 	KeyCtrlShiftDown
 	KeyCtrlShiftLeft
 	KeyCtrlShiftRight
+	KeyCtrlShiftHome
+	KeyCtrlShiftEnd
 	KeyF1
 	KeyF2
 	KeyF3
@@ -282,6 +288,12 @@ var keyNames = map[KeyType]string{
 	KeyShiftTab:       "shift+tab",
 	KeyHome:           "home",
 	KeyEnd:            "end",
+	KeyCtrlHome:       "ctrl+home",
+	KeyCtrlEnd:        "ctrl+end",
+	KeyShiftHome:      "shift+home",
+	KeyShiftEnd:       "shift+end",
+	KeyCtrlShiftHome:  "ctrl+shift+home",
+	KeyCtrlShiftEnd:   "ctrl+shift+end",
 	KeyPgUp:           "pgup",
 	KeyPgDown:         "pgdown",
 	KeyDelete:         "delete",
@@ -392,16 +404,42 @@ var sequences = map[string]Key{
 	"\x1b\x1b[6~": {Type: KeyPgDown, Alt: true}, // urxvt
 
 	"\x1b[1~":   {Type: KeyHome},
-	"\x1b[H":    {Type: KeyHome},            // vt100
-	"\x1b[1;3H": {Type: KeyHome, Alt: true}, // vt100
-	"\x1b[4~":   {Type: KeyEnd},
-	"\x1b[F":    {Type: KeyEnd},            // vt100
-	"\x1b[1;3F": {Type: KeyEnd, Alt: true}, // vt100
+	"\x1b[H":    {Type: KeyHome},                     // xterm, lxterm
+	"\x1b[1;3H": {Type: KeyHome, Alt: true},          // xterm, lxterm
+	"\x1b[1;5H": {Type: KeyCtrlHome},                 // xterm, lxterm
+	"\x1b[1;7H": {Type: KeyCtrlHome, Alt: true},      // xterm, lxterm
+	"\x1b[1;2H": {Type: KeyShiftHome},                // xterm, lxterm
+	"\x1b[1;4H": {Type: KeyShiftHome, Alt: true},     // xterm, lxterm
+	"\x1b[1;6H": {Type: KeyCtrlShiftHome},            // xterm, lxterm
+	"\x1b[1;8H": {Type: KeyCtrlShiftHome, Alt: true}, // xterm, lxterm
 
-	"\x1b[7~":     {Type: KeyHome},            // urxvt
-	"\x1b\x1b[7~": {Type: KeyHome, Alt: true}, // urxvt
-	"\x1b[8~":     {Type: KeyEnd},             // urxvt
-	"\x1b\x1b[8~": {Type: KeyEnd, Alt: true},  // urxvt
+	"\x1b[4~":   {Type: KeyEnd},
+	"\x1b[F":    {Type: KeyEnd},                     // xterm, lxterm
+	"\x1b[1;3F": {Type: KeyEnd, Alt: true},          // xterm, lxterm
+	"\x1b[1;5F": {Type: KeyCtrlEnd},                 // xterm, lxterm
+	"\x1b[1;7F": {Type: KeyCtrlEnd, Alt: true},      // xterm, lxterm
+	"\x1b[1;2F": {Type: KeyShiftEnd},                // xterm, lxterm
+	"\x1b[1;4F": {Type: KeyShiftEnd, Alt: true},     // xterm, lxterm
+	"\x1b[1;6F": {Type: KeyCtrlShiftEnd},            // xterm, lxterm
+	"\x1b[1;8F": {Type: KeyCtrlShiftEnd, Alt: true}, // xterm, lxterm
+
+	"\x1b[7~":     {Type: KeyHome},                     // urxvt
+	"\x1b\x1b[7~": {Type: KeyHome, Alt: true},          // urxvt
+	"\x1b[7^":     {Type: KeyCtrlHome},                 // urxvt
+	"\x1b\x1b[7^": {Type: KeyCtrlHome, Alt: true},      // urxvt
+	"\x1b[7$":     {Type: KeyShiftHome},                // urxvt
+	"\x1b\x1b[7$": {Type: KeyShiftHome, Alt: true},     // urxvt
+	"\x1b[7@":     {Type: KeyCtrlShiftHome},            // urxvt
+	"\x1b\x1b[7@": {Type: KeyCtrlShiftHome, Alt: true}, // urxvt
+
+	"\x1b[8~":     {Type: KeyEnd},                     // urxvt
+	"\x1b\x1b[8~": {Type: KeyEnd, Alt: true},          // urxvt
+	"\x1b[8^":     {Type: KeyCtrlEnd},                 // urxvt
+	"\x1b\x1b[8^": {Type: KeyCtrlEnd, Alt: true},      // urxvt
+	"\x1b[8$":     {Type: KeyShiftEnd},                // urxvt
+	"\x1b\x1b[8$": {Type: KeyShiftEnd, Alt: true},     // urxvt
+	"\x1b[8@":     {Type: KeyCtrlShiftEnd},            // urxvt
+	"\x1b\x1b[8@": {Type: KeyCtrlShiftEnd, Alt: true}, // urxvt
 
 	// Function keys, Linux console
 	"\x1b[[A": {Type: KeyF1}, // linux console
