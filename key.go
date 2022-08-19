@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"unicode/utf8"
+
+	"github.com/mattn/go-localereader"
 )
 
 // KeyMsg contains information about a keypress. KeyMsgs are always sent to
@@ -479,10 +481,15 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	if err != nil {
 		return nil, err
 	}
+	b := buf[:numBytes]
+	b, err = localereader.UTF8(b)
+	if err != nil {
+		return nil, err
+	}
 
 	// Check if it's a mouse event. For now we're parsing X10-type mouse events
 	// only.
-	mouseEvent, err := parseX10MouseEvents(buf[:numBytes])
+	mouseEvent, err := parseX10MouseEvents(b)
 	if err == nil {
 		var m []Msg
 		for _, v := range mouseEvent {
@@ -493,7 +500,6 @@ func readInputs(input io.Reader) ([]Msg, error) {
 
 	var runeSets [][]rune
 	var runes []rune
-	b := buf[:numBytes]
 
 	// Translate input into runes. In most cases we'll receive exactly one
 	// rune, but there are cases, particularly when an input method editor is
