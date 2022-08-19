@@ -377,29 +377,31 @@ var sequences = map[string]Key{
 	"\x1b[1;8D":  {Type: KeyCtrlShiftLeft, Alt: true},
 
 	// Miscellaneous keys
-	"\x1b[Z":      {Type: KeyShiftTab},
-	"\x1b[2~":     {Type: KeyInsert},
-	"\x1b[2;3~":   {Type: KeyInsert, Alt: true},
+	"\x1b[Z": {Type: KeyShiftTab},
+
 	"\x1b[3~":     {Type: KeyDelete},
 	"\x1b[3;3~":   {Type: KeyDelete, Alt: true},
-	"\x1b[1~":     {Type: KeyHome},
-	"\x1b[H":      {Type: KeyHome},
-	"\x1b[1;3H":   {Type: KeyHome, Alt: true},
-	"\x1b[4~":     {Type: KeyEnd},
-	"\x1b[F":      {Type: KeyEnd},
-	"\x1b[1;3F":   {Type: KeyEnd, Alt: true},
+	"\x1b\x1b[3~": {Type: KeyDelete, Alt: true}, // urxvt
+
 	"\x1b[5~":     {Type: KeyPgUp},
 	"\x1b[5;3~":   {Type: KeyPgUp, Alt: true},
+	"\x1b\x1b[5~": {Type: KeyPgUp, Alt: true}, // urxvt
+
 	"\x1b[6~":     {Type: KeyPgDown},
 	"\x1b[6;3~":   {Type: KeyPgDown, Alt: true},
-	"\x1b[7~":     {Type: KeyHome},              // urxvt
-	"\x1b[8~":     {Type: KeyEnd},               // urxvt
-	"\x1b\x1b[2~": {Type: KeyInsert, Alt: true}, // urxvt
-	"\x1b\x1b[3~": {Type: KeyDelete, Alt: true}, // urxvt
-	"\x1b\x1b[5~": {Type: KeyPgUp, Alt: true},   // urxvt
 	"\x1b\x1b[6~": {Type: KeyPgDown, Alt: true}, // urxvt
-	"\x1b\x1b[7~": {Type: KeyHome, Alt: true},   // urxvt
-	"\x1b\x1b[8~": {Type: KeyEnd, Alt: true},    // urxvt
+
+	"\x1b[1~":   {Type: KeyHome},
+	"\x1b[H":    {Type: KeyHome},            // vt100
+	"\x1b[1;3H": {Type: KeyHome, Alt: true}, // vt100
+	"\x1b[4~":   {Type: KeyEnd},
+	"\x1b[F":    {Type: KeyEnd},            // vt100
+	"\x1b[1;3F": {Type: KeyEnd, Alt: true}, // vt100
+
+	"\x1b[7~":     {Type: KeyHome},            // urxvt
+	"\x1b\x1b[7~": {Type: KeyHome, Alt: true}, // urxvt
+	"\x1b[8~":     {Type: KeyEnd},             // urxvt
+	"\x1b\x1b[8~": {Type: KeyEnd, Alt: true},  // urxvt
 
 	// Function keys, Linux console
 	"\x1b[[A": {Type: KeyF1}, // linux console
