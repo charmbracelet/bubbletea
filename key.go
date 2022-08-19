@@ -449,80 +449,97 @@ var sequences = map[string]Key{
 	"\x1b[[E": {Type: KeyF5}, // linux console
 
 	// Function keys, X11
-	"\x1bOP":     {Type: KeyF1},  // vt100
-	"\x1bOQ":     {Type: KeyF2},  // vt100
-	"\x1bOR":     {Type: KeyF3},  // vt100
-	"\x1bOS":     {Type: KeyF4},  // vt100
-	"\x1b[15~":   {Type: KeyF5},  // also urxvt
-	"\x1b[17~":   {Type: KeyF6},  // also urxvt
-	"\x1b[18~":   {Type: KeyF7},  // also urxvt
-	"\x1b[19~":   {Type: KeyF8},  // also urxvt
-	"\x1b[20~":   {Type: KeyF9},  // also urxvt
-	"\x1b[21~":   {Type: KeyF10}, // also urxvt
-	"\x1b[23~":   {Type: KeyF11}, // also urxvt
-	"\x1b[24~":   {Type: KeyF12}, // also urxvt
-	"\x1b[1;2P":  {Type: KeyF13},
-	"\x1b[1;2Q":  {Type: KeyF14},
-	"\x1b[1;2R":  {Type: KeyF15},
-	"\x1b[1;2S":  {Type: KeyF16},
+	"\x1bOP": {Type: KeyF1}, // vt100, xterm
+	"\x1bOQ": {Type: KeyF2}, // vt100, xterm
+	"\x1bOR": {Type: KeyF3}, // vt100, xterm
+	"\x1bOS": {Type: KeyF4}, // vt100, xterm
+
+	"\x1b[1;3P": {Type: KeyF1, Alt: true}, // vt100, xterm
+	"\x1b[1;3Q": {Type: KeyF2, Alt: true}, // vt100, xterm
+	"\x1b[1;3R": {Type: KeyF3, Alt: true}, // vt100, xterm
+	"\x1b[1;3S": {Type: KeyF4, Alt: true}, // vt100, xterm
+
+	"\x1b[11~": {Type: KeyF1}, // urxvt
+	"\x1b[12~": {Type: KeyF2}, // urxvt
+	"\x1b[13~": {Type: KeyF3}, // urxvt
+	"\x1b[14~": {Type: KeyF4}, // urxvt
+
+	"\x1b\x1b[11~": {Type: KeyF1, Alt: true}, // urxvt
+	"\x1b\x1b[12~": {Type: KeyF2, Alt: true}, // urxvt
+	"\x1b\x1b[13~": {Type: KeyF3, Alt: true}, // urxvt
+	"\x1b\x1b[14~": {Type: KeyF4, Alt: true}, // urxvt
+
+	"\x1b[15~": {Type: KeyF5}, // vt100, xterm, also urxvt
+
+	"\x1b[15;3~": {Type: KeyF5, Alt: true}, // vt100, xterm, also urxvt
+
+	"\x1b\x1b[15~": {Type: KeyF5, Alt: true}, // urxvt
+
+	"\x1b[17~": {Type: KeyF6},  // vt100, xterm, also urxvt
+	"\x1b[18~": {Type: KeyF7},  // vt100, xterm, also urxvt
+	"\x1b[19~": {Type: KeyF8},  // vt100, xterm, also urxvt
+	"\x1b[20~": {Type: KeyF9},  // vt100, xterm, also urxvt
+	"\x1b[21~": {Type: KeyF10}, // vt100, xterm, also urxvt
+
+	"\x1b\x1b[17~": {Type: KeyF6, Alt: true},  // urxvt
+	"\x1b\x1b[18~": {Type: KeyF7, Alt: true},  // urxvt
+	"\x1b\x1b[19~": {Type: KeyF8, Alt: true},  // urxvt
+	"\x1b\x1b[20~": {Type: KeyF9, Alt: true},  // urxvt
+	"\x1b\x1b[21~": {Type: KeyF10, Alt: true}, // urxvt
+
+	"\x1b[17;3~": {Type: KeyF6, Alt: true},  // vt100, xterm
+	"\x1b[18;3~": {Type: KeyF7, Alt: true},  // vt100, xterm
+	"\x1b[19;3~": {Type: KeyF8, Alt: true},  // vt100, xterm
+	"\x1b[20;3~": {Type: KeyF9, Alt: true},  // vt100, xterm
+	"\x1b[21;3~": {Type: KeyF10, Alt: true}, // vt100, xterm
+
+	"\x1b[23~": {Type: KeyF11}, // vt100, xterm, also urxvt
+	"\x1b[24~": {Type: KeyF12}, // vt100, xterm, also urxvt
+
+	"\x1b[23;3~": {Type: KeyF11, Alt: true}, // vt100, xterm
+	"\x1b[24;3~": {Type: KeyF12, Alt: true}, // vt100, xterm
+
+	"\x1b\x1b[23~": {Type: KeyF11, Alt: true}, // urxvt
+	"\x1b\x1b[24~": {Type: KeyF12, Alt: true}, // urxvt
+
+	"\x1b[1;2P": {Type: KeyF13},
+	"\x1b[1;2Q": {Type: KeyF14},
+
+	"\x1b[25~": {Type: KeyF13}, // vt100, xterm, also urxvt
+	"\x1b[26~": {Type: KeyF14}, // vt100, xterm, also urxvt
+
+	"\x1b[25;3~": {Type: KeyF13, Alt: true}, // vt100, xterm
+	"\x1b[26;3~": {Type: KeyF14, Alt: true}, // vt100, xterm
+
+	"\x1b\x1b[25~": {Type: KeyF13, Alt: true}, // urxvt
+	"\x1b\x1b[26~": {Type: KeyF14, Alt: true}, // urxvt
+
+	"\x1b[1;2R": {Type: KeyF15},
+	"\x1b[1;2S": {Type: KeyF16},
+
+	"\x1b[28~": {Type: KeyF15}, // vt100, xterm, also urxvt
+	"\x1b[29~": {Type: KeyF16}, // vt100, xterm, also urxvt
+
+	"\x1b[28;3~": {Type: KeyF15, Alt: true}, // vt100, xterm
+	"\x1b[29;3~": {Type: KeyF16, Alt: true}, // vt100, xterm
+
+	"\x1b\x1b[28~": {Type: KeyF15, Alt: true}, // urxvt
+	"\x1b\x1b[29~": {Type: KeyF16, Alt: true}, // urxvt
+
 	"\x1b[15;2~": {Type: KeyF17},
 	"\x1b[17;2~": {Type: KeyF18},
 	"\x1b[18;2~": {Type: KeyF19},
 	"\x1b[19;2~": {Type: KeyF20},
 
-	// Function keys with the alt modifier, X11
-	"\x1b[1;3P":  {Type: KeyF1, Alt: true},
-	"\x1b[1;3Q":  {Type: KeyF2, Alt: true},
-	"\x1b[1;3R":  {Type: KeyF3, Alt: true},
-	"\x1b[1;3S":  {Type: KeyF4, Alt: true},
-	"\x1b[15;3~": {Type: KeyF5, Alt: true},
-	"\x1b[17;3~": {Type: KeyF6, Alt: true},
-	"\x1b[18;3~": {Type: KeyF7, Alt: true},
-	"\x1b[19;3~": {Type: KeyF8, Alt: true},
-	"\x1b[20;3~": {Type: KeyF9, Alt: true},
-	"\x1b[21;3~": {Type: KeyF10, Alt: true},
-	"\x1b[23;3~": {Type: KeyF11, Alt: true},
-	"\x1b[24;3~": {Type: KeyF12, Alt: true},
-	"\x1b[25;3~": {Type: KeyF13, Alt: true},
-	"\x1b[26;3~": {Type: KeyF14, Alt: true},
-	"\x1b[28;3~": {Type: KeyF15, Alt: true},
-	"\x1b[29;3~": {Type: KeyF16, Alt: true},
-
-	// Function keys, urxvt
-	"\x1b[11~": {Type: KeyF1},
-	"\x1b[12~": {Type: KeyF2},
-	"\x1b[13~": {Type: KeyF3},
-	"\x1b[14~": {Type: KeyF4},
-	"\x1b[25~": {Type: KeyF13},
-	"\x1b[26~": {Type: KeyF14},
-	"\x1b[28~": {Type: KeyF15},
-	"\x1b[29~": {Type: KeyF16},
 	"\x1b[31~": {Type: KeyF17},
 	"\x1b[32~": {Type: KeyF18},
 	"\x1b[33~": {Type: KeyF19},
 	"\x1b[34~": {Type: KeyF20},
 
-	// Function keys with the alt modifier, urxvt
-	"\x1b\x1b[11~": {Type: KeyF1, Alt: true},
-	"\x1b\x1b[12~": {Type: KeyF2, Alt: true},
-	"\x1b\x1b[13~": {Type: KeyF3, Alt: true},
-	"\x1b\x1b[14~": {Type: KeyF4, Alt: true},
-	"\x1b\x1b[15~": {Type: KeyF5, Alt: true},
-	"\x1b\x1b[17~": {Type: KeyF6, Alt: true},
-	"\x1b\x1b[18~": {Type: KeyF7, Alt: true},
-	"\x1b\x1b[19~": {Type: KeyF8, Alt: true},
-	"\x1b\x1b[20~": {Type: KeyF9, Alt: true},
-	"\x1b\x1b[21~": {Type: KeyF10, Alt: true},
-	"\x1b\x1b[23~": {Type: KeyF11, Alt: true},
-	"\x1b\x1b[24~": {Type: KeyF12, Alt: true},
-	"\x1b\x1b[25~": {Type: KeyF13, Alt: true},
-	"\x1b\x1b[26~": {Type: KeyF14, Alt: true},
-	"\x1b\x1b[28~": {Type: KeyF15, Alt: true},
-	"\x1b\x1b[29~": {Type: KeyF16, Alt: true},
-	"\x1b\x1b[31~": {Type: KeyF17, Alt: true},
-	"\x1b\x1b[32~": {Type: KeyF18, Alt: true},
-	"\x1b\x1b[33~": {Type: KeyF19, Alt: true},
-	"\x1b\x1b[34~": {Type: KeyF20, Alt: true},
+	"\x1b\x1b[31~": {Type: KeyF17, Alt: true}, // urxvt
+	"\x1b\x1b[32~": {Type: KeyF18, Alt: true}, // urxvt
+	"\x1b\x1b[33~": {Type: KeyF19, Alt: true}, // urxvt
+	"\x1b\x1b[34~": {Type: KeyF20, Alt: true}, // urxvt
 }
 
 // Hex code mappings.
