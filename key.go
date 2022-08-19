@@ -483,6 +483,10 @@ var sequences = map[string]Key{
 	"\x1b[21;3~": {Type: KeyF10, Alt: true},
 	"\x1b[23;3~": {Type: KeyF11, Alt: true},
 	"\x1b[24;3~": {Type: KeyF12, Alt: true},
+	"\x1b[25;3~": {Type: KeyF13, Alt: true},
+	"\x1b[26;3~": {Type: KeyF14, Alt: true},
+	"\x1b[28;3~": {Type: KeyF15, Alt: true},
+	"\x1b[29;3~": {Type: KeyF16, Alt: true},
 
 	// Function keys, urxvt
 	"\x1b[11~": {Type: KeyF1},
