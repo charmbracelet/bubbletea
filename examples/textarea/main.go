@@ -19,7 +19,6 @@ func main() {
 	}
 }
 
-type tickMsg struct{}
 type errMsg error
 
 type model struct {
