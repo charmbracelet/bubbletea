@@ -337,13 +337,14 @@ func (p *Program) StartReturningModel() (Model, error) {
 		p.input = f
 	}
 
-	// Listen for SIGINT. Note that in most cases ^C will not send an
+	// Listen for SIGINT and SIGTERM. Note that in most cases ^C will not send an
 	// interrupt because the terminal will be in raw mode and thus capture
 	// that keystroke and send it along to Program.Update. If input is not a
-	// TTY, however, ^C will be caught here.
+	// TTY, however, ^C will be caught here. SIGTERM is sent by Unix utilities
+	// like kill to terminate a process.
 	go func() {
 		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, syscall.SIGINT)
+		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		defer func() {
 			signal.Stop(sig)
 			close(sigintLoopDone)
