@@ -119,6 +119,8 @@ func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 //	}
 //
 //	cmd := Sequentially(saveStateCmd, Quit)
+//
+// Deprecated: use Sequence instead.
 func Sequentially(cmds ...Cmd) Cmd {
 	return func() Msg {
 		for _, cmd := range cmds {
