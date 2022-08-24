@@ -44,7 +44,9 @@ func (m model) View() string {
 }
 
 func main() {
-	if err := tea.NewProgram(model{}).Start(); err != nil {
+    m := model{}
+    p := tea.NewProgram(m)
+	if err := p.Start(); err != nil {
 		fmt.Println("uh oh:", err)
 		os.Exit(1)
 	}
