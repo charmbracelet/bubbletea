@@ -528,6 +528,17 @@ func (p *Program) StartReturningModel() (Model, error) {
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
+
+			case sequenceMsg:
+				go func() {
+					// Execute commands one at a time, in order.
+					for _, cmd := range msg {
+						select {
+						case p.msgs <- cmd():
+						case <-p.ctx.Done():
+						}
+					}
+				}()
 			}
 
 			// Process internal messages for the renderer.
@@ -730,5 +741,16 @@ func (p *Program) Println(args ...interface{}) {
 func (p *Program) Printf(template string, args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
+	}
+}
+
+// sequenceMsg is used interally to run the the given commands in order.
+type sequenceMsg []Cmd
+
+// Sequence runs the given commands one at a time, in order. Contrast this with
+// Batch, which runs commands concurrently.
+func Sequence(cmds ...Cmd) Cmd {
+	return func() Msg {
+		return sequenceMsg(cmds)
 	}
 }
