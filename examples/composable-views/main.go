@@ -44,8 +44,10 @@ var (
 		spinner.Monkey,
 	}
 	modelStyle = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder())
+			Padding(1, 2).
+			BorderStyle(lipgloss.HiddenBorder())
 	focusedModelStyle = lipgloss.NewStyle().
+				Padding(1, 2).
 				BorderStyle(lipgloss.NormalBorder()).
 				BorderForeground(lipgloss.Color("69"))
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
@@ -79,7 +81,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "enter":
+		case "tab":
 			if m.state == timerView {
 				m.state = spinnerView
 			} else {
@@ -122,7 +124,7 @@ func (m mainModel) View() string {
 	} else {
 		s += lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(m.timer.View()), focusedModelStyle.Render(m.spinner.View()))
 	}
-	s += helpStyle.Render(fmt.Sprintf("\nenter: change focused model • n: new %s • q: exit\n", model))
+	s += helpStyle.Render(fmt.Sprintf("\ntab: change focused model • n: new %s • q: exit\n", model))
 	return s
 }
 
