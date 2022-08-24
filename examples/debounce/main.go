@@ -11,6 +11,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type exitMsg int
@@ -40,7 +41,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return "To exit press any key, then wait for one second without pressing anything."
+	return lipgloss.JoinVertical(lipgloss.Left, fmt.Sprintf("Key presses: %d", m.tag), "To exit press any key, then wait for one second without pressing anything.")
 }
 
 func main() {
