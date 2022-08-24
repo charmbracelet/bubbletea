@@ -1,11 +1,9 @@
 package main
 
-/*
-With each keypress you bump the tag on the `model` and send that tag along in a `Msg` after delaying with a `tea.Tick`.
-If the tag in the `Msg` matches the one on the model you know the debouncing is done and you can then return your command
-
-We do this in the [spinner](https://github.com/charmbracelet/bubbles/blob/master/spinner/spinner.go) Bubble to keep it from spinning out of control in the event that it accidentally gets too many spin Cmds.
-*/
+// The tag is incremented with each keypress which sends that tag along in a Msg after a `tea.Tick` delay
+// If the tag in the Msg matches the model's state, we can be sure that the debouncing is complete and that we can return our command.
+// This is useful in cases such as the Spinner bubble to prevent accidentally spinning it too fast.
+// https://github.com/charmbracelet/bubbles/blob/master/spinner/spinner.go
 
 import (
 	"fmt"
