@@ -120,6 +120,7 @@ For some Bubble Tea programs in production, see:
 * [gh-dash](https://www.github.com/dlvhdr/gh-dash): GitHub CLI extension to display a dashboard of PRs and issues
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
+* [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
