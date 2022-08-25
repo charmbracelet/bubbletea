@@ -16,7 +16,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 const debounceDuration = time.Second
@@ -55,10 +54,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		fmt.Sprintf("Key presses: %d", m.tag), "To exit press any key, then wait for one second without pressing anything.",
-	)
+	return fmt.Sprintf("Key presses: %d", m.tag) +
+		"\nTo exit press any key, then wait for one second without pressing anything."
 }
 
 func main() {
