@@ -1,9 +1,14 @@
 package main
 
-// The tag is incremented with each keypress which sends that tag along in a Msg after a `tea.Tick` delay
-// If the tag in the Msg matches the model's state, we can be sure that the debouncing is complete and that we can return our command.
-// This is useful in cases such as the Spinner bubble to prevent accidentally spinning it too fast.
-// https://github.com/charmbracelet/bubbles/blob/master/spinner/spinner.go
+// This example illustrates how to debounce commands.
+//
+// When the user presses a key we increment the "tag" value on the model and,
+// after a short delay, we include that tag value in the message produced
+// by the Tick command.
+//
+// In a subsequent Update, if the tag in the Msg matches current tag on the
+// model's state we know that the debouncing is complete and we can proceeed as
+// normal. If not, we simply ignore the inbound message.
 
 import (
 	"fmt"
@@ -13,6 +18,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+const debounceDuration = time.Second
 
 type exitMsg int
 
@@ -27,11 +34,18 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// Increment the tag on the model...
 		m.tag++
-		return m, tea.Tick(time.Second, func(_ time.Time) tea.Msg {
+		return m, tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
+			// ...and include a copy of that tag value in the message.
 			return exitMsg(m.tag)
 		})
 	case exitMsg:
+		// If the tag in the message doesn't match the tag on the model then we
+		// know that this message was not the last one sent and another is on
+		// the way. If that's the case we know, we can ignore this message.
+		// Otherwise, the debounce timeout has passed and this message is a
+		// valid debounced one.
 		if int(msg) == m.tag {
 			return m, tea.Quit
 		}
@@ -41,13 +55,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return lipgloss.JoinVertical(lipgloss.Left, fmt.Sprintf("Key presses: %d", m.tag), "To exit press any key, then wait for one second without pressing anything.")
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		fmt.Sprintf("Key presses: %d", m.tag), "To exit press any key, then wait for one second without pressing anything.",
+	)
 }
 
 func main() {
-    m := model{}
-    p := tea.NewProgram(m)
-	if err := p.Start(); err != nil {
+	if err := tea.NewProgram(model{}).Start(); err != nil {
 		fmt.Println("uh oh:", err)
 		os.Exit(1)
 	}
