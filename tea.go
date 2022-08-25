@@ -635,7 +635,7 @@ func (p *Program) EnterAltScreen() {
 	}
 
 	p.output.AltScreen()
-	p.output.MoveCursor(0, 0)
+	p.output.MoveCursor(1, 1)
 
 	p.altScreenActive = true
 	if p.renderer != nil {
