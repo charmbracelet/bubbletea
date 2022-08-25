@@ -245,6 +245,14 @@ func (r *standardRenderer) repaint() {
 	r.lastRender = ""
 }
 
+func (r *standardRenderer) clearScreen() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.ClearScreen()
+	r.out.MoveCursor(1, 1)
+}
+
 func (r *standardRenderer) altScreen() bool {
 	return r.altScreenActive
 }

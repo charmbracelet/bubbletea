@@ -378,6 +378,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 				p.shutdown(false)
 				return model, nil
 
+			case clearScreenMsg:
+				p.renderer.clearScreen()
+
 			case enterAltScreenMsg:
 				p.renderer.enterAltScreen()
 

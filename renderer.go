@@ -21,6 +21,9 @@ type renderer interface {
 	// in succession.
 	repaint()
 
+	// Clears the terminal.
+	clearScreen()
+
 	// Whether or not the alternate screen buffer is enabled.
 	altScreen() bool
 	// Enable the alternate screen buffer.
