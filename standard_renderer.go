@@ -262,9 +262,17 @@ func (r *standardRenderer) enterAltScreen() {
 	defer r.mtx.Unlock()
 
 	r.altScreenActive = true
-
 	r.out.AltScreen()
+
+	// Ensure that the terminal is cleared, even when it doesn't support
+	// alt screen (or alt screen support is disabled, like GNU screen by
+	// default).
+	//
+	// Note: we can't use r.clearScreen() here because the mutex is already
+	// locked.
+	r.out.ClearScreen()
 	r.out.MoveCursor(1, 1)
+
 	r.repaint()
 }
 
@@ -273,8 +281,8 @@ func (r *standardRenderer) exitAltScreen() {
 	defer r.mtx.Unlock()
 
 	r.altScreenActive = false
-
 	r.out.ExitAltScreen()
+
 	r.repaint()
 }
 
