@@ -394,6 +394,13 @@ var sequences = map[string]Key{
 	"\x1b\x1b[7~": {Type: KeyHome, Alt: true},   // urxvt
 	"\x1b\x1b[8~": {Type: KeyEnd, Alt: true},    // urxvt
 
+	// Function keys, Linux console
+	"\x1b[[A": {Type: KeyF1}, // linux console
+	"\x1b[[B": {Type: KeyF2}, // linux console
+	"\x1b[[C": {Type: KeyF3}, // linux console
+	"\x1b[[D": {Type: KeyF4}, // linux console
+	"\x1b[[E": {Type: KeyF5}, // linux console
+
 	// Function keys, X11
 	"\x1bOP":     {Type: KeyF1},  // vt100
 	"\x1bOQ":     {Type: KeyF2},  // vt100
