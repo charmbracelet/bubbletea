@@ -198,6 +198,7 @@ const (
 	KeyPgUp
 	KeyPgDown
 	KeyDelete
+	KeyInsert
 	KeySpace
 	KeyCtrlUp
 	KeyCtrlDown
@@ -283,6 +284,7 @@ var keyNames = map[KeyType]string{
 	KeyPgUp:           "pgup",
 	KeyPgDown:         "pgdown",
 	KeyDelete:         "delete",
+	KeyInsert:         "insert",
 	KeyCtrlUp:         "ctrl+up",
 	KeyCtrlDown:       "ctrl+down",
 	KeyCtrlRight:      "ctrl+right",
@@ -375,6 +377,8 @@ var sequences = map[string]Key{
 
 	// Miscellaneous keys
 	"\x1b[Z":      {Type: KeyShiftTab},
+	"\x1b[2~":     {Type: KeyInsert},
+	"\x1b[2;3~":   {Type: KeyInsert, Alt: true},
 	"\x1b[3~":     {Type: KeyDelete},
 	"\x1b[3;3~":   {Type: KeyDelete, Alt: true},
 	"\x1b[1~":     {Type: KeyHome},
@@ -387,6 +391,7 @@ var sequences = map[string]Key{
 	"\x1b[6;3~":   {Type: KeyPgDown, Alt: true},
 	"\x1b[7~":     {Type: KeyHome},              // urxvt
 	"\x1b[8~":     {Type: KeyEnd},               // urxvt
+	"\x1b\x1b[2~": {Type: KeyInsert, Alt: true}, // urxvt
 	"\x1b\x1b[3~": {Type: KeyDelete, Alt: true}, // urxvt
 	"\x1b\x1b[5~": {Type: KeyPgUp, Alt: true},   // urxvt
 	"\x1b\x1b[6~": {Type: KeyPgDown, Alt: true}, // urxvt
