@@ -33,6 +33,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
+
+		if msg.String() == "a" {
+			return NewSimpleListModel(), nil
+		}
+
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v)
@@ -48,6 +53,17 @@ func (m model) View() string {
 }
 
 func main() {
+
+	m := NewDefaultListModel()
+	p := tea.NewProgram(m, tea.WithAltScreen())
+
+	if err := p.Start(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
+}
+
+func NewDefaultListModel() tea.Model {
 	items := []list.Item{
 		item{title: "Raspberry Pi’s", desc: "I have ’em all over my house"},
 		item{title: "Nutella", desc: "It's good on toast"},
@@ -76,11 +92,5 @@ func main() {
 
 	m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 	m.list.Title = "My Fave Things"
-
-	p := tea.NewProgram(m, tea.WithAltScreen())
-
-	if err := p.Start(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+	return m
 }
