@@ -23,9 +23,9 @@ var (
 		spinner.Monkey,
 	}
 
-	textStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Render
+	textStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
-	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
 func main() {
@@ -94,7 +94,7 @@ func (m model) View() (s string) {
 		gap = " "
 	}
 
-	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
-	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
+	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle.Render("Spinning..."))
+	s += helpStyle.Render("h/l, ←/→: change spinner • q: exit\n")
 	return
 }
