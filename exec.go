@@ -39,7 +39,7 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 //	c := exec.Command("vim", "file.txt")
 //
 //	cmd := ExecProcess(c, func(err error) Msg {
-//	    return VimFinishedMsg{err: error}
+//	    return VimFinishedMsg{err: err}
 //	})
 //
 // Or, if you don't care about errors, you could simply:
