@@ -543,28 +543,29 @@ func readInputs(input io.Reader) ([]Msg, error) {
 
 		// Is the alt key pressed? If so, the buffer will be prefixed with an
 		// escape.
+		alt := false
 		if len(runes) > 1 && runes[0] == 0x1b {
-			msgs = append(msgs, KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: runes[1:]}))
-			continue
+			alt = true
+			runes = runes[1:]
 		}
 
 		for _, v := range runes {
 			// Is the first rune a control character?
 			r := KeyType(v)
 			if r <= keyUS || r == keyDEL {
-				msgs = append(msgs, KeyMsg(Key{Type: r}))
+				msgs = append(msgs, KeyMsg(Key{Type: r, Alt: alt}))
 				continue
 			}
 
 			// If it's a space, override the type with KeySpace (but still include
 			// the rune).
 			if r == ' ' {
-				msgs = append(msgs, KeyMsg(Key{Type: KeySpace, Runes: []rune{v}}))
+				msgs = append(msgs, KeyMsg(Key{Type: KeySpace, Runes: []rune{v}, Alt: alt}))
 				continue
 			}
 
 			// Welp, just regular, ol' runes.
-			msgs = append(msgs, KeyMsg(Key{Type: KeyRunes, Runes: []rune{v}}))
+			msgs = append(msgs, KeyMsg(Key{Type: KeyRunes, Runes: []rune{v}, Alt: alt}))
 		}
 	}
 
