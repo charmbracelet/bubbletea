@@ -12,9 +12,11 @@ The fun, functional and stateful way to build terminal apps. A Go framework
 based on [The Elm Architecture][elm]. Bubble Tea is well-suited for simple and
 complex terminal applications, either inline, full-window, or a mix of both.
 
-<p>
-    <img src="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0" width="800" alt="Bubble Tea Example">
-</p>
+<picture>
+  <source media="(max-width: 800px)" srcset="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0">
+  <source media="(min-width: 800px)" width="800" srcset="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0">
+  <img src="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0" alt="Bubble Tea Example">
+</picture>
 
 Bubble Tea is in use in production and includes a number of features and
 performance optimizations we’ve added along the way. Among those is a standard
