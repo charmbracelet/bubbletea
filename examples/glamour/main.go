@@ -55,13 +55,18 @@ type example struct {
 }
 
 func newExample() (*example, error) {
-	vp := viewport.New(78, 20)
+	const width = 78
+
+	vp := viewport.New(width, 20)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
 		PaddingRight(2)
 
-	renderer, err := glamour.NewTermRenderer(glamour.WithStylePath("notty"))
+	renderer, err := glamour.NewTermRenderer(
+		glamour.WithStylePath("notty"),
+		glamour.WithWordWrap(width),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +89,6 @@ func (e example) Init() tea.Cmd {
 
 func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		e.viewport.Width = msg.Width
-		return e, nil
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
