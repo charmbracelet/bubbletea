@@ -313,9 +313,6 @@ run `tail -f debug.log` while you run your program in another window.
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 
-## Additional utility libraries to use with Bubble Tea
-
-
 ## Bubble Tea in the Wild
 
 For some Bubble Tea programs in production, see:
@@ -335,7 +332,7 @@ For some Bubble Tea programs in production, see:
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
 * [gh-b](https://github.com/joaom00/gh-b): GitHub CLI extension to easily manage your branches
-* [gh-dash](https://www.github.com/dlvhdr/gh-dash): GitHub cli extension to display a dashboard of PRs and issues
+* [gh-dash](https://www.github.com/dlvhdr/gh-dash): GitHub CLI extension to display a dashboard of PRs and issues
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
