@@ -92,14 +92,17 @@ func main() {
 		progress: progress.New(progress.WithDefaultGradient()),
 	}
 
-	// Start the download
-	go pw.Start()
-
 	// Don't add TUI if the header doesn't include content size
 	// it's impossible see progress without total
 	if resp.ContentLength > 0 {
 		// Start Bubble Tea
 		p = tea.NewProgram(m)
+	}
+
+	// Start the download
+	go pw.Start()
+
+	if p != nil {
 		if err := p.Start(); err != nil {
 			fmt.Println("error running program:", err)
 			os.Exit(1)
