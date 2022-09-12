@@ -1,5 +1,4 @@
-Bubble Tea
-==========
+# Bubble Tea
 
 <p>
     <img src="https://stuff.charm.sh/bubbletea/bubbletea-github-header-simple.png" width="313" alt="Bubble Tea Title Treatment"><br>
@@ -193,7 +192,7 @@ the Bubble Tea runtime to quit, exiting the program.
 
 At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the model in its current state and use it to return
-a `string`.  That string is our UI!
+a `string`. That string is our UI!
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it
@@ -280,8 +279,9 @@ actually watch out what address the first `dlv` run tells you to connect to.
 
 ### Logging Stuff
 
-You can log to a debug file to print debug Bubble Tea applications. To do so,
-include something like…
+You can’t really log to stdout with Bubble Tea because your TUI is busy
+occupying that! You can, however, log to a file by including something like
+the following prior to starting your Bubble Tea program:
 
 ```go
 if len(os.Getenv("DEBUG")) > 0 {
@@ -294,8 +294,8 @@ if len(os.Getenv("DEBUG")) > 0 {
 }
 ```
 
-…before you start your Bubble Tea program. To see what’s printed in real time,
-run `tail -f debug.log` while you run your program in another window.
+To see what’s being logged in real time, run `tail -f debug.log` while you run
+your program in another window.
 
 ## Libraries we use with Bubble Tea
 
@@ -327,7 +327,7 @@ For some Bubble Tea programs in production, see:
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
-* [fztea](https://github.com/jon4hz/fztea): connect to your Flipper's UI over serial or make it accessible via SSH 
+* [fztea](https://github.com/jon4hz/fztea): connect to your Flipper's UI over serial or make it accessible via SSH
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
@@ -385,10 +385,10 @@ of days past.
 
 [MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
 
-***
+* * *
 
 Part of [Charm](https://charm.sh).
 
 <a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
 
-Charm热爱开源 • Charm loves open source
+Charm 热爱开源 • Charm loves open source
