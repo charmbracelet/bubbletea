@@ -99,7 +99,7 @@ the initial model as a variable elsewhere, too.
 ```go
 func initialModel() model {
 	return model{
-		// Our shopping list is a grocery list
+		// Our do-to list is a grocery list
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
 		// A map which indicates which choices are selected. We're using
