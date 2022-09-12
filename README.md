@@ -52,7 +52,7 @@ This tutorial assumes you have a working knowledge of Go.
 
 [elm]: https://guide.elm-lang.org/architecture/
 
-## Enough! Let's get to it.
+### Enough! Let's get to it.
 
 For this tutorial, we're making a shopping list.
 
@@ -77,7 +77,7 @@ state and three simple methods on that model:
 * **Update**, a function that handles incoming events and updates the model accordingly.
 * **View**, a function that renders the UI based on the data in the model.
 
-## The Model
+### The Model
 
 So let's start by defining our model which will store our application's state.
 It can be any type, but a `struct` usually makes the most sense.
@@ -90,7 +90,7 @@ type model struct {
 }
 ```
 
-## Initialization
+### Initialization
 
 Next, we’ll define our application’s initial state. In this case, we’re defining
 a function to return our initial model, however, we could just as easily define
@@ -121,7 +121,7 @@ func (m model) Init() tea.Cmd {
 }
 ```
 
-## The Update Method
+### The Update Method
 
 Next up is the update method. The update function is called when ”things
 happen.” Its job is to look at what has happened and return an updated model in
@@ -189,7 +189,7 @@ You may have noticed that <kbd>ctrl+c</kbd> and <kbd>q</kbd> above return
 a `tea.Quit` command with the model. That’s a special command which instructs
 the Bubble Tea runtime to quit, exiting the program.
 
-## The View Method
+### The View Method
 
 At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the model in its current state and use it to return
@@ -231,7 +231,7 @@ func (m model) View() string {
 }
 ```
 
-## All Together Now
+### All Together Now
 
 The last step is to simply run our program. We pass our initial model to
 `tea.NewProgram` and let it rip:
