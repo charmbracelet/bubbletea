@@ -1,6 +1,6 @@
 module github.com/charmbracelet/bubbletea
 
-go 1.13
+go 1.16
 
 require (
 	github.com/containerd/console v1.0.3
