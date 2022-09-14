@@ -19,8 +19,10 @@ func main() {
 	}
 }
 
-type tickMsg struct{}
-type errMsg error
+type (
+	tickMsg struct{}
+	errMsg  error
+)
 
 type model struct {
 	textInput textinput.Model

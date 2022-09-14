@@ -46,8 +46,10 @@ func main() {
 	}
 }
 
-type tickMsg struct{}
-type frameMsg struct{}
+type (
+	tickMsg  struct{}
+	frameMsg struct{}
+)
 
 func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(time.Time) tea.Msg {

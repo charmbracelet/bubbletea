@@ -46,7 +46,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = len(choices) - 1
 			}
 		}
-
 	}
 
 	return m, nil
