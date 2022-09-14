@@ -125,8 +125,10 @@ func main() {
 }
 
 func randomFood() string {
-	food := []string{"an apple", "a pear", "a gherkin", "a party gherkin",
+	food := []string{
+		"an apple", "a pear", "a gherkin", "a party gherkin",
 		"a kohlrabi", "some spaghetti", "tacos", "a currywurst", "some curry",
-		"a sandwich", "some peanut butter", "some cashews", "some ramen"}
+		"a sandwich", "some peanut butter", "some cashews", "some ramen",
+	}
 	return string(food[rand.Intn(len(food))])
 }
