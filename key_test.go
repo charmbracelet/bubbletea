@@ -134,6 +134,24 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
+		"alt+enter": {
+			[]byte{'\x1b', '\r'},
+			[]Msg{
+				KeyMsg{
+					Type: KeyEnter,
+					Alt:  true,
+				},
+			},
+		},
+		"alt+ctrl+a": {
+			[]byte{'\x1b', byte(keySOH)},
+			[]Msg{
+				KeyMsg{
+					Type: KeyCtrlA,
+					Alt:  true,
+				},
+			},
+		},
 	} {
 		t.Run(out, func(t *testing.T) {
 			msgs, err := readInputs(bytes.NewReader(td.in))

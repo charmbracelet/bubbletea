@@ -19,8 +19,10 @@ func main() {
 	}
 }
 
-type tickMsg struct{}
-type errMsg error
+type (
+	tickMsg struct{}
+	errMsg  error
+)
 
 const (
 	ccn = iota
@@ -129,9 +131,7 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		cmds []tea.Cmd = make([]tea.Cmd, len(m.inputs))
-	)
+	var cmds []tea.Cmd = make([]tea.Cmd, len(m.inputs))
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

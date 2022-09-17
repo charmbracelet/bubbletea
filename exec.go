@@ -34,17 +34,17 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 // a message containing the error which may have occurred when running the
 // ExecCommand.
 //
-//     type VimFinishedMsg struct { err error }
+//	type VimFinishedMsg struct { err error }
 //
-//     c := exec.Command("vim", "file.txt")
+//	c := exec.Command("vim", "file.txt")
 //
-//     cmd := ExecProcess(c, func(err error) Msg {
-//         return VimFinishedMsg{err: error}
-//     })
+//	cmd := ExecProcess(c, func(err error) Msg {
+//	    return VimFinishedMsg{err: err}
+//	})
 //
 // Or, if you don't care about errors, you could simply:
 //
-//     cmd := ExecProcess(exec.Command("vim", "file.txt"), nil)
+//	cmd := ExecProcess(exec.Command("vim", "file.txt"), nil)
 //
 // For non-interactive i/o you should use a Cmd (that is, a tea.Cmd).
 func ExecProcess(c *exec.Cmd, fn ExecCallback) Cmd {

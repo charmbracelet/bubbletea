@@ -27,10 +27,10 @@ func TestTick(t *testing.T) {
 }
 
 func TestSequentially(t *testing.T) {
-	var expectedErrMsg = fmt.Errorf("some err")
-	var expectedStrMsg = "some msg"
+	expectedErrMsg := fmt.Errorf("some err")
+	expectedStrMsg := "some msg"
 
-	var nilReturnCmd = func() Msg {
+	nilReturnCmd := func() Msg {
 		return nil
 	}
 

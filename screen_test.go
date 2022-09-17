@@ -62,5 +62,4 @@ func TestScreen(t *testing.T) {
 			}, []byte("\x1b[15D"))
 		})
 	})
-
 }

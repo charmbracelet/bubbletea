@@ -5,36 +5,38 @@ import (
 	"fmt"
 	"io"
 	"unicode/utf8"
+
+	"github.com/mattn/go-localereader"
 )
 
 // KeyMsg contains information about a keypress. KeyMsgs are always sent to
 // the program's update function. There are a couple general patterns you could
 // use to check for keypresses:
 //
-//     // Switch on the string representation of the key (shorter)
-//     switch msg := msg.(type) {
-//     case KeyMsg:
-//         switch msg.String() {
-//         case "enter":
-//             fmt.Println("you pressed enter!")
-//         case "a":
-//             fmt.Println("you pressed a!")
-//         }
-//     }
+//	// Switch on the string representation of the key (shorter)
+//	switch msg := msg.(type) {
+//	case KeyMsg:
+//	    switch msg.String() {
+//	    case "enter":
+//	        fmt.Println("you pressed enter!")
+//	    case "a":
+//	        fmt.Println("you pressed a!")
+//	    }
+//	}
 //
-//     // Switch on the key type (more foolproof)
-//     switch msg := msg.(type) {
-//     case KeyMsg:
-//         switch msg.Type {
-//         case KeyEnter:
-//             fmt.Println("you pressed enter!")
-//         case KeyRunes:
-//             switch string(msg.Runes) {
-//             case "a":
-//                 fmt.Println("you pressed a!")
-//             }
-//         }
-//     }
+//	// Switch on the key type (more foolproof)
+//	switch msg := msg.(type) {
+//	case KeyMsg:
+//	    switch msg.Type {
+//	    case KeyEnter:
+//	        fmt.Println("you pressed enter!")
+//	    case KeyRunes:
+//	        switch string(msg.Runes) {
+//	        case "a":
+//	            fmt.Println("you pressed a!")
+//	        }
+//	    }
+//	}
 //
 // Note that Key.Runes will always contain at least one character, so you can
 // always safely call Key.Runes[0]. In most cases Key.Runes will only contain
@@ -58,10 +60,9 @@ type Key struct {
 // String returns a friendly string representation for a key. It's safe (and
 // encouraged) for use in key comparison.
 //
-//     k := Key{Type: KeyEnter}
-//     fmt.Println(k)
-//     // Output: enter
-//
+//	k := Key{Type: KeyEnter}
+//	fmt.Println(k)
+//	// Output: enter
 func (k Key) String() (str string) {
 	if k.Alt {
 		str += "alt+"
@@ -80,16 +81,16 @@ func (k Key) String() (str string) {
 // All other keys will be type KeyRunes. To get the rune value, check the Rune
 // method on a Key struct, or use the Key.String() method:
 //
-//     k := Key{Type: KeyRunes, Runes: []rune{'a'}, Alt: true}
-//     if k.Type == KeyRunes {
+//	k := Key{Type: KeyRunes, Runes: []rune{'a'}, Alt: true}
+//	if k.Type == KeyRunes {
 //
-//         fmt.Println(k.Runes)
-//         // Output: a
+//	    fmt.Println(k.Runes)
+//	    // Output: a
 //
-//         fmt.Println(k.String())
-//         // Output: alt+a
+//	    fmt.Println(k.String())
+//	    // Output: alt+a
 //
-//     }
+//	}
 type KeyType int
 
 func (k KeyType) String() (str string) {
@@ -393,6 +394,13 @@ var sequences = map[string]Key{
 	"\x1b\x1b[7~": {Type: KeyHome, Alt: true},   // urxvt
 	"\x1b\x1b[8~": {Type: KeyEnd, Alt: true},    // urxvt
 
+	// Function keys, Linux console
+	"\x1b[[A": {Type: KeyF1}, // linux console
+	"\x1b[[B": {Type: KeyF2}, // linux console
+	"\x1b[[C": {Type: KeyF3}, // linux console
+	"\x1b[[D": {Type: KeyF4}, // linux console
+	"\x1b[[E": {Type: KeyF5}, // linux console
+
 	// Function keys, X11
 	"\x1bOP":     {Type: KeyF1},  // vt100
 	"\x1bOQ":     {Type: KeyF2},  // vt100
@@ -480,10 +488,15 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	if err != nil {
 		return nil, err
 	}
+	b := buf[:numBytes]
+	b, err = localereader.UTF8(b)
+	if err != nil {
+		return nil, err
+	}
 
 	// Check if it's a mouse event. For now we're parsing X10-type mouse events
 	// only.
-	mouseEvent, err := parseX10MouseEvents(buf[:numBytes])
+	mouseEvent, err := parseX10MouseEvents(b)
 	if err == nil {
 		var m []Msg
 		for _, v := range mouseEvent {
@@ -494,7 +507,6 @@ func readInputs(input io.Reader) ([]Msg, error) {
 
 	var runeSets [][]rune
 	var runes []rune
-	b := buf[:numBytes]
 
 	// Translate input into runes. In most cases we'll receive exactly one
 	// rune, but there are cases, particularly when an input method editor is
@@ -538,28 +550,29 @@ func readInputs(input io.Reader) ([]Msg, error) {
 
 		// Is the alt key pressed? If so, the buffer will be prefixed with an
 		// escape.
+		alt := false
 		if len(runes) > 1 && runes[0] == 0x1b {
-			msgs = append(msgs, KeyMsg(Key{Alt: true, Type: KeyRunes, Runes: runes[1:]}))
-			continue
+			alt = true
+			runes = runes[1:]
 		}
 
 		for _, v := range runes {
 			// Is the first rune a control character?
 			r := KeyType(v)
 			if r <= keyUS || r == keyDEL {
-				msgs = append(msgs, KeyMsg(Key{Type: r}))
+				msgs = append(msgs, KeyMsg(Key{Type: r, Alt: alt}))
 				continue
 			}
 
 			// If it's a space, override the type with KeySpace (but still include
 			// the rune).
 			if r == ' ' {
-				msgs = append(msgs, KeyMsg(Key{Type: KeySpace, Runes: []rune{v}}))
+				msgs = append(msgs, KeyMsg(Key{Type: KeySpace, Runes: []rune{v}, Alt: alt}))
 				continue
 			}
 
 			// Welp, just regular, ol' runes.
-			msgs = append(msgs, KeyMsg(Key{Type: KeyRunes, Runes: []rune{v}}))
+			msgs = append(msgs, KeyMsg(Key{Type: KeyRunes, Runes: []rune{v}, Alt: alt}))
 		}
 	}
 

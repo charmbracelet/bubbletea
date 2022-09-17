@@ -124,10 +124,9 @@ type Program struct {
 //
 // Example:
 //
-//     func (m model) Init() Cmd {
-//	       return tea.Batch(someCommand, someOtherCommand)
-//     }
-//
+//	    func (m model) Init() Cmd {
+//		       return tea.Batch(someCommand, someOtherCommand)
+//	    }
 func Batch(cmds ...Cmd) Cmd {
 	var validCmds []Cmd
 	for _, c := range cmds {
@@ -338,13 +337,17 @@ func (p *Program) StartReturningModel() (Model, error) {
 		p.input = f
 	}
 
-	// Listen for SIGINT. Note that in most cases ^C will not send an
-	// interrupt because the terminal will be in raw mode and thus capture
-	// that keystroke and send it along to Program.Update. If input is not a
-	// TTY, however, ^C will be caught here.
+	// Listen for SIGINT and SIGTERM.
+	//
+	// In most cases ^C will not send an interrupt because the terminal will be
+	// in raw mode and ^C will be captured as a keystroke and sent along to
+	// Program.Update as a KeyMsg. When input is not a TTY, however, ^C will be
+	// caught here.
+	//
+	// SIGTERM is sent by unix utilities (like kill) to terminate a process.
 	go func() {
 		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, syscall.SIGINT)
+		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		defer func() {
 			signal.Stop(sig)
 			close(sigintLoopDone)
@@ -529,6 +532,17 @@ func (p *Program) StartReturningModel() (Model, error) {
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
+
+			case sequenceMsg:
+				go func() {
+					// Execute commands one at a time, in order.
+					for _, cmd := range msg {
+						select {
+						case p.msgs <- cmd():
+						case <-p.ctx.Done():
+						}
+					}
+				}()
 			}
 
 			// Process internal messages for the renderer.
@@ -731,5 +745,16 @@ func (p *Program) Println(args ...interface{}) {
 func (p *Program) Printf(template string, args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
+	}
+}
+
+// sequenceMsg is used interally to run the the given commands in order.
+type sequenceMsg []Cmd
+
+// Sequence runs the given commands one at a time, in order. Contrast this with
+// Batch, which runs commands concurrently.
+func Sequence(cmds ...Cmd) Cmd {
+	return func() Msg {
+		return sequenceMsg(cmds)
 	}
 }
