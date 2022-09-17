@@ -21,13 +21,39 @@ type Program interface {
 	Send(tea.Msg)
 }
 
+// TestModelOptions defines all options available to the test function.
+type TestModelOptions struct {
+	interact      func(p Program, in io.Writer)
+	assert        func(out []byte)
+	validateModel func(m tea.Model) error
+}
+
+// TestOption is a functional option.
+type TestOption func(opts *TestModelOptions)
+
+// WithProgramInteractions ...
+func WithProgramInteractions(fn func(p Program, in io.Writer)) TestOption {
+	return func(opts *TestModelOptions) {
+		opts.interact = fn
+	}
+}
+
+// WithRequiredOutputChecker ...
+func WithRequiredOutputChecker(fn func(out []byte)) TestOption {
+	return func(opts *TestModelOptions) {
+		opts.assert = fn
+	}
+}
+
+// WithValidateFinalModel ...
+func WithValidateFinalModel(fn func(m tea.Model) error) TestOption {
+	return func(opts *TestModelOptions) {
+		opts.validateModel = fn
+	}
+}
+
 // TestModel tests a given model with the given interactions and assertions.
-func TestModel(
-	tb testing.TB,
-	m tea.Model,
-	interact func(p Program, in io.Writer),
-	assert func(out []byte),
-) {
+func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	var in bytes.Buffer
 	var out bytes.Buffer
 
@@ -49,8 +75,15 @@ func TestModel(
 		p.Quit()
 	}()
 
+	var opts TestModelOptions
+	for _, opt := range options {
+		opt(&opts)
+	}
+
 	// run the user interactions and then force a quit
-	interact(p, safe(&in))
+	if opts.interact != nil {
+		opts.interact(p, safe(&in))
+	}
 	p.Quit()
 	if err := p.ReleaseTerminal(); err != nil {
 		tb.Fatalf("could not restore terminal: %v", err)
@@ -58,7 +91,16 @@ func TestModel(
 
 	// wait for the program to quit and assert
 	<-done
-	assert(out.Bytes())
+
+	if opts.validateModel != nil {
+		if err := opts.validateModel(m); err != nil {
+			tb.Fatalf("failed to validate model: %v", err)
+		}
+	}
+
+	if opts.assert != nil {
+		opts.assert(out.Bytes())
+	}
 }
 
 // TypeText types the given text into the given program.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"testing"
@@ -18,16 +19,23 @@ func TestApp(t *testing.T) {
 			m := model(10)
 			teatest.TestModel(
 				t, m,
-				func(p teatest.Program, in io.Writer) {
+				teatest.WithProgramInteractions(func(p teatest.Program, in io.Writer) {
 					time.Sleep(time.Second + time.Millisecond*200)
 					p.Send("ignored msg")
 					p.Send(tea.KeyMsg{
 						Type: tea.KeyEnter,
 					})
-				},
-				func(out []byte) {
+				}),
+				teatest.WithRequiredOutputChecker(func(out []byte) {
 					teatest.RequireEqualOutput(t, out)
-				},
+				}),
+				teatest.WithValidateFinalModel(func(mm tea.Model) error {
+					m := mm.(model)
+					if m != 10 {
+						return fmt.Errorf("expected model to be 10, was %d", m)
+					}
+					return nil
+				}),
 			)
 		})
 	}
