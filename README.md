@@ -322,6 +322,7 @@ For some Bubble Tea programs in production, see:
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
+* [chezmoi](https://github.com/twpayne/chezmoi): manage your dotfiles across multiple machines, securely
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in your terminal
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
