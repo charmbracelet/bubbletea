@@ -11,7 +11,9 @@ import (
 )
 
 const content = `
-Today’s Menu
+# Today’s Menu
+
+## Appetizers
 
 | Name        | Price | Notes                           |
 | ---         | ---   | ---                             |
@@ -20,7 +22,7 @@ Today’s Menu
 | Okonomiyaki | $4    | Takes a few minutes to make     |
 | Curry       | $3    | We can add squash if you’d like |
 
-Seasonal Dishes
+## Seasonal Dishes
 
 | Name                 | Price | Notes              |
 | ---                  | ---   | ---                |
@@ -28,7 +30,7 @@ Seasonal Dishes
 | Takoyaki             | $3    | Fun to eat         |
 | Winter squash        | $3    | Today it's pumpkin |
 
-Desserts
+## Desserts
 
 | Name         | Price | Notes                 |
 | ---          | ---   | ---                   |
@@ -64,7 +66,7 @@ func newExample() (*example, error) {
 		PaddingRight(2)
 
 	renderer, err := glamour.NewTermRenderer(
-		glamour.WithStylePath("notty"),
+		glamour.WithAutoStyle(),
 		glamour.WithWordWrap(width),
 	)
 	if err != nil {
