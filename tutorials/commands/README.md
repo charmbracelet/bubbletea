@@ -2,7 +2,7 @@ Commands in Bubble Tea
 ======================
 
 This is the second tutorial for Bubble Tea covering commands, which deal with
-I/O. The tutorial assumes you have a working knowlege of Go and a decent
+I/O. The tutorial assumes you have a working knowledge of Go and a decent
 understanding of [the first tutorial][basics].
 
 You can find the non-annotated version of this program [on GitHub][source].
@@ -50,7 +50,7 @@ type model struct {
 `Cmd`s are functions that perform some I/O and then return a `Msg`. Checking the
 time, ticking a timer, reading from the disk, and network stuff are all I/O and
 should be run through commands. That might sound harsh, but it will keep your
-Bubble Tea program staightforward and simple.
+The Bubble Tea program is straightforward and simple.
 
 Anyway, let's write a `Cmd` that makes a request to a server and returns the
 result as a `Msg`.
@@ -87,7 +87,7 @@ First, let's write our initialization function.
 
 ## The Initialization Method
 
-The initilization method is very simple: we return the `Cmd` we made earlier.
+The initialization method is very simple: we return the `Cmd` we made earlier.
 Note that we don't call the function; the Bubble Tea runtime will do that when
 the time is right.
 
