@@ -50,7 +50,7 @@ type model struct {
 `Cmd`s are functions that perform some I/O and then return a `Msg`. Checking the
 time, ticking a timer, reading from the disk, and network stuff are all I/O and
 should be run through commands. That might sound harsh, but it will keep your
-Bubble Tea program is straightforward and simple.
+Bubble Tea program straightforward and simple.
 
 Anyway, let's write a `Cmd` that makes a request to a server and returns the
 result as a `Msg`.
