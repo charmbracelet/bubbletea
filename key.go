@@ -2,7 +2,6 @@ package tea
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"unicode/utf8"
 
@@ -540,18 +539,12 @@ var sequences = map[string]Key{
 	"\x1b\x1b[32~": {Type: KeyF18, Alt: true}, // urxvt
 	"\x1b\x1b[33~": {Type: KeyF19, Alt: true}, // urxvt
 	"\x1b\x1b[34~": {Type: KeyF20, Alt: true}, // urxvt
-}
 
-// Hex code mappings.
-var hexes = map[string]Key{
-	"1b0d": {Type: KeyEnter, Alt: true},
-	"1b7f": {Type: KeyBackspace, Alt: true},
-
-	// Powershell
-	"1b4f41": {Type: KeyUp, Alt: false},
-	"1b4f42": {Type: KeyDown, Alt: false},
-	"1b4f43": {Type: KeyRight, Alt: false},
-	"1b4f44": {Type: KeyLeft, Alt: false},
+	// Powershell sequences.
+	"\x1bOA": {Type: KeyUp, Alt: false},
+	"\x1bOB": {Type: KeyDown, Alt: false},
+	"\x1bOC": {Type: KeyRight, Alt: false},
+	"\x1bOD": {Type: KeyLeft, Alt: false},
 }
 
 // readInputs reads keypress and mouse inputs from a TTY and returns messages
@@ -613,13 +606,6 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	for _, runes := range runeSets {
 		// Is it a sequence, like an arrow key?
 		if k, ok := sequences[string(runes)]; ok {
-			msgs = append(msgs, KeyMsg(k))
-			continue
-		}
-
-		// Some of these need special handling.
-		hex := fmt.Sprintf("%x", runes)
-		if k, ok := hexes[hex]; ok {
 			msgs = append(msgs, KeyMsg(k))
 			continue
 		}
