@@ -313,7 +313,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			return p.initialModel, err
 		}
 
-		defer f.Close() // nolint:errcheck
+		defer f.Close() //nolint:errcheck
 
 		p.input = f
 
@@ -336,7 +336,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			return p.initialModel, err
 		}
 
-		defer f.Close() // nolint:errcheck
+		defer f.Close() //nolint:errcheck
 
 		p.input = f
 	}
@@ -431,7 +431,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 	} else {
 		defer close(p.readLoopDone)
 	}
-	defer p.cancelReader.Close() // nolint:errcheck
+	defer p.cancelReader.Close() //nolint:errcheck
 
 	if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
