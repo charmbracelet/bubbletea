@@ -152,6 +152,10 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
+		"unrecognized": {
+			[]byte{'\x1b', '[', '-', '-', '-', '-', 'X'},
+			[]Msg{},
+		},
 	} {
 		t.Run(out, func(t *testing.T) {
 			msgs, err := readInputs(bytes.NewReader(td.in))
