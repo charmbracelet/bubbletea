@@ -638,10 +638,11 @@ func (p *Program) EnterAltScreen() {
 	p.output.MoveCursor(1, 1)
 
 	// The reasoning behind this hideCursor is behavior of AltScreen in cmd.exe
-	// cmd stores two different cursor "states" for both AltScreen and main buffer
-	// so, we have to explicitly call hideCursor whenever we enter AltScreen
-	// Note: This should also fix cursor bugs on other platforms
-	hideCursor(p.output)
+	// cmd stores two different cursor "states" for both AltScreen and main
+	// buffer so, we have to explicitly call hideCursor whenever we enter
+	// AltScreen.
+	// Note: This should also fix cursor bugs on other platforms.
+	p.output.HideCursor()
 
 	p.altScreenActive = true
 	if p.renderer != nil {
@@ -662,8 +663,8 @@ func (p *Program) ExitAltScreen() {
 
 	p.output.ExitAltScreen()
 
-	// We have to make sure each time we exit AltScreen, we restore the cursor
-	showCursor(p.output)
+	// We have to make sure each time we exit AltScreen, we restore the cursor.
+	p.output.ShowCursor()
 
 	p.altScreenActive = false
 	if p.renderer != nil {
