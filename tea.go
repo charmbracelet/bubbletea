@@ -153,6 +153,25 @@ func Quit() Msg {
 	return quitMsg{}
 }
 
+// IsQuitCmd returns true if the given command is a Quit command.
+// Please notice that this will execute the underlying command, and is meant
+// only for testing.
+// Do not use in user-facing code.
+func IsQuitCmd(cmd Cmd) bool {
+	return IsQuitMsg(cmd())
+}
+
+// IsQuitMsg returns true if the given Msg is a quit message.
+// Mean to be used in testing only.
+func IsQuitMsg(msg Msg) bool {
+	switch msg.(type) {
+	case quitMsg:
+		return true
+	default:
+		return false
+	}
+}
+
 // quitMsg in an internal message signals that the program should quit. You can
 // send a quitMsg with Quit.
 type quitMsg struct{}
