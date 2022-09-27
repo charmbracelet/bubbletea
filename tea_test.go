@@ -44,10 +44,10 @@ func TestTeaModel(t *testing.T) {
 }
 
 func TestIsQuit(t *testing.T) {
-	if IsQuit(EnterAltScreen) {
+	if IsQuitCmd(EnterAltScreen) {
 		t.Fatal("IsQuit should have returned false")
 	}
-	if !IsQuit(Quit) {
+	if !IsQuitCmd(Quit) {
 		t.Fatal("IsQuit should have returned true")
 	}
 }
