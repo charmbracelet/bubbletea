@@ -55,7 +55,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "h", "left":
 			m.index--
-			if m.index <= 0 {
+			if m.index < 0 {
 				m.index = len(spinners) - 1
 			}
 			m.resetSpinner()

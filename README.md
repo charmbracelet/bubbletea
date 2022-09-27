@@ -322,14 +322,15 @@ For some Bubble Tea programs in production, see:
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
+* [chezmoi](https://github.com/twpayne/chezmoi): manage your dotfiles across multiple machines, securely
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in your terminal
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
-* [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
-* [fztea](https://github.com/jon4hz/fztea): connect to your Flipper's UI over serial or make it accessible via SSH
+* [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
+* [fztea](https://github.com/jon4hz/fztea): connect to your Flipper's UI over serial or make it accessible via SSH
 * [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
 * [gh-b](https://github.com/joaom00/gh-b): GitHub CLI extension to easily manage your branches
@@ -337,14 +338,16 @@ For some Bubble Tea programs in production, see:
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
+* [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
 * [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): Multiplatform terminal mandelbrot set explorer
-* [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+* [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
+* [Noted](https://github.com/torbratsberg/noted): Note viewer and manager
 * [pathos](https://github.com/chip/pathos): pathos - CLI for editing a PATH env variable
-* [portal][portal]: securely send transfer between computers
+* [portal](https://github.com/ZinoKader/portal): securely send transfer between computers
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): browse Redis databases
 * [sku](https://github.com/fedeztk/sku): a simple TUI for playing sudoku inside the terminal
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
@@ -356,13 +359,10 @@ For some Bubble Tea programs in production, see:
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal][portal])
+* [Typer](https://github.com/maaslalani/typer): a typing test
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
-* [Typer](https://github.com/maaslalani/typer): a typing test
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
-* [Noted](https://github.com/torbratsberg/noted): Note viewer and manager
-
-[portal]: https://github.com/ZinoKader/portal
 
 ## Feedback
 
