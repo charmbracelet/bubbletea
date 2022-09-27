@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 )
 
@@ -49,11 +50,12 @@ func TestKeyTypeString(t *testing.T) {
 
 func TestReadInput(t *testing.T) {
 	type test struct {
-		in  []byte
-		out []Msg
+		keyname string
+		in      []byte
+		out     []Msg
 	}
-	for out, td := range map[string]test{
-		"a": {
+	for i, td := range []test{
+		{"a",
 			[]byte{'a'},
 			[]Msg{
 				KeyMsg{
@@ -62,7 +64,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		" ": {
+		{" ",
 			[]byte{' '},
 			[]Msg{
 				KeyMsg{
@@ -71,7 +73,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"ctrl+a": {
+		{"ctrl+a",
 			[]byte{byte(keySOH)},
 			[]Msg{
 				KeyMsg{
@@ -79,7 +81,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"alt+a": {
+		{"alt+a",
 			[]byte{byte(0x1b), 'a'},
 			[]Msg{
 				KeyMsg{
@@ -89,7 +91,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"abcd": {
+		{"abcd",
 			[]byte{'a', 'b', 'c', 'd'},
 			[]Msg{
 				KeyMsg{
@@ -110,7 +112,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"up": {
+		{"up",
 			[]byte("\x1b[A"),
 			[]Msg{
 				KeyMsg{
@@ -118,7 +120,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"wheel up": {
+		{"wheel up",
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
 			[]Msg{
 				MouseMsg{
@@ -126,7 +128,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"shift+tab": {
+		{"shift+tab",
 			[]byte{'\x1b', '[', 'Z'},
 			[]Msg{
 				KeyMsg{
@@ -134,7 +136,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"alt+enter": {
+		{"alt+enter",
 			[]byte{'\x1b', '\r'},
 			[]Msg{
 				KeyMsg{
@@ -143,7 +145,7 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"alt+ctrl+a": {
+		{"alt+ctrl+a",
 			[]byte{'\x1b', byte(keySOH)},
 			[]Msg{
 				KeyMsg{
@@ -152,12 +154,37 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		"unrecognized": {
+		{"unrecognized CSI",
 			[]byte{'\x1b', '[', '-', '-', '-', '-', 'X'},
 			[]Msg{},
 		},
+		// Powershell sequences.
+		{"up",
+			[]byte{'\x1b', 'O', 'A'},
+			[]Msg{KeyMsg{Type: KeyUp}},
+		},
+		{"down",
+			[]byte{'\x1b', 'O', 'B'},
+			[]Msg{KeyMsg{Type: KeyDown}},
+		},
+		{"right",
+			[]byte{'\x1b', 'O', 'C'},
+			[]Msg{KeyMsg{Type: KeyRight}},
+		},
+		{"left",
+			[]byte{'\x1b', 'O', 'D'},
+			[]Msg{KeyMsg{Type: KeyLeft}},
+		},
+		{"alt+enter",
+			[]byte{'\x1b', '\x0d'},
+			[]Msg{KeyMsg{Type: KeyEnter, Alt: true}},
+		},
+		{"alt+backspace",
+			[]byte{'\x1b', '\x7f'},
+			[]Msg{KeyMsg{Type: KeyBackspace, Alt: true}},
+		},
 	} {
-		t.Run(out, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d: %s", i, td.keyname), func(t *testing.T) {
 			msgs, err := readInputs(bytes.NewReader(td.in))
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -167,8 +194,8 @@ func TestReadInput(t *testing.T) {
 			}
 
 			if len(msgs) == 1 {
-				if m, ok := msgs[0].(KeyMsg); ok && m.String() != out {
-					t.Fatalf(`expected a keymsg %q, got %q`, out, m)
+				if m, ok := msgs[0].(KeyMsg); ok && m.String() != td.keyname {
+					t.Fatalf(`expected a keymsg %q, got %q`, td.keyname, m)
 				}
 			}
 
@@ -178,9 +205,9 @@ func TestReadInput(t *testing.T) {
 					t.Fatalf(`expected a keymsg %q, got %q`, td.out[i].(KeyMsg), m)
 				}
 				if m, ok := v.(MouseMsg); ok &&
-					(mouseEventTypes[m.Type] != out || m.Type != td.out[i].(MouseMsg).Type) {
+					(mouseEventTypes[m.Type] != td.keyname || m.Type != td.out[i].(MouseMsg).Type) {
 					t.Fatalf(`expected a mousemsg %q, got %q`,
-						out,
+						td.keyname,
 						mouseEventTypes[td.out[i].(MouseMsg).Type])
 				}
 			}
