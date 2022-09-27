@@ -27,9 +27,7 @@ func (pw *progressWriter) Start() {
 	// TeeReader calls pw.Write() each time a new response is received
 	_, err := io.Copy(pw.file, io.TeeReader(pw.reader, pw))
 	if err != nil {
-		if p != nil {
-			p.Send(progressErrMsg{err})
-		}
+		p.Send(progressErrMsg{err})
 	}
 }
 
@@ -68,10 +66,17 @@ func main() {
 	}
 	defer resp.Body.Close()
 
+	// Don't add TUI if the header doesn't include content size
+	// it's impossible see progress without total
+	if resp.ContentLength <= 0 {
+		fmt.Println("can't parse content length, aborting download")
+		os.Exit(1)
+	}
+
 	filename := filepath.Base(*url)
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println("could not create file: ", err)
+		fmt.Println("could not create file:", err)
 		os.Exit(1)
 	}
 	defer file.Close()
@@ -81,9 +86,7 @@ func main() {
 		file:   file,
 		reader: resp.Body,
 		onProgress: func(ratio float64) {
-			if p != nil {
-				p.Send(progressMsg(ratio))
-			}
+			p.Send(progressMsg(ratio))
 		},
 	}
 
@@ -91,21 +94,14 @@ func main() {
 		pw:       pw,
 		progress: progress.New(progress.WithDefaultGradient()),
 	}
-
-	// Don't add TUI if the header doesn't include content size
-	// it's impossible see progress without total
-	if resp.ContentLength > 0 {
-		// Start Bubble Tea
-		p = tea.NewProgram(m)
-	}
+	// Start Bubble Tea
+	p = tea.NewProgram(m)
 
 	// Start the download
 	go pw.Start()
 
-	if p != nil {
-		if err := p.Start(); err != nil {
-			fmt.Println("error running program:", err)
-			os.Exit(1)
-		}
+	if err := p.Start(); err != nil {
+		fmt.Println("error running program:", err)
+		os.Exit(1)
 	}
 }
