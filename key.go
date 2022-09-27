@@ -624,6 +624,12 @@ func readInputs(input io.Reader) ([]Msg, error) {
 			continue
 		}
 
+		// Is this an unrecognized CSI sequence? If so, ignore it.
+		if len(runes) > 2 && runes[0] == 0x1b && (runes[1] == '[' ||
+			(len(runes) > 3 && runes[1] == 0x1b && runes[2] == '[')) {
+			continue
+		}
+
 		// Is the alt key pressed? If so, the buffer will be prefixed with an
 		// escape.
 		alt := false
