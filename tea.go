@@ -292,13 +292,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 		waitForGoroutines = func(withReadLoop bool) {
 			if withReadLoop {
-				select {
-				case <-p.readLoopDone:
-				case <-time.After(500 * time.Millisecond):
-					// The read loop hangs, which means the input
-					// cancelReader's cancel function has returned true even
-					// though it was not able to cancel the read.
-				}
+				p.waitForReadLoop()
 			}
 			<-cmdLoopDone
 			<-resizeLoopDone
@@ -712,6 +706,8 @@ func (p *Program) DisableMouseAllMotion() {
 func (p *Program) ReleaseTerminal() error {
 	p.ignoreSignals = true
 	p.cancelInput()
+	p.waitForReadLoop()
+
 	p.altScreenWasActive = p.altScreenActive
 	if p.altScreenActive {
 		p.ExitAltScreen()
