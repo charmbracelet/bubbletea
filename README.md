@@ -362,6 +362,7 @@ For some Bubble Tea programs in production, see:
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
+* [wander](https://github.com/robinovitch61/wander): HashiCorp Nomad terminal client
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
 ## Feedback
