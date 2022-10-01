@@ -141,3 +141,32 @@ func WithANSICompressor() ProgramOption {
 		p.startupOptions |= withANSICompressor
 	}
 }
+
+// WithOnQuit supplies an event handler that will be invoked whenever Bubble
+// Tea receives a QuitMsg. The event handler can return tea.Shutdown to
+// instruct Bubble Tea to handle the QuitMsg normally and shut the program
+// down, or it can return tea.PreventShutdown to prevent the program from
+// shutting down and instead handle the QuitMsg like a normal message and
+// pass it along to the model's Update method.
+//
+// Example:
+//
+//	func onQuit(m tea.Model) tea.QuitBehavior {
+//	    model := m.(myModel)
+//	    if model.hasChanges {
+//	        return tea.PreventShutdown
+//	    }
+//	    return tea.Shutdown
+//	}
+//
+//	p := tea.NewProgram(Model{}, tea.WithOnQuit(onQuit));
+//
+//	if _,err := p.Run(); err != nil {
+//		fmt.Println("Error running program:", err)
+//		os.Exit(1)
+//	}
+func WithOnQuit(onQuit func(Model) QuitBehavior) ProgramOption {
+	return func(p *Program) {
+		p.onQuit = onQuit
+	}
+}

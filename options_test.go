@@ -35,6 +35,13 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
+	t.Run("on quit", func(t *testing.T) {
+		p := NewProgram(nil, WithOnQuit(func(Model) QuitBehavior { return Shutdown }))
+		if p.onQuit == nil {
+			t.Errorf("expected onQuit to be set")
+		}
+	})
+
 	t.Run("startup options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, expect startupOptions) {
 			p := NewProgram(nil, opt)
