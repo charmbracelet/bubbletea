@@ -1,3 +1,3 @@
 # HTTP
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/http.gif" />
+<img width="800" src="./http.gif" />

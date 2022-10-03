@@ -1,3 +1,3 @@
 # Composable Views
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/composable-views.gif" />
+<img width="800" src="./composable-views.gif" />

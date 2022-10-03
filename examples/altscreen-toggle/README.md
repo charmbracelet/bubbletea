@@ -1,3 +1,3 @@
 # Alt Screen Toggle
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/altscreen-toggle.gif" />
+<img width="800" src="./altscreen-toggle.gif" />

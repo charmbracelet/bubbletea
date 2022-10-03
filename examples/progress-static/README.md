@@ -1,3 +1,3 @@
 # Static Progress
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/progress-static.gif" />
+<img width="800" src="./progress-static.gif" />
