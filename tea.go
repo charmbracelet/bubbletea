@@ -16,7 +16,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"sync"
 	"syscall"
 	"time"
 
@@ -83,7 +82,6 @@ type Program struct {
 	startupOptions startupOptions
 
 	ctx context.Context
-	mtx *sync.Mutex
 
 	msgs         chan Msg
 	errs         chan error
@@ -95,7 +93,6 @@ type Program struct {
 	cancelReader  cancelreader.CancelReader
 
 	renderer           renderer
-	altScreenActive    bool
 	altScreenWasActive bool // was the altscreen active before releasing the terminal?
 
 	// CatchPanics is incredibly useful for restoring the terminal to a usable
@@ -252,7 +249,6 @@ type hideCursorMsg struct{}
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
-		mtx:          &sync.Mutex{},
 		initialModel: model,
 		input:        os.Stdin,
 		msgs:         make(chan Msg),
@@ -389,17 +385,17 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.mtx, p.startupOptions.has(withANSICompressor))
+		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
 	}
 
 	// Honor program startup options.
 	if p.startupOptions&withAltScreen != 0 {
-		p.EnterAltScreen()
+		p.renderer.enterAltScreen()
 	}
 	if p.startupOptions&withMouseCellMotion != 0 {
-		p.EnableMouseCellMotion()
+		p.renderer.enableMouseCellMotion()
 	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.EnableMouseAllMotion()
+		p.renderer.enableMouseAllMotion()
 	}
 
 	// Initialize the program.
@@ -418,7 +414,6 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 	// Start the renderer.
 	p.renderer.start()
-	p.renderer.setAltScreen(p.altScreenActive)
 
 	// Render the initial view.
 	p.renderer.write(model.View())
@@ -503,39 +498,34 @@ func (p *Program) StartReturningModel() (Model, error) {
 				p.shutdown(false)
 				return model, nil
 
+			case enterAltScreenMsg:
+				p.renderer.enterAltScreen()
+
+			case exitAltScreenMsg:
+				p.renderer.exitAltScreen()
+
+			case enableMouseCellMotionMsg:
+				p.renderer.enableMouseCellMotion()
+
+			case enableMouseAllMotionMsg:
+				p.renderer.enableMouseAllMotion()
+
+			case disableMouseMsg:
+				p.renderer.disableMouseCellMotion()
+				p.renderer.disableMouseAllMotion()
+
+			case hideCursorMsg:
+				p.renderer.hideCursor()
+
+			case execMsg:
+				// NB: this blocks.
+				p.exec(msg.cmd, msg.fn)
+
 			case batchMsg:
 				for _, cmd := range msg {
 					cmds <- cmd
 				}
 				continue
-
-			case WindowSizeMsg:
-				p.mtx.Lock()
-				p.renderer.repaint()
-				p.mtx.Unlock()
-
-			case enterAltScreenMsg:
-				p.EnterAltScreen()
-
-			case exitAltScreenMsg:
-				p.ExitAltScreen()
-
-			case enableMouseCellMotionMsg:
-				p.EnableMouseCellMotion()
-
-			case enableMouseAllMotionMsg:
-				p.EnableMouseAllMotion()
-
-			case disableMouseMsg:
-				p.DisableMouseCellMotion()
-				p.DisableMouseAllMotion()
-
-			case hideCursorMsg:
-				p.output.HideCursor()
-
-			case execMsg:
-				// NB: this blocks.
-				p.exec(msg.cmd, msg.fn)
 
 			case sequenceMsg:
 				go func() {
@@ -621,19 +611,8 @@ func (p *Program) shutdown(kill bool) {
 //
 // Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	if p.altScreenActive {
-		return
-	}
-
-	p.output.AltScreen()
-	p.output.MoveCursor(1, 1)
-
-	p.altScreenActive = true
 	if p.renderer != nil {
-		p.renderer.setAltScreen(p.altScreenActive)
+		p.renderer.enterAltScreen()
 	}
 }
 
@@ -641,18 +620,8 @@ func (p *Program) EnterAltScreen() {
 //
 // Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	if !p.altScreenActive {
-		return
-	}
-
-	p.output.ExitAltScreen()
-
-	p.altScreenActive = false
 	if p.renderer != nil {
-		p.renderer.setAltScreen(p.altScreenActive)
+		p.renderer.exitAltScreen()
 	}
 }
 
@@ -661,10 +630,7 @@ func (p *Program) ExitAltScreen() {
 //
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	p.output.EnableMouseCellMotion()
+	p.renderer.enableMouseCellMotion()
 }
 
 // DisableMouseCellMotion disables Mouse Cell Motion tracking. This will be
@@ -672,10 +638,7 @@ func (p *Program) EnableMouseCellMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	p.output.DisableMouseCellMotion()
+	p.renderer.disableMouseCellMotion()
 }
 
 // EnableMouseAllMotion enables mouse click, release, wheel and motion events,
@@ -684,10 +647,7 @@ func (p *Program) DisableMouseCellMotion() {
 //
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	p.output.EnableMouseAllMotion()
+	p.renderer.enableMouseAllMotion()
 }
 
 // DisableMouseAllMotion disables All Motion mouse tracking. This will be
@@ -695,10 +655,7 @@ func (p *Program) EnableMouseAllMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	p.output.DisableMouseAllMotion()
+	p.renderer.disableMouseAllMotion()
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
@@ -708,8 +665,8 @@ func (p *Program) ReleaseTerminal() error {
 	p.cancelInput()
 	p.waitForReadLoop()
 
-	p.altScreenWasActive = p.altScreenActive
-	if p.altScreenActive {
+	p.altScreenWasActive = p.renderer.altScreen()
+	if p.renderer.altScreen() {
 		p.ExitAltScreen()
 		time.Sleep(time.Millisecond * 10) // give the terminal a moment to catch up
 	}
