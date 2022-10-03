@@ -28,6 +28,9 @@ var (
 	placeholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("238"))
 
+	endOfBufferStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("235"))
+
 	focusedPlaceholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("99"))
 
@@ -54,6 +57,8 @@ func newTextarea() textarea.Model {
 	t.FocusedStyle.CursorLine = cursorLineStyle
 	t.FocusedStyle.Base = focusedBorderStyle
 	t.BlurredStyle.Base = blurredBorderStyle
+	t.FocusedStyle.EndOfBuffer = endOfBufferStyle
+	t.BlurredStyle.EndOfBuffer = endOfBufferStyle
 	t.KeyMap.DeleteWordBackward.SetEnabled(false)
 	t.KeyMap.LineNext = key.NewBinding(key.WithKeys("down"))
 	t.KeyMap.LinePrevious = key.NewBinding(key.WithKeys("up"))
