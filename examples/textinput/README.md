@@ -1,3 +1,3 @@
 # Text Input
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/textinput.gif" />
+<img width="800" src="./textinput.gif" />

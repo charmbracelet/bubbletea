@@ -1,3 +1,3 @@
 # Split Editors
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/split-editors.gif" />
+<img width="800" src="./split-editors.gif" />

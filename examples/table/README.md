@@ -1,3 +1,3 @@
 # Table
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/table.gif" />
+<img width="800" src="./table.gif" />

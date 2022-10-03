@@ -1,3 +1,3 @@
 # Paginator
 
-<img width="800" src="https://stuff.charm.sh/bubbletea-examples/paginator.gif" />
+<img width="800" src="./paginator.gif" />
