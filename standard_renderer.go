@@ -251,6 +251,8 @@ func (r *standardRenderer) clearScreen() {
 
 	r.out.ClearScreen()
 	r.out.MoveCursor(1, 1)
+
+	r.repaint()
 }
 
 func (r *standardRenderer) altScreen() bool {
