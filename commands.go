@@ -63,7 +63,7 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 }
 
 // Tick produces a command at an interval independent of the system clock at
-// the given duration. That is, the timer begins when precisely when invoked,
+// the given duration. That is, the timer begins precisely when invoked,
 // and runs for its entire duration.
 //
 // To produce the command, pass a duration and a function which returns
