@@ -92,6 +92,16 @@ func HideCursor() Msg {
 // this message with HideCursor.
 type hideCursorMsg struct{}
 
+// ShowCursor is a special command for manually instructing Bubble Tea to show
+// the cursor.
+func ShowCursor() Msg {
+	return showCursorMsg{}
+}
+
+// showCursorMsg is an internal command used to show the cursor. You can send
+// this message with ShowCursor.
+type showCursorMsg struct{}
+
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
