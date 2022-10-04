@@ -117,34 +117,6 @@ type Program struct {
 	windowsStdin *os.File //nolint:golint,structcheck,unused
 }
 
-// Batch performs a bunch of commands concurrently with no ordering guarantees
-// about the results. Use a Batch to return several commands.
-//
-// Example:
-//
-//	    func (m model) Init() Cmd {
-//		       return tea.Batch(someCommand, someOtherCommand)
-//	    }
-func Batch(cmds ...Cmd) Cmd {
-	var validCmds []Cmd
-	for _, c := range cmds {
-		if c == nil {
-			continue
-		}
-		validCmds = append(validCmds, c)
-	}
-	if len(validCmds) == 0 {
-		return nil
-	}
-	return func() Msg {
-		return batchMsg(validCmds)
-	}
-}
-
-// batchMsg is the internal message used to perform a bunch of commands. You
-// can send a batchMsg with Batch.
-type batchMsg []Cmd
-
 // Quit is a special command that tells the Bubble Tea program to exit.
 func Quit() Msg {
 	return quitMsg{}
@@ -573,16 +545,5 @@ func (p *Program) Println(args ...interface{}) {
 func (p *Program) Printf(template string, args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
-	}
-}
-
-// sequenceMsg is used interally to run the the given commands in order.
-type sequenceMsg []Cmd
-
-// Sequence runs the given commands one at a time, in order. Contrast this with
-// Batch, which runs commands concurrently.
-func Sequence(cmds ...Cmd) Cmd {
-	return func() Msg {
-		return sequenceMsg(cmds)
 	}
 }
