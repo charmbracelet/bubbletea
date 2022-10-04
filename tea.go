@@ -422,6 +422,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 				p.renderer.disableMouseCellMotion()
 				p.renderer.disableMouseAllMotion()
 
+			case showCursorMsg:
+				p.renderer.showCursor()
+
 			case hideCursorMsg:
 				p.renderer.hideCursor()
 
