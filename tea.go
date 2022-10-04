@@ -335,7 +335,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 	}
 }
 
-// StartReturningModel initializes the program. Returns the final model.
+// StartReturningModel initializes the program and runs its event loops,
+// blocking until it gets terminated by either [Program.Quit], [Program.Kill],
+// or its signal handler. Returns the final model.
 func (p *Program) StartReturningModel() (Model, error) {
 	handlers := handlers{}
 	cmds := make(chan Cmd)
@@ -473,7 +475,9 @@ func (p *Program) StartReturningModel() (Model, error) {
 	return model, err
 }
 
-// Start initializes the program. Ignores the final model.
+// Start initializes the program and runs its event loops, blocking until it
+// gets terminated by either [Program.Quit], [Program.Kill], or its signal
+// handler.
 func (p *Program) Start() error {
 	_, err := p.StartReturningModel()
 	return err
