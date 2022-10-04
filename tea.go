@@ -257,15 +257,15 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}()
 	}
 
+	// If no renderer is set use the standard one.
+	if p.renderer == nil {
+		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
+	}
+
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
-	}
-
-	// If no renderer is set use the standard one.
-	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
 	}
 
 	// Honor program startup options.
