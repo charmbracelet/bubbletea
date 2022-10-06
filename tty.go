@@ -51,12 +51,12 @@ func (p *Program) initCancelReader() error {
 	}
 
 	p.readLoopDone = make(chan struct{})
-	go p.eventLoop()
+	go p.readLoop()
 
 	return nil
 }
 
-func (p *Program) eventLoop() {
+func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
 	for {
