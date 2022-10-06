@@ -3,44 +3,25 @@ package tea
 import (
 	"errors"
 	"io"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/mattn/go-localereader"
 )
 
 // KeyMsg contains information about a keypress. KeyMsgs are always sent to
-// the program's update function. There are a couple general patterns you could
-// use to check for keypresses:
+// the program's update function.
 //
-//	// Switch on the string representation of the key (shorter)
-//	switch msg := msg.(type) {
-//	case KeyMsg:
-//	    switch msg.String() {
-//	    case "enter":
-//	        fmt.Println("you pressed enter!")
-//	    case "a":
-//	        fmt.Println("you pressed a!")
-//	    }
-//	}
+// Although you can use a go switch statement on KeyMsg objects to
+// react to key presses, it is encouraged to use the
+// github.com/charmbracelet/bubbles/key package instead, its Binding
+// type and the Matches() function.
 //
-//	// Switch on the key type (more foolproof)
-//	switch msg := msg.(type) {
-//	case KeyMsg:
-//	    switch msg.Type {
-//	    case KeyEnter:
-//	        fmt.Println("you pressed enter!")
-//	    case KeyRunes:
-//	        switch string(msg.Runes) {
-//	        case "a":
-//	            fmt.Println("you pressed a!")
-//	        }
-//	    }
-//	}
-//
-// Note that Key.Runes will always contain at least one character, so you can
-// always safely call Key.Runes[0]. In most cases Key.Runes will only contain
-// one character, though certain input method editors (most notably Chinese
-// IMEs) can input multiple runes at once.
+// Note that when the Type field is KeyRunes, Key.Runes will always
+// contain at least one character, so you can always safely call
+// Key.Runes[0]. In most cases Key.Runes will only contain one
+// character, though certain input method editors (most notably
+// Chinese IMEs) can input multiple runes at once.
 type KeyMsg Key
 
 // String returns a string representation for a key message. It's safe (and
@@ -56,8 +37,28 @@ type Key struct {
 	Alt   bool
 }
 
-// String returns a friendly string representation for a key. It's safe (and
-// encouraged) for use in key comparison.
+// Equal returns true if and only if the key is equal to the other key.
+func (k Key) Equal(other Key) bool {
+	a, b := k, other
+	if a.Type != b.Type {
+		return false
+	}
+	if a.Alt != b.Alt {
+		return false
+	}
+	if len(a.Runes) != len(b.Runes) {
+		return false
+	}
+	for i, ar := range a.Runes {
+		if b.Runes[i] != ar {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns a friendly string representation for a key.
+// Two different keys (Equal returns false) are guaranteed to have different names.
 //
 //	k := Key{Type: KeyEnter}
 //	fmt.Println(k)
@@ -238,6 +239,7 @@ const (
 	KeyF18
 	KeyF19
 	KeyF20
+	lastOtherKey
 )
 
 // Mappings for control keys and other special keys to friendly consts.
@@ -645,4 +647,51 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	}
 
 	return msgs, nil
+}
+
+// allKeys contains a map of key names to key objects.
+var allKeys = func() map[string]Key {
+	result := make(map[string]Key)
+	for i := KeyType(0); i <= keyDEL; i++ {
+		k := Key{Type: i}
+		keyName := k.String()
+		result[keyName] = k
+		if i == keyUS {
+			// Skip over the non-special keys.
+			i = keyDEL - 1
+		}
+	}
+	for i := KeyRunes - 1; i > lastOtherKey; i-- {
+		k := Key{Type: i}
+		keyName := k.String()
+		result[keyName] = k
+	}
+	return result
+}()
+
+// MakeKey returns a Key for the given keyName.
+func MakeKey(keyName string) (Key, bool) {
+	alt := false
+	if strings.HasPrefix(keyName, "alt+") {
+		alt = true
+		keyName = keyName[4:]
+	}
+	// Is this a special key?
+	k, ok := allKeys[keyName]
+	if ok {
+		k.Alt = alt
+		return k, true
+	}
+	// Not a special key: either a simple key "a" or with an alt
+	// modifier "alt+a".
+	r := []rune(keyName)
+	if len(r) != 1 {
+		// Caller used a key name which we don't understand, bail.
+		return Key{}, false
+	}
+	return Key{
+		Type:  KeyRunes,
+		Runes: r,
+		Alt:   alt,
+	}, true
 }

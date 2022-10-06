@@ -214,3 +214,46 @@ func TestReadInput(t *testing.T) {
 		})
 	}
 }
+
+func TestNoEmptyKeyName(t *testing.T) {
+	if k, ok := allKeys[""]; ok {
+		t.Errorf("the following key has no name: %+v", k)
+	}
+}
+
+func TestControlKeyNameToKey(t *testing.T) {
+	for k, name := range keyNames {
+		if name == "runes" {
+			continue
+		}
+		nk, ok := MakeKey(name)
+		if !ok {
+			t.Errorf("the key name %q does not convert", name)
+			continue
+		}
+		if k != nk.Type {
+			t.Errorf("name %q for key %d converts to %+v", name, k, nk)
+		}
+		if len(nk.Runes) > 0 {
+			t.Errorf("%q: unexpected runes in special key after conversion %+v", name, nk)
+		}
+		if nk.Alt {
+			t.Errorf("%q: unexpected alt status: %+v", name, nk)
+		}
+		name = "alt+" + name
+		nk2, ok := MakeKey(name)
+		if !ok {
+			t.Errorf("the key name %q does not convert", name)
+			continue
+		}
+		if k != nk2.Type {
+			t.Errorf("name %q for key %d converts to %+v", name, k, nk)
+		}
+		if len(nk2.Runes) > 0 {
+			t.Errorf("%q: unexpected runes in special key after conversion %+v", name, nk)
+		}
+		if !nk2.Alt {
+			t.Errorf("%q: expected alt status: %+v", name, nk)
+		}
+	}
+}
