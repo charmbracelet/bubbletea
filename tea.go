@@ -154,68 +154,8 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	return p
 }
 
-// StartReturningModel initializes the program. Returns the final model.
-func (p *Program) StartReturningModel() (Model, error) {
-	cmds := make(chan Cmd)
-	p.errs = make(chan error)
-
-	// Channels for managing goroutine lifecycles.
-	var (
-		sigintLoopDone = make(chan struct{})
-		cmdLoopDone    = make(chan struct{})
-		resizeLoopDone = make(chan struct{})
-		initSignalDone = make(chan struct{})
-
-		waitForGoroutines = func(withReadLoop bool) {
-			if withReadLoop {
-				p.waitForReadLoop()
-			}
-			<-cmdLoopDone
-			<-resizeLoopDone
-			<-sigintLoopDone
-			<-initSignalDone
-		}
-	)
-
-	var cancelContext context.CancelFunc
-	p.ctx, cancelContext = context.WithCancel(context.Background())
-	defer cancelContext()
-
-	switch {
-	case p.startupOptions.has(withInputTTY):
-		// Open a new TTY, by request
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-
-		defer f.Close() //nolint:errcheck
-
-		p.input = f
-
-	case !p.startupOptions.has(withCustomInput):
-		// If the user hasn't set a custom input, and input's not a terminal,
-		// open a TTY so we can capture input as normal. This will allow things
-		// to "just work" in cases where data was piped or redirected into this
-		// application.
-		f, isFile := p.input.(*os.File)
-		if !isFile {
-			break
-		}
-
-		if isatty.IsTerminal(f.Fd()) {
-			break
-		}
-
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-
-		defer f.Close() //nolint:errcheck
-
-		p.input = f
-	}
+func (p *Program) handleSignals() chan struct{} {
+	ch := make(chan struct{})
 
 	// Listen for SIGINT and SIGTERM.
 	//
@@ -230,7 +170,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		defer func() {
 			signal.Stop(sig)
-			close(sigintLoopDone)
+			close(ch)
 		}()
 
 		for {
@@ -246,67 +186,12 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}
 	}()
 
-	if p.CatchPanics {
-		defer func() {
-			if r := recover(); r != nil {
-				p.shutdown(true)
-				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-				debug.PrintStack()
-				return
-			}
-		}()
-	}
+	return ch
+}
 
-	// If no renderer is set use the standard one.
-	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
-	}
-
-	// Check if output is a TTY before entering raw mode, hiding the cursor and
-	// so on.
-	if err := p.initTerminal(); err != nil {
-		return p.initialModel, err
-	}
-
-	// Honor program startup options.
-	if p.startupOptions&withAltScreen != 0 {
-		p.renderer.enterAltScreen()
-	}
-	if p.startupOptions&withMouseCellMotion != 0 {
-		p.renderer.enableMouseCellMotion()
-	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.renderer.enableMouseAllMotion()
-	}
-
-	// Initialize the program.
-	model := p.initialModel
-	if initCmd := model.Init(); initCmd != nil {
-		go func() {
-			defer close(initSignalDone)
-			select {
-			case cmds <- initCmd:
-			case <-p.ctx.Done():
-			}
-		}()
-	} else {
-		close(initSignalDone)
-	}
-
-	// Start the renderer.
-	p.renderer.start()
-
-	// Render the initial view.
-	p.renderer.write(model.View())
-
-	// Subscribe to user input.
-	if p.input != nil {
-		if err := p.initCancelReader(); err != nil {
-			return model, err
-		}
-	} else {
-		defer close(p.readLoopDone)
-	}
-	defer p.cancelReader.Close() //nolint:errcheck
+// handleResize handles terminal resize events.
+func (p *Program) handleResize() chan struct{} {
+	ch := make(chan struct{})
 
 	if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
@@ -323,20 +208,27 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}()
 
 		// Listen for window resizes.
-		go listenForResize(p.ctx, f, p.msgs, p.errs, resizeLoopDone)
+		go listenForResize(p.ctx, f, p.msgs, p.errs, ch)
 	} else {
-		close(resizeLoopDone)
+		close(ch)
 	}
 
-	// Process commands.
+	return ch
+}
+
+// handleCommands runs commands in a goroutine and sends the result to the
+// program's message channel.
+func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
+	ch := make(chan struct{})
+
 	go func() {
-		defer close(cmdLoopDone)
+		defer close(ch)
 
 		for {
 			select {
 			case <-p.ctx.Done():
-
 				return
+
 			case cmd := <-cmds:
 				if cmd == nil {
 					continue
@@ -357,25 +249,24 @@ func (p *Program) StartReturningModel() (Model, error) {
 		}
 	}()
 
-	// Handle updates and draw.
+	return ch
+}
+
+// eventLoop is the central message loop. It receives and handles the default
+// Bubble Tea messages, update the model and triggers redraws.
+func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 	for {
 		select {
 		case <-p.killc:
 			return nil, nil
+
 		case err := <-p.errs:
-			cancelContext()
-			waitForGoroutines(p.cancelReader.Cancel())
-			p.shutdown(false)
 			return model, err
 
 		case msg := <-p.msgs:
-
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case quitMsg:
-				cancelContext()
-				waitForGoroutines(p.cancelReader.Cancel())
-				p.shutdown(false)
 				return model, nil
 
 			case clearScreenMsg:
@@ -436,6 +327,142 @@ func (p *Program) StartReturningModel() (Model, error) {
 			p.renderer.write(model.View()) // send view to renderer
 		}
 	}
+}
+
+// StartReturningModel initializes the program. Returns the final model.
+func (p *Program) StartReturningModel() (Model, error) {
+	cmds := make(chan Cmd)
+	p.errs = make(chan error)
+
+	var cancelContext context.CancelFunc
+	p.ctx, cancelContext = context.WithCancel(context.Background())
+	defer cancelContext()
+
+	switch {
+	case p.startupOptions.has(withInputTTY):
+		// Open a new TTY, by request
+		f, err := openInputTTY()
+		if err != nil {
+			return p.initialModel, err
+		}
+
+		defer f.Close() //nolint:errcheck
+
+		p.input = f
+
+	case !p.startupOptions.has(withCustomInput):
+		// If the user hasn't set a custom input, and input's not a terminal,
+		// open a TTY so we can capture input as normal. This will allow things
+		// to "just work" in cases where data was piped or redirected into this
+		// application.
+		f, isFile := p.input.(*os.File)
+		if !isFile {
+			break
+		}
+
+		if isatty.IsTerminal(f.Fd()) {
+			break
+		}
+
+		f, err := openInputTTY()
+		if err != nil {
+			return p.initialModel, err
+		}
+
+		defer f.Close() //nolint:errcheck
+
+		p.input = f
+	}
+
+	// Handle signals.
+	sigintLoopDone := p.handleSignals()
+
+	if p.CatchPanics {
+		defer func() {
+			if r := recover(); r != nil {
+				p.shutdown(true)
+				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+				debug.PrintStack()
+				return
+			}
+		}()
+	}
+
+	// If no renderer is set use the standard one.
+	if p.renderer == nil {
+		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
+	}
+
+	// Check if output is a TTY before entering raw mode, hiding the cursor and
+	// so on.
+	if err := p.initTerminal(); err != nil {
+		return p.initialModel, err
+	}
+
+	// Honor program startup options.
+	if p.startupOptions&withAltScreen != 0 {
+		p.renderer.enterAltScreen()
+	}
+	if p.startupOptions&withMouseCellMotion != 0 {
+		p.renderer.enableMouseCellMotion()
+	} else if p.startupOptions&withMouseAllMotion != 0 {
+		p.renderer.enableMouseAllMotion()
+	}
+
+	// Initialize the program.
+	initSignalDone := make(chan struct{})
+	model := p.initialModel
+	if initCmd := model.Init(); initCmd != nil {
+		go func() {
+			defer close(initSignalDone)
+			select {
+			case cmds <- initCmd:
+			case <-p.ctx.Done():
+			}
+		}()
+	} else {
+		close(initSignalDone)
+	}
+
+	// Start the renderer.
+	p.renderer.start()
+
+	// Render the initial view.
+	p.renderer.write(model.View())
+
+	// Subscribe to user input.
+	if p.input != nil {
+		if err := p.initCancelReader(); err != nil {
+			return model, err
+		}
+	} else {
+		defer close(p.readLoopDone)
+	}
+	defer p.cancelReader.Close() //nolint:errcheck
+
+	// Handle resize events.
+	resizeLoopDone := p.handleResize()
+
+	// Process commands.
+	cmdLoopDone := p.handleCommands(cmds)
+
+	// Run event loop, handle updates and draw.
+	model, err := p.eventLoop(model, cmds)
+
+	// Tear down.
+	cancelContext()
+
+	// Wait for input loop to finish.
+	if p.cancelReader.Cancel() {
+		p.waitForReadLoop()
+	}
+	<-cmdLoopDone
+	<-resizeLoopDone
+	<-sigintLoopDone
+	<-initSignalDone
+	p.shutdown(false)
+
+	return model, err
 }
 
 // Start initializes the program. Ignores the final model.
