@@ -554,13 +554,22 @@ var sequences = map[string]Key{
 // readInputs reads keypress and mouse inputs from a TTY and returns messages
 // containing information about the key or mouse events accordingly.
 func readInputs(input io.Reader) ([]Msg, error) {
-	var buf [256]byte
+	var inputBuf [256]byte
+	buf := inputBuf[:]
 
 	// Read and block
 	numBytes, err := input.Read(buf[:])
 	if err != nil {
 		return nil, err
 	}
+	if numBytes == len(buf) {
+		// This can happen when a large amount of text is suddenly pasted.
+		buf, numBytes, err = readMore(buf, input)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	b := buf[:numBytes]
 	b, err = localereader.UTF8(b)
 	if err != nil {
@@ -649,4 +658,20 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	}
 
 	return msgs, nil
+}
+
+// readMore extends the input with additional bytes from the input.
+// This is called when there's a spike in input. (e.g. copy-paste)
+func readMore(buf []byte, input io.Reader) ([]byte, int, error) {
+	var inputBuf [256]byte
+	for {
+		numBytes, err := input.Read(inputBuf[:])
+		if err != nil {
+			return nil, 0, err
+		}
+		buf = append(buf, inputBuf[:numBytes]...)
+		if numBytes < len(inputBuf) {
+			return buf, len(buf), nil
+		}
+	}
 }

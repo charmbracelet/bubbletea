@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -46,6 +47,29 @@ func TestKeyTypeString(t *testing.T) {
 			t.Fatalf(`expected a "", got %q`, got)
 		}
 	})
+}
+
+func TestReadLongInput(t *testing.T) {
+	input := strings.Repeat("a", 1000)
+	msgs, err := readInputs(bytes.NewReader([]byte(input)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(msgs) != 1000 {
+		t.Errorf("expected 1000 messages, got %d", len(msgs))
+	}
+	for _, km := range msgs {
+		k := Key(km.(KeyMsg))
+		if k.Type != KeyRunes {
+			t.Errorf("expected key runes, got %d", k.Type)
+		}
+		if len(k.Runes) != 1 || k.Runes[0] != 'a' {
+			t.Errorf("unexpected runes: %+v", k)
+		}
+		if k.Alt {
+			t.Errorf("unexpected alt")
+		}
+	}
 }
 
 func TestReadInput(t *testing.T) {
