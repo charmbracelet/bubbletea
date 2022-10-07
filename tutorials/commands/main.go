@@ -22,6 +22,8 @@ func checkServer() tea.Msg {
 	if err != nil {
 		return errMsg{err}
 	}
+	defer res.Body.Close()
+
 	return statusMsg(res.StatusCode)
 }
 
@@ -39,7 +41,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case statusMsg:
 		m.status = int(msg)
 		return m, tea.Quit

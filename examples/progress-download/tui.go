@@ -27,10 +27,9 @@ func finalPause() tea.Cmd {
 }
 
 type model struct {
-	url, path string
-	pw        *progressWriter
-	progress  progress.Model
-	err       error
+	pw       *progressWriter
+	progress progress.Model
+	err      error
 }
 
 func (m model) Init() tea.Cmd {

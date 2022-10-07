@@ -47,7 +47,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m, tea.Quit
 	case tickMsg:
-		m -= 1
+		m--
 		if m <= 0 {
 			return m, tea.Quit
 		}

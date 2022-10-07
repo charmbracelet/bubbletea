@@ -20,8 +20,7 @@ func main() {
 }
 
 type (
-	tickMsg struct{}
-	errMsg  error
+	errMsg error
 )
 
 const (
@@ -139,9 +138,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			if m.focused == len(m.inputs)-1 {
 				return m, tea.Quit
-			} else {
-				m.nextInput()
 			}
+			m.nextInput()
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyShiftTab, tea.KeyCtrlP:
@@ -172,7 +170,7 @@ func (m model) View() string {
 
  %s
  %s
- 
+
  %s  %s
  %s  %s
 

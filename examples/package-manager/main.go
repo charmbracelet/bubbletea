@@ -25,7 +25,6 @@ type model struct {
 
 var (
 	currentPkgNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
-	subtleStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("239"))
 	doneStyle           = lipgloss.NewStyle().Margin(1, 2)
 	checkMark           = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓")
 )

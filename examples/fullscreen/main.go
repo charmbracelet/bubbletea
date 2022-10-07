@@ -28,7 +28,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
@@ -36,12 +35,11 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tickMsg:
-		m -= 1
+		m--
 		if m <= 0 {
 			return m, tea.Quit
 		}
 		return m, tick()
-
 	}
 
 	return m, nil
