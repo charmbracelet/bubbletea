@@ -373,6 +373,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case quitMsg:
+				p.renderer.write(model.View())
 				cancelContext()
 				waitForGoroutines(p.cancelReader.Cancel())
 				p.shutdown(false)
