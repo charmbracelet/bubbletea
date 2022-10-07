@@ -62,6 +62,10 @@ func TestOptions(t *testing.T) {
 			exercise(t, WithANSICompressor(), withANSICompressor)
 		})
 
+		t.Run("without signal handler", func(t *testing.T) {
+			exercise(t, WithoutSignalHandler(), withoutSignalHandler)
+		})
+
 		t.Run("mouse cell motion", func(t *testing.T) {
 			p := NewProgram(nil, WithMouseAllMotion(), WithMouseCellMotion())
 			if !p.startupOptions.has(withMouseCellMotion) {

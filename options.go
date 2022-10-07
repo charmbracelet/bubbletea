@@ -38,6 +38,14 @@ func WithInputTTY() ProgramOption {
 	}
 }
 
+// WithoutSignalHandler disables the signal handler that Bubble Tea sets up for
+// Programs. This is useful if you want to handle signals yourself.
+func WithoutSignalHandler() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutSignalHandler
+	}
+}
+
 // WithoutCatchPanics disables the panic catching that Bubble Tea does by
 // default. If panic catching is disabled the terminal will be in a fairly
 // unusable state after a panic because Bubble Tea will not perform its usual
