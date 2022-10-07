@@ -118,6 +118,10 @@ type Program struct {
 	// (suspend process).
 	disableSuspendOnCtrlZ bool
 
+	// disableGoStandardAbort removes direct bubbletea support for Ctrl+\
+	// (SIGQUIT / goroutine dump).
+	disableGoStandardAbort bool
+
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
 	// When the program exits this will be restored.
@@ -319,8 +323,19 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}()
 
 			case KeyMsg:
-				if !p.disableSuspendOnCtrlZ && msg.Type == KeyCtrlZ && !msg.Alt {
+				if !p.disableSuspendOnCtrlZ && !msg.Alt && msg.Type == KeyCtrlZ {
 					cmds <- Suspend()
+					continue
+				}
+				if !p.disableGoStandardAbort && !msg.Alt && msg.Type == KeyCtrlBackslash {
+					cmds <- Exec(fnAsCommand(func() {
+						pr, err := os.FindProcess(os.Getpid())
+						if err != nil {
+							// No-op.
+							return
+						}
+						_ = pr.Signal(syscall.SIGQUIT)
+					}), nil)
 					continue
 				}
 

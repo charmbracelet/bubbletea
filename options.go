@@ -161,3 +161,13 @@ func WithoutJobControl() ProgramOption {
 		p.disableSuspendOnCtrlZ = true
 	}
 }
+
+// WithoutGoStandardAbort disables support for sending SIGQUIT
+// to the process (and generating a goroutine dump) when
+// Ctrl+\ is pressed. By default, Ctrl+\ causes SIGQUIT to be
+// emitted, this is a standard Go feature.
+func WithoutGoStandardAbort() ProgramOption {
+	return func(p *Program) {
+		p.disableGoStandardAbort = true
+	}
+}
