@@ -120,7 +120,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := tea.NewProgram(model).Start(); err != nil {
+	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fmt.Println("Bummer, there's been an error:", err)
 		os.Exit(1)
 	}

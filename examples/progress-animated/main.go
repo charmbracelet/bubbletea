@@ -30,7 +30,7 @@ func main() {
 		progress: progress.New(progress.WithDefaultGradient()),
 	}
 
-	if err := tea.NewProgram(m).Start(); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Oh no!", err)
 		os.Exit(1)
 	}

@@ -63,7 +63,7 @@ func WithoutCatchPanics() ProgramOption {
 // Example:
 //
 //	p := tea.NewProgram(Model{}, tea.WithAltScreen())
-//	if err := p.Start(); err != nil {
+//	if _, err := p.Run(); err != nil {
 //	    fmt.Println("Error running program:", err)
 //	    os.Exit(1)
 //	}
