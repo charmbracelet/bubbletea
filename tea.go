@@ -71,6 +71,7 @@ const (
 	withInputTTY
 	withCustomInput
 	withANSICompressor
+	withoutSignalHandler
 )
 
 // Program is a terminal user interface.
@@ -375,7 +376,12 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}
 
 	// Handle signals.
-	sigintLoopDone := p.handleSignals()
+	sigintLoopDone := make(chan struct{})
+	if !p.startupOptions.has(withoutSignalHandler) {
+		sigintLoopDone = p.handleSignals()
+	} else {
+		close(sigintLoopDone)
+	}
 
 	if p.CatchPanics {
 		defer func() {
