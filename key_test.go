@@ -145,6 +145,14 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
+		{"insert",
+			[]byte{'\x1b', '[', '2', '~'},
+			[]Msg{
+				KeyMsg{
+					Type: KeyInsert,
+				},
+			},
+		},
 		{"alt+ctrl+a",
 			[]byte{'\x1b', byte(keySOH)},
 			[]Msg{
