@@ -38,7 +38,7 @@ func TestTeaExec(t *testing.T) {
 
 	m := &testExecModel{}
 	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 

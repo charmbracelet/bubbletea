@@ -85,8 +85,8 @@ func main() {
 		spinner: spinner.New(),
 	})
 
-	if p.Start() != nil {
-		fmt.Println("could not start program")
+	if _, err := p.Run(); err != nil {
+		fmt.Println("could not start program:", err)
 		os.Exit(1)
 	}
 }

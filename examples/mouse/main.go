@@ -12,7 +12,7 @@ import (
 
 func main() {
 	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithMouseAllMotion())
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -23,7 +23,7 @@ func main() {
 
 	// Initialize our program
 	p := tea.NewProgram(model(5))
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

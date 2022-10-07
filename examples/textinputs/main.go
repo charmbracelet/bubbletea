@@ -170,7 +170,7 @@ func (m model) View() string {
 }
 
 func main() {
-	if err := tea.NewProgram(initialModel()).Start(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Printf("could not start program: %s\n", err)
 		os.Exit(1)
 	}

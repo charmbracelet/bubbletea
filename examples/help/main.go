@@ -140,7 +140,7 @@ func main() {
 		}
 	}
 
-	if err := tea.NewProgram(newModel()).Start(); err != nil {
+	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Printf("Could not start program :(\n%v\n", err)
 		os.Exit(1)
 	}

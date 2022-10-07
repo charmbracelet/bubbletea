@@ -45,7 +45,7 @@ func main() {
 	}
 
 	p := tea.NewProgram(newModel(), opts...)
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
 	}

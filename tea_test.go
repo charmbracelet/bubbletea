@@ -34,7 +34,7 @@ func TestTeaModel(t *testing.T) {
 	in.Write([]byte("q"))
 
 	p := NewProgram(&testModel{}, WithInput(&in), WithOutput(&buf))
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -59,7 +59,7 @@ func TestTeaQuit(t *testing.T) {
 		}
 	}()
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -80,7 +80,7 @@ func TestTeaKill(t *testing.T) {
 		}
 	}()
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 }
