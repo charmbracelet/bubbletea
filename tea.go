@@ -93,9 +93,8 @@ type Program struct {
 
 	ctx context.Context
 
-	msgs         chan Msg
-	errs         chan error
-	readLoopDone chan struct{}
+	msgs chan Msg
+	errs chan error
 
 	// where to send output, this will usually be os.Stdout.
 	output        *termenv.Output
@@ -105,9 +104,11 @@ type Program struct {
 	// where to read inputs from, this will usually be os.Stdin.
 	input        io.Reader
 	cancelReader cancelreader.CancelReader
+	readLoopDone chan struct{}
 	console      console.Console
 
-	altScreenWasActive bool // was the altscreen active before releasing the terminal?
+	// was the altscreen active before releasing the terminal?
+	altScreenWasActive bool
 	ignoreSignals      bool
 
 	killc chan bool
