@@ -189,7 +189,7 @@ that returns a command. For example:
 ```go
 func cmdWithArg(id int) tea.Cmd {
     return func() tea.Msg {
-        return someMsg{id: int}
+        return someMsg{id: id}
     }
 }
 ```
