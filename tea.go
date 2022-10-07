@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"sync"
 	"syscall"
 	"time"
 
@@ -53,6 +54,8 @@ type Model interface {
 // to another part of your program. That can almost always be done in the
 // update function.
 type Cmd func() Msg
+
+type handlers []chan struct{}
 
 // Options to customize the program during its initialization. These are
 // generally set with ProgramOptions.
@@ -178,6 +181,7 @@ func (p *Program) handleSignals() chan struct{} {
 			select {
 			case <-p.ctx.Done():
 				return
+
 			case <-sig:
 				if !p.ignoreSignals {
 					p.msgs <- quitMsg{}
@@ -332,6 +336,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 // StartReturningModel initializes the program. Returns the final model.
 func (p *Program) StartReturningModel() (Model, error) {
+	handlers := handlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 
@@ -360,7 +365,6 @@ func (p *Program) StartReturningModel() (Model, error) {
 		if !isFile {
 			break
 		}
-
 		if isatty.IsTerminal(f.Fd()) {
 			break
 		}
@@ -376,11 +380,8 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}
 
 	// Handle signals.
-	sigintLoopDone := make(chan struct{})
 	if !p.startupOptions.has(withoutSignalHandler) {
-		sigintLoopDone = p.handleSignals()
-	} else {
-		close(sigintLoopDone)
+		handlers.add(p.handleSignals())
 	}
 
 	// Recover from panics.
@@ -417,18 +418,19 @@ func (p *Program) StartReturningModel() (Model, error) {
 	}
 
 	// Initialize the program.
-	initSignalDone := make(chan struct{})
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
+		ch := make(chan struct{})
+		handlers.add(ch)
+
 		go func() {
-			defer close(initSignalDone)
+			defer close(ch)
+
 			select {
 			case cmds <- initCmd:
 			case <-p.ctx.Done():
 			}
 		}()
-	} else {
-		close(initSignalDone)
 	}
 
 	// Start the renderer.
@@ -442,16 +444,15 @@ func (p *Program) StartReturningModel() (Model, error) {
 		if err := p.initCancelReader(); err != nil {
 			return model, err
 		}
-	} else {
-		defer close(p.readLoopDone)
+		defer p.cancelReader.Close() //nolint:errcheck
+		handlers.add(p.readLoopDone)
 	}
-	defer p.cancelReader.Close() //nolint:errcheck
 
 	// Handle resize events.
-	resizeLoopDone := p.handleResize()
+	handlers.add(p.handleResize())
 
 	// Process commands.
-	cmdLoopDone := p.handleCommands(cmds)
+	handlers.add(p.handleCommands(cmds))
 
 	// Run event loop, handle updates and draw.
 	model, err := p.eventLoop(model, cmds)
@@ -463,10 +464,11 @@ func (p *Program) StartReturningModel() (Model, error) {
 	if p.cancelReader.Cancel() {
 		p.waitForReadLoop()
 	}
-	<-cmdLoopDone
-	<-resizeLoopDone
-	<-sigintLoopDone
-	<-initSignalDone
+
+	// Wait for all handlers to finish.
+	handlers.shutdown()
+
+	// Restore terminal state.
 	p.shutdown(false)
 
 	return model, err
@@ -586,4 +588,23 @@ func (p *Program) Printf(template string, args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
 	}
+}
+
+// Adds a handler to the list of handlers. We wait for all handlers to terminate
+// gracefully on shutdown.
+func (h *handlers) add(ch chan struct{}) {
+	*h = append(*h, ch)
+}
+
+// Shutdown waits for all handlers to terminate.
+func (h handlers) shutdown() {
+	var wg sync.WaitGroup
+	for _, ch := range h {
+		wg.Add(1)
+		go func(ch chan struct{}) {
+			<-ch
+			wg.Done()
+		}(ch)
+	}
+	wg.Wait()
 }
