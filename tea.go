@@ -451,7 +451,10 @@ func (p *Program) Start() error {
 // If the program is not running this this will be a no-op, so it's safe to
 // send messages if the program is unstarted, or has exited.
 func (p *Program) Send(msg Msg) {
-	p.msgs <- msg
+	select {
+	case <-p.ctx.Done():
+	case p.msgs <- msg:
+	}
 }
 
 // Quit is a convenience function for quitting Bubble Tea programs. Use it
