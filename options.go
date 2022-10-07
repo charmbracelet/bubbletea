@@ -52,7 +52,7 @@ func WithoutSignalHandler() ProgramOption {
 // cleanup on exit.
 func WithoutCatchPanics() ProgramOption {
 	return func(p *Program) {
-		p.CatchPanics = false
+		p.startupOptions |= withoutCatchPanics
 	}
 }
 
