@@ -20,8 +20,7 @@ func main() {
 }
 
 type (
-	tickMsg struct{}
-	errMsg  error
+	errMsg error
 )
 
 type model struct {
