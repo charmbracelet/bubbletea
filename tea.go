@@ -310,17 +310,7 @@ func (p *Program) StartReturningModel() (Model, error) {
 
 	if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
-		go func() {
-			w, h, err := term.GetSize(int(f.Fd()))
-			if err != nil {
-				p.errs <- err
-			}
-
-			select {
-			case <-p.ctx.Done():
-			case p.msgs <- WindowSizeMsg{w, h}:
-			}
-		}()
+		go checkResize(p.ctx, f, p.msgs, p.errs)
 
 		// Listen for window resizes.
 		go listenForResize(p.ctx, f, p.msgs, p.errs, resizeLoopDone)
@@ -528,9 +518,33 @@ func (p *Program) RestoreTerminal() error {
 		p.EnterAltScreen()
 	}
 
-	go p.Send(repaintMsg{})
+	go func() {
+		// If the output is a terminal, it may have been resized while
+		// another process was at the foreground, in which case we may not
+		// have received SIGWINCH. Detect any size change now and
+		// propagate the new size as needed.
+		if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
+			checkResize(p.ctx, f, p.msgs, p.errs)
+		}
+		p.Send(repaintMsg{})
+	}()
 
 	return nil
+}
+
+// checkResize detects the current size of the output and informs
+// the program via a WindowSizeMsg.
+func checkResize(ctx context.Context, output *os.File, msgs chan Msg, errs chan error) {
+	w, h, err := term.GetSize(int(output.Fd()))
+	if err != nil {
+		errs <- err
+		return
+	}
+
+	select {
+	case <-ctx.Done():
+	case msgs <- WindowSizeMsg{w, h}:
+	}
 }
 
 // Println prints above the Program. This output is unmanaged by the program

@@ -8,8 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"golang.org/x/term"
 )
 
 // listenForResize sends messages (or errors) when the terminal resizes.
@@ -31,15 +29,6 @@ func listenForResize(ctx context.Context, output *os.File, msgs chan Msg, errs c
 		case <-sig:
 		}
 
-		w, h, err := term.GetSize(int(output.Fd()))
-		if err != nil {
-			errs <- err
-		}
-
-		select {
-		case <-ctx.Done():
-			return
-		case msgs <- WindowSizeMsg{w, h}:
-		}
+		checkResize(ctx, output, msgs, errs)
 	}
 }
