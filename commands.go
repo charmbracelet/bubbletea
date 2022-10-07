@@ -1,8 +1,6 @@
 package tea
 
-import (
-	"time"
-)
+import "time"
 
 // Batch performs a bunch of commands concurrently with no ordering guarantees
 // about the results. Use a Batch to return several commands.
@@ -170,3 +168,18 @@ func Sequentially(cmds ...Cmd) Cmd {
 		return nil
 	}
 }
+
+// Suspend causes the process to suspend itself. By default, this
+// command is automatically sent when Ctrl+Z is pressed. When the
+// WithoutJobControl program option is specified, Ctrl+Z becomes
+// controllable by the program and the program can choose to send the
+// Suspend command upon a different key input or some other event.
+func Suspend() Cmd {
+	return func() Msg {
+		return suspendMsg{}
+	}
+}
+
+// suspendMsg is the internal message used to suspend the process.
+// You can send a suspendMsg with Suspend.
+type suspendMsg struct{}

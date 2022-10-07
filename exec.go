@@ -127,3 +127,22 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 		go p.Send(fn(err))
 	}
 }
+
+type fnAsCommand func()
+
+var _ ExecCommand = fnAsCommand(nil)
+
+// Run is part of the tea.ExecCommand interface.
+func (d fnAsCommand) Run() error {
+	d()
+	return nil
+}
+
+// SetStdin is part of the tea.ExecCommand interface.
+func (d fnAsCommand) SetStdin(io.Reader) {}
+
+// SetStdout is part of the tea.ExecCommand interface.
+func (d fnAsCommand) SetStdout(io.Writer) {}
+
+// SetStderr is part of the tea.ExecCommand interface.
+func (d fnAsCommand) SetStderr(io.Writer) {}

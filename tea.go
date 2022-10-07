@@ -114,6 +114,10 @@ type Program struct {
 	altScreenWasActive bool
 	ignoreSignals      bool
 
+	// disableSuspendOnCtrlZ removes direct bubbletea support for Ctrl+Z
+	// (suspend process).
+	disableSuspendOnCtrlZ bool
+
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
 	// When the program exits this will be restored.
@@ -313,6 +317,20 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						p.Send(cmd())
 					}
 				}()
+
+			case KeyMsg:
+				if !p.disableSuspendOnCtrlZ && msg.Type == KeyCtrlZ && !msg.Alt {
+					cmds <- Suspend()
+					continue
+				}
+
+			case suspendMsg:
+				if canSuspendProcess {
+					cmds <- Exec(fnAsCommand(func() {
+						suspendProcess()
+					}), nil)
+				}
+				continue
 			}
 
 			// Process internal messages for the renderer.

@@ -151,3 +151,13 @@ func WithANSICompressor() ProgramOption {
 		p.startupOptions |= withANSICompressor
 	}
 }
+
+// WithoutJobControl disables support for suspending the process when
+// Ctrl+Z is pressed. By default, Ctrl+Z causes SIGTSTP to be emitted
+// to the current process group, to support job control in the
+// surrounding unix shell.
+func WithoutJobControl() ProgramOption {
+	return func(p *Program) {
+		p.disableSuspendOnCtrlZ = true
+	}
+}
