@@ -80,7 +80,7 @@ func TestTeaKill(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(); err != nil {
-		t.Fatal(err)
+	if _, err := p.Run(); err != ErrProgramKilled {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
