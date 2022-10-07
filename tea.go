@@ -72,6 +72,12 @@ const (
 	withCustomInput
 	withANSICompressor
 	withoutSignalHandler
+
+	// Catching panics is incredibly useful for restoring the terminal to a
+	// usable state after a panic occurs. When this is set, Bubble Tea will
+	// recover from panics, print the stack trace, and disable raw mode. This
+	// feature is on by default.
+	withoutCatchPanics
 )
 
 // Program is a terminal user interface.
@@ -88,25 +94,20 @@ type Program struct {
 	errs         chan error
 	readLoopDone chan struct{}
 
-	output        *termenv.Output // where to send output. this will usually be os.Stdout.
+	// where to send output, this will usually be os.Stdout.
+	output        *termenv.Output
 	restoreOutput func() error
-	input         io.Reader // this will usually be os.Stdin.
-	cancelReader  cancelreader.CancelReader
+	renderer      renderer
 
-	renderer           renderer
+	// where to read inputs from, this will usually be os.Stdin.
+	input        io.Reader
+	cancelReader cancelreader.CancelReader
+	console      console.Console
+
 	altScreenWasActive bool // was the altscreen active before releasing the terminal?
-
-	// CatchPanics is incredibly useful for restoring the terminal to a usable
-	// state after a panic occurs. When this is set, Bubble Tea will recover
-	// from panics, print the stack trace, and disable raw mode. This feature
-	// is on by default.
-	CatchPanics bool
-
-	ignoreSignals bool
+	ignoreSignals      bool
 
 	killc chan bool
-
-	console console.Console
 
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
@@ -133,7 +134,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		input:        os.Stdin,
 		msgs:         make(chan Msg),
-		CatchPanics:  true,
 		killc:        make(chan bool, 1),
 	}
 
@@ -383,7 +383,8 @@ func (p *Program) StartReturningModel() (Model, error) {
 		close(sigintLoopDone)
 	}
 
-	if p.CatchPanics {
+	// Recover from panics.
+	if !p.startupOptions.has(withoutCatchPanics) {
 		defer func() {
 			if r := recover(); r != nil {
 				p.shutdown(true)
