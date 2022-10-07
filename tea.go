@@ -11,6 +11,7 @@ package tea
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -25,6 +26,9 @@ import (
 	"github.com/muesli/termenv"
 	"golang.org/x/term"
 )
+
+// ErrProgramKilled is returned by [Program.Run] when the program got killed.
+var ErrProgramKilled = errors.New("program was killed")
 
 // Msg contain data from the result of a IO operation. Msgs trigger the update
 // function and, henceforth, the UI.
@@ -90,7 +94,8 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
-	ctx context.Context
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	msgs chan Msg
 	errs chan error
@@ -109,8 +114,6 @@ type Program struct {
 	// was the altscreen active before releasing the terminal?
 	altScreenWasActive bool
 	ignoreSignals      bool
-
-	killc chan bool
 
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
@@ -137,7 +140,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		input:        os.Stdin,
 		msgs:         make(chan Msg),
-		killc:        make(chan bool, 1),
 	}
 
 	// Apply all options to the program.
@@ -262,8 +264,8 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 	for {
 		select {
-		case <-p.killc:
-			return nil, nil
+		case <-p.ctx.Done():
+			return model, nil
 
 		case err := <-p.errs:
 			return model, err
@@ -342,9 +344,8 @@ func (p *Program) Run() (Model, error) {
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 
-	var cancelContext context.CancelFunc
-	p.ctx, cancelContext = context.WithCancel(context.Background())
-	defer cancelContext()
+	p.ctx, p.cancel = context.WithCancel(context.Background())
+	defer p.cancel()
 
 	switch {
 	case p.startupOptions.has(withInputTTY):
@@ -455,9 +456,13 @@ func (p *Program) Run() (Model, error) {
 
 	// Run event loop, handle updates and draw.
 	model, err := p.eventLoop(model, cmds)
+	killed := p.ctx.Err() != nil
+	if killed {
+		err = ErrProgramKilled
+	}
 
 	// Tear down.
-	cancelContext()
+	p.cancel()
 
 	// Wait for input loop to finish.
 	if p.cancelReader.Cancel() {
@@ -468,7 +473,7 @@ func (p *Program) Run() (Model, error) {
 	handlers.shutdown()
 
 	// Restore terminal state.
-	p.shutdown(false)
+	p.shutdown(killed)
 
 	return model, err
 }
@@ -515,9 +520,9 @@ func (p *Program) Quit() {
 
 // Kill stops the program immediately and restores the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
+// [program.Run] returns a [ErrProgramKilled] error.
 func (p *Program) Kill() {
-	p.killc <- true
-	p.shutdown(true)
+	p.cancel()
 }
 
 // shutdown performs operations to free up resources and restore the terminal
