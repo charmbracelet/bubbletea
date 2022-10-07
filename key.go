@@ -390,6 +390,10 @@ var sequences = map[string]Key{
 	// Miscellaneous keys
 	"\x1b[Z": {Type: KeyShiftTab},
 
+	"\x1b[2~":     {Type: KeyInsert},
+	"\x1b[3;2~":   {Type: KeyInsert, Alt: true},
+	"\x1b\x1b[2~": {Type: KeyInsert, Alt: true}, // urxvt
+
 	"\x1b[3~":     {Type: KeyDelete},
 	"\x1b[3;3~":   {Type: KeyDelete, Alt: true},
 	"\x1b\x1b[3~": {Type: KeyDelete, Alt: true}, // urxvt
