@@ -7,10 +7,14 @@ import (
 )
 
 type execFinishedMsg struct{ err error }
-type testExecModel struct{ err error }
+
+type testExecModel struct {
+	cmd string
+	err error
+}
 
 func (m testExecModel) Init() Cmd {
-	c := exec.Command("true") //nolint:gosec
+	c := exec.Command(m.cmd) //nolint:gosec
 	return ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
 	})
@@ -33,16 +37,45 @@ func (m *testExecModel) View() string {
 }
 
 func TestTeaExec(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
-	m := &testExecModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
-	if _, err := p.Run(); err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name      string
+		cmd       string
+		expectErr bool
+	}{
+		{
+			name:      "true",
+			cmd:       "true",
+			expectErr: false,
+		},
+		{
+			name:      "false",
+			cmd:       "false",
+			expectErr: true,
+		},
+		{
+			name:      "invalid command",
+			cmd:       "invalid",
+			expectErr: true,
+		},
 	}
 
-	if m.err != nil {
-		t.Fatal(m.err)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			var in bytes.Buffer
+
+			m := &testExecModel{cmd: test.cmd}
+			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			if _, err := p.Run(); err != nil {
+				t.Error(err)
+			}
+
+			if m.err != nil && !test.expectErr {
+				t.Errorf("expected no error, got %v", m.err)
+			}
+			if m.err == nil && test.expectErr {
+				t.Error("expected error, got nil")
+			}
+		})
 	}
 }
