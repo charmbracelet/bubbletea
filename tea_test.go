@@ -125,6 +125,27 @@ func TestTeaBatchMsg(t *testing.T) {
 	}
 
 	if m.counter.Load() != 2 {
-		t.Fatalf("counter should be 2, got %d", m.counter)
+		t.Fatalf("counter should be 2, got %d", m.counter.Load())
+	}
+}
+
+func TestTeaSequenceMsg(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	inc := func() Msg {
+		return incrementMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	go p.Send(sequenceMsg{inc, inc, Quit})
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	if m.counter.Load() != 2 {
+		t.Fatalf("counter should be 2, got %d", m.counter.Load())
 	}
 }
