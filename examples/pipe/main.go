@@ -1,6 +1,6 @@
 package main
 
-// An example illustating how to pipe in data to a Bubble Tea application.
+// An example illustrating how to pipe in data to a Bubble Tea application.
 // Moreso, this serves as proof that Bubble Tea will automatically listen for
 // keystrokes when input is not a TTY, such as when data is piped or redirected
 // in.
