@@ -30,6 +30,15 @@ func (p *Program) initTerminal() error {
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
 		p.renderer.showCursor()
+		p.renderer.disableMouseCellMotion()
+		p.renderer.disableMouseAllMotion()
+
+		if p.renderer.altScreen() {
+			p.renderer.exitAltScreen()
+
+			// give the terminal a moment to catch up
+			time.Sleep(time.Millisecond * 10)
+		}
 	}
 
 	if p.console != nil {
