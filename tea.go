@@ -498,7 +498,7 @@ func (p *Program) Start() error {
 // messages to be injected from outside the program for interoperability
 // purposes.
 //
-// If the program is not running this this will be a no-op, so it's safe to
+// If the program is not running this will be a no-op, so it's safe to
 // send messages if the program is unstarted, or has exited.
 func (p *Program) Send(msg Msg) {
 	p.msgs <- msg
