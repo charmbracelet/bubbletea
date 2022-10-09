@@ -90,7 +90,7 @@ func DisableMouse() Msg {
 	return disableMouseMsg{}
 }
 
-// disableMouseMsg is an internal message that that signals to stop listening
+// disableMouseMsg is an internal message that signals to stop listening
 // for mouse events. To send a disableMouseMsg, use the DisableMouse command.
 type disableMouseMsg struct{}
 
