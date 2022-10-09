@@ -13,4 +13,12 @@ func TestNilRenderer(t *testing.T) {
 	if r.altScreen() {
 		t.Errorf("altScreen should always return false")
 	}
+	r.exitAltScreen()
+	r.clearScreen()
+	r.showCursor()
+	r.hideCursor()
+	r.enableMouseCellMotion()
+	r.disableMouseCellMotion()
+	r.enableMouseAllMotion()
+	r.disableMouseAllMotion()
 }
