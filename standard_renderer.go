@@ -76,7 +76,12 @@ func (r *standardRenderer) start() {
 
 // stop permanently halts the renderer, rendering the final frame.
 func (r *standardRenderer) stop() {
+	// flush locks the mutex
 	r.flush()
+
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	r.out.ClearLine()
 	r.once.Do(func() {
 		close(r.done)
@@ -91,6 +96,9 @@ func (r *standardRenderer) stop() {
 
 // kill halts the renderer. The final frame will not be rendered.
 func (r *standardRenderer) kill() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	r.out.ClearLine()
 	r.once.Do(func() {
 		close(r.done)
