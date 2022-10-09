@@ -566,13 +566,12 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-
 	if err := p.initCancelReader(); err != nil {
 		return err
 	}
 
 	if p.altScreenWasActive {
-		p.EnterAltScreen()
+		p.renderer.enterAltScreen()
 	}
 
 	go p.Send(repaintMsg{})
