@@ -18,7 +18,6 @@ import (
 	"runtime/debug"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
@@ -531,11 +530,8 @@ func (p *Program) shutdown(kill bool) {
 			p.renderer.stop()
 		}
 	}
-	p.ExitAltScreen()
-	p.DisableMouseCellMotion()
-	p.DisableMouseAllMotion()
-	_ = p.restoreTerminalState()
 
+	_ = p.restoreTerminalState()
 	if p.restoreOutput != nil {
 		_ = p.restoreOutput()
 	}
@@ -549,10 +545,6 @@ func (p *Program) ReleaseTerminal() error {
 	p.waitForReadLoop()
 
 	p.altScreenWasActive = p.renderer.altScreen()
-	if p.renderer.altScreen() {
-		p.ExitAltScreen()
-		time.Sleep(time.Millisecond * 10) // give the terminal a moment to catch up
-	}
 	return p.restoreTerminalState()
 }
 
