@@ -40,7 +40,7 @@ func Sequence(cmds ...Cmd) Cmd {
 	}
 }
 
-// sequenceMsg is used interally to run the the given commands in order.
+// sequenceMsg is used interally to run the given commands in order.
 type sequenceMsg []Cmd
 
 // Every is a command that ticks in sync with the system clock. So, if you
