@@ -79,11 +79,6 @@ func (p *Program) readLoop() {
 	}
 }
 
-// cancelInput cancels the input reader.
-func (p *Program) cancelInput() {
-	p.cancelReader.Cancel()
-}
-
 // waitForReadLoop waits for the cancelReader to finish its read loop.
 func (p *Program) waitForReadLoop() {
 	select {
