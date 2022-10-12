@@ -197,6 +197,8 @@ const (
 	KeyEnd
 	KeyPgUp
 	KeyPgDown
+	KeyCtrlPgUp
+	KeyCtrlPgDown
 	KeyDelete
 	KeyInsert
 	KeySpace
@@ -295,6 +297,8 @@ var keyNames = map[KeyType]string{
 	KeyCtrlShiftEnd:   "ctrl+shift+end",
 	KeyPgUp:           "pgup",
 	KeyPgDown:         "pgdown",
+	KeyCtrlPgUp:       "ctrl+pgup",
+	KeyCtrlPgDown:     "ctrl+pgdown",
 	KeyDelete:         "delete",
 	KeyInsert:         "insert",
 	KeyCtrlUp:         "ctrl+up",
@@ -401,10 +405,18 @@ var sequences = map[string]Key{
 	"\x1b[5~":     {Type: KeyPgUp},
 	"\x1b[5;3~":   {Type: KeyPgUp, Alt: true},
 	"\x1b\x1b[5~": {Type: KeyPgUp, Alt: true}, // urxvt
+	"\x1b[5;5~":   {Type: KeyCtrlPgUp},
+	"\x1b[5^":     {Type: KeyCtrlPgUp}, // urxvt
+	"\x1b[5;7~":   {Type: KeyCtrlPgUp, Alt: true},
+	"\x1b\x1b[5^": {Type: KeyCtrlPgUp, Alt: true}, // urxvt
 
 	"\x1b[6~":     {Type: KeyPgDown},
 	"\x1b[6;3~":   {Type: KeyPgDown, Alt: true},
 	"\x1b\x1b[6~": {Type: KeyPgDown, Alt: true}, // urxvt
+	"\x1b[6;5~":   {Type: KeyCtrlPgDown},
+	"\x1b[6^":     {Type: KeyCtrlPgDown}, // urxvt
+	"\x1b[6;7~":   {Type: KeyCtrlPgDown, Alt: true},
+	"\x1b\x1b[6^": {Type: KeyCtrlPgDown, Alt: true}, // urxvt
 
 	"\x1b[1~":   {Type: KeyHome},
 	"\x1b[H":    {Type: KeyHome},                     // xterm, lxterm
