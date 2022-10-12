@@ -459,6 +459,9 @@ func (p *Program) Run() (Model, error) {
 	killed := p.ctx.Err() != nil
 	if killed {
 		err = ErrProgramKilled
+	} else {
+		// Ensure we rendered the final state of the model.
+		p.renderer.write(model.View())
 	}
 
 	// Tear down.
