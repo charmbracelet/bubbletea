@@ -264,6 +264,9 @@ func (r *standardRenderer) clearScreen() {
 }
 
 func (r *standardRenderer) altScreen() bool {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	return r.altScreenActive
 }
 
