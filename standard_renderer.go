@@ -38,6 +38,9 @@ type standardRenderer struct {
 	useANSICompressor  bool
 	once               sync.Once
 
+	// cursor visibility state
+	cursorHidden bool
+
 	// essentially whether or not we're using the full size of the terminal
 	altScreenActive bool
 
@@ -290,6 +293,15 @@ func (r *standardRenderer) enterAltScreen() {
 	r.out.ClearScreen()
 	r.out.MoveCursor(1, 1)
 
+	// cmd.exe and other terminals keep separate cursor states for the AltScreen
+	// and the main buffer. We have to explicitly reset the cursor visibility
+	// whenever we enter AltScreen.
+	if r.cursorHidden {
+		r.out.HideCursor()
+	} else {
+		r.out.ShowCursor()
+	}
+
 	r.repaint()
 }
 
@@ -304,6 +316,15 @@ func (r *standardRenderer) exitAltScreen() {
 	r.altScreenActive = false
 	r.out.ExitAltScreen()
 
+	// cmd.exe and other terminals keep separate cursor states for the AltScreen
+	// and the main buffer. We have to explicitly reset the cursor visibility
+	// whenever we exit AltScreen.
+	if r.cursorHidden {
+		r.out.HideCursor()
+	} else {
+		r.out.ShowCursor()
+	}
+
 	r.repaint()
 }
 
@@ -311,6 +332,7 @@ func (r *standardRenderer) showCursor() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	r.cursorHidden = false
 	r.out.ShowCursor()
 }
 
@@ -318,6 +340,7 @@ func (r *standardRenderer) hideCursor() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	r.cursorHidden = true
 	r.out.HideCursor()
 }
 
