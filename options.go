@@ -142,31 +142,37 @@ func WithANSICompressor() ProgramOption {
 	}
 }
 
-// WithOnQuit supplies an event handler that will be invoked whenever Bubble
-// Tea receives a QuitMsg. The event handler can return tea.Shutdown to
-// instruct Bubble Tea to handle the QuitMsg normally and shut the program
-// down, or it can return tea.PreventShutdown to prevent the program from
-// shutting down and instead handle the QuitMsg like a normal message and
-// pass it along to the model's Update method.
+// WithFilter supplies an event filter that will be invoked before Bubble Tea
+// processes a tea.Msg. The event filter can return any tea.Msg which will then
+// get handled by Bubble Tea instead of the original event. If the event filter
+// returns nil, the event will be ignored and Bubble Tea will not process it.
+//
+// As an example, this could be used to prevent a program from shutting down if
+// there are unsaved changes.
 //
 // Example:
 //
-//	func onQuit(m tea.Model) tea.QuitBehavior {
-//	    model := m.(myModel)
-//	    if model.hasChanges {
-//	        return tea.PreventShutdown
-//	    }
-//	    return tea.Shutdown
+//	func filter(m tea.Model, msg tea.Msg) tea.Msg {
+//		if _, ok := msg.(tea.QuitMsg); !ok {
+//			return msg
+//		}
+//
+//		model := m.(myModel)
+//		if model.hasChanges {
+//			return nil
+//		}
+//
+//		return msg
 //	}
 //
-//	p := tea.NewProgram(Model{}, tea.WithOnQuit(onQuit));
+//	p := tea.NewProgram(Model{}, tea.WithFilter(filter));
 //
 //	if _,err := p.Run(); err != nil {
 //		fmt.Println("Error running program:", err)
 //		os.Exit(1)
 //	}
-func WithOnQuit(onQuit func(Model) QuitBehavior) ProgramOption {
+func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 	return func(p *Program) {
-		p.onQuit = onQuit
+		p.filter = filter
 	}
 }

@@ -124,23 +124,10 @@ type Program struct {
 	// below.
 	windowsStdin *os.File //nolint:golint,structcheck,unused
 
-	onQuit func(Model) QuitBehavior
+	filter func(Model, Msg) Msg
 }
 
-// QuitBehavior defines how Bubble Tea handles QuitMsgs.
-type QuitBehavior int
-
-const (
-	// Shutdown instructs Bubble Tea to shut down the program normally when a
-	// QuitMsg is received.
-	Shutdown QuitBehavior = iota
-	// PreventShutdown instructs Bubble Tea to ignore the QuitMsg that it
-	// received and instead pass the message to the model's Update function.
-	PreventShutdown
-)
-
 // Quit is a special command that tells the Bubble Tea program to exit.
-// This behavior can be controlled using the WithOnQuit option.
 func Quit() Msg {
 	return QuitMsg{}
 }
@@ -286,12 +273,17 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			return model, err
 
 		case msg := <-p.msgs:
+			// Filter messages.
+			if p.filter != nil {
+				msg = p.filter(model, msg)
+			}
+			if msg == nil {
+				continue
+			}
+
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case QuitMsg:
-				if p.onQuit != nil && p.onQuit(model) == PreventShutdown {
-					break
-				}
 				return model, nil
 
 			case clearScreenMsg:

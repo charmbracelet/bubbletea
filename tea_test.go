@@ -76,13 +76,13 @@ func TestTeaQuit(t *testing.T) {
 	}
 }
 
-func TestTeaWithOnQuit(t *testing.T) {
-	testTeaWithOnQuit(t, 0)
-	testTeaWithOnQuit(t, 1)
-	testTeaWithOnQuit(t, 2)
+func TestTeaWithFilter(t *testing.T) {
+	testTeaWithFilter(t, 0)
+	testTeaWithFilter(t, 1)
+	testTeaWithFilter(t, 2)
 }
 
-func testTeaWithOnQuit(t *testing.T, preventCount uint32) {
+func testTeaWithFilter(t *testing.T, preventCount uint32) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -91,12 +91,15 @@ func testTeaWithOnQuit(t *testing.T, preventCount uint32) {
 	p := NewProgram(m,
 		WithInput(&in),
 		WithOutput(&buf),
-		WithOnQuit(func(Model) QuitBehavior {
+		WithFilter(func(_ Model, msg Msg) Msg {
+			if _, ok := msg.(QuitMsg); !ok {
+				return msg
+			}
 			if shutdowns < preventCount {
 				atomic.AddUint32(&shutdowns, 1)
-				return PreventShutdown
+				return nil
 			}
-			return Shutdown
+			return msg
 		}))
 
 	go func() {

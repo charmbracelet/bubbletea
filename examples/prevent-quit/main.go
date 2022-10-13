@@ -1,6 +1,6 @@
 package main
 
-// A program demonstrating how to use the WithOnQuit option to intercept quit events
+// A program demonstrating how to use the WithFilter option to intercept events.
 
 import (
 	"fmt"
@@ -20,19 +20,24 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithOnQuit(onQuit))
+	p := tea.NewProgram(initialModel(), tea.WithFilter(filter))
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func onQuit(teaModel tea.Model) tea.QuitBehavior {
+func filter(teaModel tea.Model, msg tea.Msg) tea.Msg {
+	if _, ok := msg.(tea.QuitMsg); !ok {
+		return msg
+	}
+
 	m := teaModel.(model)
 	if m.hasChanges {
-		return tea.PreventShutdown
+		return nil
 	}
-	return tea.Shutdown
+
+	return msg
 }
 
 type model struct {

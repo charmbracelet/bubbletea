@@ -35,10 +35,10 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
-	t.Run("on quit", func(t *testing.T) {
-		p := NewProgram(nil, WithOnQuit(func(Model) QuitBehavior { return Shutdown }))
-		if p.onQuit == nil {
-			t.Errorf("expected onQuit to be set")
+	t.Run("filter", func(t *testing.T) {
+		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
+		if p.filter == nil {
+			t.Errorf("expected filter to be set")
 		}
 	})
 
