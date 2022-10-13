@@ -268,12 +268,12 @@ func (r *standardRenderer) altScreen() bool {
 }
 
 func (r *standardRenderer) enterAltScreen() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	if r.altScreenActive {
 		return
 	}
-
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
 
 	r.altScreenActive = true
 	r.out.AltScreen()
@@ -291,12 +291,12 @@ func (r *standardRenderer) enterAltScreen() {
 }
 
 func (r *standardRenderer) exitAltScreen() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	if !r.altScreenActive {
 		return
 	}
-
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
 
 	r.altScreenActive = false
 	r.out.ExitAltScreen()
