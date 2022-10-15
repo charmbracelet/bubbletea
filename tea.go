@@ -24,7 +24,6 @@ import (
 	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
-	"golang.org/x/term"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
@@ -205,20 +204,10 @@ func (p *Program) handleResize() chan struct{} {
 
 	if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
-		go func() {
-			w, h, err := term.GetSize(int(f.Fd()))
-			if err != nil {
-				p.errs <- err
-			}
-
-			select {
-			case <-p.ctx.Done():
-			case p.msgs <- WindowSizeMsg{w, h}:
-			}
-		}()
+		go p.checkResize()
 
 		// Listen for window resizes.
-		go listenForResize(p.ctx, f, p.msgs, p.errs, ch)
+		go p.listenForResize(ch)
 	} else {
 		close(ch)
 	}
@@ -576,6 +565,12 @@ func (p *Program) RestoreTerminal() error {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
 	}
+
+	// If the output is a terminal, it may have been resized while another
+	// process was at the foreground, in which case we may not have received
+	// SIGWINCH. Detect any size change now and propagate the new size as
+	// needed.
+	go p.checkResize()
 
 	return nil
 }
