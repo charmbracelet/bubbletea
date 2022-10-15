@@ -149,3 +149,29 @@ func TestTeaSequenceMsg(t *testing.T) {
 		t.Fatalf("counter should be 2, got %d", m.counter.Load())
 	}
 }
+
+func TestTeaSend(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+
+	// sending before the program is started is a blocking operation
+	go p.Send(Quit())
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	// sending a message after program has quit is a no-op
+	p.Send(Quit())
+}
+
+func TestTeaNoRun(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	NewProgram(m, WithInput(&in), WithOutput(&buf))
+}

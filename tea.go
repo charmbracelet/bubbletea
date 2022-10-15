@@ -142,6 +142,9 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		msgs:         make(chan Msg),
 	}
 
+	// Initialize context and teardown channel.
+	p.ctx, p.cancel = context.WithCancel(context.Background())
+
 	// Apply all options to the program.
 	for _, opt := range opts {
 		opt(p)
@@ -246,12 +249,7 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				// (e.g. tick commands that sleep for half a second). It's not
 				// possible to cancel them so we'll have to leak the goroutine
 				// until Cmd returns.
-				go func() {
-					select {
-					case p.msgs <- cmd():
-					case <-p.ctx.Done():
-					}
-				}()
+				go p.Send(cmd())
 			}
 		}
 	}()
@@ -315,10 +313,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go func() {
 					// Execute commands one at a time, in order.
 					for _, cmd := range msg {
-						select {
-						case p.msgs <- cmd():
-						case <-p.ctx.Done():
-						}
+						p.Send(cmd())
 					}
 				}()
 			}
@@ -344,7 +339,6 @@ func (p *Program) Run() (Model, error) {
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 
-	p.ctx, p.cancel = context.WithCancel(context.Background())
 	defer p.cancel()
 
 	switch {
@@ -504,10 +498,14 @@ func (p *Program) Start() error {
 // messages to be injected from outside the program for interoperability
 // purposes.
 //
-// If the program is not running this will be a no-op, so it's safe to
-// send messages if the program is unstarted, or has exited.
+// If the program hasn't started yet this will be a blocking operation.
+// If the program has already been terminated this will be a no-op, so it's safe
+// to send messages after the program has exited.
 func (p *Program) Send(msg Msg) {
-	p.msgs <- msg
+	select {
+	case <-p.ctx.Done():
+	case p.msgs <- msg:
+	}
 }
 
 // Quit is a convenience function for quitting Bubble Tea programs. Use it
