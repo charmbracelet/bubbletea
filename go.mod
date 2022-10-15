@@ -10,6 +10,7 @@ require (
 	github.com/muesli/cancelreader v0.2.2
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.13.0
+	go.uber.org/goleak v1.2.0
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/text v0.3.7 // indirect
 )
