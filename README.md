@@ -70,6 +70,12 @@ import (
 )
 ```
 
+Be sure to pull the latest version of the Bubble Tea library for this tutorial.
+
+```
+go get github.com/charmbracelet/bubbletea@master
+```
+
 Bubble Tea programs are comprised of a **model** that describes the application
 state and three simple methods on that model:
 
