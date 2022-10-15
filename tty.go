@@ -3,9 +3,12 @@ package tea
 import (
 	"errors"
 	"io"
+	"os"
 	"time"
 
+	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
+	"golang.org/x/term"
 )
 
 func (p *Program) initTerminal() error {
@@ -76,7 +79,10 @@ func (p *Program) readLoop() {
 		msgs, err := readInputs(p.cancelReader)
 		if err != nil {
 			if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
-				p.errs <- err
+				select {
+				case <-p.ctx.Done():
+				case p.errs <- err:
+				}
 			}
 
 			return
@@ -97,4 +103,29 @@ func (p *Program) waitForReadLoop() {
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.
 	}
+}
+
+// checkResize detects the current size of the output and informs the program
+// via a WindowSizeMsg.
+func (p *Program) checkResize() {
+	f, ok := p.output.TTY().(*os.File)
+	if !ok || !isatty.IsTerminal(f.Fd()) {
+		// can't query window size
+		return
+	}
+
+	w, h, err := term.GetSize(int(f.Fd()))
+	if err != nil {
+		select {
+		case <-p.ctx.Done():
+		case p.errs <- err:
+		}
+
+		return
+	}
+
+	p.Send(WindowSizeMsg{
+		Width:  w,
+		Height: h,
+	})
 }
