@@ -33,6 +33,12 @@ import (
 const url = "https://charm.sh/"
 ```
 
+Be sure to pull the latest version of the Bubble Tea library for this tutorial.
+
+```
+go get github.com/charmbracelet/bubbletea@master
+```
+
 ## The Model
 
 Next we'll define our model. The only things we need to store are the status
