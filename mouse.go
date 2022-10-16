@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-// MouseMsg contains information about a mouse event and is sent to a programs
+// MouseMsg contains information about a mouse event and is sent to a program's
 // update function when mouse activity occurs. Note that the mouse must first
 // be enabled via WithMouseCellMotion or WithMouseAllMotion in order the mouse
 // events to be received.

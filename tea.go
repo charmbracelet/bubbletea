@@ -115,8 +115,8 @@ type Program struct {
 	altScreenWasActive bool
 	ignoreSignals      bool
 
-	// Stores the original reference to stdin for cases where input is not a
-	// TTY. On Windows we've automatically opened CONIN$ to receive input.
+	// Stores the original reference to stdin on Windows. If the input is not
+	// a TTY, we automatically open CONIN$ to receive input.
 	// When the program exits this will be restored.
 	//
 	// Lint ignore note: the linter will find false positive on unix systems
