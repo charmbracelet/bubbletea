@@ -116,7 +116,7 @@ type Program struct {
 	ignoreSignals      bool
 
 	// Stores the original reference to stdin for cases where input is not a
-	// TTY on windows and we've automatically opened CONIN$ to receive input.
+	// TTY. On Windows we've automatically opened CONIN$ to receive input.
 	// When the program exits this will be restored.
 	//
 	// Lint ignore note: the linter will find false positive on unix systems
@@ -396,8 +396,7 @@ func (p *Program) Run() (Model, error) {
 		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
 	}
 
-	// Check if output is a TTY before entering raw mode, hiding the cursor and
-	// so on.
+	// Unless the user has specified a custom input, we have ensured that this is a TTY.
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}

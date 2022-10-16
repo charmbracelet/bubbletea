@@ -47,10 +47,9 @@ type sequenceMsg []Cmd
 // wanted to tick with the system clock every second, minute or hour you
 // could use this. It's also handy for having different things tick in sync.
 //
-// Because we're ticking with the system clock the tick will likely not run for
-// the entire specified duration. For example, if we're ticking for one minute
-// and the clock is at 12:34:20 then the next tick will happen at 12:35:00, 40
-// seconds later.
+// Because we're ticking with the system clock the tick may not run
+// immediately. For example, if we're ticking for one minute and the clock is
+// at 12:34:20 then the next tick will happen at 12:35:00, 40 seconds later.
 //
 // To produce the command, pass a duration and a function which returns
 // a message containing the time at which the tick occurred.

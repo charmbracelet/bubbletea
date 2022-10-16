@@ -5,9 +5,10 @@ import (
 	"errors"
 )
 
-// MouseMsg contains information about a mouse event and are sent to a programs
+// MouseMsg contains information about a mouse event and is sent to a programs
 // update function when mouse activity occurs. Note that the mouse must first
-// be enabled via in order the mouse events to be received.
+// be enabled via WithMouseCellMotion or WithMouseAllMotion in order the mouse
+// events to be received.
 type MouseMsg MouseEvent
 
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel
