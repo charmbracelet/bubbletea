@@ -58,7 +58,7 @@ type Model interface {
 // update function.
 type Cmd func() Msg
 
-type handlers []chan struct{}
+type lifecycleHandlers []chan struct{}
 
 // Options to customize the program during its initialization. These are
 // generally set with ProgramOptions.
@@ -335,7 +335,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
 func (p *Program) Run() (Model, error) {
-	handlers := handlers{}
+	handlers := lifecycleHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 
@@ -601,14 +601,14 @@ func (p *Program) Printf(template string, args ...interface{}) {
 	}
 }
 
-// Adds a handler to the list of handlers. We wait for all handlers to terminate
-// gracefully on shutdown.
-func (h *handlers) add(ch chan struct{}) {
+// Adds a handler to the list of lifecycleHandlers. We wait for all
+// lifecycleHandlers to terminate gracefully on shutdown.
+func (h *lifecycleHandlers) add(ch chan struct{}) {
 	*h = append(*h, ch)
 }
 
-// Shutdown waits for all handlers to terminate.
-func (h handlers) shutdown() {
+// Shutdown waits for all lifecycleHandlers to terminate.
+func (h lifecycleHandlers) shutdown() {
 	var wg sync.WaitGroup
 	for _, ch := range h {
 		wg.Add(1)
