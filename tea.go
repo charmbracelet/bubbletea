@@ -249,7 +249,10 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				// (e.g. tick commands that sleep for half a second). It's not
 				// possible to cancel them so we'll have to leak the goroutine
 				// until Cmd returns.
-				go p.Send(cmd())
+				go func() {
+					msg := cmd() // this can be long.
+					p.Send(msg)
+				}()
 			}
 		}
 	}()
