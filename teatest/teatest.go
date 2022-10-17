@@ -143,7 +143,15 @@ func RequireEqualOutput(tb testing.TB, out []byte) {
 	}
 
 	// inspired by https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/cmd/internal/diff/diff.go;l=18
-	diff, err := exec.Command("diff", path, golden).CombinedOutput()
+	diff, err := exec.Command(
+		"diff",
+		"--minimal",
+		"--ignore-trailing-space",
+		"--ignore-all-space",
+		"--strip-trailing-cr",
+		path,
+		golden,
+	).CombinedOutput()
 	if err != nil {
 		tb.Fatalf("output does not match, diff:\n\n%s", string(diff))
 	}
