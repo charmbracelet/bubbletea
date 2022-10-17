@@ -33,7 +33,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
@@ -67,7 +66,7 @@ func (m model) View() string {
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

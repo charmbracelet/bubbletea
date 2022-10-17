@@ -25,7 +25,6 @@ type model struct {
 
 var (
 	currentPkgNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
-	subtleStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("239"))
 	doneStyle           = lipgloss.NewStyle().Margin(1, 2)
 	checkMark           = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓")
 )
@@ -132,7 +131,7 @@ func max(a, b int) int {
 func main() {
 	rand.Seed(time.Now().Unix())
 
-	if err := tea.NewProgram(newModel()).Start(); err != nil {
+	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

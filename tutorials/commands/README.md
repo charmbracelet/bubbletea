@@ -169,7 +169,7 @@ as a `struct` with defaults.
 
 ```go
 func main() {
-    if err := tea.NewProgram(model{}).Start(); err != nil {
+    if _, err := tea.NewProgram(model{}).Run(); err != nil {
         fmt.Printf("Uh oh, there was an error: %v\n", err)
         os.Exit(1)
     }
@@ -189,7 +189,7 @@ that returns a command. For example:
 ```go
 func cmdWithArg(id int) tea.Cmd {
     return func() tea.Msg {
-        return someMsg{id: int}
+        return someMsg{id: id}
     }
 }
 ```

@@ -21,14 +21,25 @@ func (p *Program) initTerminal() error {
 		}
 	}
 
-	p.output.HideCursor()
+	p.renderer.hideCursor()
 	return nil
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	p.output.ShowCursor()
+	if p.renderer != nil {
+		p.renderer.showCursor()
+		p.renderer.disableMouseCellMotion()
+		p.renderer.disableMouseAllMotion()
+
+		if p.renderer.altScreen() {
+			p.renderer.exitAltScreen()
+
+			// give the terminal a moment to catch up
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
 
 	if p.console != nil {
 		err := p.console.Reset()
@@ -49,12 +60,12 @@ func (p *Program) initCancelReader() error {
 	}
 
 	p.readLoopDone = make(chan struct{})
-	go p.eventLoop()
+	go p.readLoop()
 
 	return nil
 }
 
-func (p *Program) eventLoop() {
+func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
 	for {
@@ -75,11 +86,6 @@ func (p *Program) eventLoop() {
 			p.msgs <- msg
 		}
 	}
-}
-
-// cancelInput cancels the input reader.
-func (p *Program) cancelInput() {
-	p.cancelReader.Cancel()
 }
 
 // waitForReadLoop waits for the cancelReader to finish its read loop.

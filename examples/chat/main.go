@@ -17,14 +17,13 @@ import (
 func main() {
 	p := tea.NewProgram(initialModel())
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 type (
-	tickMsg struct{}
-	errMsg  error
+	errMsg error
 )
 
 type model struct {
@@ -51,11 +50,9 @@ func initialModel() model {
 
 	ta.ShowLineNumbers = false
 
-	vp := viewport.New(30, 10)
-	vp.SetContent(`Welcome to the Bubbles multi-line text input!
-Try typing any message and pressing ENTER.
-If you write a long message, it will automatically wrap :D
-	`)
+	vp := viewport.New(30, 5)
+	vp.SetContent(`Welcome to the chat room!
+Type a message and press Enter to send.`)
 
 	ta.KeyMap.InsertNewline.SetEnabled(false)
 

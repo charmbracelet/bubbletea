@@ -7,7 +7,7 @@ package main
 // by the Tick command.
 //
 // In a subsequent Update, if the tag in the Msg matches current tag on the
-// model's state we know that the debouncing is complete and we can proceeed as
+// model's state we know that the debouncing is complete and we can proceed as
 // normal. If not, we simply ignore the inbound message.
 
 import (
@@ -59,7 +59,7 @@ func (m model) View() string {
 }
 
 func main() {
-	if err := tea.NewProgram(model{}).Start(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("uh oh:", err)
 		os.Exit(1)
 	}

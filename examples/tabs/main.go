@@ -46,8 +46,6 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 }
 
 var (
-	defaultWidth = 20
-
 	inactiveTabBorder = tabBorderWithBottom("┴", "─", "┴")
 	activeTabBorder   = tabBorderWithBottom("┘", " ", "└")
 	docStyle          = lipgloss.NewStyle().Padding(1, 2, 1, 2)
@@ -95,7 +93,7 @@ func main() {
 	tabs := []string{"Lip Gloss", "Blush", "Eye Shadow", "Mascara", "Foundation"}
 	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab", "Mascara Tab", "Foundation Tab"}
 	m := model{Tabs: tabs, TabContent: tabContent}
-	if err := tea.NewProgram(m).Start(); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

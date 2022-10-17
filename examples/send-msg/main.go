@@ -19,7 +19,6 @@ var (
 	spinnerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Margin(1, 0)
 	dotStyle      = helpStyle.Copy().UnsetMargins()
-	foodStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("36"))
 	durationStyle = dotStyle.Copy()
 	appStyle      = lipgloss.NewStyle().Margin(1, 2, 0, 2)
 )
@@ -118,7 +117,7 @@ func main() {
 		}
 	}()
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

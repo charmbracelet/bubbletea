@@ -25,13 +25,6 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
-	t.Run("catch panics", func(t *testing.T) {
-		p := NewProgram(nil, WithoutCatchPanics())
-		if p.CatchPanics {
-			t.Errorf("catch panics should not have been set")
-		}
-	})
-
 	t.Run("renderer", func(t *testing.T) {
 		p := NewProgram(nil, WithoutRenderer())
 		switch p.renderer.(type) {
@@ -67,6 +60,14 @@ func TestOptions(t *testing.T) {
 
 		t.Run("ansi compression", func(t *testing.T) {
 			exercise(t, WithANSICompressor(), withANSICompressor)
+		})
+
+		t.Run("without catch panics", func(t *testing.T) {
+			exercise(t, WithoutCatchPanics(), withoutCatchPanics)
+		})
+
+		t.Run("without signal handler", func(t *testing.T) {
+			exercise(t, WithoutSignalHandler(), withoutSignalHandler)
 		})
 
 		t.Run("mouse cell motion", func(t *testing.T) {

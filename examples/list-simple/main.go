@@ -45,12 +45,11 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		}
 	}
 
-	fmt.Fprintf(w, fn(str))
+	fmt.Fprint(w, fn(str))
 }
 
 type model struct {
 	list     list.Model
-	items    []item
 	choice   string
 	quitting bool
 }
@@ -121,7 +120,7 @@ func main() {
 
 	m := model{list: l}
 
-	if err := tea.NewProgram(m).Start(); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

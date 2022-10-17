@@ -44,10 +44,14 @@ var (
 		spinner.Monkey,
 	}
 	modelStyle = lipgloss.NewStyle().
-			Padding(1, 2).
+			Width(15).
+			Height(5).
+			Align(lipgloss.Center, lipgloss.Center).
 			BorderStyle(lipgloss.HiddenBorder())
 	focusedModelStyle = lipgloss.NewStyle().
-				Padding(1, 2).
+				Width(15).
+				Height(5).
+				Align(lipgloss.Center, lipgloss.Center).
 				BorderStyle(lipgloss.NormalBorder()).
 				BorderForeground(lipgloss.Color("69"))
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
@@ -124,7 +128,7 @@ func (m mainModel) View() string {
 	} else {
 		s += lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(fmt.Sprintf("%4s", m.timer.View())), focusedModelStyle.Render(m.spinner.View()))
 	}
-	s += helpStyle.Render(fmt.Sprintf("\ntab: change focused model • n: new %s • q: exit\n", model))
+	s += helpStyle.Render(fmt.Sprintf("\ntab: focus next • n: new %s • q: exit\n", model))
 	return s
 }
 
@@ -152,7 +156,7 @@ func (m *mainModel) resetSpinner() {
 func main() {
 	p := tea.NewProgram(newModel(defaultTime))
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

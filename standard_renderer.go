@@ -25,12 +25,13 @@ const (
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
 type standardRenderer struct {
-	out                *termenv.Output
+	mtx *sync.Mutex
+	out *termenv.Output
+
 	buf                bytes.Buffer
 	queuedMessageLines []string
 	framerate          time.Duration
 	ticker             *time.Ticker
-	mtx                *sync.Mutex
 	done               chan struct{}
 	lastRender         string
 	linesRendered      int
@@ -50,10 +51,10 @@ type standardRenderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out *termenv.Output, mtx *sync.Mutex, useANSICompressor bool) renderer {
+func newRenderer(out *termenv.Output, useANSICompressor bool) renderer {
 	r := &standardRenderer{
 		out:                out,
-		mtx:                mtx,
+		mtx:                &sync.Mutex{},
 		framerate:          defaultFramerate,
 		useANSICompressor:  useANSICompressor,
 		queuedMessageLines: []string{},
@@ -75,7 +76,12 @@ func (r *standardRenderer) start() {
 
 // stop permanently halts the renderer, rendering the final frame.
 func (r *standardRenderer) stop() {
+	// flush locks the mutex
 	r.flush()
+
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	r.out.ClearLine()
 	r.once.Do(func() {
 		close(r.done)
@@ -90,6 +96,9 @@ func (r *standardRenderer) stop() {
 
 // kill halts the renderer. The final frame will not be rendered.
 func (r *standardRenderer) kill() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	r.out.ClearLine()
 	r.once.Do(func() {
 		close(r.done)
@@ -244,13 +253,100 @@ func (r *standardRenderer) repaint() {
 	r.lastRender = ""
 }
 
+func (r *standardRenderer) clearScreen() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.ClearScreen()
+	r.out.MoveCursor(1, 1)
+
+	r.repaint()
+}
+
 func (r *standardRenderer) altScreen() bool {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
 	return r.altScreenActive
 }
 
-func (r *standardRenderer) setAltScreen(v bool) {
-	r.altScreenActive = v
+func (r *standardRenderer) enterAltScreen() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	if r.altScreenActive {
+		return
+	}
+
+	r.altScreenActive = true
+	r.out.AltScreen()
+
+	// Ensure that the terminal is cleared, even when it doesn't support
+	// alt screen (or alt screen support is disabled, like GNU screen by
+	// default).
+	//
+	// Note: we can't use r.clearScreen() here because the mutex is already
+	// locked.
+	r.out.ClearScreen()
+	r.out.MoveCursor(1, 1)
+
 	r.repaint()
+}
+
+func (r *standardRenderer) exitAltScreen() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	if !r.altScreenActive {
+		return
+	}
+
+	r.altScreenActive = false
+	r.out.ExitAltScreen()
+
+	r.repaint()
+}
+
+func (r *standardRenderer) showCursor() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.ShowCursor()
+}
+
+func (r *standardRenderer) hideCursor() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.HideCursor()
+}
+
+func (r *standardRenderer) enableMouseCellMotion() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.EnableMouseCellMotion()
+}
+
+func (r *standardRenderer) disableMouseCellMotion() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.DisableMouseCellMotion()
+}
+
+func (r *standardRenderer) enableMouseAllMotion() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.EnableMouseAllMotion()
+}
+
+func (r *standardRenderer) disableMouseAllMotion() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.DisableMouseAllMotion()
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
@@ -371,6 +467,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		r.mtx.Lock()
 		r.width = msg.Width
 		r.height = msg.Height
+		r.repaint()
 		r.mtx.Unlock()
 
 	case clearScrollAreaMsg:

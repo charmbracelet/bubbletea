@@ -14,7 +14,7 @@ import (
 func main() {
 	p := tea.NewProgram(initialModel())
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

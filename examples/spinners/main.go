@@ -32,7 +32,7 @@ func main() {
 	m := model{}
 	m.resetSpinner()
 
-	if err := tea.NewProgram(m).Start(); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}

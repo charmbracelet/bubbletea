@@ -41,7 +41,7 @@ var (
 func main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
@@ -115,16 +115,15 @@ func (m model) View() string {
 // Update loop for the first view where you're choosing a task.
 func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "j", "down":
-			m.Choice += 1
+			m.Choice++
 			if m.Choice > 3 {
 				m.Choice = 3
 			}
 		case "k", "up":
-			m.Choice -= 1
+			m.Choice--
 			if m.Choice < 0 {
 				m.Choice = 0
 			}
@@ -138,7 +137,7 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.Quitting = true
 			return m, tea.Quit
 		}
-		m.Ticks -= 1
+		m.Ticks--
 		return m, tick()
 	}
 
@@ -148,10 +147,9 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 // Update loop for the second view after a choice has been made
 func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
-
 	case frameMsg:
 		if !m.Loaded {
-			m.Frames += 1
+			m.Frames++
 			m.Progress = ease.OutBounce(float64(m.Frames) / float64(100))
 			if m.Progress >= 1 {
 				m.Progress = 1
@@ -168,7 +166,7 @@ func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.Quitting = true
 				return m, tea.Quit
 			}
-			m.Ticks -= 1
+			m.Ticks--
 			return m, tick()
 		}
 	}

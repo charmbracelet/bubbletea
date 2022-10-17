@@ -17,7 +17,7 @@ type tickMsg time.Time
 
 func main() {
 	p := tea.NewProgram(model(5), tea.WithAltScreen())
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -28,7 +28,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
@@ -36,12 +35,11 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tickMsg:
-		m -= 1
+		m--
 		if m <= 0 {
 			return m, tea.Quit
 		}
 		return m, tick()
-
 	}
 
 	return m, nil
