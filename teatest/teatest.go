@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"syscall"
 	"testing"
@@ -131,6 +132,18 @@ func TypeText(p Program, s string) {
 }
 
 var update = flag.Bool("update", false, "update .golden files")
+
+// RequireRegexpOutput matches the given output with the given regular
+// expression, and fails they don't match.
+func RequireRegexpOutput(tb testing.TB, out []byte, re string) {
+	rexp, err := regexp.Compile(re)
+	if err != nil {
+		tb.Fatal("could not compile regular expression:", err)
+	}
+	if !rexp.Match(out) {
+		tb.Fatalf("output does not match the given regular expression: %s", string(out))
+	}
+}
 
 // RequireEqualOutput is a helper function to assert the given output is
 // the expected from the golden files, printing its diff in case it is not.
