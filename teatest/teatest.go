@@ -63,7 +63,7 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	signal.Notify(ints, syscall.SIGINT)
 	done := make(chan bool, 1)
 	go func() {
-		if err := p.Start(); err != nil {
+		if _, err := p.Run(); err != nil {
 			tb.Fatalf("app failed: %s", err)
 		}
 		done <- true
