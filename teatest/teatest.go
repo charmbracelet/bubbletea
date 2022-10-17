@@ -26,6 +26,7 @@ type TestModelOptions struct {
 	interact      func(p Program, in io.Writer)
 	assert        func(out []byte)
 	validateModel func(m tea.Model) error
+	size          struct{ x, y int }
 }
 
 // TestOption is a functional option.
@@ -49,6 +50,14 @@ func WithRequiredOutputChecker(fn func(out []byte)) TestOption {
 func WithValidateFinalModel(fn func(m tea.Model) error) TestOption {
 	return func(opts *TestModelOptions) {
 		opts.validateModel = fn
+	}
+}
+
+// WithTermSize ...
+func WithTermSize(x, y int) TestOption {
+	return func(opts *TestModelOptions) {
+		opts.size.x = x
+		opts.size.y = y
 	}
 }
 
@@ -79,7 +88,15 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	for _, opt := range options {
 		opt(&opts)
 	}
+	x := opts.size.x
 
+	y := opts.size.y
+	if x > 0 && y > 0 {
+		p.Send(tea.WindowSizeMsg{
+			Width:  x,
+			Height: y,
+		})
+	}
 	// run the user interactions and then force a quit
 	if opts.interact != nil {
 		opts.interact(p, safe(&in))
