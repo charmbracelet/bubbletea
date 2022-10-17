@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -69,7 +70,12 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	var in bytes.Buffer
 	var out bytes.Buffer
 
-	p := tea.NewProgram(m, tea.WithInput(&in), tea.WithOutput(safe(&out)), tea.WithoutSignals())
+	p := tea.NewProgram(
+		m,
+		tea.WithInput(&in),
+		tea.WithOutput(safe(&out)),
+		tea.WithoutSignals(),
+	)
 
 	ints := make(chan os.Signal, 1)
 	signal.Notify(ints, syscall.SIGINT)
@@ -99,6 +105,7 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	if opts.interact != nil {
 		opts.interact(p, safe(&in))
 	}
+	time.Sleep(100 * time.Millisecond)
 	p.Quit()
 	if err := p.ReleaseTerminal(); err != nil {
 		tb.Fatalf("could not restore terminal: %v", err)
