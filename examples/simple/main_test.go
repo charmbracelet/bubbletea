@@ -29,6 +29,7 @@ func TestApp(t *testing.T) {
 				}),
 				teatest.WithRequiredOutputChecker(func(out []byte) {
 					teatest.RequireEqualOutput(t, out)
+					teatest.RequireRegexpOutput(t, out, "10")
 				}),
 				teatest.WithValidateFinalModel(func(mm tea.Model) error {
 					m := mm.(model)
