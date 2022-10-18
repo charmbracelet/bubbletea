@@ -136,6 +136,15 @@ func (r *standardRenderer) flush() {
 	out := termenv.NewOutput(buf)
 
 	newLines := strings.Split(r.buf.String(), "\n")
+
+	// If we know the output's height, we can use it to determine how many
+	// lines we can render. We drop lines from the top of the render buffer if
+	// necessary, as we can't navigate the cursor into the terminal's scrollback
+	// buffer.
+	if r.height > 0 && len(newLines) > r.height {
+		newLines = newLines[len(newLines)-r.height:]
+	}
+
 	numLinesThisFlush := len(newLines)
 	oldLines := strings.Split(r.lastRender, "\n")
 	skipLines := make(map[int]struct{})
