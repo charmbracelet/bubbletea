@@ -50,6 +50,8 @@ type standardRenderer struct {
 
 	// background color when renderer is created
 	defaultBackgroundColor termenv.Color
+	// flag if background color has been changed
+	backgroundColorChanged bool
 }
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
@@ -62,6 +64,7 @@ func newRenderer(out *termenv.Output, useANSICompressor bool) renderer {
 		useANSICompressor:      useANSICompressor,
 		queuedMessageLines:     []string{},
 		defaultBackgroundColor: out.BackgroundColor(),
+		backgroundColorChanged: false,
 	}
 	if r.useANSICompressor {
 		r.out = termenv.NewOutput(&compressor.Writer{Forward: out})
@@ -366,6 +369,7 @@ func (r *standardRenderer) setBackgroundColor(c termenv.Color) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	r.backgroundColorChanged = true
 	r.out.SetBackgroundColor(c)
 }
 
@@ -373,7 +377,7 @@ func (r *standardRenderer) resetBackgroundColor() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	if r.out.BackgroundColor() != r.defaultBackgroundColor {
+	if r.backgroundColorChanged && r.defaultBackgroundColor.Sequence(true) != "" {
 		r.out.SetBackgroundColor(r.defaultBackgroundColor)
 	}
 }

@@ -3,9 +3,11 @@ package tea
 import (
 	"bytes"
 	"testing"
+
+	"github.com/muesli/termenv"
 )
 
-func TestClearMsg(t *testing.T) {
+func TestInternalMsg(t *testing.T) {
 	tests := []struct {
 		name     string
 		cmds     sequenceMsg
@@ -50,6 +52,11 @@ func TestClearMsg(t *testing.T) {
 			name:     "cursor_hideshow",
 			cmds:     []Cmd{HideCursor, ShowCursor},
 			expected: "\x1b[?25l\x1b[?25l\x1b[?25hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
+		},
+		{
+			name:     "set_background_color",
+			cmds:     []Cmd{func() Msg { return SetBackgroundColor(termenv.RGBColor("#eeeeee")) }},
+			expected: "\x1b[?25l\x1b]11;#eeeeee\asuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
 	}
 
