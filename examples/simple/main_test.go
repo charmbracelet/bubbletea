@@ -28,7 +28,7 @@ func TestApp(t *testing.T) {
 		}),
 		teatest.WithValidateFinalModel(func(mm tea.Model) error {
 			m := mm.(model)
-			if m != 10 {
+			if m != 9 {
 				return fmt.Errorf("expected model to be 10, was %d", m)
 			}
 			return nil

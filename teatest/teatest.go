@@ -77,18 +77,19 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 		tea.WithoutSignals(),
 	)
 
-	ints := make(chan os.Signal, 1)
-	signal.Notify(ints, syscall.SIGINT)
-	done := make(chan bool, 1)
+	interruptions := make(chan os.Signal, 1)
+	signal.Notify(interruptions, syscall.SIGINT)
+	returnedModel := make(chan tea.Model, 1)
 	go func() {
-		if _, err := p.Run(); err != nil {
+		m, err := p.Run()
+		if err != nil {
 			tb.Fatalf("app failed: %s", err)
 		}
-		done <- true
+		returnedModel <- m
 	}()
 	go func() {
-		<-ints
-		signal.Stop(ints)
+		<-interruptions
+		signal.Stop(interruptions)
 		tb.Log("interrupted")
 		p.Quit()
 	}()
@@ -105,14 +106,15 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	if opts.interact != nil {
 		opts.interact(p, safe(&in))
 	}
+
 	time.Sleep(100 * time.Millisecond)
 	p.Quit()
 	if err := p.ReleaseTerminal(); err != nil {
 		tb.Fatalf("could not restore terminal: %v", err)
 	}
 
-	// wait for the program to quit and assert
-	<-done
+	// wait for the program to finish and run assertions
+	m = <-returnedModel
 
 	if opts.validateModel != nil {
 		if err := opts.validateModel(m); err != nil {
