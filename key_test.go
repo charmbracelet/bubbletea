@@ -2,13 +2,17 @@ package tea
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"math/rand"
 	"reflect"
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -442,12 +446,7 @@ func TestReadInput(t *testing.T) {
 
 	for i, td := range testData {
 		t.Run(fmt.Sprintf("%d: %s", i, td.keyname), func(t *testing.T) {
-			msgs, err := readInputs(bytes.NewReader(td.in))
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			// Compute the title for the event sequence.
+			msgs := testReadInputs(t, bytes.NewReader(td.in))
 			var buf strings.Builder
 			for i, msg := range msgs {
 				if i > 0 {
@@ -459,6 +458,7 @@ func TestReadInput(t *testing.T) {
 					fmt.Fprintf(&buf, "%#v:%T", msg, msg)
 				}
 			}
+
 			title := buf.String()
 			if title != td.keyname {
 				t.Errorf("expected message titles:\n  %s\ngot:\n  %s", td.keyname, title)
@@ -473,6 +473,49 @@ func TestReadInput(t *testing.T) {
 			}
 		})
 	}
+}
+
+func testReadInputs(t *testing.T, input io.Reader) []Msg {
+	// We'll check that the input reader finishes at the end
+	// without error.
+	var wg sync.WaitGroup
+	var inputErr error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		cancel()
+		wg.Wait()
+		if inputErr != nil && !errors.Is(inputErr, io.EOF) {
+			t.Fatalf("unexpected input error: %v", inputErr)
+		}
+	}()
+
+	// The messages we're consuming.
+	msgsC := make(chan Msg)
+
+	// Start the reader in the background.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		inputErr = readInputs(ctx, msgsC, input)
+		msgsC <- nil
+	}()
+
+	var msgs []Msg
+loop:
+	for {
+		select {
+		case msg := <-msgsC:
+			if msg == nil {
+				// end of input marker for the test.
+				break loop
+			}
+			msgs = append(msgs, msg)
+		case <-time.After(2 * time.Second):
+			t.Errorf("timeout waiting for input event")
+			break loop
+		}
+	}
+	return msgs
 }
 
 // randTest defines the test input and expected output for a sequence

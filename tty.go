@@ -7,6 +7,7 @@ import (
 	"time"
 
 	isatty "github.com/mattn/go-isatty"
+	localereader "github.com/mattn/go-localereader"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/term"
 )
@@ -71,25 +72,12 @@ func (p *Program) initCancelReader() error {
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	for {
-		if p.ctx.Err() != nil {
-			return
-		}
-
-		msgs, err := readInputs(p.cancelReader)
-		if err != nil {
-			if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
-				select {
-				case <-p.ctx.Done():
-				case p.errs <- err:
-				}
-			}
-
-			return
-		}
-
-		for _, msg := range msgs {
-			p.msgs <- msg
+	input := localereader.NewReader(p.cancelReader)
+	err := readInputs(p.ctx, p.msgs, input)
+	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+		select {
+		case <-p.ctx.Done():
+		case p.errs <- err:
 		}
 	}
 }
