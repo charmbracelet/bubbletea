@@ -115,6 +115,9 @@ type Program struct {
 	altScreenWasActive bool
 	ignoreSignals      bool
 
+	// color to be used for background when program starts
+	backgroundColor termenv.Color
+
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
 	// When the program exits this will be restored.
@@ -416,6 +419,11 @@ func (p *Program) Run() (Model, error) {
 		p.renderer.enableMouseCellMotion()
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.renderer.enableMouseAllMotion()
+	}
+
+	// Set background color
+	if p.backgroundColor != nil {
+		p.renderer.setBackgroundColor(p.backgroundColor)
 	}
 
 	// Initialize the program.

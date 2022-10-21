@@ -3,6 +3,8 @@ package tea
 import (
 	"bytes"
 	"testing"
+
+	"github.com/muesli/termenv"
 )
 
 func TestOptions(t *testing.T) {
@@ -32,6 +34,13 @@ func TestOptions(t *testing.T) {
 			return
 		default:
 			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
+		}
+	})
+
+	t.Run("background color", func(t *testing.T) {
+		p := NewProgram(nil, WithBackgroundColor(termenv.ANSIBlack))
+		if p.backgroundColor == nil {
+			t.Error("expected background color to be set")
 		}
 	})
 
