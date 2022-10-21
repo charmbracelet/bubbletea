@@ -1,5 +1,7 @@
 package tea
 
+import "github.com/muesli/termenv"
+
 // renderer is the interface for Bubble Tea renderers.
 type renderer interface {
 	// Start the renderer.
@@ -50,6 +52,11 @@ type renderer interface {
 
 	// DisableMouseAllMotion disables All Motion mouse tracking.
 	disableMouseAllMotion()
+
+	// Sets background color of the terminal.
+	setBackgroundColor(termenv.Color)
+	// Resets background color to the original color before the renderer started.
+	resetBackgroundColor()
 }
 
 // repaintMsg forces a full repaint.

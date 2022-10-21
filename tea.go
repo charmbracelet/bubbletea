@@ -302,6 +302,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case hideCursorMsg:
 				p.renderer.hideCursor()
 
+			case backgroundColorMsg:
+				p.renderer.setBackgroundColor(msg.color)
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
