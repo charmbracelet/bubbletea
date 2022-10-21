@@ -1,6 +1,10 @@
 package tea
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/muesli/termenv"
+)
 
 func TestNilRenderer(t *testing.T) {
 	r := nilRenderer{}
@@ -21,4 +25,6 @@ func TestNilRenderer(t *testing.T) {
 	r.disableMouseCellMotion()
 	r.enableMouseAllMotion()
 	r.disableMouseAllMotion()
+	r.setBackgroundColor(termenv.RGBColor("#ffffff"))
+	r.resetBackgroundColor()
 }
