@@ -548,6 +548,11 @@ func (p *Program) Kill() {
 	p.cancel()
 }
 
+// Wait waits/blocks until the underlying Program context is done.
+func (p *Program) Wait() {
+	<-p.ctx.Done()
+}
+
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {

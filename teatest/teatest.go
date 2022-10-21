@@ -13,7 +13,6 @@ import (
 	"sync"
 	"syscall"
 	"testing"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -107,8 +106,10 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 		opts.interact(p, safe(&in))
 	}
 
-	time.Sleep(100 * time.Millisecond)
+	// time.Sleep(100 * time.Millisecond)
 	p.Quit()
+	p.Wait()
+
 	if err := p.ReleaseTerminal(); err != nil {
 		tb.Fatalf("could not restore terminal: %v", err)
 	}
