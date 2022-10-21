@@ -31,6 +31,14 @@ type clearScreenMsg struct{}
 // This can be used in the Init function to set a different background color for
 // the program. The background color is reset to the original state when the
 // program exits.
+//
+// Example:
+//
+//	func (m model) Init() tea.Cmd {
+//	    return tea.Cmd(func() tea.Msg {
+//	        return tea.SetBackgroundColor(termenv.RGBColor("#eeeeee"))
+//	    })
+//	}
 func SetBackgroundColor(c termenv.Color) Msg {
 	return backgroundColorMsg{color: c}
 }
