@@ -1,12 +1,11 @@
 package tea
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"regexp"
 	"unicode/utf8"
-
-	"github.com/mattn/go-localereader"
 )
 
 // KeyMsg contains information about a keypress. KeyMsgs are always sent to
@@ -539,27 +538,30 @@ func (u unknownCSISequenceMsg) String() string {
 
 var spaceRunes = []rune{' '}
 
-// readInputs reads keypress and mouse inputs from a TTY and returns messages
+// readInputs reads keypress and mouse inputs from a TTY and produces messages
 // containing information about the key or mouse events accordingly.
-func readInputs(input io.Reader) ([]Msg, error) {
+func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 	var buf [256]byte
 
-	input = localereader.NewReader(input)
+	for {
+		// Read and block.
+		numBytes, err := input.Read(buf[:])
+		if err != nil {
+			return err
+		}
+		b := buf[:numBytes]
 
-	// Read and block
-	numBytes, err := input.Read(buf[:])
-	if err != nil {
-		return nil, err
+		var i, w int
+		for i, w = 0, 0; i < len(b); i += w {
+			var msg Msg
+			w, msg = detectOneMsg(b[i:])
+			select {
+			case msgs <- msg:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
 	}
-	b := buf[:numBytes]
-
-	var msgs []Msg
-	for i, w := 0, 0; i < len(b); i += w {
-		var msg Msg
-		w, msg = detectOneMsg(b[i:])
-		msgs = append(msgs, msg)
-	}
-	return msgs, nil
 }
 
 var unknownCSIRe = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
