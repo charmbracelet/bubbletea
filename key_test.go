@@ -200,7 +200,7 @@ func TestDetectOneMsg(t *testing.T) {
 
 	for _, tc := range td {
 		t.Run(fmt.Sprintf("%q", string(tc.seq)), func(t *testing.T) {
-			width, msg := detectOneMsg(tc.seq)
+			width, msg := detectOneMsg(tc.seq, false /* canHaveMoreData */)
 			if width != len(tc.seq) {
 				t.Errorf("parser did not consume the entire input: got %d, expected %d", width, len(tc.seq))
 			}
@@ -208,6 +208,25 @@ func TestDetectOneMsg(t *testing.T) {
 				t.Errorf("expected event %#v (%T), got %#v (%T)", tc.msg, tc.msg, msg, msg)
 			}
 		})
+	}
+}
+
+func TestReadLongInput(t *testing.T) {
+	input := strings.Repeat("a", 1000)
+	msgs := testReadInputs(t, bytes.NewReader([]byte(input)))
+	if len(msgs) != 1 {
+		t.Errorf("expected 1 messages, got %d", len(msgs))
+	}
+	km := msgs[0]
+	k := Key(km.(KeyMsg))
+	if k.Type != KeyRunes {
+		t.Errorf("expected key runes, got %d", k.Type)
+	}
+	if len(k.Runes) != 1000 || !reflect.DeepEqual(k.Runes, []rune(input)) {
+		t.Errorf("unexpected runes: %+v", k)
+	}
+	if k.Alt {
+		t.Errorf("unexpected alt")
 	}
 }
 
