@@ -461,7 +461,6 @@ func (p *Program) Run() (Model, error) {
 		if err := p.initCancelReader(); err != nil {
 			return model, err
 		}
-		defer p.cancelReader.Close() //nolint:errcheck
 	}
 
 	// Handle resize events.
@@ -487,6 +486,7 @@ func (p *Program) Run() (Model, error) {
 	if p.cancelReader.Cancel() {
 		p.waitForReadLoop()
 	}
+	_ = p.cancelReader.Close()
 
 	// Wait for all handlers to finish.
 	handlers.shutdown()
