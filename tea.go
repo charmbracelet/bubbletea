@@ -141,8 +141,14 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		msgs:         make(chan Msg),
 	}
 
+	// A context can be provided with a ProgramOption, but if none was provided
+	// we'll use the default background context.
+	if p.ctx == nil {
+		p.ctx = context.Background()
+	}
+
 	// Initialize context and teardown channel.
-	p.ctx, p.cancel = context.WithCancel(context.Background())
+	p.ctx, p.cancel = context.WithCancel(p.ctx)
 
 	// Apply all options to the program.
 	for _, opt := range opts {
