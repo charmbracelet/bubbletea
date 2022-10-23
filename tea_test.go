@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"context"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -87,6 +88,28 @@ func TestTeaKill(t *testing.T) {
 			time.Sleep(time.Millisecond)
 			if m.executed.Load() != nil {
 				p.Kill()
+				return
+			}
+		}
+	}()
+
+	if _, err := p.Run(); err != ErrProgramKilled {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
+func TestTeaContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				cancel()
 				return
 			}
 		}
