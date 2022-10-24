@@ -235,8 +235,8 @@ And, of course, check out the [Go Docs][docs].
 We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.technology/@charm)
-* [Slack](https://charm.sh/slack)
+* [The Fediverse](https://mastodon.social/@charmcli)
+* [Discord](https://charm.sh/chat)
 
 ***
 
