@@ -370,7 +370,8 @@ For some Bubble Tea programs in production, see:
 We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.technology/@charm)
+* [The Fediverse](https://mastodon.social/@charmcli)
+* [Discord](https://charm.sh/chat)
 
 ## Acknowledgments
 
@@ -387,10 +388,10 @@ of days past.
 
 [MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
 
-* * *
+***
 
 Part of [Charm](https://charm.sh).
 
 <a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
 
-Charm 热爱开源 • Charm loves open source
+Charm热爱开源 • Charm loves open source
