@@ -11,11 +11,9 @@ The fun, functional and stateful way to build terminal apps. A Go framework
 based on [The Elm Architecture][elm]. Bubble Tea is well-suited for simple and
 complex terminal applications, either inline, full-window, or a mix of both.
 
-<picture>
-  <source media="(max-width: 800px)" srcset="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0">
-  <source media="(min-width: 800px)" width="800" srcset="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0">
-  <img src="https://stuff.charm.sh/bubbletea/bubbletea-example.gif?0" alt="Bubble Tea Example">
-</picture>
+<p>
+    <img src="https://stuff.charm.sh/bubbletea/bubbletea-example.gif" width="100%" alt="Bubble Tea Example">
+</p>
 
 Bubble Tea is in use in production and includes a number of features and
 performance optimizations we’ve added along the way. Among those is a standard
@@ -36,7 +34,7 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
-* * *
+***
 
 ## Tutorial
 
@@ -367,10 +365,11 @@ For some Bubble Tea programs in production, see:
 
 ## Feedback
 
-We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
+We'd love to hear your thoughts on this project. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.technology/@charm)
+* [The Fediverse](https://mastodon.social/@charmcli)
+* [Discord](https://charm.sh/chat)
 
 ## Acknowledgments
 
@@ -387,10 +386,10 @@ of days past.
 
 [MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
 
-* * *
+***
 
 Part of [Charm](https://charm.sh).
 
 <a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
 
-Charm 热爱开源 • Charm loves open source
+Charm热爱开源 • Charm loves open source

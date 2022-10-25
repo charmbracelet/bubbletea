@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"context"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -106,6 +107,28 @@ func TestTeaKill(t *testing.T) {
 	}
 }
 
+func TestTeaContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				cancel()
+				return
+			}
+		}
+	}()
+
+	if _, err := p.Run(); err != ErrProgramKilled {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
 func TestTeaBatchMsg(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
@@ -117,7 +140,7 @@ func TestTeaBatchMsg(t *testing.T) {
 	m := &testModel{}
 	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
 	go func() {
-		p.Send(batchMsg{inc, inc})
+		p.Send(BatchMsg{inc, inc})
 
 		for {
 			time.Sleep(time.Millisecond)
