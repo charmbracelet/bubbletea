@@ -34,7 +34,7 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
-* * *
+***
 
 ## Tutorial
 
@@ -365,7 +365,7 @@ For some Bubble Tea programs in production, see:
 
 ## Feedback
 
-We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
+We'd love to hear your thoughts on this project. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.social/@charmcli)
