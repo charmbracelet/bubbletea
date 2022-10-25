@@ -17,6 +17,8 @@ const (
 	// defaultFramerate specifies the maximum interval at which we should
 	// update the view.
 	defaultFramerate = time.Second / 60
+
+	maxFPS = 120
 )
 
 // standardRenderer is a framerate-based terminal renderer, updating the view
@@ -54,12 +56,15 @@ type standardRenderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out *termenv.Output, useANSICompressor bool) renderer {
+func newRenderer(out *termenv.Output, useANSICompressor bool, framerate time.Duration) renderer {
+	if framerate == 0 {
+		framerate = defaultFramerate
+	}
 	r := &standardRenderer{
 		out:                out,
 		mtx:                &sync.Mutex{},
 		done:               make(chan struct{}),
-		framerate:          defaultFramerate,
+		framerate:          framerate,
 		useANSICompressor:  useANSICompressor,
 		queuedMessageLines: []string{},
 	}

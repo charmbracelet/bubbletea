@@ -3,6 +3,7 @@ package tea
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/muesli/termenv"
 )
@@ -198,5 +199,16 @@ func WithANSICompressor() ProgramOption {
 func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 	return func(p *Program) {
 		p.filter = filter
+	}
+}
+
+// WithMaxFPS sets a custom maximum FPS at which we should
+// update the view.
+func WithMaxFPS(fps uint) ProgramOption {
+	if fps > maxFPS {
+		fps = maxFPS
+	}
+	return func(p *Program) {
+		p.framerate = time.Second / time.Duration(fps)
 	}
 }
