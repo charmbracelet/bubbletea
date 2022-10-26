@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"regexp"
 	"testing"
 	"time"
 
@@ -23,7 +24,9 @@ func TestApp(t *testing.T) {
 			})
 		}),
 		teatest.WithRequiredOutputChecker(func(out []byte) {
-			teatest.RequireRegexpOutput(t, out, `This program will exit in \d+ seconds`)
+			if !regexp.MustCompile(`This program will exit in \d+ seconds`).Match(out) {
+				t.Fatalf("output does not match the given regular expression: %s", string(out))
+			}
 			teatest.RequireEqualOutput(t, out)
 		}),
 		teatest.WithValidateFinalModel(func(mm tea.Model) error {
