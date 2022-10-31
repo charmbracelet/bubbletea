@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -129,7 +128,7 @@ func max(a, b int) int {
 
 func main() {
 	// Load some text for our viewport
-	content, err := ioutil.ReadFile("artichoke.md")
+	content, err := os.ReadFile("artichoke.md")
 	if err != nil {
 		fmt.Println("could not load file:", err)
 		os.Exit(1)

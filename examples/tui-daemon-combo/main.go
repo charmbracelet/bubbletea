@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -41,7 +41,7 @@ func main() {
 		opts = []tea.ProgramOption{tea.WithoutRenderer()}
 	} else {
 		// If we're in TUI mode, discard log output
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 
 	p := tea.NewProgram(newModel(), opts...)
