@@ -23,7 +23,7 @@ type Program interface {
 
 // TestModelOptions defines all options available to the test function.
 type TestModelOptions struct {
-	interact      func(p Program, in io.Writer)
+	interact      func(p Program, out io.Reader)
 	assert        func(out []byte)
 	validateModel func(m tea.Model) error
 	size          tea.WindowSizeMsg
@@ -33,7 +33,7 @@ type TestModelOptions struct {
 type TestOption func(opts *TestModelOptions)
 
 // WithProgramInteractions ...
-func WithProgramInteractions(fn func(p Program, in io.Writer)) TestOption {
+func WithProgramInteractions(fn func(p Program, out io.Reader)) TestOption {
 	return func(opts *TestModelOptions) {
 		opts.interact = fn
 	}
@@ -102,7 +102,7 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	}
 	// run the user interactions and then force a quit
 	if opts.interact != nil {
-		opts.interact(p, safe(&in))
+		opts.interact(p, &out)
 	}
 
 	// time.Sleep(100 * time.Millisecond)
