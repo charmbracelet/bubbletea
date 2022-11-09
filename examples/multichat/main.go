@@ -29,23 +29,23 @@ const (
 	port = 23234
 )
 
-// App contains a wish server and the list of running programs
-type App struct {
+// app contains a wish server and the list of running programs
+type app struct {
 	*ssh.Server
-	Programs []*tea.Program
+	progs []*tea.Program
 }
 
-// Send dispatches a message to all running programs
-func (a *App) Send(msg tea.Msg) {
-	for _, p := range a.Programs {
+// send dispatches a message to all running programs
+func (a *app) send(msg tea.Msg) {
+	for _, p := range a.progs {
 		// this has to run as a goroutine to avoir a deadlock
 		go p.Send(msg)
 	}
 	fmt.Println(msg)
 }
 
-func NewApp() *App {
-	a := new(App)
+func newApp() *app {
+	a := new(app)
 
 	s, err := wish.NewServer(
 		wish.WithAddress(fmt.Sprintf("%s:%d", host, port)),
@@ -64,7 +64,7 @@ func NewApp() *App {
 	return a
 }
 
-func (a *App) Start() {
+func (a *app) Start() {
 	var err error
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -84,7 +84,7 @@ func (a *App) Start() {
 	}
 }
 
-func (a *App) ProgramHandler(s ssh.Session) *tea.Program {
+func (a *app) ProgramHandler(s ssh.Session) *tea.Program {
 	// vérifier la validité de la session
 	_, _, active := s.Pty()
 	if !active {
@@ -92,28 +92,33 @@ func (a *App) ProgramHandler(s ssh.Session) *tea.Program {
 	}
 
 	model := initialModel()
-	model.App = a
+	model.app = a
+	model.id = fmt.Sprintf("%p", &model)
 
 	p := tea.NewProgram(model, tea.WithOutput(s), tea.WithInput(s))
-	a.Programs = append(a.Programs, p)
+	a.progs = append(a.progs, p)
 
 	return p
 }
 
 func main() {
-	app := NewApp()
+	app := newApp()
 	app.Start()
 }
 
 type (
 	errMsg  error
-	chatMsg string
+	chatMsg struct {
+		id   string
+		text string
+	}
 )
 
 type model struct {
-	*App
+	*app
 	viewport    viewport.Model
 	messages    []string
+	id          string
 	textarea    textarea.Model
 	senderStyle lipgloss.Style
 	err         error
@@ -170,12 +175,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
 		case tea.KeyEnter:
-			m.App.Send(chatMsg(m.textarea.Value()))
+			m.app.send(chatMsg{
+				id:   m.id,
+				text: m.textarea.Value(),
+			})
 			m.textarea.Reset()
 		}
 
 	case chatMsg:
-		m.messages = append(m.messages, string(msg))
+		m.messages = append(m.messages, m.senderStyle.Render(msg.id)+": "+msg.text)
 		m.viewport.SetContent(strings.Join(m.messages, "\n"))
 		m.viewport.GotoBottom()
 
