@@ -29,16 +29,17 @@ const (
 	port = 23234
 )
 
-// App contient le serveur wish et l'état partagé
+// App contains a wish server and the list of running programs
 type App struct {
 	*ssh.Server
 	Programs []*tea.Program
 }
 
-// Send envoit un tea.Msg a tous les clients du serveur wish
+// Send dispatches a message to all running programs
 func (a *App) Send(msg tea.Msg) {
 	for _, p := range a.Programs {
-		go p.Send(msg) // dans une goroutine pour éviter un deadlock
+		// this has to run as a goroutine to avoir a deadlock
+		go p.Send(msg)
 	}
 	fmt.Println(msg)
 }
@@ -87,7 +88,7 @@ func (a *App) ProgramHandler(s ssh.Session) *tea.Program {
 	// vérifier la validité de la session
 	_, _, active := s.Pty()
 	if !active {
-		wish.Fatalln(s, "terminal inactif")
+		wish.Fatalln(s, "terminal is not active")
 	}
 
 	model := initialModel()
@@ -104,10 +105,9 @@ func main() {
 	app.Start()
 }
 
-type chatMsg string
-
 type (
-	errMsg error
+	errMsg  error
+	chatMsg string
 )
 
 type model struct {
