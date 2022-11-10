@@ -53,10 +53,9 @@ func TestAppInteractive(t *testing.T) {
 				t.Fatalf("output does not match: expected %q", string(bts))
 			}
 
-			time.Sleep(time.Second)
-			if bts := readBts(t, out); !bytes.Contains(bts, []byte("This program will exit in 8 seconds")) {
-				t.Fatalf("output does not match: expected %q", string(bts))
-			}
+			teatest.WaitFor(t, out, func(out []byte) bool {
+				return bytes.Contains(out, []byte("This program will exit in 7 seconds"))
+			}, 5*time.Second, time.Second)
 
 			p.Send(tea.KeyMsg{
 				Type: tea.KeyEnter,
@@ -64,8 +63,8 @@ func TestAppInteractive(t *testing.T) {
 		}),
 		teatest.WithValidateFinalModel(func(mm tea.Model) error {
 			m := mm.(model)
-			if m != 8 {
-				return fmt.Errorf("expected model to be 8, was %d", m)
+			if m != 7 {
+				return fmt.Errorf("expected model to be 7, was %d", m)
 			}
 			return nil
 		}),

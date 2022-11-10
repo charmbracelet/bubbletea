@@ -12,6 +12,7 @@ import (
 	"sync"
 	"syscall"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -61,6 +62,29 @@ func WithInitialTermSize(x, y int) TestOption {
 			Height: y,
 		}
 	}
+}
+
+// WaitFor keeps reading from r until the condition matches, trying again every
+// interval, for as long as duration.
+func WaitFor(
+	tb testing.TB,
+	r io.Reader,
+	condition func(bts []byte) bool,
+	duration, interval time.Duration,
+) {
+	tb.Helper()
+	var b bytes.Buffer
+	start := time.Now()
+	for time.Since(start) <= duration {
+		if _, err := io.ReadAll(io.TeeReader(r, &b)); err != nil {
+			tb.Fatal("WaitFor:", err)
+		}
+		if condition(b.Bytes()) {
+			return
+		}
+		time.Sleep(interval)
+	}
+	tb.Fatalf("WaitFor: condition not met in time")
 }
 
 // TestModel tests a given model with the given interactions and assertions.
