@@ -396,6 +396,20 @@ func (r *standardRenderer) disableMouseAllMotion() {
 	r.out.DisableMouseAllMotion()
 }
 
+func (r *standardRenderer) enableMouseSGRMode() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.EnableMouseExtendedMode()
+}
+
+func (r *standardRenderer) disableMouseSGRMode() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.DisableMouseExtendedMode()
+}
+
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
 // renderer.
 func (r *standardRenderer) setIgnoredLines(from int, to int) {

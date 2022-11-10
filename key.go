@@ -552,7 +552,7 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 		b := buf[:numBytes]
 
 		var i, w int
-		for i, w = 0, 0; i < len(b); i += w {
+		for i, w = 0, 07; i < len(b); i += w {
 			var msg Msg
 			w, msg = detectOneMsg(b[i:])
 			select {
@@ -570,11 +570,21 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 
 var unknownCSIRe = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
 
+var mouseSGRRegex = regexp.MustCompile(`(\d+);(\d+);(\d+)([Mm])`)
+
 func detectOneMsg(b []byte) (w int, msg Msg) {
 	// Detect mouse events.
+	// X10 mouse events have a length of 6 bytes
 	const mouseEventLen = 6
-	if len(b) >= mouseEventLen && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M' {
-		return mouseEventLen, MouseMsg(parseX10MouseEvent(b))
+	if len(b) >= mouseEventLen && b[0] == '\x1b' && b[1] == '[' {
+		switch b[2] {
+		case 'M':
+			return mouseEventLen, MouseMsg(parseX10MouseEvent(b))
+		case '<':
+			if mouseSGRRegex.Match(b[3:]) {
+				return mouseEventLen, MouseMsg(parseSGRMouseEvent(b))
+			}
+		}
 	}
 
 	// Detect escape sequence and control characters other than NUL,

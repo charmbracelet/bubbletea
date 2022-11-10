@@ -17,3 +17,5 @@ func (n nilRenderer) enableMouseCellMotion()  {}
 func (n nilRenderer) disableMouseCellMotion() {}
 func (n nilRenderer) enableMouseAllMotion()   {}
 func (n nilRenderer) disableMouseAllMotion()  {}
+func (n nilRenderer) enableMouseSGRMode()     {}
+func (n nilRenderer) disableMouseSGRMode()    {}
