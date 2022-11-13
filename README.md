@@ -266,15 +266,21 @@ delve in headless mode and then connect to it:
 
 ```bash
 # Start the debugger
-$ dlv debug --headless .
-API server listening at: 127.0.0.1:34241
+$ dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 .
+API server listening at: 127.0.0.1:43000
 
 # Connect to it from another terminal
-$ dlv connect 127.0.0.1:34241
+$ dlv connect 127.0.0.1:43000
 ```
 
-Note that the default port used will vary on your system and per run, so
-actually watch out what address the first `dlv` run tells you to connect to.
+If you do not explicitly supply the `--listen` flag, the port used will vary
+per run, so passing this in makes the debugger easier to use from a script 
+or your IDE of choice. 
+
+Additionally, we pass in `--api-version=2` because delve defaults to version 1 
+for backwards compatibility reasons. However, delve recommends using version 2 
+for all new development and some clients may no longer work with version 1.
+For more information, see the [Delve documentation](https://github.com/go-delve/delve/tree/master/Documentation/api).
 
 ### Logging Stuff
 
