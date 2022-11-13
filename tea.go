@@ -345,6 +345,7 @@ func (p *Program) Run() (Model, error) {
 		if err != nil {
 			return p.initialModel, err
 		}
+		defer f.Close() //nolint:errcheck
 		p.input = f
 
 	case !p.startupOptions.has(withCustomInput):
@@ -364,11 +365,8 @@ func (p *Program) Run() (Model, error) {
 		if err != nil {
 			return p.initialModel, err
 		}
-		p.input = f
-	}
-
-	if f, ok := p.input.(io.ReadCloser); ok {
 		defer f.Close() //nolint:errcheck
+		p.input = f
 	}
 
 	// Handle signals.
