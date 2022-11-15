@@ -55,7 +55,7 @@ func TestAppInteractive(t *testing.T) {
 
 			teatest.WaitFor(t, out, func(out []byte) bool {
 				return bytes.Contains(out, []byte("This program will exit in 7 seconds"))
-			}, 5*time.Second, time.Second)
+			}, teatest.WithDuration(5*time.Second))
 
 			p.Send(tea.KeyMsg{
 				Type: tea.KeyEnter,

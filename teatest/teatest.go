@@ -64,27 +64,62 @@ func WithInitialTermSize(x, y int) TestOption {
 	}
 }
 
-// WaitFor keeps reading from r until the condition matches, trying again every
-// interval, for as long as duration.
+// WaitingForContext is the context for a WaitFor.
+type WaitingForContext struct {
+	Duration      time.Duration
+	CheckInterval time.Duration
+}
+
+// WaitForOption changes how a WaitFor will behave.
+type WaitForOption func(*WaitingForContext)
+
+// WithCheckInterval sets how much time a WaitFor should sleep between every
+// check.
+func WithCheckInterval(d time.Duration) WaitForOption {
+	return func(wf *WaitingForContext) {
+		wf.CheckInterval = d
+	}
+}
+
+// WithDuration sets how much time a WaitFor will wait for the condition.
+func WithDuration(d time.Duration) WaitForOption {
+	return func(wf *WaitingForContext) {
+		wf.Duration = d
+	}
+}
+
+// WaitFor keeps reading from r until the condition matches.
+// Default duration is 1s, default check interval is 50ms.
+// These defaults can be changed with WithDuration and WithCheckInterval.
 func WaitFor(
 	tb testing.TB,
 	r io.Reader,
 	condition func(bts []byte) bool,
-	duration, interval time.Duration,
+	options ...WaitForOption,
 ) {
 	tb.Helper()
+
+	wf := WaitingForContext{
+		Duration:      time.Second,
+		CheckInterval: 50 * time.Millisecond,
+	}
+
+	for _, opt := range options {
+		opt(&wf)
+	}
+
 	var b bytes.Buffer
 	start := time.Now()
-	for time.Since(start) <= duration {
+	for time.Since(start) <= wf.Duration {
 		if _, err := io.ReadAll(io.TeeReader(r, &b)); err != nil {
 			tb.Fatal("WaitFor:", err)
 		}
 		if condition(b.Bytes()) {
 			return
 		}
-		time.Sleep(interval)
+		time.Sleep(wf.CheckInterval)
 	}
-	tb.Fatalf("WaitFor: condition not met in time")
+	tb.Fatalf("WaitFor: condition not met after %s", wf.Duration)
 }
 
 // TestModel tests a given model with the given interactions and assertions.
