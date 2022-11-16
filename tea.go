@@ -123,6 +123,7 @@ type Program struct {
 	// below.
 	windowsStdin *os.File //nolint:golint,structcheck,unused
 	initMtx      sync.Mutex
+	initDone     bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -143,6 +144,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		input:        os.Stdin,
 		initMtx:      waitForWindowsSizeMsgMtx,
 		msgs:         make(chan Msg),
+		initDone:     false,
 	}
 
 	// Apply all options to the program.
@@ -330,6 +332,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case WindowSizeMsg:
 				// mark window size message as received, allowing all other messages to flow now
 				p.initMtx.Unlock()
+				p.initDone = true
 			}
 			cmds <- cmd                    // process command (if any)
 			p.renderer.write(model.View()) // send view to renderer
@@ -513,12 +516,16 @@ func (p *Program) Send(msg Msg) {
 		case p.msgs <- msg:
 		}
 	default:
-		p.initMtx.Lock()
+		if !p.initDone {
+			p.initMtx.Lock()
+		}
 		select {
 		case <-p.ctx.Done():
 		case p.msgs <- msg:
 		}
-		p.initMtx.Unlock()
+		if !p.initDone {
+			p.initMtx.Unlock()
+		}
 	}
 }
 
