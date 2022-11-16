@@ -122,6 +122,7 @@ type Program struct {
 	// as this value only comes into play on Windows, hence the ignore comment
 	// below.
 	windowsStdin *os.File //nolint:golint,structcheck,unused
+	initMtx      sync.Mutex
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -135,9 +136,12 @@ type quitMsg struct{}
 
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
+	var waitForWindowsSizeMsgMtx sync.Mutex
+	waitForWindowsSizeMsgMtx.Lock()
 	p := &Program{
 		initialModel: model,
 		input:        os.Stdin,
+		initMtx:      waitForWindowsSizeMsgMtx,
 		msgs:         make(chan Msg),
 	}
 
@@ -322,6 +326,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
+			switch msg.(type) {
+			case WindowSizeMsg:
+				// mark window size message as received, allowing all other messages to flow now
+				p.initMtx.Unlock()
+			}
 			cmds <- cmd                    // process command (if any)
 			p.renderer.write(model.View()) // send view to renderer
 		}
@@ -497,9 +506,19 @@ func (p *Program) Start() error {
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
 func (p *Program) Send(msg Msg) {
-	select {
-	case <-p.ctx.Done():
-	case p.msgs <- msg:
+	switch msg.(type) {
+	case WindowSizeMsg:
+		select {
+		case <-p.ctx.Done():
+		case p.msgs <- msg:
+		}
+	default:
+		p.initMtx.Lock()
+		select {
+		case <-p.ctx.Done():
+		case p.msgs <- msg:
+		}
+		p.initMtx.Unlock()
 	}
 }
 
