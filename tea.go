@@ -313,6 +313,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						p.Send(cmd())
 					}
 				}()
+
+			case setWindowTitleMsg:
+				p.SetWindowTitle(string(msg))
 			}
 
 			// Process internal messages for the renderer.
