@@ -24,35 +24,11 @@ type Program interface {
 
 // TestModelOptions defines all options available to the test function.
 type TestModelOptions struct {
-	interact      func(p Program, out io.Reader)
-	assert        func(out []byte)
-	validateModel func(m tea.Model) error
-	size          tea.WindowSizeMsg
+	size tea.WindowSizeMsg
 }
 
 // TestOption is a functional option.
 type TestOption func(opts *TestModelOptions)
-
-// WithProgramInteractions ...
-func WithProgramInteractions(fn func(p Program, out io.Reader)) TestOption {
-	return func(opts *TestModelOptions) {
-		opts.interact = fn
-	}
-}
-
-// WithRequiredOutputChecker ...
-func WithRequiredOutputChecker(fn func(out []byte)) TestOption {
-	return func(opts *TestModelOptions) {
-		opts.assert = fn
-	}
-}
-
-// WithValidateFinalModel ...
-func WithValidateFinalModel(fn func(m tea.Model) error) TestOption {
-	return func(opts *TestModelOptions) {
-		opts.validateModel = fn
-	}
-}
 
 // WithInitialTermSize ...
 func WithInitialTermSize(x, y int) TestOption {
@@ -122,33 +98,51 @@ func WaitFor(
 	tb.Fatalf("WaitFor: condition not met after %s", wf.Duration)
 }
 
-// TestModel tests a given model with the given interactions and assertions.
-func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
-	var in bytes.Buffer
-	var out bytes.Buffer
+// TestModel is a model that is being tested.
+type TestModel struct {
+	program *tea.Program
 
-	p := tea.NewProgram(
+	in  *bytes.Buffer
+	out *bytes.Buffer
+
+	modelCh chan tea.Model
+	model   tea.Model
+
+	done   sync.Once
+	doneCh chan bool
+}
+
+// NewTestModel makes a new TestModel which can be used for tests.
+func NewTestModel(tb testing.TB, m tea.Model, options ...TestOption) *TestModel {
+	tm := &TestModel{
+		in:      bytes.NewBuffer(nil),
+		out:     bytes.NewBuffer(nil),
+		modelCh: make(chan tea.Model, 1),
+		doneCh:  make(chan bool, 1),
+	}
+
+	tm.program = tea.NewProgram(
 		m,
-		tea.WithInput(&in),
-		tea.WithOutput(safe(&out)),
+		tea.WithInput(tm.in),
+		tea.WithOutput(safe(tm.out)),
 		tea.WithoutSignals(),
 	)
 
 	interruptions := make(chan os.Signal, 1)
 	signal.Notify(interruptions, syscall.SIGINT)
-	returnedModel := make(chan tea.Model, 1)
 	go func() {
-		m, err := p.Run()
+		m, err := tm.program.Run()
 		if err != nil {
 			tb.Fatalf("app failed: %s", err)
 		}
-		returnedModel <- m
+		tm.doneCh <- true
+		tm.modelCh <- m
 	}()
 	go func() {
 		<-interruptions
 		signal.Stop(interruptions)
 		tb.Log("interrupted")
-		p.Quit()
+		tm.program.Quit()
 	}()
 
 	var opts TestModelOptions
@@ -157,39 +151,51 @@ func TestModel(tb testing.TB, m tea.Model, options ...TestOption) {
 	}
 
 	if opts.size.Width != 0 {
-		p.Send(opts.size)
+		tm.program.Send(opts.size)
 	}
-	// run the user interactions and then force a quit
-	if opts.interact != nil {
-		opts.interact(p, &out)
-	}
+	return tm
+}
 
-	// time.Sleep(100 * time.Millisecond)
-	p.Quit()
-	p.Wait()
+func (tm *TestModel) waitDone() {
+	tm.done.Do(func() {
+		<-tm.doneCh
+	})
+}
 
-	if err := p.ReleaseTerminal(); err != nil {
-		tb.Fatalf("could not restore terminal: %v", err)
-	}
-
-	// wait for the program to finish and run assertions
-	m = <-returnedModel
-
-	if opts.validateModel != nil {
-		if err := opts.validateModel(m); err != nil {
-			tb.Fatalf("failed to validate model: %v", err)
-		}
-	}
-
-	if opts.assert != nil {
-		opts.assert(out.Bytes())
+// FinalModel returns the resulting model, resulting from program.Run().
+// This method only returns once the program has finished running.
+func (tm *TestModel) FinalModel() tea.Model {
+	tm.waitDone()
+	select {
+	case m := <-tm.modelCh:
+		tm.model = m
+		return tm.model
+	default:
+		return tm.model
 	}
 }
 
-// TypeText types the given text into the given program.
-func TypeText(p Program, s string) {
+// Output returns the program's output io.Reader.
+func (tm *TestModel) Output() io.Reader {
+	return tm.out
+}
+
+// Send sends messages to the underlying program.
+func (tm *TestModel) Send(m tea.Msg) {
+	tm.program.Send(m)
+}
+
+// Quit quits the program and releases the terminal.
+func (tm *TestModel) Quit() error {
+	tm.program.Quit()
+	tm.program.Wait()
+	return tm.program.ReleaseTerminal()
+}
+
+// Type types the given text into the given program.
+func (tm *TestModel) Type(s string) {
 	for _, c := range []byte(s) {
-		p.Send(tea.KeyMsg{
+		tm.program.Send(tea.KeyMsg{
 			Runes: []rune{rune(c)},
 			Type:  tea.KeyRunes,
 		})
