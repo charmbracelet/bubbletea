@@ -318,6 +318,7 @@ For some Bubble Tea programs in production, see:
 
 * [AT CLI](https://github.com/daskycodes/at_cli): a utility for executing AT Commands via serial port connections
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
+* [brows](https://github.com/rubysolo/brows): A CLI GitHub release browser
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
 * [chezmoi](https://github.com/twpayne/chezmoi): manage your dotfiles across multiple machines, securely
