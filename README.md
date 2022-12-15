@@ -326,6 +326,7 @@ For some Bubble Tea programs in production, see:
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
+* [enola](https://github.com/sherlock-project/enola): 🔎 Hunt down social media accounts by username across social networks
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
