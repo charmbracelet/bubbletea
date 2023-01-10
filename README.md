@@ -344,6 +344,7 @@ For some Bubble Tea programs in production, see:
 * [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): Multiplatform terminal mandelbrot set explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
+* [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): BBS-style TUI client for Discourse, Lemmy, Lobsters and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): Note viewer and manager
 * [pathos](https://github.com/chip/pathos): pathos - CLI for editing a PATH env variable
 * [portal](https://github.com/ZinoKader/portal): securely send transfer between computers
