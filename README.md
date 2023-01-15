@@ -324,6 +324,7 @@ For some Bubble Tea programs in production, see:
 * [chezmoi](https://github.com/twpayne/chezmoi): manage your dotfiles across multiple machines, securely
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in your terminal
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
+* [cLive](https://github.com/koki-develop/clive): Automates terminal operations and lets you view them live via a browser
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
