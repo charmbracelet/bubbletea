@@ -539,6 +539,12 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 	}
 }
 
+// FrameRate sets frame rate of program
+// if not set; default will be used
+func (r *standardRenderer) frameRate(d time.Duration) {
+	r.framerate = d
+}
+
 // HIGH-PERFORMANCE RENDERING STUFF
 
 type syncScrollAreaMsg struct {

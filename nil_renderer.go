@@ -1,5 +1,7 @@
 package tea
 
+import "time"
+
 type nilRenderer struct{}
 
 func (n nilRenderer) start()                  {}
@@ -17,3 +19,4 @@ func (n nilRenderer) enableMouseCellMotion()  {}
 func (n nilRenderer) disableMouseCellMotion() {}
 func (n nilRenderer) enableMouseAllMotion()   {}
 func (n nilRenderer) disableMouseAllMotion()  {}
+func (n nilRenderer) frameRate(time.Duration) {}

@@ -1,5 +1,7 @@
 package tea
 
+import "time"
+
 // renderer is the interface for Bubble Tea renderers.
 type renderer interface {
 	// Start the renderer.
@@ -50,6 +52,10 @@ type renderer interface {
 
 	// DisableMouseAllMotion disables All Motion mouse tracking.
 	disableMouseAllMotion()
+
+	// FrameRate sets frame rate of program
+	// if not set; default will be used
+	frameRate(time.Duration)
 }
 
 // repaintMsg forces a full repaint.
