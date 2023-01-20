@@ -310,6 +310,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go func() {
 					// Execute commands one at a time, in order.
 					for _, cmd := range msg {
+						if cmd == nil {
+							continue
+						}
+
 						p.Send(cmd())
 					}
 				}()
