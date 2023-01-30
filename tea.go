@@ -459,11 +459,14 @@ func (p *Program) Run() (Model, error) {
 	// Tear down.
 	p.cancel()
 
-	// Wait for input loop to finish.
-	if p.cancelReader.Cancel() {
-		p.waitForReadLoop()
+	// Check if the cancel reader has been setup before waiting and closing.
+	if p.cancelReader != nil {
+		// Wait for input loop to finish.
+		if p.cancelReader.Cancel() {
+			p.waitForReadLoop()
+		}
+		_ = p.cancelReader.Close()
 	}
-	_ = p.cancelReader.Close()
 
 	// Wait for all handlers to finish.
 	handlers.shutdown()
