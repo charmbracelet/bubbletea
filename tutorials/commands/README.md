@@ -176,7 +176,7 @@ func main() {
 }
 ```
 
-And that's that. There's one more thing you that is helpful to know about
+And that's that. There's one more thing that is helpful to know about
 `Cmd`s, though.
 
 ## One More Thing About Commands
