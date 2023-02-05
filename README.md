@@ -354,6 +354,7 @@ For some Bubble Tea programs in production, see:
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
 * [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): Slurm workload manager TUI
 * [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
+* [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike solitaire for the terminal
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
 * [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
 * [sttr](https://github.com/abhimanyu003/sttr): run various text transformations
