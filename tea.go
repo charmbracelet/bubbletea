@@ -24,6 +24,7 @@ import (
 	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
+	"golang.org/x/sync/errgroup"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
@@ -313,8 +314,22 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						if cmd == nil {
 							continue
 						}
-
-						p.Send(cmd())
+						msg := cmd()
+						if batchMsg, ok := msg.(BatchMsg); ok {
+							g, _ := errgroup.WithContext(p.ctx)
+							for _, cmd := range batchMsg {
+								cmd := cmd
+								g.Go(func() error {
+									p.Send(cmd())
+									return nil
+								})
+							}
+							//nolint:errcheck
+							g.Wait() // wait for all commands from batch msg to finish
+							continue
+						} else {
+							p.Send(msg)
+						}
 					}
 				}()
 			}
