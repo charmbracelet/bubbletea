@@ -13,9 +13,12 @@ type model struct{}
 
 func (m model) Init() tea.Cmd {
 	return tea.Sequence(
-		tea.Println("A"),
-		tea.Println("B"),
-		tea.Println("C"),
+		tea.Batch(
+			tea.Println("A"),
+			tea.Println("B"),
+			tea.Println("C"),
+		),
+		tea.Println("Z"),
 		tea.Quit,
 	)
 }
