@@ -316,58 +316,58 @@ your program in another window.
 
 For some Bubble Tea programs in production, see:
 
-* [AT CLI](https://github.com/daskycodes/at_cli): a utility for executing AT Commands via serial port connections
+* [AT CLI](https://github.com/daskycodes/at_cli): execute AT Commands via serial port connections
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
-* [brows](https://github.com/rubysolo/brows): A CLI GitHub release browser
+* [brows](https://github.com/rubysolo/brows): a GitHub release browser
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
-* [chezmoi](https://github.com/twpayne/chezmoi): manage your dotfiles across multiple machines, securely
-* [chtop](https://github.com/chhetripradeep/chtop): monitor your clickhouse node without leaving terminal
-* [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in your terminal
-* [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone for your terminal
-* [cLive](https://github.com/koki-develop/clive): Automates terminal operations and lets you view them live via a browser
+* [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
+* [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving terminal
+* [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
+* [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone
+* [cLive](https://github.com/koki-develop/clive): automate terminal operations and view them live in a browser
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
-* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
-* [enola](https://github.com/sherlock-project/enola): 🔎 Hunt down social media accounts by username across social networks
+* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53: expose your EC2 quickly, securely and privately
+* [enola](https://github.com/sherlock-project/enola): hunt down social media accounts by username across social networks
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
-* [fztea](https://github.com/jon4hz/fztea): connect to your Flipper's UI over serial or make it accessible via SSH
-* [gambit](https://github.com/maaslalani/gambit): play chess in the terminal
+* [fztea](https://github.com/jon4hz/fztea): a Flipper Zero TUI
+* [gambit](https://github.com/maaslalani/gambit): chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
-* [gh-b](https://github.com/joaom00/gh-b): GitHub CLI extension to easily manage your branches
-* [gh-dash](https://www.github.com/dlvhdr/gh-dash): GitHub CLI extension to display a dashboard of PRs and issues
+* [gh-b](https://github.com/joaom00/gh-b): a GitHub CLI extension for managing branches
+* [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
-* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser and online markdown stash
+* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
-* [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): Multiplatform terminal mandelbrot set explorer
+* [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): a multiplatform terminal mandelbrot set explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
-* [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): BBS-style TUI client for Discourse, Lemmy, Lobsters and Hacker News
-* [Noted](https://github.com/torbratsberg/noted): Note viewer and manager
-* [pathos](https://github.com/chip/pathos): pathos - CLI for editing a PATH env variable
-* [portal](https://github.com/ZinoKader/portal): securely send transfer between computers
-* [redis-viewer](https://github.com/SaltFishPr/redis-viewer): browse Redis databases
-* [sku](https://github.com/fedeztk/sku): a simple TUI for playing sudoku inside the terminal
+* [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
+* [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
+* [pathos](https://github.com/chip/pathos): pathos - a PATH env variable editor
+* [portal](https://github.com/ZinoKader/portal): secure transfers between computers
+* [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis databases browser
+* [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
-* [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): Slurm workload manager TUI
+* [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): a Slurm workload manager TUI
 * [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
-* [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike solitaire for the terminal
+* [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike Solitaire for the terminal
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
 * [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
-* [sttr](https://github.com/abhimanyu003/sttr): run various text transformations
+* [sttr](https://github.com/abhimanyu003/sttr): a general-purpose text transformer
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
-* [ticker](https://github.com/achannarasappa/ticker): a terminal stock watcher and stock position tracker
+* [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal][portal])
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
-* [wander](https://github.com/robinovitch61/wander): HashiCorp Nomad terminal client
+* [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
 ## Feedback
