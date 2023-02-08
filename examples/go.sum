@@ -7,13 +7,12 @@ github.com/aymanbagabas/go-osc52 v1.2.1 h1:q2sWUyDcozPLcLabEMd+a+7Ea2DitxZVN9hTx
 github.com/aymanbagabas/go-osc52 v1.2.1/go.mod h1:zT8H+Rk4VSabYN90pWyugflM3ZhpTZNC7cASDfUCdT4=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/charmbracelet/bubbles v0.13.1-0.20220815142520-649f78e1fd8b h1:ppafRlD8VXOEqnUPkMvO7et9rpSsKVjUX+K3QG7tAB0=
-github.com/charmbracelet/bubbles v0.13.1-0.20220815142520-649f78e1fd8b/go.mod h1:bbeTiXwPww4M031aGi8UK2HT9RDWoiNibae+1yCMtcc=
+github.com/charmbracelet/bubbles v0.15.0 h1:c5vZ3woHV5W2b8YZI1q7v4ZNQaPetfHuoHzx+56Z6TI=
+github.com/charmbracelet/bubbles v0.15.0/go.mod h1:Y7gSFbBzlMpUDR/XM9MhZI374Q+1p1kluf1uLl8iK74=
 github.com/charmbracelet/glamour v0.6.0 h1:wi8fse3Y7nfcabbbDuwolqTqMQPMnVPeZhDM273bISc=
 github.com/charmbracelet/glamour v0.6.0/go.mod h1:taqWV4swIMMbWALc0m7AfE9JkPSU8om2538k9ITBxOc=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
-github.com/charmbracelet/lipgloss v0.5.0/go.mod h1:EZLha/HbzEt7cYqdFPovlqy5FZPj0xFhg5SaqxScmgs=
 github.com/charmbracelet/lipgloss v0.6.0 h1:1StyZB9vBSOyuZxQUcUwGr17JmojPNm87inij9N3wJY=
 github.com/charmbracelet/lipgloss v0.6.0/go.mod h1:tHh2wr34xcHjC2HCXIlGSG1jaDF0S0atAUvBMP6Ppuk=
 github.com/containerd/console v1.0.3 h1:lIr7SlA5PxZyMV30bDW0MGbiOPXwc63yRuCP0ARubLw=
@@ -53,7 +52,6 @@ github.com/muesli/reflow v0.2.1-0.20210115123740-9e1d0d53df68/go.mod h1:Xk+z4oIW
 github.com/muesli/reflow v0.3.0 h1:IFsN6K9NfGtjeggFP+68I4chLZV2yIKsXJFNZ+eWh6s=
 github.com/muesli/reflow v0.3.0/go.mod h1:pbwTDkVPibjO2kyvBQRBxTWEEGDGq0FlB1BIKtnHY/8=
 github.com/muesli/termenv v0.11.1-0.20220204035834-5ac8409525e0/go.mod h1:Bd5NYQ7pd+SrtBSrSNoBBmXlcY8+Xj4BMJgh8qcZrvs=
-github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739/go.mod h1:Bd5NYQ7pd+SrtBSrSNoBBmXlcY8+Xj4BMJgh8qcZrvs=
 github.com/muesli/termenv v0.13.0/go.mod h1:sP1+uffeLaEYpyOTb8pLCUctGcGLnoFjSn4YJK5e2bc=
 github.com/muesli/termenv v0.14.0 h1:8x9NFfOe8lmIWK4pgy3IfVEy47f+ppe3tUqdPZG2Uy0=
 github.com/muesli/termenv v0.14.0/go.mod h1:kG/pF1E7fh949Xhe156crRUrHNyK221IuGO7Ez60Uc8=
