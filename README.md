@@ -331,7 +331,7 @@ For some Bubble Tea programs in production, see:
 * [enola](https://github.com/sherlock-project/enola): hunt down social media accounts by username across social networks
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
-* [fork-cleaner](https://github.com/caarlos0/fork-cleaner): cleans up old and inactive forks in your GitHub account
+* [fork-cleaner](https://github.com/caarlos0/fork-cleaner): clean up old and inactive forks in your GitHub account
 * [fztea](https://github.com/jon4hz/fztea): a Flipper Zero TUI
 * [gambit](https://github.com/maaslalani/gambit): chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
@@ -342,14 +342,14 @@ For some Bubble Tea programs in production, see:
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
-* [IDNT](https://github.com/r-darwish/idnt): batch software uninstaller
+* [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
 * [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): a multiplatform terminal mandelbrot set explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
-* [pathos](https://github.com/chip/pathos): pathos - a PATH env variable editor
+* [pathos](https://github.com/chip/pathos): a PATH env variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis databases browser
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
@@ -358,12 +358,12 @@ For some Bubble Tea programs in production, see:
 * [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
 * [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike Solitaire for the terminal
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
-* [STTG](https://github.com/wille1101/sttg): teletext client for SVT, Sweden’s national public television station
+* [STTG](https://github.com/wille1101/sttg): a teletext client for SVT, Sweden’s national public television station
 * [sttr](https://github.com/abhimanyu003/sttr): a general-purpose text transformer
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
-* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal][portal])
+* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal][https://github.com/ZinoKader/portal])
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
