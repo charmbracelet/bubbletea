@@ -1,4 +1,4 @@
-module github.com/charmbracelet/bubbletea
+module github.com/hopefulTex/bubbletea
 
 go 1.16
 
