@@ -151,3 +151,14 @@ func WithANSICompressor() ProgramOption {
 		p.startupOptions |= withANSICompressor
 	}
 }
+
+// UnsafeOutput forces ANSI sequences to be output even if the program is not
+// a TTY.
+//
+// This should be used for things like displaying TUI when the program is the
+// source of a pipe or being output to a file.
+func UnsafeOutput() ProgramOption {
+	return func(p *Program) {
+		p.output = termenv.NewOutput(p.output, termenv.WithUnsafe())
+	}
+}
