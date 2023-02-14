@@ -53,11 +53,11 @@ func ccnValidator(s string) error {
 	// It should include 16 integers and 3 spaces
 	// Since typing past 19 is intuitively disabled, we don't *really* need a msg
 	// This is brings ccnValidator in line with the other validators
-	if len(s) > 16+3 {
-		return fmt.Errorf("")
-	}
 	if len(s) == 0 {
 		return fmt.Errorf("CCN cannot be blank")
+	}
+	if len(s) > 16+3 {
+		return fmt.Errorf("")
 	}
 
 	// The last digit should be a number unless it is a multiple of 4 in which
