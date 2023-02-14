@@ -29,14 +29,19 @@ const (
 	cvv
 )
 
+var (
+	submitting bool
+)
+
 const (
 	hotPink  = lipgloss.Color("#FF06B7")
 	darkGray = lipgloss.Color("#767676")
+	errorRed = lipgloss.Color("#FF2222")
 )
 
 var (
 	inputStyle    = lipgloss.NewStyle().Foreground(hotPink)
-	errorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0000"))
+	errorStyle    = lipgloss.NewStyle().Foreground(errorRed)
 	continueStyle = lipgloss.NewStyle().Foreground(darkGray)
 )
 
@@ -51,11 +56,16 @@ type model struct {
 func ccnValidator(s string) error {
 	// Credit Card Number should a string less than 20 digits
 	// It should include 16 integers and 3 spaces
+
+	if len(s) == 0 {
+		if submitting {
+			return fmt.Errorf("CCN cannot be blank")
+		}
+		return nil
+	}
+
 	// Since typing past 19 is intuitively disabled, we don't *really* need a msg
 	// This is brings ccnValidator in line with the other validators
-	if len(s) == 0 {
-		return fmt.Errorf("CCN cannot be blank")
-	}
 	if len(s) > 16+3 {
 		return fmt.Errorf("")
 	}
@@ -66,7 +76,7 @@ func ccnValidator(s string) error {
 		return fmt.Errorf("CCN must separate groups with spaces")
 	}
 	if len(s)%5 != 0 && (s[len(s)-1] < '0' || s[len(s)-1] > '9') {
-		return fmt.Errorf("CCN is invalid")
+		return fmt.Errorf("CCN must be numbers seperated by spaces")
 	}
 
 	// The remaining digits should be integers
@@ -80,12 +90,20 @@ func expValidator(s string) error {
 	// The 3 character should be a slash (/)
 	// The rest thould be numbers
 	if len(s) == 0 {
-		return fmt.Errorf("EXP cannot be blank")
+		if submitting {
+			return fmt.Errorf("EXP cannot be blank")
+		}
+		return nil
 	}
+
+	if len(s) >= 2 && s[1] == '/' {
+		return fmt.Errorf("EXP must be two, two-digit numbers seperated by a slash (/)")
+	}
+
 	e := strings.ReplaceAll(s, "/", "")
 	_, err := strconv.ParseInt(e, 10, 64)
 	if err != nil {
-		return fmt.Errorf("EXP is invalid")
+		return fmt.Errorf("EXP must be two, two-digit numbers seperated by a slash (/)")
 	}
 
 	// There should be only one slash and it should be in the 2nd index (3rd character)
@@ -99,11 +117,18 @@ func expValidator(s string) error {
 func cvvValidator(s string) error {
 	// The CVV should be a number of 3 digits
 	if len(s) == 0 {
-		return fmt.Errorf("CVV cannot be blank")
+		if submitting {
+			return fmt.Errorf("CVV cannot be blank")
+		}
+		return nil
+
 	}
 	// All we need to do is check that it is a number
 	_, err := strconv.ParseInt(s, 10, 64)
-	return err
+	if err != nil {
+		return fmt.Errorf("CVV must be a number")
+	}
+	return nil
 }
 
 func initialModel() model {
@@ -146,11 +171,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		submitting = false
 		switch msg.Type {
 		case tea.KeyEnter:
 			if m.focused == len(m.inputs)-1 {
-				return m, tea.Quit
+				return m, nil
 			}
+			submitting = true
 			m.nextInput()
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
@@ -181,9 +208,12 @@ func (m model) View() string {
 	errorString := ""
 	err = m.inputs[m.focused].Err
 	if err == nil {
-		for _, i := range m.inputs {
-			if i.Err != nil {
-				err = i.Err
+		for i, input := range m.inputs {
+			if i > m.focused {
+				break
+			}
+			if input.Err != nil {
+				err = input.Err
 				break
 			}
 		}
