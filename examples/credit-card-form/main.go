@@ -36,6 +36,7 @@ const (
 
 var (
 	inputStyle    = lipgloss.NewStyle().Foreground(hotPink)
+	errorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0000"))
 	continueStyle = lipgloss.NewStyle().Foreground(darkGray)
 )
 
@@ -49,8 +50,13 @@ type model struct {
 func ccnValidator(s string) error {
 	// Credit Card Number should a string less than 20 digits
 	// It should include 16 integers and 3 spaces
+	// Since typing past 19 is intuitively disabled, we don't *really* need a msg
+	// This is brings ccnValidator in line with the other validators
 	if len(s) > 16+3 {
-		return fmt.Errorf("CCN is too long")
+		return fmt.Errorf("")
+	}
+	if len(s) == 0 {
+		return fmt.Errorf("CCN cannot be blank")
 	}
 
 	// The last digit should be a number unless it is a multiple of 4 in which
@@ -88,7 +94,9 @@ func expValidator(s string) error {
 
 func cvvValidator(s string) error {
 	// The CVV should be a number of 3 digits
-	// Since the input will already ensure that the CVV is a string of length 3,
+	if len(s) == 0 {
+		return fmt.Errorf("CVV cannot be blank")
+	}
 	// All we need to do is check that it is a number
 	_, err := strconv.ParseInt(s, 10, 64)
 	return err
@@ -165,6 +173,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
+	var err error
+	errorString := ""
+	for _, i := range m.inputs {
+		if i.Err != nil {
+			err = i.Err
+			break
+		}
+	}
+	if err != nil {
+		errorString = err.Error()
+	}
 	return fmt.Sprintf(
 		` Total: $21.50:
 
@@ -173,7 +192,7 @@ func (m model) View() string {
 
  %s  %s
  %s  %s
-
+ %s
  %s
 `,
 		inputStyle.Width(30).Render("Card Number"),
@@ -182,6 +201,7 @@ func (m model) View() string {
 		inputStyle.Width(6).Render("CVV"),
 		m.inputs[exp].View(),
 		m.inputs[cvv].View(),
+		errorStyle.Render(errorString),
 		continueStyle.Render("Continue ->"),
 	) + "\n"
 }
