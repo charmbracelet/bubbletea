@@ -47,6 +47,7 @@ type model struct {
 }
 
 // Validator functions to ensure valid input
+// Note: Please don't mix runtime errors with your users' errors
 func ccnValidator(s string) error {
 	// Credit Card Number should a string less than 20 digits
 	// It should include 16 integers and 3 spaces
