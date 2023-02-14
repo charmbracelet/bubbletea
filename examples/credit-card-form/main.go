@@ -179,20 +179,18 @@ func (m model) View() string {
 	var err error
 	errorString := ""
 	err = m.inputs[m.focused].Err
-	if err != nil {
-		errorString = err.Error()
-	} else {
+	if err == nil {
 		for _, i := range m.inputs {
 			if i.Err != nil {
 				err = i.Err
 				break
 			}
 		}
-
-		if err != nil {
-			errorString = err.Error()
-		}
 	}
+	if err != nil {
+		errorString = err.Error()
+	}
+
 	return fmt.Sprintf(
 		` Total: $21.50:
 
