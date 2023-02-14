@@ -78,6 +78,9 @@ func ccnValidator(s string) error {
 func expValidator(s string) error {
 	// The 3 character should be a slash (/)
 	// The rest thould be numbers
+	if len(s) == 0 {
+		return fmt.Errorf("EXP cannot be blank")
+	}
 	e := strings.ReplaceAll(s, "/", "")
 	_, err := strconv.ParseInt(e, 10, 64)
 	if err != nil {
@@ -86,7 +89,7 @@ func expValidator(s string) error {
 
 	// There should be only one slash and it should be in the 2nd index (3rd character)
 	if len(s) >= 3 && (strings.Index(s, "/") != 2 || strings.LastIndex(s, "/") != 2) {
-		return fmt.Errorf("EXP is invalid")
+		return fmt.Errorf("EXP month and year must be separated by a /")
 	}
 
 	return nil
@@ -175,14 +178,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	var err error
 	errorString := ""
-	for _, i := range m.inputs {
-		if i.Err != nil {
-			err = i.Err
-			break
-		}
-	}
+	err = m.inputs[m.focused].Err
 	if err != nil {
 		errorString = err.Error()
+	} else {
+		for _, i := range m.inputs {
+			if i.Err != nil {
+				err = i.Err
+				break
+			}
+		}
+
+		if err != nil {
+			errorString = err.Error()
+		}
 	}
 	return fmt.Sprintf(
 		` Total: $21.50:
