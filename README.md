@@ -368,6 +368,7 @@ For some Bubble Tea programs in production, see:
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
 * [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
+* [WG Commander](https://github.com/AndrianBdn/wg-cmd): a TUI for a simple WireGuard VPN setup 
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
 ## Feedback
