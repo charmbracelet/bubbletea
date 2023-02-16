@@ -363,7 +363,7 @@ For some Bubble Tea programs in production, see:
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
-* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal][https://github.com/ZinoKader/portal])
+* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
