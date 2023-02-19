@@ -11,6 +11,6 @@ require (
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.14.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/term v0.5.0
+	golang.org/x/text v0.7.0 // indirect
 )
