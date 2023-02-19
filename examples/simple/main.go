@@ -56,7 +56,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Views return a string based on data in the model. That string which will be
+// View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
 func (m model) View() string {
 	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
