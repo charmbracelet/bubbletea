@@ -41,7 +41,7 @@ func WithInput(input io.Reader) ProgramOption {
 	}
 }
 
-// WithInputTTY open a new TTY for input (or console input device on Windows).
+// WithInputTTY opens a new TTY for input (or console input device on Windows).
 func WithInputTTY() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withInputTTY
@@ -144,7 +144,7 @@ func WithoutRenderer() ProgramOption {
 // WithANSICompressor removes redundant ANSI sequences to produce potentially
 // smaller output, at the cost of some processing overhead.
 //
-// This feature is provisional, and may be changed removed in a future version
+// This feature is provisional, and may be changed or removed in a future version
 // of this package.
 func WithANSICompressor() ProgramOption {
 	return func(p *Program) {
