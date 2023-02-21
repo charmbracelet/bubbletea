@@ -13,6 +13,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.14.0
+	golang.org/x/net v0.7.0 // indirect
 )
 
 replace github.com/charmbracelet/bubbletea => ../
