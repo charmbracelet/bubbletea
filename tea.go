@@ -24,6 +24,7 @@ import (
 	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
+	"golang.org/x/sync/errgroup"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
@@ -329,7 +330,25 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go func() {
 					// Execute commands one at a time, in order.
 					for _, cmd := range msg {
-						p.Send(cmd())
+						if cmd == nil {
+							continue
+						}
+						msg := cmd()
+						if batchMsg, ok := msg.(BatchMsg); ok {
+							g, _ := errgroup.WithContext(p.ctx)
+							for _, cmd := range batchMsg {
+								cmd := cmd
+								g.Go(func() error {
+									p.Send(cmd())
+									return nil
+								})
+							}
+							//nolint:errcheck
+							g.Wait() // wait for all commands from batch msg to finish
+							continue
+						} else {
+							p.Send(msg)
+						}
 					}
 				}()
 			}
@@ -474,11 +493,14 @@ func (p *Program) Run() (Model, error) {
 	// Tear down.
 	p.cancel()
 
-	// Wait for input loop to finish.
-	if p.cancelReader.Cancel() {
-		p.waitForReadLoop()
+	// Check if the cancel reader has been setup before waiting and closing.
+	if p.cancelReader != nil {
+		// Wait for input loop to finish.
+		if p.cancelReader.Cancel() {
+			p.waitForReadLoop()
+		}
+		_ = p.cancelReader.Close()
 	}
-	_ = p.cancelReader.Close()
 
 	// Wait for all handlers to finish.
 	handlers.shutdown()

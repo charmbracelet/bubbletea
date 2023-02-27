@@ -71,7 +71,7 @@ func ccnValidator(s string) error {
 
 func expValidator(s string) error {
 	// The 3 character should be a slash (/)
-	// The rest thould be numbers
+	// The rest should be numbers
 	e := strings.ReplaceAll(s, "/", "")
 	_, err := strconv.ParseInt(e, 10, 64)
 	if err != nil {

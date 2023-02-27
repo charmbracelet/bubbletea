@@ -1,6 +1,6 @@
 package main
 
-// A simple program demonstrating the text input component from the Bubbles
+// A simple program demonstrating the textarea component from the Bubbles
 // component library.
 
 import (

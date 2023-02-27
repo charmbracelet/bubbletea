@@ -123,7 +123,7 @@ func (m model) View() string {
 	return indent.String(s, 1)
 }
 
-// processFinishedMsg is send when a pretend process completes.
+// processFinishedMsg is sent when a pretend process completes.
 type processFinishedMsg time.Duration
 
 // pretendProcess simulates a long-running process.
