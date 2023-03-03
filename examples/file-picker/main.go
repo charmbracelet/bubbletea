@@ -27,12 +27,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		}
-	case filepicker.FileSelectedMsg:
-		m.selectedFile = msg.Path
 	}
 
 	var cmd tea.Cmd
 	m.filepicker, cmd = m.filepicker.Update(msg)
+
+	// Let's check whether this update the user selected a file.
+	// If they did select a file, update the model to display.
+	if didSelect, path := m.filepicker.DidSelectFile(msg); didSelect {
+		m.selectedFile = path
+	}
+
 	return m, cmd
 }
 

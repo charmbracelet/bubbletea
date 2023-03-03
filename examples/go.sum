@@ -9,6 +9,8 @@ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuP
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/charmbracelet/bubbles v0.15.1-0.20230303180827-c01b49080882 h1:bhZOZDpFHFKZhROCENdN+cUHNknH3MY8CUE2xJ9a3HM=
 github.com/charmbracelet/bubbles v0.15.1-0.20230303180827-c01b49080882/go.mod h1:39HL8bnL0foloiENA/KvD+3mNg5SqWQV2Qh3eY/4ey4=
+github.com/charmbracelet/bubbles v0.15.1-0.20230303214459-958a0ea710f1 h1:BcxSgchb4ZV1lJe9W9+LhQj6S3JouC39yYswVI4YOrw=
+github.com/charmbracelet/bubbles v0.15.1-0.20230303214459-958a0ea710f1/go.mod h1:39HL8bnL0foloiENA/KvD+3mNg5SqWQV2Qh3eY/4ey4=
 github.com/charmbracelet/glamour v0.6.0 h1:wi8fse3Y7nfcabbbDuwolqTqMQPMnVPeZhDM273bISc=
 github.com/charmbracelet/glamour v0.6.0/go.mod h1:taqWV4swIMMbWALc0m7AfE9JkPSU8om2538k9ITBxOc=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
