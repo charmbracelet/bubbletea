@@ -73,7 +73,12 @@ func (r *standardRenderer) start() {
 	if r.ticker == nil {
 		r.ticker = time.NewTicker(r.framerate)
 	}
+
+	// Since the renderer can be restarted after a stop, we need to reset
+	// the done channel and its corresponding sync.Once.
+	r.once = sync.Once{}
 	r.done = make(chan struct{})
+
 	go r.listen()
 }
 
