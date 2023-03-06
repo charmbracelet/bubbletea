@@ -567,6 +567,10 @@ func (p *Program) ReleaseTerminal() error {
 	p.cancelReader.Cancel()
 	p.waitForReadLoop()
 
+	if p.renderer != nil {
+		p.renderer.stop()
+	}
+
 	p.altScreenWasActive = p.renderer.altScreen()
 	return p.restoreTerminalState()
 }
@@ -589,6 +593,9 @@ func (p *Program) RestoreTerminal() error {
 	} else {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
+	}
+	if p.renderer != nil {
+		p.renderer.start()
 	}
 
 	// If the output is a terminal, it may have been resized while another
