@@ -7,8 +7,12 @@ github.com/aymanbagabas/go-osc52 v1.2.1 h1:q2sWUyDcozPLcLabEMd+a+7Ea2DitxZVN9hTx
 github.com/aymanbagabas/go-osc52 v1.2.1/go.mod h1:zT8H+Rk4VSabYN90pWyugflM3ZhpTZNC7cASDfUCdT4=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/charmbracelet/bubbles v0.15.0 h1:c5vZ3woHV5W2b8YZI1q7v4ZNQaPetfHuoHzx+56Z6TI=
-github.com/charmbracelet/bubbles v0.15.0/go.mod h1:Y7gSFbBzlMpUDR/XM9MhZI374Q+1p1kluf1uLl8iK74=
+github.com/charmbracelet/bubbles v0.15.1-0.20230303180827-c01b49080882 h1:bhZOZDpFHFKZhROCENdN+cUHNknH3MY8CUE2xJ9a3HM=
+github.com/charmbracelet/bubbles v0.15.1-0.20230303180827-c01b49080882/go.mod h1:39HL8bnL0foloiENA/KvD+3mNg5SqWQV2Qh3eY/4ey4=
+github.com/charmbracelet/bubbles v0.15.1-0.20230303214459-958a0ea710f1 h1:BcxSgchb4ZV1lJe9W9+LhQj6S3JouC39yYswVI4YOrw=
+github.com/charmbracelet/bubbles v0.15.1-0.20230303214459-958a0ea710f1/go.mod h1:39HL8bnL0foloiENA/KvD+3mNg5SqWQV2Qh3eY/4ey4=
+github.com/charmbracelet/bubbles v0.15.1-0.20230306155959-3372cf1aea2b h1:K9dWJ2spDhDhIrqnchjG867djPxWWe3mwdk6RdLMfhg=
+github.com/charmbracelet/bubbles v0.15.1-0.20230306155959-3372cf1aea2b/go.mod h1:39HL8bnL0foloiENA/KvD+3mNg5SqWQV2Qh3eY/4ey4=
 github.com/charmbracelet/glamour v0.6.0 h1:wi8fse3Y7nfcabbbDuwolqTqMQPMnVPeZhDM273bISc=
 github.com/charmbracelet/glamour v0.6.0/go.mod h1:taqWV4swIMMbWALc0m7AfE9JkPSU8om2538k9ITBxOc=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
@@ -22,6 +26,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2 v1.4.0 h1:F1rxgk7p4uKjwIQxBs9oAXe5CqrXlCduYEJvrF4u93E=
 github.com/dlclark/regexp2 v1.4.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
+github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
+github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776 h1:VRIbnDWRmAh5yBdz+J6yFMF5vso1It6vn+WmM/5l7MA=
 github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776/go.mod h1:9wvnDu3YOfxzWM9Cst40msBF1C2UdQgDv962oTxSuMs=
 github.com/gorilla/css v1.0.0 h1:BQqNyPTi50JCFMTw/b67hByjMVXZRwGha6wxVGkeihY=
