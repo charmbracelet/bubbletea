@@ -20,9 +20,9 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
+	"github.com/muesli/console"
 	"github.com/muesli/termenv"
 	"golang.org/x/sync/errgroup"
 )

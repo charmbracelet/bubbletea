@@ -6,7 +6,7 @@ package tea
 import (
 	"os"
 
-	"github.com/containerd/console"
+	"github.com/muesli/console"
 )
 
 func (p *Program) initInput() error {
