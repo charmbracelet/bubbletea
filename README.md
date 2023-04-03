@@ -321,6 +321,7 @@ For some Bubble Tea programs in production, see:
 * [brows](https://github.com/rubysolo/brows): a GitHub release browser
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
+* [chatgpt-cli](https://github.com/j178/chatgpt): an elegant interactive cli for ChatGPT
 * [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
 * [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving terminal
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
