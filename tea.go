@@ -314,6 +314,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						if cmd == nil {
 							continue
 						}
+
 						msg := cmd()
 						if batchMsg, ok := msg.(BatchMsg); ok {
 							g, _ := errgroup.WithContext(p.ctx)
@@ -324,12 +325,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 									return nil
 								})
 							}
+
 							//nolint:errcheck
 							g.Wait() // wait for all commands from batch msg to finish
 							continue
-						} else {
-							p.Send(msg)
 						}
+
+						p.Send(msg)
 					}
 				}()
 			}
