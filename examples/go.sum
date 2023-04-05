@@ -9,8 +9,12 @@ github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiE
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+github.com/charmbracelet/bubbles v0.15.0 h1:c5vZ3woHV5W2b8YZI1q7v4ZNQaPetfHuoHzx+56Z6TI=
+github.com/charmbracelet/bubbles v0.15.0/go.mod h1:Y7gSFbBzlMpUDR/XM9MhZI374Q+1p1kluf1uLl8iK74=
 github.com/charmbracelet/bubbles v0.15.1-0.20230306155959-3372cf1aea2b h1:K9dWJ2spDhDhIrqnchjG867djPxWWe3mwdk6RdLMfhg=
 github.com/charmbracelet/bubbles v0.15.1-0.20230306155959-3372cf1aea2b/go.mod h1:39HL8bnL0foloiENA/KvD+3mNg5SqWQV2Qh3eY/4ey4=
+github.com/charmbracelet/bubbles v0.15.1-0.20230405171750-8865e0675a88 h1:cSyCqKeoxMChc6bDNpgH9TdHenr/vrEHqSngbFWiCwA=
+github.com/charmbracelet/bubbles v0.15.1-0.20230405171750-8865e0675a88/go.mod h1:39HL8bnL0foloiENA/KvD+3mNg5SqWQV2Qh3eY/4ey4=
 github.com/charmbracelet/glamour v0.6.0 h1:wi8fse3Y7nfcabbbDuwolqTqMQPMnVPeZhDM273bISc=
 github.com/charmbracelet/glamour v0.6.0/go.mod h1:taqWV4swIMMbWALc0m7AfE9JkPSU8om2538k9ITBxOc=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
