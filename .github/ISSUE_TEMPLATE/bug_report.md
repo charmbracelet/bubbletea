@@ -24,6 +24,9 @@ Steps to reproduce the behavior:
 3. Scroll down to '....'
 4. See error
 
+**Source Code**
+Please include source code if needed to reproduce the behaviour. 
+
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
