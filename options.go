@@ -28,7 +28,12 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
+		switch o := output.(type) {
+		case *termenv.Output:
+			p.output = o
+		default:
+			p.output = termenv.NewOutput(o, termenv.WithColorCache(true))
+		}
 	}
 }
 
