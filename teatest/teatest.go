@@ -6,7 +6,6 @@ import (
 	"flag"
 	"io"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"sync"
@@ -14,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aymanbagabas/go-udiff"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -231,18 +231,13 @@ func RequireEqualOutput(tb testing.TB, out []byte) {
 		tb.Fatal(err)
 	}
 
-	// inspired by https://cs.opensource.google/go/go/+/refs/tags/go1.18.3:src/cmd/internal/diff/diff.go;l=18
-	diff, err := exec.Command(
-		"diff",
-		"--minimal",
-		"--ignore-trailing-space",
-		"--ignore-all-space",
-		"--strip-trailing-cr",
-		path,
-		golden,
-	).CombinedOutput()
+	goldenBts, err := os.ReadFile(golden)
 	if err != nil {
-		tb.Fatalf("output does not match, diff:\n\n%s", string(diff))
+		tb.Fatal(err)
+	}
+	diff := udiff.Unified("golden", "run", string(goldenBts), string(out))
+	if diff != "" {
+		tb.Fatalf("output does not match, diff:\n\n%s", diff)
 	}
 }
 
