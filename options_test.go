@@ -35,6 +35,13 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
+	t.Run("without signals", func(t *testing.T) {
+		p := NewProgram(nil, WithoutSignals())
+		if !p.ignoreSignals {
+			t.Errorf("ignore signals should have been set")
+		}
+	})
+
 	t.Run("startup options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, expect startupOptions) {
 			p := NewProgram(nil, opt)
