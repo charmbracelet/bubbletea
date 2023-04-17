@@ -134,6 +134,26 @@ func Quit() Msg {
 // send a quitMsg with Quit.
 type quitMsg struct{}
 
+// IsQuitCmd returns true if the given command is a Quit command.
+//
+// Please notice that this will execute the underlying command, which may cause
+// undesired behavior.
+// This package is meant to be used only for testing.
+func IsQuitCmd(cmd Cmd) bool {
+	return IsQuitMsg(cmd())
+}
+
+// IsQuitMsg returns true if the given Msg is a quit message.
+// Mean to be used in testing only.
+func IsQuitMsg(msg Msg) bool {
+	switch msg.(type) {
+	case quitMsg:
+		return true
+	default:
+		return false
+	}
+}
+
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
