@@ -327,7 +327,9 @@ For some Bubble Tea programs in production, see:
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone
 * [cLive](https://github.com/koki-develop/clive): automate terminal operations and view them live in a browser
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
-* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53: expose your EC2 quickly, securely and privately
+* [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
+* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
+* [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an eks cluster
 * [enola](https://github.com/sherlock-project/enola): hunt down social media accounts by username across social networks
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
@@ -368,6 +370,7 @@ For some Bubble Tea programs in production, see:
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
 * [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
+* [WG Commander](https://github.com/AndrianBdn/wg-cmd): a TUI for a simple WireGuard VPN setup 
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
 ## Feedback

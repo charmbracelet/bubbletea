@@ -333,6 +333,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						if cmd == nil {
 							continue
 						}
+
 						msg := cmd()
 						if batchMsg, ok := msg.(BatchMsg); ok {
 							g, _ := errgroup.WithContext(p.ctx)
@@ -343,12 +344,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 									return nil
 								})
 							}
+
 							//nolint:errcheck
 							g.Wait() // wait for all commands from batch msg to finish
 							continue
-						} else {
-							p.Send(msg)
 						}
+
+						p.Send(msg)
 					}
 				}()
 			}
@@ -591,6 +593,10 @@ func (p *Program) ReleaseTerminal() error {
 	p.cancelReader.Cancel()
 	p.waitForReadLoop()
 
+	if p.renderer != nil {
+		p.renderer.stop()
+	}
+
 	p.altScreenWasActive = p.renderer.altScreen()
 	return p.restoreTerminalState()
 }
@@ -613,6 +619,9 @@ func (p *Program) RestoreTerminal() error {
 	} else {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
+	}
+	if p.renderer != nil {
+		p.renderer.start()
 	}
 
 	// If the output is a terminal, it may have been resized while another

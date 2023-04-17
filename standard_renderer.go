@@ -58,6 +58,7 @@ func newRenderer(out *termenv.Output, useANSICompressor bool) renderer {
 	r := &standardRenderer{
 		out:                out,
 		mtx:                &sync.Mutex{},
+		done:               make(chan struct{}),
 		framerate:          defaultFramerate,
 		useANSICompressor:  useANSICompressor,
 		queuedMessageLines: []string{},
@@ -72,8 +73,16 @@ func newRenderer(out *termenv.Output, useANSICompressor bool) renderer {
 func (r *standardRenderer) start() {
 	if r.ticker == nil {
 		r.ticker = time.NewTicker(r.framerate)
+	} else {
+		// If the ticker already exists, it has been stopped and we need to
+		// reset it.
+		r.ticker.Reset(r.framerate)
 	}
-	r.done = make(chan struct{})
+
+	// Since the renderer can be restarted after a stop, we need to reset
+	// the done channel and its corresponding sync.Once.
+	r.once = sync.Once{}
+
 	go r.listen()
 }
 
@@ -87,7 +96,7 @@ func (r *standardRenderer) stop() {
 
 	r.out.ClearLine()
 	r.once.Do(func() {
-		close(r.done)
+		r.done <- struct{}{}
 	})
 
 	if r.useANSICompressor {
@@ -104,7 +113,7 @@ func (r *standardRenderer) kill() {
 
 	r.out.ClearLine()
 	r.once.Do(func() {
-		close(r.done)
+		r.done <- struct{}{}
 	})
 }
 
@@ -112,14 +121,12 @@ func (r *standardRenderer) kill() {
 func (r *standardRenderer) listen() {
 	for {
 		select {
-		case <-r.ticker.C:
-			if r.ticker != nil {
-				r.flush()
-			}
 		case <-r.done:
 			r.ticker.Stop()
-			r.ticker = nil
 			return
+
+		case <-r.ticker.C:
+			r.flush()
 		}
 	}
 }
