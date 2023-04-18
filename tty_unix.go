@@ -28,7 +28,7 @@ func (p *Program) initInput() error {
 // program exits.
 func (p *Program) restoreInput() error {
 	if p.console != nil {
-		return p.console.Reset()
+		return p.console.Reset() //nolint:wrapcheck
 	}
 	return nil
 }
@@ -36,7 +36,7 @@ func (p *Program) restoreInput() error {
 func openInputTTY() (*os.File, error) {
 	f, err := os.Open("/dev/tty")
 	if err != nil {
-		return nil, err
+		return nil, err //nolint:wrapcheck
 	}
 	return f, nil
 }

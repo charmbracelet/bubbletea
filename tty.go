@@ -20,7 +20,7 @@ func (p *Program) initTerminal() error {
 	if p.console != nil {
 		err = p.console.SetRaw()
 		if err != nil {
-			return err
+			return err //nolint:wrapcheck
 		}
 	}
 
@@ -40,14 +40,14 @@ func (p *Program) restoreTerminalState() error {
 			p.renderer.exitAltScreen()
 
 			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond * 10) //nolint:gomnd
 		}
 	}
 
 	if p.console != nil {
 		err := p.console.Reset()
 		if err != nil {
-			return err
+			return err //nolint:wrapcheck
 		}
 	}
 
@@ -59,7 +59,7 @@ func (p *Program) initCancelReader() error {
 	var err error
 	p.cancelReader, err = cancelreader.NewReader(p.input)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	p.readLoopDone = make(chan struct{})
@@ -98,7 +98,7 @@ func (p *Program) readLoop() {
 func (p *Program) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(500 * time.Millisecond): //nolint:gomnd
 		// The read loop hangs, which means the input
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.

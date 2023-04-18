@@ -571,12 +571,12 @@ func readInputs(input io.Reader) ([]Msg, error) {
 	// Read and block
 	numBytes, err := input.Read(buf[:])
 	if err != nil {
-		return nil, err
+		return nil, err //nolint:wrapcheck
 	}
 	b := buf[:numBytes]
 	b, err = localereader.UTF8(b)
 	if err != nil {
-		return nil, err
+		return nil, err //nolint:wrapcheck
 	}
 
 	// Check if it's a mouse event. For now we're parsing X10-type mouse events

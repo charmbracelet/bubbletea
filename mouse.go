@@ -67,7 +67,7 @@ var mouseEventTypes = map[MouseEventType]string{
 //
 // See: http://www.xfree86.org/current/ctlseqs.html#Mouse%20Tracking
 func parseX10MouseEvents(buf []byte) ([]MouseEvent, error) {
-	var r []MouseEvent
+	var r []MouseEvent //nolint:prealloc
 
 	seq := []byte("\x1b[M")
 	if !bytes.Contains(buf, seq) {
@@ -78,7 +78,7 @@ func parseX10MouseEvents(buf []byte) ([]MouseEvent, error) {
 		if len(v) == 0 {
 			continue
 		}
-		if len(v) != 3 {
+		if len(v) != 3 { //nolint:gomnd
 			return r, errors.New("not an X10 mouse event")
 		}
 
