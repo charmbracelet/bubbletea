@@ -115,6 +115,10 @@ type Program struct {
 	altScreenWasActive bool
 	ignoreSignals      bool
 
+	// Used to signal that the Program has completely finished running. This
+	// a
+	shutdownComplete chan struct{}
+
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
 	// When the program exits this will be restored.
@@ -139,9 +143,10 @@ type QuitMsg struct{}
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
-		initialModel: model,
-		input:        os.Stdin,
-		msgs:         make(chan Msg),
+		initialModel:     model,
+		input:            os.Stdin,
+		msgs:             make(chan Msg),
+		shutdownComplete: make(chan struct{}, 1),
 	}
 
 	// Apply all options to the program.
@@ -555,6 +560,26 @@ func (p *Program) Kill() {
 	p.cancel()
 }
 
+// Done returns a channel that receives once the Bubble Tea program has finished
+// running and has restored the terminal state. This can be useful for waiting
+// for Bubble Tea to completely wrap up before printing further output in your
+// applciation.
+//
+// Done will receive after calling both [Program.Quit] and [Program.Kill].
+//
+// Example:
+//
+//	go func() {
+//		if _, err := p.Run(); err != nil {
+//			fmt.Println("Uh oh:", err)
+//		}
+//	}()
+//
+//	<-p.Done()
+func (p *Program) Done() chan struct{} {
+	return p.shutdownComplete
+}
+
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
@@ -570,6 +595,8 @@ func (p *Program) shutdown(kill bool) {
 	if p.restoreOutput != nil {
 		_ = p.restoreOutput()
 	}
+
+	p.shutdownComplete <- struct{}{}
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
