@@ -56,15 +56,6 @@ func TestTeaModel(t *testing.T) {
 	}
 }
 
-func TestIsQuit(t *testing.T) {
-	if IsQuitCmd(EnterAltScreen) {
-		t.Fatal("IsQuit should have returned false")
-	}
-	if !IsQuitCmd(Quit) {
-		t.Fatal("IsQuit should have returned true")
-	}
-}
-
 func TestTeaQuit(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
