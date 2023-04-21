@@ -35,6 +35,13 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
+	t.Run("filter", func(t *testing.T) {
+		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
+		if p.filter == nil {
+			t.Errorf("expected filter to be set")
+		}
+	})
+
 	t.Run("startup options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, expect startupOptions) {
 			p := NewProgram(nil, opt)

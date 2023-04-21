@@ -123,16 +123,18 @@ type Program struct {
 	// as this value only comes into play on Windows, hence the ignore comment
 	// below.
 	windowsStdin *os.File //nolint:golint,structcheck,unused
+
+	filter func(Model, Msg) Msg
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
 func Quit() Msg {
-	return quitMsg{}
+	return QuitMsg{}
 }
 
-// quitMsg in an internal message signals that the program should quit. You can
-// send a quitMsg with Quit.
-type quitMsg struct{}
+// QuitMsg signals that the program should quit. You can send a QuitMsg with
+// Quit.
+type QuitMsg struct{}
 
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
@@ -194,7 +196,7 @@ func (p *Program) handleSignals() chan struct{} {
 
 			case <-sig:
 				if !p.ignoreSignals {
-					p.msgs <- quitMsg{}
+					p.msgs <- QuitMsg{}
 					return
 				}
 			}
@@ -267,9 +269,17 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			return model, err
 
 		case msg := <-p.msgs:
+			// Filter messages.
+			if p.filter != nil {
+				msg = p.filter(model, msg)
+			}
+			if msg == nil {
+				continue
+			}
+
 			// Handle special internal messages.
 			switch msg := msg.(type) {
-			case quitMsg:
+			case QuitMsg:
 				return model, nil
 
 			case clearScreenMsg:
