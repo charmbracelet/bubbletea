@@ -97,18 +97,9 @@ func detectBracketedPaste(input []byte) (hasBp bool, width int, msg Msg) {
 	inputLen := len(bpStart) + idx + len(bpEnd)
 	if idx == -1 {
 		// We have encountered the end of the input buffer without seeing
-		// the marker for the end of the bracketed paste. What does this
-		// mean?
-		if canHaveMoreData {
-			// There may be more data to read.
-			// Tell the outer loop we have done a short read and we want more.
-			return true, 0, nil
-		}
-		// There won't be any more input, so we can consider we have our
-		// event. Assume the bracketed paste extends until the end of
-		// the input.
-		idx = len(input)
-		inputLen = len(bpStart) + idx
+		// the marker for the end of the bracketed paste.
+		// Tell the outer loop we have done a short read and we want more.
+		return true, 0, nil
 	}
 
 	// The paste is everything in-between.
