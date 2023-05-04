@@ -34,7 +34,7 @@ func TestApp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out := readBts(t, tm.Output())
+	out := readBts(t, tm.FinalOutput())
 	if !regexp.MustCompile(`This program will exit in \d+ seconds`).Match(out) {
 		t.Fatalf("output does not match the given regular expression: %s", string(out))
 	}

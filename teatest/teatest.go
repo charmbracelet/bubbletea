@@ -175,7 +175,14 @@ func (tm *TestModel) FinalModel() tea.Model {
 	}
 }
 
-// Output returns the program's output io.Reader.
+// FinalOutput returns the program's final output io.Reader.
+// It'll block until the program finishes.
+func (tm *TestModel) FinalOutput() io.Reader {
+	tm.waitDone()
+	return tm.Output()
+}
+
+// Output returns the program's current output io.Reader.
 func (tm *TestModel) Output() io.Reader {
 	return tm.out
 }
@@ -188,8 +195,7 @@ func (tm *TestModel) Send(m tea.Msg) {
 // Quit quits the program and releases the terminal.
 func (tm *TestModel) Quit() error {
 	tm.program.Quit()
-	tm.program.Wait()
-	return tm.program.ReleaseTerminal()
+	return nil
 }
 
 // Type types the given text into the given program.
