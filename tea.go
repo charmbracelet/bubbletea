@@ -97,8 +97,9 @@ type Program struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	msgs chan Msg
-	errs chan error
+	msgs     chan Msg
+	errs     chan error
+	finished chan struct{}
 
 	// where to send output, this will usually be os.Stdout.
 	output        *termenv.Output
@@ -366,6 +367,7 @@ func (p *Program) Run() (Model, error) {
 	handlers := handlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
+	p.finished = make(chan struct{}, 1)
 
 	defer p.cancel()
 
@@ -555,6 +557,11 @@ func (p *Program) Kill() {
 	p.cancel()
 }
 
+// Wait waits/blocks until the underlying Program finished shutting down.
+func (p *Program) Wait() {
+	<-p.finished
+}
+
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
@@ -570,6 +577,7 @@ func (p *Program) shutdown(kill bool) {
 	if p.restoreOutput != nil {
 		_ = p.restoreOutput()
 	}
+	p.finished <- struct{}{}
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
