@@ -35,6 +35,13 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
+	t.Run("without signals", func(t *testing.T) {
+		p := NewProgram(nil, WithoutSignals())
+		if !p.ignoreSignals {
+			t.Errorf("ignore signals should have been set")
+		}
+	})
+
 	t.Run("filter", func(t *testing.T) {
 		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
 		if p.filter == nil {
