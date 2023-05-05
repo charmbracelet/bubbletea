@@ -14,13 +14,13 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
-	t.Run("input", func(t *testing.T) {
+	t.Run("custom input", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithInput(&b))
 		if p.input != &b {
 			t.Errorf("expected input to custom, got %v", p.input)
 		}
-		if p.startupOptions&withCustomInput == 0 {
+		if p.inputType != customInput {
 			t.Errorf("expected startup options to have custom input set, got %v", p.input)
 		}
 	})
@@ -49,6 +49,25 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
+	t.Run("input options", func(t *testing.T) {
+		exercise := func(t *testing.T, opt ProgramOption, expect inputType) {
+			p := NewProgram(nil, opt)
+			if p.inputType != expect {
+				t.Errorf("expected input type %s, got %s", expect, p.inputType)
+			}
+		}
+
+		t.Run("tty input", func(t *testing.T) {
+			exercise(t, WithInputTTY(), ttyInput)
+		})
+
+		t.Run("custom input", func(t *testing.T) {
+			var b bytes.Buffer
+			exercise(t, WithInput(&b), customInput)
+		})
+
+	})
+
 	t.Run("startup options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, expect startupOptions) {
 			p := NewProgram(nil, opt)
@@ -56,10 +75,6 @@ func TestOptions(t *testing.T) {
 				t.Errorf("expected startup options have %v, got %v", expect, p.startupOptions)
 			}
 		}
-
-		t.Run("input tty", func(t *testing.T) {
-			exercise(t, WithInputTTY(), withInputTTY)
-		})
 
 		t.Run("alt screen", func(t *testing.T) {
 			exercise(t, WithAltScreen(), withAltScreen)
@@ -100,9 +115,12 @@ func TestOptions(t *testing.T) {
 
 	t.Run("multiple", func(t *testing.T) {
 		p := NewProgram(nil, WithMouseAllMotion(), WithAltScreen(), WithInputTTY())
-		for _, opt := range []startupOptions{withMouseAllMotion, withAltScreen, withInputTTY} {
+		for _, opt := range []startupOptions{withMouseAllMotion, withAltScreen} {
 			if !p.startupOptions.has(opt) {
 				t.Errorf("expected startup options have %v, got %v", opt, p.startupOptions)
+			}
+			if p.inputType != ttyInput {
+				t.Errorf("expected input to be %v, got %v", opt, p.startupOptions)
 			}
 		}
 	})

@@ -37,18 +37,20 @@ func WithOutput(output io.Writer) ProgramOption {
 }
 
 // WithInput sets the input which, by default, is stdin. In most cases you
-// won't need to use this.
+// won't need to use this. To disable input entirely pass nil.
+//
+//	p := NewProgram(model, WithInput(nil))
 func WithInput(input io.Reader) ProgramOption {
 	return func(p *Program) {
 		p.input = input
-		p.startupOptions |= withCustomInput
+		p.inputType = customInput
 	}
 }
 
 // WithInputTTY opens a new TTY for input (or console input device on Windows).
 func WithInputTTY() ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withInputTTY
+		p.inputType = ttyInput
 	}
 }
 
