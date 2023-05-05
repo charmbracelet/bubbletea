@@ -41,14 +41,22 @@ func WithOutput(output io.Writer) ProgramOption {
 func WithInput(input io.Reader) ProgramOption {
 	return func(p *Program) {
 		p.input = input
-		p.startupOptions |= withCustomInput
+		p.inputType = customInput
 	}
 }
 
 // WithInputTTY opens a new TTY for input (or console input device on Windows).
 func WithInputTTY() ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withInputTTY
+		p.inputType = ttyInput
+	}
+}
+
+// WithoutInput will initialize the [Program] without reading input. Keypress
+// events, mouse events and so on will not be sent to Bubble Tea.
+func WithoutInput() ProgramOption {
+	return func(p *Program) {
+		p.inputType = noInput
 	}
 }
 

@@ -60,6 +60,15 @@ type Cmd func() Msg
 
 type handlers []chan struct{}
 
+type inputType int
+
+const (
+	defaultInput inputType = iota
+	ttyInput
+	customInput
+	noInput
+)
+
 // Options to customize the program during its initialization. These are
 // generally set with ProgramOptions.
 //
@@ -74,8 +83,6 @@ const (
 	withAltScreen startupOptions = 1 << iota
 	withMouseCellMotion
 	withMouseAllMotion
-	withInputTTY
-	withCustomInput
 	withANSICompressor
 	withoutSignalHandler
 
@@ -93,6 +100,8 @@ type Program struct {
 	// Configuration options that will set as the program is initializing,
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
+
+	inputType inputType
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -141,7 +150,6 @@ type QuitMsg struct{}
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
 		initialModel: model,
-		input:        os.Stdin,
 		msgs:         make(chan Msg),
 	}
 
@@ -371,8 +379,11 @@ func (p *Program) Run() (Model, error) {
 
 	defer p.cancel()
 
-	switch {
-	case p.startupOptions.has(withInputTTY):
+	switch p.inputType {
+	case defaultInput:
+		p.input = os.Stdin
+
+	case ttyInput:
 		// Open a new TTY, by request
 		f, err := openInputTTY()
 		if err != nil {
@@ -381,7 +392,7 @@ func (p *Program) Run() (Model, error) {
 		defer f.Close() //nolint:errcheck
 		p.input = f
 
-	case !p.startupOptions.has(withCustomInput):
+	case customInput:
 		// If the user hasn't set a custom input, and input's not a terminal,
 		// open a TTY so we can capture input as normal. This will allow things
 		// to "just work" in cases where data was piped or redirected into this
