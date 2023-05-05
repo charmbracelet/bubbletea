@@ -28,7 +28,11 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
+		if o, ok := output.(*termenv.Output); ok {
+			p.output = o
+		} else {
+			p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
+		}
 	}
 }
 
@@ -66,7 +70,8 @@ func WithoutCatchPanics() ProgramOption {
 	}
 }
 
-// WithoutSignals will ignore OS signals, useful for testing.
+// WithoutSignals will ignore OS signals.
+// This is mainly useful for testing.
 func WithoutSignals() ProgramOption {
 	return func(p *Program) {
 		p.ignoreSignals = true
