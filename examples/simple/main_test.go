@@ -8,7 +8,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/bubbletea/teatest"
+	"github.com/charmbracelet/x/exp/teatest"
 )
 
 func TestApp(t *testing.T) {
