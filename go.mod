@@ -3,7 +3,6 @@ module github.com/charmbracelet/bubbletea
 go 1.17
 
 require (
-	github.com/aymanbagabas/go-udiff v0.1.0
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81
 	github.com/mattn/go-isatty v0.0.18
 	github.com/mattn/go-localereader v0.0.1
@@ -17,7 +16,6 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/x/exp/teatest v0.0.0-20230504195420-fee909365d1c // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
