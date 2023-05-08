@@ -20,8 +20,6 @@ github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJ
 github.com/charmbracelet/lipgloss v0.6.0/go.mod h1:tHh2wr34xcHjC2HCXIlGSG1jaDF0S0atAUvBMP6Ppuk=
 github.com/charmbracelet/lipgloss v0.7.1 h1:17WMwi7N1b1rVWOjMT+rCh7sQkvDU75B2hbZpc5Kc1E=
 github.com/charmbracelet/lipgloss v0.7.1/go.mod h1:yG0k3giv8Qj8edTCbbg6AlQ5e8KNWpFujkNawKNhE2c=
-github.com/charmbracelet/x/exp/teatest v0.0.0-20230505175841-25a09ea9b713 h1:aRUlesfHrzj9NECuQ1O2h1yBK5M4LFKwLYTQVoEkaQ8=
-github.com/charmbracelet/x/exp/teatest v0.0.0-20230505175841-25a09ea9b713/go.mod h1:dpMo6PfGlhavn+ofggWhfFQmK9sZB2Ewljiz9bZtKVI=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20230508155401-2bd6fa14c46a h1:GpNt24LKE8sH5G0SZUpu4Tg15sP5XSt1mnfIqE7fW34=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20230508155401-2bd6fa14c46a/go.mod h1:dpMo6PfGlhavn+ofggWhfFQmK9sZB2Ewljiz9bZtKVI=
 github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 h1:q2hJAaP1k2wIvVRd/hEHD7lacgqrCPS+k8g1MndzfWY=
