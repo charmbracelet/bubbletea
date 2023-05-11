@@ -3,7 +3,6 @@ package tea
 import (
 	"context"
 	"io"
-	"time"
 
 	"github.com/muesli/termenv"
 )
@@ -202,13 +201,11 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 	}
 }
 
-// WithMaxFPS sets a custom maximum FPS at which we should
-// update the view.
-func WithMaxFPS(fps uint) ProgramOption {
-	if fps > maxFPS {
-		fps = maxFPS
-	}
+// WithMaxFPS sets a custom maximum FPS at which the renderer should run. If
+// less than 1, the default value of 60 will be used. If over 120, the FPS
+// will be capped at 120.
+func WithFPS(fps int) ProgramOption {
 	return func(p *Program) {
-		p.framerate = time.Second / time.Duration(fps)
+		p.fps = fps
 	}
 }

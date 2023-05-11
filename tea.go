@@ -19,7 +19,6 @@ import (
 	"runtime/debug"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
@@ -146,9 +145,9 @@ type Program struct {
 
 	filter func(Model, Msg) Msg
 
-	// framerate specifies a custom maximum interval at which we should
-	// update the view. If it is 0, the default value is used.
-	framerate time.Duration
+	// fps is the frames per second we should set on the renderer, if
+	// applicable,
+	fps int
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -446,7 +445,7 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.framerate)
+		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
 	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
