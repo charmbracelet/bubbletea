@@ -9,11 +9,11 @@ import (
 )
 
 func (p *Program) initInput() error {
-	return errors.New("unavailable in js")
+	return nil
 }
 
 func (p *Program) restoreInput() error {
-	return errors.New("unavailable in js")
+	return nil
 }
 
 func openInputTTY() (*os.File, error) {
