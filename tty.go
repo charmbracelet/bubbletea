@@ -108,7 +108,7 @@ func (p *Program) waitForReadLoop() {
 // checkResize detects the current size of the output and informs the program
 // via a WindowSizeMsg.
 func (p *Program) checkResize() {
-	f, ok := p.output.TTY().(*os.File)
+	f, ok := p.output.Writer().(*os.File)
 	if !ok || !isatty.IsTerminal(f.Fd()) {
 		// can't query window size
 		return

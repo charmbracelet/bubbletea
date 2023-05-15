@@ -228,7 +228,7 @@ func (p *Program) handleSignals() chan struct{} {
 func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
 
-	if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
+	if f, ok := p.output.Writer().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
 		go p.checkResize()
 
