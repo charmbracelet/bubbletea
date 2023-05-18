@@ -89,7 +89,11 @@ func (p *Program) readLoop() {
 		}
 
 		for _, msg := range msgs {
-			p.msgs <- msg
+			select {
+			case p.msgs <- msg:
+			case <-p.ctx.Done():
+				return
+			}
 		}
 	}
 }
