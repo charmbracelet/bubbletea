@@ -88,17 +88,20 @@ func (r *standardRenderer) start() {
 
 // stop permanently halts the renderer, rendering the final frame.
 func (r *standardRenderer) stop() {
-	// flush locks the mutex
+	// flush locks and releases the mutex
 	r.flush()
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	// clearLine also locks and releases the mutex
+	r.clearLine()
 
-	r.out.ClearLine()
+	// the mutex is not held now, preventing deadlock with the listen goroutine
 	r.once.Do(func() {
 		r.done <- struct{}{}
 	})
 
+	// go ahead and grab the mutext for the rest of the method
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
 	if r.useANSICompressor {
 		if w, ok := r.out.TTY().(io.WriteCloser); ok {
 			_ = w.Close()
@@ -108,13 +111,17 @@ func (r *standardRenderer) stop() {
 
 // kill halts the renderer. The final frame will not be rendered.
 func (r *standardRenderer) kill() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.out.ClearLine()
+	r.clearLine()
 	r.once.Do(func() {
 		r.done <- struct{}{}
 	})
+}
+
+// clearLine grabs the mutext and then clears the line.
+func (r *standardRenderer) clearLine() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	r.out.ClearLine()
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.
