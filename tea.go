@@ -393,7 +393,7 @@ func (p *Program) Run() (Model, error) {
 		p.input = os.Stdin
 
 		// The user has not set a custom input, so we need to check whether or
-		// not standard input is a terminal. If its not, we open a new TTY for
+		// not standard input is a terminal. If it's not, we open a new TTY for
 		// input. This will allow things to "just work" in cases where data was
 		// piped in or redirected to the application.
 		//
