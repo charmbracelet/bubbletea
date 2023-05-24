@@ -392,20 +392,12 @@ func (p *Program) Run() (Model, error) {
 	case defaultInput:
 		p.input = os.Stdin
 
-	case ttyInput:
-		// Open a new TTY, by request
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
-
-	case customInput:
-		// If the user hasn't set a custom input, and input's not a terminal,
-		// open a TTY so we can capture input as normal. This will allow things
-		// to "just work" in cases where data was piped or redirected into this
-		// application.
+		// The user has not set a custom input, so we need to check whether or
+		// not standard input is a terminal. If it's not, we open a new TTY for
+		// input. This will allow things to "just work" in cases where data was
+		// piped in or redirected to the application.
+		//
+		// To disable input entirely pass nil to the [WithInput] program option.
 		f, isFile := p.input.(*os.File)
 		if !isFile {
 			break
@@ -420,6 +412,18 @@ func (p *Program) Run() (Model, error) {
 		}
 		defer f.Close() //nolint:errcheck
 		p.input = f
+
+	case ttyInput:
+		// Open a new TTY, by request
+		f, err := openInputTTY()
+		if err != nil {
+			return p.initialModel, err
+		}
+		defer f.Close() //nolint:errcheck
+		p.input = f
+
+	case customInput:
+		// (There is nothing extra to do.)
 	}
 
 	// Handle signals.
