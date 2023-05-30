@@ -5,8 +5,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/charmbracelet/log"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

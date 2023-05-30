@@ -5,8 +5,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/lipgloss"

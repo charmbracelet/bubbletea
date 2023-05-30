@@ -4,7 +4,8 @@ package main
 
 import (
 	"fmt"
-	"log"
+
+	"github.com/charmbracelet/log"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"

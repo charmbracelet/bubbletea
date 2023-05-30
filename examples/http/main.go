@@ -4,9 +4,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/charmbracelet/log"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
