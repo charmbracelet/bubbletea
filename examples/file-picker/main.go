@@ -82,8 +82,8 @@ func (m model) View() string {
 
 func main() {
 	fp := filepicker.New()
-	fp.Path, _ = os.UserHomeDir()
 	fp.AllowedTypes = []string{".mod", ".sum", ".go", ".txt", ".md"}
+	fp.CurrentDirectory, _ = os.UserHomeDir()
 
 	m := model{
 		filepicker: fp,

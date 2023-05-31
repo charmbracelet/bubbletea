@@ -77,6 +77,47 @@ func TestTeaQuit(t *testing.T) {
 	}
 }
 
+func TestTeaWithFilter(t *testing.T) {
+	testTeaWithFilter(t, 0)
+	testTeaWithFilter(t, 1)
+	testTeaWithFilter(t, 2)
+}
+
+func testTeaWithFilter(t *testing.T, preventCount uint32) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	shutdowns := uint32(0)
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+		WithFilter(func(_ Model, msg Msg) Msg {
+			if _, ok := msg.(QuitMsg); !ok {
+				return msg
+			}
+			if shutdowns < preventCount {
+				atomic.AddUint32(&shutdowns, 1)
+				return nil
+			}
+			return msg
+		}))
+
+	go func() {
+		for atomic.LoadUint32(&shutdowns) <= preventCount {
+			time.Sleep(time.Millisecond)
+			p.Quit()
+		}
+	}()
+
+	if err := p.Start(); err != nil {
+		t.Fatal(err)
+	}
+	if shutdowns != preventCount {
+		t.Errorf("Expected %d prevented shutdowns, got %d", preventCount, shutdowns)
+	}
+}
+
 func TestTeaKill(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
