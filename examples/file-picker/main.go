@@ -58,7 +58,7 @@ func (m model) View() string {
 
 func main() {
 	fp := filepicker.New()
-	fp.Path, _ = os.UserHomeDir()
+	fp.CurrentDirectory, _ = os.UserHomeDir()
 
 	m := model{
 		filepicker: fp,
