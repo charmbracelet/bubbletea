@@ -88,6 +88,11 @@ func (r *standardRenderer) start() {
 
 // stop permanently halts the renderer, rendering the final frame.
 func (r *standardRenderer) stop() {
+	// Stop the renderer before acquiring the mutex to avoid a deadlock.
+	r.once.Do(func() {
+		r.done <- struct{}{}
+	})
+
 	// flush locks the mutex
 	r.flush()
 
@@ -95,9 +100,6 @@ func (r *standardRenderer) stop() {
 	defer r.mtx.Unlock()
 
 	r.out.ClearLine()
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
 
 	if r.useANSICompressor {
 		if w, ok := r.out.TTY().(io.WriteCloser); ok {
@@ -108,13 +110,15 @@ func (r *standardRenderer) stop() {
 
 // kill halts the renderer. The final frame will not be rendered.
 func (r *standardRenderer) kill() {
+	// Stop the renderer before acquiring the mutex to avoid a deadlock.
+	r.once.Do(func() {
+		r.done <- struct{}{}
+	})
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	r.out.ClearLine()
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.
