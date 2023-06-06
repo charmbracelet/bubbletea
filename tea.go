@@ -144,6 +144,10 @@ type Program struct {
 	windowsStdin *os.File //nolint:golint,structcheck,unused
 
 	filter func(Model, Msg) Msg
+
+	// fps is the frames per second we should set on the renderer, if
+	// applicable,
+	fps int
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -445,7 +449,7 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
+		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
 	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
