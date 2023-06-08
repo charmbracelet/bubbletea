@@ -60,6 +60,24 @@ type Cmd func() Msg
 
 type handlers []chan struct{}
 
+type inputType int
+
+const (
+	defaultInput inputType = iota
+	ttyInput
+	customInput
+)
+
+// String implements the stringer interface for [inputType]. It is inteded to
+// be used in testing.
+func (i inputType) String() string {
+	return [...]string{
+		"default input",
+		"tty input",
+		"custom input",
+	}[i]
+}
+
 // Options to customize the program during its initialization. These are
 // generally set with ProgramOptions.
 //
@@ -74,8 +92,6 @@ const (
 	withAltScreen startupOptions = 1 << iota
 	withMouseCellMotion
 	withMouseAllMotion
-	withInputTTY
-	withCustomInput
 	withANSICompressor
 	withoutSignalHandler
 
@@ -94,11 +110,14 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
+	inputType inputType
+
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	msgs chan Msg
-	errs chan error
+	msgs     chan Msg
+	errs     chan error
+	finished chan struct{}
 
 	// where to send output, this will usually be os.Stdout.
 	output        *termenv.Output
@@ -125,6 +144,10 @@ type Program struct {
 	windowsStdin *os.File //nolint:golint,structcheck,unused
 
 	filter func(Model, Msg) Msg
+
+	// fps is the frames per second we should set on the renderer, if
+	// applicable,
+	fps int
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -140,7 +163,6 @@ type QuitMsg struct{}
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
 		initialModel: model,
-		input:        os.Stdin,
 		msgs:         make(chan Msg),
 	}
 
@@ -366,24 +388,20 @@ func (p *Program) Run() (Model, error) {
 	handlers := handlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
+	p.finished = make(chan struct{}, 1)
 
 	defer p.cancel()
 
-	switch {
-	case p.startupOptions.has(withInputTTY):
-		// Open a new TTY, by request
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
+	switch p.inputType {
+	case defaultInput:
+		p.input = os.Stdin
 
-	case !p.startupOptions.has(withCustomInput):
-		// If the user hasn't set a custom input, and input's not a terminal,
-		// open a TTY so we can capture input as normal. This will allow things
-		// to "just work" in cases where data was piped or redirected into this
-		// application.
+		// The user has not set a custom input, so we need to check whether or
+		// not standard input is a terminal. If it's not, we open a new TTY for
+		// input. This will allow things to "just work" in cases where data was
+		// piped in or redirected to the application.
+		//
+		// To disable input entirely pass nil to the [WithInput] program option.
 		f, isFile := p.input.(*os.File)
 		if !isFile {
 			break
@@ -398,6 +416,18 @@ func (p *Program) Run() (Model, error) {
 		}
 		defer f.Close() //nolint:errcheck
 		p.input = f
+
+	case ttyInput:
+		// Open a new TTY, by request
+		f, err := openInputTTY()
+		if err != nil {
+			return p.initialModel, err
+		}
+		defer f.Close() //nolint:errcheck
+		p.input = f
+
+	case customInput:
+		// (There is nothing extra to do.)
 	}
 
 	// Handle signals.
@@ -419,7 +449,7 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
+		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
 	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
@@ -555,6 +585,11 @@ func (p *Program) Kill() {
 	p.cancel()
 }
 
+// Wait waits/blocks until the underlying Program finished shutting down.
+func (p *Program) Wait() {
+	<-p.finished
+}
+
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
@@ -570,6 +605,7 @@ func (p *Program) shutdown(kill bool) {
 	if p.restoreOutput != nil {
 		_ = p.restoreOutput()
 	}
+	p.finished <- struct{}{}
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
