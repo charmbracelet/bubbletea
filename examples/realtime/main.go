@@ -24,7 +24,7 @@ type responseMsg struct{}
 func listenForActivity(sub chan struct{}) tea.Cmd {
 	return func() tea.Msg {
 		for {
-			time.Sleep(time.Millisecond * time.Duration(rand.Int63n(900)+100))
+			time.Sleep(time.Millisecond * time.Duration(rand.Int63n(900)+100)) // nolint:gosec
 			sub <- struct{}{}
 		}
 	}
@@ -46,7 +46,7 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		spinner.Tick,
+		m.spinner.Tick,
 		listenForActivity(m.sub), // generate activity
 		waitForActivity(m.sub),   // wait for activity
 	)
@@ -78,8 +78,6 @@ func (m model) View() string {
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	p := tea.NewProgram(model{
 		sub:     make(chan struct{}),
 		spinner: spinner.New(),

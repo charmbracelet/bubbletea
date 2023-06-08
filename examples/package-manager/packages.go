@@ -46,7 +46,7 @@ func getPackages() []string {
 	})
 
 	for k := range pkgs {
-		pkgs[k] += fmt.Sprintf("-%d.%d.%d", rand.Intn(10), rand.Intn(10), rand.Intn(10))
+		pkgs[k] += fmt.Sprintf("-%d.%d.%d", rand.Intn(10), rand.Intn(10), rand.Intn(10)) //nolint:gosec
 	}
 	return pkgs
 }

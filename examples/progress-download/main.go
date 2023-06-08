@@ -40,7 +40,7 @@ func (pw *progressWriter) Write(p []byte) (int, error) {
 }
 
 func getResponse(url string) (*http.Response, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) // nolint:gosec
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func main() {
 		fmt.Println("could not get response", err)
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
 	// Don't add TUI if the header doesn't include content size
 	// it's impossible see progress without total
@@ -79,7 +79,7 @@ func main() {
 		fmt.Println("could not create file:", err)
 		os.Exit(1)
 	}
-	defer file.Close()
+	defer file.Close() // nolint:errcheck
 
 	pw := &progressWriter{
 		total:  int(resp.ContentLength),
