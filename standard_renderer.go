@@ -16,7 +16,8 @@ import (
 const (
 	// defaultFramerate specifies the maximum interval at which we should
 	// update the view.
-	defaultFramerate = time.Second / 60
+	defaultFPS = 60
+	maxFPS     = 120
 )
 
 // standardRenderer is a framerate-based terminal renderer, updating the view
@@ -54,12 +55,17 @@ type standardRenderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out *termenv.Output, useANSICompressor bool) renderer {
+func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer {
+	if fps < 1 {
+		fps = defaultFPS
+	} else if fps > maxFPS {
+		fps = maxFPS
+	}
 	r := &standardRenderer{
 		out:                out,
 		mtx:                &sync.Mutex{},
 		done:               make(chan struct{}),
-		framerate:          defaultFramerate,
+		framerate:          time.Second / time.Duration(fps),
 		useANSICompressor:  useANSICompressor,
 		queuedMessageLines: []string{},
 	}
@@ -88,6 +94,11 @@ func (r *standardRenderer) start() {
 
 // stop permanently halts the renderer, rendering the final frame.
 func (r *standardRenderer) stop() {
+	// Stop the renderer before acquiring the mutex to avoid a deadlock.
+	r.once.Do(func() {
+		r.done <- struct{}{}
+	})
+
 	// flush locks the mutex
 	r.flush()
 
@@ -95,9 +106,6 @@ func (r *standardRenderer) stop() {
 	defer r.mtx.Unlock()
 
 	r.out.ClearLine()
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
 
 	if r.useANSICompressor {
 		if w, ok := r.out.TTY().(io.WriteCloser); ok {
@@ -108,13 +116,15 @@ func (r *standardRenderer) stop() {
 
 // kill halts the renderer. The final frame will not be rendered.
 func (r *standardRenderer) kill() {
+	// Stop the renderer before acquiring the mutex to avoid a deadlock.
+	r.once.Do(func() {
+		r.done <- struct{}{}
+	})
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	r.out.ClearLine()
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.

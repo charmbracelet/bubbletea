@@ -200,3 +200,12 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 		p.filter = filter
 	}
 }
+
+// WithMaxFPS sets a custom maximum FPS at which the renderer should run. If
+// less than 1, the default value of 60 will be used. If over 120, the FPS
+// will be capped at 120.
+func WithFPS(fps int) ProgramOption {
+	return func(p *Program) {
+		p.fps = fps
+	}
+}
