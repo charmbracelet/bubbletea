@@ -61,7 +61,7 @@ func initialModel() model {
 
 	return model{
 		textarea: ti,
-		help:     help.NewModel(),
+		help:     help.New(),
 		keymap: keymap{
 			save: key.NewBinding(
 				key.WithKeys("ctrl+s"),

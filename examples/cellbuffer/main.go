@@ -18,14 +18,14 @@ const (
 	fps       = 60
 	frequency = 7.5
 	damping   = 0.15
+	asterisk  = "*"
 )
 
 func drawEllipse(cb *cellbuffer, xc, yc, rx, ry float64) {
-	const c = "*"
 	var (
 		dx, dy, d1, d2 float64
-		x              float64 = 0
-		y                      = ry
+		x              float64
+		y              = ry
 	)
 
 	d1 = ry*ry - rx*rx*ry + 0.25*rx*rx
@@ -33,10 +33,10 @@ func drawEllipse(cb *cellbuffer, xc, yc, rx, ry float64) {
 	dy = 2 * rx * rx * y
 
 	for dx < dy {
-		cb.set(c, int(x+xc), int(y+yc))
-		cb.set(c, int(-x+xc), int(y+yc))
-		cb.set(c, int(x+xc), int(-y+yc))
-		cb.set(c, int(-x+xc), int(-y+yc))
+		cb.set(int(x+xc), int(y+yc))
+		cb.set(int(-x+xc), int(y+yc))
+		cb.set(int(x+xc), int(-y+yc))
+		cb.set(int(-x+xc), int(-y+yc))
 		if d1 < 0 {
 			x++
 			dx = dx + (2 * ry * ry)
@@ -53,10 +53,10 @@ func drawEllipse(cb *cellbuffer, xc, yc, rx, ry float64) {
 	d2 = ((ry * ry) * ((x + 0.5) * (x + 0.5))) + ((rx * rx) * ((y - 1) * (y - 1))) - (rx * rx * ry * ry)
 
 	for y >= 0 {
-		cb.set(c, int(x+xc), int(y+yc))
-		cb.set(c, int(-x+xc), int(y+yc))
-		cb.set(c, int(x+xc), int(-y+yc))
-		cb.set(c, int(-x+xc), int(-y+yc))
+		cb.set(int(x+xc), int(y+yc))
+		cb.set(int(-x+xc), int(y+yc))
+		cb.set(int(x+xc), int(-y+yc))
+		cb.set(int(-x+xc), int(-y+yc))
 		if d2 > 0 {
 			y--
 			dy = dy - (2 * rx * rx)
@@ -85,16 +85,12 @@ func (c *cellbuffer) init(w, h int) {
 	c.wipe()
 }
 
-func (c cellbuffer) set(v string, x, y int) {
+func (c cellbuffer) set(x, y int) {
 	i := y*c.stride + x
 	if i > len(c.cells)-1 || x < 0 || y < 0 || x >= c.width() || y >= c.height() {
 		return
 	}
-	c.cells[i] = v
-}
-
-func (c *cellbuffer) clear(x, y int) {
-	c.set(" ", x, y)
+	c.cells[i] = asterisk
 }
 
 func (c *cellbuffer) wipe() {

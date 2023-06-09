@@ -216,7 +216,7 @@ func chosenView(m model) string {
 		label = fmt.Sprintf("Downloaded. Exiting in %s seconds...", colorFg(strconv.Itoa(m.Ticks), "79"))
 	}
 
-	return msg + "\n\n" + label + "\n" + progressbar(80, m.Progress) + "%"
+	return msg + "\n\n" + label + "\n" + progressbar(m.Progress) + "%"
 }
 
 func checkbox(label string, checked bool) string {
@@ -226,7 +226,7 @@ func checkbox(label string, checked bool) string {
 	return fmt.Sprintf("[ ] %s", label)
 }
 
-func progressbar(width int, percent float64) string {
+func progressbar(percent float64) string {
 	w := float64(progressBarWidth)
 
 	fullSize := int(math.Round(w * percent))
@@ -251,14 +251,6 @@ func colorFg(val, color string) string {
 // Return a function that will colorize the foreground of a given string.
 func makeFgStyle(color string) func(string) string {
 	return termenv.Style{}.Foreground(term.Color(color)).Styled
-}
-
-// Color a string's foreground and background with the given value.
-func makeFgBgStyle(fg, bg string) func(string) string {
-	return termenv.Style{}.
-		Foreground(term.Color(fg)).
-		Background(term.Color(bg)).
-		Styled
 }
 
 // Generate a blend of colors.

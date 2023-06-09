@@ -98,7 +98,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.Next()
 				m.resetSpinner()
-				cmds = append(cmds, spinner.Tick)
+				cmds = append(cmds, m.spinner.Tick)
 			}
 		}
 		switch m.state {

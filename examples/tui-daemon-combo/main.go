@@ -19,8 +19,6 @@ import (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	var (
 		daemonMode bool
 		showHelp   bool
@@ -77,7 +75,7 @@ func newModel() model {
 func (m model) Init() tea.Cmd {
 	log.Println("Starting work...")
 	return tea.Batch(
-		spinner.Tick,
+		m.spinner.Tick,
 		runPretendProcess,
 	)
 }
@@ -128,12 +126,12 @@ type processFinishedMsg time.Duration
 
 // pretendProcess simulates a long-running process.
 func runPretendProcess() tea.Msg {
-	pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond
+	pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond // nolint:gosec
 	time.Sleep(pause)
 	return processFinishedMsg(pause)
 }
 
 func randomEmoji() string {
 	emojis := []rune("🍦🧋🍡🤠👾😭🦊🐯🦆🥨🎏🍔🍒🍥🎮📦🦁🐶🐸🍕🥐🧲🚒🥇🏆🌽")
-	return string(emojis[rand.Intn(len(emojis))])
+	return string(emojis[rand.Intn(len(emojis))]) // nolint:gosec
 }

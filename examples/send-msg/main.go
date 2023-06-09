@@ -53,7 +53,7 @@ func newModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return spinner.Tick
+	return m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -100,14 +100,12 @@ func (m model) View() string {
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	p := tea.NewProgram(newModel())
 
 	// Simulate activity
 	go func() {
 		for {
-			pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond
+			pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond // nolint:gosec
 			time.Sleep(pause)
 
 			// Send the Bubble Tea program a message from outside the
@@ -129,5 +127,5 @@ func randomFood() string {
 		"a kohlrabi", "some spaghetti", "tacos", "a currywurst", "some curry",
 		"a sandwich", "some peanut butter", "some cashews", "some ramen",
 	}
-	return string(food[rand.Intn(len(food))])
+	return food[rand.Intn(len(food))] // nolint:gosec
 }
