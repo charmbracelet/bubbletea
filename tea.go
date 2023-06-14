@@ -58,8 +58,6 @@ type Model interface {
 // update function.
 type Cmd func() Msg
 
-type handlers []chan struct{}
-
 type inputType int
 
 const (
@@ -101,6 +99,29 @@ const (
 	// feature is on by default.
 	withoutCatchPanics
 )
+
+// handlers manages series of channels returned by various processes. It allows
+// us to wait for those processes to terminate before exiting the program.
+type handlers []chan struct{}
+
+// Adds a channel to the list of handlers. We wait for all handlers to terminate
+// gracefully on shutdown.
+func (h *handlers) add(ch chan struct{}) {
+	*h = append(*h, ch)
+}
+
+// shutdown waits for all handlers to terminate.
+func (h handlers) shutdown() {
+	var wg sync.WaitGroup
+	for _, ch := range h {
+		wg.Add(1)
+		go func(ch chan struct{}) {
+			<-ch
+			wg.Done()
+		}(ch)
+	}
+	wg.Wait()
+}
 
 // Program is a terminal user interface.
 type Program struct {
@@ -677,23 +698,4 @@ func (p *Program) Printf(template string, args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
 	}
-}
-
-// Adds a handler to the list of handlers. We wait for all handlers to terminate
-// gracefully on shutdown.
-func (h *handlers) add(ch chan struct{}) {
-	*h = append(*h, ch)
-}
-
-// Shutdown waits for all handlers to terminate.
-func (h handlers) shutdown() {
-	var wg sync.WaitGroup
-	for _, ch := range h {
-		wg.Add(1)
-		go func(ch chan struct{}) {
-			<-ch
-			wg.Done()
-		}(ch)
-	}
-	wg.Wait()
 }
