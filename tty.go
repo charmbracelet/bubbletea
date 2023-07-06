@@ -2,6 +2,7 @@ package tea
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -21,7 +22,7 @@ func (p *Program) initTerminal() error {
 	if p.console != nil {
 		err = p.console.SetRaw()
 		if err != nil {
-			return err
+			return fmt.Errorf("error entering raw mode: %w", err)
 		}
 	}
 
@@ -48,7 +49,7 @@ func (p *Program) restoreTerminalState() error {
 	if p.console != nil {
 		err := p.console.Reset()
 		if err != nil {
-			return err
+			return fmt.Errorf("error restoring terminal state: %w", err)
 		}
 	}
 
@@ -60,7 +61,7 @@ func (p *Program) initCancelReader() error {
 	var err error
 	p.cancelReader, err = cancelreader.NewReader(p.input)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating cancelreader: %w", err)
 	}
 
 	p.readLoopDone = make(chan struct{})
