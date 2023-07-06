@@ -44,6 +44,13 @@ type model struct {
 	quitting  bool
 }
 
+func initialModel() model {
+	return model{
+		sub:     make(chan struct{}),
+		spinner: spinner.New(),
+	}
+}
+
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		m.spinner.Tick,
@@ -78,10 +85,7 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{
-		sub:     make(chan struct{}),
-		spinner: spinner.New(),
-	})
+	p := tea.NewProgram(initialModel())
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)

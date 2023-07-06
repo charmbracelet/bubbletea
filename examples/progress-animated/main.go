@@ -26,11 +26,7 @@ const (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 func main() {
-	m := model{
-		progress: progress.New(progress.WithDefaultGradient()),
-	}
-
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Println("Oh no!", err)
 		os.Exit(1)
 	}
@@ -40,6 +36,12 @@ type tickMsg time.Time
 
 type model struct {
 	progress progress.Model
+}
+
+func initialModel() model {
+	return model{
+		progress: progress.New(progress.WithDefaultGradient()),
+	}
 }
 
 func (m model) Init() tea.Cmd {

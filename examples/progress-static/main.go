@@ -35,9 +35,7 @@ const (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 func main() {
-	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
-
-	if _, err := tea.NewProgram(model{progress: prog}).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Println("Oh no!", err)
 		os.Exit(1)
 	}
@@ -48,6 +46,14 @@ type tickMsg time.Time
 type model struct {
 	percent  float64
 	progress progress.Model
+}
+
+func initialModel() model {
+	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
+
+	return model{
+		progress: prog,
+	}
 }
 
 func (m model) Init() tea.Cmd {

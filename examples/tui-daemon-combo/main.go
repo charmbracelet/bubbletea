@@ -42,7 +42,7 @@ func main() {
 		log.SetOutput(io.Discard)
 	}
 
-	p := tea.NewProgram(newModel(), opts...)
+	p := tea.NewProgram(initialModel(), opts...)
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
@@ -60,7 +60,7 @@ type model struct {
 	quitting bool
 }
 
-func newModel() model {
+func initialModel() model {
 	const showLastResults = 5
 
 	sp := spinner.New()

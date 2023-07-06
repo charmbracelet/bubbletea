@@ -75,7 +75,7 @@ type model struct {
 	focus  int
 }
 
-func newModel() model {
+func initialModel() model {
 	m := model{
 		inputs: make([]textarea.Model, initialInputs),
 		help:   help.New(),
@@ -197,7 +197,7 @@ func (m model) View() string {
 }
 
 func main() {
-	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel(), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}

@@ -14,7 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func newModel() model {
+func initialModel() model {
 	var items []string
 	for i := 1; i < 101; i++ {
 		text := fmt.Sprintf("Item %d", i)
@@ -69,7 +69,7 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(newModel())
+	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}

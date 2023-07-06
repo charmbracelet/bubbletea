@@ -79,7 +79,7 @@ type model struct {
 	delegateKeys  *delegateKeyMap
 }
 
-func newModel() model {
+func initialModel() model {
 	var (
 		itemGenerator randomItemGenerator
 		delegateKeys  = newDelegateKeyMap()
@@ -183,7 +183,7 @@ func (m model) View() string {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

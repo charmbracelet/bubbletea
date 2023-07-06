@@ -15,6 +15,15 @@ type model struct {
 	activeTab  int
 }
 
+func initialModel() model {
+	tabs := []string{"Lip Gloss", "Blush", "Eye Shadow", "Mascara", "Foundation"}
+	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab", "Mascara Tab", "Foundation Tab"}
+	return model{
+		Tabs:       tabs,
+		TabContent: tabContent,
+	}
+}
+
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -90,10 +99,7 @@ func (m model) View() string {
 }
 
 func main() {
-	tabs := []string{"Lip Gloss", "Blush", "Eye Shadow", "Mascara", "Foundation"}
-	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab", "Mascara Tab", "Foundation Tab"}
-	m := model{Tabs: tabs, TabContent: tabContent}
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

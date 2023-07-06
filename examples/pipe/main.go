@@ -18,6 +18,17 @@ import (
 )
 
 func main() {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
+		fmt.Println("Couldn't start program:", err)
+		os.Exit(1)
+	}
+}
+
+type model struct {
+	userInput textinput.Model
+}
+
+func getPipe() string {
 	stat, err := os.Stdin.Stat()
 	if err != nil {
 		panic(err)
@@ -43,24 +54,15 @@ func main() {
 		}
 	}
 
-	model := newModel(strings.TrimSpace(b.String()))
-
-	if _, err := tea.NewProgram(model).Run(); err != nil {
-		fmt.Println("Couldn't start program:", err)
-		os.Exit(1)
-	}
+	return strings.TrimSpace(b.String())
 }
 
-type model struct {
-	userInput textinput.Model
-}
-
-func newModel(initialValue string) (m model) {
+func initialModel() (m model) {
 	i := textinput.New()
 	i.Prompt = ""
 	i.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	i.Width = 48
-	i.SetValue(initialValue)
+	i.SetValue(getPipe())
 	i.CursorEnd()
 	i.Focus()
 

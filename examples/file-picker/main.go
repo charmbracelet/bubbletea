@@ -26,6 +26,16 @@ func clearErrorAfter(t time.Duration) tea.Cmd {
 	})
 }
 
+func initialModel() model {
+	fp := filepicker.New()
+	fp.AllowedTypes = []string{".mod", ".sum", ".go", ".txt", ".md"}
+	fp.CurrentDirectory, _ = os.UserHomeDir()
+
+	return model{
+		filepicker: fp,
+	}
+}
+
 func (m model) Init() tea.Cmd {
 	return m.filepicker.Init()
 }
@@ -81,14 +91,8 @@ func (m model) View() string {
 }
 
 func main() {
-	fp := filepicker.New()
-	fp.AllowedTypes = []string{".mod", ".sum", ".go", ".txt", ".md"}
-	fp.CurrentDirectory, _ = os.UserHomeDir()
-
-	m := model{
-		filepicker: fp,
-	}
-	tm, _ := tea.NewProgram(&m, tea.WithOutput(os.Stderr)).Run()
+	m := initialModel()
+	tm, _ := tea.NewProgram(m, tea.WithOutput(os.Stderr)).Run()
 	mm := tm.(model)
 	fmt.Println("\n  You selected: " + m.filepicker.Styles.Selected.Render(mm.selectedFile) + "\n")
 }

@@ -94,6 +94,7 @@ func main() {
 		pw:       pw,
 		progress: progress.New(progress.WithDefaultGradient()),
 	}
+
 	// Start Bubble Tea
 	p = tea.NewProgram(m)
 

@@ -72,7 +72,7 @@ type model struct {
 	quitting   bool
 }
 
-func newModel() model {
+func initialModel() model {
 	return model{
 		keys:       keys,
 		help:       help.New(),
@@ -140,7 +140,7 @@ func main() {
 		defer f.Close() // nolint:errcheck
 	}
 
-	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Printf("Could not start program :(\n%v\n", err)
 		os.Exit(1)
 	}

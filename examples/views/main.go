@@ -39,8 +39,7 @@ var (
 )
 
 func main() {
-	initialModel := model{0, false, 10, 0, 0, false, false}
-	p := tea.NewProgram(initialModel)
+	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
@@ -71,6 +70,10 @@ type model struct {
 	Progress float64
 	Loaded   bool
 	Quitting bool
+}
+
+func initialModel() model {
+	return model{0, false, 10, 0, 0, false, false}
 }
 
 func (m model) Init() tea.Cmd {

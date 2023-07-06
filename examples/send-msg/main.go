@@ -42,7 +42,7 @@ type model struct {
 	quitting bool
 }
 
-func newModel() model {
+func initialModel() model {
 	const numLastResults = 5
 	s := spinner.New()
 	s.Style = spinnerStyle
@@ -100,7 +100,7 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(newModel())
+	p := tea.NewProgram(initialModel())
 
 	// Simulate activity
 	go func() {

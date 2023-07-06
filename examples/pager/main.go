@@ -41,6 +41,19 @@ type model struct {
 	viewport viewport.Model
 }
 
+func initialModel() model {
+	// Load some text for our viewport
+	content, err := os.ReadFile("artichoke.md")
+	if err != nil {
+		fmt.Println("could not load file:", err)
+		os.Exit(1)
+	}
+
+	return model{
+		content: string(content),
+	}
+}
+
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -127,15 +140,8 @@ func max(a, b int) int {
 }
 
 func main() {
-	// Load some text for our viewport
-	content, err := os.ReadFile("artichoke.md")
-	if err != nil {
-		fmt.Println("could not load file:", err)
-		os.Exit(1)
-	}
-
 	p := tea.NewProgram(
-		model{content: string(content)},
+		initialModel(),
 		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 	)

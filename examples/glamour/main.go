@@ -52,11 +52,11 @@ Bon appétit!
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
-type example struct {
+type model struct {
 	viewport viewport.Model
 }
 
-func newExample() (*example, error) {
+func initialModel() (*model, error) {
 	const width = 78
 
 	vp := viewport.New(width, 20)
@@ -80,16 +80,16 @@ func newExample() (*example, error) {
 
 	vp.SetContent(str)
 
-	return &example{
+	return &model{
 		viewport: vp,
 	}, nil
 }
 
-func (e example) Init() tea.Cmd {
+func (e model) Init() tea.Cmd {
 	return nil
 }
 
-func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (e model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -105,16 +105,16 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (e example) View() string {
+func (e model) View() string {
 	return e.viewport.View() + e.helpView()
 }
 
-func (e example) helpView() string {
+func (e model) helpView() string {
 	return helpStyle("\n  ↑/↓: Navigate • q: Quit\n")
 }
 
 func main() {
-	model, err := newExample()
+	model, err := initialModel()
 	if err != nil {
 		fmt.Println("Could not initialize Bubble Tea model:", err)
 		os.Exit(1)

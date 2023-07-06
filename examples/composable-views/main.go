@@ -65,7 +65,7 @@ type mainModel struct {
 	index   int
 }
 
-func newModel(timeout time.Duration) mainModel {
+func initialModel(timeout time.Duration) mainModel {
 	m := mainModel{state: timerView}
 	m.timer = timer.New(timeout)
 	m.spinner = spinner.New()
@@ -154,7 +154,7 @@ func (m *mainModel) resetSpinner() {
 }
 
 func main() {
-	p := tea.NewProgram(newModel(defaultTime))
+	p := tea.NewProgram(initialModel(defaultTime))
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
