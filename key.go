@@ -572,8 +572,9 @@ var unknownCSIRe = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e
 
 func detectOneMsg(b []byte) (w int, msg Msg) {
 	// Detect mouse events.
-	if len(b) >= 6 && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M' {
-		return 6, MouseMsg(parseX10MouseEvent(b))
+	const mouseEventLen = 6
+	if len(b) >= mouseEventLen && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M' {
+		return mouseEventLen, MouseMsg(parseX10MouseEvent(b))
 	}
 
 	// Detect escape sequence and control characters other than NUL,
