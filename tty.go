@@ -42,7 +42,7 @@ func (p *Program) restoreTerminalState() error {
 			p.renderer.exitAltScreen()
 
 			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond * 10) //nolint:gomnd
 		}
 	}
 
@@ -87,7 +87,7 @@ func (p *Program) readLoop() {
 func (p *Program) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(500 * time.Millisecond): //nolint:gomnd
 		// The read loop hangs, which means the input
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.
