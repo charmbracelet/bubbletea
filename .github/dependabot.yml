@@ -9,10 +9,6 @@ updates:
     commit-message:
       prefix: "feat"
       include: "scope"
-    groups:
-      gomod:
-        patterns:
-          - "*"
   - package-ecosystem: "gomod"
     directory: "/examples"
     schedule:
@@ -20,12 +16,8 @@ updates:
     labels:
       - "dependencies"
     commit-message:
-      prefix: "docs"
+      prefix: "chore"
       include: "scope"
-    groups:
-      gomod:
-        patterns:
-          - "*"
   - package-ecosystem: "gomod"
     directory: "/tutorials"
     schedule:
@@ -33,12 +25,8 @@ updates:
     labels:
       - "dependencies"
     commit-message:
-      prefix: "docs"
+      prefix: "chore"
       include: "scope"
-    groups:
-      gomod:
-        patterns:
-          - "*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -48,7 +36,3 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    groups:
-      github-actions:
-        patterns:
-          - "*"
