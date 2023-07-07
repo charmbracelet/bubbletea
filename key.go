@@ -547,7 +547,7 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 		// Read and block.
 		numBytes, err := input.Read(buf[:])
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading input: %w", err)
 		}
 		b := buf[:numBytes]
 
@@ -558,7 +558,11 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 			select {
 			case msgs <- msg:
 			case <-ctx.Done():
-				return ctx.Err()
+				err := ctx.Err()
+				if err != nil {
+					err = fmt.Errorf("found context error while reading input: %w", err)
+				}
+				return err
 			}
 		}
 	}
