@@ -1,4 +1,4 @@
-package main
+package pager
 
 // An example program demonstrating the pager component from the Bubbles
 // component library.
@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "github.com/rprtr258/bubbletea"
+	"github.com/rprtr258/bubbletea/bubbles/viewport"
+	"github.com/rprtr258/bubbletea/lipgloss"
 )
 
 // You generally won't need this unless you're processing stuff with
@@ -45,14 +45,14 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		if k := msg.String(); k == "ctrl+c" || k == "q" || k == "esc" {
 			return m, tea.Quit
 		}
@@ -100,11 +100,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
 	if !m.ready {
-		return "\n  Initializing..."
+		r.Write("\n  Initializing...")
+		return
 	}
-	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
+
+	r.Write(fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView()))
 }
 
 func (m model) headerView() string {
@@ -126,7 +128,7 @@ func max(a, b int) int {
 	return b
 }
 
-func main() {
+func Main() {
 	// Load some text for our viewport
 	content, err := os.ReadFile("artichoke.md")
 	if err != nil {
@@ -134,11 +136,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	p := tea.NewProgram(
-		model{content: string(content)},
-		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
-		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
-	)
+	p := tea.NewProgram(model{content: string(content)}).
+		WithAltScreen().      // use the full size of the terminal in its "alternate screen buffer"
+		WithMouseCellMotion() // turn on mouse support so we can track the mouse wheel
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("could not run program:", err)

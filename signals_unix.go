@@ -12,7 +12,7 @@ import (
 // listenForResize sends messages (or errors) when the terminal resizes.
 // Argument output should be the file descriptor for the terminal; usually
 // os.Stdout.
-func (p *Program) listenForResize(done chan struct{}) {
+func (p *Program[M]) listenForResize(done chan struct{}) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGWINCH)
 

@@ -59,7 +59,7 @@ func detectSequence(input []byte) (hasSeq bool, width int, msg Msg) {
 		prefix := input[:sz]
 		key, ok := seqs[string(prefix)]
 		if ok {
-			return true, sz, KeyMsg(key)
+			return true, sz, MsgKey(key)
 		}
 	}
 	// Is this an unknown CSI sequence?

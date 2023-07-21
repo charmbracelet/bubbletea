@@ -1,4 +1,4 @@
-package main
+package simple
 
 // A simple program that counts down from 5 and then exits.
 
@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/rprtr258/bubbletea"
 )
 
-func main() {
+func Main() {
 	// Log to a file. Useful in debugging since you can't really log to stdout.
 	// Not required.
 	logfilePath := os.Getenv("BUBBLETEA_LOG")
@@ -42,9 +42,9 @@ func (m model) Init() tea.Cmd {
 // Update is called when messages are received. The idea is that you inspect the
 // message and send back an updated model accordingly. You can also return
 // a command, which is a function that performs I/O and returns a message.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		return m, tea.Quit
 	case tickMsg:
 		m--
@@ -58,8 +58,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
-func (m model) View() string {
-	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
+func (m model) View(r tea.Renderer) {
+	r.Write(fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m))
 }
 
 // Messages are events that we respond to in our Update function. This

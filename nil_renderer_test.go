@@ -1,18 +1,20 @@
 package tea
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestNilRenderer(t *testing.T) {
 	r := nilRenderer{}
 	r.start()
 	r.stop()
 	r.kill()
-	r.write("a")
+	r.Write("a")
 	r.repaint()
 	r.enterAltScreen()
-	if r.altScreen() {
-		t.Errorf("altScreen should always return false")
-	}
+	assert.False(t, r.altScreen(), "altScreen should always return false")
 	r.exitAltScreen()
 	r.clearScreen()
 	r.showCursor()

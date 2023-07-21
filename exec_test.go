@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"os/exec"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-type execFinishedMsg struct{ err error }
+type execFinishedMsg struct {
+	err error
+}
 
 type testExecModel struct {
 	cmd string
@@ -16,11 +20,11 @@ type testExecModel struct {
 func (m testExecModel) Init() Cmd {
 	c := exec.Command(m.cmd) //nolint:gosec
 	return ExecProcess(c, func(err error) Msg {
-		return execFinishedMsg{err}
+		return execFinishedMsg{err: err}
 	})
 }
 
-func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
+func (m *testExecModel) Update(msg Msg) (*testExecModel, Cmd) {
 	switch msg := msg.(type) {
 	case execFinishedMsg:
 		if msg.err != nil {
@@ -32,50 +36,34 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() string {
-	return "\n"
-}
+func (m *testExecModel) View(Renderer) {}
 
 func TestTeaExec(t *testing.T) {
-	tests := []struct {
-		name      string
+	for name, test := range map[string]struct {
 		cmd       string
-		expectErr bool
+		expectErr error
 	}{
-		{
-			name:      "true",
+		"true": {
 			cmd:       "true",
-			expectErr: false,
+			expectErr: nil,
 		},
-		{
-			name:      "false",
+		"false": {
 			cmd:       "false",
-			expectErr: true,
+			expectErr: &exec.ExitError{},
 		},
-		{
-			name:      "invalid command",
+		"invalid command": {
 			cmd:       "invalid",
-			expectErr: true,
+			expectErr: &exec.Error{},
 		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	} {
+		t.Run(name, func(t *testing.T) {
 			var buf bytes.Buffer
 			var in bytes.Buffer
 
 			m := &testExecModel{cmd: test.cmd}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
-			if _, err := p.Run(); err != nil {
-				t.Error(err)
-			}
-
-			if m.err != nil && !test.expectErr {
-				t.Errorf("expected no error, got %v", m.err)
-			}
-			if m.err == nil && test.expectErr {
-				t.Error("expected error, got nil")
-			}
+			_, err := NewProgram(m).WithInput(&in).WithOutput(&buf).Run()
+			assert.NoError(t, err)
+			assert.IsType(t, test.expectErr, m.err)
 		})
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package textinputs
 
 // A simple example demonstrating the use of multiple text input components
 // from the Bubbles component library.
@@ -8,10 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/cursor"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "github.com/rprtr258/bubbletea"
+	"github.com/rprtr258/bubbletea/bubbles/cursor"
+	"github.com/rprtr258/bubbletea/bubbles/textinput"
+	"github.com/rprtr258/bubbletea/lipgloss"
 )
 
 var (
@@ -68,9 +68,9 @@ func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
@@ -147,7 +147,7 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
 	var b strings.Builder
 
 	for i := range m.inputs {
@@ -167,10 +167,10 @@ func (m model) View() string {
 	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
 
-	return b.String()
+	r.Write(b.String())
 }
 
-func main() {
+func Main() {
 	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Printf("could not start program: %s\n", err)
 		os.Exit(1)

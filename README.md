@@ -2,9 +2,9 @@
 
 <p>
     <img src="https://stuff.charm.sh/bubbletea/bubbletea-github-header-simple.png" width="313" alt="Bubble Tea Title Treatment"><br>
-    <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
-    <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
-    <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/workflows/build/badge.svg" alt="Build Status"></a>
+    <a href="https://github.com/rprtr258/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
+    <a href="https://pkg.go.dev/github.com/rprtr258/bubbletea?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
+    <a href="https://github.com/rprtr258/bubbletea/actions"><img src="https://github.com/rprtr258/bubbletea/workflows/build/badge.svg" alt="Build Status"></a>
 </p>
 
 The fun, functional and stateful way to build terminal apps. A Go framework
@@ -30,8 +30,8 @@ To get started, see the tutorial below, the [examples][examples], the
 Be sure to check out [Bubbles][bubbles], a library of common UI components for Bubble Tea.
 
 <p>
-    <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles/bubbles-badge.png" width="174" alt="Bubbles Badge"></a>&nbsp;&nbsp;
-    <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
+    <a href="https://github.com/rprtr258/bubbletea/bubbles"><img src="https://stuff.charm.sh/bubbles/bubbles-badge.png" width="174" alt="Bubbles Badge"></a>&nbsp;&nbsp;
+    <a href="https://github.com/rprtr258/bubbletea/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
 ***
@@ -48,7 +48,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]:https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[tut-source]:https://github.com/rprtr258/bubbletea/tree/master/tutorials/basics
 
 ### Enough! Let's get to it.
 
@@ -64,7 +64,7 @@ import (
     "fmt"
     "os"
 
-    tea "github.com/charmbracelet/bubbletea"
+    tea "github.com/rprtr258/bubbletea"
 )
 ```
 
@@ -136,35 +136,29 @@ tick, or a response from a server.
 We usually figure out which type of `Msg` we received with a type switch, but
 you could also use a type assertion.
 
-For now, we'll just deal with `tea.KeyMsg` messages, which are automatically
+For now, we'll just deal with `tea.MsgKey` messages, which are automatically
 sent to the update function when keys are pressed.
 
 ```go
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
     switch msg := msg.(type) {
-
     // Is it a key press?
-    case tea.KeyMsg:
-
+    case tea.MsgKey:
         // Cool, what was the actual key pressed?
         switch msg.String() {
-
         // These keys should exit the program.
         case "ctrl+c", "q":
             return m, tea.Quit
-
         // The "up" and "k" keys move the cursor up
         case "up", "k":
             if m.cursor > 0 {
                 m.cursor--
             }
-
         // The "down" and "j" keys move the cursor down
         case "down", "j":
             if m.cursor < len(m.choices)-1 {
                 m.cursor++
             }
-
         // The "enter" key and the spacebar (a literal space) toggle
         // the selected state for the item that the cursor is pointing at.
         case "enter", " ":
@@ -198,7 +192,7 @@ worry about redrawing logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
     // The header
     s := "What should we buy at the market?\n\n"
 
@@ -253,9 +247,9 @@ look at the [Command Tutorial][cmd]. It's pretty simple.
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
-[examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
+[cmd]: http://github.com/rprtr258/bubbletea/tree/master/tutorials/commands/
+[examples]: http://github.com/rprtr258/bubbletea/tree/master/examples
+[docs]: https://pkg.go.dev/github.com/rprtr258/bubbletea?tab=doc
 
 ## Debugging
 
@@ -305,8 +299,8 @@ your program in another window.
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
-[bubbles]: https://github.com/charmbracelet/bubbles
-[lipgloss]: https://github.com/charmbracelet/lipgloss
+[bubbles]: https://github.com/rprtr258/bubbletea/bubbles
+[lipgloss]: https://github.com/rprtr258/bubbletea/lipgloss
 [harmonica]: https://github.com/charmbracelet/harmonica
 [bubblezone]: https://github.com/lrstanley/bubblezone
 [termenv]: https://github.com/muesli/termenv
@@ -395,7 +389,7 @@ of days past.
 
 ## License
 
-[MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
+[MIT](https://github.com/rprtr258/bubbletea/raw/master/LICENSE)
 
 ***
 

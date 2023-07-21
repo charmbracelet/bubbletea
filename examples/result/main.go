@@ -1,4 +1,4 @@
-package main
+package result
 
 // A simple example that shows how to retrieve a value from a Bubble Tea
 // program after the Bubble Tea has exited.
@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/rprtr258/bubbletea"
 )
 
 var choices = []string{"Taro", "Coffee", "Lychee"}
@@ -22,9 +22,9 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			return m, tea.Quit
@@ -51,7 +51,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
 	s := strings.Builder{}
 	s.WriteString("What kind of Bubble Tea would you like to order?\n\n")
 
@@ -66,10 +66,10 @@ func (m model) View() string {
 	}
 	s.WriteString("\n(press q to quit)\n")
 
-	return s.String()
+	r.Write(s.String())
 }
 
-func main() {
+func Main() {
 	p := tea.NewProgram(model{})
 
 	// Run returns the model as a tea.Model.
@@ -80,7 +80,7 @@ func main() {
 	}
 
 	// Assert the final tea.Model to our local model and print the choice.
-	if m, ok := m.(model); ok && m.choice != "" {
+	if m.choice != "" {
 		fmt.Printf("\n---\nYou chose %s!\n", m.choice)
 	}
 }

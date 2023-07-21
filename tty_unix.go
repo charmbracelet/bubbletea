@@ -10,7 +10,7 @@ import (
 	"github.com/containerd/console"
 )
 
-func (p *Program) initInput() error {
+func (p *Program[M]) initInput() error {
 	// If input's a file, use console to manage it
 	if f, ok := p.input.(*os.File); ok {
 		c, err := console.ConsoleFromFile(f)
@@ -27,7 +27,7 @@ func (p *Program) initInput() error {
 // we don't do this on Windows as it causes the prompt to not be drawn until
 // the terminal receives a keypress rather than appearing promptly after the
 // program exits.
-func (p *Program) restoreInput() error {
+func (p *Program[M]) restoreInput() error {
 	if p.console != nil {
 		if err := p.console.Reset(); err != nil {
 			return fmt.Errorf("error restoring console: %w", err)

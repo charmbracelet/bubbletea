@@ -13,7 +13,7 @@ import (
 	"golang.org/x/term"
 )
 
-func (p *Program) initTerminal() error {
+func (p *Program[M]) initTerminal() error {
 	err := p.initInput()
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func (p *Program) initTerminal() error {
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
-func (p *Program) restoreTerminalState() error {
+func (p *Program[M]) restoreTerminalState() error {
 	if p.renderer != nil {
 		p.renderer.showCursor()
 		p.renderer.disableMouseCellMotion()
@@ -57,7 +57,7 @@ func (p *Program) restoreTerminalState() error {
 }
 
 // initCancelReader (re)commences reading inputs.
-func (p *Program) initCancelReader() error {
+func (p *Program[M]) initCancelReader() error {
 	var err error
 	p.cancelReader, err = cancelreader.NewReader(p.input)
 	if err != nil {
@@ -70,7 +70,7 @@ func (p *Program) initCancelReader() error {
 	return nil
 }
 
-func (p *Program) readLoop() {
+func (p *Program[M]) readLoop() {
 	defer close(p.readLoopDone)
 
 	input := localereader.NewReader(p.cancelReader)
@@ -84,7 +84,7 @@ func (p *Program) readLoop() {
 }
 
 // waitForReadLoop waits for the cancelReader to finish its read loop.
-func (p *Program) waitForReadLoop() {
+func (p *Program[M]) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
 	case <-time.After(500 * time.Millisecond): //nolint:gomnd
@@ -96,7 +96,7 @@ func (p *Program) waitForReadLoop() {
 
 // checkResize detects the current size of the output and informs the program
 // via a WindowSizeMsg.
-func (p *Program) checkResize() {
+func (p *Program[M]) checkResize() {
 	f, ok := p.output.TTY().(*os.File)
 	if !ok || !isatty.IsTerminal(f.Fd()) {
 		// can't query window size

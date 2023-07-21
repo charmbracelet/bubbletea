@@ -1,4 +1,4 @@
-package main
+package pipe
 
 // An example illustrating how to pipe in data to a Bubble Tea application.
 // More so, this serves as proof that Bubble Tea will automatically listen for
@@ -12,12 +12,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "github.com/rprtr258/bubbletea"
+	"github.com/rprtr258/bubbletea/bubbles/textinput"
+	"github.com/rprtr258/bubbletea/lipgloss"
 )
 
-func main() {
+func Main() {
 	stat, err := os.Stdin.Stat()
 	if err != nil {
 		panic(err)
@@ -72,8 +72,8 @@ func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if key, ok := msg.(tea.KeyMsg); ok {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
+	if key, ok := msg.(tea.MsgKey); ok {
 		switch key.Type {
 		case tea.KeyCtrlC, tea.KeyEscape, tea.KeyEnter:
 			return m, tea.Quit
@@ -85,9 +85,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
+func (m model) View(r tea.Renderer) {
+	r.Write(fmt.Sprintf(
 		"\nYou piped in: %s\n\nPress ^C to exit",
 		m.userInput.View(),
-	)
+	))
 }

@@ -1,12 +1,12 @@
-package main
+package spinners
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "github.com/rprtr258/bubbletea"
+	"github.com/rprtr258/bubbletea/bubbles/spinner"
+	"github.com/rprtr258/bubbletea/lipgloss"
 )
 
 var (
@@ -28,7 +28,7 @@ var (
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 )
 
-func main() {
+func Main() {
 	m := model{}
 	m.resetSpinner()
 
@@ -47,9 +47,9 @@ func (m model) Init() tea.Cmd {
 	return m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			return m, tea.Quit
@@ -85,7 +85,7 @@ func (m *model) resetSpinner() {
 	m.spinner.Spinner = spinners[m.index]
 }
 
-func (m model) View() (s string) {
+func (m model) View(r tea.Renderer) {
 	var gap string
 	switch m.index {
 	case 1:
@@ -94,7 +94,6 @@ func (m model) View() (s string) {
 		gap = " "
 	}
 
-	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
-	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
+	r.Write(fmt.Sprintf("\n %s%s%s\n\n%s", m.spinner.View(), gap, textStyle("Spinning..."), helpStyle("h/l, ←/→: change spinner • q: exit\n")))
 	return
 }

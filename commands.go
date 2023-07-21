@@ -4,33 +4,38 @@ import (
 	"time"
 )
 
+// BatchMsg is a message used to perform a bunch of commands concurrently with
+// no ordering guarantees. You can send a BatchMsg with Batch.
+type BatchMsg []Cmd
+
 // Batch performs a bunch of commands concurrently with no ordering guarantees
 // about the results. Use a Batch to return several commands.
-//
-// Example:
-//
-//	    func (m model) Init() Cmd {
-//		       return tea.Batch(someCommand, someOtherCommand)
-//	    }
 func Batch(cmds ...Cmd) Cmd {
-	var validCmds []Cmd //nolint:prealloc
+	count := 0
+	for _, c := range cmds {
+		if c != nil {
+			count++
+		}
+	}
+
+	if count == 0 {
+		return nil
+	}
+
+	validCmds := make([]Cmd, 0, count)
 	for _, c := range cmds {
 		if c == nil {
 			continue
 		}
 		validCmds = append(validCmds, c)
 	}
-	if len(validCmds) == 0 {
-		return nil
-	}
 	return func() Msg {
 		return BatchMsg(validCmds)
 	}
 }
 
-// BatchMsg is a message used to perform a bunch of commands concurrently with
-// no ordering guarantees. You can send a BatchMsg with Batch.
-type BatchMsg []Cmd
+// sequenceMsg is used internally to run the given commands in order.
+type sequenceMsg []Cmd
 
 // Sequence runs the given commands one at a time, in order. Contrast this with
 // Batch, which runs commands concurrently.
@@ -39,9 +44,6 @@ func Sequence(cmds ...Cmd) Cmd {
 		return sequenceMsg(cmds)
 	}
 }
-
-// sequenceMsg is used internally to run the given commands in order.
-type sequenceMsg []Cmd
 
 // Every is a command that ticks in sync with the system clock. So, if you
 // wanted to tick with the system clock every second, minute or hour you

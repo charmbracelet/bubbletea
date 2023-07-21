@@ -3,74 +3,61 @@ package tea
 import (
 	"bytes"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClearMsg(t *testing.T) {
-	tests := []struct {
-		name     string
+	for name, test := range map[string]struct {
 		cmds     sequenceMsg
 		expected string
 	}{
-		{
-			name:     "clear_screen",
+		"clear_screen": {
 			cmds:     []Cmd{ClearScreen},
 			expected: "\x1b[?25l\x1b[2J\x1b[1;1H\x1b[1;1Hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
-		{
-			name:     "altscreen",
+		"altscreen": {
 			cmds:     []Cmd{EnterAltScreen, ExitAltScreen},
 			expected: "\x1b[?25l\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[1;1H\x1b[?25l\x1b[?1049l\x1b[?25lsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
-		{
-			name:     "altscreen_autoexit",
+		"altscreen_autoexit": {
 			cmds:     []Cmd{EnterAltScreen},
 			expected: "\x1b[?25l\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[1;1H\x1b[?25lsuccess\r\n\x1b[2;0H\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1049l\x1b[?25h",
 		},
-		{
-			name:     "mouse_cellmotion",
+		"mouse_cellmotion": {
 			cmds:     []Cmd{EnableMouseCellMotion},
 			expected: "\x1b[?25l\x1b[?1002hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
-		{
-			name:     "mouse_allmotion",
+		"mouse_allmotion": {
 			cmds:     []Cmd{EnableMouseAllMotion},
 			expected: "\x1b[?25l\x1b[?1003hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
-		{
-			name:     "mouse_disable",
+		"mouse_disable": {
 			cmds:     []Cmd{EnableMouseAllMotion, DisableMouse},
 			expected: "\x1b[?25l\x1b[?1003h\x1b[?1002l\x1b[?1003lsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
-		{
-			name:     "cursor_hide",
+		"cursor_hide": {
 			cmds:     []Cmd{HideCursor},
 			expected: "\x1b[?25l\x1b[?25lsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
-		{
-			name:     "cursor_hideshow",
+		"cursor_hideshow": {
 			cmds:     []Cmd{HideCursor, ShowCursor},
 			expected: "\x1b[?25l\x1b[?25l\x1b[?25hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l",
 		},
-	}
+	} {
+		t.Run(name, func(t *testing.T) {
+			var (
+				in  bytes.Buffer
+				out bytes.Buffer
+			)
+			p := NewProgram(&testModel{}).WithInput(&in).WithOutput(&out)
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			var in bytes.Buffer
+			go p.Send(append(test.cmds, Quit))
 
-			m := &testModel{}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			_, err := p.Run()
+			assert.NoError(t, err)
 
-			test.cmds = append(test.cmds, Quit)
-			go p.Send(test.cmds)
-
-			if _, err := p.Run(); err != nil {
-				t.Fatal(err)
-			}
-
-			if buf.String() != test.expected {
-				t.Errorf("expected embedded sequence, got %q", buf.String())
-			}
+			assert.Equal(t, test.expected, out.String())
 		})
 	}
 }

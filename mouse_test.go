@@ -1,71 +1,63 @@
 package tea
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestMouseEvent_String(t *testing.T) {
-	tt := []struct {
-		name     string
+	for name, test := range map[string]struct {
 		event    MouseEvent
 		expected string
 	}{
-		{
-			name:     "unknown",
+		"unknown": {
 			event:    MouseEvent{Type: MouseUnknown},
 			expected: "unknown",
 		},
-		{
-			name:     "left",
+		"left": {
 			event:    MouseEvent{Type: MouseLeft},
 			expected: "left",
 		},
-		{
-			name:     "right",
+		"right": {
 			event:    MouseEvent{Type: MouseRight},
 			expected: "right",
 		},
-		{
-			name:     "middle",
+		"middle": {
 			event:    MouseEvent{Type: MouseMiddle},
 			expected: "middle",
 		},
-		{
-			name:     "release",
+		"release": {
 			event:    MouseEvent{Type: MouseRelease},
 			expected: "release",
 		},
-		{
-			name:     "wheel up",
+		"wheel up": {
 			event:    MouseEvent{Type: MouseWheelUp},
 			expected: "wheel up",
 		},
-		{
-			name:     "wheel down",
+		"wheel down": {
 			event:    MouseEvent{Type: MouseWheelDown},
 			expected: "wheel down",
 		},
-		{
-			name:     "motion",
+		"motion": {
 			event:    MouseEvent{Type: MouseMotion},
 			expected: "motion",
 		},
-		{
-			name: "alt+left",
+		"alt+left": {
 			event: MouseEvent{
 				Type: MouseLeft,
 				Alt:  true,
 			},
 			expected: "alt+left",
 		},
-		{
-			name: "ctrl+left",
+		"ctrl+left": {
 			event: MouseEvent{
 				Type: MouseLeft,
 				Ctrl: true,
 			},
 			expected: "ctrl+left",
 		},
-		{
-			name: "ctrl+alt+left",
+		"ctrl+alt+left": {
 			event: MouseEvent{
 				Type: MouseLeft,
 				Alt:  true,
@@ -73,8 +65,7 @@ func TestMouseEvent_String(t *testing.T) {
 			},
 			expected: "ctrl+alt+left",
 		},
-		{
-			name: "ignore coordinates",
+		"ignore coordinates": {
 			event: MouseEvent{
 				X:    100,
 				Y:    200,
@@ -82,27 +73,15 @@ func TestMouseEvent_String(t *testing.T) {
 			},
 			expected: "left",
 		},
-		{
-			name: "broken type",
+		"broken type": {
 			event: MouseEvent{
 				Type: MouseEventType(-1000),
 			},
 			expected: "",
 		},
-	}
-
-	for i := range tt {
-		tc := tt[i]
-
-		t.Run(tc.name, func(t *testing.T) {
-			actual := tc.event.String()
-
-			if tc.expected != actual {
-				t.Fatalf("expected %q but got %q",
-					tc.expected,
-					actual,
-				)
-			}
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, test.event.String())
 		})
 	}
 }
@@ -119,24 +98,21 @@ func TestParseX10MouseEvent(t *testing.T) {
 		}
 	}
 
-	tt := []struct {
-		name     string
+	for name, test := range map[string]struct {
 		buf      []byte
 		expected MouseEvent
 	}{
 		// Position.
-		{
-			name: "zero position",
-			buf:  encode(0b0010_0000, 0, 0),
+		"zero position": {
+			buf: encode(0b0010_0000, 0, 0),
 			expected: MouseEvent{
 				X:    0,
 				Y:    0,
 				Type: MouseLeft,
 			},
 		},
-		{
-			name: "max position",
-			buf:  encode(0b0010_0000, 222, 222), // Because 255 (max int8) - 32 - 1.
+		"max position": {
+			buf: encode(0b0010_0000, 222, 222), // Because 255 (max int8) - 32 - 1.
 			expected: MouseEvent{
 				X:    222,
 				Y:    222,
@@ -144,90 +120,80 @@ func TestParseX10MouseEvent(t *testing.T) {
 			},
 		},
 		// Simple.
-		{
-			name: "left",
-			buf:  encode(0b0000_0000, 32, 16),
+		"left": {
+			buf: encode(0b0000_0000, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseLeft,
 			},
 		},
-		{
-			name: "left in motion",
-			buf:  encode(0b0010_0000, 32, 16),
+		"left in motion": {
+			buf: encode(0b0010_0000, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseLeft,
 			},
 		},
-		{
-			name: "middle",
-			buf:  encode(0b0000_0001, 32, 16),
+		"middle": {
+			buf: encode(0b0000_0001, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseMiddle,
 			},
 		},
-		{
-			name: "middle in motion",
-			buf:  encode(0b0010_0001, 32, 16),
+		"middle in motion": {
+			buf: encode(0b0010_0001, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseMiddle,
 			},
 		},
-		{
-			name: "right",
-			buf:  encode(0b0000_0010, 32, 16),
+		"right": {
+			buf: encode(0b0000_0010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseRight,
 			},
 		},
-		{
-			name: "right in motion",
-			buf:  encode(0b0010_0010, 32, 16),
+		"right in motion": {
+			buf: encode(0b0010_0010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseRight,
 			},
 		},
-		{
-			name: "motion",
-			buf:  encode(0b0010_0011, 32, 16),
+		"motion": {
+			buf: encode(0b0010_0011, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseMotion,
 			},
 		},
-		{
-			name: "wheel up",
-			buf:  encode(0b0100_0000, 32, 16),
+		"wheel up": {
+			buf: encode(0b0100_0000, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseWheelUp,
 			},
 		},
-		{
-			name: "wheel down",
-			buf:  encode(0b0100_0001, 32, 16),
+		"wheel down": {
+			buf: encode(0b0100_0001, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseWheelDown,
 			},
 		},
-		{
-			name: "release",
-			buf:  encode(0b0000_0011, 32, 16),
+		"release": {
+			buf: encode(0b0000_0011, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -235,9 +201,8 @@ func TestParseX10MouseEvent(t *testing.T) {
 			},
 		},
 		// Combinations.
-		{
-			name: "alt+right",
-			buf:  encode(0b0010_1010, 32, 16),
+		"alt+right": {
+			buf: encode(0b0010_1010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -245,9 +210,8 @@ func TestParseX10MouseEvent(t *testing.T) {
 				Alt:  true,
 			},
 		},
-		{
-			name: "ctrl+right",
-			buf:  encode(0b0011_0010, 32, 16),
+		"ctrl+right": {
+			buf: encode(0b0011_0010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -255,9 +219,8 @@ func TestParseX10MouseEvent(t *testing.T) {
 				Ctrl: true,
 			},
 		},
-		{
-			name: "ctrl+alt+right",
-			buf:  encode(0b0011_1010, 32, 16),
+		"ctrl+alt+right": {
+			buf: encode(0b0011_1010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -266,9 +229,8 @@ func TestParseX10MouseEvent(t *testing.T) {
 				Ctrl: true,
 			},
 		},
-		{
-			name: "alt+wheel down",
-			buf:  encode(0b0100_1001, 32, 16),
+		"alt+wheel down": {
+			buf: encode(0b0100_1001, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -276,9 +238,8 @@ func TestParseX10MouseEvent(t *testing.T) {
 				Alt:  true,
 			},
 		},
-		{
-			name: "ctrl+wheel down",
-			buf:  encode(0b0101_0001, 32, 16),
+		"ctrl+wheel down": {
+			buf: encode(0b0101_0001, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -286,9 +247,8 @@ func TestParseX10MouseEvent(t *testing.T) {
 				Ctrl: true,
 			},
 		},
-		{
-			name: "ctrl+alt+wheel down",
-			buf:  encode(0b0101_1001, 32, 16),
+		"ctrl+alt+wheel down": {
+			buf: encode(0b0101_1001, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -298,18 +258,16 @@ func TestParseX10MouseEvent(t *testing.T) {
 			},
 		},
 		// Unknown.
-		{
-			name: "wheel with unknown bit",
-			buf:  encode(0b0100_0010, 32, 16),
+		"wheel with unknown bit": {
+			buf: encode(0b0100_0010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
 				Type: MouseUnknown,
 			},
 		},
-		{
-			name: "unknown with modifier",
-			buf:  encode(0b0100_1010, 32, 16),
+		"unknown with modifier": {
+			buf: encode(0b0100_1010, 32, 16),
 			expected: MouseEvent{
 				X:    32,
 				Y:    16,
@@ -318,29 +276,17 @@ func TestParseX10MouseEvent(t *testing.T) {
 			},
 		},
 		// Overflow position.
-		{
-			name: "overflow position",
-			buf:  encode(0b0010_0000, 250, 223), // Because 255 (max int8) - 32 - 1.
+		"overflow position": {
+			buf: encode(0b0010_0000, 250, 223), // Because 255 (max int8) - 32 - 1.
 			expected: MouseEvent{
 				X:    -6,
 				Y:    -33,
 				Type: MouseLeft,
 			},
 		},
-	}
-
-	for i := range tt {
-		tc := tt[i]
-
-		t.Run(tc.name, func(t *testing.T) {
-			actual := parseX10MouseEvent(tc.buf)
-
-			if tc.expected != actual {
-				t.Fatalf("expected %#v but got %#v",
-					tc.expected,
-					actual,
-				)
-			}
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, parseX10MouseEvent(test.buf))
 		})
 	}
 }

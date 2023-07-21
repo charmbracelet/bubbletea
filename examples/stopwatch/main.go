@@ -1,14 +1,14 @@
-package main
+package stopwatch
 
 import (
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/stopwatch"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/rprtr258/bubbletea"
+	"github.com/rprtr258/bubbletea/bubbles/help"
+	"github.com/rprtr258/bubbletea/bubbles/key"
+	"github.com/rprtr258/bubbletea/bubbles/stopwatch"
 )
 
 type model struct {
@@ -29,7 +29,7 @@ func (m model) Init() tea.Cmd {
 	return m.stopwatch.Init()
 }
 
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
 	// Note: you could further customize the time output by getting the
 	// duration from m.stopwatch.Elapsed(), which returns a time.Duration, and
 	// skip m.stopwatch.View() altogether.
@@ -38,7 +38,7 @@ func (m model) View() string {
 		s = "Elapsed: " + s
 		s += m.helpView()
 	}
-	return s
+	r.Write(s)
 }
 
 func (m model) helpView() string {
@@ -50,9 +50,9 @@ func (m model) helpView() string {
 	})
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch {
 		case key.Matches(msg, m.keymap.quit):
 			m.quitting = true
@@ -70,7 +70,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func main() {
+func Main() {
 	m := model{
 		stopwatch: stopwatch.NewWithInterval(time.Millisecond),
 		keymap: keymap{

@@ -1,13 +1,12 @@
-package main
+package glamour
 
 import (
-	"fmt"
-	"os"
+	"log"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+	tea "github.com/rprtr258/bubbletea"
+	"github.com/rprtr258/bubbletea/bubbles/viewport"
+	"github.com/rprtr258/bubbletea/glamour"
+	"github.com/rprtr258/bubbletea/lipgloss"
 )
 
 const content = `
@@ -52,11 +51,11 @@ Bon appétit!
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
-type example struct {
+type model struct {
 	viewport viewport.Model
 }
 
-func newExample() (*example, error) {
+func newExample() (model, error) {
 	const width = 78
 
 	vp := viewport.New(width, 20)
@@ -70,58 +69,56 @@ func newExample() (*example, error) {
 		glamour.WithWordWrap(width),
 	)
 	if err != nil {
-		return nil, err
+		return model{}, err
 	}
 
 	str, err := renderer.Render(content)
 	if err != nil {
-		return nil, err
+		return model{}, err
 	}
 
 	vp.SetContent(str)
 
-	return &example{
+	return model{
 		viewport: vp,
 	}, nil
 }
 
-func (e example) Init() tea.Cmd {
+func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
-			return e, tea.Quit
+			return m, tea.Quit
 		default:
 			var cmd tea.Cmd
-			e.viewport, cmd = e.viewport.Update(msg)
-			return e, cmd
+			m.viewport, cmd = m.viewport.Update(msg)
+			return m, cmd
 		}
 	default:
-		return e, nil
+		return m, nil
 	}
 }
 
-func (e example) View() string {
-	return e.viewport.View() + e.helpView()
+func (m model) View(r tea.Renderer) {
+	r.Write(m.viewport.View() + m.helpView()) // TODO: do not concat strings
 }
 
-func (e example) helpView() string {
+func (e model) helpView() string {
 	return helpStyle("\n  ↑/↓: Navigate • q: Quit\n")
 }
 
-func main() {
+func Main() {
 	model, err := newExample()
 	if err != nil {
-		fmt.Println("Could not initialize Bubble Tea model:", err)
-		os.Exit(1)
+		log.Fatal("Could not initialize Bubble Tea model: ", err.Error())
 	}
 
 	if _, err := tea.NewProgram(model).Run(); err != nil {
-		fmt.Println("Bummer, there's been an error:", err)
-		os.Exit(1)
+		log.Fatal("Bummer, there's been an error: ", err.Error())
 	}
 }

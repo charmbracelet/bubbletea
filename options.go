@@ -7,97 +7,73 @@ import (
 	"github.com/muesli/termenv"
 )
 
-// ProgramOption is used to set options when initializing a Program. Program can
-// accept a variable number of options.
-//
-// Example usage:
-//
-//	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
-type ProgramOption func(*Program)
-
 // WithContext lets you specify a context in which to run the Program. This is
 // useful if you want to cancel the execution from outside. When a Program gets
 // cancelled it will exit with an error ErrProgramKilled.
-func WithContext(ctx context.Context) ProgramOption {
-	return func(p *Program) {
-		p.ctx = ctx
-	}
+func (p *Program[M]) WithContext(ctx context.Context) *Program[M] {
+	p.ctx = ctx
+	return p
 }
 
 // WithOutput sets the output which, by default, is stdout. In most cases you
 // won't need to use this.
-func WithOutput(output io.Writer) ProgramOption {
-	return func(p *Program) {
-		if o, ok := output.(*termenv.Output); ok {
-			p.output = o
-		} else {
-			p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
-		}
+func (p *Program[M]) WithOutput(output io.Writer) *Program[M] {
+	if o, ok := output.(*termenv.Output); ok {
+		p.output = o
+	} else {
+		p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
 	}
+	return p
 }
 
 // WithInput sets the input which, by default, is stdin. In most cases you
 // won't need to use this. To disable input entirely pass nil.
 //
-//	p := NewProgram(model, WithInput(nil))
-func WithInput(input io.Reader) ProgramOption {
-	return func(p *Program) {
-		p.input = input
-		p.inputType = customInput
-	}
+//	p := NewProgram(model).WithInput(nil)
+func (p *Program[M]) WithInput(input io.Reader) *Program[M] {
+	p.input = input
+	p.inputType = customInput
+	return p
 }
 
 // WithInputTTY opens a new TTY for input (or console input device on Windows).
-func WithInputTTY() ProgramOption {
-	return func(p *Program) {
-		p.inputType = ttyInput
-	}
+func (p *Program[M]) WithInputTTY() *Program[M] {
+	p.inputType = ttyInput
+	return p
 }
 
 // WithoutSignalHandler disables the signal handler that Bubble Tea sets up for
 // Programs. This is useful if you want to handle signals yourself.
-func WithoutSignalHandler() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutSignalHandler
-	}
+func (p *Program[M]) WithoutSignalHandler() *Program[M] {
+	p.startupOptions |= withoutSignalHandler
+	return p
 }
 
 // WithoutCatchPanics disables the panic catching that Bubble Tea does by
 // default. If panic catching is disabled the terminal will be in a fairly
 // unusable state after a panic because Bubble Tea will not perform its usual
 // cleanup on exit.
-func WithoutCatchPanics() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutCatchPanics
-	}
+func (p *Program[M]) WithoutCatchPanics() *Program[M] {
+	p.startupOptions |= withoutCatchPanics
+	return p
 }
 
 // WithoutSignals will ignore OS signals.
 // This is mainly useful for testing.
-func WithoutSignals() ProgramOption {
-	return func(p *Program) {
-		p.ignoreSignals = true
-	}
+func (p *Program[M]) WithoutSignals() *Program[M] {
+	p.ignoreSignals = true
+	return p
 }
 
 // WithAltScreen starts the program with the alternate screen buffer enabled
 // (i.e. the program starts in full window mode). Note that the altscreen will
 // be automatically exited when the program quits.
 //
-// Example:
-//
-//	p := tea.NewProgram(Model{}, tea.WithAltScreen())
-//	if _, err := p.Run(); err != nil {
-//	    fmt.Println("Error running program:", err)
-//	    os.Exit(1)
-//	}
-//
 // To enter the altscreen once the program has already started running use the
 // EnterAltScreen command.
-func WithAltScreen() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withAltScreen
-	}
+func (p *Program[M]) WithAltScreen() *Program[M] {
+	p.startupOptions |= withAltScreen
+	return p
 }
 
 // WithMouseCellMotion starts the program with the mouse enabled in "cell
@@ -112,11 +88,10 @@ func WithAltScreen() ProgramOption {
 // running use the DisableMouse command.
 //
 // The mouse will be automatically disabled when the program exits.
-func WithMouseCellMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseCellMotion // set
-		p.startupOptions &^= withMouseAllMotion // clear
-	}
+func (p *Program[M]) WithMouseCellMotion() *Program[M] {
+	p.startupOptions |= withMouseCellMotion // set
+	p.startupOptions &^= withMouseAllMotion // clear
+	return p
 }
 
 // WithMouseAllMotion starts the program with the mouse enabled in "all motion"
@@ -134,11 +109,10 @@ func WithMouseCellMotion() ProgramOption {
 // running use the DisableMouse command.
 //
 // The mouse will be automatically disabled when the program exits.
-func WithMouseAllMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseAllMotion   // set
-		p.startupOptions &^= withMouseCellMotion // clear
-	}
+func (p *Program[M]) WithMouseAllMotion() *Program[M] {
+	p.startupOptions |= withMouseAllMotion   // set
+	p.startupOptions &^= withMouseCellMotion // clear
+	return p
 }
 
 // WithoutRenderer disables the renderer. When this is set output and log
@@ -149,10 +123,9 @@ func WithMouseAllMotion() ProgramOption {
 // application, or to provide an additional non-TUI mode to your Bubble Tea
 // programs. For example, your program could behave like a daemon if output is
 // not a TTY.
-func WithoutRenderer() ProgramOption {
-	return func(p *Program) {
-		p.renderer = &nilRenderer{}
-	}
+func (p *Program[M]) WithoutRenderer() *Program[M] {
+	p.renderer = &nilRenderer{}
+	return p
 }
 
 // WithANSICompressor removes redundant ANSI sequences to produce potentially
@@ -160,10 +133,9 @@ func WithoutRenderer() ProgramOption {
 //
 // This feature is provisional, and may be changed or removed in a future version
 // of this package.
-func WithANSICompressor() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withANSICompressor
-	}
+func (p *Program[M]) WithANSICompressor() *Program[M] {
+	p.startupOptions |= withANSICompressor
+	return p
 }
 
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
@@ -176,36 +148,28 @@ func WithANSICompressor() ProgramOption {
 //
 // Example:
 //
-//	func filter(m tea.Model, msg tea.Msg) tea.Msg {
-//		if _, ok := msg.(tea.QuitMsg); !ok {
+//	tea.NewProgram(Model{}).
+//		.WithFilter(func (m tea.Model, msg tea.Msg) tea.Msg {
+//			if _, ok := msg.(tea.QuitMsg); !ok {
+//				return msg
+//			}
+//
+//			model := m.(myModel)
+//			if model.hasChanges {
+//				return nil
+//			}
+//
 //			return msg
-//		}
-//
-//		model := m.(myModel)
-//		if model.hasChanges {
-//			return nil
-//		}
-//
-//		return msg
-//	}
-//
-//	p := tea.NewProgram(Model{}, tea.WithFilter(filter));
-//
-//	if _,err := p.Run(); err != nil {
-//		fmt.Println("Error running program:", err)
-//		os.Exit(1)
-//	}
-func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
-	return func(p *Program) {
-		p.filter = filter
-	}
+//		});
+func (p *Program[M]) WithFilter(filter func(M, Msg) Msg) *Program[M] {
+	p.filter = filter
+	return p
 }
 
 // WithMaxFPS sets a custom maximum FPS at which the renderer should run. If
 // less than 1, the default value of 60 will be used. If over 120, the FPS
 // will be capped at 120.
-func WithFPS(fps int) ProgramOption {
-	return func(p *Program) {
-		p.fps = fps
-	}
+func (p *Program[M]) WithFPS(fps int) *Program[M] {
+	p.fps = fps
+	return p
 }

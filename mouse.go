@@ -21,7 +21,8 @@ type MouseEvent struct {
 }
 
 // String returns a string representation of a mouse event.
-func (m MouseEvent) String() (s string) {
+func (m MouseEvent) String() string {
+	s := ""
 	if m.Ctrl {
 		s += "ctrl+"
 	}

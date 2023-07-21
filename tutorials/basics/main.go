@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/rprtr258/bubbletea"
 )
 
 type model struct {
@@ -28,9 +28,9 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -55,7 +55,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
 	s := "What should we buy at the market?\n\n"
 
 	for i, choice := range m.choices {
@@ -74,7 +74,7 @@ func (m model) View() string {
 
 	s += "\nPress q to quit.\n"
 
-	return s
+	r.Write(s)
 }
 
 func main() {

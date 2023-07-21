@@ -26,7 +26,7 @@ const (
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
 type standardRenderer struct {
-	mtx *sync.Mutex
+	mu  *sync.Mutex
 	out *termenv.Output
 
 	buf                bytes.Buffer
@@ -55,7 +55,7 @@ type standardRenderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer {
+func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) Renderer {
 	if fps < 1 {
 		fps = defaultFPS
 	} else if fps > maxFPS {
@@ -63,7 +63,7 @@ func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer 
 	}
 	r := &standardRenderer{
 		out:                out,
-		mtx:                &sync.Mutex{},
+		mu:                 &sync.Mutex{},
 		done:               make(chan struct{}),
 		framerate:          time.Second / time.Duration(fps),
 		useANSICompressor:  useANSICompressor,
@@ -102,8 +102,8 @@ func (r *standardRenderer) stop() {
 	// flush locks the mutex
 	r.flush()
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.out.ClearLine()
 
@@ -121,8 +121,8 @@ func (r *standardRenderer) kill() {
 		r.done <- struct{}{}
 	})
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.out.ClearLine()
 }
@@ -143,8 +143,8 @@ func (r *standardRenderer) listen() {
 
 // flush renders the buffer.
 func (r *standardRenderer) flush() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if r.buf.Len() == 0 || r.buf.String() == r.lastRender {
 		// Nothing to do
@@ -262,9 +262,9 @@ func (r *standardRenderer) flush() {
 
 // write writes to the internal buffer. The buffer will be outputted via the
 // ticker which calls flush().
-func (r *standardRenderer) write(s string) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+func (r *standardRenderer) Write(s string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.buf.Reset()
 
 	// If an empty string was passed we should clear existing output and
@@ -283,8 +283,8 @@ func (r *standardRenderer) repaint() {
 }
 
 func (r *standardRenderer) clearScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.out.ClearScreen()
 	r.out.MoveCursor(1, 1)
@@ -293,15 +293,15 @@ func (r *standardRenderer) clearScreen() {
 }
 
 func (r *standardRenderer) altScreen() bool {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	return r.altScreenActive
 }
 
 func (r *standardRenderer) enterAltScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if r.altScreenActive {
 		return
@@ -332,8 +332,8 @@ func (r *standardRenderer) enterAltScreen() {
 }
 
 func (r *standardRenderer) exitAltScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if !r.altScreenActive {
 		return
@@ -355,45 +355,45 @@ func (r *standardRenderer) exitAltScreen() {
 }
 
 func (r *standardRenderer) showCursor() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.cursorHidden = false
 	r.out.ShowCursor()
 }
 
 func (r *standardRenderer) hideCursor() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.cursorHidden = true
 	r.out.HideCursor()
 }
 
 func (r *standardRenderer) enableMouseCellMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.out.EnableMouseCellMotion()
 }
 
 func (r *standardRenderer) disableMouseCellMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.out.DisableMouseCellMotion()
 }
 
 func (r *standardRenderer) enableMouseAllMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.out.EnableMouseAllMotion()
 }
 
 func (r *standardRenderer) disableMouseAllMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.out.DisableMouseAllMotion()
 }
@@ -404,8 +404,8 @@ func (r *standardRenderer) setIgnoredLines(from int, to int) {
 	// Lock if we're going to be clearing some lines since we don't want
 	// anything jacking our cursor.
 	if r.linesRendered > 0 {
-		r.mtx.Lock()
-		defer r.mtx.Unlock()
+		r.mu.Lock()
+		defer r.mu.Unlock()
 	}
 
 	if r.ignoreLines == nil {
@@ -457,8 +457,8 @@ func (r *standardRenderer) clearIgnoredLines() {
 // be rendering very complicated ansi. In cases where the content is simpler
 // standard Bubble Tea rendering should suffice.
 func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	buf := &bytes.Buffer{}
 	out := termenv.NewOutput(buf)
@@ -485,8 +485,8 @@ func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary
 // full-window applications, and how it differs from the normal way we do
 // rendering in Bubble Tea.
 func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBoundary int) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	buf := &bytes.Buffer{}
 	out := termenv.NewOutput(buf)
@@ -508,26 +508,23 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 	case repaintMsg:
 		// Force a repaint by clearing the render cache as we slide into a
 		// render.
-		r.mtx.Lock()
+		r.mu.Lock()
 		r.repaint()
-		r.mtx.Unlock()
-
+		r.mu.Unlock()
 	case WindowSizeMsg:
-		r.mtx.Lock()
+		r.mu.Lock()
 		r.width = msg.Width
 		r.height = msg.Height
 		r.repaint()
-		r.mtx.Unlock()
-
+		r.mu.Unlock()
 	case clearScrollAreaMsg:
 		r.clearIgnoredLines()
 
 		// Force a repaint on the area where the scrollable stuff was in this
 		// update cycle
-		r.mtx.Lock()
+		r.mu.Lock()
 		r.repaint()
-		r.mtx.Unlock()
-
+		r.mu.Unlock()
 	case syncScrollAreaMsg:
 		// Re-render scrolling area
 		r.clearIgnoredLines()
@@ -535,23 +532,20 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
 
 		// Force non-scrolling stuff to repaint in this update cycle
-		r.mtx.Lock()
+		r.mu.Lock()
 		r.repaint()
-		r.mtx.Unlock()
-
+		r.mu.Unlock()
 	case scrollUpMsg:
 		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
 	case printLineMessage:
 		if !r.altScreenActive {
 			lines := strings.Split(msg.messageBody, "\n")
-			r.mtx.Lock()
+			r.mu.Lock()
 			r.queuedMessageLines = append(r.queuedMessageLines, lines...)
 			r.repaint()
-			r.mtx.Unlock()
+			r.mu.Unlock()
 		}
 	}
 }
@@ -642,7 +636,7 @@ type printLineMessage struct {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func Println(args ...interface{}) Cmd {
+func Println(args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprint(args...),
@@ -658,7 +652,7 @@ func Println(args ...interface{}) Cmd {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func Printf(template string, args ...interface{}) Cmd {
+func Printf(template string, args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprintf(template, args...),

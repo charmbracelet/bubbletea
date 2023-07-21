@@ -7,8 +7,8 @@ understanding of [the first tutorial][basics].
 
 You can find the non-annotated version of this program [on GitHub][source].
 
-[basics]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
-[source]: https://github.com/charmbracelet/bubbletea/blob/master/tutorials/commands/main.go
+[basics]: https://github.com/rprtr258/bubbletea/tree/master/tutorials/basics
+[source]: https://github.com/rprtr258/bubbletea/blob/master/tutorials/commands/main.go
 
 ## Let's Go!
 
@@ -27,7 +27,7 @@ import (
     "os"
     "time"
 
-    tea "github.com/charmbracelet/bubbletea"
+    tea "github.com/rprtr258/bubbletea"
 )
 
 const url = "https://charm.sh/"
@@ -105,7 +105,7 @@ types we made earlier when we were making the `checkServer` command? We handle
 them here. This makes dealing with many asynchronous operations very easy.
 
 ```go
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
     switch msg := msg.(type) {
 
     case statusMsg:
@@ -122,7 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         m.err = msg
         return m, tea.Quit
 
-    case tea.KeyMsg:
+    case tea.MsgKey:
         // Ctrl+c exits. Even with short running programs it's good to have
         // a quit key, just in case your logic is off. Users will be very
         // annoyed if they can't exit.
@@ -142,7 +142,7 @@ Our view is very straightforward. We look at the current model and build a
 string accordingly:
 
 ```go
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
     // If there's an error, print it out and don't do anything else.
     if m.err != nil {
         return fmt.Sprintf("\nWe had some trouble: %v\n\n", m.err)
@@ -221,14 +221,14 @@ a component library for Bubble Tea.
 
 And, of course, check out the [Go Docs][docs].
 
-[bubbles]: https://github.com/charmbracelet/bubbles
-[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
-[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
+[bubbles]: https://github.com/rprtr258/bubbletea/bubbles
+[docs]: https://pkg.go.dev/github.com/rprtr258/bubbletea?tab=doc
+[examples]: https://github.com/rprtr258/bubbletea/tree/master/examples
 
 ## Additional Resources
 
-* [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
-* [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
+* [Libraries we use with Bubble Tea](https://github.com/rprtr258/bubbletea/#libraries-we-use-with-bubble-tea)
+* [Bubble Tea in the Wild](https://github.com/rprtr258/bubbletea/#bubble-tea-in-the-wild)
 
 ### Feedback
 

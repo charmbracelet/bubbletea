@@ -1,4 +1,4 @@
-package main
+package spinner
 
 // A simple program demonstrating the spinner component from the Bubbles
 // component library.
@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "github.com/rprtr258/bubbletea"
+	"github.com/rprtr258/bubbletea/bubbles/spinner"
+	"github.com/rprtr258/bubbletea/lipgloss"
 )
 
 type errMsg error
@@ -31,9 +31,9 @@ func (m model) Init() tea.Cmd {
 	return m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
 			m.quitting = true
@@ -53,18 +53,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
 	if m.err != nil {
-		return m.err.Error()
+		r.Write(m.err.Error())
+		return
 	}
+
 	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", m.spinner.View())
 	if m.quitting {
-		return str + "\n"
+		str += "\n"
 	}
-	return str
+
+	r.Write(str)
 }
 
-func main() {
+func Main() {
 	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Println(err)

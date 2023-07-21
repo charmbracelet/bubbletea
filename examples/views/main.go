@@ -1,9 +1,9 @@
-package main
+package views
 
 // An example demonstrating an application with multiple views.
 //
 // Note that this example was produced before the Bubbles progress component
-// was available (github.com/charmbracelet/bubbles/progress) and thus, we're
+// was available (github.com/rprtr258/bubbletea/bubbles/progress) and thus, we're
 // implementing a progress bar from scratch here.
 
 import (
@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fogleman/ease"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/reflow/indent"
 	"github.com/muesli/termenv"
+	tea "github.com/rprtr258/bubbletea"
 )
 
 const (
@@ -38,7 +38,7 @@ var (
 	ramp = makeRamp("#B14FFF", "#00FFA3", progressBarWidth)
 )
 
-func main() {
+func Main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
 	if _, err := p.Run(); err != nil {
@@ -78,9 +78,9 @@ func (m model) Init() tea.Cmd {
 }
 
 // Main update function.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	// Make sure these keys always quit
-	if msg, ok := msg.(tea.KeyMsg); ok {
+	if msg, ok := msg.(tea.MsgKey); ok {
 		k := msg.String()
 		if k == "q" || k == "esc" || k == "ctrl+c" {
 			m.Quitting = true
@@ -97,25 +97,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // The main view, which just calls the appropriate sub-view
-func (m model) View() string {
-	var s string
+func (m model) View(r tea.Renderer) {
 	if m.Quitting {
-		return "\n  See you later!\n\n"
+		r.Write("\n  See you later!\n\n")
+		return
 	}
+
+	var s string
 	if !m.Chosen {
 		s = choicesView(m)
 	} else {
 		s = chosenView(m)
 	}
-	return indent.String("\n"+s+"\n\n", 2)
+	r.Write(indent.String("\n"+s+"\n\n", 2))
+	return
 }
 
 // Sub-update functions
 
 // Update loop for the first view where you're choosing a task.
-func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func updateChoices(msg tea.Msg, m model) (model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "j", "down":
 			m.Choice++
@@ -145,7 +148,7 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 }
 
 // Update loop for the second view after a choice has been made
-func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func updateChosen(msg tea.Msg, m model) (model, tea.Cmd) {
 	switch msg.(type) {
 	case frameMsg:
 		if !m.Loaded {

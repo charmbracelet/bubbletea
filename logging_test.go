@@ -5,25 +5,22 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLogToFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "log.txt")
 	prefix := "logprefix"
 	f, err := LogToFile(path, prefix)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	log.SetFlags(log.Lmsgprefix)
 	log.Println("some test log")
-	if err := f.Close(); err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, f.Close())
+
 	out, err := os.ReadFile(path)
-	if err != nil {
-		t.Error(err)
-	}
-	if string(out) != prefix+" some test log\n" {
-		t.Fatalf("wrong log msg: %q", string(out))
-	}
+	assert.NoError(t, err)
+
+	assert.Equal(t, prefix+" some test log\n", string(out))
 }

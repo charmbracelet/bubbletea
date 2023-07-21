@@ -9,6 +9,10 @@ type WindowSizeMsg struct {
 	Height int
 }
 
+// clearScreenMsg is an internal message that signals to clear the screen.
+// You can send a clearScreenMsg with ClearScreen.
+type clearScreenMsg struct{}
+
 // ClearScreen is a special command that tells the program to clear the screen
 // before the next update. This can be used to move the cursor to the top left
 // of the screen and clear visual clutter when the alt screen is not in use.
@@ -19,9 +23,10 @@ func ClearScreen() Msg {
 	return clearScreenMsg{}
 }
 
-// clearScreenMsg is an internal message that signals to clear the screen.
-// You can send a clearScreenMsg with ClearScreen.
-type clearScreenMsg struct{}
+// enterAltScreenMsg in an internal message signals that the program should
+// enter alternate screen buffer. You can send a enterAltScreenMsg with
+// EnterAltScreen.
+type enterAltScreenMsg struct{}
 
 // EnterAltScreen is a special command that tells the Bubble Tea program to
 // enter the alternate screen buffer.
@@ -33,10 +38,9 @@ func EnterAltScreen() Msg {
 	return enterAltScreenMsg{}
 }
 
-// enterAltScreenMsg in an internal message signals that the program should
-// enter alternate screen buffer. You can send a enterAltScreenMsg with
-// EnterAltScreen.
-type enterAltScreenMsg struct{}
+// exitAltScreenMsg in an internal message signals that the program should exit
+// alternate screen buffer. You can send a exitAltScreenMsg with ExitAltScreen.
+type exitAltScreenMsg struct{}
 
 // ExitAltScreen is a special command that tells the Bubble Tea program to exit
 // the alternate screen buffer. This command should be used to exit the
@@ -48,9 +52,10 @@ func ExitAltScreen() Msg {
 	return exitAltScreenMsg{}
 }
 
-// exitAltScreenMsg in an internal message signals that the program should exit
-// alternate screen buffer. You can send a exitAltScreenMsg with ExitAltScreen.
-type exitAltScreenMsg struct{}
+// enableMouseCellMotionMsg is a special command that signals to start
+// listening for "cell motion" type mouse events (ESC[?1002l). To send an
+// enableMouseCellMotionMsg, use the EnableMouseCellMotion command.
+type enableMouseCellMotionMsg struct{}
 
 // EnableMouseCellMotion is a special command that enables mouse click,
 // release, and wheel events. Mouse movement events are also captured if
@@ -62,10 +67,10 @@ func EnableMouseCellMotion() Msg {
 	return enableMouseCellMotionMsg{}
 }
 
-// enableMouseCellMotionMsg is a special command that signals to start
-// listening for "cell motion" type mouse events (ESC[?1002l). To send an
-// enableMouseCellMotionMsg, use the EnableMouseCellMotion command.
-type enableMouseCellMotionMsg struct{}
+// enableMouseAllMotionMsg is a special command that signals to start listening
+// for "all motion" type mouse events (ESC[?1003l). To send an
+// enableMouseAllMotionMsg, use the EnableMouseAllMotion command.
+type enableMouseAllMotionMsg struct{}
 
 // EnableMouseAllMotion is a special command that enables mouse click, release,
 // wheel, and motion events, which are delivered regardless of whether a mouse
@@ -80,19 +85,18 @@ func EnableMouseAllMotion() Msg {
 	return enableMouseAllMotionMsg{}
 }
 
-// enableMouseAllMotionMsg is a special command that signals to start listening
-// for "all motion" type mouse events (ESC[?1003l). To send an
-// enableMouseAllMotionMsg, use the EnableMouseAllMotion command.
-type enableMouseAllMotionMsg struct{}
+// disableMouseMsg is an internal message that signals to stop listening
+// for mouse events. To send a disableMouseMsg, use the DisableMouse command.
+type disableMouseMsg struct{}
 
 // DisableMouse is a special command that stops listening for mouse events.
 func DisableMouse() Msg {
 	return disableMouseMsg{}
 }
 
-// disableMouseMsg is an internal message that signals to stop listening
-// for mouse events. To send a disableMouseMsg, use the DisableMouse command.
-type disableMouseMsg struct{}
+// hideCursorMsg is an internal command used to hide the cursor. You can send
+// this message with HideCursor.
+type hideCursorMsg struct{}
 
 // HideCursor is a special command for manually instructing Bubble Tea to hide
 // the cursor. In some rare cases, certain operations will cause the terminal
@@ -102,9 +106,9 @@ func HideCursor() Msg {
 	return hideCursorMsg{}
 }
 
-// hideCursorMsg is an internal command used to hide the cursor. You can send
-// this message with HideCursor.
-type hideCursorMsg struct{}
+// showCursorMsg is an internal command used to show the cursor. You can send
+// this message with ShowCursor.
+type showCursorMsg struct{}
 
 // ShowCursor is a special command for manually instructing Bubble Tea to show
 // the cursor.
@@ -112,15 +116,11 @@ func ShowCursor() Msg {
 	return showCursorMsg{}
 }
 
-// showCursorMsg is an internal command used to show the cursor. You can send
-// this message with ShowCursor.
-type showCursorMsg struct{}
-
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
 // Deprecated: Use the WithAltScreen ProgramOption instead.
-func (p *Program) EnterAltScreen() {
+func (p *Program[M]) EnterAltScreen() {
 	if p.renderer != nil {
 		p.renderer.enterAltScreen()
 	}
@@ -129,7 +129,7 @@ func (p *Program) EnterAltScreen() {
 // ExitAltScreen exits the alternate screen buffer.
 //
 // Deprecated: The altscreen will exited automatically when the program exits.
-func (p *Program) ExitAltScreen() {
+func (p *Program[M]) ExitAltScreen() {
 	if p.renderer != nil {
 		p.renderer.exitAltScreen()
 	}
@@ -139,7 +139,7 @@ func (p *Program) ExitAltScreen() {
 // if a mouse button is pressed (i.e., drag events).
 //
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
-func (p *Program) EnableMouseCellMotion() {
+func (p *Program[M]) EnableMouseCellMotion() {
 	p.renderer.enableMouseCellMotion()
 }
 
@@ -147,7 +147,7 @@ func (p *Program) EnableMouseCellMotion() {
 // called automatically when exiting a Bubble Tea program.
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
-func (p *Program) DisableMouseCellMotion() {
+func (p *Program[M]) DisableMouseCellMotion() {
 	p.renderer.disableMouseCellMotion()
 }
 
@@ -156,7 +156,7 @@ func (p *Program) DisableMouseCellMotion() {
 // support this, but not all.
 //
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
-func (p *Program) EnableMouseAllMotion() {
+func (p *Program[M]) EnableMouseAllMotion() {
 	p.renderer.enableMouseAllMotion()
 }
 
@@ -164,6 +164,6 @@ func (p *Program) EnableMouseAllMotion() {
 // called automatically when exiting a Bubble Tea program.
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
-func (p *Program) DisableMouseAllMotion() {
+func (p *Program[M]) DisableMouseAllMotion() {
 	p.renderer.disableMouseAllMotion()
 }

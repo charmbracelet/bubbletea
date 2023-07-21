@@ -1,7 +1,7 @@
 package tea
 
-// renderer is the interface for Bubble Tea renderers.
-type renderer interface {
+// Renderer is the interface for Bubble Tea renderers.
+type Renderer interface {
 	// Start the renderer.
 	start()
 
@@ -13,7 +13,7 @@ type renderer interface {
 
 	// Write a frame to the renderer. The renderer can write this data to
 	// output at its discretion.
-	write(string)
+	Write(string)
 
 	// Request a full re-render. Note that this will not trigger a render
 	// immediately. Rather, this method causes the next render to be a full
@@ -50,6 +50,8 @@ type renderer interface {
 
 	// DisableMouseAllMotion disables All Motion mouse tracking.
 	disableMouseAllMotion()
+
+	handleMessages(Msg)
 }
 
 // repaintMsg forces a full repaint.

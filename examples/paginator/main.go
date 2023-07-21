@@ -1,4 +1,4 @@
-package main
+package paginator
 
 // A simple program demonstrating the paginator component from the Bubbles
 // component library.
@@ -8,10 +8,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/paginator"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/rprtr258/bubbletea/bubbles/paginator"
+	"github.com/rprtr258/bubbletea/lipgloss"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/rprtr258/bubbletea"
 )
 
 func newModel() model {
@@ -43,10 +43,10 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.MsgKey:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
 			return m, tea.Quit
@@ -56,7 +56,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View(r tea.Renderer) {
 	var b strings.Builder
 	b.WriteString("\n  Paginator Example\n\n")
 	start, end := m.paginator.GetSliceBounds(len(m.items))
@@ -65,10 +65,10 @@ func (m model) View() string {
 	}
 	b.WriteString("  " + m.paginator.View())
 	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
-	return b.String()
+	r.Write(b.String())
 }
 
-func main() {
+func Main() {
 	p := tea.NewProgram(newModel())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)

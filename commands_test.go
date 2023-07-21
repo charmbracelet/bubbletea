@@ -1,56 +1,56 @@
 package tea
 
 import (
-	"fmt"
+	"errors"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
+type stringMsg string
+
 func TestEvery(t *testing.T) {
-	expected := "every ms"
+	expected := stringMsg("every ms")
 	msg := Every(time.Millisecond, func(t time.Time) Msg {
 		return expected
 	})()
-	if expected != msg {
-		t.Fatalf("expected a msg %v but got %v", expected, msg)
-	}
+	assert.Equal(t, expected, msg)
 }
 
 func TestTick(t *testing.T) {
-	expected := "tick"
+	expected := stringMsg("tick")
 	msg := Tick(time.Millisecond, func(t time.Time) Msg {
 		return expected
 	})()
-	if expected != msg {
-		t.Fatalf("expected a msg %v but got %v", expected, msg)
-	}
+	assert.Equal(t, expected, msg)
+}
+
+type errorMsg struct {
+	error
 }
 
 func TestSequentially(t *testing.T) {
-	expectedErrMsg := fmt.Errorf("some err")
-	expectedStrMsg := "some msg"
+	expectedErrMsg := errorMsg{error: errors.New("some err")}
+	expectedStrMsg := stringMsg("some msg")
 
 	nilReturnCmd := func() Msg {
 		return nil
 	}
 
-	tests := []struct {
-		name     string
+	for name, test := range map[string]struct {
 		cmds     []Cmd
 		expected Msg
 	}{
-		{
-			name:     "all nil",
+		"all nil": {
 			cmds:     []Cmd{nilReturnCmd, nilReturnCmd},
 			expected: nil,
 		},
-		{
-			name:     "null cmds",
+		"null cmds": {
 			cmds:     []Cmd{nil, nil},
 			expected: nil,
 		},
-		{
-			name: "one error",
+		"one error": {
 			cmds: []Cmd{
 				nilReturnCmd,
 				func() Msg {
@@ -60,8 +60,7 @@ func TestSequentially(t *testing.T) {
 			},
 			expected: expectedErrMsg,
 		},
-		{
-			name: "some msg",
+		"some msg": {
 			cmds: []Cmd{
 				nilReturnCmd,
 				func() Msg {
@@ -71,37 +70,41 @@ func TestSequentially(t *testing.T) {
 			},
 			expected: expectedStrMsg,
 		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if msg := Sequentially(test.cmds...)(); msg != test.expected {
-				t.Fatalf("expected a msg %v but got %v", test.expected, msg)
-			}
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, test.expected, Sequentially(test.cmds...)())
 		})
 	}
 }
 
 func TestBatch(t *testing.T) {
-	t.Run("nil cmd", func(t *testing.T) {
-		if b := Batch(nil); b != nil {
-			t.Fatalf("expected nil, got %+v", b)
-		}
-	})
-	t.Run("empty cmd", func(t *testing.T) {
-		if b := Batch(); b != nil {
-			t.Fatalf("expected nil, got %+v", b)
-		}
-	})
-	t.Run("single cmd", func(t *testing.T) {
-		b := Batch(Quit)()
-		if l := len(b.(BatchMsg)); l != 1 {
-			t.Fatalf("expected a []Cmd with len 1, got %d", l)
-		}
-	})
-	t.Run("mixed nil cmds", func(t *testing.T) {
-		b := Batch(nil, Quit, nil, Quit, nil, nil)()
-		if l := len(b.(BatchMsg)); l != 2 {
-			t.Fatalf("expected a []Cmd with len 2, got %d", l)
-		}
-	})
+	for name, test := range map[string]struct {
+		cmds        []Cmd
+		expectedLen int
+	}{
+		"nil cmd": {
+			cmds:        []Cmd{nil},
+			expectedLen: 0,
+		},
+		"empty cmd": {
+			cmds:        nil,
+			expectedLen: 0,
+		},
+		"single cmd": {
+			cmds:        []Cmd{Quit},
+			expectedLen: 1,
+		},
+		"mixed nil cmds": {
+			cmds:        []Cmd{nil, Quit, nil, Quit, nil, nil},
+			expectedLen: 2,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if test.expectedLen == 0 {
+				assert.Nil(t, Batch(test.cmds...))
+			} else {
+				assert.Len(t, Batch(test.cmds...)(), test.expectedLen)
+			}
+		})
+	}
 }

@@ -8,13 +8,13 @@ import (
 	"unicode/utf8"
 )
 
-// KeyMsg contains information about a keypress. KeyMsgs are always sent to
+// MsgKey contains information about a keypress. MsgKeys are always sent to
 // the program's update function. There are a couple general patterns you could
 // use to check for keypresses:
 //
 //	// Switch on the string representation of the key (shorter)
 //	switch msg := msg.(type) {
-//	case KeyMsg:
+//	case MsgKey:
 //	    switch msg.String() {
 //	    case "enter":
 //	        fmt.Println("you pressed enter!")
@@ -25,7 +25,7 @@ import (
 //
 //	// Switch on the key type (more foolproof)
 //	switch msg := msg.(type) {
-//	case KeyMsg:
+//	case MsgKey:
 //	    switch msg.Type {
 //	    case KeyEnter:
 //	        fmt.Println("you pressed enter!")
@@ -41,11 +41,11 @@ import (
 // always safely call Key.Runes[0]. In most cases Key.Runes will only contain
 // one character, though certain input method editors (most notably Chinese
 // IMEs) can input multiple runes at once.
-type KeyMsg Key
+type MsgKey Key
 
 // String returns a string representation for a key message. It's safe (and
 // encouraged) for use in key comparison.
-func (k KeyMsg) String() (str string) {
+func (k MsgKey) String() string {
 	return Key(k).String()
 }
 
@@ -62,7 +62,8 @@ type Key struct {
 //	k := Key{Type: KeyEnter}
 //	fmt.Println(k)
 //	// Output: enter
-func (k Key) String() (str string) {
+func (k Key) String() string {
+	str := ""
 	if k.Alt {
 		str += "alt+"
 	}
@@ -92,11 +93,8 @@ func (k Key) String() (str string) {
 //	}
 type KeyType int
 
-func (k KeyType) String() (str string) {
-	if s, ok := keyNames[k]; ok {
-		return s
-	}
-	return ""
+func (k KeyType) String() string {
+	return keyNames[k]
 }
 
 // Control keys. We could do this with an iota, but the values are very
@@ -597,7 +595,7 @@ func detectOneMsg(b []byte) (w int, msg Msg) {
 
 	// Are we seeing a standalone NUL? This is not handled by detectSequence().
 	if i < len(b) && b[i] == 0 {
-		return i + 1, KeyMsg{Type: keyNUL, Alt: alt}
+		return i + 1, MsgKey{Type: keyNUL, Alt: alt}
 	}
 
 	// Find the longest sequence of runes that are not control
@@ -625,13 +623,13 @@ func detectOneMsg(b []byte) (w int, msg Msg) {
 		if len(runes) == 1 && runes[0] == ' ' {
 			k.Type = KeySpace
 		}
-		return i, KeyMsg(k)
+		return i, MsgKey(k)
 	}
 
 	// We didn't find an escape sequence, nor a valid rune. Was this a
 	// lone escape character at the end of the input?
 	if alt && len(b) == 1 {
-		return 1, KeyMsg(Key{Type: KeyEscape})
+		return 1, MsgKey(Key{Type: KeyEscape})
 	}
 
 	// The character at the current position is neither an escape
