@@ -3,6 +3,7 @@ package tea
 import (
 	"context"
 	"io"
+	"sync/atomic"
 
 	"github.com/muesli/termenv"
 )
@@ -76,7 +77,7 @@ func WithoutCatchPanics() ProgramOption {
 // This is mainly useful for testing.
 func WithoutSignals() ProgramOption {
 	return func(p *Program) {
-		p.ignoreSignals.Store(true)
+		atomic.StoreUint32(&p.ignoreSignals, 1)
 	}
 }
 
