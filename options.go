@@ -76,7 +76,7 @@ func WithoutCatchPanics() ProgramOption {
 // This is mainly useful for testing.
 func WithoutSignals() ProgramOption {
 	return func(p *Program) {
-		p.ignoreSignals = true
+		p.ignoreSignals.Store(true)
 	}
 }
 

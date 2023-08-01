@@ -37,7 +37,7 @@ func TestOptions(t *testing.T) {
 
 	t.Run("without signals", func(t *testing.T) {
 		p := NewProgram(nil, WithoutSignals())
-		if !p.ignoreSignals {
+		if !p.ignoreSignals.Load() {
 			t.Errorf("ignore signals should have been set")
 		}
 	})
