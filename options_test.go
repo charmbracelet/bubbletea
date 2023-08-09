@@ -65,7 +65,6 @@ func TestOptions(t *testing.T) {
 			var b bytes.Buffer
 			exercise(t, WithInput(&b), customInput)
 		})
-
 	})
 
 	t.Run("startup options", func(t *testing.T) {
@@ -90,6 +89,10 @@ func TestOptions(t *testing.T) {
 
 		t.Run("without signal handler", func(t *testing.T) {
 			exercise(t, WithoutSignalHandler(), withoutSignalHandler)
+		})
+
+		t.Run("without empty renders", func(t *testing.T) {
+			exercise(t, WithoutEmptyRenders(), withoutEmptyRenders)
 		})
 
 		t.Run("mouse cell motion", func(t *testing.T) {

@@ -166,6 +166,16 @@ func WithANSICompressor() ProgramOption {
 	}
 }
 
+// WithoutEmptyRenders makes bubbletea do nothing when the View method return
+// an empty string.
+//
+// By default, it will render a space instead.
+func WithoutEmptyRenders() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutEmptyRenders
+	}
+}
+
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter

@@ -37,6 +37,7 @@ type standardRenderer struct {
 	lastRender         string
 	linesRendered      int
 	useANSICompressor  bool
+	renderEmpty        bool
 	once               sync.Once
 
 	// cursor visibility state
@@ -55,7 +56,7 @@ type standardRenderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer {
+func newRenderer(out *termenv.Output, useANSICompressor, renderEmpty bool, fps int) renderer {
 	if fps < 1 {
 		fps = defaultFPS
 	} else if fps > maxFPS {
@@ -67,6 +68,7 @@ func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer 
 		done:               make(chan struct{}),
 		framerate:          time.Second / time.Duration(fps),
 		useANSICompressor:  useANSICompressor,
+		renderEmpty:        renderEmpty,
 		queuedMessageLines: []string{},
 	}
 	if r.useANSICompressor {
@@ -271,7 +273,7 @@ func (r *standardRenderer) write(s string) {
 	// rendering nothing. Rather than introduce additional state to manage
 	// this, we render a single space as a simple (albeit less correct)
 	// solution.
-	if s == "" {
+	if s == "" && r.renderEmpty {
 		s = " "
 	}
 

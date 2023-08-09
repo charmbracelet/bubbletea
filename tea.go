@@ -98,6 +98,8 @@ const (
 	// recover from panics, print the stack trace, and disable raw mode. This
 	// feature is on by default.
 	withoutCatchPanics
+
+	withoutEmptyRenders
 )
 
 // handlers manages series of channels returned by various processes. It allows
@@ -470,7 +472,12 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
+		p.renderer = newRenderer(
+			p.output,
+			p.startupOptions.has(withANSICompressor),
+			!p.startupOptions.has(withoutEmptyRenders),
+			p.fps,
+		)
 	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
