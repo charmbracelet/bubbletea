@@ -118,7 +118,7 @@ func newModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.EnterAltScreen
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -183,7 +183,7 @@ func (m model) View() string {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
+	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
