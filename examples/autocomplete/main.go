@@ -9,6 +9,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func main() {
@@ -63,7 +64,9 @@ type model struct {
 
 func initialModel() model {
 	ti := textinput.New()
-	ti.Placeholder = "Bubbletea"
+	ti.Prompt = "charmbracelet/"
+	ti.Placeholder = "repo..."
+	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	ti.CharLimit = 50
 	ti.Width = 20
@@ -99,6 +102,6 @@ func (m model) View() string {
 	return fmt.Sprintf(
 		"What’s your favorite Charm repository?\n\n%s\n\n%s\n",
 		m.textInput.View(),
-		"(esc to quit)",
+		"(tab to complete, ctrl+n/ctrl+p to cycle through suggestions, esc to quit)",
 	)
 }
