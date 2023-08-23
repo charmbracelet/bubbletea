@@ -21,6 +21,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/charmbracelet/log"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
 	"golang.org/x/sync/errgroup"
@@ -165,6 +166,11 @@ type Program struct {
 	// fps is the frames per second we should set on the renderer, if
 	// applicable,
 	fps int
+
+	// We initialize RUNEWIDTH_EASTASIAN to resolve runewidth conflicts. This
+	// value will be hold the original value of the environment variable on
+	// startup, so we can reset it on program shutdown.
+	runewidthEastAsian string
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -615,6 +621,9 @@ func (p *Program) Send(msg Msg) {
 // If the program is not running this will be a no-op, so it's safe to call
 // if the program is unstarted or has already exited.
 func (p *Program) Quit() {
+	if err := os.Setenv("RUNEWIDTH_EASTASIAN", p.runewidthEastAsian); err != nil {
+		log.Error("Unable to unset RUNEWIDTH_EASTASIAN environment variable; it is set to true for compatiblity purposes", "err", err)
+	}
 	p.Send(Quit())
 }
 
@@ -622,6 +631,9 @@ func (p *Program) Quit() {
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
 func (p *Program) Kill() {
+	if err := os.Setenv("RUNEWIDTH_EASTASIAN", p.runewidthEastAsian); err != nil {
+		log.Error("Unable to unset RUNEWIDTH_EASTASIAN environment variable; it is set to true for compatiblity purposes", "err", err)
+	}
 	p.cancel()
 }
 
