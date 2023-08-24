@@ -208,10 +208,8 @@ func (r *standardRenderer) flush() {
 
 	// Merge the set of lines we're skipping as a rendering optimization with
 	// the set of lines we've explicitly asked the renderer to ignore.
-	if r.ignoreLines != nil {
-		for k, v := range r.ignoreLines {
-			skipLines[k] = v
-		}
+	for k, v := range r.ignoreLines {
+		skipLines[k] = v
 	}
 
 	// Paint new lines
