@@ -38,9 +38,9 @@ func (p *Program) listen(done chan struct{}, sig syscall.Signal, f func()) {
 
 	for {
 		select {
-			case <-p.ctx.Done():
+		case <-p.ctx.Done():
 			return
-			case <-c:
+		case <-c:
 		}
 
 		f()
