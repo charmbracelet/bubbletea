@@ -343,6 +343,7 @@ For some Bubble Tea programs in production, see:
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
+* [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context, synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
