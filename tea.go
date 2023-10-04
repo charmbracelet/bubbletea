@@ -607,10 +607,12 @@ func (p *Program) Start() error {
 // If the program hasn't started yet this will be a blocking operation.
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
-func (p *Program) Send(msg Msg) {
+func (p *Program) Send(msg Msg) bool {
 	select {
 	case <-p.ctx.Done():
+		return false
 	case p.msgs <- msg:
+		return true
 	}
 }
 
