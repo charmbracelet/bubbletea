@@ -5,19 +5,19 @@ jobs:
   build:
     strategy:
       matrix:
-        go-version: [~1.16, ^1]
+        go-version: [~1.17, ^1]
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     env:
       GO111MODULE: "on"
     steps:
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download Go modules
         run: go mod download
@@ -30,6 +30,10 @@ jobs:
 
       - name: Build examples
         run: go build -v ./...
+        working-directory: ./examples
+
+      - name: Test examples
+        run: go test -v ./...
         working-directory: ./examples
 
       - name: Build tutorials

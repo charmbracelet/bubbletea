@@ -4,6 +4,7 @@
 package tea
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/containerd/console"
@@ -28,7 +29,9 @@ func (p *Program) initInput() error {
 // program exits.
 func (p *Program) restoreInput() error {
 	if p.console != nil {
-		return p.console.Reset()
+		if err := p.console.Reset(); err != nil {
+			return fmt.Errorf("error restoring console: %w", err)
+		}
 	}
 	return nil
 }
@@ -36,7 +39,7 @@ func (p *Program) restoreInput() error {
 func openInputTTY() (*os.File, error) {
 	f, err := os.Open("/dev/tty")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not open a new TTY: %w", err)
 	}
 	return f, nil
 }

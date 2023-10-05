@@ -28,23 +28,29 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
+		if o, ok := output.(*termenv.Output); ok {
+			p.output = o
+		} else {
+			p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
+		}
 	}
 }
 
 // WithInput sets the input which, by default, is stdin. In most cases you
-// won't need to use this.
+// won't need to use this. To disable input entirely pass nil.
+//
+//	p := NewProgram(model, WithInput(nil))
 func WithInput(input io.Reader) ProgramOption {
 	return func(p *Program) {
 		p.input = input
-		p.startupOptions |= withCustomInput
+		p.inputType = customInput
 	}
 }
 
-// WithInputTTY open a new TTY for input (or console input device on Windows).
+// WithInputTTY opens a new TTY for input (or console input device on Windows).
 func WithInputTTY() ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withInputTTY
+		p.inputType = ttyInput
 	}
 }
 
@@ -63,6 +69,14 @@ func WithoutSignalHandler() ProgramOption {
 func WithoutCatchPanics() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withoutCatchPanics
+	}
+}
+
+// WithoutSignals will ignore OS signals.
+// This is mainly useful for testing.
+func WithoutSignals() ProgramOption {
+	return func(p *Program) {
+		p.ignoreSignals = true
 	}
 }
 
@@ -144,7 +158,7 @@ func WithoutRenderer() ProgramOption {
 // WithANSICompressor removes redundant ANSI sequences to produce potentially
 // smaller output, at the cost of some processing overhead.
 //
-// This feature is provisional, and may be changed removed in a future version
+// This feature is provisional, and may be changed or removed in a future version
 // of this package.
 func WithANSICompressor() ProgramOption {
 	return func(p *Program) {
@@ -169,5 +183,49 @@ func WithoutJobControl() ProgramOption {
 func WithoutGoStandardAbort() ProgramOption {
 	return func(p *Program) {
 		p.disableGoStandardAbort = true
+  }
+}
+
+// WithFilter supplies an event filter that will be invoked before Bubble Tea
+// processes a tea.Msg. The event filter can return any tea.Msg which will then
+// get handled by Bubble Tea instead of the original event. If the event filter
+// returns nil, the event will be ignored and Bubble Tea will not process it.
+//
+// As an example, this could be used to prevent a program from shutting down if
+// there are unsaved changes.
+//
+// Example:
+//
+//	func filter(m tea.Model, msg tea.Msg) tea.Msg {
+//		if _, ok := msg.(tea.QuitMsg); !ok {
+//			return msg
+//		}
+//
+//		model := m.(myModel)
+//		if model.hasChanges {
+//			return nil
+//		}
+//
+//		return msg
+//	}
+//
+//	p := tea.NewProgram(Model{}, tea.WithFilter(filter));
+//
+//	if _,err := p.Run(); err != nil {
+//		fmt.Println("Error running program:", err)
+//		os.Exit(1)
+//	}
+func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
+	return func(p *Program) {
+		p.filter = filter
+	}
+}
+
+// WithFPS sets a custom maximum FPS at which the renderer should run. If
+// less than 1, the default value of 60 will be used. If over 120, the FPS
+// will be capped at 120.
+func WithFPS(fps int) ProgramOption {
+	return func(p *Program) {
+		p.fps = fps
 	}
 }

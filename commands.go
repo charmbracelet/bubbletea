@@ -11,7 +11,7 @@ import "time"
 //		       return tea.Batch(someCommand, someOtherCommand)
 //	    }
 func Batch(cmds ...Cmd) Cmd {
-	var validCmds []Cmd
+	var validCmds []Cmd //nolint:prealloc
 	for _, c := range cmds {
 		if c == nil {
 			continue

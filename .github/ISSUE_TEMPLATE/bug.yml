@@ -1,0 +1,61 @@
+name: Bug Report
+description: File a bug report
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please fill the form below.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: reproducible
+    attributes:
+      label: How can we reproduce this?
+      description: |
+        Please share a code snippet, gist, or public repository that reproduces the issue.
+        Make sure to make the reproducible as concise as possible,
+        with only the minimum required code to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Which version of bubbletea are you using?
+      description: ''
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: terminaal
+    attributes:
+      label: Which terminals did you reproduce this with?
+      description: |
+        Other helpful information:
+        was it over SSH?
+        On tmux?
+        Which version of said terminal?
+    validations:
+      required: true
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Search
+      options:
+        - label: |
+           I searched for other open and closed issues and pull requests before opening this,
+           and didn't find anything that seems related.
+          required: true
+  - type: textarea
+    id: ctx
+    attributes:
+      label: Additional context
+      description: Anything else you would like to add
+    validations:
+      required: false
+

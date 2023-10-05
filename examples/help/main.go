@@ -87,7 +87,7 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		// If we set a width on the help menu it can it can gracefully truncate
+		// If we set a width on the help menu it can gracefully truncate
 		// its view as needed.
 		m.help.Width = msg.Width
 
@@ -132,12 +132,12 @@ func (m model) View() string {
 
 func main() {
 	if os.Getenv("HELP_DEBUG") != "" {
-		if f, err := tea.LogToFile("debug.log", "help"); err != nil {
+		f, err := tea.LogToFile("debug.log", "help")
+		if err != nil {
 			fmt.Println("Couldn't open a file for logging:", err)
 			os.Exit(1)
-		} else {
-			defer f.Close()
 		}
+		defer f.Close() // nolint:errcheck
 	}
 
 	if _, err := tea.NewProgram(newModel()).Run(); err != nil {

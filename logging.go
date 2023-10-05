@@ -1,6 +1,8 @@
 package tea
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"unicode"
@@ -19,9 +21,21 @@ import (
 //	  }
 //	  defer f.Close()
 func LogToFile(path string, prefix string) (*os.File, error) {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+	return LogToFileWith(path, prefix, log.Default())
+}
+
+// LogOptionsSetter is an interface implemented by stdlib's log and charm's log
+// libraries.
+type LogOptionsSetter interface {
+	SetOutput(io.Writer)
+	SetPrefix(string)
+}
+
+// LogToFileWith does allows to call LogToFile with a custom LogOptionsSetter.
+func LogToFileWith(path string, prefix string, log LogOptionsSetter) (*os.File, error) {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600) //nolint:gomnd
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file for logging: %w", err)
 	}
 	log.SetOutput(f)
 

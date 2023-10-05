@@ -64,7 +64,7 @@ func initialModel() model {
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
 		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
+		// the map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
@@ -154,7 +154,7 @@ the Bubble Tea runtime to quit, exiting the program.
 
 At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the model in its current state and use it to return
-a `string`.  That string is our UI!
+a `string`. That string is our UI!
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it

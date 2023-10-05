@@ -76,7 +76,7 @@ func checkServer() tea.Msg {
 	if err != nil {
 		return errMsg{err}
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() // nolint:errcheck
 
 	return statusMsg(res.StatusCode)
 }
