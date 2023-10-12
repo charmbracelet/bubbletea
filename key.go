@@ -575,14 +575,16 @@ var mouseSGRRegex = regexp.MustCompile(`(\d+);(\d+);(\d+)([Mm])`)
 func detectOneMsg(b []byte) (w int, msg Msg) {
 	// Detect mouse events.
 	// X10 mouse events have a length of 6 bytes
-	const mouseEventLen = 6
-	if len(b) >= mouseEventLen && b[0] == '\x1b' && b[1] == '[' {
+	const mouseEventX10Len = 6
+	if len(b) >= mouseEventX10Len && b[0] == '\x1b' && b[1] == '[' {
 		switch b[2] {
 		case 'M':
-			return mouseEventLen, MouseMsg(parseX10MouseEvent(b))
+			return mouseEventX10Len, MouseMsg(parseX10MouseEvent(b))
 		case '<':
-			if mouseSGRRegex.Match(b[3:]) {
-				return mouseEventLen, MouseMsg(parseSGRMouseEvent(b))
+			if matchIndices := mouseSGRRegex.FindSubmatchIndex(b[3:]); matchIndices != nil {
+				// SGR mouse events length is the length of the match plus the length of the escape sequence
+				mouseEventSGRLen := matchIndices[1] + 3
+				return mouseEventSGRLen, MouseMsg(parseSGRMouseEvent(b))
 			}
 		}
 	}
