@@ -290,6 +290,17 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				// possible to cancel them so we'll have to leak the goroutine
 				// until Cmd returns.
 				go func() {
+					// Recover from panics.
+					if !p.startupOptions.has(withoutCatchPanics) {
+						defer func() {
+							if r := recover(); r != nil {
+								fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+								debug.PrintStack()
+								p.errs <- fmt.Errorf("%v", r)
+								return
+							}
+						}()
+					}
 					msg := cmd() // this can be long.
 					p.Send(msg)
 				}()
