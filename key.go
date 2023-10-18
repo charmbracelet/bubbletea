@@ -644,9 +644,9 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 	if i >= len(b) && canHaveMoreData {
 		// We have encountered the end of the input buffer. Alas, we can't
 		// be sure whether the data in the remainder of the buffer is
-		// complete (maybe there was a short read). Instead of saying anything
-		// dumb to the message channel, do a short read. The outer loop will handle this case
-		// by extending the buffer as necessary.
+		// complete (maybe there was a short read). Instead of sending anything
+		// dumb to the message channel, do a short read. The outer loop will
+		// handle this case by extending the buffer as necessary.
 		return 0, nil
 	}
 
