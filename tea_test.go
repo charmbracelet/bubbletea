@@ -263,3 +263,53 @@ func TestTeaNoRun(t *testing.T) {
 	m := &testModel{}
 	NewProgram(m, WithInput(&in), WithOutput(&buf))
 }
+
+type panicModel struct {
+	panicOnInit, panicOnUpdate, panicOnView bool
+}
+
+func (m panicModel) Init() Cmd {
+	if m.panicOnInit {
+		panic("init panic")
+	}
+	return nil
+}
+
+func (m panicModel) Update(msg Msg) (Model, Cmd) {
+	return m, func() Msg {
+		if m.panicOnUpdate {
+			panic("update panic")
+		}
+		return Quit
+	}
+}
+func (m panicModel) View() string {
+	if m.panicOnView {
+		panic("view panic")
+	}
+	return ""
+}
+
+func TestPanicRecovery(t *testing.T) {
+	t.Run("recover from panics from model.Update()", func(t *testing.T) {
+		var buf bytes.Buffer
+		var in bytes.Buffer
+		in.Write([]byte("q"))
+
+		NewProgram(panicModel{panicOnUpdate: true}, WithInput(&in), WithOutput(&buf)).Run()
+	})
+	t.Run("recover from panics from model.View()", func(t *testing.T) {
+		var buf bytes.Buffer
+		var in bytes.Buffer
+		in.Write([]byte("q"))
+
+		NewProgram(panicModel{panicOnView: true}, WithInput(&in), WithOutput(&buf)).Run()
+	})
+	t.Run("recover from panics from model.View()", func(t *testing.T) {
+		var buf bytes.Buffer
+		var in bytes.Buffer
+		in.Write([]byte("q"))
+
+		NewProgram(panicModel{panicOnView: true}, WithInput(&in), WithOutput(&buf)).Run()
+	})
+}
