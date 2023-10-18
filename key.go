@@ -543,6 +543,8 @@ var spaceRunes = []rune{' '}
 func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 	var buf [256]byte
 
+	var leftOverFromPrevIteration []byte
+loop:
 	for {
 		// Read and block.
 		numBytes, err := input.Read(buf[:])
@@ -550,11 +552,31 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 			return fmt.Errorf("error reading input: %w", err)
 		}
 		b := buf[:numBytes]
+		if leftOverFromPrevIteration != nil {
+			b = append(leftOverFromPrevIteration, b...)
+		}
+
+		// If we had a short read (numBytes < len(buf)), we're sure that
+		// the end of this read is an event boundary, so there is no doubt
+		// if we are encountering the end of the buffer while parsing a message.
+		// However, if we've succeeded in filling up the buffer, there may
+		// be more data in the OS buffer ready to be read in, to complete
+		// the last message in the input. In that case, we will retry with
+		// the left over data in the next iteration.
+		canHaveMoreData := numBytes == len(buf)
 
 		var i, w int
 		for i, w = 0, 0; i < len(b); i += w {
 			var msg Msg
-			w, msg = detectOneMsg(b[i:])
+			w, msg = detectOneMsg(b[i:], canHaveMoreData)
+			if w == 0 {
+				// Expecting more bytes beyond the current buffer. Try waiting
+				// for more input.
+				leftOverFromPrevIteration = make([]byte, 0, len(b[i:])+len(buf))
+				leftOverFromPrevIteration = append(leftOverFromPrevIteration, b[i:]...)
+				continue loop
+			}
+
 			select {
 			case msgs <- msg:
 			case <-ctx.Done():
@@ -565,12 +587,13 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 				return err
 			}
 		}
+		leftOverFromPrevIteration = nil
 	}
 }
 
 var unknownCSIRe = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
 
-func detectOneMsg(b []byte) (w int, msg Msg) {
+func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 	// Detect mouse events.
 	const mouseEventLen = 6
 	if len(b) >= mouseEventLen && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M' {
@@ -618,6 +641,15 @@ func detectOneMsg(b []byte) (w int, msg Msg) {
 			break
 		}
 	}
+	if i >= len(b) && canHaveMoreData {
+		// We have encountered the end of the input buffer. Alas, we can't
+		// be sure whether the data in the remainder of the buffer is
+		// complete (maybe there was a short read). Instead of sending anything
+		// dumb to the message channel, do a short read. The outer loop will
+		// handle this case by extending the buffer as necessary.
+		return 0, nil
+	}
+
 	// If we found at least one rune, we report the bunch of them as
 	// a single KeyRunes or KeySpace event.
 	if len(runes) > 0 {
