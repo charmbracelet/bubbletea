@@ -361,32 +361,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				continue
 
 			case sequenceMsg:
-				go func() {
-					// Execute commands one at a time, in order.
-					for _, cmd := range msg {
-						if cmd == nil {
-							continue
-						}
-
-						msg := cmd()
-						if batchMsg, ok := msg.(BatchMsg); ok {
-							g, _ := errgroup.WithContext(p.ctx)
-							for _, cmd := range batchMsg {
-								cmd := cmd
-								g.Go(func() error {
-									p.Send(cmd())
-									return nil
-								})
-							}
-
-							//nolint:errcheck
-							g.Wait() // wait for all commands from batch msg to finish
-							continue
-						}
-
-						p.Send(msg)
-					}
-				}()
+				go p.execSequenceMsg(msg)
 			}
 
 			// Process internal messages for the renderer.
@@ -400,6 +375,50 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			p.renderer.write(model.View()) // send view to renderer
 		}
 	}
+}
+
+func (p *Program) execSequenceMsg(msg sequenceMsg) {
+	// Execute commands one at a time, in order.
+	for _, cmd := range msg {
+		if cmd == nil {
+			continue
+		}
+		msg := cmd()
+		switch msg := msg.(type) {
+		case BatchMsg:
+			p.execBatchMsg(msg)
+		case sequenceMsg:
+			p.execSequenceMsg(msg)
+		default:
+			p.Send(msg)
+		}
+	}
+}
+
+func (p *Program) execBatchMsg(msg BatchMsg) {
+
+	g, _ := errgroup.WithContext(p.ctx)
+	for _, cmd := range msg {
+		cmd := cmd
+		if cmd == nil {
+			continue
+		}
+		g.Go(func() error {
+			msg := cmd()
+			switch msg := msg.(type) {
+			case BatchMsg:
+				p.execBatchMsg(msg)
+			case sequenceMsg:
+				p.execSequenceMsg(msg)
+			default:
+				p.Send(msg)
+			}
+			return nil
+		})
+	}
+
+	//nolint:errcheck
+	g.Wait() // wait for all commands from batch msg to finish
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
