@@ -355,13 +355,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.exec(msg.cmd, msg.fn)
 
 			case BatchMsg:
-				for _, cmd := range msg {
-					cmds <- cmd
-				}
+				go p.execBatchMsg(msg)
 				continue
 
 			case sequenceMsg:
 				go p.execSequenceMsg(msg)
+				continue
 			}
 
 			// Process internal messages for the renderer.
@@ -396,7 +395,7 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) {
 }
 
 func (p *Program) execBatchMsg(msg BatchMsg) {
-
+	// Execute commands one at a time.
 	g, _ := errgroup.WithContext(p.ctx)
 	for _, cmd := range msg {
 		cmd := cmd
