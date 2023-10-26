@@ -16,9 +16,18 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/charmbracelet/bubbles v0.13.0 // indirect
+	github.com/charmbracelet/lipgloss v0.5.0 // indirect
+	github.com/cockroachdb/datadriven v1.0.2 // indirect
+	github.com/knz/catwalk v0.1.4 // indirect
+	github.com/knz/lipgloss-convert v0.1.0 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rogpeppe/go-internal v1.6.1 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.3.8 // indirect
 )

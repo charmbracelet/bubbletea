@@ -1,0 +1,58 @@
+run
+----
+-- view:
+ Total: $21.50:␤
+␤
+ Card Number                   ␤
+ 4505 **** **** 1234␤
+␤
+ EXP     CVV   ␤
+ MM/YY   XXX␤
+␤
+ Continue ->␤
+␤
+
+run
+enter 1234 1234 1234 1234
+----
+-- view:
+ Total: $21.50:␤
+␤
+ Card Number                   ␤
+ 1234 1234 1234 1234            ␤
+␤
+ EXP     CVV   ␤
+ MM/YY   XXX␤
+␤
+ Continue ->␤
+␤
+
+run
+enter 01/28
+----
+-- view:
+ Total: $21.50:␤
+␤
+ Card Number                   ␤
+ 1234 1234 1234 1234            ␤
+␤
+ EXP     CVV   ␤
+ 01/28   XXX␤
+␤
+ Continue ->␤
+␤
+
+run
+type 123
+----
+-- view:
+ Total: $21.50:␤
+␤
+ Card Number                   ␤
+ 1234 1234 1234 1234            ␤
+␤
+ EXP     CVV   ␤
+ 01/28   123   ␤
+␤
+ Continue ->␤
+␤
