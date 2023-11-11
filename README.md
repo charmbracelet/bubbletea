@@ -348,6 +348,7 @@ For some Bubble Tea programs in production, see:
 * [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context, synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
+* [json-log-viewer](https://github.com/hedhyw/json-log-viewer): interactive viewer for JSON logs
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
 * [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractals explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
