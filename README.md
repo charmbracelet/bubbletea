@@ -352,6 +352,7 @@ For some Bubble Tea programs in production, see:
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
+* [nom](https://github.com/guyfedwards/nom): RSS reader and manager
 * [pathos](https://github.com/chip/pathos): a PATH env variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis databases browser
