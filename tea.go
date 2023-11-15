@@ -18,6 +18,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/containerd/console"
@@ -153,7 +154,7 @@ type Program struct {
 
 	// was the altscreen active before releasing the terminal?
 	altScreenWasActive bool
-	ignoreSignals      bool
+	ignoreSignals      uint32
 
 	// Stores the original reference to stdin for cases where input is not a
 	// TTY on windows and we've automatically opened CONIN$ to receive input.
@@ -238,7 +239,7 @@ func (p *Program) handleSignals() chan struct{} {
 				return
 
 			case <-sig:
-				if !p.ignoreSignals {
+				if atomic.LoadUint32(&p.ignoreSignals) == 0 {
 					p.msgs <- QuitMsg{}
 					return
 				}
@@ -643,7 +644,7 @@ func (p *Program) shutdown(kill bool) {
 // ReleaseTerminal restores the original terminal state and cancels the input
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
-	p.ignoreSignals = true
+	atomic.StoreUint32(&p.ignoreSignals, 1)
 	p.cancelReader.Cancel()
 	p.waitForReadLoop()
 
@@ -659,7 +660,7 @@ func (p *Program) ReleaseTerminal() error {
 // terminal to the former state when the program was running, and repaints.
 // Use it to reinitialize a Program after running ReleaseTerminal.
 func (p *Program) RestoreTerminal() error {
-	p.ignoreSignals = false
+	atomic.StoreUint32(&p.ignoreSignals, 0)
 
 	if err := p.initTerminal(); err != nil {
 		return err
