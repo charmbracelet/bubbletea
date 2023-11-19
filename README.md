@@ -355,6 +355,7 @@ For some Bubble Tea programs in production, see:
 * [pathos](https://github.com/chip/pathos): a PATH env variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis databases browser
+* [redis_tui](https://github.com/mat2cc/redis_tui): a Redis TUI application
 * [scrabbler](https://github.com/wI2L/scrabbler): Automatic draw TUI for your duplicate Scrabble games
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
