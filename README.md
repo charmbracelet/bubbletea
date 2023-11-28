@@ -341,6 +341,7 @@ For some Bubble Tea programs in production, see:
 * [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
+* [go-sweep](https://github.com/maxpaulus43/go-sweep): Minesweeper in the terminal
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
 * [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context, synced, and queryable
