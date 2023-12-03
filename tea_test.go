@@ -56,6 +56,17 @@ func TestTeaModel(t *testing.T) {
 	}
 }
 
+func TestTeaModelNoCustomInput(t *testing.T) {
+    var buf bytes.Buffer
+    var in bytes.Buffer
+    in.Write([]byte("q"))
+
+    p := NewProgram(&testModel{}, WithOutput(&buf))
+    if _, err := p.Run(); err == nil {
+        t.Fatal(err)
+    }
+}
+
 func TestTeaQuit(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
