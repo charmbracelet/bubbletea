@@ -25,7 +25,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.SetWindowTitle("Grocery List")
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
