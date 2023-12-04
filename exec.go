@@ -2,8 +2,9 @@ package tea
 
 import (
 	"io"
-	"os"
 	"os/exec"
+
+	"github.com/aymanbagabas/go-pty"
 )
 
 // execMsg is used internally to run an ExecCommand sent with Exec.
@@ -51,6 +52,11 @@ func ExecProcess(c *exec.Cmd, fn ExecCallback) Cmd {
 	return Exec(wrapExecCommand(c), fn)
 }
 
+// ExecPty does the same as `ExecProcess`, but for a *pty.Cmd.
+func ExecPty(c *pty.Cmd, fn ExecCallback) Cmd {
+	return Exec(wrapPtyCommand(c), fn)
+}
+
 // ExecCallback is used when executing an *exec.Command to return a message
 // with an error, which may or may not be nil.
 type ExecCallback func(error) Msg
@@ -64,8 +70,19 @@ type ExecCommand interface {
 	SetStderr(io.Writer)
 }
 
+func wrapPtyCommand(c *pty.Cmd) ExecCommand {
+	return &ptyCommand{c}
+}
+
+// ptyCommand wraps a pty.Cmd so that it satisfied the ExecCommand interface.
+type ptyCommand struct{ *pty.Cmd }
+
+func (*ptyCommand) SetStderr(io.Writer) {}
+func (*ptyCommand) SetStdin(io.Reader)  {}
+func (*ptyCommand) SetStdout(io.Writer) {}
+
 // wrapExecCommand wraps an exec.Cmd so that it satisfies the ExecCommand
-// interface so it can be used with Exec.
+// interface.
 func wrapExecCommand(c *exec.Cmd) ExecCommand {
 	return &osExecCommand{Cmd: c}
 }
@@ -110,7 +127,7 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 
 	c.SetStdin(p.input)
 	c.SetStdout(p.output.TTY())
-	c.SetStderr(os.Stderr)
+	c.SetStderr(p.output.TTY())
 
 	// Execute system command.
 	if err := c.Run(); err != nil {
