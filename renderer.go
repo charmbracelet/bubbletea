@@ -40,16 +40,22 @@ type renderer interface {
 	// events if a mouse button is pressed (i.e., drag events).
 	enableMouseCellMotion()
 
-	// DisableMouseCellMotion disables Mouse Cell Motion tracking.
+	// disableMouseCellMotion disables Mouse Cell Motion tracking.
 	disableMouseCellMotion()
 
-	// EnableMouseAllMotion enables mouse click, release, wheel and motion
+	// enableMouseAllMotion enables mouse click, release, wheel and motion
 	// events, regardless of whether a mouse button is pressed. Many modern
 	// terminals support this, but not all.
 	enableMouseAllMotion()
 
-	// DisableMouseAllMotion disables All Motion mouse tracking.
+	// disableMouseAllMotion disables All Motion mouse tracking.
 	disableMouseAllMotion()
+
+	// enableMouseSGRMode enables mouse extended mode (SGR).
+	enableMouseSGRMode()
+
+	// disableMouseSGRMode disables mouse extended mode (SGR).
+	disableMouseSGRMode()
 }
 
 // repaintMsg forces a full repaint.

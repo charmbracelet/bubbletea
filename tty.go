@@ -35,8 +35,7 @@ func (p *Program) initTerminal() error {
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
 		p.renderer.showCursor()
-		p.renderer.disableMouseCellMotion()
-		p.renderer.disableMouseAllMotion()
+		p.disableMouse()
 
 		if p.renderer.altScreen() {
 			p.renderer.exitAltScreen()

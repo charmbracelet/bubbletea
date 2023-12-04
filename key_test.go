@@ -137,7 +137,12 @@ func TestDetectOneMsg(t *testing.T) {
 		// Mouse event.
 		seqTest{
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
-			MouseMsg{X: 32, Y: 16, Type: MouseWheelUp},
+			MouseMsg{X: 32, Y: 16, Type: MouseWheelUp, Button: MouseButtonWheelUp, Action: MouseActionPress},
+		},
+		// SGR Mouse event.
+		seqTest{
+			[]byte("\x1b[<0;33;17M"),
+			MouseMsg{X: 32, Y: 16, Type: MouseLeft, Button: MouseButtonLeft, Action: MouseActionPress},
 		},
 		// Runes.
 		seqTest{
@@ -316,27 +321,33 @@ func TestReadInput(t *testing.T) {
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
 			[]Msg{
 				MouseMsg{
-					X:    32,
-					Y:    16,
-					Type: MouseWheelUp,
+					X:      32,
+					Y:      16,
+					Type:   MouseWheelUp,
+					Button: MouseButtonWheelUp,
+					Action: MouseActionPress,
 				},
 			},
 		},
-		{"left release",
+		{"left motion release",
 			[]byte{
 				'\x1b', '[', 'M', byte(32) + 0b0010_0000, byte(32 + 33), byte(16 + 33),
 				'\x1b', '[', 'M', byte(32) + 0b0000_0011, byte(64 + 33), byte(32 + 33),
 			},
 			[]Msg{
 				MouseMsg(MouseEvent{
-					X:    32,
-					Y:    16,
-					Type: MouseLeft,
+					X:      32,
+					Y:      16,
+					Type:   MouseLeft,
+					Button: MouseButtonLeft,
+					Action: MouseActionMotion,
 				}),
 				MouseMsg(MouseEvent{
-					X:    64,
-					Y:    32,
-					Type: MouseRelease,
+					X:      64,
+					Y:      32,
+					Type:   MouseRelease,
+					Button: MouseButtonNone,
+					Action: MouseActionRelease,
 				}),
 			},
 		},

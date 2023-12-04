@@ -566,7 +566,7 @@ loop:
 		canHaveMoreData := numBytes == len(buf)
 
 		var i, w int
-		for i, w = 0, 0; i < len(b); i += w {
+		for i, w = 0, 07; i < len(b); i += w {
 			var msg Msg
 			w, msg = detectOneMsg(b[i:], canHaveMoreData)
 			if w == 0 {
@@ -591,13 +591,26 @@ loop:
 	}
 }
 
-var unknownCSIRe = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
+var (
+	unknownCSIRe  = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
+	mouseSGRRegex = regexp.MustCompile(`(\d+);(\d+);(\d+)([Mm])`)
+)
 
 func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 	// Detect mouse events.
-	const mouseEventLen = 6
-	if len(b) >= mouseEventLen && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M' {
-		return mouseEventLen, MouseMsg(parseX10MouseEvent(b))
+	// X10 mouse events have a length of 6 bytes
+	const mouseEventX10Len = 6
+	if len(b) >= mouseEventX10Len && b[0] == '\x1b' && b[1] == '[' {
+		switch b[2] {
+		case 'M':
+			return mouseEventX10Len, MouseMsg(parseX10MouseEvent(b))
+		case '<':
+			if matchIndices := mouseSGRRegex.FindSubmatchIndex(b[3:]); matchIndices != nil {
+				// SGR mouse events length is the length of the match plus the length of the escape sequence
+				mouseEventSGRLen := matchIndices[1] + 3
+				return mouseEventSGRLen, MouseMsg(parseSGRMouseEvent(b))
+			}
+		}
 	}
 
 	// Detect escape sequence and control characters other than NUL,

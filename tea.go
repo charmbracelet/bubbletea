@@ -301,6 +301,12 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	return ch
 }
 
+func (p *Program) disableMouse() {
+	p.renderer.disableMouseCellMotion()
+	p.renderer.disableMouseAllMotion()
+	p.renderer.disableMouseSGRMode()
+}
+
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
@@ -335,15 +341,18 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case exitAltScreenMsg:
 				p.renderer.exitAltScreen()
 
-			case enableMouseCellMotionMsg:
-				p.renderer.enableMouseCellMotion()
-
-			case enableMouseAllMotionMsg:
-				p.renderer.enableMouseAllMotion()
+			case enableMouseCellMotionMsg, enableMouseAllMotionMsg:
+				switch msg.(type) {
+				case enableMouseCellMotionMsg:
+					p.renderer.enableMouseCellMotion()
+				case enableMouseAllMotionMsg:
+					p.renderer.enableMouseAllMotion()
+				}
+				// mouse mode (1006) is a no-op if the terminal doesn't support it.
+				p.renderer.enableMouseSGRMode()
 
 			case disableMouseMsg:
-				p.renderer.disableMouseCellMotion()
-				p.renderer.disableMouseAllMotion()
+				p.disableMouse()
 
 			case showCursorMsg:
 				p.renderer.showCursor()
@@ -489,8 +498,10 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withMouseCellMotion != 0 {
 		p.renderer.enableMouseCellMotion()
+		p.renderer.enableMouseSGRMode()
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.renderer.enableMouseAllMotion()
+		p.renderer.enableMouseSGRMode()
 	}
 
 	// Initialize the program.
