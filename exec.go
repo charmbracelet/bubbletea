@@ -74,7 +74,7 @@ func wrapPtyCommand(c *pty.Cmd) ExecCommand {
 	return &ptyCommand{c}
 }
 
-// ptyCommand wraps a pty.Cmd so that it satisfied the ExecCommand interface.
+// ptyCommand wraps a pty.Cmd so that it satisfies the ExecCommand interface.
 type ptyCommand struct{ *pty.Cmd }
 
 func (*ptyCommand) SetStderr(io.Writer) {}
