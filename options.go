@@ -73,6 +73,12 @@ func WithoutCatchPanics() ProgramOption {
 	}
 }
 
+func WithRethrowPanics() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withRethrowPanics
+	}
+}
+
 // WithoutSignals will ignore OS signals.
 // This is mainly useful for testing.
 func WithoutSignals() ProgramOption {

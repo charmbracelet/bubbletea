@@ -99,6 +99,7 @@ const (
 	// recover from panics, print the stack trace, and disable raw mode. This
 	// feature is on by default.
 	withoutCatchPanics
+	withRethrowPanics
 )
 
 // handlers manages series of channels returned by various processes. It allows
@@ -474,6 +475,9 @@ func (p *Program) Run() (Model, error) {
 		defer func() {
 			if r := recover(); r != nil {
 				p.shutdown(true)
+				if p.startupOptions.has(withRethrowPanics) {
+					panic(r)
+				}
 				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
 				debug.PrintStack()
 				return

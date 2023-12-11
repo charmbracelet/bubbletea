@@ -89,6 +89,10 @@ func TestOptions(t *testing.T) {
 			exercise(t, WithoutCatchPanics(), withoutCatchPanics)
 		})
 
+		t.Run("with rethrow panics", func(t *testing.T) {
+			exercise(t, WithRethrowPanics(), withRethrowPanics)
+		})
+
 		t.Run("without signal handler", func(t *testing.T) {
 			exercise(t, WithoutSignalHandler(), withoutSignalHandler)
 		})
