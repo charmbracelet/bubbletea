@@ -9,15 +9,30 @@ import (
 	"syscall"
 )
 
+// listenForHangup sends a message when the terminal is closed.
+// Argument output should be the file descriptor for the terminal; usually
+// os.Stdout.
+func (p *Program) listenForHangup(done chan struct{}) {
+	p.listen(done, syscall.SIGHUP, p.sendHangupMsg)
+}
+
+func (p *Program) sendHangupMsg() {
+	p.Send(HangupMsg{})
+}
+
 // listenForResize sends messages (or errors) when the terminal resizes.
 // Argument output should be the file descriptor for the terminal; usually
 // os.Stdout.
 func (p *Program) listenForResize(done chan struct{}) {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGWINCH)
+	p.listen(done, syscall.SIGWINCH, p.checkResize)
+}
+
+func (p *Program) listen(done chan struct{}, sig syscall.Signal, f func()) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, sig)
 
 	defer func() {
-		signal.Stop(sig)
+		signal.Stop(c)
 		close(done)
 	}()
 
@@ -25,9 +40,9 @@ func (p *Program) listenForResize(done chan struct{}) {
 		select {
 		case <-p.ctx.Done():
 			return
-		case <-sig:
+		case <-c:
 		}
 
-		p.checkResize()
+		f()
 	}
 }

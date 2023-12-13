@@ -250,6 +250,15 @@ func (p *Program) handleSignals() chan struct{} {
 	return ch
 }
 
+// handleHangup handles terminal hangup events.
+func (p *Program) handleHangup() chan struct{} {
+	ch := make(chan struct{})
+
+	go p.listenForHangup(ch)
+
+	return ch
+}
+
 // handleResize handles terminal resize events.
 func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
@@ -533,7 +542,8 @@ func (p *Program) Run() (Model, error) {
 		}
 	}
 
-	// Handle resize events.
+	// Handle signal-based events.
+	handlers.add(p.handleHangup())
 	handlers.add(p.handleResize())
 
 	// Process commands.

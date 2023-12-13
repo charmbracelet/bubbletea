@@ -1,5 +1,10 @@
 package tea
 
+// HangupMsg is used to report a terminal hangup. Note that Windows does not
+// have support for reporting when hangups occur as it does not support the
+// SIGHUP signal.
+type HangupMsg struct{}
+
 // WindowSizeMsg is used to report the terminal size. It's sent to Update once
 // initially and then on every terminal resize. Note that Windows does not
 // have support for reporting when resizes occur as it does not support the
