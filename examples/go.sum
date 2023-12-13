@@ -11,13 +11,12 @@ github.com/aymanbagabas/go-udiff v0.1.0 h1:9Dpklm2oBBhMxIFbMffmPvDaF7vOYfv9B5HXV
 github.com/aymanbagabas/go-udiff v0.1.0/go.mod h1:RE4Ex0qsGkTAJoQdQQCA0uG+nAzJO/pI/QwceO5fgrA=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/charmbracelet/bubbles v0.16.2-0.20230821152602-eda891258c02 h1:MruS04uPbUJHF0MQzwOlh9yco1pHwPDLI7qGMu25IME=
-github.com/charmbracelet/bubbles v0.16.2-0.20230821152602-eda891258c02/go.mod h1:XUdibuVUiMfcfKTRla58bmY3TWsdjgF+Rp8pvimQLck=
+github.com/charmbracelet/bubbles v0.17.0 h1:VfyQMZMWr5TW1SqIJzpZaOcbeApXPpoy/1ZwIO0lMAI=
+github.com/charmbracelet/bubbles v0.17.0/go.mod h1:0B5SDVyyRXMteAgJRkYRJQ6bvsKtWdzeepp8rN+RhXQ=
 github.com/charmbracelet/glamour v0.6.0 h1:wi8fse3Y7nfcabbbDuwolqTqMQPMnVPeZhDM273bISc=
 github.com/charmbracelet/glamour v0.6.0/go.mod h1:taqWV4swIMMbWALc0m7AfE9JkPSU8om2538k9ITBxOc=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
-github.com/charmbracelet/lipgloss v0.7.1/go.mod h1:yG0k3giv8Qj8edTCbbg6AlQ5e8KNWpFujkNawKNhE2c=
 github.com/charmbracelet/lipgloss v0.9.1 h1:PNyd3jvaJbg4jRHKWXnCj1akQm4rh8dbEzN1p/u1KWg=
 github.com/charmbracelet/lipgloss v0.9.1/go.mod h1:1mPmG4cxScwUQALAAnacHaigiiHB9Pmr+v1VEawJl6I=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20230508155401-2bd6fa14c46a h1:GpNt24LKE8sH5G0SZUpu4Tg15sP5XSt1mnfIqE7fW34=
