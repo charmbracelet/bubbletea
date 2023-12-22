@@ -341,8 +341,10 @@ For some Bubble Tea programs in production, see:
 * [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
 * [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
+* [go-sweep](https://github.com/maxpaulus43/go-sweep): Minesweeper in the terminal
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
+* [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context, synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
@@ -351,15 +353,18 @@ For some Bubble Tea programs in production, see:
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
+* [nom](https://github.com/guyfedwards/nom): RSS reader and manager
 * [pathos](https://github.com/chip/pathos): a PATH env variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis databases browser
+* [scrabbler](https://github.com/wI2L/scrabbler): Automatic draw TUI for your duplicate Scrabble games
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
 * [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): a Slurm workload manager TUI
 * [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
 * [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike Solitaire for the terminal
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
+* [Storydb](https://github.com/grrlopes/storydb): a bash/zsh ctrl+r improved command history finder.
 * [STTG](https://github.com/wille1101/sttg): a teletext client for SVT, Sweden’s national public television station
 * [sttr](https://github.com/abhimanyu003/sttr): a general-purpose text transformer
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
@@ -367,8 +372,10 @@ For some Bubble Tea programs in production, see:
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
 * [Typer](https://github.com/maaslalani/typer): a typing test
+* [typioca](https://github.com/bloznelis/typioca): Cozy typing speed tester in terminal 
 * [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
+* [walk](https://github.com/antonmedv/walk): a terminal navigator
 * [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
 * [WG Commander](https://github.com/AndrianBdn/wg-cmd): a TUI for a simple WireGuard VPN setup 
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory

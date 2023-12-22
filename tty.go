@@ -2,11 +2,13 @@ package tea
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"time"
 
 	isatty "github.com/mattn/go-isatty"
+	localereader "github.com/mattn/go-localereader"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/term"
 )
@@ -20,7 +22,7 @@ func (p *Program) initTerminal() error {
 	if p.console != nil {
 		err = p.console.SetRaw()
 		if err != nil {
-			return err
+			return fmt.Errorf("error entering raw mode: %w", err)
 		}
 	}
 
@@ -33,21 +35,20 @@ func (p *Program) initTerminal() error {
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
 		p.renderer.showCursor()
-		p.renderer.disableMouseCellMotion()
-		p.renderer.disableMouseAllMotion()
+		p.disableMouse()
 
 		if p.renderer.altScreen() {
 			p.renderer.exitAltScreen()
 
 			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond * 10) //nolint:gomnd
 		}
 	}
 
 	if p.console != nil {
 		err := p.console.Reset()
 		if err != nil {
-			return err
+			return fmt.Errorf("error restoring terminal state: %w", err)
 		}
 	}
 
@@ -59,7 +60,7 @@ func (p *Program) initCancelReader() error {
 	var err error
 	p.cancelReader, err = cancelreader.NewReader(p.input)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating cancelreader: %w", err)
 	}
 
 	p.readLoopDone = make(chan struct{})
@@ -71,25 +72,12 @@ func (p *Program) initCancelReader() error {
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	for {
-		if p.ctx.Err() != nil {
-			return
-		}
-
-		msgs, err := readInputs(p.cancelReader)
-		if err != nil {
-			if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
-				select {
-				case <-p.ctx.Done():
-				case p.errs <- err:
-				}
-			}
-
-			return
-		}
-
-		for _, msg := range msgs {
-			p.msgs <- msg
+	input := localereader.NewReader(p.cancelReader)
+	err := readInputs(p.ctx, p.msgs, input)
+	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+		select {
+		case <-p.ctx.Done():
+		case p.errs <- err:
 		}
 	}
 }
@@ -98,7 +86,7 @@ func (p *Program) readLoop() {
 func (p *Program) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(500 * time.Millisecond): //nolint:gomnd
 		// The read loop hangs, which means the input
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.

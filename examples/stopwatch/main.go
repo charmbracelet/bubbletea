@@ -91,7 +91,7 @@ func main() {
 				key.WithHelp("q", "quit"),
 			),
 		},
-		help: help.NewModel(),
+		help: help.New(),
 	}
 
 	m.keymap.start.SetEnabled(false)

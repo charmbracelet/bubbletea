@@ -8,8 +8,14 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/exp/teatest"
+	"github.com/muesli/termenv"
 )
+
+func init() {
+	lipgloss.SetColorProfile(termenv.Ascii)
+}
 
 func TestApp(t *testing.T) {
 	m := model(10)
@@ -34,13 +40,13 @@ func TestApp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out := readBts(t, tm.FinalOutput())
+	out := readBts(t, tm.FinalOutput(t))
 	if !regexp.MustCompile(`This program will exit in \d+ seconds`).Match(out) {
 		t.Fatalf("output does not match the given regular expression: %s", string(out))
 	}
 	teatest.RequireEqualOutput(t, out)
 
-	if tm.FinalModel().(model) != 9 {
+	if tm.FinalModel(t).(model) != 9 {
 		t.Errorf("expected model to be 10, was %d", m)
 	}
 }
@@ -71,7 +77,7 @@ func TestAppInteractive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if tm.FinalModel().(model) != 7 {
+	if tm.FinalModel(t).(model) != 7 {
 		t.Errorf("expected model to be 7, was %d", m)
 	}
 }

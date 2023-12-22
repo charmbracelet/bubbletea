@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -32,9 +33,9 @@ type LogOptionsSetter interface {
 
 // LogToFileWith does allows to call LogToFile with a custom LogOptionsSetter.
 func LogToFileWith(path string, prefix string, log LogOptionsSetter) (*os.File, error) {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600) //nolint:gomnd
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file for logging: %w", err)
 	}
 	log.SetOutput(f)
 

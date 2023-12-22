@@ -53,13 +53,14 @@ func ccnValidator(s string) error {
 		return fmt.Errorf("CCN is too long")
 	}
 
+	if len(s) == 0 || len(s)%5 != 0 && (s[len(s)-1] < '0' || s[len(s)-1] > '9') {
+		return fmt.Errorf("CCN is invalid")
+	}
+
 	// The last digit should be a number unless it is a multiple of 4 in which
 	// case it should be a space
 	if len(s)%5 == 0 && s[len(s)-1] != ' ' {
 		return fmt.Errorf("CCN must separate groups with spaces")
-	}
-	if len(s)%5 != 0 && (s[len(s)-1] < '0' || s[len(s)-1] > '9') {
-		return fmt.Errorf("CCN is invalid")
 	}
 
 	// The remaining digits should be integers

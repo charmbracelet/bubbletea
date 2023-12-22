@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"sync/atomic"
 	"testing"
 )
 
@@ -37,7 +38,7 @@ func TestOptions(t *testing.T) {
 
 	t.Run("without signals", func(t *testing.T) {
 		p := NewProgram(nil, WithoutSignals())
-		if !p.ignoreSignals {
+		if atomic.LoadUint32(&p.ignoreSignals) == 0 {
 			t.Errorf("ignore signals should have been set")
 		}
 	})
