@@ -348,7 +348,7 @@ For some Bubble Tea programs in production, see:
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
-* [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): a multiplatform terminal mandelbrot set explorer
+* [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractals explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
