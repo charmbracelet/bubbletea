@@ -335,6 +335,7 @@ For some Bubble Tea programs in production, see:
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): clean up old and inactive forks in your GitHub account
 * [fztea](https://github.com/jon4hz/fztea): a Flipper Zero TUI
+* [gama](https://github.com/termkit/gama): Manage GitHub Actions from the terminal
 * [gambit](https://github.com/maaslalani/gambit): chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
 * [gh-b](https://github.com/joaom00/gh-b): a GitHub CLI extension for managing branches
