@@ -21,11 +21,10 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/containerd/console"
-	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/term"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
@@ -148,25 +147,18 @@ type Program struct {
 	renderer      renderer
 
 	// where to read inputs from, this will usually be os.Stdin.
-	input        io.Reader
-	cancelReader cancelreader.CancelReader
-	readLoopDone chan struct{}
-	console      console.Console
+	input io.Reader
+	// tty is null if input is not a TTY.
+	tty              *os.File
+	previousTtyState *term.State
+	cancelReader     cancelreader.CancelReader
+	readLoopDone     chan struct{}
 
 	// was the altscreen active before releasing the terminal?
 	altScreenWasActive bool
 	ignoreSignals      uint32
 
 	bpWasActive bool // was the bracketed paste mode active before releasing the terminal?
-
-	// Stores the original reference to stdin for cases where input is not a
-	// TTY on windows and we've automatically opened CONIN$ to receive input.
-	// When the program exits this will be restored.
-	//
-	// Lint ignore note: the linter will find false positive on unix systems
-	// as this value only comes into play on Windows, hence the ignore comment
-	// below.
-	windowsStdin *os.File //nolint:golint,structcheck,unused
 
 	filter func(Model, Msg) Msg
 
@@ -257,7 +249,7 @@ func (p *Program) handleSignals() chan struct{} {
 func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
 
-	if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
+	if f, ok := p.output.TTY().(*os.File); ok && term.IsTerminal(int(f.Fd())) {
 		// Get the initial terminal size and send it to the program.
 		go p.checkResize()
 
@@ -449,7 +441,7 @@ func (p *Program) Run() (Model, error) {
 		if !isFile {
 			break
 		}
-		if isatty.IsTerminal(f.Fd()) {
+		if term.IsTerminal(int(f.Fd())) {
 			break
 		}
 
