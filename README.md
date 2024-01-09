@@ -328,10 +328,10 @@ For some Bubble Tea programs in production, see:
 * [cLive](https://github.com/koki-develop/clive): automate terminal operations and view them live in a browser
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
-* [CRT](https://github.com/BigJk/crt): a simple terminal emulator to run bubbletea in a dedicated window (with optional shaders)
+* [CRT](https://github.com/BigJk/crt): a simple terminal emulator for running Bubble Tea in a dedicated window, with optional shaders
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an eks cluster
-* [End Of Eden](https://github.com/BigJk/end_of_eden): a "Slay the Spire"-like, roguelite deck-builder game running fully
+* [End Of Eden](https://github.com/BigJk/end_of_eden): a "Slay the Spire"-like, roguelite deck-builder game
 * [enola](https://github.com/sherlock-project/enola): find social media accounts by username across social networks
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
