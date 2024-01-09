@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -60,18 +62,40 @@ func getRepos() tea.Msg {
 
 type model struct {
 	textInput textinput.Model
+	help      help.Model
+	keymap    keymap
+}
+
+type keymap struct{}
+
+func (k keymap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete")),
+		key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next")),
+		key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev")),
+		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
+	}
+}
+func (k keymap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{k.ShortHelp()}
 }
 
 func initialModel() model {
 	ti := textinput.New()
+	ti.Placeholder = "repository"
 	ti.Prompt = "charmbracelet/"
-	ti.Placeholder = "repo..."
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	ti.CharLimit = 50
 	ti.Width = 20
 	ti.ShowSuggestions = true
-	return model{textInput: ti}
+
+	h := help.New()
+
+	km := keymap{}
+
+	return model{textInput: ti, help: h, keymap: km}
 }
 
 func (m model) Init() tea.Cmd {
@@ -100,8 +124,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"What’s your favorite Charm repository?\n\n%s\n\n%s\n",
+		"Pick a Charm™ repo:\n\n  %s\n\n%s\n\n",
 		m.textInput.View(),
-		"(tab to complete, ctrl+n/ctrl+p to cycle through suggestions, esc to quit)",
+		m.help.View(m.keymap),
 	)
 }
