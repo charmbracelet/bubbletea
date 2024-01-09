@@ -165,7 +165,7 @@ func (m model) View() string {
 
 The only thing left to do is run the program, so let's do that! Our initial
 model doesn't need any data at all in this case, we just initialize it with
-as a `struct` with defaults.
+a `model` struct with default values.
 
 ```go
 func main() {
