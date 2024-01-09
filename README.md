@@ -322,7 +322,7 @@ For some Bubble Tea programs in production, see:
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
 * [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
-* [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving terminal
+* [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving the terminal
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone
 * [cLive](https://github.com/koki-develop/clive): automate terminal operations and view them live in a browser
@@ -330,12 +330,12 @@ For some Bubble Tea programs in production, see:
 * [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an eks cluster
-* [enola](https://github.com/sherlock-project/enola): hunt down social media accounts by username across social networks
+* [enola](https://github.com/sherlock-project/enola): find social media accounts by username across social networks
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): clean up old and inactive forks in your GitHub account
 * [fztea](https://github.com/jon4hz/fztea): a Flipper Zero TUI
-* [gama](https://github.com/termkit/gama): Manage GitHub Actions from the terminal
+* [gama](https://github.com/termkit/gama): manage GitHub Actions from the terminal
 * [gambit](https://github.com/maaslalani/gambit): chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
 * [gh-b](https://github.com/joaom00/gh-b): a GitHub CLI extension for managing branches
@@ -350,18 +350,18 @@ For some Bubble Tea programs in production, see:
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [json-log-viewer](https://github.com/hedhyw/json-log-viewer): interactive viewer for JSON logs
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
-* [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractals explorer
+* [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractal explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
-* [meteor](https://github.com/stefanlogue/meteor): a highly customisable conventional commit message tool
+* [meteor](https://github.com/stefanlogue/meteor): a highly customizable conventional commit message tool
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
-* [nom](https://github.com/guyfedwards/nom): RSS reader and manager
-* [pathos](https://github.com/chip/pathos): a PATH env variable editor
+* [nom](https://github.com/guyfedwards/nom): an RSS reader and manager
+* [pathos](https://github.com/chip/pathos): a PATH environment variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
-* [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis databases browser
-* [redis_tui](https://github.com/mat2cc/redis_tui): a Redis TUI application
-* [scrabbler](https://github.com/wI2L/scrabbler): Automatic draw TUI for your duplicate Scrabble games
+* [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
+* [redis_tui](https://github.com/mat2cc/redis_tui): a Redis database browser
+* [scrabbler](https://github.com/wI2L/scrabbler): an automatic draw TUI for your duplicate Scrabble games
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
 * [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): a Slurm workload manager TUI
@@ -375,10 +375,10 @@ For some Bubble Tea programs in production, see:
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
-* [trainer](https://github.com/rusinikita/trainer): golang concurrency coding interview simulator and learning materials 
+* [trainer](https://github.com/rusinikita/trainer): a Go concurrency coding interview simulator with learning materials 
 * [Typer](https://github.com/maaslalani/typer): a typing test
-* [typioca](https://github.com/bloznelis/typioca): Cozy typing speed tester in terminal 
-* [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
+* [typioca](https://github.com/bloznelis/typioca): a typing test
+* [tz](https://github.com/oz/tz): an scheduling aid for people in multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
 * [walk](https://github.com/antonmedv/walk): a terminal navigator
 * [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
