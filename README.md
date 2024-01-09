@@ -345,6 +345,7 @@ For some Bubble Tea programs in production, see:
 * [go-sweep](https://github.com/maxpaulus43/go-sweep): Minesweeper in the terminal
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
+* [gum](https://github.com/charmbracelet/gum): interactivity and styling for shells and shell scripts
 * [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context, synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
@@ -354,6 +355,7 @@ For some Bubble Tea programs in production, see:
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [meteor](https://github.com/stefanlogue/meteor): a highly customizable conventional commit message tool
+* [mods](https://github.com/charmbracelet/mods): AI on the CLI; built for pipelines
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
 * [nom](https://github.com/guyfedwards/nom): an RSS reader and manager
