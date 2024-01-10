@@ -81,7 +81,7 @@ func TestOptions(t *testing.T) {
 			exercise(t, WithAltScreen(), withAltScreen)
 		})
 
-		t.Run("bracketed space disabled", func(t *testing.T) {
+		t.Run("bracketed paste disabled", func(t *testing.T) {
 			exercise(t, WithoutBracketedPaste(), withoutBracketedPaste)
 		})
 
