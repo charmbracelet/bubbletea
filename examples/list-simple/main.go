@@ -36,12 +36,12 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
-	str := fmt.Sprintf("%d. %s", index+1, i)
+	str := fmt.Sprintf("%d. %s >", index+1, i)
 
 	fn := itemStyle.Render
 	if index == m.Index() {
-		fn = func(s string) string {
-			return selectedItemStyle.Render("> " + s)
+		fn = func(s ...string) string {
+			return selectedItemStyle.Render(s...)
 		}
 	}
 
