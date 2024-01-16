@@ -23,7 +23,7 @@ func main() {
 
 	// Initialize our program
 	p := tea.NewProgram(model(5))
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -47,7 +47,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m, tea.Quit
 	case tickMsg:
-		m -= 1
+		m--
 		if m <= 0 {
 			return m, tea.Quit
 		}
@@ -56,7 +56,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Views return a string based on data in the model. That string which will be
+// View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
 func (m model) View() string {
 	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)

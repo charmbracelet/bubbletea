@@ -4,17 +4,24 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-      time: "08:00"
     labels:
       - "dependencies"
     commit-message:
-      prefix: "feat"
+      prefix: "chore"
       include: "scope"
   - package-ecosystem: "gomod"
     directory: "/examples"
     schedule:
       interval: "daily"
-      time: "08:00"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+  - package-ecosystem: "gomod"
+    directory: "/tutorials"
+    schedule:
+      interval: "daily"
     labels:
       - "dependencies"
     commit-message:
@@ -24,7 +31,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-      time: "08:00"
     labels:
       - "dependencies"
     commit-message:

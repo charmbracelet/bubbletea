@@ -22,6 +22,8 @@ func checkServer() tea.Msg {
 	if err != nil {
 		return errMsg{err}
 	}
+	defer res.Body.Close() // nolint:errcheck
+
 	return statusMsg(res.StatusCode)
 }
 
@@ -39,7 +41,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case statusMsg:
 		m.status = int(msg)
 		return m, tea.Quit
@@ -70,7 +71,7 @@ func (m model) View() string {
 }
 
 func main() {
-	if err := tea.NewProgram(model{}).Start(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Printf("Uh oh, there was an error: %v\n", err)
 		os.Exit(1)
 	}

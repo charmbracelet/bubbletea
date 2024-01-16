@@ -26,7 +26,7 @@ func (e errMsg) Error() string { return e.error.Error() }
 
 func main() {
 	p := tea.NewProgram(model{})
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -37,7 +37,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
@@ -77,5 +76,7 @@ func checkServer() tea.Msg {
 	if err != nil {
 		return errMsg{err}
 	}
+	defer res.Body.Close() // nolint:errcheck
+
 	return statusMsg(res.StatusCode)
 }

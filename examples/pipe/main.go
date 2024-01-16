@@ -1,7 +1,7 @@
 package main
 
-// An example illustating how to pipe in data to a Bubble Tea application.
-// Moreso, this serves as proof that Bubble Tea will automatically listen for
+// An example illustrating how to pipe in data to a Bubble Tea application.
+// More so, this serves as proof that Bubble Tea will automatically listen for
 // keystrokes when input is not a TTY, such as when data is piped or redirected
 // in.
 
@@ -45,7 +45,7 @@ func main() {
 
 	model := newModel(strings.TrimSpace(b.String()))
 
-	if err := tea.NewProgram(model).Start(); err != nil {
+	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fmt.Println("Couldn't start program:", err)
 		os.Exit(1)
 	}
@@ -58,7 +58,7 @@ type model struct {
 func newModel(initialValue string) (m model) {
 	i := textinput.New()
 	i.Prompt = ""
-	i.CursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+	i.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	i.Width = 48
 	i.SetValue(initialValue)
 	i.CursorEnd()

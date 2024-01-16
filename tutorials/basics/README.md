@@ -2,19 +2,20 @@ Bubble Tea Basics
 =================
 
 Bubble Tea is based on the functional design paradigms of [The Elm
-Architecture][elm] which happens work nicely with Go. It's a delightful way to
-build applications.
-
-By the way, the non-annotated source code for this program is available
-[on GitHub](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics).
+Architecture][elm], which happens to work nicely with Go. It's a delightful way
+to build applications.
 
 This tutorial assumes you have a working knowledge of Go.
 
+By the way, the non-annotated source code for this program is available
+[on GitHub][tut-source].
+
 [elm]: https://guide.elm-lang.org/architecture/
+[tut-source]:https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
 
 ## Enough! Let's get to it.
 
-For this tutorial we're making a shopping list.
+For this tutorial, we're making a shopping list.
 
 To start we'll define our package and import some libraries. Our only external
 import will be the Bubble Tea library, which we'll call `tea` for short.
@@ -52,26 +53,26 @@ type model struct {
 
 ## Initialization
 
-Next we’ll define our application’s initial state. In this case we’re defining
-a function to return our initial model, however we could just as easily define
+Next, we’ll define our application’s initial state. In this case, we’re defining
+a function to return our initial model, however, we could just as easily define
 the initial model as a variable elsewhere, too.
 
 ```go
 func initialModel() model {
 	return model{
-		// Our shopping list is a grocery list
+		// Our to-do list is a grocery list
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
 		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
+		// the map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
 }
 ```
 
-Next we define the `Init` method. `Init` can return a `Cmd` that could perform
-some initial I/O. For now, we don't need to do any I/O, so for the command
+Next, we define the `Init` method. `Init` can return a `Cmd` that could perform
+some initial I/O. For now, we don't need to do any I/O, so for the command,
 we'll just return `nil`, which translates to "no command."
 
 ```go
@@ -152,8 +153,8 @@ the Bubble Tea runtime to quit, exiting the program.
 ## The View Method
 
 At last, it’s time to render our UI. Of all the methods, the view is the
-simplest. We look at the  model in it's current state and use it to return
-a `string`.  That string is our UI!
+simplest. We look at the model in its current state and use it to return
+a `string`. That string is our UI!
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it
@@ -199,7 +200,7 @@ The last step is to simply run our program. We pass our initial model to
 ```go
 func main() {
     p := tea.NewProgram(initialModel())
-    if err := p.Start(); err != nil {
+    if _, err := p.Run(); err != nil {
         fmt.Printf("Alas, there's been an error: %v", err)
         os.Exit(1)
     }
@@ -229,12 +230,13 @@ there are [Go Docs][docs].
 We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.technology/@charm)
+* [The Fediverse](https://mastodon.social/@charmcli)
+* [Discord](https://charm.sh/chat)
 
 ***
 
 Part of [Charm](https://charm.sh).
 
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
 
 Charm热爱开源 • Charm loves open source

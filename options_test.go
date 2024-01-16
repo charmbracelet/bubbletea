@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"sync/atomic"
 	"testing"
 )
 
@@ -9,26 +10,19 @@ func TestOptions(t *testing.T) {
 	t.Run("output", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithOutput(&b))
-		if p.output != &b {
-			t.Errorf("expected output to custom, got %v", p.output)
+		if p.output.TTY() != nil {
+			t.Errorf("expected output to custom, got %v", p.output.TTY().Fd())
 		}
 	})
 
-	t.Run("input", func(t *testing.T) {
+	t.Run("custom input", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithInput(&b))
 		if p.input != &b {
-			t.Errorf("expected input to custom, got %v", p.output)
+			t.Errorf("expected input to custom, got %v", p.input)
 		}
-		if p.startupOptions&withCustomInput == 0 {
-			t.Errorf("expected startup options to have custom input set, got %v", p.output)
-		}
-	})
-
-	t.Run("catch panics", func(t *testing.T) {
-		p := NewProgram(nil, WithoutCatchPanics())
-		if p.CatchPanics {
-			t.Errorf("catch panics should not have been set")
+		if p.inputType != customInput {
+			t.Errorf("expected startup options to have custom input set, got %v", p.input)
 		}
 	})
 
@@ -42,6 +36,39 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
+	t.Run("without signals", func(t *testing.T) {
+		p := NewProgram(nil, WithoutSignals())
+		if atomic.LoadUint32(&p.ignoreSignals) == 0 {
+			t.Errorf("ignore signals should have been set")
+		}
+	})
+
+	t.Run("filter", func(t *testing.T) {
+		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
+		if p.filter == nil {
+			t.Errorf("expected filter to be set")
+		}
+	})
+
+	t.Run("input options", func(t *testing.T) {
+		exercise := func(t *testing.T, opt ProgramOption, expect inputType) {
+			p := NewProgram(nil, opt)
+			if p.inputType != expect {
+				t.Errorf("expected input type %s, got %s", expect, p.inputType)
+			}
+		}
+
+		t.Run("tty input", func(t *testing.T) {
+			exercise(t, WithInputTTY(), ttyInput)
+		})
+
+		t.Run("custom input", func(t *testing.T) {
+			var b bytes.Buffer
+			exercise(t, WithInput(&b), customInput)
+		})
+
+	})
+
 	t.Run("startup options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, expect startupOptions) {
 			p := NewProgram(nil, opt)
@@ -50,16 +77,20 @@ func TestOptions(t *testing.T) {
 			}
 		}
 
-		t.Run("input tty", func(t *testing.T) {
-			exercise(t, WithInputTTY(), withInputTTY)
-		})
-
 		t.Run("alt screen", func(t *testing.T) {
 			exercise(t, WithAltScreen(), withAltScreen)
 		})
 
 		t.Run("ansi compression", func(t *testing.T) {
 			exercise(t, WithANSICompressor(), withANSICompressor)
+		})
+
+		t.Run("without catch panics", func(t *testing.T) {
+			exercise(t, WithoutCatchPanics(), withoutCatchPanics)
+		})
+
+		t.Run("without signal handler", func(t *testing.T) {
+			exercise(t, WithoutSignalHandler(), withoutSignalHandler)
 		})
 
 		t.Run("mouse cell motion", func(t *testing.T) {
@@ -85,9 +116,12 @@ func TestOptions(t *testing.T) {
 
 	t.Run("multiple", func(t *testing.T) {
 		p := NewProgram(nil, WithMouseAllMotion(), WithAltScreen(), WithInputTTY())
-		for _, opt := range []startupOptions{withMouseAllMotion, withAltScreen, withInputTTY} {
+		for _, opt := range []startupOptions{withMouseAllMotion, withAltScreen} {
 			if !p.startupOptions.has(opt) {
 				t.Errorf("expected startup options have %v, got %v", opt, p.startupOptions)
+			}
+			if p.inputType != ttyInput {
+				t.Errorf("expected input to be %v, got %v", opt, p.startupOptions)
 			}
 		}
 	})

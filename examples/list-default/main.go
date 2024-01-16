@@ -34,8 +34,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		top, right, bottom, left := docStyle.GetMargin()
-		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom)
+		h, v := docStyle.GetFrameSize()
+		m.list.SetSize(msg.Width-h, msg.Height-v)
 	}
 
 	var cmd tea.Cmd
@@ -79,7 +79,7 @@ func main() {
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

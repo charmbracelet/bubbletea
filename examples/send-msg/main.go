@@ -19,7 +19,6 @@ var (
 	spinnerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Margin(1, 0)
 	dotStyle      = helpStyle.Copy().UnsetMargins()
-	foodStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("36"))
 	durationStyle = dotStyle.Copy()
 	appStyle      = lipgloss.NewStyle().Margin(1, 2, 0, 2)
 )
@@ -54,7 +53,7 @@ func newModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return spinner.Tick
+	return m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -101,36 +100,32 @@ func (m model) View() string {
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
-	done := make(chan struct{})
-
 	p := tea.NewProgram(newModel())
-	go func() {
-		if err := p.Start(); err != nil {
-			fmt.Println("Error running program:", err)
-			os.Exit(1)
-		}
-		close(done)
-	}()
 
 	// Simulate activity
 	go func() {
 		for {
-			pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond
+			pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond // nolint:gosec
 			time.Sleep(pause)
 
-			// Send the Bubble Tea program a message from outside the program.
+			// Send the Bubble Tea program a message from outside the
+			// tea.Program. This will block until it is ready to receive
+			// messages.
 			p.Send(resultMsg{food: randomFood(), duration: pause})
 		}
 	}()
 
-	<-done
+	if _, err := p.Run(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
 }
 
 func randomFood() string {
-	food := []string{"an apple", "a pear", "a gherkin", "a party gherkin",
+	food := []string{
+		"an apple", "a pear", "a gherkin", "a party gherkin",
 		"a kohlrabi", "some spaghetti", "tacos", "a currywurst", "some curry",
-		"a sandwich", "some peanut butter", "some cashews", "some ramen"}
-	return string(food[rand.Intn(len(food))])
+		"a sandwich", "some peanut butter", "some cashews", "some ramen",
+	}
+	return food[rand.Intn(len(food))] // nolint:gosec
 }

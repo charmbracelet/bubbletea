@@ -11,7 +11,9 @@ import (
 )
 
 const content = `
-Today’s Menu
+# Today’s Menu
+
+## Appetizers
 
 | Name        | Price | Notes                           |
 | ---         | ---   | ---                             |
@@ -20,7 +22,7 @@ Today’s Menu
 | Okonomiyaki | $4    | Takes a few minutes to make     |
 | Curry       | $3    | We can add squash if you’d like |
 
-Seasonal Dishes
+## Seasonal Dishes
 
 | Name                 | Price | Notes              |
 | ---                  | ---   | ---                |
@@ -28,7 +30,7 @@ Seasonal Dishes
 | Takoyaki             | $3    | Fun to eat         |
 | Winter squash        | $3    | Today it's pumpkin |
 
-Desserts
+## Desserts
 
 | Name         | Price | Notes                 |
 | ---          | ---   | ---                   |
@@ -55,13 +57,18 @@ type example struct {
 }
 
 func newExample() (*example, error) {
-	vp := viewport.New(78, 20)
+	const width = 78
+
+	vp := viewport.New(width, 20)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
 		PaddingRight(2)
 
-	renderer, err := glamour.NewTermRenderer(glamour.WithStylePath("notty"))
+	renderer, err := glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+		glamour.WithWordWrap(width),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -84,10 +91,6 @@ func (e example) Init() tea.Cmd {
 
 func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		e.viewport.Width = msg.Width
-		return e, nil
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
@@ -117,7 +120,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := tea.NewProgram(model).Start(); err != nil {
+	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fmt.Println("Bummer, there's been an error:", err)
 		os.Exit(1)
 	}

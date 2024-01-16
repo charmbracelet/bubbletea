@@ -126,8 +126,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		topGap, rightGap, bottomGap, leftGap := appStyle.GetPadding()
-		m.list.SetSize(msg.Width-leftGap-rightGap, msg.Height-topGap-bottomGap)
+		h, v := appStyle.GetFrameSize()
+		m.list.SetSize(msg.Width-h, msg.Height-v)
 
 	case tea.KeyMsg:
 		// Don't match any of the keys below if we're actively filtering.
@@ -183,7 +183,7 @@ func (m model) View() string {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	if err := tea.NewProgram(newModel()).Start(); err != nil {
+	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

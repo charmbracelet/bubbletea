@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -28,7 +29,7 @@ var (
 type model struct {
 	focusIndex int
 	inputs     []textinput.Model
-	cursorMode textinput.CursorMode
+	cursorMode cursor.Mode
 }
 
 func initialModel() model {
@@ -39,7 +40,7 @@ func initialModel() model {
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
-		t.CursorStyle = cursorStyle
+		t.Cursor.Style = cursorStyle
 		t.CharLimit = 32
 
 		switch i {
@@ -62,6 +63,7 @@ func initialModel() model {
 
 	return m
 }
+
 func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -76,12 +78,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Change cursor mode
 		case "ctrl+r":
 			m.cursorMode++
-			if m.cursorMode > textinput.CursorHide {
-				m.cursorMode = textinput.CursorBlink
+			if m.cursorMode > cursor.CursorHide {
+				m.cursorMode = cursor.CursorBlink
 			}
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := range m.inputs {
-				cmds[i] = m.inputs[i].SetCursorMode(m.cursorMode)
+				cmds[i] = m.inputs[i].Cursor.SetMode(m.cursorMode)
 			}
 			return m, tea.Batch(cmds...)
 
@@ -134,7 +136,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
-	var cmds = make([]tea.Cmd, len(m.inputs))
+	cmds := make([]tea.Cmd, len(m.inputs))
 
 	// Only text inputs with Focus() set will respond, so it's safe to simply
 	// update all of them here without any further logic.
@@ -169,7 +171,7 @@ func (m model) View() string {
 }
 
 func main() {
-	if err := tea.NewProgram(initialModel()).Start(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Printf("could not start program: %s\n", err)
 		os.Exit(1)
 	}

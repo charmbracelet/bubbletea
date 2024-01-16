@@ -2,65 +2,75 @@ package tea
 
 import (
 	"bytes"
-	"io"
 	"testing"
 )
 
-func TestScreen(t *testing.T) {
-	exercise := func(t *testing.T, fn func(io.Writer), expect []byte) {
-		var w bytes.Buffer
-		fn(&w)
-		if !bytes.Equal(w.Bytes(), expect) {
-			t.Errorf("expected %q, got %q", expect, w.Bytes())
-		}
+func TestClearMsg(t *testing.T) {
+	tests := []struct {
+		name     string
+		cmds     sequenceMsg
+		expected string
+	}{
+		{
+			name:     "clear_screen",
+			cmds:     []Cmd{ClearScreen},
+			expected: "\x1b[?25l\x1b[2J\x1b[1;1H\x1b[1;1Hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "altscreen",
+			cmds:     []Cmd{EnterAltScreen, ExitAltScreen},
+			expected: "\x1b[?25l\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[1;1H\x1b[?25l\x1b[?1049l\x1b[?25lsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "altscreen_autoexit",
+			cmds:     []Cmd{EnterAltScreen},
+			expected: "\x1b[?25l\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[1;1H\x1b[?25lsuccess\r\n\x1b[2;0H\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?1049l\x1b[?25h",
+		},
+		{
+			name:     "mouse_cellmotion",
+			cmds:     []Cmd{EnableMouseCellMotion},
+			expected: "\x1b[?25l\x1b[?1002h\x1b[?1006hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "mouse_allmotion",
+			cmds:     []Cmd{EnableMouseAllMotion},
+			expected: "\x1b[?25l\x1b[?1003h\x1b[?1006hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "mouse_disable",
+			cmds:     []Cmd{EnableMouseAllMotion, DisableMouse},
+			expected: "\x1b[?25l\x1b[?1003h\x1b[?1006h\x1b[?1002l\x1b[?1003l\x1b[?1006lsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "cursor_hide",
+			cmds:     []Cmd{HideCursor},
+			expected: "\x1b[?25l\x1b[?25lsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "cursor_hideshow",
+			cmds:     []Cmd{HideCursor, ShowCursor},
+			expected: "\x1b[?25l\x1b[?25l\x1b[?25hsuccess\r\n\x1b[0D\x1b[2K\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
 	}
 
-	t.Run("change scrolling region", func(t *testing.T) {
-		exercise(t, func(w io.Writer) {
-			changeScrollingRegion(w, 16, 22)
-		}, []byte("\x1b[16;22r"))
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			var in bytes.Buffer
 
-	t.Run("line", func(t *testing.T) {
-		t.Run("clear", func(t *testing.T) {
-			exercise(t, clearLine, []byte("\x1b[2K"))
+			m := &testModel{}
+			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+
+			test.cmds = append(test.cmds, Quit)
+			go p.Send(test.cmds)
+
+			if _, err := p.Run(); err != nil {
+				t.Fatal(err)
+			}
+
+			if buf.String() != test.expected {
+				t.Errorf("expected embedded sequence, got %q", buf.String())
+			}
 		})
-
-		t.Run("insert", func(t *testing.T) {
-			exercise(t, func(w io.Writer) {
-				insertLine(w, 12)
-			}, []byte("\x1b[12L"))
-		})
-	})
-
-	t.Run("cursor", func(t *testing.T) {
-		t.Run("hide", func(t *testing.T) {
-			exercise(t, hideCursor, []byte("\x1b[?25l"))
-		})
-
-		t.Run("show", func(t *testing.T) {
-			exercise(t, showCursor, []byte("\x1b[?25h"))
-		})
-
-		t.Run("up", func(t *testing.T) {
-			exercise(t, cursorUp, []byte("\x1b[1A"))
-		})
-
-		t.Run("down", func(t *testing.T) {
-			exercise(t, cursorDown, []byte("\x1b[1B"))
-		})
-
-		t.Run("move", func(t *testing.T) {
-			exercise(t, func(w io.Writer) {
-				moveCursor(w, 10, 20)
-			}, []byte("\x1b[10;20H"))
-		})
-
-		t.Run("back", func(t *testing.T) {
-			exercise(t, func(w io.Writer) {
-				cursorBack(w, 15)
-			}, []byte("\x1b[15D"))
-		})
-	})
-
+	}
 }

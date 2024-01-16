@@ -2,7 +2,7 @@ Commands in Bubble Tea
 ======================
 
 This is the second tutorial for Bubble Tea covering commands, which deal with
-I/O. The tutorial assumes you have a working knowlege of Go and a decent
+I/O. The tutorial assumes you have a working knowledge of Go and a decent
 understanding of [the first tutorial][basics].
 
 You can find the non-annotated version of this program [on GitHub][source].
@@ -50,7 +50,7 @@ type model struct {
 `Cmd`s are functions that perform some I/O and then return a `Msg`. Checking the
 time, ticking a timer, reading from the disk, and network stuff are all I/O and
 should be run through commands. That might sound harsh, but it will keep your
-Bubble Tea program staightforward and simple.
+Bubble Tea program straightforward and simple.
 
 Anyway, let's write a `Cmd` that makes a request to a server and returns the
 result as a `Msg`.
@@ -87,7 +87,7 @@ First, let's write our initialization function.
 
 ## The Initialization Method
 
-The initilization method is very simple: we return the `Cmd` we made earlier.
+The initialization method is very simple: we return the `Cmd` we made earlier.
 Note that we don't call the function; the Bubble Tea runtime will do that when
 the time is right.
 
@@ -124,7 +124,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
     case tea.KeyMsg:
         // Ctrl+c exits. Even with short running programs it's good to have
-        // a quit key, just incase your logic is off. Users will be very
+        // a quit key, just in case your logic is off. Users will be very
         // annoyed if they can't exit.
         if msg.Type == tea.KeyCtrlC {
             return m, tea.Quit
@@ -165,18 +165,18 @@ func (m model) View() string {
 
 The only thing left to do is run the program, so let's do that! Our initial
 model doesn't need any data at all in this case, we just initialize it with
-as a `struct` with defaults.
+a `model` struct with default values.
 
 ```go
 func main() {
-    if err := tea.NewProgram(model{}).Start(); err != nil {
+    if _, err := tea.NewProgram(model{}).Run(); err != nil {
         fmt.Printf("Uh oh, there was an error: %v\n", err)
         os.Exit(1)
     }
 }
 ```
 
-And that's that. There's one more thing you that is helpful to know about
+And that's that. There's one more thing that is helpful to know about
 `Cmd`s, though.
 
 ## One More Thing About Commands
@@ -189,7 +189,7 @@ that returns a command. For example:
 ```go
 func cmdWithArg(id int) tea.Cmd {
     return func() tea.Msg {
-        return someMsg{id: int}
+        return someMsg{id: id}
     }
 }
 ```
@@ -202,7 +202,7 @@ func checkSomeUrl(url string) tea.Cmd {
         c := &http.Client{Timeout: 10 * time.Second}
         res, err := c.Get(url)
         if err != nil {
-            return errMsg(err)
+            return errMsg{err}
         }
         return statusMsg(res.StatusCode)
     }
@@ -235,12 +235,13 @@ And, of course, check out the [Go Docs][docs].
 We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 * [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.technology/@charm)
+* [The Fediverse](https://mastodon.social/@charmcli)
+* [Discord](https://charm.sh/chat)
 
 ***
 
 Part of [Charm](https://charm.sh).
 
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge-unrounded.jpg" width="400"></a>
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
 
 Charm热爱开源 • Charm loves open source

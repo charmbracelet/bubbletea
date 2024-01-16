@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,9 +28,9 @@ func (i item) FilterValue() string { return "" }
 
 type itemDelegate struct{}
 
-func (d itemDelegate) Height() int                               { return 1 }
-func (d itemDelegate) Spacing() int                              { return 0 }
-func (d itemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
+func (d itemDelegate) Height() int                             { return 1 }
+func (d itemDelegate) Spacing() int                            { return 0 }
+func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(item)
 	if !ok {
@@ -41,16 +42,15 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	fn := itemStyle.Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return selectedItemStyle.Render(s...)
+			return selectedItemStyle.Render("> " + strings.Join(s, " "))
 		}
 	}
 
-	fmt.Fprintf(w, fn(str))
+	fmt.Fprint(w, fn(str))
 }
 
 type model struct {
 	list     list.Model
-	items    []item
 	choice   string
 	quitting bool
 }
@@ -67,7 +67,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
-		case "ctrl+c":
+		case "q", "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
 
@@ -121,7 +121,7 @@ func main() {
 
 	m := model{list: l}
 
-	if err := tea.NewProgram(m).Start(); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

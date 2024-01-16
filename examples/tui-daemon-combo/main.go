@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -19,8 +19,6 @@ import (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	var (
 		daemonMode bool
 		showHelp   bool
@@ -41,11 +39,11 @@ func main() {
 		opts = []tea.ProgramOption{tea.WithoutRenderer()}
 	} else {
 		// If we're in TUI mode, discard log output
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 
 	p := tea.NewProgram(newModel(), opts...)
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
 	}
@@ -77,7 +75,7 @@ func newModel() model {
 func (m model) Init() tea.Cmd {
 	log.Println("Starting work...")
 	return tea.Batch(
-		spinner.Tick,
+		m.spinner.Tick,
 		runPretendProcess,
 	)
 }
@@ -123,17 +121,17 @@ func (m model) View() string {
 	return indent.String(s, 1)
 }
 
-// processFinishedMsg is send when a pretend process completes.
+// processFinishedMsg is sent when a pretend process completes.
 type processFinishedMsg time.Duration
 
 // pretendProcess simulates a long-running process.
 func runPretendProcess() tea.Msg {
-	pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond
+	pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond // nolint:gosec
 	time.Sleep(pause)
 	return processFinishedMsg(pause)
 }
 
 func randomEmoji() string {
 	emojis := []rune("🍦🧋🍡🤠👾😭🦊🐯🦆🥨🎏🍔🍒🍥🎮📦🦁🐶🐸🍕🥐🧲🚒🥇🏆🌽")
-	return string(emojis[rand.Intn(len(emojis))])
+	return string(emojis[rand.Intn(len(emojis))]) // nolint:gosec
 }

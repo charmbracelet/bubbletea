@@ -7,7 +7,7 @@ A casual introduction. 你好世界!
 
 The _artichoke_ is mentioned as a garden plant in the 8th century BC by Homer
 **and** Hesiod. The naturally occurring variant of the artichoke, the cardoon,
-which is native the the Mediterranean area, also has records of use as a food
+which is native to the Mediterranean area, also has records of use as a food
 among the ancient Greeks and Romans. Pliny the Elder mentioned growing of
 _carduus_ in Carthage and Cordoba.
 

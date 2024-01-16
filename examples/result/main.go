@@ -46,7 +46,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = len(choices) - 1
 			}
 		}
-
 	}
 
 	return m, nil
@@ -73,8 +72,8 @@ func (m model) View() string {
 func main() {
 	p := tea.NewProgram(model{})
 
-	// StartReturningModel returns the model as a tea.Model.
-	m, err := p.StartReturningModel()
+	// Run returns the model as a tea.Model.
+	m, err := p.Run()
 	if err != nil {
 		fmt.Println("Oh no:", err)
 		os.Exit(1)

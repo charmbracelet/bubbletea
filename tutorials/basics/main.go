@@ -18,14 +18,14 @@ func initialModel() model {
 		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
 		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
+		// the map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.SetWindowTitle("Grocery List")
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -79,7 +79,7 @@ func (m model) View() string {
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
 	}

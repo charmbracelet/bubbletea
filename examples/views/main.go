@@ -28,7 +28,7 @@ const (
 
 // General stuff for styling the view
 var (
-	term          = termenv.ColorProfile()
+	term          = termenv.EnvColorProfile()
 	keyword       = makeFgStyle("211")
 	subtle        = makeFgStyle("241")
 	progressEmpty = subtle(progressEmptyChar)
@@ -41,13 +41,15 @@ var (
 func main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
 
-type tickMsg struct{}
-type frameMsg struct{}
+type (
+	tickMsg  struct{}
+	frameMsg struct{}
+)
 
 func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(time.Time) tea.Msg {
@@ -113,16 +115,15 @@ func (m model) View() string {
 // Update loop for the first view where you're choosing a task.
 func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "j", "down":
-			m.Choice += 1
+			m.Choice++
 			if m.Choice > 3 {
 				m.Choice = 3
 			}
 		case "k", "up":
-			m.Choice -= 1
+			m.Choice--
 			if m.Choice < 0 {
 				m.Choice = 0
 			}
@@ -136,7 +137,7 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.Quitting = true
 			return m, tea.Quit
 		}
-		m.Ticks -= 1
+		m.Ticks--
 		return m, tick()
 	}
 
@@ -146,10 +147,9 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 // Update loop for the second view after a choice has been made
 func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
-
 	case frameMsg:
 		if !m.Loaded {
-			m.Frames += 1
+			m.Frames++
 			m.Progress = ease.OutBounce(float64(m.Frames) / float64(100))
 			if m.Progress >= 1 {
 				m.Progress = 1
@@ -166,7 +166,7 @@ func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.Quitting = true
 				return m, tea.Quit
 			}
-			m.Ticks -= 1
+			m.Ticks--
 			return m, tick()
 		}
 	}
@@ -216,7 +216,7 @@ func chosenView(m model) string {
 		label = fmt.Sprintf("Downloaded. Exiting in %s seconds...", colorFg(strconv.Itoa(m.Ticks), "79"))
 	}
 
-	return msg + "\n\n" + label + "\n" + progressbar(80, m.Progress) + "%"
+	return msg + "\n\n" + label + "\n" + progressbar(m.Progress) + "%"
 }
 
 func checkbox(label string, checked bool) string {
@@ -226,7 +226,7 @@ func checkbox(label string, checked bool) string {
 	return fmt.Sprintf("[ ] %s", label)
 }
 
-func progressbar(width int, percent float64) string {
+func progressbar(percent float64) string {
 	w := float64(progressBarWidth)
 
 	fullSize := int(math.Round(w * percent))
@@ -251,14 +251,6 @@ func colorFg(val, color string) string {
 // Return a function that will colorize the foreground of a given string.
 func makeFgStyle(color string) func(string) string {
 	return termenv.Style{}.Foreground(term.Color(color)).Styled
-}
-
-// Color a string's foreground and background with the given value.
-func makeFgBgStyle(fg, bg string) func(string) string {
-	return termenv.Style{}.
-		Foreground(term.Color(fg)).
-		Background(term.Color(bg)).
-		Styled
 }
 
 // Generate a blend of colors.

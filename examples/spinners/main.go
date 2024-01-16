@@ -32,7 +32,7 @@ func main() {
 	m := model{}
 	m.resetSpinner()
 
-	if err := tea.NewProgram(m).Start(); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}
@@ -55,7 +55,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "h", "left":
 			m.index--
-			if m.index <= 0 {
+			if m.index < 0 {
 				m.index = len(spinners) - 1
 			}
 			m.resetSpinner()
