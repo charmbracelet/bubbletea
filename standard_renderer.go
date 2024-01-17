@@ -95,9 +95,7 @@ func (r *standardRenderer) start() {
 // stop permanently halts the renderer, rendering the final frame.
 func (r *standardRenderer) stop() {
 	// Stop the renderer before acquiring the mutex to avoid a deadlock.
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
+	r.sendDoneSignal()
 
 	// flush locks the mutex
 	r.flush()
@@ -117,14 +115,24 @@ func (r *standardRenderer) stop() {
 // kill halts the renderer. The final frame will not be rendered.
 func (r *standardRenderer) kill() {
 	// Stop the renderer before acquiring the mutex to avoid a deadlock.
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
+	r.sendDoneSignal()
 
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	r.out.ClearLine()
+}
+
+func (r *standardRenderer) sendDoneSignal() {
+	// If ticker is nil then the renderer has not been started yet and therefore it is not listening for the done signal.
+	// In this case we skip stepping the done signal or we will hang if there is a panic during Init.
+	if r.ticker == nil {
+		return
+	}
+
+	r.once.Do(func() {
+		r.done <- struct{}{}
+	})
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.
