@@ -363,6 +363,7 @@ For some Bubble Tea programs in production, see:
 * [nom](https://github.com/guyfedwards/nom): an RSS reader and manager
 * [pathos](https://github.com/chip/pathos): a PATH environment variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
+* [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
 * [redis_tui](https://github.com/mat2cc/redis_tui): a Redis database browser
 * [scrabbler](https://github.com/wI2L/scrabbler): an automatic draw TUI for your duplicate Scrabble games
