@@ -23,7 +23,7 @@ func main() {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(tick(), tea.EnterAltScreen)
+	return tick()
 }
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
