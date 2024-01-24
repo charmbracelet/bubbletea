@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
+	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/ansi/compressor"
 	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/termenv"
@@ -39,6 +41,8 @@ type standardRenderer struct {
 	useANSICompressor  bool
 	once               sync.Once
 
+	isTTY bool
+
 	// cursor visibility state
 	cursorHidden bool
 
@@ -61,6 +65,9 @@ func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer 
 	} else if fps > maxFPS {
 		fps = maxFPS
 	}
+
+	f, ok := out.TTY().(*os.File)
+	tty := ok && isatty.IsTerminal(f.Fd())
 	r := &standardRenderer{
 		out:                out,
 		mtx:                &sync.Mutex{},
@@ -68,6 +75,7 @@ func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer 
 		framerate:          time.Second / time.Duration(fps),
 		useANSICompressor:  useANSICompressor,
 		queuedMessageLines: []string{},
+		isTTY:              tty,
 	}
 	if r.useANSICompressor {
 		r.out = termenv.NewOutput(&compressor.Writer{Forward: out})
@@ -105,7 +113,9 @@ func (r *standardRenderer) stop() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.out.ClearLine()
+	if r.isTTY {
+		r.out.ClearLine()
+	}
 
 	if r.useANSICompressor {
 		if w, ok := r.out.TTY().(io.WriteCloser); ok {
@@ -124,7 +134,9 @@ func (r *standardRenderer) kill() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.out.ClearLine()
+	if r.isTTY {
+		r.out.ClearLine()
+	}
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.
@@ -201,8 +213,10 @@ func (r *standardRenderer) flush() {
 			// standard (whereas others are proprietary to, say, VT100/VT52).
 			// If cursor previous line (ESC[ + <n> + F) were better supported
 			// we could use that above to eliminate this step.
-			out.CursorBack(r.width)
-			out.ClearLine()
+			if r.isTTY {
+				out.CursorBack(r.width)
+				out.ClearLine()
+			}
 		}
 	}
 
@@ -244,13 +258,15 @@ func (r *standardRenderer) flush() {
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
-	if r.altScreenActive {
-		// This case fixes a bug in macOS terminal. In other terminals the
-		// other case seems to do the job regardless of whether or not we're
-		// using the full terminal window.
-		out.MoveCursor(r.linesRendered, 0)
-	} else {
-		out.CursorBack(r.width)
+	if r.isTTY {
+		if r.altScreenActive {
+			// This case fixes a bug in macOS terminal. In other terminals the
+			// other case seems to do the job regardless of whether or not we're
+			// using the full terminal window.
+			out.MoveCursor(r.linesRendered, 0)
+		} else {
+			out.CursorBack(r.width)
+		}
 	}
 
 	_, _ = r.out.Write(buf.Bytes())
@@ -281,6 +297,9 @@ func (r *standardRenderer) repaint() {
 }
 
 func (r *standardRenderer) clearScreen() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -291,6 +310,9 @@ func (r *standardRenderer) clearScreen() {
 }
 
 func (r *standardRenderer) altScreen() bool {
+	if !r.isTTY {
+		return false
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -298,6 +320,9 @@ func (r *standardRenderer) altScreen() bool {
 }
 
 func (r *standardRenderer) enterAltScreen() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -330,6 +355,9 @@ func (r *standardRenderer) enterAltScreen() {
 }
 
 func (r *standardRenderer) exitAltScreen() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -353,6 +381,9 @@ func (r *standardRenderer) exitAltScreen() {
 }
 
 func (r *standardRenderer) showCursor() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -361,6 +392,9 @@ func (r *standardRenderer) showCursor() {
 }
 
 func (r *standardRenderer) hideCursor() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -369,6 +403,9 @@ func (r *standardRenderer) hideCursor() {
 }
 
 func (r *standardRenderer) enableMouseCellMotion() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -376,6 +413,9 @@ func (r *standardRenderer) enableMouseCellMotion() {
 }
 
 func (r *standardRenderer) disableMouseCellMotion() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -383,6 +423,9 @@ func (r *standardRenderer) disableMouseCellMotion() {
 }
 
 func (r *standardRenderer) enableMouseAllMotion() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -390,6 +433,9 @@ func (r *standardRenderer) enableMouseAllMotion() {
 }
 
 func (r *standardRenderer) disableMouseAllMotion() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -397,6 +443,9 @@ func (r *standardRenderer) disableMouseAllMotion() {
 }
 
 func (r *standardRenderer) enableMouseSGRMode() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -404,6 +453,9 @@ func (r *standardRenderer) enableMouseSGRMode() {
 }
 
 func (r *standardRenderer) disableMouseSGRMode() {
+	if !r.isTTY {
+		return
+	}
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -428,7 +480,7 @@ func (r *standardRenderer) setIgnoredLines(from int, to int) {
 	}
 
 	// Erase ignored lines
-	if r.linesRendered > 0 {
+	if r.linesRendered > 0 && r.isTTY {
 		buf := &bytes.Buffer{}
 		out := termenv.NewOutput(buf)
 
