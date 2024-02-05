@@ -45,6 +45,9 @@ type standardRenderer struct {
 	// essentially whether or not we're using the full size of the terminal
 	altScreenActive bool
 
+	// whether or not we're currently using bracketed paste
+	bpActive bool
+
 	// renderer dimensions; usually the size of the window
 	width  int
 	height int
@@ -408,6 +411,29 @@ func (r *standardRenderer) disableMouseSGRMode() {
 	defer r.mtx.Unlock()
 
 	r.out.DisableMouseExtendedMode()
+}
+
+func (r *standardRenderer) enableBracketedPaste() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.EnableBracketedPaste()
+	r.bpActive = true
+}
+
+func (r *standardRenderer) disableBracketedPaste() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.out.DisableBracketedPaste()
+	r.bpActive = false
+}
+
+func (r *standardRenderer) bracketedPasteActive() bool {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	return r.bpActive
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea

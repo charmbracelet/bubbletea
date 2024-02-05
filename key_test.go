@@ -434,23 +434,25 @@ func TestReadInput(t *testing.T) {
 			[]byte{'\x1b', '\x1b'},
 			[]Msg{KeyMsg{Type: KeyEsc, Alt: true}},
 		},
-		// Bracketed paste does not work yet.
-		{"?CSI[50 48 48 126]? a   b ?CSI[50 48 49 126]?",
+		{"[a b] o",
 			[]byte{
 				'\x1b', '[', '2', '0', '0', '~',
 				'a', ' ', 'b',
+				'\x1b', '[', '2', '0', '1', '~',
+				'o',
+			},
+			[]Msg{
+				KeyMsg{Type: KeyRunes, Runes: []rune("a b"), Paste: true},
+				KeyMsg{Type: KeyRunes, Runes: []rune("o")},
+			},
+		},
+		{"[a\x03\nb]",
+			[]byte{
+				'\x1b', '[', '2', '0', '0', '~',
+				'a', '\x03', '\n', 'b',
 				'\x1b', '[', '2', '0', '1', '~'},
 			[]Msg{
-				// What we expect once bracketed paste is recognized properly:
-				//
-				//  KeyMsg{Type: KeyRunes, Runes: []rune("a b")},
-				//
-				// What we get instead (for now):
-				unknownCSISequenceMsg{0x1b, 0x5b, 0x32, 0x30, 0x30, 0x7e},
-				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
-				KeyMsg{Type: KeySpace, Runes: []rune{' '}},
-				KeyMsg{Type: KeyRunes, Runes: []rune{'b'}},
-				unknownCSISequenceMsg{0x1b, 0x5b, 0x32, 0x30, 0x31, 0x7e},
+				KeyMsg{Type: KeyRunes, Runes: []rune("a\x03\nb"), Paste: true},
 			},
 		},
 	}

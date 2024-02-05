@@ -116,6 +116,34 @@ func ShowCursor() Msg {
 // this message with ShowCursor.
 type showCursorMsg struct{}
 
+// EnableBracketedPaste is a special command that tells the Bubble Tea program
+// to accept bracketed paste input.
+//
+// Note that bracketed paste will be automatically disabled when the
+// program quits.
+func EnableBracketedPaste() Msg {
+	return enableBracketedPasteMsg{}
+}
+
+// enableBracketedPasteMsg in an internal message signals that
+// bracketed paste should be enabled. You can send an
+// enableBracketedPasteMsg with EnableBracketedPaste.
+type enableBracketedPasteMsg struct{}
+
+// DisableBracketedPaste is a special command that tells the Bubble Tea program
+// to accept bracketed paste input.
+//
+// Note that bracketed paste will be automatically disabled when the
+// program quits.
+func DisableBracketedPaste() Msg {
+	return disableBracketedPasteMsg{}
+}
+
+// disableBracketedPasteMsg in an internal message signals that
+// bracketed paste should be disabled. You can send an
+// disableBracketedPasteMsg with DisableBracketedPaste.
+type disableBracketedPasteMsg struct{}
+
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //

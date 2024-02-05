@@ -34,6 +34,7 @@ func (p *Program) initTerminal() error {
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
+		p.renderer.disableBracketedPaste()
 		p.renderer.showCursor()
 		p.disableMouse()
 
