@@ -1,6 +1,10 @@
 package tea
 
-import "sort"
+import (
+	"bytes"
+	"sort"
+	"unicode/utf8"
+)
 
 // extSequences is used by the map-based algorithm below. It contains
 // the sequences plus their alternatives with an escape character
@@ -68,4 +72,48 @@ func detectSequence(input []byte) (hasSeq bool, width int, msg Msg) {
 	}
 
 	return false, 0, nil
+}
+
+// detectBracketedPaste detects an input pasted while bracketed
+// paste mode was enabled.
+//
+// Note: this function is a no-op if bracketed paste was not enabled
+// on the terminal, since in that case we'd never see this
+// particular escape sequence.
+func detectBracketedPaste(input []byte) (hasBp bool, width int, msg Msg) {
+	// Detect the start sequence.
+	const bpStart = "\x1b[200~"
+	if len(input) < len(bpStart) || string(input[:len(bpStart)]) != bpStart {
+		return false, 0, nil
+	}
+
+	// Skip over the start sequence.
+	input = input[len(bpStart):]
+
+	// If we saw the start sequence, then we must have an end sequence
+	// as well. Find it.
+	const bpEnd = "\x1b[201~"
+	idx := bytes.Index(input, []byte(bpEnd))
+	inputLen := len(bpStart) + idx + len(bpEnd)
+	if idx == -1 {
+		// We have encountered the end of the input buffer without seeing
+		// the marker for the end of the bracketed paste.
+		// Tell the outer loop we have done a short read and we want more.
+		return true, 0, nil
+	}
+
+	// The paste is everything in-between.
+	paste := input[:idx]
+
+	// All there is in-between is runes, not to be interpreted further.
+	k := Key{Type: KeyRunes, Paste: true}
+	for len(paste) > 0 {
+		r, w := utf8.DecodeRune(paste)
+		if r != utf8.RuneError {
+			k.Runes = append(k.Runes, r)
+		}
+		paste = paste[w:]
+	}
+
+	return true, inputLen, KeyMsg(k)
 }

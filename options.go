@@ -101,6 +101,13 @@ func WithAltScreen() ProgramOption {
 	}
 }
 
+// WithoutBracketedPaste starts the program with bracketed paste disabled.
+func WithoutBracketedPaste() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutBracketedPaste
+	}
+}
+
 // WithMouseCellMotion starts the program with the mouse enabled in "cell
 // motion" mode.
 //
