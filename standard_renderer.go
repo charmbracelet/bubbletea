@@ -680,7 +680,6 @@ func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 
 type printLineMessage struct {
 	messageBody string
-	// if true, skips truncation of the message
 }
 
 // Println prints above the Program. This output is unmanaged by the program and
