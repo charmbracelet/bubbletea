@@ -508,6 +508,9 @@ func (p *Program) Run() (Model, error) {
 		p.renderer.enableMouseSGRMode()
 	}
 
+	// Start the renderer.
+	p.renderer.start()
+
 	// Initialize the program.
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
@@ -523,9 +526,6 @@ func (p *Program) Run() (Model, error) {
 			}
 		}()
 	}
-
-	// Start the renderer.
-	p.renderer.start()
 
 	// Render the initial view.
 	p.renderer.write(model.View())
