@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(model{})
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
@@ -22,23 +22,19 @@ func main() {
 type errMsg error
 
 type model struct {
+	ctx      *tea.Context
 	textarea textarea.Model
 	err      error
 }
 
-func initialModel() model {
-	ti := textarea.New()
-	ti.Placeholder = "Once upon a time..."
-	ti.Focus()
+func (m model) Init(ctx *tea.Context) (tea.Model, tea.Cmd) {
+	m.ctx = ctx
 
-	return model{
-		textarea: ti,
-		err:      nil,
-	}
-}
+	m.textarea = textarea.New(ctx.Renderer)
+	m.textarea.Placeholder = "Once upon a time..."
+	m.textarea.Focus()
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+	return m, textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
