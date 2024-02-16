@@ -21,6 +21,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/containerd/console"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
@@ -39,7 +40,7 @@ type Msg interface{}
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
-	Init() Cmd
+	Init(*Context) (Model, Cmd)
 
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
@@ -58,6 +59,11 @@ type Model interface {
 // to another part of your program. That can almost always be done in the
 // update function.
 type Cmd func() Msg
+
+type Context struct {
+	// Renderer ready to use.
+	Renderer *lipgloss.Renderer
+}
 
 type inputType int
 
@@ -134,8 +140,9 @@ type Program struct {
 
 	inputType inputType
 
-	ctx    context.Context
-	cancel context.CancelFunc
+	renderContext *Context
+	ctx           context.Context
+	cancel        context.CancelFunc
 
 	msgs     chan Msg
 	errs     chan error
@@ -434,6 +441,12 @@ func (p *Program) Run() (Model, error) {
 
 	defer p.cancel()
 
+	p.renderContext = &Context{
+		// FIXME: this isn't ideal, as TTY may be nil. We should share
+		// outputs here.
+		Renderer: lipgloss.NewRenderer(p.output.TTY()),
+	}
+
 	switch p.inputType {
 	case defaultInput:
 		p.input = os.Stdin
@@ -516,8 +529,9 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Initialize the program.
+	var initCmd Cmd
 	model := p.initialModel
-	if initCmd := model.Init(); initCmd != nil {
+	if model, initCmd = model.Init(p.renderContext); initCmd != nil {
 		ch := make(chan struct{})
 		handlers.add(ch)
 
