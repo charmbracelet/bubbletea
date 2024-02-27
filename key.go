@@ -553,9 +553,9 @@ func (u unknownCSISequenceMsg) String() string {
 
 var spaceRunes = []rune{' '}
 
-// readInputs reads keypress and mouse inputs from a TTY and produces messages
+// readAnsiInputs reads keypress and mouse inputs from a TTY and produces messages
 // containing information about the key or mouse events accordingly.
-func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
+func readAnsiInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 	var buf [256]byte
 
 	var leftOverFromPrevIteration []byte

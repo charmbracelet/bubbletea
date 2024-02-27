@@ -8,7 +8,6 @@ import (
 	"time"
 
 	isatty "github.com/mattn/go-isatty"
-	localereader "github.com/mattn/go-localereader"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/term"
 )
@@ -59,7 +58,7 @@ func (p *Program) restoreTerminalState() error {
 // initCancelReader (re)commences reading inputs.
 func (p *Program) initCancelReader() error {
 	var err error
-	p.cancelReader, err = cancelreader.NewReader(p.input)
+	p.cancelReader, err = newInputReader(p.input)
 	if err != nil {
 		return fmt.Errorf("error creating cancelreader: %w", err)
 	}
@@ -73,8 +72,7 @@ func (p *Program) initCancelReader() error {
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	input := localereader.NewReader(p.cancelReader)
-	err := readInputs(p.ctx, p.msgs, input)
+	err := readInputs(p.ctx, p.msgs, p.cancelReader)
 	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 		select {
 		case <-p.ctx.Done():
