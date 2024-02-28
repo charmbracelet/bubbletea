@@ -3,7 +3,7 @@ module github.com/charmbracelet/bubbletea
 go 1.18
 
 require (
-	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81
+	github.com/containerd/console v1.0.4
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-localereader v0.0.1
