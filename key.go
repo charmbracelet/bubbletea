@@ -581,7 +581,7 @@ loop:
 		canHaveMoreData := numBytes == len(buf)
 
 		var i, w int
-		for i, w = 0, 07; i < len(b); i += w {
+		for i, w = 0, 0; i < len(b); i += w {
 			var msg Msg
 			w, msg = detectOneMsg(b[i:], canHaveMoreData)
 			if w == 0 {
