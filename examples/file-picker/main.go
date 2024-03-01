@@ -88,7 +88,7 @@ func main() {
 	m := model{
 		filepicker: fp,
 	}
-	tm, _ := tea.NewProgram(&m, tea.WithOutput(os.Stderr)).Run()
+	tm, _ := tea.NewProgram(&m).Run()
 	mm := tm.(model)
 	fmt.Println("\n  You selected: " + m.filepicker.Styles.Selected.Render(mm.selectedFile) + "\n")
 }
