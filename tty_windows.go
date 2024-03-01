@@ -4,37 +4,36 @@
 package tea
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/containerd/console"
+	"golang.org/x/sys/windows"
+	"golang.org/x/term"
 )
 
-func (p *Program) initInput() error {
-	// If input's a file, use console to manage it
-	if f, ok := p.input.(*os.File); ok {
-		// Save a reference to the current stdin then replace stdin with our
-		// input. We do this so we can hand input off to containerd/console to
-		// set raw mode, and do it in this fashion because the method
-		// console.ConsoleFromFile isn't supported on Windows.
-		p.windowsStdin = os.Stdin
-		os.Stdin = f
+func (p *Program) initInput() (err error) {
+	// Save stdin state and enable VT input
+	// We enable VT processing using Termenv, but we also need to enable VT
+	// input here.
+	if f, ok := p.input.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+		p.tty = f
+		p.previousTtyState, err = term.MakeRaw(int(p.tty.Fd()))
+		if err != nil {
+			return err
+		}
 
-		// Note: this will panic if it fails.
-		c := console.Current()
-		p.console = c
+		// Enable VT input
+		var mode uint32
+		if err := windows.GetConsoleMode(windows.Handle(p.tty.Fd()), &mode); err != nil {
+			return fmt.Errorf("error getting console mode: %w", err)
+		}
+
+		if err := windows.SetConsoleMode(windows.Handle(p.tty.Fd()), mode|windows.ENABLE_VIRTUAL_TERMINAL_INPUT); err != nil {
+			return fmt.Errorf("error setting console mode: %w", err)
+		}
 	}
 
-	return nil
-}
-
-// restoreInput restores stdout in the event that we placed it aside to handle
-// input with CONIN$, above.
-func (p *Program) restoreInput() error {
-	if p.windowsStdin != nil {
-		os.Stdin = p.windowsStdin
-	}
-
-	return nil
+	return
 }
 
 // Open the Windows equivalent of a TTY.
