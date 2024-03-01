@@ -94,8 +94,8 @@ func TestBatch(t *testing.T) {
 	})
 	t.Run("single cmd", func(t *testing.T) {
 		b := Batch(Quit)()
-		if l := len(b.(BatchMsg)); l != 1 {
-			t.Fatalf("expected a []Cmd with len 1, got %d", l)
+		if _, ok := b.(QuitMsg); !ok {
+			t.Fatalf("expected a QuitMsg, got %T", b)
 		}
 	})
 	t.Run("mixed nil cmds", func(t *testing.T) {
