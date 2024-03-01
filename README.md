@@ -316,6 +316,7 @@ your program in another window.
 
 For some Bubble Tea programs in production, see:
 
+* [ASCII Movie](https://github.com/gabe565/ascii-movie): Star Wars ASCII art movie player
 * [AT CLI](https://github.com/daskycodes/at_cli): execute AT Commands via serial port connections
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [brows](https://github.com/rubysolo/brows): a GitHub release browser
