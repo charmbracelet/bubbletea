@@ -20,11 +20,15 @@ func Batch(cmds ...Cmd) Cmd {
 		}
 		validCmds = append(validCmds, c)
 	}
-	if len(validCmds) == 0 {
+	switch len(validCmds) {
+	case 0:
 		return nil
-	}
-	return func() Msg {
-		return BatchMsg(validCmds)
+	case 1:
+		return validCmds[0]
+	default:
+		return func() Msg {
+			return BatchMsg(validCmds)
+		}
 	}
 }
 
