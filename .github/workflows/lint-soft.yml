@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/checkout@v4
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         with:
           # Optional: golangci-lint command line arguments.
           args: --config .golangci-soft.yml --issues-exit-code=0
