@@ -47,7 +47,6 @@ func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
 	originalMode, err := prepareConsole(conin,
 		windows.ENABLE_MOUSE_INPUT,
 		windows.ENABLE_WINDOW_INPUT,
-		windows.ENABLE_PROCESSED_INPUT,
 		windows.ENABLE_EXTENDED_FLAGS,
 	)
 	if err != nil {
