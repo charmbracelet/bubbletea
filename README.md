@@ -358,7 +358,7 @@ For some Bubble Tea programs in production, see:
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [meteor](https://github.com/stefanlogue/meteor): a highly customizable conventional commit message tool
 * [mods](https://github.com/charmbracelet/mods): AI on the CLI; built for pipelines
-* [nachrichten](https://github.com/zMoooooritz/nachrichten): stay informed without leaving your command line
+* [nachrichten](https://github.com/zMoooooritz/nachrichten): access up-to-date news in German provided by the [Tagesschau](https://www.tagesschau.de/)
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
 * [nom](https://github.com/guyfedwards/nom): an RSS reader and manager
