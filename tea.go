@@ -622,7 +622,7 @@ func (p *Program) Send(msg Msg) {
 // if the program is unstarted or has already exited.
 func (p *Program) Quit() {
 	if err := os.Setenv("RUNEWIDTH_EASTASIAN", p.runewidthEastAsian); err != nil {
-		log.Error("Unable to unset RUNEWIDTH_EASTASIAN environment variable; it is set to true for compatiblity purposes", "err", err)
+		log.Error("Unable to unset RUNEWIDTH_EASTASIAN environment variable; it is set to true for compatibility purposes", "err", err)
 	}
 	p.Send(Quit())
 }
@@ -632,7 +632,7 @@ func (p *Program) Quit() {
 // [program.Run] returns a [ErrProgramKilled] error.
 func (p *Program) Kill() {
 	if err := os.Setenv("RUNEWIDTH_EASTASIAN", p.runewidthEastAsian); err != nil {
-		log.Error("Unable to unset RUNEWIDTH_EASTASIAN environment variable; it is set to true for compatiblity purposes", "err", err)
+		log.Error("Unable to unset RUNEWIDTH_EASTASIAN environment variable; it is set to true for compatibility purposes", "err", err)
 	}
 	p.cancel()
 }
