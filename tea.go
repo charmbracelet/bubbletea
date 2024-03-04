@@ -22,7 +22,6 @@ import (
 	"syscall"
 
 	"github.com/muesli/cancelreader"
-	"github.com/muesli/termenv"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/term"
 )
@@ -142,17 +141,19 @@ type Program struct {
 	finished chan struct{}
 
 	// where to send output, this will usually be os.Stdout.
-	output        *termenv.Output
-	restoreOutput func() error
-	renderer      renderer
+	output io.Writer
+	// ttyOutput is null if output is not a TTY.
+	ttyOutput           *os.File
+	previousOutputState *term.State
+	renderer            renderer
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
-	// tty is null if input is not a TTY.
-	tty              *os.File
-	previousTtyState *term.State
-	cancelReader     cancelreader.CancelReader
-	readLoopDone     chan struct{}
+	// ttyInput is null if input is not a TTY.
+	ttyInput              *os.File
+	previousTtyInputState *term.State
+	cancelReader          cancelreader.CancelReader
+	readLoopDone          chan struct{}
 
 	// was the altscreen active before releasing the terminal?
 	altScreenWasActive bool
@@ -198,13 +199,8 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
-		p.output = termenv.DefaultOutput()
-
-		// cache detected color values
-		termenv.WithColorCache(true)(p.output)
+		p.output = os.Stdout
 	}
-
-	p.restoreOutput, _ = termenv.EnableVirtualTerminalProcessing(p.output)
 
 	return p
 }
@@ -249,7 +245,7 @@ func (p *Program) handleSignals() chan struct{} {
 func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
 
-	if f, ok := p.output.TTY().(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+	if p.ttyOutput != nil {
 		// Get the initial terminal size and send it to the program.
 		go p.checkResize()
 
@@ -642,9 +638,6 @@ func (p *Program) shutdown(kill bool) {
 	}
 
 	_ = p.restoreTerminalState()
-	if p.restoreOutput != nil {
-		_ = p.restoreOutput()
-	}
 	p.finished <- struct{}{}
 }
 

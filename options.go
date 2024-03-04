@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
-
-	"github.com/muesli/termenv"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -29,11 +27,7 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		if o, ok := output.(*termenv.Output); ok {
-			p.output = o
-		} else {
-			p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
-		}
+		p.output = output
 	}
 }
 

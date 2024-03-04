@@ -13,11 +13,15 @@ import (
 func (p *Program) initInput() (err error) {
 	// Check if input is a terminal
 	if f, ok := p.input.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
-		p.tty = f
-		p.previousTtyState, err = term.MakeRaw(int(p.tty.Fd()))
+		p.ttyInput = f
+		p.previousTtyInputState, err = term.MakeRaw(int(p.ttyInput.Fd()))
 		if err != nil {
 			return fmt.Errorf("error entering raw mode: %w", err)
 		}
+	}
+
+	if f, ok := p.output.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+		p.ttyOutput = f
 	}
 
 	return nil

@@ -67,6 +67,9 @@ type renderer interface {
 	// bracketedPasteActive reports whether bracketed paste mode is
 	// currently enabled.
 	bracketedPasteActive() bool
+
+	// setWindowTitle sets the terminal window title.
+	setWindowTitle(string)
 }
 
 // repaintMsg forces a full repaint.
