@@ -323,7 +323,7 @@ For some Bubble Tea programs in production, see:
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
 * [chatgpt-cli](https://github.com/j178/chatgpt): a CLI for ChatGPT
-* [ChatGPTUI](https://github.com/dwisiswant0/chatgptui): ChatGPT with Textual User Interface (TUI) mode
+* [ChatGPTUI](https://github.com/dwisiswant0/chatgptui): a TUI for ChatGPT
 * [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
 * [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving the terminal
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
