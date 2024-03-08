@@ -356,6 +356,7 @@ For some Bubble Tea programs in production, see:
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [json-log-viewer](https://github.com/hedhyw/json-log-viewer): interactive viewer for JSON logs
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [laboon](https://github.com/arisnacg/laboon): a Docker-desktop-style container manager
 * [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractal explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
@@ -393,7 +394,6 @@ For some Bubble Tea programs in production, see:
 * [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
 * [WG Commander](https://github.com/AndrianBdn/wg-cmd): a TUI for a simple WireGuard VPN setup 
 * [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
-* [laboon](https://github.com/arisnacg/laboon): an TUI that similliar Docker Desktop
 
 ## Feedback
 
