@@ -332,6 +332,7 @@ For some Bubble Tea programs in production, see:
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
 * [CRT](https://github.com/BigJk/crt): a simple terminal emulator for running Bubble Tea in a dedicated window, with optional shaders
+* [cueitup](https://github.com/dhth/cueitup): inspect messages in an AWS SQS queue in a simple and deliberate manner
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
 * [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an eks cluster
 * [End Of Eden](https://github.com/BigJk/end_of_eden): a "Slay the Spire"-like, roguelite deck-builder game
@@ -356,6 +357,7 @@ For some Bubble Tea programs in production, see:
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [json-log-viewer](https://github.com/hedhyw/json-log-viewer): interactive viewer for JSON logs
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
+* [kplay](https://github.com/dhth/kplay): inspect messages in a kafka topic in a simple and deliberate manner
 * [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractal explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
@@ -365,6 +367,7 @@ For some Bubble Tea programs in production, see:
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
 * [nom](https://github.com/guyfedwards/nom): an RSS reader and manager
+* [outtasync](https://github.com/dhth/outtasync): identify cloudformation stacks that are out of sync with their template files
 * [pathos](https://github.com/chip/pathos): a PATH environment variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
