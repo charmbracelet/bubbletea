@@ -358,6 +358,7 @@ For some Bubble Tea programs in production, see:
 * [json-log-viewer](https://github.com/hedhyw/json-log-viewer): interactive viewer for JSON logs
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
 * [kplay](https://github.com/dhth/kplay): inspect messages in a kafka topic in a simple and deliberate manner
+* [laboon](https://github.com/arisnacg/laboon): a Docker-desktop-style container manager
 * [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractal explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
