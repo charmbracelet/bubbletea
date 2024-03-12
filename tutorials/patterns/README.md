@@ -8,7 +8,7 @@ when building command line apps with Bubble Tea. In this tutorial, we'll
 highlight some common patterns that you'll come across when building Bubble Tea
 applications that should help to simplify your solutions.
 
-## I want multiple elements in a single view
+## "I want multiple elements in a single view"
 
 <img width="800" src="https://github.com/charmbracelet/bubbletea/blob/master/examples/composable-views/composable-views.gif" />
 
@@ -17,8 +17,8 @@ that you want to be able to switch between. To handle this in Bubble Tea, you'll
 want your parent component to house a `state` field that dictates which element
 on the screen is focused and receiving key presses.
 
-You can see a [basic example][basic] of this in the repo where we switch focus
-between a timer and spinner.
+You can see a [basic example][basic] of this where we switch focus between a
+timer and spinner.
 
 ```go
 		switch m.state {
@@ -36,7 +36,7 @@ This same strategy can be used for switching between different models. We do
 just this in [Glow][glow] to switch between the file listing and viewing the
 document.
 
-## I only want the model that triggered the message to update
+## "I only want the model that triggered the message to update"
 
 To figure out whether a component should process the message or not, simply
 include an ID in the message. The ID will match the ID field of your child
@@ -148,7 +148,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 ```
 [Source][send-msg]
 
-In the more specific download example, it looks like this:
+In the more complex download example, it looks like this:
 
 ```go
 func (pw *progressWriter) Start() {
@@ -218,9 +218,9 @@ getting started with Bubble Tea.
 
 ### Feedback
 
-Let us know in [GitHub discussions][discuss] if there are other patterns that you'd like to see!
-If there's enough interest we can certainly include it. Don't be shy, we'd love
-to hear from you.
+Let us know in [GitHub discussions][discuss] if there are other patterns that
+you'd like to see! If there's enough interest we can certainly include it.
+Don't be shy, we love to hear from you.
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.social/@charmcli)
@@ -236,8 +236,8 @@ Charm热爱开源 • Charm loves open source
 
 
 [discuss]: https://github.com/charmbracelet/bubbletea/discussions
-[tutorials]: https://github.com/charmbracelet/bubbletea/tutorials
-[examples]: https://github.com/charmbracelet/bubbletea/examples
+[tutorials]: https://github.com/charmbracelet/bubbletea/tree/patterns/tutorials
+[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
 [psend]: https://pkg.go.dev/github.com/charmbracelet/bubbletea#Program.Send
 [goroutine]: https://go.dev/doc/effective_go#goroutines
 [send-msg]: https://github.com/charmbracelet/bubbletea/blob/master/examples/send-msg/main.go
