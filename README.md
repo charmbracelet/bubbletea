@@ -316,17 +316,17 @@ your program in another window.
 
 For some Bubble Tea programs in production, see:
 
-* [ASCII Movie](https://github.com/gabe565/ascii-movie): Star Wars ASCII art movie player
+* [ASCII Movie](https://github.com/gabe565/ascii-movie): a Star Wars ASCII art movie player
 * [AT CLI](https://github.com/daskycodes/at_cli): execute AT Commands via serial port connections
 * [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 * [brows](https://github.com/rubysolo/brows): a GitHub release browser
 * [Canard](https://github.com/mrusme/canard): an RSS client
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
 * [chatgpt-cli](https://github.com/j178/chatgpt): a CLI for ChatGPT
-* [ChatGPTUI](https://github.com/dwisiswant0/chatgptui): a TUI for ChatGPT
 * [chatgpt-tui](https://github.com/tearingItUp786/chatgpt-tui): a TUI for ChatGPT with SQLite sessions
+* [ChatGPTUI](https://github.com/dwisiswant0/chatgptui): a TUI for ChatGPT
 * [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
-* [chip-8](https://github.com/braheezy/chip-8): CHIP-8 interpreter
+* [chip-8](https://github.com/braheezy/chip-8): a CHIP-8 interpreter
 * [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving the terminal
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone
@@ -335,13 +335,14 @@ For some Bubble Tea programs in production, see:
 * [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
 * [CRT](https://github.com/BigJk/crt): a simple terminal emulator for running Bubble Tea in a dedicated window, with optional shaders
 * [cueitup](https://github.com/dhth/cueitup): inspect messages in an AWS SQS queue in a simple and deliberate manner
-* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
-* [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an eks cluster
-* [End Of Eden](https://github.com/BigJk/end_of_eden): a "Slay the Spire"-like, roguelite deck-builder game
+* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53; expose your EC2 quickly, securely and privately
+* [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
+* [End Of Eden](https://github.com/BigJk/end_of_eden): a "Slay the Spire"-like, roguelike deck-builder game
 * [enola](https://github.com/sherlock-project/enola): find social media accounts by username across social networks
 * [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
 * [fm](https://github.com/knipferrc/fm): a terminal-based file manager
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): clean up old and inactive forks in your GitHub account
+* [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractal explorer
 * [fztea](https://github.com/jon4hz/fztea): a Flipper Zero TUI
 * [gama](https://github.com/termkit/gama): manage GitHub Actions from the terminal
 * [gambit](https://github.com/maaslalani/gambit): chess in the terminal
@@ -352,48 +353,47 @@ For some Bubble Tea programs in production, see:
 * [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
 * [go-sweep](https://github.com/maxpaulus43/go-sweep): Minesweeper in the terminal
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
-* [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
+* [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app built on simplytranslate's APIs
 * [gum](https://github.com/charmbracelet/gum): interactivity and styling for shells and shell scripts
-* [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context, synced, and queryable
+* [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context: synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
-* [json-log-viewer](https://github.com/hedhyw/json-log-viewer): interactive viewer for JSON logs
+* [json-log-viewer](https://github.com/hedhyw/json-log-viewer): an interactive JSON log viewer
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
-* [kplay](https://github.com/dhth/kplay): inspect messages in a kafka topic in a simple and deliberate manner
+* [kplay](https://github.com/dhth/kplay): inspect messages in a Kafka topic
 * [laboon](https://github.com/arisnacg/laboon): a Docker-desktop-style container manager
-* [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractal explorer
 * [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
 * [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
 * [meteor](https://github.com/stefanlogue/meteor): a highly customizable conventional commit message tool
-* [mods](https://github.com/charmbracelet/mods): AI on the CLI; built for pipelines
+* [mods](https://github.com/charmbracelet/mods): AI on the CLI, built for pipelines
 * [nachrichten](https://github.com/zMoooooritz/nachrichten): access up-to-date news in German provided by the [Tagesschau](https://www.tagesschau.de/)
 * [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
-* [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
 * [nom](https://github.com/guyfedwards/nom): an RSS reader and manager
-* [outtasync](https://github.com/dhth/outtasync): identify cloudformation stacks that are out of sync with their template files
+* [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
+* [outtasync](https://github.com/dhth/outtasync): identify CloudFormation stacks that are out of sync with their template files
 * [pathos](https://github.com/chip/pathos): a PATH environment variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
 * [redis_tui](https://github.com/mat2cc/redis_tui): a Redis database browser
-* [scrabbler](https://github.com/wI2L/scrabbler): an automatic draw TUI for your duplicate Scrabble games
+* [scrabbler](https://github.com/wI2L/scrabbler): an automatic draw tool for your duplicate Scrabble games
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
 * [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): a Slurm workload manager TUI
 * [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
 * [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike Solitaire for the terminal
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
-* [Storydb](https://github.com/grrlopes/storydb): a bash/zsh ctrl+r improved command history finder.
+* [Storydb](https://github.com/grrlopes/storydb): an improved bash/zsh-style ctrl+r command history finder
 * [STTG](https://github.com/wille1101/sttg): a teletext client for SVT, Sweden’s national public television station
 * [sttr](https://github.com/abhimanyu003/sttr): a general-purpose text transformer
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
-* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
 * [trainer](https://github.com/rusinikita/trainer): a Go concurrency coding interview simulator with learning materials 
+* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [typioca](https://github.com/bloznelis/typioca): a typing test
-* [tz](https://github.com/oz/tz): an scheduling aid for people in multiple time zones
+* [tz](https://github.com/oz/tz): a scheduling aid for people in multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
 * [walk](https://github.com/antonmedv/walk): a terminal navigator
 * [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
