@@ -39,8 +39,9 @@ document.
 ## "I only want the model that triggered the message to update"
 
 To figure out whether a component should process the message or not, simply
-include an ID in the message. The ID will match the ID field of your child
-model and can be handled in that child model's `Update`.
+include an ID in the message. We'll then compare the ID fields in the message
+and your child model. If they are a match, then we handle that message in the
+child's `Update`, otherwise it just gets ignored.
 
 This pattern is used in the [spinner bubble][spinner]:
 
@@ -96,8 +97,9 @@ func (m Model) tick(id, tag int) tea.Cmd {
 
 ## "I want my Bubble Tea program to display external processes"
 
-You can send information from outside processes to your Bubble Tea app. There
-are a couple of examples on how to handle this behavior in the Bubble Tea Repo: 
+You can send information from outside processes to your Bubble Tea
+applications. There are a couple of examples on how to handle this behavior in
+the Bubble Tea Repo: 
 - [downloading a file and feeding the progress to Bubble Tea][progress-download]
 - [a `p.Send` example that simulates a message from outside the program][send-msg]. 
 
@@ -204,7 +206,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 ```
 [Source][progress-download]
-
 
 ## Additional Resources
 
