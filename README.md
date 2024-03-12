@@ -335,6 +335,7 @@ For some Bubble Tea programs in production, see:
 * [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
 * [CRT](https://github.com/BigJk/crt): a simple terminal emulator for running Bubble Tea in a dedicated window, with optional shaders
 * [cueitup](https://github.com/dhth/cueitup): inspect messages in an AWS SQS queue in a simple and deliberate manner
+* [Daytona](https://github.com/daytonaio/daytona): an development environment manager
 * [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53; expose your EC2 quickly, securely and privately
 * [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
 * [End Of Eden](https://github.com/BigJk/end_of_eden): a "Slay the Spire"-like, roguelike deck-builder game
@@ -357,6 +358,7 @@ For some Bubble Tea programs in production, see:
 * [gum](https://github.com/charmbracelet/gum): interactivity and styling for shells and shell scripts
 * [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context: synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
+* [Huh?](https://charmbracelet/huh): an interactive prompt and form toolkit
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [json-log-viewer](https://github.com/hedhyw/json-log-viewer): an interactive JSON log viewer
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
@@ -391,6 +393,7 @@ For some Bubble Tea programs in production, see:
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
 * [trainer](https://github.com/rusinikita/trainer): a Go concurrency coding interview simulator with learning materials 
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
+* [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [typioca](https://github.com/bloznelis/typioca): a typing test
 * [tz](https://github.com/oz/tz): a scheduling aid for people in multiple time zones
