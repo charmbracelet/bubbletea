@@ -1,18 +1,19 @@
 # Common Patterns in Bubble Tea
 
-You've started building your app, but now you're not sure if you're doing
-things the "right way". 
+You've become comfortable with the basics of Bubble Tea, `tea.Cmd`, and
+`tea.Msg`, *but* you're still unsure if your solution is following best
+practices? We get asked about this a lot, so we decided to take some time
+to investigate what questions are being asked most and assess our own patterns
+when building command line apps with Bubble Tea. In this tutorial, we'll
+highlight some common patterns that you'll come across when building Bubble Tea
+applications that should help to simplify your solutions.
 
-Thankfully, there are some common patterns that you'll come across when
-building Bubble Tea applications that should help to simplify your
-decision-making.
-
-## Managing multiple components in one model
+## I want multiple elements in a single view
 
 <img width="800" src="https://github.com/charmbracelet/bubbletea/blob/master/examples/composable-views/composable-views.gif" />
 
 If you have a composite view, then you have multiple components on one screen
-that you want to be able to switch between. To handle this in Bubble Tea you'll
+that you want to be able to switch between. To handle this in Bubble Tea, you'll
 want your parent component to house a `state` field that dictates which element
 on the screen is focused and receiving key presses.
 
@@ -93,16 +94,18 @@ func (m Model) tick(id, tag int) tea.Cmd {
 
 [Source](https://github.com/charmbracelet/bubbles/blob/master/spinner/spinner.go#L195-L203l)
 
-## I want my Bubble Tea program to display external processes
+## "I want my Bubble Tea program to display external processes"
 
-How do I send information to my Bubble Tea app? There are a couple of examples
-on how to handle this behavior in the Bubble Tea Repo: 
+You can send information from outside processes to your Bubble Tea app. There
+are a couple of examples on how to handle this behavior in the Bubble Tea Repo: 
 - [downloading a file and feeding the progress to Bubble Tea][progress-download]
 - [a `p.Send` example that simulates a message from outside the program][send-msg]. 
 
 <img width="800" src="https://github.com/charmbracelet/bubbletea/blob/master/examples/send-msg/send-msg.gif" />
 
 The goal here is to have the external process run in a [Goroutine][goroutine].
+
+The steps are as follows:
 1. Create a new `tea.Program` with your model.
 2. Start a Goroutine for the external process you want to document in your
    Bubble Tea program.
@@ -202,17 +205,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 ```
 [Source][progress-download]
 
-Let us know in Discussions if there are other patterns that you'd like to see!
-If there's enough interest we can certainly include it in these docs.
 
 ## Additional Resources
 
+* [Official examples of Bubble Tea usage][examples]
+* [The Bubble Tea API](https://pkg.go.dev/github.com/charmbracelet/bubbletea)
 * [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
-* [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
+* [Bubble Tea in the wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
+
+And don't forget to check out the other [tutorials][tutorials] if you're just
+getting started with Bubble Tea.
 
 ### Feedback
 
-We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
+Let us know in [GitHub discussions][discuss] if there are other patterns that you'd like to see!
+If there's enough interest we can certainly include it. Don't be shy, we'd love
+to hear from you.
 
 * [Twitter](https://twitter.com/charmcli)
 * [The Fediverse](https://mastodon.social/@charmcli)
@@ -226,6 +234,10 @@ Part of [Charm](https://charm.sh).
 
 Charm热爱开源 • Charm loves open source
 
+
+[discuss]: https://github.com/charmbracelet/bubbletea/discussions
+[tutorials]: https://github.com/charmbracelet/bubbletea/tutorials
+[examples]: https://github.com/charmbracelet/bubbletea/examples
 [psend]: https://pkg.go.dev/github.com/charmbracelet/bubbletea#Program.Send
 [goroutine]: https://go.dev/doc/effective_go#goroutines
 [send-msg]: https://github.com/charmbracelet/bubbletea/blob/master/examples/send-msg/main.go
