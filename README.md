@@ -324,6 +324,7 @@ For some Bubble Tea programs in production, see:
 * [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
 * [chatgpt-cli](https://github.com/j178/chatgpt): a CLI for ChatGPT
 * [ChatGPTUI](https://github.com/dwisiswant0/chatgptui): a TUI for ChatGPT
+* [chatgpt-tui](https://github.com/tearingItUp786/chatgpt-tui): a TUI for ChatGPT with SQLite sessions
 * [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
 * [chip-8](https://github.com/braheezy/chip-8): CHIP-8 interpreter
 * [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving the terminal
