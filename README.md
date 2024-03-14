@@ -364,7 +364,7 @@ For some Bubble Tea programs in production, see:
 * [gum](https://github.com/charmbracelet/gum): interactivity and styling for shells and shell scripts
 * [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context: synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
-* [Huh?](https://charmbracelet/huh): an interactive prompt and form toolkit
+* [Huh?](https://github.com/charmbracelet/huh): an interactive prompt and form toolkit
 * [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
 * [json-log-viewer](https://github.com/hedhyw/json-log-viewer): an interactive JSON log viewer
 * [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
