@@ -395,6 +395,14 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 							continue
 						}
 
+						// process nested sequence messages in order
+						if sequenceMsg, ok := msg.(sequenceMsg); ok {
+							for _, cmd := range sequenceMsg {
+								p.Send(cmd())
+							}
+							continue
+						}
+
 						p.Send(msg)
 					}
 				}()
