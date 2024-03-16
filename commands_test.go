@@ -82,25 +82,33 @@ func TestSequentially(t *testing.T) {
 }
 
 func TestBatch(t *testing.T) {
+	testMultipleCommands[BatchMsg](t, Batch)
+}
+
+func TestSequence(t *testing.T) {
+	testMultipleCommands[sequenceMsg](t, Sequence)
+}
+
+func testMultipleCommands[T ~[]Cmd](t *testing.T, createFn func(cmd ...Cmd) Cmd) {
 	t.Run("nil cmd", func(t *testing.T) {
-		if b := Batch(nil); b != nil {
+		if b := createFn(nil); b != nil {
 			t.Fatalf("expected nil, got %+v", b)
 		}
 	})
 	t.Run("empty cmd", func(t *testing.T) {
-		if b := Batch(); b != nil {
+		if b := createFn(); b != nil {
 			t.Fatalf("expected nil, got %+v", b)
 		}
 	})
 	t.Run("single cmd", func(t *testing.T) {
-		b := Batch(Quit)()
+		b := createFn(Quit)()
 		if _, ok := b.(QuitMsg); !ok {
 			t.Fatalf("expected a QuitMsg, got %T", b)
 		}
 	})
 	t.Run("mixed nil cmds", func(t *testing.T) {
-		b := Batch(nil, Quit, nil, Quit, nil, nil)()
-		if l := len(b.(BatchMsg)); l != 2 {
+		b := createFn(nil, Quit, nil, Quit, nil, nil)()
+		if l := len(b.(T)); l != 2 {
 			t.Fatalf("expected a []Cmd with len 2, got %d", l)
 		}
 	})
