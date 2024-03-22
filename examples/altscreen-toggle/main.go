@@ -5,13 +5,12 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var (
-	color   = termenv.EnvColorProfile().Color
-	keyword = termenv.Style{}.Foreground(color("204")).Background(color("235")).Styled
-	help    = termenv.Style{}.Foreground(color("241")).Styled
+	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("204")).Background(lipgloss.Color("235"))
+	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
 type model struct {
@@ -61,8 +60,8 @@ func (m model) View() string {
 		mode = inlineMode
 	}
 
-	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keyword(mode)) +
-		help("  space: switch modes • q: exit\n")
+	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
+		helpStyle.Render("  space: switch modes • q: exit\n")
 }
 
 func main() {
