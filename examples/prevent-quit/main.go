@@ -101,7 +101,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.quit):
 			m.quitting = true
 			return m, tea.Quit
-		case msg.Type == tea.KeyRunes:
+		case msg.Sym == tea.KeyNone && (msg.Mod == 0 || msg.Mod == tea.Shift):
 			m.saveText = ""
 			m.hasChanges = true
 			fallthrough

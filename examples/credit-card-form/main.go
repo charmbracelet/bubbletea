@@ -135,17 +135,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter:
+		switch msg.String() {
+		case "enter":
 			if m.focused == len(m.inputs)-1 {
 				return m, tea.Quit
 			}
 			m.nextInput()
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case "ctrl+c", "esc":
 			return m, tea.Quit
-		case tea.KeyShiftTab, tea.KeyCtrlP:
+		case "shift+tab", "ctrl+p":
 			m.prevInput()
-		case tea.KeyTab, tea.KeyCtrlN:
+		case "tab", "ctrl+n":
 			m.nextInput()
 		}
 		for i := range m.inputs {

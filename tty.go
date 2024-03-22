@@ -1,11 +1,14 @@
 package tea
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
+	"github.com/charmbracelet/x/input"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/term"
 )
@@ -53,24 +56,63 @@ func (p *Program) restoreInput() error {
 	return nil
 }
 
-// initCancelReader (re)commences reading inputs.
-func (p *Program) initCancelReader() error {
-	var err error
-	p.cancelReader, err = newInputReader(p.input)
-	if err != nil {
-		return fmt.Errorf("error creating cancelreader: %w", err)
+// initInputReader (re)commences reading inputs.
+func (p *Program) initInputReader() error {
+	var term string
+	for i := len(p.environ) - 1; i >= 0; i-- {
+		// We iterate backwards to find the last TERM variable set in the
+		// environment. This is because the last one is the one that will be
+		// used by the terminal.
+		parts := strings.SplitN(p.environ[i], "=", 2)
+		if len(parts) == 2 && parts[0] == "TERM" {
+			term = parts[1]
+			break
+		}
 	}
 
+	// Initialize the input reader.
+	// This need to be done after the terminal has been initialized and set to
+	// raw mode.
+	// On Windows, this will change the console mode to enable mouse and window
+	// events.
+	var flags int // TODO: make configurable through environment variables?
+	drv, err := input.NewDriver(p.input, term, flags)
+	if err != nil {
+		return err
+	}
+
+	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
 	go p.readLoop()
 
 	return nil
 }
 
+func readInputs(ctx context.Context, msgs chan<- Msg, reader *input.Driver) error {
+	for {
+		events, err := reader.ReadEvents()
+		if err != nil {
+			return err
+		}
+
+		for _, e := range events {
+			select {
+			case msgs <- e:
+			case <-ctx.Done():
+				err := ctx.Err()
+				if err != nil {
+					err = fmt.Errorf("found context error while reading input: %w", err)
+				}
+				return err
+			}
+		}
+	}
+}
+
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := readInputs(p.ctx, p.msgs, p.cancelReader)
+	err := readInputs(p.ctx, p.msgs, p.inputReader)
 	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 		select {
 		case <-p.ctx.Done():

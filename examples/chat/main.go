@@ -80,11 +80,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		switch msg.String() {
+		case "ctrl+c", "esc":
 			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
-		case tea.KeyEnter:
+		case "enter":
 			m.messages = append(m.messages, m.senderStyle.Render("You: ")+m.textarea.Value())
 			m.viewport.SetContent(strings.Join(m.messages, "\n"))
 			m.textarea.Reset()

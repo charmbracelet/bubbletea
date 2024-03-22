@@ -74,8 +74,8 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if key, ok := msg.(tea.KeyMsg); ok {
-		switch key.Type {
-		case tea.KeyCtrlC, tea.KeyEscape, tea.KeyEnter:
+		switch key.String() {
+		case "ctrl+c", "esc", "enter":
 			return m, tea.Quit
 		}
 	}

@@ -1,13 +1,16 @@
 package tea
 
+import "github.com/charmbracelet/x/input"
+
 // WindowSizeMsg is used to report the terminal size. It's sent to Update once
 // initially and then on every terminal resize. Note that Windows does not
 // have support for reporting when resizes occur as it does not support the
 // SIGWINCH signal.
-type WindowSizeMsg struct {
-	Width  int
-	Height int
-}
+type WindowSizeMsg = input.WindowSizeEvent
+
+// PaseMsg is used to report the terminal paste event. It's sent to Update when
+// a bracketed paste event occurs.
+type PasteMsg = input.PasteEvent
 
 // ClearScreen is a special command that tells the program to clear the screen
 // before the next update. This can be used to move the cursor to the top left

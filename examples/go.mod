@@ -3,8 +3,8 @@ module examples
 go 1.18
 
 require (
-	github.com/charmbracelet/bubbles v0.18.0
-	github.com/charmbracelet/bubbletea v0.25.0
+	github.com/charmbracelet/bubbles v0.18.1-0.20240422202427-075dd25792ad
+	github.com/charmbracelet/bubbletea v0.25.1-0.20240306212323-3df8b37dba50
 	github.com/charmbracelet/glamour v0.7.0
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v0.10.0
@@ -21,12 +21,11 @@ require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20240222125807-0344fda748f8 // indirect
-	github.com/charmbracelet/x/exp/term v0.0.0-20240322170634-ebda89b611f2 // indirect
+	github.com/charmbracelet/x/exp/term v0.0.0-20240422202207-14b82ac81136 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/gorilla/css v1.0.0 // indirect
-	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.25 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
@@ -35,14 +34,14 @@ require (
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
+	github.com/sahilm/fuzzy v0.1.1 // indirect
+	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/goldmark v1.5.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/term v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/term v0.19.0 // indirect
 )
 
 replace github.com/charmbracelet/bubbletea => ../

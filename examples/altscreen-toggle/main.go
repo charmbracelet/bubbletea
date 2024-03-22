@@ -29,7 +29,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c", "esc":
 			m.quitting = true
 			return m, tea.Quit
-		case " ":
+		case "space":
 			var cmd tea.Cmd
 			if m.altscreen {
 				cmd = tea.ExitAltScreen

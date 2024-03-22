@@ -31,8 +31,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case tea.MouseMsg:
-		return m, tea.Printf("(X: %d, Y: %d) %s", msg.X, msg.Y, tea.MouseEvent(msg))
+	case tea.MouseDownMsg, tea.MouseUpMsg, tea.MouseWheelMsg, tea.MouseMotionMsg:
+		var x, y int
+		switch msg := msg.(type) {
+		case tea.MouseDownMsg:
+			x, y = msg.X, msg.Y
+		case tea.MouseUpMsg:
+			x, y = msg.X, msg.Y
+		case tea.MouseWheelMsg:
+			x, y = msg.X, msg.Y
+		case tea.MouseMotionMsg:
+			x, y = msg.X, msg.Y
+		}
+		return m, tea.Printf("(X: %d, Y: %d) %s", x, y, msg)
 	}
 
 	return m, nil
