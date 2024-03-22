@@ -13,10 +13,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-isatty"
-	"github.com/muesli/reflow/indent"
 )
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+var (
+	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+	mainStyle = lipgloss.NewStyle().MarginLeft(1)
+)
 
 func main() {
 	var (
@@ -118,7 +120,7 @@ func (m model) View() string {
 		s += "\n"
 	}
 
-	return indent.String(s, 1)
+	return mainStyle.Render(s)
 }
 
 // processFinishedMsg is sent when a pretend process completes.

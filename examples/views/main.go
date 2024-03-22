@@ -17,7 +17,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fogleman/ease"
 	"github.com/lucasb-eyer/go-colorful"
-	"github.com/muesli/reflow/indent"
 )
 
 const (
@@ -34,7 +33,8 @@ var (
 	ticksStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("79"))
 	checkboxStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 	progressEmpty = subtleStyle.Render(progressEmptyChar)
-	dot           = lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render(dotChar)
+	dotStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render(dotChar)
+	mainStyle     = lipgloss.NewStyle().MarginLeft(2)
 
 	// Gradient colors we'll use for the progress bar
 	ramp = makeRampStyles("#B14FFF", "#00FFA3", progressBarWidth)
@@ -109,7 +109,7 @@ func (m model) View() string {
 	} else {
 		s = chosenView(m)
 	}
-	return indent.String("\n"+s+"\n\n", 2)
+	return mainStyle.Render("\n" + s + "\n\n")
 }
 
 // Sub-update functions
@@ -185,8 +185,8 @@ func choicesView(m model) string {
 	tpl := "What to do today?\n\n"
 	tpl += "%s\n\n"
 	tpl += "Program quits in %s seconds\n\n"
-	tpl += subtleStyle.Render("j/k, up/down: select") + dot +
-		subtleStyle.Render("enter: choose") + dot +
+	tpl += subtleStyle.Render("j/k, up/down: select") + dotStyle +
+		subtleStyle.Render("enter: choose") + dotStyle +
 		subtleStyle.Render("q, esc: quit")
 
 	choices := fmt.Sprintf(
