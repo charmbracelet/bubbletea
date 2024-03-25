@@ -110,7 +110,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 		}
 	}()
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 	if shutdowns != preventCount {

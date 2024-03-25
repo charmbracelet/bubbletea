@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -26,7 +27,7 @@ func TestTick(t *testing.T) {
 	}
 }
 
-func TestSequentially(t *testing.T) {
+func TestSequence(t *testing.T) {
 	expectedErrMsg := fmt.Errorf("some err")
 	expectedStrMsg := "some msg"
 
@@ -37,12 +38,12 @@ func TestSequentially(t *testing.T) {
 	tests := []struct {
 		name     string
 		cmds     []Cmd
-		expected Msg
+		expected []Msg
 	}{
 		{
 			name:     "all nil",
 			cmds:     []Cmd{nilReturnCmd, nilReturnCmd},
-			expected: nil,
+			expected: []Msg{nil, nil},
 		},
 		{
 			name:     "null cmds",
@@ -58,7 +59,7 @@ func TestSequentially(t *testing.T) {
 				},
 				nilReturnCmd,
 			},
-			expected: expectedErrMsg,
+			expected: []Msg{nil, expectedErrMsg, nil},
 		},
 		{
 			name: "some msg",
@@ -69,13 +70,22 @@ func TestSequentially(t *testing.T) {
 				},
 				nilReturnCmd,
 			},
-			expected: expectedStrMsg,
+			expected: []Msg{nil, expectedStrMsg, nil},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if msg := Sequentially(test.cmds...)(); msg != test.expected {
-				t.Fatalf("expected a msg %v but got %v", test.expected, msg)
+			var msgs []Msg
+			sequentially(context.TODO(), Sequence(test.cmds...)().(sequenceMsg), func(m Msg) {
+				msgs = append(msgs, m)
+			})
+			if len(msgs) != len(test.expected) {
+				t.Fatalf("expected %d msgs but got %d", len(test.expected), len(msgs))
+			}
+			for i, msg := range msgs {
+				if msg != test.expected[i] {
+					t.Fatalf("expected a msg %v but got %v", test.expected[i], msg)
+				}
 			}
 		})
 	}
