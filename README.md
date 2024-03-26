@@ -383,8 +383,10 @@ For some Bubble Tea programs in production, see:
 * [pathos](https://github.com/chip/pathos): a PATH environment variable editor
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
+* [punchout](https://github.com/dhth/punchout): takes the suck out of logging time on JIRA
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
 * [redis_tui](https://github.com/mat2cc/redis_tui): a Redis database browser
+* [schemas](https://github.com/dhth/schemas): lets you inspect postgres schemas in the terminal
 * [scrabbler](https://github.com/wI2L/scrabbler): an automatic draw tool for your duplicate Scrabble games
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
