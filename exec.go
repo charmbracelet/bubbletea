@@ -109,7 +109,7 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	}
 
 	c.SetStdin(p.input)
-	c.SetStdout(p.output.TTY())
+	c.SetStdout(p.output)
 	c.SetStderr(os.Stderr)
 
 	// Execute system command.

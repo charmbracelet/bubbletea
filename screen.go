@@ -198,5 +198,5 @@ func (p *Program) DisableMouseAllMotion() {
 
 // SetWindowTitle sets the terminal window title.
 func (p *Program) SetWindowTitle(title string) {
-	p.output.SetWindowTitle(title)
+	p.renderer.setWindowTitle(title)
 }
