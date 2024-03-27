@@ -445,6 +445,10 @@ func (r *standardRenderer) bracketedPasteActive() bool {
 	return r.bpActive
 }
 
+func (r *standardRenderer) setWindowTitle(title string) {
+	r.out.SetWindowTitle(title)
+}
+
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
 // renderer.
 func (r *standardRenderer) setIgnoredLines(from int, to int) {

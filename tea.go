@@ -373,34 +373,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case sequenceMsg:
 				go func() {
-					// Execute commands one at a time, in order.
-					for _, cmd := range msg {
-						if cmd == nil {
-							continue
-						}
-
-						msg := cmd()
-						if batchMsg, ok := msg.(BatchMsg); ok {
-							g, _ := errgroup.WithContext(p.ctx)
-							for _, cmd := range batchMsg {
-								cmd := cmd
-								g.Go(func() error {
-									p.Send(cmd())
-									return nil
-								})
-							}
-
-							//nolint:errcheck
-							g.Wait() // wait for all commands from batch msg to finish
-							continue
-						}
-
-						p.Send(msg)
-					}
+					sequentially(p.ctx, msg, p.Send)
 				}()
 
 			case setWindowTitleMsg:
-				p.SetWindowTitle(string(msg))
+				p.renderer.setWindowTitle(string(msg))
 			}
 
 			// Process internal messages for the renderer.
@@ -413,6 +390,33 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			cmds <- cmd                    // process command (if any)
 			p.renderer.write(model.View()) // send view to renderer
 		}
+	}
+}
+
+func sequentially(ctx context.Context, msg sequenceMsg, sender func(Msg)) {
+	// Execute commands one at a time, in order.
+	for _, cmd := range msg {
+		if cmd == nil {
+			continue
+		}
+
+		msg := cmd()
+		if batchMsg, ok := msg.(BatchMsg); ok {
+			g, _ := errgroup.WithContext(ctx)
+			for _, cmd := range batchMsg {
+				cmd := cmd
+				g.Go(func() error {
+					sender(cmd())
+					return nil
+				})
+			}
+
+			//nolint:errcheck
+			g.Wait() // wait for all commands from batch msg to finish
+			continue
+		}
+
+		sender(msg)
 	}
 }
 
@@ -572,25 +576,6 @@ func (p *Program) Run() (Model, error) {
 	p.shutdown(killed)
 
 	return model, err
-}
-
-// StartReturningModel initializes the program and runs its event loops,
-// blocking until it gets terminated by either [Program.Quit], [Program.Kill],
-// or its signal handler. Returns the final model.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) StartReturningModel() (Model, error) {
-	return p.Run()
-}
-
-// Start initializes the program and runs its event loops, blocking until it
-// gets terminated by either [Program.Quit], [Program.Kill], or its signal
-// handler.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) Start() error {
-	_, err := p.Run()
-	return err
 }
 
 // Send sends a message to the main update function, effectively allowing
