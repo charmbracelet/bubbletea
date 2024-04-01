@@ -381,6 +381,7 @@ For some Bubble Tea programs in production, see:
 * [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
 * [outtasync](https://github.com/dhth/outtasync): identify CloudFormation stacks that are out of sync with their template files
 * [pathos](https://github.com/chip/pathos): a PATH environment variable editor
+* [Plandex](https://github.com/plandex-ai/plandex): a terminal-based AI coding engine for complex tasks
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
 * [punchout](https://github.com/dhth/punchout): takes the suck out of logging time on JIRA
