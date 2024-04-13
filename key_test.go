@@ -676,7 +676,7 @@ func runTestDetectSequence(
 	}
 }
 
-// TestDetectRandomSequencesLex checks that the map-based sequence
+// TestDetectRandomSequencesMap checks that the map-based sequence
 // detector works over concatenations of random sequences.
 func TestDetectRandomSequencesMap(t *testing.T) {
 	runTestDetectSequence(t, detectSequence)
