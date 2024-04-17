@@ -383,6 +383,7 @@ For some Bubble Tea programs in production, see:
 * [pathos](https://github.com/chip/pathos): a PATH environment variable editor
 * [Plandex](https://github.com/plandex-ai/plandex): a terminal-based AI coding engine for complex tasks
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
+* [prs](https://github.com/dhth/prs): stay up to date with your PRs
 * [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
 * [punchout](https://github.com/dhth/punchout): takes the suck out of logging time on JIRA
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
