@@ -392,7 +392,7 @@ For some Bubble Tea programs in production, see:
 * [scrabbler](https://github.com/wI2L/scrabbler): an automatic draw tool for your duplicate Scrabble games
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
-* [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): a Slurm workload manager TUI
+* [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): a Slurm workload manager
 * [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
 * [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike Solitaire for the terminal
 * [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
@@ -401,6 +401,7 @@ For some Bubble Tea programs in production, see:
 * [sttr](https://github.com/abhimanyu003/sttr): a general-purpose text transformer
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
+* [tgpt](https://github.com/aandrew-me/tgpt): conversational AI for the CLI; no API keys necessary
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
 * [trainer](https://github.com/rusinikita/trainer): a Go concurrency coding interview simulator with learning materials 
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
