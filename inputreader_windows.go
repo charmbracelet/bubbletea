@@ -4,6 +4,7 @@
 package tea
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -129,11 +130,11 @@ func waitForInput(conin, cancel windows.Handle) error {
 
 		return fmt.Errorf("unexpected wait object is ready: %d", event-windows.WAIT_OBJECT_0)
 	case windows.WAIT_ABANDONED <= event && event < windows.WAIT_ABANDONED+2:
-		return fmt.Errorf("abandoned")
+		return errors.New("abandoned")
 	case event == uint32(windows.WAIT_TIMEOUT):
-		return fmt.Errorf("timeout")
+		return errors.New("timeout")
 	case event == windows.WAIT_FAILED:
-		return fmt.Errorf("failed")
+		return errors.New("failed")
 	default:
 		return fmt.Errorf("unexpected error: %w", err)
 	}
