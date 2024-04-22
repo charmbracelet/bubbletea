@@ -23,13 +23,17 @@ jobs:
         run: go mod download
 
       - name: Build
-        run: go build -v ./...
+        run: |
+          go mod tidy
+          go build -v ./...
 
       - name: Test
         run: go test ./...
 
       - name: Build examples
-        run: go build -v ./...
+        run: |
+          go mod tidy
+          go build -v ./...
         working-directory: ./examples
 
       - name: Test examples
@@ -37,5 +41,7 @@ jobs:
         working-directory: ./examples
 
       - name: Build tutorials
-        run: go build -v ./...
+        run: |
+          go mod tidy
+          go build -v ./...
         working-directory: ./tutorials
