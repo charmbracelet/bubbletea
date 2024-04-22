@@ -191,3 +191,12 @@ func SetWindowTitle(title string) Cmd {
 		return setWindowTitleMsg(title)
 	}
 }
+
+type windowSizeMsg struct{}
+
+// WindowSize is a command that queries the terminal for its current size.
+func WindowSize() Cmd {
+	return func() Msg {
+		return windowSizeMsg{}
+	}
+}
