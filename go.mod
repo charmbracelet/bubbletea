@@ -9,7 +9,7 @@ require (
 	github.com/muesli/cancelreader v0.2.2
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
-	golang.org/x/sync v0.6.0
+	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.17.0
 	golang.org/x/term v0.17.0
 )
