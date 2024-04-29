@@ -387,6 +387,7 @@ For some Bubble Tea programs in production, see:
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [prs](https://github.com/dhth/prs): stay up to date with your PRs
 * [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
+* [pug](https://github.com/leg100/pug): terraform task manager
 * [punchout](https://github.com/dhth/punchout): takes the suck out of logging time on JIRA
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
 * [redis_tui](https://github.com/mat2cc/redis_tui): a Redis database browser
