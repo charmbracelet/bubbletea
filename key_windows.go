@@ -170,29 +170,89 @@ func mouseEvent(p coninput.ButtonState, e coninput.MouseEventRecord) MouseMsg {
 func keyType(e coninput.KeyEventRecord) KeyType {
 	code := e.VirtualKeyCode
 
+	shiftPressed := e.ControlKeyState.Contains(coninput.SHIFT_PRESSED)
+	ctrlPressed := e.ControlKeyState.Contains(coninput.LEFT_CTRL_PRESSED | coninput.RIGHT_CTRL_PRESSED)
+
 	switch code {
 	case coninput.VK_RETURN:
 		return KeyEnter
 	case coninput.VK_BACK:
 		return KeyBackspace
 	case coninput.VK_TAB:
+		if shiftPressed {
+			return KeyShiftTab
+		}
 		return KeyTab
 	case coninput.VK_SPACE:
 		return KeyRunes // this could be KeySpace but on unix space also produces KeyRunes
 	case coninput.VK_ESCAPE:
 		return KeyEscape
 	case coninput.VK_UP:
-		return KeyUp
+		switch {
+		case shiftPressed && ctrlPressed:
+			return KeyCtrlShiftUp
+		case shiftPressed:
+			return KeyShiftUp
+		case ctrlPressed:
+			return KeyCtrlUp
+		default:
+			return KeyUp
+		}
 	case coninput.VK_DOWN:
-		return KeyDown
+		switch {
+		case shiftPressed && ctrlPressed:
+			return KeyCtrlShiftDown
+		case shiftPressed:
+			return KeyShiftDown
+		case ctrlPressed:
+			return KeyCtrlDown
+		default:
+			return KeyDown
+		}
 	case coninput.VK_RIGHT:
-		return KeyRight
+		switch {
+		case shiftPressed && ctrlPressed:
+			return KeyCtrlShiftRight
+		case shiftPressed:
+			return KeyShiftRight
+		case ctrlPressed:
+			return KeyCtrlRight
+		default:
+			return KeyRight
+		}
 	case coninput.VK_LEFT:
-		return KeyLeft
+		switch {
+		case shiftPressed && ctrlPressed:
+			return KeyCtrlShiftLeft
+		case shiftPressed:
+			return KeyShiftLeft
+		case ctrlPressed:
+			return KeyCtrlLeft
+		default:
+			return KeyLeft
+		}
 	case coninput.VK_HOME:
-		return KeyHome
+		switch {
+		case shiftPressed && ctrlPressed:
+			return KeyCtrlShiftHome
+		case shiftPressed:
+			return KeyShiftHome
+		case ctrlPressed:
+			return KeyCtrlHome
+		default:
+			return KeyHome
+		}
 	case coninput.VK_END:
-		return KeyEnd
+		switch {
+		case shiftPressed && ctrlPressed:
+			return KeyCtrlShiftEnd
+		case shiftPressed:
+			return KeyShiftEnd
+		case ctrlPressed:
+			return KeyCtrlEnd
+		default:
+			return KeyEnd
+		}
 	case coninput.VK_PRIOR:
 		return KeyPgUp
 	case coninput.VK_NEXT:
