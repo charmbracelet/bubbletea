@@ -309,6 +309,7 @@ your program in another window.
 * [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
 * [Harmonica][harmonica]: A spring animation library for smooth, natural motion
 * [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
+* [ntcharts][ntcharts]: A terminal charting library built for Bubble Tea and [Lip Gloss][lipgloss]
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
@@ -316,6 +317,7 @@ your program in another window.
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [harmonica]: https://github.com/charmbracelet/harmonica
 [bubblezone]: https://github.com/lrstanley/bubblezone
+[ntcharts]: https://github.com/NimbleMarkets/ntcharts
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 
