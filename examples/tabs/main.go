@@ -51,7 +51,7 @@ var (
 	docStyle          = lipgloss.NewStyle().Padding(1, 2, 1, 2)
 	highlightColor    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
 	inactiveTabStyle  = lipgloss.NewStyle().Border(inactiveTabBorder, true).BorderForeground(highlightColor).Padding(0, 1)
-	activeTabStyle    = inactiveTabStyle.Copy().Border(activeTabBorder, true)
+	activeTabStyle    = inactiveTabStyle.Border(activeTabBorder, true)
 	windowStyle       = lipgloss.NewStyle().BorderForeground(highlightColor).Padding(2, 0).Align(lipgloss.Center).Border(lipgloss.NormalBorder()).UnsetBorderTop()
 )
 
@@ -64,9 +64,9 @@ func (m model) View() string {
 		var style lipgloss.Style
 		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == m.activeTab
 		if isActive {
-			style = activeTabStyle.Copy()
+			style = activeTabStyle
 		} else {
-			style = inactiveTabStyle.Copy()
+			style = inactiveTabStyle
 		}
 		border, _, _, _, _ := style.GetBorder()
 		if isFirst && isActive {
