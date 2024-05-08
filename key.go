@@ -632,7 +632,7 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 	var foundbp bool
 	foundbp, w, msg = detectBracketedPaste(b)
 	if foundbp {
-		return
+		return w, msg
 	}
 
 	// Detect escape sequence and control characters other than NUL,
@@ -641,7 +641,7 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 	var foundSeq bool
 	foundSeq, w, msg = detectSequence(b)
 	if foundSeq {
-		return
+		return w, msg
 	}
 
 	// No non-NUL control character or escape sequence.
