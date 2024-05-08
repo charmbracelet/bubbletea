@@ -23,7 +23,6 @@ linters:
     - gomnd
     - gomoddirectives
     - goprintffuncname
-    - ifshort
     # - lll
     - misspell
     - nakedret
