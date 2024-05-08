@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/charmbracelet/x/exp/term"
 	"github.com/muesli/cancelreader"
-	"golang.org/x/term"
 )
 
 func (p *Program) initTerminal() error {
@@ -42,7 +42,7 @@ func (p *Program) restoreTerminalState() error {
 // restoreInput restores the tty input to its original state.
 func (p *Program) restoreInput() error {
 	if p.tty != nil && p.previousTtyState != nil {
-		if err := term.Restore(int(p.tty.Fd()), p.previousTtyState); err != nil {
+		if err := term.Restore(p.tty.Fd(), p.previousTtyState); err != nil {
 			return fmt.Errorf("error restoring console: %w", err)
 		}
 	}
@@ -90,12 +90,12 @@ func (p *Program) waitForReadLoop() {
 // via a WindowSizeMsg.
 func (p *Program) checkResize() {
 	f, ok := p.output.TTY().(*os.File)
-	if !ok || !term.IsTerminal(int(f.Fd())) {
+	if !ok || !term.IsTerminal(f.Fd()) {
 		// can't query window size
 		return
 	}
 
-	w, h, err := term.GetSize(int(f.Fd()))
+	w, h, err := term.GetSize(f.Fd())
 	if err != nil {
 		select {
 		case <-p.ctx.Done():

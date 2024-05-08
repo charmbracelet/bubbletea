@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/x/exp/term"
 	"golang.org/x/sys/windows"
-	"golang.org/x/term"
 )
 
 func (p *Program) initInput() (err error) {
 	// Save stdin state and enable VT input
 	// We enable VT processing using Termenv, but we also need to enable VT
 	// input here.
-	if f, ok := p.input.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+	if f, ok := p.input.(*os.File); ok && term.IsTerminal(f.Fd()) {
 		p.tty = f
-		p.previousTtyState, err = term.MakeRaw(int(p.tty.Fd()))
+		p.previousTtyState, err = term.MakeRaw(p.tty.Fd())
 		if err != nil {
 			return err
 		}

@@ -21,10 +21,10 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/charmbracelet/x/exp/term"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/term"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
@@ -249,7 +249,7 @@ func (p *Program) handleSignals() chan struct{} {
 func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
 
-	if f, ok := p.output.TTY().(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+	if f, ok := p.output.TTY().(*os.File); ok && term.IsTerminal(f.Fd()) {
 		// Get the initial terminal size and send it to the program.
 		go p.checkResize()
 
@@ -441,7 +441,7 @@ func (p *Program) Run() (Model, error) {
 		if !isFile {
 			break
 		}
-		if term.IsTerminal(int(f.Fd())) {
+		if term.IsTerminal(f.Fd()) {
 			break
 		}
 
