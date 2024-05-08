@@ -232,6 +232,12 @@ func (r *standardRenderer) flush() {
 				out.CursorDown(1)
 			}
 		} else {
+			if i == 0 && r.lastRender == "" {
+				// On first render, reset the cursor to the start of the line
+				// before writing anything.
+				buf.WriteByte('\r')
+			}
+
 			line := newLines[i]
 
 			// Truncate lines wider than the width of the window to avoid
