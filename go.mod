@@ -10,7 +10,7 @@ require (
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.15.2
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.19.0
+	golang.org/x/sys v0.20.0
 	golang.org/x/term v0.19.0
 )
 
