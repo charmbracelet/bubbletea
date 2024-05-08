@@ -45,7 +45,7 @@ func (m MouseEvent) String() (s string) {
 		s += "shift+"
 	}
 
-	if m.Button == MouseButtonNone {
+	if m.Button == MouseButtonNone { //nolint:nestif
 		if m.Action == MouseActionMotion || m.Action == MouseActionRelease {
 			s += mouseActions[m.Action]
 		} else {
@@ -172,7 +172,7 @@ const (
 func parseSGRMouseEvent(buf []byte) MouseEvent {
 	str := string(buf[3:])
 	matches := mouseSGRRegex.FindStringSubmatch(str)
-	if len(matches) != 5 {
+	if len(matches) != 5 { //nolint:gomnd
 		// Unreachable, we already checked the regex in `detectOneMsg`.
 		panic("invalid mouse event")
 	}
@@ -288,7 +288,7 @@ func parseMouseButton(b int, isSGR bool) MouseEvent {
 		m.Type = MouseForward
 	case m.Action == MouseActionMotion:
 		m.Type = MouseMotion
-		switch m.Button {
+		switch m.Button { //nolint:exhaustive
 		case MouseButtonLeft:
 			m.Type = MouseLeft
 		case MouseButtonMiddle:
