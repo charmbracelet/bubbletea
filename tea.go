@@ -22,8 +22,8 @@ import (
 	"syscall"
 
 	"github.com/charmbracelet/x/input"
+	"github.com/charmbracelet/x/term"
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/term"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
@@ -444,7 +444,7 @@ func (p *Program) Run() (Model, error) {
 		if !isFile {
 			break
 		}
-		if term.IsTerminal(int(f.Fd())) {
+		if term.IsTerminal(f.Fd()) {
 			break
 		}
 
