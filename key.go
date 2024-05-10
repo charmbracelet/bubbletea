@@ -32,11 +32,6 @@ import (
 //	        }
 //	    }
 //	}
-//
-// Note that Key.Runes will always contain at least one character, so you can
-// always safely call Key.Runes[0]. In most cases Key.Runes will only contain
-// one character, though certain input method editors (most notably Chinese
-// IMEs) can input multiple runes at once.
 type (
 	Key        = input.Key
 	KeyMsg     = input.KeyDownEvent
