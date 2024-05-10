@@ -20,9 +20,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 
 	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
+	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -37,15 +39,15 @@ type Msg = input.Event
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
-	Init() Cmd
+	Init(ctx Context) (Model, Cmd)
 
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
-	Update(Msg) (Model, Cmd)
+	Update(ctx Context, msg Msg) (Model, Cmd)
 
 	// View renders the program's UI, which is just a string. The view is
 	// rendered after every Update.
-	View() string
+	View(ctx Context) string
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
@@ -133,7 +135,7 @@ type Program struct {
 
 	inputType inputType
 
-	ctx    context.Context
+	ctx    *teaContext
 	cancel context.CancelFunc
 
 	msgs     chan Msg
@@ -199,10 +201,10 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// A context can be provided with a ProgramOption, but if none was provided
 	// we'll use the default background context.
 	if p.ctx == nil {
-		p.ctx = context.Background()
+		p.ctx = newContext(context.Background())
 	}
 	// Initialize context and teardown channel.
-	p.ctx, p.cancel = context.WithCancel(p.ctx)
+	p.ctx.Context, p.cancel = context.WithCancel(p.ctx)
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
@@ -330,6 +332,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case QuitMsg:
 				return model, nil
 
+			case BackgroundColorMsg:
+				p.handleContextMessages(msg)
+
 			case clearScreenMsg:
 				p.renderer.clearScreen()
 
@@ -363,6 +368,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case disableBracketedPasteMsg:
 				p.renderer.disableBracketedPaste()
+
+			case requestBackgroundColorMsg:
+				p.renderer.requestBackgroundColor()
 
 			case execMsg:
 				// NB: this blocks.
@@ -412,9 +420,21 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			var cmd Cmd
-			model, cmd = model.Update(msg) // run update
-			cmds <- cmd                    // process command (if any)
-			p.renderer.write(model.View()) // send view to renderer
+			model, cmd = model.Update(p.ctx, msg) // run update
+			cmds <- cmd                           // process command (if any)
+			p.renderer.write(model.View(p.ctx))   // send view to renderer
+		}
+	}
+}
+
+func (p *Program) handleContextMessages(msg Msg) {
+	switch msg := msg.(type) {
+	case BackgroundColorMsg:
+		p.ctx.backgroundColor = msg.Color
+		col, ok := colorful.MakeColor(msg.Color)
+		if ok {
+			_, _, l := col.Hsl()
+			p.ctx.hasLightBg = l > 0.5
 		}
 	}
 }
@@ -514,9 +534,58 @@ func (p *Program) Run() (Model, error) {
 	// Start the renderer.
 	p.renderer.start()
 
-	// Initialize the program.
+	// Subscribe to user input.
 	model := p.initialModel
-	if initCmd := model.Init(); initCmd != nil {
+	if p.input != nil {
+		if err := p.initInputReader(); err != nil {
+			return model, err
+		}
+	}
+
+	// Query terminal capabilities.
+	p.renderer.requestBackgroundColor()
+	p.renderer.requestDeviceAttributes()
+
+	// XXX: Here, we wait for a short period of time to receive terminal
+	// capabilities we care about before starting the event loop. This is
+	// necessary because we need to know the background color before rendering
+	// the first view.
+	// We always send a DA1 request last to detect whether the terminal
+	// supports capabilities sent before it.
+	// Receiving a DA1 before the other capabilities simply means the terminal
+	// doesn't support them.
+	// In case the terminal doesn't support DA1, which is unlikely, we'll wait
+	// for 2 seconds before continuing to the event loop.
+	const defaultWaitTime = 2 * time.Second
+	msgs := make([]Msg, 0)
+EVENTS:
+	for {
+		select {
+		case msg := <-p.msgs:
+			msgs = append(msgs, msg)
+			// Message types we care about before the event loop starts.
+			switch msg := msg.(type) {
+			case BackgroundColorMsg:
+				p.handleContextMessages(msg)
+			case PrimaryDeviceAttributesMsg:
+				break EVENTS
+			}
+		case <-time.After(defaultWaitTime): // wait for 2 seconds
+			break EVENTS
+		}
+	}
+
+	go func() {
+		for _, msg := range msgs {
+			// Send the message back to the message channel for the event loop to
+			// pick up and process.
+			p.msgs <- msg
+		}
+	}()
+
+	// Initialize the program.
+	model, initCmd := model.Init(p.ctx)
+	if initCmd != nil {
 		ch := make(chan struct{})
 		handlers.add(ch)
 
@@ -531,14 +600,7 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Render the initial view.
-	p.renderer.write(model.View())
-
-	// Subscribe to user input.
-	if p.input != nil {
-		if err := p.initInputReader(); err != nil {
-			return model, err
-		}
-	}
+	p.renderer.write(model.View(p.ctx))
 
 	// Handle resize events.
 	handlers.add(p.handleResize())
@@ -553,7 +615,7 @@ func (p *Program) Run() (Model, error) {
 		err = ErrProgramKilled
 	} else {
 		// Ensure we rendered the final state of the model.
-		p.renderer.write(model.View())
+		p.renderer.write(model.View(p.ctx))
 	}
 
 	// Tear down.

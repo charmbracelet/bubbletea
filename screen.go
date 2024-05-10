@@ -12,6 +12,15 @@ type WindowSizeMsg = input.WindowSizeEvent
 // a bracketed paste event occurs.
 type PasteMsg = input.PasteEvent
 
+// BackgroundColorMsg is used to report the terminal's background color. It's
+// sent to Update once initially and whenever the background color is queried
+// using RequestBackgroundColor Cmd.
+type BackgroundColorMsg = input.BackgroundColorEvent
+
+// PrimaryDeviceAttributesMsg is used to report the terminal's primary device
+// attributes.
+type PrimaryDeviceAttributesMsg = input.PrimaryDeviceAttributesEvent
+
 // ClearScreen is a special command that tells the program to clear the screen
 // before the next update. This can be used to move the cursor to the top left
 // of the screen and clear visual clutter when the alt screen is not in use.
@@ -146,6 +155,29 @@ func DisableBracketedPaste() Msg {
 // bracketed paste should be disabled. You can send an
 // disableBracketedPasteMsg with DisableBracketedPaste.
 type disableBracketedPasteMsg struct{}
+
+// RequestBackgroundColor is a special command that requests the terminal's
+// background color. The background color will be sent to the program in a
+// BackgroundColorMsg.
+func RequestBackgroundColor() Msg {
+	return requestBackgroundColorMsg{}
+}
+
+// requestBackgroundColorMsg is an internal message that requests the terminal's
+// background color. You can send a requestBackgroundColorMsg with
+// RequestBackgroundColor.
+type requestBackgroundColorMsg struct{}
+
+// requestPrimaryDeviceAttributes is a special command that requests the
+// primary device attributes (DA1) from the terminal. The response will be
+// sent to the program in a DeviceAttributesMsg.
+func requestPrimaryDeviceAttributes() Msg {
+	return requestPrimaryDeviceAttributesMsg{}
+}
+
+// requestPrimaryDeviceAttributesMsg is an internal message that requests the
+// primary device attributes (DA1) from the terminal.
+type requestPrimaryDeviceAttributesMsg struct{}
 
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.

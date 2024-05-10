@@ -70,6 +70,13 @@ type renderer interface {
 
 	// setWindowTitle sets the terminal window title.
 	setWindowTitle(string)
+
+	// requestBackgroundColor reports the terminal background color.
+	requestBackgroundColor()
+
+	// requestDeviceAttributes requests the terminal to send its device
+	// attributes DA1.
+	requestDeviceAttributes()
 }
 
 // repaintMsg forces a full repaint.
