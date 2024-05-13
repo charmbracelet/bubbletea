@@ -18,6 +18,11 @@ type Context interface {
 	// color.
 	BackgroundColor() color.Color
 
+	// HasLightBackground returns true if the terminal's background color is
+	// light. This is useful for determining whether to use light or dark colors
+	// in the program's UI.
+	HasLightBackground() bool
+
 	// SupportsEnhancedKeyboard reports whether the terminal supports enhanced
 	// keyboard keys. On Windows, this means it supports virtual keys like and
 	// the Windows Console API. On Unix, this means it supports the Kitty
@@ -52,6 +57,10 @@ func newContext(ctx context.Context) *teaContext {
 
 func (c *teaContext) BackgroundColor() color.Color {
 	return c.backgroundColor
+}
+
+func (c *teaContext) HasLightBackground() bool {
+	return c.hasLightBg
 }
 
 func (c *teaContext) SupportsEnhancedKeyboard() bool {
