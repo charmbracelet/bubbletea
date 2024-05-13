@@ -22,6 +22,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"github.com/lucasb-eyer/go-colorful"
@@ -447,6 +448,9 @@ func (p *Program) Run() (Model, error) {
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 	p.finished = make(chan struct{}, 1)
+
+	// Detect color profile.
+	p.ctx.profile = lipgloss.DetectColorProfile(p.output, p.environ)
 
 	defer p.cancel()
 
