@@ -136,7 +136,7 @@ type Program struct {
 
 	inputType inputType
 
-	ctx    *teaContext
+	ctx    Context
 	cancel context.CancelFunc
 
 	msgs     chan Msg
@@ -202,10 +202,8 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// A context can be provided with a ProgramOption, but if none was provided
 	// we'll use the default background context.
 	if p.ctx == nil {
-		p.ctx = newContext(context.Background())
+		p.ctx, p.cancel = newContext(context.Background())
 	}
-	// Initialize context and teardown channel.
-	p.ctx.Context, p.cancel = context.WithCancel(p.ctx)
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
@@ -431,11 +429,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) handleContextMessages(msg Msg) {
 	switch msg := msg.(type) {
 	case BackgroundColorMsg:
-		p.ctx.backgroundColor = msg.Color
+		p.ctx.SetValue(ContextKeyBackgroundColor, msg.Color)
 		col, ok := colorful.MakeColor(msg.Color)
 		if ok {
 			_, _, l := col.Hsl()
-			p.ctx.hasLightBg = l > 0.5
+			p.ctx.SetValue(ContextKeyHasLightBackground, l > 0.5)
 		}
 	}
 }
@@ -450,7 +448,7 @@ func (p *Program) Run() (Model, error) {
 	p.finished = make(chan struct{}, 1)
 
 	// Detect color profile.
-	p.ctx.profile = lipgloss.DetectColorProfile(p.output, p.environ)
+	p.ctx.SetValue(ContextKeyColorProfile, lipgloss.DetectColorProfile(p.output, p.environ))
 
 	defer p.cancel()
 

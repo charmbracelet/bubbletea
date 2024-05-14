@@ -45,44 +45,76 @@ type Context interface {
 	// what else?
 }
 
+type contextKey struct{ string }
+
+var (
+	// ContextKeyColorProfile is the key used to store the terminal's color
+	// profile in the context.
+	ContextKeyColorProfile = contextKey{"color-profile"}
+
+	// ContextKeyKittyKeyboardFlags is the key used to store the terminal's Kitty
+	// Keyboard Protocol flags in the context.
+	ContextKeyKittyKeyboardFlags = contextKey{"kitty-keyboard-flags"}
+
+	// ContextKeyBackgroundColor is the key used to store the terminal's background
+	// color in the context.
+	ContextKeyBackgroundColor = contextKey{"background-color"}
+
+	// ContextKeyHasLightBackground is the key used to store whether the terminal
+	// has a light background in the context.
+	ContextKeyHasLightBackground = contextKey{"has-light-background"}
+)
+
 type teaContext struct {
 	context.Context
-
-	profile         lipgloss.Profile
-	kittyFlags      int
-	backgroundColor color.Color
-	hasLightBg      bool // cached value
 
 	values map[interface{}]interface{}
 	mtx    sync.Mutex
 }
 
-func newContext(ctx context.Context) *teaContext {
+// newContext returns a new teaContext and a cancel function. It wraps the
+// provided context with a new context that can be canceled.
+func newContext(ctx context.Context) (*teaContext, context.CancelFunc) {
 	c := new(teaContext)
-	c.Context = ctx
-	c.kittyFlags = -1
+	var cancel context.CancelFunc
+	c.Context, cancel = context.WithCancel(ctx)
 	c.values = make(map[interface{}]interface{})
-	return c
+	c.SetValue(ContextKeyKittyKeyboardFlags, -1)
+	return c, cancel
 }
 
 func (c *teaContext) BackgroundColor() color.Color {
-	return c.backgroundColor
+	if bg, ok := c.Value(ContextKeyBackgroundColor).(color.Color); ok {
+		return bg
+	}
+	return nil
 }
 
 func (c *teaContext) HasLightBackground() bool {
-	return c.hasLightBg
+	if v, ok := c.Value(ContextKeyHasLightBackground).(bool); ok {
+		return v
+	}
+	return false
 }
 
 func (c *teaContext) SupportsEnhancedKeyboard() bool {
-	return c.kittyFlags >= 0
+	if v, ok := c.Value(ContextKeyKittyKeyboardFlags).(int); ok {
+		return v >= 0
+	}
+	return false
 }
 
 func (c *teaContext) NewStyle() lipgloss.Style {
-	return lipgloss.NewStyle().ColorProfile(c.profile).HasLightBackground(c.hasLightBg)
+	return lipgloss.NewStyle().
+		ColorProfile(c.ColorProfile()).
+		HasLightBackground(c.HasLightBackground())
 }
 
 func (c *teaContext) ColorProfile() lipgloss.Profile {
-	return c.profile
+	if v, ok := c.Value(ContextKeyColorProfile).(lipgloss.Profile); ok {
+		return v
+	}
+	return lipgloss.TrueColor
 }
 
 func (ctx *teaContext) Value(key interface{}) interface{} {
