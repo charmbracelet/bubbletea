@@ -67,8 +67,8 @@ func (c *teaContext) SupportsEnhancedKeyboard() bool {
 	return c.kittyFlags >= 0
 }
 
-func (c *teaContext) NewStyle() lipgloss.Style {
-	return lipgloss.NewStyle().ColorProfile(c.profile).HasLightBackground(c.hasLightBg)
+func (c *teaContext) NewStyle() (s lipgloss.Style) {
+	return s.ColorProfile(c.profile).HasLightBackground(c.hasLightBg)
 }
 
 func (c *teaContext) ColorProfile() lipgloss.Profile {
