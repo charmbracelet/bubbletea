@@ -3,7 +3,6 @@ package tea
 import (
 	"context"
 	"image/color"
-	"sync"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -13,11 +12,6 @@ import (
 // program's state and to allow them to interact with the terminal.
 type Context interface {
 	context.Context
-
-	// SetValue sets a value on the context. This is useful for storing values
-	// that needs to be accessed across multiple functions.
-	// You can access the value later using Value.
-	SetValue(key, value interface{})
 
 	// BackgroundColor returns the current background color of the terminal.
 	// It returns nil if the terminal's doesn't support querying the background
@@ -52,16 +46,12 @@ type teaContext struct {
 	kittyFlags      int
 	backgroundColor color.Color
 	hasLightBg      bool // cached value
-
-	values map[interface{}]interface{}
-	mtx    sync.Mutex
 }
 
 func newContext(ctx context.Context) *teaContext {
 	c := new(teaContext)
 	c.Context = ctx
 	c.kittyFlags = -1
-	c.values = make(map[interface{}]interface{})
 	return c
 }
 
@@ -83,19 +73,4 @@ func (c *teaContext) NewStyle() lipgloss.Style {
 
 func (c *teaContext) ColorProfile() lipgloss.Profile {
 	return c.profile
-}
-
-func (ctx *teaContext) Value(key interface{}) interface{} {
-	ctx.mtx.Lock()
-	defer ctx.mtx.Unlock()
-	if v, ok := ctx.values[key]; ok {
-		return v
-	}
-	return ctx.Context.Value(key)
-}
-
-func (ctx *teaContext) SetValue(key, value interface{}) {
-	ctx.mtx.Lock()
-	defer ctx.mtx.Unlock()
-	ctx.values[key] = value
 }
