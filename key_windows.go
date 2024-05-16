@@ -22,7 +22,8 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 }
 
 func readConInputs(ctx context.Context, msgsch chan<- Msg, con windows.Handle) error {
-	var ps coninput.ButtonState // keep track of previous mouse state
+	var ps coninput.ButtonState                 // keep track of previous mouse state
+	var ws coninput.WindowBufferSizeEventRecord // keep track of the last window size event
 	for {
 		events, err := coninput.ReadNConsoleInputs(con, 16)
 		if err != nil {
@@ -45,10 +46,13 @@ func readConInputs(ctx context.Context, msgsch chan<- Msg, con windows.Handle) e
 					})
 				}
 			case coninput.WindowBufferSizeEventRecord:
-				msgs = append(msgs, WindowSizeMsg{
-					Width:  int(e.Size.X),
-					Height: int(e.Size.Y),
-				})
+				if e != ws {
+					ws = e
+					msgs = append(msgs, WindowSizeMsg{
+						Width:  int(e.Size.X),
+						Height: int(e.Size.Y),
+					})
+				}
 			case coninput.MouseEventRecord:
 				event := mouseEvent(ps, e)
 				if event.Type != MouseUnknown {
