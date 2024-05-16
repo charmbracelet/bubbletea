@@ -17,16 +17,9 @@ import (
 type conInputReader struct {
 	cancelMixin
 
-	conin       windows.Handle
-	cancelEvent windows.Handle
+	conin windows.Handle
 
 	originalMode uint32
-
-	// inputEvent holds the input event that was read in order to avoid
-	// unnecessary allocations. This re-use is possible because
-	// InputRecord.Unwarp which is called inparseInputMsgFromInputRecord
-	// returns an data structure that is independent of the passed InputRecord.
-	inputEvent []coninput.InputRecord
 }
 
 var _ cancelreader.CancelReader = &conInputReader{}
@@ -53,14 +46,8 @@ func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
 		return nil, fmt.Errorf("failed to prepare console input: %w", err)
 	}
 
-	cancelEvent, err := windows.CreateEvent(nil, 0, 0, nil)
-	if err != nil {
-		return nil, fmt.Errorf("create stop event: %w", err)
-	}
-
 	return &conInputReader{
 		conin:        conin,
-		cancelEvent:  cancelEvent,
 		originalMode: originalMode,
 	}, nil
 }
@@ -69,21 +56,11 @@ func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
 func (r *conInputReader) Cancel() bool {
 	r.setCanceled()
 
-	err := windows.SetEvent(r.cancelEvent)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return windows.CancelIo(r.conin) == nil
 }
 
 // Close implements cancelreader.CancelReader.
 func (r *conInputReader) Close() error {
-	err := windows.CloseHandle(r.cancelEvent)
-	if err != nil {
-		return fmt.Errorf("closing cancel event handle: %w", err)
-	}
-
 	if r.originalMode != 0 {
 		err := windows.SetConsoleMode(r.conin, r.originalMode)
 		if err != nil {
@@ -113,30 +90,6 @@ func prepareConsole(input windows.Handle, modes ...uint32) (originalMode uint32,
 	}
 
 	return originalMode, nil
-}
-
-func waitForInput(conin, cancel windows.Handle) error {
-	event, err := windows.WaitForMultipleObjects([]windows.Handle{conin, cancel}, false, windows.INFINITE)
-	switch {
-	case windows.WAIT_OBJECT_0 <= event && event < windows.WAIT_OBJECT_0+2:
-		if event == windows.WAIT_OBJECT_0+1 {
-			return cancelreader.ErrCanceled
-		}
-
-		if event == windows.WAIT_OBJECT_0 {
-			return nil
-		}
-
-		return fmt.Errorf("unexpected wait object is ready: %d", event-windows.WAIT_OBJECT_0)
-	case windows.WAIT_ABANDONED <= event && event < windows.WAIT_ABANDONED+2:
-		return fmt.Errorf("abandoned")
-	case event == uint32(windows.WAIT_TIMEOUT):
-		return fmt.Errorf("timeout")
-	case event == windows.WAIT_FAILED:
-		return fmt.Errorf("failed")
-	default:
-		return fmt.Errorf("unexpected error: %w", err)
-	}
 }
 
 // cancelMixin represents a goroutine-safe cancelation status.
