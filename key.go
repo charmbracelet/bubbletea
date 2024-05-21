@@ -37,6 +37,9 @@ type (
 	KeyMsg     = input.KeyDownEvent
 	KeyDownMsg = input.KeyDownEvent
 	KeyUpMsg   = input.KeyUpEvent
+
+	// KeyMod represents modifier keys.
+	KeyMod = input.KeyMod
 )
 
 // Modifier keys.
