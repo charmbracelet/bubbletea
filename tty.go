@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
+	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
-	"golang.org/x/term"
 )
 
 func (p *Program) initTerminal() error {
@@ -41,8 +40,13 @@ func (p *Program) restoreTerminalState() error {
 
 // restoreInput restores the tty input to its original state.
 func (p *Program) restoreInput() error {
-	if p.tty != nil && p.previousTtyState != nil {
-		if err := term.Restore(int(p.tty.Fd()), p.previousTtyState); err != nil {
+	if p.ttyInput != nil && p.previousTtyInputState != nil {
+		if err := term.Restore(p.ttyInput.Fd(), p.previousTtyInputState); err != nil {
+			return fmt.Errorf("error restoring console: %w", err)
+		}
+	}
+	if p.ttyOutput != nil && p.previousOutputState != nil {
+		if err := term.Restore(p.ttyOutput.Fd(), p.previousOutputState); err != nil {
 			return fmt.Errorf("error restoring console: %w", err)
 		}
 	}
@@ -89,13 +93,12 @@ func (p *Program) waitForReadLoop() {
 // checkResize detects the current size of the output and informs the program
 // via a WindowSizeMsg.
 func (p *Program) checkResize() {
-	f, ok := p.output.TTY().(*os.File)
-	if !ok || !term.IsTerminal(int(f.Fd())) {
+	if p.ttyOutput == nil {
 		// can't query window size
 		return
 	}
 
-	w, h, err := term.GetSize(int(f.Fd()))
+	w, h, err := term.GetSize(p.ttyOutput.Fd())
 	if err != nil {
 		select {
 		case <-p.ctx.Done():

@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"os"
 	"sync/atomic"
 	"testing"
 )
@@ -10,8 +11,8 @@ func TestOptions(t *testing.T) {
 	t.Run("output", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithOutput(&b))
-		if p.output.TTY() != nil {
-			t.Errorf("expected output to custom, got %v", p.output.TTY().Fd())
+		if f, ok := p.output.(*os.File); ok {
+			t.Errorf("expected output to custom, got %v", f.Fd())
 		}
 	})
 
@@ -66,7 +67,6 @@ func TestOptions(t *testing.T) {
 			var b bytes.Buffer
 			exercise(t, WithInput(&b), customInput)
 		})
-
 	})
 
 	t.Run("startup options", func(t *testing.T) {
