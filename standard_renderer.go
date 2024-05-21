@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/x/exp/term/ansi"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/ansi/compressor"
 )
 
@@ -300,7 +300,7 @@ func (r *standardRenderer) clearScreen() {
 	defer r.mtx.Unlock()
 
 	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorZero)
+	r.execute(ansi.MoveCursorOrigin)
 
 	r.repaint()
 }
@@ -330,7 +330,7 @@ func (r *standardRenderer) enterAltScreen() {
 	// Note: we can't use r.clearScreen() here because the mutex is already
 	// locked.
 	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorZero)
+	r.execute(ansi.MoveCursorOrigin)
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
