@@ -21,9 +21,9 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/term"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
@@ -143,14 +143,14 @@ type Program struct {
 	// where to send output, this will usually be os.Stdout.
 	output io.Writer
 	// ttyOutput is null if output is not a TTY.
-	ttyOutput           *os.File
+	ttyOutput           term.File
 	previousOutputState *term.State
 	renderer            renderer
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
 	// ttyInput is null if input is not a TTY.
-	ttyInput              *os.File
+	ttyInput              term.File
 	previousTtyInputState *term.State
 	cancelReader          cancelreader.CancelReader
 	readLoopDone          chan struct{}
@@ -433,11 +433,11 @@ func (p *Program) Run() (Model, error) {
 		// piped in or redirected to the application.
 		//
 		// To disable input entirely pass nil to the [WithInput] program option.
-		f, isFile := p.input.(*os.File)
+		f, isFile := p.input.(term.File)
 		if !isFile {
 			break
 		}
-		if term.IsTerminal(int(f.Fd())) {
+		if term.IsTerminal(f.Fd()) {
 			break
 		}
 

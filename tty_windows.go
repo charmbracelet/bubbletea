@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/x/term"
 	"golang.org/x/sys/windows"
-	"golang.org/x/term"
 )
 
 func (p *Program) initInput() (err error) {
 	// Save stdin state and enable VT input
 	// We also need to enable VT
 	// input here.
-	if f, ok := p.input.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+	if f, ok := p.input.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyInput = f
-		p.previousTtyInputState, err = term.MakeRaw(int(p.ttyInput.Fd()))
+		p.previousTtyInputState, err = term.MakeRaw(p.ttyInput.Fd())
 		if err != nil {
 			return err
 		}
@@ -34,9 +34,9 @@ func (p *Program) initInput() (err error) {
 	}
 
 	// Save output screen buffer state and enable VT processing.
-	if f, ok := p.output.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
-		p.previousOutputState, err = term.GetState(int(f.Fd()))
+		p.previousOutputState, err = term.GetState(f.Fd())
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func (p *Program) initInput() (err error) {
 
 // Open the Windows equivalent of a TTY.
 func openInputTTY() (*os.File, error) {
-	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0644)
+	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0o644)
 	if err != nil {
 		return nil, err
 	}

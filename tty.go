@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
-	"golang.org/x/term"
 )
 
 func (p *Program) initTerminal() error {
@@ -41,12 +41,12 @@ func (p *Program) restoreTerminalState() error {
 // restoreInput restores the tty input to its original state.
 func (p *Program) restoreInput() error {
 	if p.ttyInput != nil && p.previousTtyInputState != nil {
-		if err := term.Restore(int(p.ttyInput.Fd()), p.previousTtyInputState); err != nil {
+		if err := term.Restore(p.ttyInput.Fd(), p.previousTtyInputState); err != nil {
 			return fmt.Errorf("error restoring console: %w", err)
 		}
 	}
 	if p.ttyOutput != nil && p.previousOutputState != nil {
-		if err := term.Restore(int(p.ttyOutput.Fd()), p.previousOutputState); err != nil {
+		if err := term.Restore(p.ttyOutput.Fd(), p.previousOutputState); err != nil {
 			return fmt.Errorf("error restoring console: %w", err)
 		}
 	}
@@ -98,7 +98,7 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	w, h, err := term.GetSize(int(p.ttyOutput.Fd()))
+	w, h, err := term.GetSize(p.ttyOutput.Fd())
 	if err != nil {
 		select {
 		case <-p.ctx.Done():

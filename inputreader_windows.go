@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/charmbracelet/x/term"
 	"github.com/erikgeiser/coninput"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/sys/windows"
@@ -28,7 +29,7 @@ func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
 	fallback := func(io.Reader) (cancelreader.CancelReader, error) {
 		return cancelreader.NewReader(r)
 	}
-	if f, ok := r.(*os.File); !ok || f.Fd() != os.Stdin.Fd() {
+	if f, ok := r.(term.File); !ok || f.Fd() != os.Stdin.Fd() {
 		return fallback(r)
 	}
 
