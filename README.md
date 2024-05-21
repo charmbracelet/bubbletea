@@ -309,6 +309,7 @@ your program in another window.
 * [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
 * [Harmonica][harmonica]: A spring animation library for smooth, natural motion
 * [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
+* [ntcharts][ntcharts]: A terminal charting library built for Bubble Tea and [Lip Gloss][lipgloss]
 * [Termenv][termenv]: Advanced ANSI styling for terminal applications
 * [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
@@ -316,6 +317,7 @@ your program in another window.
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [harmonica]: https://github.com/charmbracelet/harmonica
 [bubblezone]: https://github.com/lrstanley/bubblezone
+[ntcharts]: https://github.com/NimbleMarkets/ntcharts
 [termenv]: https://github.com/muesli/termenv
 [reflow]: https://github.com/muesli/reflow
 
@@ -385,6 +387,7 @@ For some Bubble Tea programs in production, see:
 * [portal](https://github.com/ZinoKader/portal): secure transfers between computers
 * [prs](https://github.com/dhth/prs): stay up to date with your PRs
 * [puffin](https://github.com/siddhantac/puffin): a TUI for hledger to manage your finances
+* [pug](https://github.com/leg100/pug): terraform task manager
 * [punchout](https://github.com/dhth/punchout): takes the suck out of logging time on JIRA
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
 * [redis_tui](https://github.com/mat2cc/redis_tui): a Redis database browser
@@ -399,6 +402,7 @@ For some Bubble Tea programs in production, see:
 * [Storydb](https://github.com/grrlopes/storydb): an improved bash/zsh-style ctrl+r command history finder
 * [STTG](https://github.com/wille1101/sttg): a teletext client for SVT, Sweden’s national public television station
 * [sttr](https://github.com/abhimanyu003/sttr): a general-purpose text transformer
+* [superfile](https://github.com/MHNightCat/superfile)  a fancy, modern terminal-based file manager
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [tgpt](https://github.com/aandrew-me/tgpt): conversational AI for the CLI; no API keys necessary

@@ -622,7 +622,7 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 		case '<':
 			if matchIndices := mouseSGRRegex.FindSubmatchIndex(b[3:]); matchIndices != nil {
 				// SGR mouse events length is the length of the match plus the length of the escape sequence
-				mouseEventSGRLen := matchIndices[1] + 3
+				mouseEventSGRLen := matchIndices[1] + 3 //nolint:gomnd
 				return mouseEventSGRLen, MouseMsg(parseSGRMouseEvent(b))
 			}
 		}
@@ -632,7 +632,7 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 	var foundbp bool
 	foundbp, w, msg = detectBracketedPaste(b)
 	if foundbp {
-		return
+		return w, msg
 	}
 
 	// Detect escape sequence and control characters other than NUL,
@@ -641,7 +641,7 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 	var foundSeq bool
 	foundSeq, w, msg = detectSequence(b)
 	if foundSeq {
-		return
+		return w, msg
 	}
 
 	// No non-NUL control character or escape sequence.
