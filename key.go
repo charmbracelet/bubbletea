@@ -40,6 +40,9 @@ type (
 
 	// KeyMod represents modifier keys.
 	KeyMod = input.KeyMod
+
+	// KeySym represents a key symbol.
+	KeySym = input.KeySym
 )
 
 // Modifier keys.
