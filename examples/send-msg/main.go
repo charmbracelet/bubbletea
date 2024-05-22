@@ -1,7 +1,7 @@
 package main
 
-// A simple example that shows how to send messages to a Bubble Tea program
-// from outside the program using Program.Send(Msg).
+// A simple example that shows how to send messages at an interval
+// using tea.Tick()
 
 import (
 	"fmt"
@@ -52,8 +52,17 @@ func newModel() model {
 	}
 }
 
+func doTick() tea.Cmd {
+	// Simulate activity
+	pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond // nolint:gosec
+	return tea.Tick(pause, func(t time.Time) tea.Msg {
+		// Send a resultMsg to the Update method
+		return resultMsg{food: randomFood(), duration: pause}
+	})
+}
+
 func (m model) Init() tea.Cmd {
-	return m.spinner.Tick
+	return tea.Batch(m.spinner.Tick, doTick())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -63,7 +72,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case resultMsg:
 		m.results = append(m.results[1:], msg)
-		return m, nil
+		// Return the tea.Tick command again to loop
+		return m, doTick()
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -102,19 +112,9 @@ func (m model) View() string {
 func main() {
 	p := tea.NewProgram(newModel())
 
-	// Simulate activity
-	go func() {
-		for {
-			pause := time.Duration(rand.Int63n(899)+100) * time.Millisecond // nolint:gosec
-			time.Sleep(pause)
-
-			// Send the Bubble Tea program a message from outside the
-			// tea.Program. This will block until it is ready to receive
-			// messages.
-			p.Send(resultMsg{food: randomFood(), duration: pause})
-		}
-	}()
-
+	// Send a message to a Bubble Tea program from outside the program
+	// using Program.Send(Msg), e.g:
+	// p.Send(resultMsg{duration: time.Second, food: randomFood()})
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
