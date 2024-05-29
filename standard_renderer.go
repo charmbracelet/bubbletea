@@ -470,6 +470,12 @@ func (r *standardRenderer) requestDeviceAttributes() {
 	r.execute(ansi.RequestPrimaryDeviceAttributes)
 }
 
+// requestKittyKeyboard sends a request to the terminal to report
+// keyboard events in the Kitty format.
+func (r *standardRenderer) requestKittyKeyboard() {
+	r.execute(ansi.RequestKittyKeyboard)
+}
+
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
 // renderer.
 func (r *standardRenderer) setIgnoredLines(from int, to int) {

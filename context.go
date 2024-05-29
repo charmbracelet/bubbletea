@@ -73,7 +73,7 @@ func newContext(ctx context.Context) *teaContext {
 	c := new(teaContext)
 	c.Context = ctx
 	c.values = make(map[interface{}]interface{})
-	// c.kittyFlags = -1
+	c.values[ContextKeyKittyFlags] = -1 // Assume no Kitty support by default
 	return c
 }
 

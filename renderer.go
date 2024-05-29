@@ -77,6 +77,10 @@ type renderer interface {
 	// requestDeviceAttributes requests the terminal to send its device
 	// attributes DA1.
 	requestDeviceAttributes()
+
+	// requestKittyKeyboard sends a request to the terminal to report
+	// kitty keyboard flags.
+	requestKittyKeyboard()
 }
 
 // repaintMsg forces a full repaint.

@@ -25,3 +25,4 @@ func (n nilRenderer) bracketedPasteActive() bool { return false }
 func (n nilRenderer) setWindowTitle(_ string)    {}
 func (n nilRenderer) requestBackgroundColor()    {}
 func (n nilRenderer) requestDeviceAttributes()   {}
+func (n nilRenderer) requestKittyKeyboard()      {}

@@ -17,6 +17,9 @@ type PasteMsg = input.PasteEvent
 // using RequestBackgroundColor Cmd.
 type BackgroundColorMsg = input.BackgroundColorEvent
 
+// KittyKeyboardMsg is used to report Kitty keyboard capabilities.
+type KittyKeyboardMsg = input.KittyKeyboardEvent
+
 // PrimaryDeviceAttributesMsg is used to report the terminal's primary device
 // attributes.
 type PrimaryDeviceAttributesMsg = input.PrimaryDeviceAttributesEvent

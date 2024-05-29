@@ -437,6 +437,8 @@ func (p *Program) handleContextMessages(msg Msg) {
 			_, _, l := col.Hsl()
 			p.ctx.hasLightBg = l > 0.5
 		}
+	case KittyKeyboardMsg:
+		p.ctx.SetValue(ContextKeyKittyFlags, int(msg))
 	}
 }
 
@@ -548,6 +550,7 @@ func (p *Program) Run() (Model, error) {
 
 	// Query terminal capabilities.
 	p.renderer.requestBackgroundColor()
+	p.renderer.requestKittyKeyboard()
 	p.renderer.requestDeviceAttributes()
 
 	// XXX: Here, we wait for a short period of time to receive terminal
@@ -570,6 +573,8 @@ EVENTS:
 			// Message types we care about before the event loop starts.
 			switch msg := msg.(type) {
 			case BackgroundColorMsg:
+				p.handleContextMessages(msg)
+			case KittyKeyboardMsg:
 				p.handleContextMessages(msg)
 			case PrimaryDeviceAttributesMsg:
 				break EVENTS
