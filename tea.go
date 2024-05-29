@@ -431,7 +431,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) handleContextMessages(msg Msg) {
 	switch msg := msg.(type) {
 	case BackgroundColorMsg:
-		p.ctx.backgroundColor = msg.Color
+		p.ctx.SetValue(ContextKeyBackgroundColor, msg.Color)
 		col, ok := colorful.MakeColor(msg.Color)
 		if ok {
 			_, _, l := col.Hsl()
