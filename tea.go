@@ -20,7 +20,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 
+	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
@@ -492,6 +495,19 @@ func (p *Program) Run() (Model, error) {
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
+
+	// See: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
+	_ = term.QueryTerminal(p.input, p.output, time.Millisecond*100, func(events []input.Event) bool {
+		for _, e := range events {
+			switch event := e.(type) {
+			case input.ReportModeEvent:
+				if event.Mode == 2026 && (event.Value == 2 || event.Value == 4) {
+					p.renderer.enableSynchronizedOutput()
+				}
+			}
+		}
+		return true
+	}, ansi.RequestSyncdOutput)
 
 	// Honor program startup options.
 	if p.startupTitle != "" {

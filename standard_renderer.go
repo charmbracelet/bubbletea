@@ -47,6 +47,9 @@ type standardRenderer struct {
 	// whether or not we're currently using bracketed paste
 	bpActive bool
 
+	// whether or not we're currently using synchronized output
+	soActive bool
+
 	// renderer dimensions; usually the size of the window
 	width  int
 	height int
@@ -274,7 +277,18 @@ func (r *standardRenderer) flush() {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
 
+	// Enable synchronized output
+	if r.soActive {
+		_, _ = io.WriteString(r.out, ansi.EnableSyncdOutput)
+	}
+
 	_, _ = r.out.Write(buf.Bytes())
+
+	// Disable synchronized output
+	if r.soActive {
+		_, _ = io.WriteString(r.out, ansi.DisableSyncdOutput)
+	}
+
 	r.lastRender = r.buf.String()
 	r.buf.Reset()
 }
@@ -457,6 +471,13 @@ func (r *standardRenderer) bracketedPasteActive() bool {
 // setWindowTitle sets the terminal window title.
 func (r *standardRenderer) setWindowTitle(title string) {
 	r.execute(ansi.SetWindowTitle(title))
+}
+
+func (r *standardRenderer) enableSynchronizedOutput() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.soActive = true
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea

@@ -70,6 +70,9 @@ type renderer interface {
 
 	// setWindowTitle sets the terminal window title.
 	setWindowTitle(string)
+
+	// enableSynchronizedOutput enables synchronized output.
+	enableSynchronizedOutput()
 }
 
 // repaintMsg forces a full repaint.
