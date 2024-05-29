@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/x/term"
@@ -92,10 +93,40 @@ func (p *Program) waitForReadLoop() {
 
 // checkResize detects the current size of the output and informs the program
 // via a WindowSizeMsg.
-func (p *Program) checkResize() {
+func (p *Program) checkResize(first bool) {
 	if p.ttyOutput == nil {
 		// can't query window size
 		return
+	}
+
+	if first {
+		// JetBrains terminal (JediTerm) don't answer real size until approx. 400ms.
+		// In other words, we have no choice but to try hard again and again...
+		if _, ok := os.LookupEnv("IDEA_INITIAL_DIRECTORY"); ok {
+			var w, h int
+			var err error
+			for i := 0; i < 60; i++ {
+				time.Sleep(time.Millisecond * 10)
+				w, h, err = term.GetSize(p.ttyOutput.Fd())
+				if err != nil {
+					select {
+					case <-p.ctx.Done():
+					case p.errs <- err:
+					}
+
+					return
+				}
+				if w != 0 || h != 0 {
+					break
+				}
+			}
+			p.Send(WindowSizeMsg{
+				Width:  w,
+				Height: h,
+			})
+
+			return
+		}
 	}
 
 	w, h, err := term.GetSize(p.ttyOutput.Fd())
