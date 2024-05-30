@@ -131,6 +131,10 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
+	// startupTitle is the title that will be set on the terminal when the
+	// program starts.
+	startupTitle string
+
 	inputType inputType
 
 	ctx    context.Context
@@ -490,6 +494,9 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Honor program startup options.
+	if p.startupTitle != "" {
+		p.renderer.setWindowTitle(p.startupTitle)
+	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.renderer.enterAltScreen()
 	}
