@@ -3,7 +3,7 @@ module github.com/charmbracelet/bubbletea
 go 1.18
 
 require (
-	github.com/charmbracelet/x/ansi v0.1.1
+	github.com/charmbracelet/x/ansi v0.1.2
 	github.com/charmbracelet/x/term v0.1.1
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f
 	github.com/mattn/go-localereader v0.0.1
