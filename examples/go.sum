@@ -1,4 +1,3 @@
-github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/alecthomas/assert/v2 v2.2.1 h1:XivOgYcduV98QCahG8T5XTezV5bylXe+lBxLG2K2ink=
 github.com/alecthomas/chroma/v2 v2.8.0 h1:w9WJUjFFmHHB2e8mRpL9jjy3alYDlU0QLDezj1xE264=
 github.com/alecthomas/chroma/v2 v2.8.0/go.mod h1:yrkMI9807G1ROx13fhe1v6PN2DDeaR73L3d+1nmYQtw=
@@ -17,14 +16,12 @@ github.com/charmbracelet/glamour v0.7.0 h1:2BtKGZ4iVJCDfMF229EzbeR1QRKLWztO9dMtj
 github.com/charmbracelet/glamour v0.7.0/go.mod h1:jUMh5MeihljJPQbJ/wf4ldw2+yBP59+ctV36jASy7ps=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
-github.com/charmbracelet/lipgloss v0.10.0 h1:KWeXFSexGcfahHX+54URiZGkBFazf70JNMtwg/AFW3s=
-github.com/charmbracelet/lipgloss v0.10.0/go.mod h1:Wig9DSfvANsxqkRsqj6x87irdy123SR4dOXlKa91ciE=
+github.com/charmbracelet/lipgloss v0.11.0 h1:UoAcbQ6Qml8hDwSWs0Y1cB5TEQuZkDPH/ZqwWWYTG4g=
+github.com/charmbracelet/lipgloss v0.11.0/go.mod h1:1UdRTH9gYgpcdNN5oBtjbu/IzNKtzVtb7sqN1t9LNn8=
 github.com/charmbracelet/x/ansi v0.1.1 h1:CGAduulr6egay/YVbGc8Hsu8deMg1xZ/bkaXTPi1JDk=
 github.com/charmbracelet/x/ansi v0.1.1/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/exp/golden v0.0.0-20240521172236-71f88323a7ca h1:Cw9p8EJdhDGIWICF34TIxTcQrAdzBdgkvaLA4AmqDVk=
 github.com/charmbracelet/x/exp/golden v0.0.0-20240521172236-71f88323a7ca/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
-github.com/charmbracelet/x/exp/teatest v0.0.0-20240229115032-4b79243a3516 h1:7IZFEUZpEgjlTSd7P1MRRhGXs7t4F6mENeMw17TxnQs=
-github.com/charmbracelet/x/exp/teatest v0.0.0-20240229115032-4b79243a3516/go.mod h1:SG24wGkG/mix5V2dZLXfQ6Bod43HGvk9CkTDxATwKN4=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28 h1:sOWKNRjt8uOEVgPiJVIJCse1+mUDM2F/vYY6W0Go640=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28/go.mod h1:l1w+LTJZCCozeGzMEWGxRw6Mo2DfcZUvupz8HGubdes=
 github.com/charmbracelet/x/input v0.1.0 h1:TEsGSfZYQyOtp+STIjyBq6tpRaorH0qpwZUj8DavAhQ=
