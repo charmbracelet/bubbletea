@@ -35,9 +35,7 @@ const (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 func main() {
-	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
-
-	if _, err := tea.NewProgram(model{progress: prog}).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Oh no!", err)
 		os.Exit(1)
 	}
@@ -50,11 +48,12 @@ type model struct {
 	progress progress.Model
 }
 
-func (m model) Init() tea.Cmd {
-	return tickCmd()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.progress = progress.New(ctx, progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
+	return m, tickCmd()
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return m, tea.Quit
@@ -79,10 +78,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	pad := strings.Repeat(" ", padding)
 	return "\n" +
-		pad + m.progress.ViewAs(m.percent) + "\n\n" +
+		pad + m.progress.ViewAs(ctx, m.percent) + "\n\n" +
 		pad + helpStyle("Press any key to quit")
 }
 

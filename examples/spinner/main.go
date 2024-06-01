@@ -27,11 +27,11 @@ func initialModel() model {
 	return model{spinner: s}
 }
 
-func (m model) Init() tea.Cmd {
-	return m.spinner.Tick
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -53,7 +53,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	if m.err != nil {
 		return m.err.Error()
 	}

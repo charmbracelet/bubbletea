@@ -64,11 +64,11 @@ func initialModel() model {
 	return m
 }
 
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -147,7 +147,7 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	var b strings.Builder
 
 	for i := range m.inputs {

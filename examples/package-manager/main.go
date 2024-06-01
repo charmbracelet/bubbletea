@@ -44,11 +44,11 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
@@ -87,7 +87,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	n := len(m.packages)
 	w := lipgloss.Width(fmt.Sprintf("%d", n))
 

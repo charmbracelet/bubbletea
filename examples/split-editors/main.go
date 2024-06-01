@@ -110,11 +110,11 @@ func newModel() model {
 	return m
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -179,7 +179,7 @@ func (m *model) updateKeybindings() {
 	m.keymap.remove.SetEnabled(len(m.inputs) > minInputs)
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
 		m.keymap.prev,

@@ -39,11 +39,11 @@ type model struct {
 	paginator paginator.Model
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -56,7 +56,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	var b strings.Builder
 	b.WriteString("\n  Paginator Example\n\n")
 	start, end := m.paginator.GetSliceBounds(len(m.items))

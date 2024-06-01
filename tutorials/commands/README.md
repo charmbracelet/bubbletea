@@ -92,7 +92,7 @@ Note that we don't call the function; the Bubble Tea runtime will do that when
 the time is right.
 
 ```go
-func (m model) Init() (tea.Cmd) {
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
     return checkServer
 }
 ```
@@ -105,7 +105,7 @@ types we made earlier when we were making the `checkServer` command? We handle
 them here. This makes dealing with many asynchronous operations very easy.
 
 ```go
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
 
     case statusMsg:
@@ -142,7 +142,7 @@ Our view is very straightforward. We look at the current model and build a
 string accordingly:
 
 ```go
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
     // If there's an error, print it out and don't do anything else.
     if m.err != nil {
         return fmt.Sprintf("\nWe had some trouble: %v\n\n", m.err)

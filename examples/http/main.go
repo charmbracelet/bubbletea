@@ -31,11 +31,11 @@ func main() {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return checkServer
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, checkServer
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -58,7 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	s := fmt.Sprintf("Checking %s...", url)
 	if m.err != nil {
 		s += fmt.Sprintf("something went wrong: %s", m.err)

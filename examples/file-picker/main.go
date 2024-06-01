@@ -26,11 +26,16 @@ func clearErrorAfter(t time.Duration) tea.Cmd {
 	})
 }
 
-func (m model) Init() tea.Cmd {
-	return m.filepicker.Init()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	fp := filepicker.New(ctx)
+	fp.AllowedTypes = []string{".mod", ".sum", ".go", ".txt", ".md"}
+	fp.CurrentDirectory, _ = os.UserHomeDir()
+
+	m.filepicker = fp
+	return m, m.filepicker.Init(ctx)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -43,7 +48,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	m.filepicker, cmd = m.filepicker.Update(msg)
+	m.filepicker, cmd = m.filepicker.Update(ctx, msg)
 
 	// Did the user select a file?
 	if didSelect, path := m.filepicker.DidSelectFile(msg); didSelect {
@@ -63,7 +68,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	if m.quitting {
 		return ""
 	}
@@ -76,19 +81,15 @@ func (m model) View() string {
 	} else {
 		s.WriteString("Selected file: " + m.filepicker.Styles.Selected.Render(m.selectedFile))
 	}
-	s.WriteString("\n\n" + m.filepicker.View() + "\n")
+	s.WriteString("\n\n" + m.filepicker.View(ctx) + "\n")
 	return s.String()
 }
 
 func main() {
-	fp := filepicker.New()
-	fp.AllowedTypes = []string{".mod", ".sum", ".go", ".txt", ".md"}
-	fp.CurrentDirectory, _ = os.UserHomeDir()
-
-	m := model{
-		filepicker: fp,
-	}
-	tm, _ := tea.NewProgram(&m).Run()
+	// This expects a tea.Context... Do I have to implement the interface myself?
+	m := &model{}
+	tm, _ := tea.NewProgram(m).Run()
 	mm := tm.(model)
+	// TODO styles are broken not sure if filepicker.Styles are defined? Shows no styling when I run it
 	fmt.Println("\n  You selected: " + m.filepicker.Styles.Selected.Render(mm.selectedFile) + "\n")
 }

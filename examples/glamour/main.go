@@ -85,11 +85,11 @@ func newExample() (*example, error) {
 	}, nil
 }
 
-func (e example) Init() tea.Cmd {
-	return nil
+func (e example) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return e, nil
 }
 
-func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (e example) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -105,7 +105,7 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (e example) View() string {
+func (e example) View(ctx tea.Context) string {
 	return e.viewport.View() + e.helpView()
 }
 

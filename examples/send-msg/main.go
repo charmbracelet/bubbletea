@@ -52,11 +52,11 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	return m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		m.quitting = true
@@ -73,7 +73,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	var s string
 
 	if m.quitting {

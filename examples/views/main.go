@@ -75,12 +75,12 @@ type model struct {
 	Quitting bool
 }
 
-func (m model) Init() tea.Cmd {
-	return tick()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, tick()
 }
 
 // Main update function.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Make sure these keys always quit
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		k := msg.String()
@@ -99,7 +99,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // The main view, which just calls the appropriate sub-view
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	var s string
 	if m.Quitting {
 		return "\n  See you later!\n\n"

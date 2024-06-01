@@ -37,11 +37,11 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
@@ -72,7 +72,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"Tell me a story.\n\n%s\n\n%s",
 		m.textarea.View(),

@@ -15,11 +15,11 @@ type testModel struct {
 	counter  atomic.Value
 }
 
-func (m testModel) Init() Cmd {
-	return nil
+func (m *testModel) Init(ctx Context) (Model, Cmd) {
+	return m, nil
 }
 
-func (m *testModel) Update(msg Msg) (Model, Cmd) {
+func (m *testModel) Update(ctx Context, msg Msg) (Model, Cmd) {
 	switch msg.(type) {
 	case incrementMsg:
 		i := m.counter.Load()
@@ -36,7 +36,7 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testModel) View() string {
+func (m *testModel) View(ctx Context) string {
 	m.executed.Store(true)
 	return "success\n"
 }

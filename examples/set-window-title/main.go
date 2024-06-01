@@ -11,11 +11,11 @@ import (
 
 type model struct{}
 
-func (m model) Init() tea.Cmd {
-	return tea.SetWindowTitle("Bubble Tea Example")
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, tea.SetWindowTitle("Bubble Tea Example")
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyMsg:
 		return m, tea.Quit
@@ -23,7 +23,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return "\nPress any key to quit."
 }
 

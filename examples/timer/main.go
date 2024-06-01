@@ -27,11 +27,11 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() tea.Cmd {
-	return m.timer.Init()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, m.timer.Init()
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case timer.TickMsg:
 		var cmd tea.Cmd
@@ -73,7 +73,7 @@ func (m model) helpView() string {
 	})
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	// For a more detailed timer view you could read m.timer.Timeout to get
 	// the remaining time as a time.Duration and skip calling m.timer.View()
 	// entirely.

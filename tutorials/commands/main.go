@@ -35,11 +35,11 @@ type errMsg struct{ err error }
 // error interface on the message.
 func (e errMsg) Error() string { return e.err.Error() }
 
-func (m model) Init() tea.Cmd {
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	return checkServer
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case statusMsg:
 		m.status = int(msg)
@@ -58,7 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	if m.err != nil {
 		return fmt.Sprintf("\nWe had some trouble: %v\n\n", m.err)
 	}

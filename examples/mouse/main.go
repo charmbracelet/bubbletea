@@ -20,11 +20,11 @@ type model struct {
 	mouseEvent tea.MouseEvent
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if s := msg.String(); s == "ctrl+c" || s == "q" || s == "esc" {
@@ -49,7 +49,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	s := "Do mouse stuff. When you're done press q to quit.\n"
 
 	return s

@@ -13,14 +13,14 @@ type testExecModel struct {
 	err error
 }
 
-func (m testExecModel) Init() Cmd {
+func (m *testExecModel) Init(ctx Context) (Model, Cmd) {
 	c := exec.Command(m.cmd) //nolint:gosec
-	return ExecProcess(c, func(err error) Msg {
+	return m, ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
 	})
 }
 
-func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
+func (m *testExecModel) Update(ctx Context, msg Msg) (Model, Cmd) {
 	switch msg := msg.(type) {
 	case execFinishedMsg:
 		if msg.err != nil {
@@ -32,7 +32,7 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() string {
+func (m *testExecModel) View(ctx Context) string {
 	return "\n"
 }
 

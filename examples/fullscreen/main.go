@@ -22,11 +22,11 @@ func main() {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tick()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, tick()
 }
 
-func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -45,7 +45,7 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
 }
 

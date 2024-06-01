@@ -76,7 +76,7 @@ some initial I/O. For now, we don't need to do any I/O, so for the command,
 we'll just return `nil`, which translates to "no command."
 
 ```go
-func (m model) Init() tea.Cmd {
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
     // Just return `nil`, which means "no I/O right now, please."
     return nil
 }
@@ -103,7 +103,7 @@ For now, we'll just deal with `tea.KeyMsg` messages, which are automatically
 sent to the update function when keys are pressed.
 
 ```go
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
 
     // Is it a key press?
@@ -161,7 +161,7 @@ worry about redrawing logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
     // The header
     s := "What should we buy at the market?\n\n"
 

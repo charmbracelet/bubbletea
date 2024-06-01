@@ -65,11 +65,11 @@ Type a message and press Enter to send.`)
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		tiCmd tea.Cmd
 		vpCmd tea.Cmd
@@ -100,7 +100,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(tiCmd, vpCmd)
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"%s\n\n%s",
 		m.viewport.View(),

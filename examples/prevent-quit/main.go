@@ -75,11 +75,11 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.quitting {
 		return m.updatePromptView(msg)
 	}
@@ -131,7 +131,7 @@ func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	if m.quitting {
 		if m.hasChanges {
 			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yn]"))
