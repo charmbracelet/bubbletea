@@ -35,14 +35,14 @@ type model int
 
 // Init optionally returns an initial command we should run. In this case we
 // want to start the timer.
-func (m model) Init() tea.Cmd {
-	return tick
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, tick
 }
 
 // Update is called when messages are received. The idea is that you inspect the
 // message and send back an updated model accordingly. You can also return
 // a command, which is a function that performs I/O and returns a message.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyMsg:
 		return m, tea.Quit
@@ -58,7 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
 }
 

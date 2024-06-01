@@ -25,11 +25,11 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() tea.Cmd {
-	return m.stopwatch.Init()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, m.stopwatch.Init()
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	// Note: you could further customize the time output by getting the
 	// duration from m.stopwatch.Elapsed(), which returns a time.Duration, and
 	// skip m.stopwatch.View() altogether.
@@ -50,7 +50,7 @@ func (m model) helpView() string {
 	})
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {

@@ -15,11 +15,11 @@ type model struct {
 	activeTab  int
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -55,7 +55,7 @@ var (
 	windowStyle       = lipgloss.NewStyle().BorderForeground(highlightColor).Padding(2, 0).Align(lipgloss.Center).Border(lipgloss.NormalBorder()).UnsetBorderTop()
 )
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	doc := strings.Builder{}
 
 	var renderedTabs []string

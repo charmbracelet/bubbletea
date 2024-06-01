@@ -72,12 +72,12 @@ func newModel(timeout time.Duration) mainModel {
 	return m
 }
 
-func (m mainModel) Init() tea.Cmd {
+func (m mainModel) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	// start the timer and spinner on program start
-	return tea.Batch(m.timer.Init(), m.spinner.Tick)
+	return m, tea.Batch(m.timer.Init(), m.spinner.Tick)
 }
 
-func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m mainModel) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
@@ -120,7 +120,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m mainModel) View() string {
+func (m mainModel) View(ctx tea.Context) string {
 	var s string
 	model := m.currentFocusedModel()
 	if m.state == timerView {

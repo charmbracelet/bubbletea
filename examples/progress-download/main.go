@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -91,8 +90,7 @@ func main() {
 	}
 
 	m := model{
-		pw:       pw,
-		progress: progress.New(progress.WithDefaultGradient()),
+		pw: pw,
 	}
 	// Start Bubble Tea
 	p = tea.NewProgram(m)

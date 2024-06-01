@@ -68,11 +68,11 @@ func newModel(initialValue string) (m model) {
 	return
 }
 
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	if key, ok := msg.(tea.KeyMsg); ok {
 		switch key.String() {
 		case "ctrl+c", "esc", "enter":
@@ -85,7 +85,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"\nYou piped in: %s\n\nPress ^C to exit",
 		m.userInput.View(),

@@ -40,11 +40,11 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -64,7 +64,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"What’s your favorite Pokémon?\n\n%s\n\n%s",
 		m.textInput.View(),

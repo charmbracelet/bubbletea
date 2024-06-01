@@ -26,11 +26,7 @@ const (
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 func main() {
-	m := model{
-		progress: progress.New(progress.WithDefaultGradient()),
-	}
-
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Oh no!", err)
 		os.Exit(1)
 	}
@@ -42,11 +38,12 @@ type model struct {
 	progress progress.Model
 }
 
-func (m model) Init() tea.Cmd {
-	return tickCmd()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.progress = progress.New(ctx, progress.WithDefaultGradient())
+	return m, tickCmd()
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return m, tea.Quit
@@ -70,7 +67,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// FrameMsg is sent when the progress bar wants to animate itself
 	case progress.FrameMsg:
-		progressModel, cmd := m.progress.Update(msg)
+		progressModel, cmd := m.progress.Update(ctx, msg)
 		m.progress = progressModel.(progress.Model)
 		return m, cmd
 
@@ -79,10 +76,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	pad := strings.Repeat(" ", padding)
 	return "\n" +
-		pad + m.progress.View() + "\n\n" +
+		pad + m.progress.View(ctx) + "\n\n" +
 		pad + helpStyle("Press any key to quit")
 }
 

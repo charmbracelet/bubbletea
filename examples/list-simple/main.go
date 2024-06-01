@@ -55,11 +55,11 @@ type model struct {
 	quitting bool
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width)
@@ -85,7 +85,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	if m.choice != "" {
 		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
 	}

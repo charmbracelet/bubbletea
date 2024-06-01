@@ -11,8 +11,8 @@ import (
 
 type model struct{}
 
-func (m model) Init() tea.Cmd {
-	return tea.Sequence(
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	return m, tea.Sequence(
 		tea.Batch(
 			tea.Println("A"),
 			tea.Println("B"),
@@ -23,7 +23,7 @@ func (m model) Init() tea.Cmd {
 	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyMsg:
 		return m, tea.Quit
@@ -31,7 +31,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return ""
 }
 

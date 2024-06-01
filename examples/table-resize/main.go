@@ -13,9 +13,9 @@ type model struct {
 	table *table.Table
 }
 
-func (m model) Init() tea.Cmd { return nil }
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) { return m, nil }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -31,13 +31,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View(ctx tea.Context) string {
 	return "\n" + m.table.String() + "\n"
 }
 
 func main() {
-	re := lipgloss.NewRenderer(os.Stdout)
-	baseStyle := re.NewStyle().Padding(0, 1)
+	baseStyle := lipgloss.NewStyle().Padding(0, 1)
 	headerStyle := baseStyle.Copy().Foreground(lipgloss.Color("252")).Bold(true)
 	selectedStyle := baseStyle.Copy().Foreground(lipgloss.Color("#01BE85")).Background(lipgloss.Color("#00432F"))
 	typeColors := map[string]lipgloss.Color{
@@ -98,7 +97,7 @@ func main() {
 		Headers(headers...).
 		Rows(rows...).
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(re.NewStyle().Foreground(lipgloss.Color("238"))).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("238"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			if row == 0 {
 				return headerStyle
