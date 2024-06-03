@@ -38,8 +38,8 @@ func (m model) View() string {
 func main() {
 	re := lipgloss.NewRenderer(os.Stdout)
 	baseStyle := re.NewStyle().Padding(0, 1)
-	headerStyle := baseStyle.Copy().Foreground(lipgloss.Color("252")).Bold(true)
-	selectedStyle := baseStyle.Copy().Foreground(lipgloss.Color("#01BE85")).Background(lipgloss.Color("#00432F"))
+	headerStyle := baseStyle.Foreground(lipgloss.Color("252")).Bold(true)
+	selectedStyle := baseStyle.Foreground(lipgloss.Color("#01BE85")).Background(lipgloss.Color("#00432F"))
 	typeColors := map[string]lipgloss.Color{
 		"Bug":      lipgloss.Color("#D7FF87"),
 		"Electric": lipgloss.Color("#FDFF90"),
@@ -118,13 +118,13 @@ func main() {
 				}
 
 				color := c[fmt.Sprint(rows[row-1][col])]
-				return baseStyle.Copy().Foreground(color)
+				return baseStyle.Foreground(color)
 			}
 
 			if even {
-				return baseStyle.Copy().Foreground(lipgloss.Color("245"))
+				return baseStyle.Foreground(lipgloss.Color("245"))
 			}
-			return baseStyle.Copy().Foreground(lipgloss.Color("252"))
+			return baseStyle.Foreground(lipgloss.Color("252"))
 		}).
 		Border(lipgloss.ThickBorder())
 
