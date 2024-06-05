@@ -1,5 +1,7 @@
 github.com/charmbracelet/lipgloss v0.10.1-0.20240528172826-972c013da128 h1:/I9AeUxL+sekKPqe9LgQP8WesLt8Zo40WwcZmozjk1g=
 github.com/charmbracelet/lipgloss v0.10.1-0.20240528172826-972c013da128/go.mod h1:/WJOlugg8bddqSP52FFiGXWVIfXsO+/+KzOGAT7opnw=
+github.com/charmbracelet/lipgloss v0.11.1-0.20240605151253-a724723338e3 h1:mr/tgxpMK+EUnQguGGByux9bxLQMG3at24Xs+07BBYY=
+github.com/charmbracelet/lipgloss v0.11.1-0.20240605151253-a724723338e3/go.mod h1:aA4Y43qJqCRSpm/LoDYWDsLFP9U/Z6h0O99AIjiwThc=
 github.com/charmbracelet/x/ansi v0.1.1 h1:CGAduulr6egay/YVbGc8Hsu8deMg1xZ/bkaXTPi1JDk=
 github.com/charmbracelet/x/ansi v0.1.1/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/input v0.1.0 h1:TEsGSfZYQyOtp+STIjyBq6tpRaorH0qpwZUj8DavAhQ=
