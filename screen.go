@@ -189,6 +189,8 @@ type requestPrimaryDeviceAttributesMsg struct{}
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
 		p.renderer.enterAltScreen()
+	} else {
+		p.startupOptions |= withAltScreen
 	}
 }
 
@@ -198,6 +200,8 @@ func (p *Program) EnterAltScreen() {
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
 		p.renderer.exitAltScreen()
+	} else {
+		p.startupOptions &^= withAltScreen
 	}
 }
 
@@ -206,7 +210,11 @@ func (p *Program) ExitAltScreen() {
 //
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
-	p.renderer.enableMouseCellMotion()
+	if p.renderer != nil {
+		p.renderer.enableMouseCellMotion()
+	} else {
+		p.startupOptions |= withMouseCellMotion
+	}
 }
 
 // DisableMouseCellMotion disables Mouse Cell Motion tracking. This will be
@@ -214,7 +222,11 @@ func (p *Program) EnableMouseCellMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
-	p.renderer.disableMouseCellMotion()
+	if p.renderer != nil {
+		p.renderer.disableMouseCellMotion()
+	} else {
+		p.startupOptions &^= withMouseCellMotion
+	}
 }
 
 // EnableMouseAllMotion enables mouse click, release, wheel and motion events,
@@ -223,7 +235,11 @@ func (p *Program) DisableMouseCellMotion() {
 //
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
-	p.renderer.enableMouseAllMotion()
+	if p.renderer != nil {
+		p.renderer.enableMouseAllMotion()
+	} else {
+		p.startupOptions |= withMouseAllMotion
+	}
 }
 
 // DisableMouseAllMotion disables All Motion mouse tracking. This will be
@@ -231,10 +247,20 @@ func (p *Program) EnableMouseAllMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
-	p.renderer.disableMouseAllMotion()
+	if p.renderer != nil {
+		p.renderer.disableMouseAllMotion()
+	} else {
+		p.startupOptions &^= withMouseAllMotion
+	}
 }
 
 // SetWindowTitle sets the terminal window title.
+//
+// Deprecated: Use the SetWindowTitle command instead.
 func (p *Program) SetWindowTitle(title string) {
-	p.renderer.setWindowTitle(title)
+	if p.renderer != nil {
+		p.renderer.setWindowTitle(title)
+	} else {
+		p.startupTitle = title
+	}
 }

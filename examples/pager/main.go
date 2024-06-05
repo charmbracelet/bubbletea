@@ -31,7 +31,7 @@ var (
 	infoStyle = func() lipgloss.Style {
 		b := lipgloss.RoundedBorder()
 		b.Left = "┤"
-		return titleStyle.Copy().BorderStyle(b)
+		return titleStyle.BorderStyle(b)
 	}()
 )
 

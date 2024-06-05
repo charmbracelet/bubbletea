@@ -134,6 +134,10 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
+	// startupTitle is the title that will be set on the terminal when the
+	// program starts.
+	startupTitle string
+
 	inputType inputType
 
 	ctx    *teaContext
@@ -146,14 +150,14 @@ type Program struct {
 	// where to send output, this will usually be os.Stdout.
 	output io.Writer
 	// ttyOutput is null if output is not a TTY.
-	ttyOutput           *os.File
+	ttyOutput           term.File
 	previousOutputState *term.State
 	renderer            renderer
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
 	// ttyInput is null if input is not a TTY.
-	ttyInput              *os.File
+	ttyInput              term.File
 	previousTtyInputState *term.State
 	readLoopDone          chan struct{}
 
@@ -466,7 +470,7 @@ func (p *Program) Run() (Model, error) {
 		// piped in or redirected to the application.
 		//
 		// To disable input entirely pass nil to the [WithInput] program option.
-		f, isFile := p.input.(*os.File)
+		f, isFile := p.input.(term.File)
 		if !isFile {
 			break
 		}
@@ -523,6 +527,9 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Honor program startup options.
+	if p.startupTitle != "" {
+		p.renderer.setWindowTitle(p.startupTitle)
+	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.renderer.enterAltScreen()
 	}
