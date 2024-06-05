@@ -41,6 +41,9 @@ type Context interface {
 	// ColorProfile returns the terminal's color profile.
 	ColorProfile() lipgloss.Profile
 
+	// WindowSize returns the terminal's current size.
+	WindowSize() (width, height int)
+
 	// what else?
 }
 
@@ -55,6 +58,10 @@ var (
 	// ContextKeyKittyFlags is a key for storing the terminal's Kitty flags in a
 	// Context.
 	ContextKeyKittyFlags = &ContextKey{"kitty-flags"}
+
+	// ContextKeyWindowSize is a key for storing the terminal's window size in
+	// a Context.
+	ContextKeyWindowSize = &ContextKey{"window-size"}
 )
 
 type teaContext struct {
@@ -121,4 +128,11 @@ func (c *teaContext) NewStyle() (s lipgloss.Style) {
 
 func (c *teaContext) ColorProfile() lipgloss.Profile {
 	return c.profile
+}
+
+func (c *teaContext) WindowSize() (width, height int) {
+	if s, ok := c.Value(ContextKeyWindowSize).(WindowSizeMsg); ok {
+		return s.Width, s.Height
+	}
+	return 0, 0
 }

@@ -337,6 +337,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case QuitMsg:
 				return model, nil
 
+			case WindowSizeMsg:
+				p.ctx.SetValue(ContextKeyWindowSize, msg)
+
+			case KittyKeyboardMsg:
+				p.ctx.SetValue(ContextKeyKittyFlags, int(msg))
+
 			case BackgroundColorMsg:
 				p.handleContextMessages(msg)
 
