@@ -407,6 +407,7 @@ For some Bubble Tea programs in production, see:
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
 * [tgpt](https://github.com/aandrew-me/tgpt): conversational AI for the CLI; no API keys necessary
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
+* [tofui](https://github.com/treethought/tofui): a TUI client for the farcaster social network
 * [trainer](https://github.com/rusinikita/trainer): a Go concurrency coding interview simulator with learning materials 
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
 * [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
