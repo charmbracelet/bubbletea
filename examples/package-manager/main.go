@@ -61,7 +61,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.index >= len(m.packages)-1 {
 			// Everything's been installed. We're done!
 			m.done = true
-			return m, tea.Quit
+			return m, tea.Sequence(
+				tea.Printf("%s %s", checkMark, m.packages[m.index]), // print latest success message before quitting
+				tea.Quit,
+			)
 		}
 
 		// Update progress bar
@@ -70,8 +73,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.index++
 		return m, tea.Batch(
 			progressCmd,
-			tea.Printf("%s %s", checkMark, m.packages[m.index]), // print success message above our program
-			downloadAndInstall(m.packages[m.index]),             // download the next package
+			tea.Printf("%s %s", checkMark, m.packages[m.index-1]), // print success message above our program
+			downloadAndInstall(m.packages[m.index]),               // download the next package
 		)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -95,7 +98,7 @@ func (m model) View() string {
 		return doneStyle.Render(fmt.Sprintf("Done! Installed %d packages.\n", n))
 	}
 
-	pkgCount := fmt.Sprintf(" %*d/%*d", w, m.index, w, n-1)
+	pkgCount := fmt.Sprintf(" %*d/%*d", w, m.index+1, w, n)
 
 	spin := m.spinner.View() + " "
 	prog := m.progress.View()
