@@ -8,17 +8,22 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("204")).Background(lipgloss.Color("235"))
-	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-)
-
 type model struct {
 	altscreen bool
 	quitting  bool
+	styles    *styles
+}
+
+type styles struct {
+	keywordStyle lipgloss.Style
+	helpStyle    lipgloss.Style
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.styles = &styles{
+		keywordStyle: ctx.NewStyle().Foreground(lipgloss.Color("204")).Background(lipgloss.Color("235")),
+		helpStyle:    ctx.NewStyle().Foreground(lipgloss.Color("241")),
+	}
 	return m, nil
 }
 
@@ -60,8 +65,8 @@ func (m model) View(ctx tea.Context) string {
 		mode = inlineMode
 	}
 
-	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
-		helpStyle.Render("  space: switch modes • q: exit\n")
+	return fmt.Sprintf("\n\n  You're in %s\n\n\n", m.styles.keywordStyle.Render(mode)) +
+		m.styles.helpStyle.Render("  space: switch modes • q: exit\n")
 }
 
 func main() {

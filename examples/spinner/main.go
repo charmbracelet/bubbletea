@@ -20,14 +20,15 @@ type model struct {
 	err      error
 }
 
-func initialModel() model {
-	s := spinner.New()
+func initialModel(ctx tea.Context) model {
+	s := spinner.New(ctx)
 	s.Spinner = spinner.Dot
-	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	s.Style = ctx.NewStyle().Foreground(lipgloss.Color("205"))
 	return model{spinner: s}
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m = initialModel(ctx)
 	return m, m.spinner.Tick
 }
 
@@ -48,7 +49,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	default:
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(ctx, msg)
 		return m, cmd
 	}
 }
@@ -57,7 +58,7 @@ func (m model) View(ctx tea.Context) string {
 	if m.err != nil {
 		return m.err.Error()
 	}
-	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", m.spinner.View())
+	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", m.spinner.View(ctx))
 	if m.quitting {
 		return str + "\n"
 	}
@@ -65,7 +66,7 @@ func (m model) View(ctx tea.Context) string {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(model{})
 	if _, err := p.Run(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

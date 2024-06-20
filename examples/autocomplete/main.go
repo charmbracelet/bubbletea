@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(model{})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -83,18 +83,18 @@ func (k keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{k.ShortHelp()}
 }
 
-func initialModel() model {
-	ti := textinput.New()
+func initialModel(ctx tea.Context) model {
+	ti := textinput.New(ctx)
 	ti.Placeholder = "repository"
 	ti.Prompt = "charmbracelet/"
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+	ti.PromptStyle = ctx.NewStyle().Foreground(lipgloss.Color("63"))
+	ti.Cursor.Style = ctx.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	ti.CharLimit = 50
 	ti.Width = 20
 	ti.ShowSuggestions = true
 
-	h := help.New()
+	h := help.New(ctx)
 
 	km := keymap{}
 
@@ -102,6 +102,7 @@ func initialModel() model {
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m = initialModel(ctx)
 	return m, tea.Batch(getRepos, textinput.Blink)
 }
 
@@ -121,14 +122,14 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	m.textInput, cmd = m.textInput.Update(msg)
+	m.textInput, cmd = m.textInput.Update(ctx, msg)
 	return m, cmd
 }
 
 func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"Pick a Charm™ repo:\n\n  %s\n\n%s\n\n",
-		m.textInput.View(),
+		m.textInput.View(ctx),
 		m.help.View(m.keymap),
 	)
 }

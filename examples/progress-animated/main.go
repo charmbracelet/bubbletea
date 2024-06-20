@@ -23,8 +23,6 @@ const (
 	maxWidth = 80
 )
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
-
 func main() {
 	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Oh no!", err)
@@ -35,11 +33,13 @@ func main() {
 type tickMsg time.Time
 
 type model struct {
-	progress progress.Model
+	progress  progress.Model
+	helpStyle lipgloss.Style
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	m.progress = progress.New(ctx, progress.WithDefaultGradient())
+	m.helpStyle = ctx.NewStyle().Foreground(lipgloss.Color("#626262"))
 	return m, tickCmd()
 }
 
@@ -80,7 +80,7 @@ func (m model) View(ctx tea.Context) string {
 	pad := strings.Repeat(" ", padding)
 	return "\n" +
 		pad + m.progress.View(ctx) + "\n\n" +
-		pad + helpStyle("Press any key to quit")
+		pad + m.helpStyle.Render("Press any key to quit")
 }
 
 func tickCmd() tea.Cmd {

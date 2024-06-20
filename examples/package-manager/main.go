@@ -21,21 +21,23 @@ type model struct {
 	spinner  spinner.Model
 	progress progress.Model
 	done     bool
+	styles   *styles
 }
 
-var (
-	currentPkgNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
-	doneStyle           = lipgloss.NewStyle().Margin(1, 2)
-	checkMark           = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓")
-)
+type styles struct {
+	currentPkgNameStyle lipgloss.Style
+	doneStyle           lipgloss.Style
+	checkMark           lipgloss.Style
+}
 
-func newModel() model {
+func newModel(ctx tea.Context) model {
 	p := progress.New(
+		ctx,
 		progress.WithDefaultGradient(),
 		progress.WithWidth(40),
 		progress.WithoutPercentage(),
 	)
-	s := spinner.New()
+	s := spinner.New(ctx)
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	return model{
 		packages: getPackages(),
@@ -45,6 +47,13 @@ func newModel() model {
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m = newModel(ctx)
+	m.styles = &styles{
+		currentPkgNameStyle: ctx.NewStyle().Foreground(lipgloss.Color("211")),
+		doneStyle:           ctx.NewStyle().Margin(1, 2),
+		checkMark:           ctx.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓"),
+	}
+
 	return m, tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
 }
 
@@ -70,15 +79,15 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.index++
 		return m, tea.Batch(
 			progressCmd,
-			tea.Printf("%s %s", checkMark, m.packages[m.index]), // print success message above our program
-			downloadAndInstall(m.packages[m.index]),             // download the next package
+			tea.Printf("%s %s", m.styles.checkMark, m.packages[m.index]), // print success message above our program
+			downloadAndInstall(m.packages[m.index]),                      // download the next package
 		)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(ctx, msg)
 		return m, cmd
 	case progress.FrameMsg:
-		newModel, cmd := m.progress.Update(msg)
+		newModel, cmd := m.progress.Update(ctx, msg)
 		if newModel, ok := newModel.(progress.Model); ok {
 			m.progress = newModel
 		}
@@ -92,16 +101,16 @@ func (m model) View(ctx tea.Context) string {
 	w := lipgloss.Width(fmt.Sprintf("%d", n))
 
 	if m.done {
-		return doneStyle.Render(fmt.Sprintf("Done! Installed %d packages.\n", n))
+		return m.styles.doneStyle.Render(fmt.Sprintf("Done! Installed %d packages.\n", n))
 	}
 
 	pkgCount := fmt.Sprintf(" %*d/%*d", w, m.index, w, n-1)
 
-	spin := m.spinner.View() + " "
-	prog := m.progress.View()
+	spin := m.spinner.View(ctx) + " "
+	prog := m.progress.View(ctx)
 	cellsAvail := max(0, m.width-lipgloss.Width(spin+prog+pkgCount))
 
-	pkgName := currentPkgNameStyle.Render(m.packages[m.index])
+	pkgName := m.styles.currentPkgNameStyle.Render(m.packages[m.index])
 	info := lipgloss.NewStyle().MaxWidth(cellsAvail).Render("Installing " + pkgName)
 
 	cellsRemaining := max(0, m.width-lipgloss.Width(spin+info+prog+pkgCount))
@@ -129,7 +138,7 @@ func max(a, b int) int {
 }
 
 func main() {
-	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

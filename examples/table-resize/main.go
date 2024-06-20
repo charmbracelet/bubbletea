@@ -13,30 +13,10 @@ type model struct {
 	table *table.Table
 }
 
-func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) { return m, nil }
-
-func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.table = m.table.Width(msg.Width)
-		m.table = m.table.Height(msg.Height)
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
-			return m, tea.Quit
-		case "enter":
-		}
-	}
-	return m, cmd
-}
-
-func (m model) View(ctx tea.Context) string {
-	return "\n" + m.table.String() + "\n"
-}
-
-func main() {
-	baseStyle := lipgloss.NewStyle().Padding(0, 1)
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	// create table.
+	// use ctx.NewStyle instead of lipgloss.NewStyle.
+	baseStyle := ctx.NewStyle().Padding(0, 1)
 	headerStyle := baseStyle.Copy().Foreground(lipgloss.Color("252")).Bold(true)
 	selectedStyle := baseStyle.Copy().Foreground(lipgloss.Color("#01BE85")).Background(lipgloss.Color("#00432F"))
 	typeColors := map[string]lipgloss.Color{
@@ -93,11 +73,11 @@ func main() {
 		{"28", "Sandslash", "Ground", "", "サンドパン", "Sandpan"},
 	}
 
-	t := table.New().
+	m.table = table.New().
 		Headers(headers...).
 		Rows(rows...).
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("238"))).
+		BorderStyle(ctx.NewStyle().Foreground(lipgloss.Color("238"))).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			if row == 0 {
 				return headerStyle
@@ -126,8 +106,32 @@ func main() {
 			return baseStyle.Copy().Foreground(lipgloss.Color("252"))
 		}).
 		Border(lipgloss.ThickBorder())
+	return m, nil
+}
 
-	m := model{t}
+func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.table = m.table.Width(msg.Width)
+		m.table = m.table.Height(msg.Height)
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, tea.Quit
+		case "enter":
+		}
+	}
+	return m, cmd
+}
+
+func (m model) View(ctx tea.Context) string {
+	return "\n" + m.table.String() + "\n"
+}
+
+func main() {
+	// Program starts with an empty model, we will populate it on Init.
+	m := model{}
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

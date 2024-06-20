@@ -9,29 +9,27 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	// Available spinners
-	spinners = []spinner.Spinner{
-		spinner.Line,
-		spinner.Dot,
-		spinner.MiniDot,
-		spinner.Jump,
-		spinner.Pulse,
-		spinner.Points,
-		spinner.Globe,
-		spinner.Moon,
-		spinner.Monkey,
-	}
+// Available spinners
+var spinners = []spinner.Spinner{
+	spinner.Line,
+	spinner.Dot,
+	spinner.MiniDot,
+	spinner.Jump,
+	spinner.Pulse,
+	spinner.Points,
+	spinner.Globe,
+	spinner.Moon,
+	spinner.Monkey,
+}
 
-	textStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Render
-	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
-	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
-)
+type styles struct {
+	textStyle    lipgloss.Style
+	spinnerStyle lipgloss.Style
+	helpStyle    lipgloss.Style
+}
 
 func main() {
 	m := model{}
-	m.resetSpinner()
-
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
@@ -41,9 +39,18 @@ func main() {
 type model struct {
 	index   int
 	spinner spinner.Model
+	styles  *styles
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.styles = &styles{
+		textStyle:    ctx.NewStyle().Foreground(lipgloss.Color("252")),
+		spinnerStyle: ctx.NewStyle().Foreground(lipgloss.Color("69")),
+		helpStyle:    ctx.NewStyle().Foreground(lipgloss.Color("241")),
+	}
+
+	m.resetSpinner(ctx)
+
 	return m, m.spinner.Tick
 }
 
@@ -58,30 +65,30 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.index < 0 {
 				m.index = len(spinners) - 1
 			}
-			m.resetSpinner()
+			m.resetSpinner(ctx)
 			return m, m.spinner.Tick
 		case "l", "right":
 			m.index++
 			if m.index >= len(spinners) {
 				m.index = 0
 			}
-			m.resetSpinner()
+			m.resetSpinner(ctx)
 			return m, m.spinner.Tick
 		default:
 			return m, nil
 		}
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(ctx, msg)
 		return m, cmd
 	default:
 		return m, nil
 	}
 }
 
-func (m *model) resetSpinner() {
-	m.spinner = spinner.New()
-	m.spinner.Style = spinnerStyle
+func (m *model) resetSpinner(ctx tea.Context) {
+	m.spinner = spinner.New(ctx)
+	m.spinner.Style = m.styles.spinnerStyle
 	m.spinner.Spinner = spinners[m.index]
 }
 
@@ -94,7 +101,7 @@ func (m model) View(ctx tea.Context) (s string) {
 		gap = " "
 	}
 
-	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
-	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
+	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(ctx), gap, m.styles.textStyle.Render("Spinning..."))
+	s += m.styles.helpStyle.Render("h/l, ←/→: change spinner • q: exit\n")
 	return
 }
