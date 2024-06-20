@@ -25,7 +25,7 @@ func initialModel() model {
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
-	return tea.SetWindowTitle("Grocery List")
+	return m, tea.SetWindowTitle("Grocery List")
 }
 
 func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {

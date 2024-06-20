@@ -36,7 +36,7 @@ type errMsg struct{ err error }
 func (e errMsg) Error() string { return e.err.Error() }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
-	return checkServer
+	return m, checkServer
 }
 
 func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {

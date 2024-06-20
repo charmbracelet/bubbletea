@@ -93,7 +93,7 @@ the time is right.
 
 ```go
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
-    return checkServer
+    return m, checkServer
 }
 ```
 

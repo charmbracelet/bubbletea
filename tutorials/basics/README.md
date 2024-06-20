@@ -78,7 +78,7 @@ we'll just return `nil`, which translates to "no command."
 ```go
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
     // Just return `nil`, which means "no I/O right now, please."
-    return nil
+    return m, nil
 }
 ```
 
