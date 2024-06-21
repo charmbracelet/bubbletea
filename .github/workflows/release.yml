@@ -1,0 +1,29 @@
+name: goreleaser
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+concurrency:
+  group: goreleaser
+  cancel-in-progress: true
+
+jobs:
+  goreleaser:
+    uses: charmbracelet/meta/.github/workflows/goreleaser.yml@main
+    secrets:
+      docker_username: ${{ secrets.DOCKERHUB_USERNAME }}
+      docker_token: ${{ secrets.DOCKERHUB_TOKEN }}
+      gh_pat: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      goreleaser_key: ${{ secrets.GORELEASER_KEY }}
+      twitter_consumer_key: ${{ secrets.TWITTER_CONSUMER_KEY }}
+      twitter_consumer_secret: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+      twitter_access_token: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+      twitter_access_token_secret: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+      mastodon_client_id: ${{ secrets.MASTODON_CLIENT_ID }}
+      mastodon_client_secret: ${{ secrets.MASTODON_CLIENT_SECRET }}
+      mastodon_access_token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+      discord_webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+      discord_webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
