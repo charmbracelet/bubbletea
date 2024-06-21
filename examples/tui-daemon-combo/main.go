@@ -15,11 +15,6 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-var (
-	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
-	mainStyle = lipgloss.NewStyle().MarginLeft(1)
-)
-
 func main() {
 	var (
 		daemonMode bool
@@ -44,7 +39,7 @@ func main() {
 		log.SetOutput(io.Discard)
 	}
 
-	p := tea.NewProgram(newModel(), opts...)
+	p := tea.NewProgram(model{}, opts...)
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
@@ -57,24 +52,29 @@ type result struct {
 }
 
 type model struct {
-	spinner  spinner.Model
-	results  []result
-	quitting bool
+	spinner   spinner.Model
+	results   []result
+	quitting  bool
+	helpStyle lipgloss.Style
+	mainStyle lipgloss.Style
 }
 
-func newModel() model {
+func newModel(ctx tea.Context) model {
 	const showLastResults = 5
 
-	sp := spinner.New()
-	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("206"))
+	sp := spinner.New(ctx)
+	sp.Style = ctx.NewStyle().Foreground(lipgloss.Color("206"))
 
 	return model{
-		spinner: sp,
-		results: make([]result, showLastResults),
+		spinner:   sp,
+		results:   make([]result, showLastResults),
+		helpStyle: ctx.NewStyle().Foreground(lipgloss.Color("241")),
+		mainStyle: ctx.NewStyle().MarginLeft(1),
 	}
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m = newModel(ctx)
 	log.Println("Starting work...")
 	return m, tea.Batch(
 		m.spinner.Tick,
@@ -89,7 +89,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(ctx, msg)
 		return m, cmd
 	case processFinishedMsg:
 		d := time.Duration(msg)
@@ -104,7 +104,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View(ctx tea.Context) string {
 	s := "\n" +
-		m.spinner.View() + " Doing some work...\n\n"
+		m.spinner.View(ctx) + " Doing some work...\n\n"
 
 	for _, res := range m.results {
 		if res.duration == 0 {
@@ -114,13 +114,13 @@ func (m model) View(ctx tea.Context) string {
 		}
 	}
 
-	s += helpStyle("\nPress any key to exit\n")
+	s += m.helpStyle.Render("\nPress any key to exit\n")
 
 	if m.quitting {
 		s += "\n"
 	}
 
-	return mainStyle.Render(s)
+	return m.mainStyle.Render(s)
 }
 
 // processFinishedMsg is sent when a pretend process completes.

@@ -72,16 +72,17 @@ type model struct {
 	quitting   bool
 }
 
-func newModel() model {
+func newModel(ctx tea.Context) model {
 	return model{
 		keys:       keys,
-		help:       help.New(),
-		inputStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FF75B7")),
+		help:       help.New(ctx),
+		inputStyle: ctx.NewStyle().Foreground(lipgloss.Color("#FF75B7")),
 	}
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
-	return nil
+	m = newModel(ctx)
+	return m, nil
 }
 
 func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -140,7 +141,7 @@ func main() {
 		defer f.Close() // nolint:errcheck
 	}
 
-	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Printf("Could not start program :(\n%v\n", err)
 		os.Exit(1)
 	}

@@ -50,16 +50,15 @@ Some famous people that have eaten here lately:
 Bon appétit!
 `
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
-
 type example struct {
-	viewport viewport.Model
+	viewport  viewport.Model
+	helpStyle lipgloss.Style
 }
 
-func newExample() (*example, error) {
+func newExample(ctx tea.Context) (example, error) {
 	const width = 78
 
-	vp := viewport.New(width, 20)
+	vp := viewport.New(ctx, width, 20)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
@@ -70,22 +69,29 @@ func newExample() (*example, error) {
 		glamour.WithWordWrap(width),
 	)
 	if err != nil {
-		return nil, err
+		return example{}, err
 	}
 
 	str, err := renderer.Render(content)
 	if err != nil {
-		return nil, err
+		return example{}, err
 	}
 
 	vp.SetContent(str)
 
-	return &example{
+	return example{
 		viewport: vp,
 	}, nil
 }
 
 func (e example) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	var err error
+	e, err = newExample(ctx)
+	if err != nil {
+		fmt.Println("Could not initialize Bubble Tea model:", err)
+		os.Exit(1)
+	}
+	e.helpStyle = ctx.NewStyle().Foreground(lipgloss.Color("241"))
 	return e, nil
 }
 
@@ -97,7 +103,7 @@ func (e example) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 			return e, tea.Quit
 		default:
 			var cmd tea.Cmd
-			e.viewport, cmd = e.viewport.Update(msg)
+			e.viewport, cmd = e.viewport.Update(ctx, msg)
 			return e, cmd
 		}
 	default:
@@ -106,21 +112,15 @@ func (e example) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (e example) View(ctx tea.Context) string {
-	return e.viewport.View() + e.helpView()
+	return e.viewport.View(ctx) + e.helpView()
 }
 
 func (e example) helpView() string {
-	return helpStyle("\n  ↑/↓: Navigate • q: Quit\n")
+	return e.helpStyle.Render("\n  ↑/↓: Navigate • q: Quit\n")
 }
 
 func main() {
-	model, err := newExample()
-	if err != nil {
-		fmt.Println("Could not initialize Bubble Tea model:", err)
-		os.Exit(1)
-	}
-
-	if _, err := tea.NewProgram(model).Run(); err != nil {
+	if _, err := tea.NewProgram(example{}).Run(); err != nil {
 		fmt.Println("Bummer, there's been an error:", err)
 		os.Exit(1)
 	}

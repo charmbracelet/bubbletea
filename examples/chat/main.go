@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(model{})
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
@@ -34,8 +34,8 @@ type model struct {
 	err         error
 }
 
-func initialModel() model {
-	ta := textarea.New()
+func initialModel(ctx tea.Context) model {
+	ta := textarea.New(ctx)
 	ta.Placeholder = "Send a message..."
 	ta.Focus()
 
@@ -46,11 +46,11 @@ func initialModel() model {
 	ta.SetHeight(3)
 
 	// Remove cursor line styling
-	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	ta.FocusedStyle.CursorLine = ctx.NewStyle()
 
 	ta.ShowLineNumbers = false
 
-	vp := viewport.New(30, 5)
+	vp := viewport.New(ctx, 30, 5)
 	vp.SetContent(`Welcome to the chat room!
 Type a message and press Enter to send.`)
 
@@ -60,12 +60,13 @@ Type a message and press Enter to send.`)
 		textarea:    ta,
 		messages:    []string{},
 		viewport:    vp,
-		senderStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("5")),
+		senderStyle: ctx.NewStyle().Foreground(lipgloss.Color("5")),
 		err:         nil,
 	}
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m = initialModel(ctx)
 	return m, textarea.Blink
 }
 
@@ -75,8 +76,8 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		vpCmd tea.Cmd
 	)
 
-	m.textarea, tiCmd = m.textarea.Update(msg)
-	m.viewport, vpCmd = m.viewport.Update(msg)
+	m.textarea, tiCmd = m.textarea.Update(ctx, msg)
+	m.viewport, vpCmd = m.viewport.Update(ctx, msg)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -103,7 +104,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"%s\n\n%s",
-		m.viewport.View(),
-		m.textarea.View(),
+		m.viewport.View(ctx),
+		m.textarea.View(ctx),
 	) + "\n\n"
 }
