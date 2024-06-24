@@ -652,15 +652,18 @@ func (p *Program) shutdown(kill bool) {
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
-	p.cancelReader.Cancel()
+	if p.cancelReader != nil {
+		p.cancelReader.Cancel()
+	}
+
 	p.waitForReadLoop()
 
 	if p.renderer != nil {
 		p.renderer.stop()
+		p.altScreenWasActive = p.renderer.altScreen()
+		p.bpWasActive = p.renderer.bracketedPasteActive()
 	}
 
-	p.altScreenWasActive = p.renderer.altScreen()
-	p.bpWasActive = p.renderer.bracketedPasteActive()
 	return p.restoreTerminalState()
 }
 
