@@ -79,9 +79,9 @@ func (m model) View(ctx tea.Context) string {
 		var style lipgloss.Style
 		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == m.activeTab
 		if isActive {
-			style = m.styles.activeTabStyle.Copy()
+			style = m.styles.activeTabStyle
 		} else {
-			style = m.styles.inactiveTabStyle.Copy()
+			style = m.styles.inactiveTabStyle
 		}
 		border, _, _, _, _ := style.GetBorder()
 		if isFirst && isActive {
