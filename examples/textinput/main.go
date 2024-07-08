@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(model{})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -27,20 +27,14 @@ type model struct {
 	err       error
 }
 
-func initialModel() model {
-	ti := textinput.New()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	ti := textinput.New(ctx)
 	ti.Placeholder = "Pikachu"
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
 
-	return model{
-		textInput: ti,
-		err:       nil,
-	}
-}
-
-func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.textInput = ti
 	return m, textinput.Blink
 }
 
@@ -60,14 +54,14 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.textInput, cmd = m.textInput.Update(msg)
+	m.textInput, cmd = m.textInput.Update(ctx, msg)
 	return m, cmd
 }
 
 func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"What’s your favorite Pokémon?\n\n%s\n\n%s",
-		m.textInput.View(),
+		m.textInput.View(ctx),
 		"(esc to quit)",
 	) + "\n"
 }

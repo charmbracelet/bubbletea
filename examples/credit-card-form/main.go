@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(model{})
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
@@ -95,9 +95,9 @@ func cvvValidator(s string) error {
 	return err
 }
 
-func initialModel() model {
+func initialModel(ctx tea.Context) model {
 	var inputs []textinput.Model = make([]textinput.Model, 3)
-	inputs[ccn] = textinput.New()
+	inputs[ccn] = textinput.New(ctx)
 	inputs[ccn].Placeholder = "4505 **** **** 1234"
 	inputs[ccn].Focus()
 	inputs[ccn].CharLimit = 20
@@ -105,14 +105,14 @@ func initialModel() model {
 	inputs[ccn].Prompt = ""
 	inputs[ccn].Validate = ccnValidator
 
-	inputs[exp] = textinput.New()
+	inputs[exp] = textinput.New(ctx)
 	inputs[exp].Placeholder = "MM/YY "
 	inputs[exp].CharLimit = 5
 	inputs[exp].Width = 5
 	inputs[exp].Prompt = ""
 	inputs[exp].Validate = expValidator
 
-	inputs[cvv] = textinput.New()
+	inputs[cvv] = textinput.New(ctx)
 	inputs[cvv].Placeholder = "XXX"
 	inputs[cvv].CharLimit = 3
 	inputs[cvv].Width = 5
@@ -127,6 +127,7 @@ func initialModel() model {
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m = initialModel(ctx)
 	return m, textinput.Blink
 }
 
@@ -160,7 +161,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	for i := range m.inputs {
-		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
+		m.inputs[i], cmds[i] = m.inputs[i].Update(ctx, msg)
 	}
 	return m, tea.Batch(cmds...)
 }
@@ -178,11 +179,11 @@ func (m model) View(ctx tea.Context) string {
  %s
 `,
 		inputStyle.Width(30).Render("Card Number"),
-		m.inputs[ccn].View(),
+		m.inputs[ccn].View(ctx),
 		inputStyle.Width(6).Render("EXP"),
 		inputStyle.Width(6).Render("CVV"),
-		m.inputs[exp].View(),
-		m.inputs[cvv].View(),
+		m.inputs[exp].View(ctx),
+		m.inputs[cvv].View(ctx),
 		continueStyle.Render("Continue ->"),
 	) + "\n"
 }

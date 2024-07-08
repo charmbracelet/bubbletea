@@ -65,16 +65,12 @@ type mainModel struct {
 	index   int
 }
 
-func newModel(timeout time.Duration) mainModel {
-	m := mainModel{state: timerView}
-	m.timer = timer.New(timeout)
-	m.spinner = spinner.New()
-	return m
-}
-
 func (m mainModel) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.timer = timer.New(ctx, defaultTime)
+	m.spinner = spinner.New(ctx)
+
 	// start the timer and spinner on program start
-	return m, tea.Batch(m.timer.Init(), m.spinner.Tick)
+	return m, tea.Batch(m.timer.Init(ctx), m.spinner.Tick)
 }
 
 func (m mainModel) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -93,28 +89,28 @@ func (m mainModel) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "n":
 			if m.state == timerView {
-				m.timer = timer.New(defaultTime)
-				cmds = append(cmds, m.timer.Init())
+				m.timer = timer.New(ctx, defaultTime)
+				cmds = append(cmds, m.timer.Init(ctx))
 			} else {
 				m.Next()
-				m.resetSpinner()
+				m.resetSpinner(ctx)
 				cmds = append(cmds, m.spinner.Tick)
 			}
 		}
 		switch m.state {
 		// update whichever model is focused
 		case spinnerView:
-			m.spinner, cmd = m.spinner.Update(msg)
+			m.spinner, cmd = m.spinner.Update(ctx, msg)
 			cmds = append(cmds, cmd)
 		default:
-			m.timer, cmd = m.timer.Update(msg)
+			m.timer, cmd = m.timer.Update(ctx, msg)
 			cmds = append(cmds, cmd)
 		}
 	case spinner.TickMsg:
-		m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(ctx, msg)
 		cmds = append(cmds, cmd)
 	case timer.TickMsg:
-		m.timer, cmd = m.timer.Update(msg)
+		m.timer, cmd = m.timer.Update(ctx, msg)
 		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
@@ -124,9 +120,9 @@ func (m mainModel) View(ctx tea.Context) string {
 	var s string
 	model := m.currentFocusedModel()
 	if m.state == timerView {
-		s += lipgloss.JoinHorizontal(lipgloss.Top, focusedModelStyle.Render(fmt.Sprintf("%4s", m.timer.View())), modelStyle.Render(m.spinner.View()))
+		s += lipgloss.JoinHorizontal(lipgloss.Top, focusedModelStyle.Render(fmt.Sprintf("%4s", m.timer.View(ctx))), modelStyle.Render(m.spinner.View(ctx)))
 	} else {
-		s += lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(fmt.Sprintf("%4s", m.timer.View())), focusedModelStyle.Render(m.spinner.View()))
+		s += lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(fmt.Sprintf("%4s", m.timer.View(ctx))), focusedModelStyle.Render(m.spinner.View(ctx)))
 	}
 	s += helpStyle.Render(fmt.Sprintf("\ntab: focus next • n: new %s • q: exit\n", model))
 	return s
@@ -147,14 +143,14 @@ func (m *mainModel) Next() {
 	}
 }
 
-func (m *mainModel) resetSpinner() {
-	m.spinner = spinner.New()
+func (m *mainModel) resetSpinner(ctx tea.Context) {
+	m.spinner = spinner.New(ctx)
 	m.spinner.Style = spinnerStyle
 	m.spinner.Spinner = spinners[m.index]
 }
 
 func main() {
-	p := tea.NewProgram(newModel(defaultTime))
+	p := tea.NewProgram(mainModel{state: timerView})
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
