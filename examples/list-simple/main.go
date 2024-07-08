@@ -14,13 +14,16 @@ import (
 const listHeight = 14
 
 var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
+
+type styles struct {
+	titleStyle      lipgloss.Style
+	paginationStyle lipgloss.Style
+	helpStyle       lipgloss.Style
+	quitTextStyle   lipgloss.Style
+}
 
 type item string
 
@@ -28,9 +31,9 @@ func (i item) FilterValue() string { return "" }
 
 type itemDelegate struct{}
 
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+func (d itemDelegate) Height() int                                            { return 1 }
+func (d itemDelegate) Spacing() int                                           { return 0 }
+func (d itemDelegate) Update(_ tea.Context, _ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(item)
 	if !ok {
@@ -51,11 +54,44 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 type model struct {
 	list     list.Model
+	styles   *styles
 	choice   string
 	quitting bool
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.styles = &styles{
+		titleStyle:      ctx.NewStyle().MarginLeft(2),
+		paginationStyle: list.DefaultStyles(ctx).PaginationStyle.PaddingLeft(4),
+		helpStyle:       list.DefaultStyles(ctx).HelpStyle.PaddingLeft(4).PaddingBottom(1),
+		quitTextStyle:   ctx.NewStyle().Margin(1, 0, 2, 4),
+	}
+
+	items := []list.Item{
+		item("Ramen"),
+		item("Tomato Soup"),
+		item("Hamburgers"),
+		item("Cheeseburgers"),
+		item("Currywurst"),
+		item("Okonomiyaki"),
+		item("Pasta"),
+		item("Fillet Mignon"),
+		item("Caviar"),
+		item("Just Wine"),
+	}
+
+	const defaultWidth = 20
+
+	l := list.New(ctx, items, itemDelegate{}, defaultWidth, listHeight)
+	l.Title = "What do you want for dinner?"
+	l.SetShowStatusBar(false)
+	l.SetFilteringEnabled(false)
+	l.Styles.Title = m.styles.titleStyle
+	l.Styles.PaginationStyle = m.styles.paginationStyle
+	l.Styles.HelpStyle = m.styles.helpStyle
+
+	m.list = l
+
 	return m, nil
 }
 
@@ -81,47 +117,22 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
+	m.list, cmd = m.list.Update(ctx, msg)
 	return m, cmd
 }
 
 func (m model) View(ctx tea.Context) string {
 	if m.choice != "" {
-		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
+		return m.styles.quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
 	}
 	if m.quitting {
-		return quitTextStyle.Render("Not hungry? That’s cool.")
+		return m.styles.quitTextStyle.Render("Not hungry? That’s cool.")
 	}
-	return "\n" + m.list.View()
+	return "\n" + m.list.View(ctx)
 }
 
 func main() {
-	items := []list.Item{
-		item("Ramen"),
-		item("Tomato Soup"),
-		item("Hamburgers"),
-		item("Cheeseburgers"),
-		item("Currywurst"),
-		item("Okonomiyaki"),
-		item("Pasta"),
-		item("Fillet Mignon"),
-		item("Caviar"),
-		item("Just Wine"),
-	}
-
-	const defaultWidth = 20
-
-	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
-	l.Title = "What do you want for dinner?"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.Styles.Title = titleStyle
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
-
-	m := model{list: l}
-
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
