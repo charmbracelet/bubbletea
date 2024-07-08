@@ -45,6 +45,7 @@ type model struct {
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.spinner = spinner.New(ctx)
 	return m, tea.Batch(
 		m.spinner.Tick,
 		listenForActivity(m.sub), // generate activity
@@ -62,7 +63,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, waitForActivity(m.sub) // wait for next event
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(ctx, msg)
 		return m, cmd
 	default:
 		return m, nil
@@ -70,7 +71,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View(ctx tea.Context) string {
-	s := fmt.Sprintf("\n %s Events received: %d\n\n Press any key to exit\n", m.spinner.View(), m.responses)
+	s := fmt.Sprintf("\n %s Events received: %d\n\n Press any key to exit\n", m.spinner.View(ctx), m.responses)
 	if m.quitting {
 		s += "\n"
 	}
@@ -79,8 +80,7 @@ func (m model) View(ctx tea.Context) string {
 
 func main() {
 	p := tea.NewProgram(model{
-		sub:     make(chan struct{}),
-		spinner: spinner.New(),
+		sub: make(chan struct{}),
 	})
 
 	if _, err := p.Run(); err != nil {

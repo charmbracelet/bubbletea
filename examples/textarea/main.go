@@ -12,8 +12,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
-
+	p := tea.NewProgram(model{})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -26,18 +25,11 @@ type model struct {
 	err      error
 }
 
-func initialModel() model {
-	ti := textarea.New()
-	ti.Placeholder = "Once upon a time..."
-	ti.Focus()
-
-	return model{
-		textarea: ti,
-		err:      nil,
-	}
-}
-
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	m.textarea = textarea.New(ctx)
+	m.textarea.Placeholder = "Once upon a time..."
+	m.textarea.Focus()
+
 	return m, textarea.Blink
 }
 
@@ -67,7 +59,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	m.textarea, cmd = m.textarea.Update(msg)
+	m.textarea, cmd = m.textarea.Update(ctx, msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -75,7 +67,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"Tell me a story.\n\n%s\n\n%s",
-		m.textarea.View(),
+		m.textarea.View(ctx),
 		"(ctrl+c to quit)",
 	) + "\n\n"
 }

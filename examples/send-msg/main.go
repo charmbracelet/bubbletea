@@ -16,16 +16,13 @@ import (
 )
 
 var (
-	spinnerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Margin(1, 0)
-	dotStyle      = helpStyle.Copy().UnsetMargins()
-	durationStyle = dotStyle.Copy()
-	appStyle      = lipgloss.NewStyle().Margin(1, 2, 0, 2)
+	dotStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	durationStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
 type resultMsg struct {
-	duration time.Duration
 	food     string
+	duration time.Duration
 }
 
 func (r resultMsg) String() string {
@@ -37,23 +34,31 @@ func (r resultMsg) String() string {
 }
 
 type model struct {
-	spinner  spinner.Model
 	results  []resultMsg
+	spinner  spinner.Model
+	styles   *styles
 	quitting bool
 }
 
-func newModel() model {
-	const numLastResults = 5
-	s := spinner.New()
-	s.Style = spinnerStyle
-	return model{
-		spinner: s,
-		results: make([]resultMsg, numLastResults),
-	}
+type styles struct {
+	spinnerStyle lipgloss.Style
+	helpStyle    lipgloss.Style
+	appStyle     lipgloss.Style
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
-	return m.spinner.Tick
+	m.styles = &styles{
+		spinnerStyle: ctx.NewStyle().Foreground(lipgloss.Color("63")),
+		helpStyle:    ctx.NewStyle().Foreground(lipgloss.Color("241")).Margin(1, 0),
+		appStyle:     ctx.NewStyle().Margin(1, 2, 0, 2),
+	}
+
+	const numLastResults = 5
+	m.spinner = spinner.New(ctx)
+	m.spinner.Style = m.styles.spinnerStyle
+	m.results = make([]resultMsg, numLastResults)
+
+	return m, m.spinner.Tick
 }
 
 func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -66,7 +71,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
+		m.spinner, cmd = m.spinner.Update(ctx, msg)
 		return m, cmd
 	default:
 		return m, nil
@@ -79,7 +84,7 @@ func (m model) View(ctx tea.Context) string {
 	if m.quitting {
 		s += "That’s all for today!"
 	} else {
-		s += m.spinner.View() + " Eating food..."
+		s += m.spinner.View(ctx) + " Eating food..."
 	}
 
 	s += "\n\n"
@@ -89,18 +94,18 @@ func (m model) View(ctx tea.Context) string {
 	}
 
 	if !m.quitting {
-		s += helpStyle.Render("Press any key to exit")
+		s += m.styles.helpStyle.Render("Press any key to exit")
 	}
 
 	if m.quitting {
 		s += "\n"
 	}
 
-	return appStyle.Render(s)
+	return m.styles.appStyle.Render(s)
 }
 
 func main() {
-	p := tea.NewProgram(newModel())
+	p := tea.NewProgram(model{})
 
 	// Simulate activity
 	go func() {

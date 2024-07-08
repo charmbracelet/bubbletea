@@ -14,9 +14,9 @@ import (
 const timeout = time.Second * 5
 
 type model struct {
-	timer    timer.Model
-	keymap   keymap
 	help     help.Model
+	keymap   keymap
+	timer    timer.Model
 	quitting bool
 }
 
@@ -28,19 +28,21 @@ type keymap struct {
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
-	return m, m.timer.Init()
+	m.timer = timer.NewWithInterval(ctx, timeout, time.Millisecond)
+	m.help = help.New(ctx)
+	return m, m.timer.Init(ctx)
 }
 
 func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case timer.TickMsg:
 		var cmd tea.Cmd
-		m.timer, cmd = m.timer.Update(msg)
+		m.timer, cmd = m.timer.Update(ctx, msg)
 		return m, cmd
 
 	case timer.StartStopMsg:
 		var cmd tea.Cmd
-		m.timer, cmd = m.timer.Update(msg)
+		m.timer, cmd = m.timer.Update(ctx, msg)
 		m.keymap.stop.SetEnabled(m.timer.Running())
 		m.keymap.start.SetEnabled(!m.timer.Running())
 		return m, cmd
@@ -77,7 +79,7 @@ func (m model) View(ctx tea.Context) string {
 	// For a more detailed timer view you could read m.timer.Timeout to get
 	// the remaining time as a time.Duration and skip calling m.timer.View()
 	// entirely.
-	s := m.timer.View()
+	s := m.timer.View(ctx)
 
 	if m.timer.Timedout() {
 		s = "All done!"
@@ -92,7 +94,6 @@ func (m model) View(ctx tea.Context) string {
 
 func main() {
 	m := model{
-		timer: timer.NewWithInterval(timeout, time.Millisecond),
 		keymap: keymap{
 			start: key.NewBinding(
 				key.WithKeys("s"),
@@ -111,7 +112,6 @@ func main() {
 				key.WithHelp("q", "quit"),
 			),
 		},
-		help: help.New(),
 	}
 	m.keymap.start.SetEnabled(false)
 

@@ -79,7 +79,7 @@ type model struct {
 	delegateKeys  *delegateKeyMap
 }
 
-func newModel() model {
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	var (
 		itemGenerator randomItemGenerator
 		delegateKeys  = newDelegateKeyMap()
@@ -94,8 +94,8 @@ func newModel() model {
 	}
 
 	// Setup list
-	delegate := newItemDelegate(delegateKeys)
-	groceryList := list.New(items, delegate, 0, 0)
+	delegate := newItemDelegate(ctx, delegateKeys)
+	groceryList := list.New(ctx, items, delegate, 0, 0)
 	groceryList.Title = "Groceries"
 	groceryList.Styles.Title = titleStyle
 	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
@@ -109,15 +109,12 @@ func newModel() model {
 		}
 	}
 
-	return model{
+	m = model{
 		list:          groceryList,
 		keys:          listKeys,
 		delegateKeys:  delegateKeys,
 		itemGenerator: &itemGenerator,
 	}
-}
-
-func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
@@ -169,7 +166,7 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// This will also call our delegate's update function.
-	newListModel, cmd := m.list.Update(msg)
+	newListModel, cmd := m.list.Update(ctx, msg)
 	m.list = newListModel
 	cmds = append(cmds, cmd)
 
@@ -177,13 +174,13 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View(ctx tea.Context) string {
-	return appStyle.Render(m.list.View())
+	return appStyle.Render(m.list.View(ctx))
 }
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
