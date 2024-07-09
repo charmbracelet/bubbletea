@@ -20,7 +20,7 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithFilter(filter))
+	p := tea.NewProgram(model{}, tea.WithFilter(filter))
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
@@ -41,10 +41,10 @@ func filter(teaModel tea.Model, msg tea.Msg) tea.Msg {
 }
 
 type model struct {
-	textarea   textarea.Model
-	help       help.Model
-	keymap     keymap
 	saveText   string
+	help       help.Model
+	textarea   textarea.Model
+	keymap     keymap
 	hasChanges bool
 	quitting   bool
 }
@@ -54,14 +54,14 @@ type keymap struct {
 	quit key.Binding
 }
 
-func initialModel() model {
-	ti := textarea.New()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	ti := textarea.New(ctx)
 	ti.Placeholder = "Only the best words"
 	ti.Focus()
 
-	return model{
+	m = model{
 		textarea: ti,
-		help:     help.New(),
+		help:     help.New(ctx),
 		keymap: keymap{
 			save: key.NewBinding(
 				key.WithKeys("ctrl+s"),
@@ -73,9 +73,7 @@ func initialModel() model {
 			),
 		},
 	}
-}
 
-func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	return m, textarea.Blink
 }
 
@@ -84,10 +82,10 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updatePromptView(msg)
 	}
 
-	return m.updateTextView(msg)
+	return m.updateTextView(ctx, msg)
 }
 
-func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) updateTextView(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
@@ -112,7 +110,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-	m.textarea, cmd = m.textarea.Update(msg)
+	m.textarea, cmd = m.textarea.Update(ctx, msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -147,7 +145,7 @@ func (m model) View(ctx tea.Context) string {
 
 	return fmt.Sprintf(
 		"\nType some important things.\n\n%s\n\n %s\n %s",
-		m.textarea.View(),
+		m.textarea.View(ctx),
 		saveTextStyle.Render(m.saveText),
 		helpView,
 	) + "\n\n"

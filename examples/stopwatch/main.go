@@ -12,9 +12,9 @@ import (
 )
 
 type model struct {
-	stopwatch stopwatch.Model
-	keymap    keymap
 	help      help.Model
+	keymap    keymap
+	stopwatch stopwatch.Model
 	quitting  bool
 }
 
@@ -26,14 +26,16 @@ type keymap struct {
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
-	return m, m.stopwatch.Init()
+	m.stopwatch = stopwatch.NewWithInterval(ctx, time.Millisecond)
+	m.help = help.New(ctx)
+	return m, m.stopwatch.Init(ctx)
 }
 
 func (m model) View(ctx tea.Context) string {
 	// Note: you could further customize the time output by getting the
 	// duration from m.stopwatch.Elapsed(), which returns a time.Duration, and
 	// skip m.stopwatch.View() altogether.
-	s := m.stopwatch.View() + "\n"
+	s := m.stopwatch.View(ctx) + "\n"
 	if !m.quitting {
 		s = "Elapsed: " + s
 		s += m.helpView()
@@ -66,13 +68,12 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	var cmd tea.Cmd
-	m.stopwatch, cmd = m.stopwatch.Update(msg)
+	m.stopwatch, cmd = m.stopwatch.Update(ctx, msg)
 	return m, cmd
 }
 
 func main() {
 	m := model{
-		stopwatch: stopwatch.NewWithInterval(time.Millisecond),
 		keymap: keymap{
 			start: key.NewBinding(
 				key.WithKeys("s"),
@@ -91,7 +92,6 @@ func main() {
 				key.WithHelp("q", "quit"),
 			),
 		},
-		help: help.New(),
 	}
 
 	m.keymap.start.SetEnabled(false)
