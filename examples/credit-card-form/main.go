@@ -40,9 +40,9 @@ var (
 )
 
 type model struct {
+	err     error
 	inputs  []textinput.Model
 	focused int
-	err     error
 }
 
 // Validator functions to ensure valid input

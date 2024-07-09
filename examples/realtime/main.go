@@ -39,8 +39,8 @@ func waitForActivity(sub chan struct{}) tea.Cmd {
 
 type model struct {
 	sub       chan struct{} // where we'll receive activity notifications
-	responses int           // how many responses we've received
 	spinner   spinner.Model
+	responses int // how many responses we've received
 	quitting  bool
 }
 

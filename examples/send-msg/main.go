@@ -34,9 +34,9 @@ func (r resultMsg) String() string {
 }
 
 type model struct {
+	styles   *styles
 	results  []resultMsg
 	spinner  spinner.Model
-	styles   *styles
 	quitting bool
 }
 

@@ -59,9 +59,9 @@ var (
 )
 
 type mainModel struct {
-	state   sessionState
-	timer   timer.Model
 	spinner spinner.Model
+	timer   timer.Model
+	state   sessionState
 	index   int
 }
 

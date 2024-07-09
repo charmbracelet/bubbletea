@@ -6,12 +6,12 @@ import (
 )
 
 type randomItemGenerator struct {
-	titles     []string
-	descs      []string
-	titleIndex int
-	descIndex  int
 	mtx        *sync.Mutex
 	shuffle    *sync.Once
+	descs      []string
+	titles     []string
+	titleIndex int
+	descIndex  int
 }
 
 func (r *randomItemGenerator) reset() {

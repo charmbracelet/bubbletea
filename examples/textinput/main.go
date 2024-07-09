@@ -23,8 +23,8 @@ type (
 )
 
 type model struct {
-	textInput textinput.Model
 	err       error
+	textInput textinput.Model
 }
 
 func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
