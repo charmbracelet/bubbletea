@@ -3,11 +3,11 @@ module examples
 go 1.18
 
 require (
-	github.com/charmbracelet/bubbles v0.18.1-0.20240528173005-12ae3c128ebf
-	github.com/charmbracelet/bubbletea v0.26.3-0.20240528172931-7581b6a46c83
+	github.com/charmbracelet/bubbles v0.18.1-0.20240708195940-bd3a206c13c4
+	github.com/charmbracelet/bubbletea v0.26.5-0.20240605151746-bca513b1982b
 	github.com/charmbracelet/glamour v0.7.0
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss v0.10.1-0.20240528172826-972c013da128
+	github.com/charmbracelet/lipgloss v0.11.1-0.20240605151253-a724723338e3
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20240229115032-4b79243a3516
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
