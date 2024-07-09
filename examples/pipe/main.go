@@ -43,7 +43,7 @@ func main() {
 		}
 	}
 
-	model := newModel(strings.TrimSpace(b.String()))
+	model := model{initialValue: strings.TrimSpace(b.String())}
 
 	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fmt.Println("Couldn't start program:", err)
@@ -52,23 +52,21 @@ func main() {
 }
 
 type model struct {
-	userInput textinput.Model
+	initialValue string
+	userInput    textinput.Model
 }
 
-func newModel(initialValue string) (m model) {
-	i := textinput.New()
+func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
+	i := textinput.New(ctx)
 	i.Prompt = ""
 	i.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	i.Width = 48
-	i.SetValue(initialValue)
+	i.SetValue(m.initialValue)
 	i.CursorEnd()
 	i.Focus()
 
 	m.userInput = i
-	return
-}
 
-func (m model) Init(ctx tea.Context) (tea.Model, tea.Cmd) {
 	return m, textinput.Blink
 }
 
@@ -81,13 +79,13 @@ func (m model) Update(ctx tea.Context, msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	m.userInput, cmd = m.userInput.Update(msg)
+	m.userInput, cmd = m.userInput.Update(ctx, msg)
 	return m, cmd
 }
 
 func (m model) View(ctx tea.Context) string {
 	return fmt.Sprintf(
 		"\nYou piped in: %s\n\nPress ^C to exit",
-		m.userInput.View(),
+		m.userInput.View(ctx),
 	)
 }
