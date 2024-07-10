@@ -7,12 +7,11 @@ require (
 	github.com/charmbracelet/bubbletea v0.26.2
 	github.com/charmbracelet/glamour v0.7.0
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss v0.11.0
+	github.com/charmbracelet/lipgloss v0.11.1
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mattn/go-isatty v0.0.20
-	github.com/spf13/cobra v1.8.1
 )
 
 require (
@@ -21,7 +20,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.1.2 // indirect
+	github.com/charmbracelet/x/ansi v0.1.3 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20240521172236-71f88323a7ca // indirect
 	github.com/charmbracelet/x/input v0.1.0 // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
@@ -30,7 +29,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/gorilla/css v1.0.0 // indirect
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.25 // indirect
@@ -41,7 +39,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/goldmark v1.5.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
