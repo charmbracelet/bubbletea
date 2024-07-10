@@ -76,7 +76,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return tick()
+	return nil
 }
 
 // Main update function.
@@ -139,7 +139,7 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.Quitting = true
 			return m, tea.Quit
 		}
-		m.Ticks--
+		// m.Ticks--
 		return m, tick()
 	}
 

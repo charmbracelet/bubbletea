@@ -26,8 +26,6 @@ func (p *Program) initTerminal() error {
 	if err := p.initInput(); err != nil {
 		return err
 	}
-
-	p.renderer.hideCursor()
 	return nil
 }
 
@@ -40,8 +38,6 @@ func (p *Program) restoreTerminalState() error {
 		p.disableMouse()
 
 		if p.renderer.altScreen() {
-			p.renderer.exitAltScreen()
-
 			// give the terminal a moment to catch up
 			time.Sleep(time.Millisecond * 10) //nolint:gomnd
 		}

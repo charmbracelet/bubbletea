@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -425,6 +426,27 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case windowSizeMsg:
 				p.checkResize()
+
+			case WindowSizeMsg:
+				if r, ok := p.renderer.(*screenRenderer); ok {
+					r.resize(msg.Width, msg.Height)
+				}
+
+			case printLineMessage:
+				switch r := p.renderer.(type) {
+				case *screenRenderer:
+					if !r.altScreen() {
+						r.screen.InsertAbove(msg.messageBody)
+					}
+				case *standardRenderer:
+					if !r.altScreenActive {
+						lines := strings.Split(msg.messageBody, "\n")
+						r.mtx.Lock()
+						r.queuedMessageLines = append(r.queuedMessageLines, lines...)
+						r.repaint()
+						r.mtx.Unlock()
+					}
+				}
 			}
 
 			// Process internal messages for the renderer.
@@ -506,16 +528,23 @@ func (p *Program) Run() (Model, error) {
 		}()
 	}
 
-	// If no renderer is set use the standard one.
-	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
-	}
-
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
+
+	// If no renderer is set use the standard one.
+	if p.renderer == nil {
+		var w, h int
+		if p.ttyOutput != nil {
+			w, h, _ = term.GetSize(p.ttyOutput.Fd())
+		}
+		p.renderer = newScreenRenderer(p.output, w, h)
+		// p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
+	}
+
+	p.renderer.hideCursor()
 
 	// Honor program startup options.
 	if p.startupTitle != "" {

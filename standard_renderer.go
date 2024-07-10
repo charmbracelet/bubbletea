@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -278,9 +280,21 @@ func (r *standardRenderer) flush() {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
 
-	_, _ = r.out.Write(buf.Bytes())
+	bts := buf.Bytes()
+	log.Printf("=== frame: %q\n", string(bts))
+	_, _ = r.out.Write(bts)
 	r.lastRender = r.buf.String()
 	r.buf.Reset()
+}
+
+func init() {
+	f, err := os.OpenFile("debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		panic(err)
+	}
+
+	log.SetOutput(f)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
 // write writes to the internal buffer. The buffer will be outputted via the
@@ -606,15 +620,6 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
-	case printLineMessage:
-		if !r.altScreenActive {
-			lines := strings.Split(msg.messageBody, "\n")
-			r.mtx.Lock()
-			r.queuedMessageLines = append(r.queuedMessageLines, lines...)
-			r.repaint()
-			r.mtx.Unlock()
-		}
 	}
 }
 
