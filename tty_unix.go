@@ -6,6 +6,7 @@ package tea
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"syscall"
 
 	"github.com/charmbracelet/x/term"
@@ -40,5 +41,9 @@ const suspendSupported = true
 
 // Send SIGTSTP to the entire process group.
 func suspendProcess() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGCONT)
 	_ = syscall.Kill(0, syscall.SIGTSTP)
+	// blocks until a CONT happens...
+	<-c
 }
