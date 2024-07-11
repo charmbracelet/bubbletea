@@ -6,6 +6,7 @@ package tea
 import (
 	"fmt"
 	"os"
+	"syscall"
 
 	"github.com/charmbracelet/x/term"
 )
@@ -33,4 +34,11 @@ func openInputTTY() (*os.File, error) {
 		return nil, fmt.Errorf("could not open a new TTY: %w", err)
 	}
 	return f, nil
+}
+
+var suspendSupported = true
+
+// Send SIGTSTP to the entire process group.
+func suspendProcess() {
+	_ = syscall.Kill(0, syscall.SIGTSTP)
 }
