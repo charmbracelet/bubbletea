@@ -177,14 +177,14 @@ func Quit() Msg {
 	return QuitMsg{}
 }
 
-// Quit is a special command that tells the Bubble Tea program to suspend.
-func Suspend() Msg {
-	return SuspendMsg{}
-}
-
 // QuitMsg signals that the program should quit. You can send a QuitMsg with
 // Quit.
 type QuitMsg struct{}
+
+// Suspend is a special command that tells the Bubble Tea program to suspend.
+func Suspend() Msg {
+	return SuspendMsg{}
+}
 
 // SuspendMsg signals the program should suspend.
 // This usually happens when ctrl+z is pressed on common programs, but since
