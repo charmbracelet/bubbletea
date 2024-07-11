@@ -63,6 +63,6 @@ func openInputTTY() (*os.File, error) {
 	return f, nil
 }
 
-var suspendSupported = false
+const suspendSupported = false
 
 func suspendProcess() {}

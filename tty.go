@@ -10,6 +10,17 @@ import (
 	"github.com/muesli/cancelreader"
 )
 
+func (p *Program) suspend() {
+	if err := p.ReleaseTerminal(); err != nil {
+		// If we can't release input, abort.
+		return
+	}
+
+	suspendProcess()
+
+	_ = p.RestoreTerminal()
+}
+
 func (p *Program) initTerminal() error {
 	if err := p.initInput(); err != nil {
 		return err

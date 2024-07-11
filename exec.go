@@ -98,17 +98,6 @@ func (c *osExecCommand) SetStderr(w io.Writer) {
 	}
 }
 
-func (p *Program) suspend() {
-	if err := p.ReleaseTerminal(); err != nil {
-		// If we can't release input, abort.
-		return
-	}
-
-	suspendProcess()
-
-	_ = p.RestoreTerminal()
-}
-
 // exec runs an ExecCommand and delivers the results to the program as a Msg.
 func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	if err := p.ReleaseTerminal(); err != nil {

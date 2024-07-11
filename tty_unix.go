@@ -36,7 +36,7 @@ func openInputTTY() (*os.File, error) {
 	return f, nil
 }
 
-var suspendSupported = true
+const suspendSupported = true
 
 // Send SIGTSTP to the entire process group.
 func suspendProcess() {
