@@ -14,8 +14,9 @@ var (
 )
 
 type model struct {
-	altscreen bool
-	quitting  bool
+	altscreen  bool
+	quitting   bool
+	suspending bool
 }
 
 func (m model) Init() tea.Cmd {
@@ -24,11 +25,17 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.ResumeMsg:
+		m.suspending = false
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			m.quitting = true
 			return m, tea.Quit
+		case "ctrl+z":
+			m.suspending = true
+			return m, tea.Suspend
 		case " ":
 			var cmd tea.Cmd
 			if m.altscreen {
@@ -44,6 +51,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
+	if m.suspending {
+		return ""
+	}
+
 	if m.quitting {
 		return "Bye!\n"
 	}
@@ -61,7 +72,7 @@ func (m model) View() string {
 	}
 
 	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
-		helpStyle.Render("  space: switch modes • q: exit\n")
+		helpStyle.Render("  space: switch modes • ctrl-z: suspend • q: exit\n")
 }
 
 func main() {
