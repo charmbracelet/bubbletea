@@ -19,6 +19,7 @@ func (p *Program) suspend() {
 	suspendProcess()
 
 	_ = p.RestoreTerminal()
+	go p.Send(ResumeMsg{})
 }
 
 func (p *Program) initTerminal() error {

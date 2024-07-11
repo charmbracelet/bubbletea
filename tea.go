@@ -193,6 +193,10 @@ func Suspend() Msg {
 // You can send this message with Suspend.
 type SuspendMsg struct{}
 
+// ResumeMsg can be listen to to do something once a program is resumed back
+// from a suspend state.
+type ResumeMsg struct{}
+
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
