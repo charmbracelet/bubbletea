@@ -1,6 +1,8 @@
 .DS_Store
 .envrc
 
+**/go.work
+**/go.work.sum
 examples/fullscreen/fullscreen
 examples/help/help
 examples/http/http
