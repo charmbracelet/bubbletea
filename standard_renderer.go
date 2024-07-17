@@ -108,6 +108,8 @@ func (r *standardRenderer) stop() {
 	defer r.mtx.Unlock()
 
 	r.execute(ansi.EraseEntireLine)
+	// Move the cursor back to the beginning of the line
+	r.execute("\r")
 
 	if r.useANSICompressor {
 		if w, ok := r.out.(io.WriteCloser); ok {
@@ -132,6 +134,8 @@ func (r *standardRenderer) kill() {
 	defer r.mtx.Unlock()
 
 	r.execute(ansi.EraseEntireLine)
+	// Move the cursor back to the beginning of the line
+	r.execute("\r")
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.
