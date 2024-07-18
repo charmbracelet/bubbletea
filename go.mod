@@ -11,6 +11,7 @@ require (
 	github.com/muesli/cancelreader v0.2.2
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.22.0
+	golang.org/x/text v0.6.0
 )
 
 require (
@@ -19,5 +20,4 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/text v0.3.8 // indirect
 )
