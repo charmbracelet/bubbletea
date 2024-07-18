@@ -316,7 +316,11 @@ func (r *standardRenderer) write(s string) {
 }
 
 func (r *standardRenderer) repaint() {
+	// Force a repaint by clearing the render cache as we slide into a
+	// render.
+	r.mtx.Lock()
 	r.lastRender = ""
+	r.mtx.Unlock()
 }
 
 func (r *standardRenderer) clearScreen() {
@@ -581,13 +585,6 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 // handleMessages handles internal messages for the renderer.
 func (r *standardRenderer) handleMessages(msg Msg) {
 	switch msg := msg.(type) {
-	case repaintMsg:
-		// Force a repaint by clearing the render cache as we slide into a
-		// render.
-		r.mtx.Lock()
-		r.repaint()
-		r.mtx.Unlock()
-
 	case WindowSizeMsg:
 		r.mtx.Lock()
 		r.width = msg.Width

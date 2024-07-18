@@ -432,15 +432,18 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					r.resize(msg.Width, msg.Height)
 				}
 
+			case repaintMsg:
+				p.renderer.repaint()
+
 			case printLineMessage:
+				lines := strings.Split(msg.messageBody, "\n")
 				switch r := p.renderer.(type) {
 				case *screenRenderer:
 					if !r.altScreen() {
-						r.screen.InsertAbove(msg.messageBody)
+						r.screen.InsertAbove(lines...)
 					}
 				case *standardRenderer:
 					if !r.altScreenActive {
-						lines := strings.Split(msg.messageBody, "\n")
 						r.mtx.Lock()
 						r.queuedMessageLines = append(r.queuedMessageLines, lines...)
 						r.repaint()
@@ -540,7 +543,7 @@ func (p *Program) Run() (Model, error) {
 		if p.ttyOutput != nil {
 			w, h, _ = term.GetSize(p.ttyOutput.Fd())
 		}
-		p.renderer = newScreenRenderer(p.output, w, h)
+		p.renderer = newScreenRenderer(p.output, w, h, p.fps)
 		// p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
 	}
 

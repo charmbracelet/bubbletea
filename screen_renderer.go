@@ -13,27 +13,34 @@ import (
 )
 
 type screenRenderer struct {
-	w             io.Writer
-	width, height int
-	screen        *shampoo.Renderer
-	ticker        *time.Ticker
-	donec         chan struct{}
-	lastFrame     string
-	bpActive      bool
+	w         io.Writer
+	screen    *shampoo.Renderer
+	ticker    *time.Ticker
+	donec     chan struct{}
+	lastFrame string
+	width     int
+	height    int
+	framerate time.Duration
+	once      sync.Once
+	bpActive  bool
 }
 
 var _ renderer = &screenRenderer{}
 
-func newScreenRenderer(w io.Writer, width, height int) *screenRenderer {
-	framerate := time.Second / 60
+func newScreenRenderer(w io.Writer, width, height, fps int) *screenRenderer {
+	if fps < 1 {
+		fps = defaultFPS
+	} else if fps > maxFPS {
+		fps = maxFPS
+	}
 	screen := shampoo.NewRenderer(w, width, height)
 	return &screenRenderer{
-		screen: screen,
-		w:      w,
-		width:  width,
-		height: height,
-		ticker: time.NewTicker(framerate),
-		donec:  make(chan struct{}, 1),
+		screen:    screen,
+		w:         w,
+		width:     width,
+		height:    height,
+		framerate: time.Second / time.Duration(fps),
+		donec:     make(chan struct{}, 1),
 	}
 }
 
@@ -125,14 +132,15 @@ func (s *screenRenderer) hideCursor() {
 
 // kill implements renderer.
 func (s *screenRenderer) kill() {
-	sync.OnceFunc(func() {
+	s.once.Do(func() {
 		s.donec <- struct{}{}
 	})
 }
 
 // repaint implements renderer.
 func (s *screenRenderer) repaint() {
-	s.screen.Draw(s.lastFrame)
+	s.screen.Clear()
+	s.lastFrame = ""
 }
 
 // requestBackgroundColor implements renderer.
@@ -162,6 +170,21 @@ func (s *screenRenderer) showCursor() {
 
 // start implements renderer.
 func (s *screenRenderer) start() {
+	if s.ticker == nil {
+		s.ticker = time.NewTicker(s.framerate)
+	} else {
+		// If the ticker already exists, it has been stopped and we need to
+		// reset it.
+		s.ticker.Reset(s.framerate)
+	}
+
+	// Since the renderer can be restarted after a stop, we need to reset
+	// the done channel and its corresponding sync.Once.
+	s.once = sync.Once{}
+
+	// Reset the screen to its initial state.
+	s.screen.Reset()
+
 	go func() {
 		for {
 			select {
@@ -179,7 +202,7 @@ func (s *screenRenderer) start() {
 
 // stop implements renderer.
 func (s *screenRenderer) stop() {
-	sync.OnceFunc(func() {
+	s.once.Do(func() {
 		s.donec <- struct{}{}
 	})
 
