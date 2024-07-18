@@ -354,6 +354,7 @@ For some Bubble Tea programs in production, see:
 * [fork-cleaner](https://github.com/caarlos0/fork-cleaner): clean up old and inactive forks in your GitHub account
 * [fractals-cli](https://github.com/MicheleFiladelfia/fractals-cli): a multiplatform terminal fractal explorer
 * [fztea](https://github.com/jon4hz/fztea): a Flipper Zero TUI
+* [goManageDocker](https://github.com/ajayd-san/gomanagedocker): definitive TUI tool to manage your docker images, containers and volumes 
 * [gama](https://github.com/termkit/gama): manage GitHub Actions from the terminal
 * [gambit](https://github.com/maaslalani/gambit): chess in the terminal
 * [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
