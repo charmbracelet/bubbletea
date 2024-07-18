@@ -9,6 +9,8 @@ import (
 
 	"github.com/charmbracelet/x/term"
 	"golang.org/x/sys/windows"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 func (p *Program) initInput() (err error) {
@@ -49,6 +51,11 @@ func (p *Program) initInput() (err error) {
 		if err := windows.SetConsoleMode(windows.Handle(p.ttyOutput.Fd()), mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
 			return fmt.Errorf("error setting console mode: %w", err)
 		}
+	} else {
+		// If we're not running in a terminal, we need to encode output as UTF-16
+		// to avoid issues with Windows' default wide character encoding.
+		encoder := unicode.UTF16(unicode.LittleEndian, unicode.UseBOM).NewEncoder()
+		p.output = transform.NewWriter(p.output, encoder)
 	}
 
 	return
