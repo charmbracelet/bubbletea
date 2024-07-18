@@ -425,7 +425,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.SetWindowTitle(string(msg))
 
 			case windowSizeMsg:
-				p.checkResize()
+				go p.checkResize()
 
 			case WindowSizeMsg:
 				if r, ok := p.renderer.(*screenRenderer); ok {
