@@ -49,6 +49,13 @@ func WithInputTTY() ProgramOption {
 	}
 }
 
+// WithEnvironment sets the environment variables that the program will use.
+func WithEnvironment(env []string) ProgramOption {
+	return func(p *Program) {
+		p.environ = env
+	}
+}
+
 // WithoutSignalHandler disables the signal handler that Bubble Tea sets up for
 // Programs. This is useful if you want to handle signals yourself.
 func WithoutSignalHandler() ProgramOption {
