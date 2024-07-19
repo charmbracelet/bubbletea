@@ -547,6 +547,9 @@ func (p *Program) Run() (Model, error) {
 		// p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
 	}
 
+	// Start the renderer.
+	p.renderer.start()
+
 	p.renderer.hideCursor()
 
 	// Honor program startup options.
@@ -566,9 +569,6 @@ func (p *Program) Run() (Model, error) {
 		p.renderer.enableMouseAllMotion()
 		p.renderer.enableMouseSGRMode()
 	}
-
-	// Start the renderer.
-	p.renderer.start()
 
 	// Initialize the program.
 	model := p.initialModel
@@ -735,14 +735,14 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initCancelReader(); err != nil {
 		return err
 	}
+	if p.renderer != nil {
+		p.renderer.start()
+	}
 	if p.altScreenWasActive {
 		p.renderer.enterAltScreen()
 	} else {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
-	}
-	if p.renderer != nil {
-		p.renderer.start()
 	}
 	if p.bpWasActive {
 		p.renderer.enableBracketedPaste()
