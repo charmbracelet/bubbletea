@@ -114,7 +114,7 @@ some initial I/O. For now, we don't need to do any I/O, so for the command,
 we'll just return `nil`, which translates to "no command."
 
 ```go
-func (m model) Init() tea.Cmd {
+func (m model) Init() (tea.Model, tea.Cmd) {
     // Just return `nil`, which means "no I/O right now, please."
     return nil
 }
