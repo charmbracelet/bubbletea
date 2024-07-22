@@ -1,5 +1,7 @@
 package tea
 
+import "image/color"
+
 // WindowSizeMsg is used to report the terminal size. It's sent to Update once
 // initially and then on every terminal resize. Note that Windows does not
 // have support for reporting when resizes occur as it does not support the
@@ -7,6 +9,23 @@ package tea
 type WindowSizeMsg struct {
 	Width  int
 	Height int
+}
+
+// BackgroundColorMsg is used to report the terminal's background color. It's
+// sent to Update once initially and can be queried at any time using the
+// BackgroundColor command.
+type BackgroundColorMsg color.Color
+
+// backgroundColorMsg is an internal message that signals to query the terminal's
+// background color. You can send a backgroundColorMsg with BackgroundColor.
+// It will be responded to with a BackgroundColorMsg.
+type backgroundColorMsg struct{}
+
+// BackgroundColor is a command that can be sent to the program to query the
+// terminal's background color. The program will respond with a
+// BackgroundColorMsg.
+func BackgroundColor() Msg {
+	return backgroundColorMsg{}
 }
 
 // ClearScreen is a special command that tells the program to clear the screen

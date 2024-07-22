@@ -23,6 +23,7 @@ import (
 	"syscall"
 
 	"github.com/charmbracelet/shampoo"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"golang.org/x/sync/errgroup"
@@ -395,6 +396,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case disableBracketedPasteMsg:
 				p.renderer.disableBracketedPaste()
 
+			case backgroundColorMsg:
+				p.renderer.execute(ansi.RequestBackgroundColor)
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
@@ -593,6 +597,9 @@ func (p *Program) Run() (Model, error) {
 			return model, err
 		}
 	}
+
+	// Query terminal capabilities.
+	p.renderer.execute(ansi.RequestBackgroundColor)
 
 	var initCmd Cmd
 	model, initCmd = model.Init()

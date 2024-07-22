@@ -55,3 +55,5 @@ replace github.com/charmbracelet/bubbletea => ../
 replace github.com/rivo/uniseg => github.com/aymanbagabas/uniseg v0.4.8-0.20240530203522-35d7fd3fe5ce
 
 replace github.com/charmbracelet/shampoo => ../../shampoo
+
+replace github.com/charmbracelet/lipgloss => ../../lipgloss
