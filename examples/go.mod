@@ -3,8 +3,8 @@ module examples
 go 1.18
 
 require (
-	github.com/charmbracelet/bubbles v0.18.1-0.20240722200220-780d1cf6e81f
-	github.com/charmbracelet/bubbletea v0.26.7-0.20240722185632-e15f5e8453c6
+	github.com/charmbracelet/bubbles v0.18.1-0.20240722201604-f48667461c13
+	github.com/charmbracelet/bubbletea v0.26.7-0.20240722201518-6c3c2dd3c1eb
 	github.com/charmbracelet/glamour v0.7.0
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v0.12.2-0.20240722162534-2390dea254e8

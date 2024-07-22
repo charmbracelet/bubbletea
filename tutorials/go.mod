@@ -2,11 +2,11 @@ module tutorial
 
 go 1.18
 
-require github.com/charmbracelet/bubbletea v0.25.0
+require github.com/charmbracelet/bubbletea v0.26.7-0.20240722201518-6c3c2dd3c1eb
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/lipgloss v0.12.1 // indirect
+	github.com/charmbracelet/lipgloss v0.12.2-0.20240722162534-2390dea254e8 // indirect
 	github.com/charmbracelet/shampoo v0.0.0-00010101000000-000000000000 // indirect
 	github.com/charmbracelet/x/ansi v0.1.4 // indirect
 	github.com/charmbracelet/x/input v0.1.3 // indirect
