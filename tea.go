@@ -326,6 +326,14 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	return ch
 }
 
+func (p *Program) enableEnhancedKeyboard() {
+	p.renderer.execute(ansi.PushKittyKeyboard(ansi.KittyDisambiguateEscapeCodes | ansi.KittyReportEventTypes))
+}
+
+func (p *Program) disableEnhancedKeyboard() {
+	p.renderer.execute(ansi.PushKittyKeyboard(0))
+}
+
 func (p *Program) disableMouse() {
 	p.renderer.disableMouseCellMotion()
 	p.renderer.disableMouseAllMotion()
@@ -398,6 +406,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case backgroundColorMsg:
 				p.renderer.execute(ansi.RequestBackgroundColor)
+
+			case enableEnhancedKeyboardMsg:
+				p.enableEnhancedKeyboard()
+
+			case disableEnhancedKeyboardMsg:
+				p.disableEnhancedKeyboard()
 
 			case execMsg:
 				// NB: this blocks.
@@ -589,6 +603,10 @@ func (p *Program) Run() (Model, error) {
 		p.renderer.enableMouseSGRMode()
 	}
 
+	if p.startupOptions&withEnhancedKeyboard != 0 {
+		p.enableEnhancedKeyboard()
+	}
+
 	// Initialize the program.
 	model := p.initialModel
 	if p.input != nil {
@@ -633,6 +651,10 @@ func (p *Program) Run() (Model, error) {
 	} else {
 		// Ensure we rendered the final state of the model.
 		p.renderer.write(model.View())
+	}
+
+	if p.startupOptions&withEnhancedKeyboard != 0 {
+		p.disableEnhancedKeyboard()
 	}
 
 	// Tear down.

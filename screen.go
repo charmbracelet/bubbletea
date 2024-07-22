@@ -167,6 +167,28 @@ func DisableBracketedPaste() Msg {
 // disableBracketedPasteMsg with DisableBracketedPaste.
 type disableBracketedPasteMsg struct{}
 
+// enableEnhancedKeyboardMsg is an internal message that signals to enable the
+// Kitty keyboard protocol. You can send an enableEnhancedKeyboardMsg with
+// EnableEnhancedKeyboard.
+type enableEnhancedKeyboardMsg struct{}
+
+// EnableEnhancedKeyboard is a special command that tells the Bubble Tea program
+// to enable the Kitty keyboard protocol.
+func EnableEnhancedKeyboard() Msg {
+	return enableEnhancedKeyboardMsg{}
+}
+
+// disableEnhancedKeyboardMsg is an internal message that signals to disable the
+// Kitty keyboard protocol. You can send a disableEnhancedKeyboardMsg with
+// DisableEnhancedKeyboard.
+type disableEnhancedKeyboardMsg struct{}
+
+// DisableEnhancedKeyboard is a special command that tells the Bubble Tea program
+// to disable the Kitty keyboard protocol.
+func DisableEnhancedKeyboard() Msg {
+	return disableEnhancedKeyboardMsg{}
+}
+
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
