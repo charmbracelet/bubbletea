@@ -29,7 +29,7 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 			m.counter.Store(i.(int) + 1)
 		}
 
-	case KeyMsg:
+	case KeyPressMsg:
 		return m, Quit
 	}
 

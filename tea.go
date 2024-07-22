@@ -22,8 +22,9 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/charmbracelet/shampoo"
+	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -98,6 +99,7 @@ const (
 	// feature is on by default.
 	withoutCatchPanics
 	withoutBracketedPaste
+	withEnhancedKeyboard
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -160,8 +162,10 @@ type Program struct {
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
-	cancelReader          cancelreader.CancelReader
-	readLoopDone          chan struct{}
+
+	// input look driver
+	inputReader  *input.Driver
+	readLoopDone chan struct{}
 
 	// was the altscreen active before releasing the terminal?
 	altScreenWasActive bool
@@ -241,7 +245,7 @@ func (p *Program) handleSignals() chan struct{} {
 	//
 	// In most cases ^C will not send an interrupt because the terminal will be
 	// in raw mode and ^C will be captured as a keystroke and sent along to
-	// Program.Update as a KeyMsg. When input is not a TTY, however, ^C will be
+	// Program.Update as a KeyPressMsg. When input is not a TTY, however, ^C will be
 	// caught here.
 	//
 	// SIGTERM is sent by unix utilities (like kill) to terminate a process.
@@ -545,14 +549,18 @@ func (p *Program) Run() (Model, error) {
 		return p.initialModel, err
 	}
 
+	// Determine terminal color profile
+	profile := shampoo.DetectColorProfile(p.output, p.environ)
+
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
 		var w, h int
 		if p.ttyOutput != nil {
 			w, h, _ = term.GetSize(p.ttyOutput.Fd())
 		}
-		p.renderer = newScreenRenderer(p.output, w, h, p.fps)
-		// p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
+		renderer := newScreenRenderer(p.output, w, h, p.fps)
+		renderer.screen.Profile = profile
+		p.renderer = renderer
 	}
 
 	// Start the renderer.
@@ -580,6 +588,12 @@ func (p *Program) Run() (Model, error) {
 
 	// Initialize the program.
 	model := p.initialModel
+	if p.input != nil {
+		if err := p.initInputReader(); err != nil {
+			return model, err
+		}
+	}
+
 	if initCmd := model.Init(); initCmd != nil {
 		ch := make(chan struct{})
 		handlers.add(ch)
@@ -596,13 +610,6 @@ func (p *Program) Run() (Model, error) {
 
 	// Render the initial view.
 	p.renderer.write(model.View())
-
-	// Subscribe to user input.
-	if p.input != nil {
-		if err := p.initCancelReader(); err != nil {
-			return model, err
-		}
-	}
 
 	// Handle resize events.
 	handlers.add(p.handleResize())
@@ -624,12 +631,12 @@ func (p *Program) Run() (Model, error) {
 	p.cancel()
 
 	// Check if the cancel reader has been setup before waiting and closing.
-	if p.cancelReader != nil {
+	if p.inputReader != nil {
 		// Wait for input loop to finish.
-		if p.cancelReader.Cancel() {
+		if p.inputReader.Cancel() {
 			p.waitForReadLoop()
 		}
-		_ = p.cancelReader.Close()
+		_ = p.inputReader.Close()
 	}
 
 	// Wait for all handlers to finish.
@@ -716,8 +723,8 @@ func (p *Program) shutdown(kill bool) {
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
-	if p.cancelReader != nil {
-		p.cancelReader.Cancel()
+	if p.inputReader != nil {
+		p.inputReader.Cancel()
 	}
 
 	p.waitForReadLoop()
@@ -740,7 +747,7 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-	if err := p.initCancelReader(); err != nil {
+	if err := p.initInputReader(); err != nil {
 		return err
 	}
 	if p.renderer != nil {

@@ -122,7 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         m.err = msg
         return m, tea.Quit
 
-    case tea.KeyMsg:
+    case tea.KeyPressMsg:
         // Ctrl+c exits. Even with short running programs it's good to have
         // a quit key, just in case your logic is off. Users will be very
         // annoyed if they can't exit.

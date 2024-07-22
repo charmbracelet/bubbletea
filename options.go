@@ -224,3 +224,13 @@ func WithFPS(fps int) ProgramOption {
 		p.fps = fps
 	}
 }
+
+// WithEnhancedKeyboard enables enhanced keyboard support. This is useful if
+// you want to capture special key combinations like Ctrl+Enter and Ctrl+Space.
+//
+// Note that this feature is experimental and may not work in all terminals.
+func WithEnhancedKeyboard() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withEnhancedKeyboard
+	}
+}

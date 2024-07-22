@@ -26,7 +26,7 @@ func TestApp(t *testing.T) {
 	time.Sleep(time.Second + time.Millisecond*200)
 	tm.Type("I'm typing things, but it'll be ignored by my program")
 	tm.Send("ignored msg")
-	tm.Send(tea.KeyMsg{
+	tm.Send(tea.KeyPressMsg{
 		Type: tea.KeyEnter,
 	})
 
@@ -63,7 +63,7 @@ func TestAppInteractive(t *testing.T) {
 		return bytes.Contains(out, []byte("This program will exit in 7 seconds"))
 	}, teatest.WithDuration(5*time.Second))
 
-	tm.Send(tea.KeyMsg{
+	tm.Send(tea.KeyPressMsg{
 		Type: tea.KeyEnter,
 	})
 

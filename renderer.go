@@ -70,6 +70,9 @@ type renderer interface {
 
 	// setWindowTitle sets the terminal window title.
 	setWindowTitle(string)
+
+	// execute writes an escape sequence to the terminal.
+	execute(string)
 }
 
 // repaintMsg forces a full repaint.

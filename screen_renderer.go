@@ -168,6 +168,11 @@ func (s *screenRenderer) showCursor() {
 	s.screen.SetCursorVisibility(true)
 }
 
+// execute implements renderer.
+func (s *screenRenderer) execute(cmd string) {
+	ansi.Execute(s.w, cmd)
+}
+
 // start implements renderer.
 func (s *screenRenderer) start() {
 	if s.ticker == nil {

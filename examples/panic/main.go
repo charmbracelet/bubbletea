@@ -18,13 +18,13 @@ func (m model) Init() tea.Cmd {
 // Update implements tea.Model.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
 		return m, tea.Printf("You pressed a key! %T", msg)
-	case tea.MouseMsg:
+	case tea.MouseClickMsg:
 		return m, tea.Printf("You clicked a mouse button! %T", msg)
 	}
 	return m, nil

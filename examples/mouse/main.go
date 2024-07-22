@@ -16,9 +16,7 @@ func main() {
 	}
 }
 
-type model struct {
-	mouseEvent tea.MouseEvent
-}
+type model struct{}
 
 func (m model) Init() tea.Cmd {
 	return nil
@@ -26,13 +24,25 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if s := msg.String(); s == "ctrl+c" || s == "q" || s == "esc" {
 			return m, tea.Quit
 		}
 
-	case tea.MouseMsg:
-		return m, tea.Printf("(X: %d, Y: %d) %s", msg.X, msg.Y, tea.MouseEvent(msg))
+	case tea.MouseClickMsg, tea.MouseReleaseMsg, tea.MouseWheelMsg, tea.MouseMotionMsg:
+		var mouse tea.Mouse
+		switch msg := msg.(type) {
+		case tea.MouseClickMsg:
+			mouse = tea.Mouse(msg)
+		case tea.MouseReleaseMsg:
+			mouse = tea.Mouse(msg)
+		case tea.MouseWheelMsg:
+			mouse = tea.Mouse(msg)
+		case tea.MouseMotionMsg:
+			mouse = tea.Mouse(msg)
+		}
+		x, y := mouse.X, mouse.Y
+		return m, tea.Printf("(X: %d, Y: %d) %s", x, y, msg)
 	}
 
 	return m, nil
