@@ -562,8 +562,7 @@ func (p *Program) Run() (Model, error) {
 		if p.ttyOutput != nil {
 			w, h, _ = term.GetSize(p.ttyOutput.Fd())
 		}
-		renderer := newScreenRenderer(p.output, w, h, p.fps)
-		renderer.screen.Profile = profile
+		renderer := newScreenRenderer(p.output, w, h, p.fps, profile)
 		p.renderer = renderer
 	}
 

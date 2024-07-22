@@ -27,13 +27,17 @@ type screenRenderer struct {
 
 var _ renderer = &screenRenderer{}
 
-func newScreenRenderer(w io.Writer, width, height, fps int) *screenRenderer {
+func newScreenRenderer(w io.Writer, width, height, fps int, profile shampoo.Profile) *screenRenderer {
 	if fps < 1 {
 		fps = defaultFPS
 	} else if fps > maxFPS {
 		fps = maxFPS
 	}
-	screen := shampoo.NewRenderer(w, width, height)
+	opts := []shampoo.RendererOption{}
+	if profile != shampoo.TrueColor {
+		opts = append(opts, shampoo.WithColorProfile(profile))
+	}
+	screen := shampoo.NewRenderer(w, width, height, opts...)
 	return &screenRenderer{
 		screen:    screen,
 		w:         w,
