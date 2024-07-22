@@ -28,6 +28,10 @@ func BackgroundColor() Msg {
 	return backgroundColorMsg{}
 }
 
+// PasteMsg is used to report bracketed paste input. It's sent to Update when
+// bracketed paste input is detected.
+type PasteMsg string
+
 // ClearScreen is a special command that tells the program to clear the screen
 // before the next update. This can be used to move the cursor to the top left
 // of the screen and clear visual clutter when the alt screen is not in use.
