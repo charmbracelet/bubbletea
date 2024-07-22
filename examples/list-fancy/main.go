@@ -21,7 +21,7 @@ var (
 			Padding(0, 1)
 
 	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
+				Foreground(lipgloss.Color("#04B575")).
 				Render
 )
 
@@ -117,8 +117,8 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

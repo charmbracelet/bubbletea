@@ -24,8 +24,8 @@ func newModel() model {
 	p := paginator.New()
 	p.Type = paginator.Dots
 	p.PerPage = 10
-	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
-	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
+	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.Color(252)).Render("•")
+	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.Color(238)).Render("•")
 	p.SetTotalPages(len(items))
 
 	return model{
@@ -39,13 +39,24 @@ type model struct {
 	paginator paginator.Model
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		activeDotColor := 252
+		inactiveDotColor := 238
+		if !lipgloss.IsDarkColor(msg) {
+			activeDotColor = 235
+			inactiveDotColor = 250
+		}
+
+		m.paginator.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.Color(activeDotColor)).Render("•")
+		m.paginator.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.Color(inactiveDotColor)).Render("•")
+
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":

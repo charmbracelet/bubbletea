@@ -72,9 +72,9 @@ func newModel(timeout time.Duration) mainModel {
 	return m
 }
 
-func (m mainModel) Init() tea.Cmd {
+func (m mainModel) Init() (tea.Model, tea.Cmd) {
 	// start the timer and spinner on program start
-	return tea.Batch(m.timer.Init(), m.spinner.Tick)
+	return m, tea.Batch(m.timer.Init(), m.spinner.Tick)
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

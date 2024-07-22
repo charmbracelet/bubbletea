@@ -64,8 +64,8 @@ func initialModel() model {
 	return m
 }
 
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

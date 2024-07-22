@@ -17,7 +17,7 @@ type model struct {
 	table table.Model
 }
 
-func (m model) Init() tea.Cmd { return nil }
+func (m model) Init() (tea.Model, tea.Cmd) { return m, nil }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd

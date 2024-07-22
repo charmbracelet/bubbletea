@@ -35,8 +35,8 @@ type errMsg struct{ err error }
 // error interface on the message.
 func (e errMsg) Error() string { return e.err.Error() }
 
-func (m model) Init() tea.Cmd {
-	return checkServer
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, checkServer
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,7 +50,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case tea.KeyPressMsg:
-		if msg.Type == tea.KeyCtrlC {
+		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
 	}

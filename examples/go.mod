@@ -3,11 +3,11 @@ module examples
 go 1.18
 
 require (
-	github.com/charmbracelet/bubbles v0.18.0
-	github.com/charmbracelet/bubbletea v0.26.2
+	github.com/charmbracelet/bubbles v0.18.1-0.20240722200220-780d1cf6e81f
+	github.com/charmbracelet/bubbletea v0.26.7-0.20240722185632-e15f5e8453c6
 	github.com/charmbracelet/glamour v0.7.0
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss v0.12.1
+	github.com/charmbracelet/lipgloss v0.12.2-0.20240722162534-2390dea254e8
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
@@ -40,7 +40,7 @@ require (
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/sahilm/fuzzy v0.1.1-0.20230530133925-c48e322e2a8f // indirect
+	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/goldmark v1.5.4 // indirect
@@ -55,5 +55,3 @@ replace github.com/charmbracelet/bubbletea => ../
 replace github.com/rivo/uniseg => github.com/aymanbagabas/uniseg v0.4.8-0.20240530203522-35d7fd3fe5ce
 
 replace github.com/charmbracelet/shampoo => ../../shampoo
-
-replace github.com/charmbracelet/lipgloss => ../../lipgloss

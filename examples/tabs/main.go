@@ -15,12 +15,18 @@ type model struct {
 	activeTab  int
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		if lipgloss.IsDarkColor(msg) {
+			highlightColor = lipgloss.Color("#7D56F4")
+		} else {
+			highlightColor = lipgloss.Color("#874BFD")
+		}
 	case tea.KeyPressMsg:
 		switch keypress := msg.String(); keypress {
 		case "ctrl+c", "q":
@@ -49,7 +55,7 @@ var (
 	inactiveTabBorder = tabBorderWithBottom("┴", "─", "┴")
 	activeTabBorder   = tabBorderWithBottom("┘", " ", "└")
 	docStyle          = lipgloss.NewStyle().Padding(1, 2, 1, 2)
-	highlightColor    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
+	highlightColor    = lipgloss.Color("#7D56F4")
 	inactiveTabStyle  = lipgloss.NewStyle().Border(inactiveTabBorder, true).BorderForeground(highlightColor).Padding(0, 1)
 	activeTabStyle    = inactiveTabStyle.Border(activeTabBorder, true)
 	windowStyle       = lipgloss.NewStyle().BorderForeground(highlightColor).Padding(2, 0).Align(lipgloss.Center).Border(lipgloss.NormalBorder()).UnsetBorderTop()

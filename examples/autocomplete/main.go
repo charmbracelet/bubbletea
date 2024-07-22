@@ -21,8 +21,10 @@ func main() {
 	}
 }
 
-type gotReposSuccessMsg []repo
-type gotReposErrMsg error
+type (
+	gotReposSuccessMsg []repo
+	gotReposErrMsg     error
+)
 
 type repo struct {
 	Name string `json:"name"`
@@ -76,6 +78,7 @@ func (k keymap) ShortHelp() []key.Binding {
 		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
 	}
 }
+
 func (k keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{k.ShortHelp()}
 }
@@ -98,15 +101,15 @@ func initialModel() model {
 	return model{textInput: ti, help: h, keymap: km}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(getRepos, textinput.Blink)
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.Batch(getRepos, textinput.Blink)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		switch msg.Type {
-		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
+		switch msg.String() {
+		case "enter", "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 	case gotReposSuccessMsg:

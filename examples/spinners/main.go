@@ -43,8 +43,8 @@ type model struct {
 	spinner spinner.Model
 }
 
-func (m model) Init() tea.Cmd {
-	return m.spinner.Tick
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -14,11 +14,12 @@ import (
 const listHeight = 14
 
 var (
+	styles            = list.DefaultStyles(true)
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+	paginationStyle   = styles.PaginationStyle.PaddingLeft(4)
+	helpStyle         = styles.HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
@@ -55,12 +56,16 @@ type model struct {
 	quitting bool
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		styles = list.DefaultStyles(lipgloss.IsDarkColor(msg))
+		paginationStyle = styles.PaginationStyle.PaddingLeft(4)
+		helpStyle = styles.HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width)
 		return m, nil

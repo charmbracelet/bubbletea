@@ -75,8 +75,8 @@ type model struct {
 	Quitting bool
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 // Main update function.

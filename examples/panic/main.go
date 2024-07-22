@@ -11,8 +11,8 @@ import (
 type model struct{}
 
 // Init implements tea.Model.
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 // Update implements tea.Model.

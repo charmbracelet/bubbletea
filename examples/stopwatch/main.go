@@ -25,8 +25,8 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() tea.Cmd {
-	return m.stopwatch.Init()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, m.stopwatch.Init()
 }
 
 func (m model) View() string {

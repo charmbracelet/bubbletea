@@ -142,8 +142,8 @@ type model struct {
 	xVelocity, yVelocity float64
 }
 
-func (m model) Init() tea.Cmd {
-	return animate()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, animate()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

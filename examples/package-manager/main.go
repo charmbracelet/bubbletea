@@ -44,8 +44,8 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

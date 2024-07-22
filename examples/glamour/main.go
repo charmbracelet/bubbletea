@@ -85,8 +85,8 @@ func newExample() (*example, error) {
 	}, nil
 }
 
-func (e example) Init() tea.Cmd {
-	return nil
+func (e example) Init() (tea.Model, tea.Cmd) {
+	return e, nil
 }
 
 func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -40,8 +40,8 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -49,8 +49,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		switch msg.Type {
-		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
+		switch msg.String() {
+		case "enter", "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 
