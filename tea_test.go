@@ -15,8 +15,8 @@ type testModel struct {
 	counter  atomic.Value
 }
 
-func (m testModel) Init() Cmd {
-	return nil
+func (m *testModel) Init() (Model, Cmd) {
+	return m, nil
 }
 
 func (m *testModel) Update(msg Msg) (Model, Cmd) {
