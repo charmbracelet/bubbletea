@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/shampoo"
 	"github.com/charmbracelet/x/ansi"
 )
@@ -53,9 +52,7 @@ func (s *screenRenderer) resize(width, height int) {
 	if width == s.width && height == s.height {
 		return
 	}
-	if s.altScreen() || s.width != width {
-		s.clearScreen()
-	}
+	s.clearScreen()
 	s.width, s.height = width, height
 	s.lastFrame = ""
 }
@@ -118,15 +115,13 @@ func (s *screenRenderer) enableMouseSGRMode() {
 // enterAltScreen implements renderer.
 func (s *screenRenderer) enterAltScreen() {
 	s.screen.SetAltScreen(true)
-	s.screen.Clear()
-	s.lastFrame = ""
+	s.repaint()
 }
 
 // exitAltScreen implements renderer.
 func (s *screenRenderer) exitAltScreen() {
 	s.screen.SetAltScreen(false)
-	s.screen.Clear()
-	s.lastFrame = ""
+	s.repaint()
 }
 
 // hideCursor implements renderer.
@@ -143,7 +138,6 @@ func (s *screenRenderer) kill() {
 
 // repaint implements renderer.
 func (s *screenRenderer) repaint() {
-	s.screen.Clear()
 	s.lastFrame = ""
 }
 
@@ -233,12 +227,6 @@ func (s *screenRenderer) write(content string) {
 		if frameHeight := len(frameLines); frameHeight > s.height {
 			content = strings.Join(frameLines[frameHeight-s.height:], "\n")
 		}
-	}
-
-	if s.altScreen() {
-		s.screen.Resize(s.width, s.height)
-	} else {
-		s.screen.Resize(s.width, lipgloss.Height(content))
 	}
 
 	s.screen.Draw(content) //nolint:errcheck
