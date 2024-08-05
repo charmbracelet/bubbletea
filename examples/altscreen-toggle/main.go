@@ -36,7 +36,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+z":
 			m.suspending = true
 			return m, tea.Suspend
-		case " ":
+		case "space":
 			var cmd tea.Cmd
 			if m.altscreen {
 				cmd = tea.ExitAltScreen

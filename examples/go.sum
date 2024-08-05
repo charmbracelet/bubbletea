@@ -13,10 +13,6 @@ github.com/aymanbagabas/uniseg v0.4.8-0.20240530203522-35d7fd3fe5ce h1:sy9Ufkp20
 github.com/aymanbagabas/uniseg v0.4.8-0.20240530203522-35d7fd3fe5ce/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/charmbracelet/bubbles v0.18.1-0.20240722200220-780d1cf6e81f h1:qP5JYh3gqMLcBKBT0qgoDjgxmBap0UiJEZJsUg/6ns0=
-github.com/charmbracelet/bubbles v0.18.1-0.20240722200220-780d1cf6e81f/go.mod h1:Ezc0gl5CWyMR43EDwJrtxoslb7Wy8cQjqVRIm4LwJRE=
-github.com/charmbracelet/bubbles v0.18.1-0.20240722201604-f48667461c13 h1:PoOxOyhZyvdKO6hb5+CrE78ndLamhnr7WJrsgxLC9qM=
-github.com/charmbracelet/bubbles v0.18.1-0.20240722201604-f48667461c13/go.mod h1:fOu2P0j55tt4dPQwV6iRdziqm4YXjyEWgTT6gnGdRdA=
 github.com/charmbracelet/bubbles v0.18.1-0.20240722203105-d996a2d61d05 h1:nhkEFFkbm79h5zCzDDhz8EcnNoQyfFsIlByCJ5DHuqY=
 github.com/charmbracelet/bubbles v0.18.1-0.20240722203105-d996a2d61d05/go.mod h1:GX8EIKE8HEKfrrPYoU5U/d2G6smGIhQIBoRjlmVyrYY=
 github.com/charmbracelet/glamour v0.7.0 h1:2BtKGZ4iVJCDfMF229EzbeR1QRKLWztO9dMtjmqZSng=
@@ -25,8 +21,8 @@ github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
 github.com/charmbracelet/lipgloss v0.12.2-0.20240722162534-2390dea254e8 h1:7SMpm8y17K515kM1Q/tiOrSm1jb3hJh94W+LXHWKv+U=
 github.com/charmbracelet/lipgloss v0.12.2-0.20240722162534-2390dea254e8/go.mod h1:LCQCsVTQm+lcQLFSiHwSvQUqRXtry1v/2KCfKxdsCeY=
-github.com/charmbracelet/x/ansi v0.1.4 h1:IEU3D6+dWwPSgZ6HBH+v6oUuZ/nVawMiWj5831KfiLM=
-github.com/charmbracelet/x/ansi v0.1.4/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
+github.com/charmbracelet/x/ansi v0.1.5-0.20240805145438-99a7cad109d8 h1:xY92Yl/d/CzRlwUc+g0uZQjAQTCS11vNQIsap0G74Ww=
+github.com/charmbracelet/x/ansi v0.1.5-0.20240805145438-99a7cad109d8/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/exp/golden v0.0.0-20240710172756-1a5969e3146f h1:baeZl5dM2HFldOVxnFTWkljEe26O/o4i0bMFnIu1Q2M=
 github.com/charmbracelet/x/exp/golden v0.0.0-20240710172756-1a5969e3146f/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28 h1:sOWKNRjt8uOEVgPiJVIJCse1+mUDM2F/vYY6W0Go640=

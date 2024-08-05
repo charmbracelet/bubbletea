@@ -22,7 +22,7 @@ require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/shampoo v0.0.0-20240626211909-29eec07921e9 // indirect
-	github.com/charmbracelet/x/ansi v0.1.4 // indirect
+	github.com/charmbracelet/x/ansi v0.1.5-0.20240805145438-99a7cad109d8 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20240710172756-1a5969e3146f // indirect
 	github.com/charmbracelet/x/input v0.1.3 // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
