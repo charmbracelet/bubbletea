@@ -410,6 +410,7 @@ For some Bubble Tea programs in production, see:
 * [trainer](https://github.com/rusinikita/trainer): a Go concurrency coding interview simulator with learning materials 
 * [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
 * [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
+* [Twenty forty-eight](https://github.com/SkYler163/twenty-forty-eight): an implementation of the popular game 2048
 * [Typer](https://github.com/maaslalani/typer): a typing test
 * [typioca](https://github.com/bloznelis/typioca): a typing test
 * [tz](https://github.com/oz/tz): a scheduling aid for people in multiple time zones
