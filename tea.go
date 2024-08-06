@@ -151,6 +151,9 @@ type Program struct {
 	previousOutputState *term.State
 	renderer            renderer
 
+	// the environment variables for the program, defaults to os.Environ().
+	environ []string
+
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
 	// ttyInput is null if input is not a TTY.
@@ -220,6 +223,11 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// if no output was set, set it to stdout
 	if p.output == nil {
 		p.output = os.Stdout
+	}
+
+	// if no environment was set, set it to os.Environ()
+	if p.environ == nil {
+		p.environ = os.Environ()
 	}
 
 	return p
