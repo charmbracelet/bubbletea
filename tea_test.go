@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"context"
+	"errors"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -46,7 +47,10 @@ func TestTeaModel(t *testing.T) {
 	var in bytes.Buffer
 	in.Write([]byte("q"))
 
-	p := NewProgram(&testModel{}, WithInput(&in), WithOutput(&buf))
+	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	defer cancel()
+
+	p := NewProgram(&testModel{}, WithInput(&in), WithOutput(&buf), WithContext(ctx))
 	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +138,7 @@ func TestTeaKill(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(); err != ErrProgramKilled {
+	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
@@ -156,7 +160,7 @@ func TestTeaContext(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(); err != ErrProgramKilled {
+	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
