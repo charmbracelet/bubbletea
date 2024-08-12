@@ -31,16 +31,19 @@ jobs:
         run: go test ./...
 
       - name: Build examples
+        if: ${{ matrix.go-version != '~1.18' }}
         run: |
           go mod tidy
           go build -v ./...
         working-directory: ./examples
 
       - name: Test examples
+        if: ${{ matrix.go-version != '~1.18' }}
         run: go test -v ./...
         working-directory: ./examples
 
       - name: Build tutorials
+        if: ${{ matrix.go-version != '~1.18' }}
         run: |
           go mod tidy
           go build -v ./...
