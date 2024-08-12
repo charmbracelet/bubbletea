@@ -408,9 +408,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case backgroundColorMsg:
 				p.renderer.execute(ansi.RequestBackgroundColor)
 
-			case reportFocusMsg:
-				p.renderer.execute(ansi.RequestReportFocus)
-
 			case enableEnhancedKeyboardMsg:
 				p.enableEnhancedKeyboard()
 
@@ -625,7 +622,6 @@ func (p *Program) Run() (Model, error) {
 
 	// Query terminal capabilities.
 	p.renderer.execute(ansi.RequestBackgroundColor)
-	p.renderer.execute(ansi.RequestReportFocus)
 
 	var initCmd Cmd
 	model, initCmd = model.Init()

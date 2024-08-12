@@ -20,6 +20,7 @@ type model struct {
 }
 
 func (m model) Init() (tea.Model, tea.Cmd) {
+	// assume we start focused...
 	m.focused = true
 	return m, nil
 }
@@ -38,6 +39,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Suspend
 		}
 	}
+
 	return m, nil
 }
 
