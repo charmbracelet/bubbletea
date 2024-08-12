@@ -122,6 +122,10 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *input.Driver) erro
 				msg = BackgroundColorMsg(e)
 			case input.PasteEvent:
 				msg = PasteMsg(e)
+			case input.FocusEvent:
+				msg = FocusMsg{}
+			case input.BlurEvent:
+				msg = BlurMsg{}
 			default:
 				msg = Msg(e)
 			}

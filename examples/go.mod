@@ -21,10 +21,10 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/shampoo v0.0.0-20240626211909-29eec07921e9 // indirect
-	github.com/charmbracelet/x/ansi v0.1.5-0.20240805145438-99a7cad109d8 // indirect
+	github.com/charmbracelet/shampoo v0.0.0-20240809005633-96634cadc01c // indirect
+	github.com/charmbracelet/x/ansi v0.1.5-0.20240812190614-74518029592c // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20240710172756-1a5969e3146f // indirect
-	github.com/charmbracelet/x/input v0.1.3 // indirect
+	github.com/charmbracelet/x/input v0.1.4-0.20240812190614-74518029592c // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.1.2 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 )
 
 replace github.com/charmbracelet/bubbletea => ../

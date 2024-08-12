@@ -234,3 +234,12 @@ func WithEnhancedKeyboard() ProgramOption {
 		p.startupOptions |= withEnhancedKeyboard
 	}
 }
+
+// WithReportFocus enables reporting when the terminal gains and lost focus.
+//
+// You can then check for FocusMsg and BlurMsg in your model's Update method.
+func WithReportFocus() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withReportFocus
+	}
+}

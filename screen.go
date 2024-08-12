@@ -11,6 +11,12 @@ type WindowSizeMsg struct {
 	Height int
 }
 
+// FocusMsg is used to report when the terminal gains focus.
+type FocusMsg struct{}
+
+// BlurMsg is used to report when the terminal lost focus.
+type BlurMsg struct{}
+
 // BackgroundColorMsg is used to report the terminal's background color. It's
 // sent to Update once initially and can be queried at any time using the
 // BackgroundColor command.

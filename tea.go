@@ -101,6 +101,7 @@ const (
 	withoutCatchPanics
 	withoutBracketedPaste
 	withEnhancedKeyboard
+	withReportFocus
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -605,6 +606,10 @@ func (p *Program) Run() (Model, error) {
 
 	if p.startupOptions&withEnhancedKeyboard != 0 {
 		p.enableEnhancedKeyboard()
+	}
+
+	if p.startupOptions&withReportFocus != 0 {
+		p.renderer.execute(ansi.EnableReportFocus)
 	}
 
 	// Initialize the program.
