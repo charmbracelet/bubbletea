@@ -49,6 +49,23 @@ func WithInputTTY() ProgramOption {
 	}
 }
 
+// WithEnvironment sets the environment variables that the program will use.
+// This useful when the program is running in a remote session (e.g. SSH) and
+// you want to pass the environment variables from the remote session to the
+// program.
+//
+// Example:
+//
+//	var sess ssh.Session // ssh.Session is a type from the github.com/charmbracelet/ssh package
+//	pty, _, _ := sess.Pty()
+//	environ := append(sess.Environ(), "TERM="+pty.Term)
+//	p := tea.NewProgram(model, tea.WithEnvironment(environ)
+func WithEnvironment(env []string) ProgramOption {
+	return func(p *Program) {
+		p.environ = env
+	}
+}
+
 // WithoutSignalHandler disables the signal handler that Bubble Tea sets up for
 // Programs. This is useful if you want to handle signals yourself.
 func WithoutSignalHandler() ProgramOption {
