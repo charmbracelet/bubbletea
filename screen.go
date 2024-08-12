@@ -34,6 +34,17 @@ func BackgroundColor() Msg {
 	return backgroundColorMsg{}
 }
 
+// reportFocusMsg is an internal message that signals to query the terminal's focus
+// state.
+type reportFocusMsg struct{}
+
+// BackgroundColor is a command that can be sent to the program to query the
+// terminal's background color. The program will respond with a
+// BackgroundColorMsg.
+func ReportFocus() Msg {
+	return reportFocusMsg{}
+}
+
 // PasteMsg is used to report bracketed paste input. It's sent to Update when
 // bracketed paste input is detected.
 type PasteMsg string
