@@ -22,7 +22,6 @@ import (
 	"syscall"
 
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -159,7 +158,7 @@ type Program struct {
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
-	cancelReader          cancelreader.CancelReader
+	inputReader           *driver
 	readLoopDone          chan struct{}
 
 	// was the altscreen active before releasing the terminal?
@@ -543,11 +542,18 @@ func (p *Program) Run() (Model, error) {
 		p.renderer.enableMouseSGRMode()
 	}
 
+	// Init the input reader and initial model.
+	model := p.initialModel
+	if p.input != nil {
+		if err := p.initInputReader(); err != nil {
+			return model, err
+		}
+	}
+
 	// Start the renderer.
 	p.renderer.start()
 
 	// Initialize the program.
-	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
 		ch := make(chan struct{})
 		handlers.add(ch)
@@ -564,13 +570,6 @@ func (p *Program) Run() (Model, error) {
 
 	// Render the initial view.
 	p.renderer.write(model.View())
-
-	// Subscribe to user input.
-	if p.input != nil {
-		if err := p.initCancelReader(); err != nil {
-			return model, err
-		}
-	}
 
 	// Handle resize events.
 	handlers.add(p.handleResize())
@@ -592,12 +591,12 @@ func (p *Program) Run() (Model, error) {
 	p.cancel()
 
 	// Check if the cancel reader has been setup before waiting and closing.
-	if p.cancelReader != nil {
+	if p.inputReader != nil {
 		// Wait for input loop to finish.
-		if p.cancelReader.Cancel() {
+		if p.inputReader.Cancel() {
 			p.waitForReadLoop()
 		}
-		_ = p.cancelReader.Close()
+		_ = p.inputReader.Close()
 	}
 
 	// Wait for all handlers to finish.
@@ -684,8 +683,8 @@ func (p *Program) shutdown(kill bool) {
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
-	if p.cancelReader != nil {
-		p.cancelReader.Cancel()
+	if p.inputReader != nil {
+		p.inputReader.Cancel()
 	}
 
 	p.waitForReadLoop()
@@ -708,7 +707,7 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-	if err := p.initCancelReader(); err != nil {
+	if err := p.initInputReader(); err != nil {
 		return err
 	}
 	if p.altScreenWasActive {

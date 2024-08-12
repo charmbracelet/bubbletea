@@ -15,53 +15,52 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
+
+var sequences = buildKeysTable(_FlagTerminfo, "dumb")
 
 func TestKeyString(t *testing.T) {
 	t.Run("alt+space", func(t *testing.T) {
-		if got := KeyMsg(Key{
-			Type: KeySpace,
-			Alt:  true,
-		}).String(); got != "alt+ " {
-			t.Fatalf(`expected a "alt+ ", got %q`, got)
+		k := KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModAlt}
+		if got := k.String(); got != "alt+space" {
+			t.Fatalf(`expected a "alt+space ", got %q`, got)
 		}
 	})
 
 	t.Run("runes", func(t *testing.T) {
-		if got := KeyMsg(Key{
-			Type:  KeyRunes,
-			Runes: []rune{'a'},
-		}).String(); got != "a" {
+		k := KeyPressMsg{Runes: []rune{'a'}}
+		if got := k.String(); got != "a" {
 			t.Fatalf(`expected an "a", got %q`, got)
 		}
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		if got := KeyMsg(Key{
-			Type: KeyType(99999),
-		}).String(); got != "" {
-			t.Fatalf(`expected a "", got %q`, got)
+		k := KeyPressMsg{Sym: 99999}
+		if got := k.String(); got != "unknown" {
+			t.Fatalf(`expected a "unknown", got %q`, got)
 		}
 	})
 }
 
 func TestKeyTypeString(t *testing.T) {
 	t.Run("space", func(t *testing.T) {
-		if got := KeySpace.String(); got != " " {
-			t.Fatalf(`expected a " ", got %q`, got)
+		if got := KeySpace.String(); got != "space" {
+			t.Fatalf(`expected a "space", got %q`, got)
 		}
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		if got := KeyType(99999).String(); got != "" {
-			t.Fatalf(`expected a "", got %q`, got)
+		if got := KeySym(99999).String(); got != "unknown" {
+			t.Fatalf(`expected a "unknown", got %q`, got)
 		}
 	})
 }
 
 type seqTest struct {
-	seq []byte
-	msg Msg
+	seq  []byte
+	msgs []Msg
 }
 
 // buildBaseSeqTests returns sequence tests that are valid for the
@@ -69,25 +68,7 @@ type seqTest struct {
 func buildBaseSeqTests() []seqTest {
 	td := []seqTest{}
 	for seq, key := range sequences {
-		key := key
-		td = append(td, seqTest{[]byte(seq), KeyMsg(key)})
-		if !key.Alt {
-			key.Alt = true
-			td = append(td, seqTest{[]byte("\x1b" + seq), KeyMsg(key)})
-		}
-	}
-	// Add all the control characters.
-	for i := keyNUL + 1; i <= keyDEL; i++ {
-		if i == keyESC {
-			// Not handled in detectSequence(), so not part of the base test
-			// suite.
-			continue
-		}
-		td = append(td, seqTest{[]byte{byte(i)}, KeyMsg{Type: i}})
-		td = append(td, seqTest{[]byte{'\x1b', byte(i)}, KeyMsg{Type: i, Alt: true}})
-		if i == keyUS {
-			i = keyDEL - 1
-		}
+		td = append(td, seqTest{[]byte(seq), []Msg{KeyPressMsg(key)}})
 	}
 
 	// Additional special cases.
@@ -95,102 +76,129 @@ func buildBaseSeqTests() []seqTest {
 		// Unrecognized CSI sequence.
 		seqTest{
 			[]byte{'\x1b', '[', '-', '-', '-', '-', 'X'},
-			unknownCSISequenceMsg([]byte{'\x1b', '[', '-', '-', '-', '-', 'X'}),
+			[]Msg{
+				UnknownMsg([]byte{'\x1b', '[', '-', '-', '-', '-', 'X'}),
+			},
 		},
 		// A lone space character.
 		seqTest{
 			[]byte{' '},
-			KeyMsg{Type: KeySpace, Runes: []rune(" ")},
+			[]Msg{
+				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}},
+			},
 		},
 		// An escape character with the alt modifier.
 		seqTest{
 			[]byte{'\x1b', ' '},
-			KeyMsg{Type: KeySpace, Runes: []rune(" "), Alt: true},
+			[]Msg{
+				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModAlt},
+			},
 		},
 	)
 	return td
 }
 
-func TestDetectSequence(t *testing.T) {
+func TestParseSequence(t *testing.T) {
 	td := buildBaseSeqTests()
-	for _, tc := range td {
-		t.Run(fmt.Sprintf("%q", string(tc.seq)), func(t *testing.T) {
-			hasSeq, width, msg := detectSequence(tc.seq)
-			if !hasSeq {
-				t.Fatalf("no sequence found")
-			}
-			if width != len(tc.seq) {
-				t.Errorf("parser did not consume the entire input: got %d, expected %d", width, len(tc.seq))
-			}
-			if !reflect.DeepEqual(tc.msg, msg) {
-				t.Errorf("expected event %#v (%T), got %#v (%T)", tc.msg, tc.msg, msg, msg)
-			}
-		})
-	}
-}
-
-func TestDetectOneMsg(t *testing.T) {
-	td := buildBaseSeqTests()
-	// Add tests for the inputs that detectOneMsg() can parse, but
-	// detectSequence() cannot.
 	td = append(td,
+		// focus/blur
+		seqTest{
+			[]byte{'\x1b', '[', 'I'},
+			[]Msg{
+				FocusMsg{},
+			},
+		},
+		seqTest{
+			[]byte{'\x1b', '[', 'O'},
+			[]Msg{
+				BlurMsg{},
+			},
+		},
 		// Mouse event.
 		seqTest{
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
-			MouseMsg{X: 32, Y: 16, Type: MouseWheelUp, Button: MouseButtonWheelUp, Action: MouseActionPress},
+			[]Msg{
+				MouseWheelMsg{X: 32, Y: 16, Button: MouseWheelUp},
+			},
 		},
 		// SGR Mouse event.
 		seqTest{
 			[]byte("\x1b[<0;33;17M"),
-			MouseMsg{X: 32, Y: 16, Type: MouseLeft, Button: MouseButtonLeft, Action: MouseActionPress},
+			[]Msg{
+				MouseClickMsg{X: 32, Y: 16, Button: MouseLeft},
+			},
 		},
 		// Runes.
 		seqTest{
 			[]byte{'a'},
-			KeyMsg{Type: KeyRunes, Runes: []rune("a")},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{'a'}},
+			},
 		},
 		seqTest{
 			[]byte{'\x1b', 'a'},
-			KeyMsg{Type: KeyRunes, Runes: []rune("a"), Alt: true},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModAlt},
+			},
 		},
 		seqTest{
 			[]byte{'a', 'a', 'a'},
-			KeyMsg{Type: KeyRunes, Runes: []rune("aaa")},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
+			},
 		},
 		// Multi-byte rune.
 		seqTest{
 			[]byte("☃"),
-			KeyMsg{Type: KeyRunes, Runes: []rune("☃")},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{'☃'}},
+			},
 		},
 		seqTest{
 			[]byte("\x1b☃"),
-			KeyMsg{Type: KeyRunes, Runes: []rune("☃"), Alt: true},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{'☃'}, Mod: ModAlt},
+			},
 		},
 		// Standalone control chacters.
 		seqTest{
 			[]byte{'\x1b'},
-			KeyMsg{Type: KeyEscape},
+			[]Msg{
+				KeyPressMsg{Sym: KeyEscape},
+			},
 		},
 		seqTest{
-			[]byte{byte(keySOH)},
-			KeyMsg{Type: KeyCtrlA},
+			[]byte{ansi.SOH},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModCtrl},
+			},
 		},
 		seqTest{
-			[]byte{'\x1b', byte(keySOH)},
-			KeyMsg{Type: KeyCtrlA, Alt: true},
+			[]byte{'\x1b', ansi.SOH},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModCtrl | ModAlt},
+			},
 		},
 		seqTest{
-			[]byte{byte(keyNUL)},
-			KeyMsg{Type: KeyCtrlAt},
+			[]byte{ansi.NUL},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{' '}, Sym: KeySpace, Mod: ModCtrl},
+			},
 		},
 		seqTest{
-			[]byte{'\x1b', byte(keyNUL)},
-			KeyMsg{Type: KeyCtrlAt, Alt: true},
+			[]byte{'\x1b', ansi.NUL},
+			[]Msg{
+				KeyPressMsg{Runes: []rune{' '}, Sym: KeySpace, Mod: ModCtrl | ModAlt},
+			},
 		},
-		// Invalid characters.
+		// C1 control characters.
 		seqTest{
 			[]byte{'\x80'},
-			unknownInputByteMsg(0x80),
+			[]Msg{
+				KeyPressMsg{Runes: []rune{0x80 - '@'}, Mod: ModCtrl | ModAlt},
+			},
 		},
 	)
 
@@ -199,39 +207,53 @@ func TestDetectOneMsg(t *testing.T) {
 		// This is incorrect, but it makes our test fail if we try it out.
 		td = append(td, seqTest{
 			[]byte{'\xfe'},
-			unknownInputByteMsg(0xfe),
+			[]Msg{
+				UnknownMsg(rune(0xfe)),
+			},
 		})
 	}
 
 	for _, tc := range td {
 		t.Run(fmt.Sprintf("%q", string(tc.seq)), func(t *testing.T) {
-			width, msg := detectOneMsg(tc.seq, false /* canHaveMoreData */)
-			if width != len(tc.seq) {
-				t.Errorf("parser did not consume the entire input: got %d, expected %d", width, len(tc.seq))
+			var events []Msg
+			buf := tc.seq
+			for len(buf) > 0 {
+				width, msg := parseSequence(buf)
+				events = append(events, msg)
+				buf = buf[width:]
 			}
-			if !reflect.DeepEqual(tc.msg, msg) {
-				t.Errorf("expected event %#v (%T), got %#v (%T)", tc.msg, tc.msg, msg, msg)
+			if !reflect.DeepEqual(tc.msgs, events) {
+				t.Errorf("\nexpected event:\n    %#v\ngot:\n    %#v", tc.msgs, events)
 			}
 		})
 	}
 }
 
 func TestReadLongInput(t *testing.T) {
+	expect := make([]Msg, 1000)
+	for i := 0; i < 1000; i++ {
+		expect[i] = KeyPressMsg{Runes: []rune{'a'}}
+	}
 	input := strings.Repeat("a", 1000)
-	msgs := testReadInputs(t, bytes.NewReader([]byte(input)))
-	if len(msgs) != 1 {
-		t.Errorf("expected 1 messages, got %d", len(msgs))
+	drv, err := newDriver(strings.NewReader(input), "dumb", 0)
+	if err != nil {
+		t.Fatalf("unexpected input driver error: %v", err)
 	}
-	km := msgs[0]
-	k := Key(km.(KeyMsg))
-	if k.Type != KeyRunes {
-		t.Errorf("expected key runes, got %d", k.Type)
+
+	var msgs []Msg
+	for {
+		events, err := drv.ReadEvents()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("unexpected input error: %v", err)
+		}
+		msgs = append(msgs, events...)
 	}
-	if len(k.Runes) != 1000 || !reflect.DeepEqual(k.Runes, []rune(input)) {
-		t.Errorf("unexpected runes: %+v", k)
-	}
-	if k.Alt {
-		t.Errorf("unexpected alt")
+
+	if !reflect.DeepEqual(expect, msgs) {
+		t.Errorf("unexpected messages, expected:\n    %+v\ngot:\n    %+v", expect, msgs)
 	}
 }
 
@@ -242,199 +264,185 @@ func TestReadInput(t *testing.T) {
 		out     []Msg
 	}
 	testData := []test{
-		{"a",
+		{
+			"a",
 			[]byte{'a'},
 			[]Msg{
-				KeyMsg{
-					Type:  KeyRunes,
-					Runes: []rune{'a'},
-				},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
 			},
 		},
-		{" ",
+		{
+			"space",
 			[]byte{' '},
 			[]Msg{
-				KeyMsg{
-					Type:  KeySpace,
-					Runes: []rune{' '},
-				},
+				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}},
 			},
 		},
-		{"a alt+a",
+		{
+			"a alt+a",
 			[]byte{'a', '\x1b', 'a'},
 			[]Msg{
-				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
-				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}, Alt: true},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}, Mod: ModAlt},
 			},
 		},
-		{"a alt+a a",
+		{
+			"a alt+a a",
 			[]byte{'a', '\x1b', 'a', 'a'},
 			[]Msg{
-				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
-				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}, Alt: true},
-				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}, Mod: ModAlt},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
 			},
 		},
-		{"ctrl+a",
-			[]byte{byte(keySOH)},
+		{
+			"ctrl+a",
+			[]byte{byte(ansi.SOH)},
 			[]Msg{
-				KeyMsg{
-					Type: KeyCtrlA,
-				},
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModCtrl},
 			},
 		},
-		{"ctrl+a ctrl+b",
-			[]byte{byte(keySOH), byte(keySTX)},
+		{
+			"ctrl+a ctrl+b",
+			[]byte{byte(ansi.SOH), byte(ansi.STX)},
 			[]Msg{
-				KeyMsg{Type: KeyCtrlA},
-				KeyMsg{Type: KeyCtrlB},
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModCtrl},
+				KeyPressMsg{Runes: []rune{'b'}, Mod: ModCtrl},
 			},
 		},
-		{"alt+a",
+		{
+			"alt+a",
 			[]byte{byte(0x1b), 'a'},
 			[]Msg{
-				KeyMsg{
-					Type:  KeyRunes,
-					Alt:   true,
-					Runes: []rune{'a'},
-				},
+				KeyPressMsg{Sym: KeyNone, Mod: ModAlt, Runes: []rune{'a'}},
 			},
 		},
-		{"abcd",
+		{
+			"a b c d",
 			[]byte{'a', 'b', 'c', 'd'},
 			[]Msg{
-				KeyMsg{
-					Type:  KeyRunes,
-					Runes: []rune{'a', 'b', 'c', 'd'},
-				},
+				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'b'}},
+				KeyPressMsg{Runes: []rune{'c'}},
+				KeyPressMsg{Runes: []rune{'d'}},
 			},
 		},
-		{"up",
+		{
+			"up",
 			[]byte("\x1b[A"),
 			[]Msg{
-				KeyMsg{
-					Type: KeyUp,
-				},
+				KeyPressMsg{Sym: KeyUp},
 			},
 		},
-		{"wheel up",
+		{
+			"wheel up",
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
 			[]Msg{
-				MouseMsg{
-					X:      32,
-					Y:      16,
-					Type:   MouseWheelUp,
-					Button: MouseButtonWheelUp,
-					Action: MouseActionPress,
-				},
+				MouseWheelMsg{X: 32, Y: 16, Button: MouseWheelUp},
 			},
 		},
-		{"left motion release",
+		{
+			"left motion release",
 			[]byte{
 				'\x1b', '[', 'M', byte(32) + 0b0010_0000, byte(32 + 33), byte(16 + 33),
 				'\x1b', '[', 'M', byte(32) + 0b0000_0011, byte(64 + 33), byte(32 + 33),
 			},
 			[]Msg{
-				MouseMsg(MouseEvent{
-					X:      32,
-					Y:      16,
-					Type:   MouseLeft,
-					Button: MouseButtonLeft,
-					Action: MouseActionMotion,
-				}),
-				MouseMsg(MouseEvent{
-					X:      64,
-					Y:      32,
-					Type:   MouseRelease,
-					Button: MouseButtonNone,
-					Action: MouseActionRelease,
-				}),
+				MouseMotionMsg{X: 32, Y: 16, Button: MouseLeft},
+				MouseReleaseMsg{X: 64, Y: 32, Button: MouseNone},
 			},
 		},
-		{"shift+tab",
+		{
+			"shift+tab",
 			[]byte{'\x1b', '[', 'Z'},
 			[]Msg{
-				KeyMsg{
-					Type: KeyShiftTab,
-				},
+				KeyPressMsg{Sym: KeyTab, Mod: ModShift},
 			},
 		},
-		{"enter",
+		{
+			"enter",
 			[]byte{'\r'},
-			[]Msg{KeyMsg{Type: KeyEnter}},
+			[]Msg{KeyPressMsg{Sym: KeyEnter}},
 		},
-		{"alt+enter",
+		{
+			"alt+enter",
 			[]byte{'\x1b', '\r'},
 			[]Msg{
-				KeyMsg{
-					Type: KeyEnter,
-					Alt:  true,
-				},
+				KeyPressMsg{Sym: KeyEnter, Mod: ModAlt},
 			},
 		},
-		{"insert",
+		{
+			"insert",
 			[]byte{'\x1b', '[', '2', '~'},
 			[]Msg{
-				KeyMsg{
-					Type: KeyInsert,
-				},
+				KeyPressMsg{Sym: KeyInsert},
 			},
 		},
-		{"alt+ctrl+a",
-			[]byte{'\x1b', byte(keySOH)},
+		{
+			"ctrl+alt+a",
+			[]byte{'\x1b', byte(ansi.SOH)},
 			[]Msg{
-				KeyMsg{
-					Type: KeyCtrlA,
-					Alt:  true,
-				},
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModCtrl | ModAlt},
 			},
 		},
-		{"?CSI[45 45 45 45 88]?",
+		{
+			"CSI?----X?",
 			[]byte{'\x1b', '[', '-', '-', '-', '-', 'X'},
-			[]Msg{unknownCSISequenceMsg([]byte{'\x1b', '[', '-', '-', '-', '-', 'X'})},
+			[]Msg{UnknownMsg([]byte{'\x1b', '[', '-', '-', '-', '-', 'X'})},
 		},
 		// Powershell sequences.
-		{"up",
+		{
+			"up",
 			[]byte{'\x1b', 'O', 'A'},
-			[]Msg{KeyMsg{Type: KeyUp}},
+			[]Msg{KeyPressMsg{Sym: KeyUp}},
 		},
-		{"down",
+		{
+			"down",
 			[]byte{'\x1b', 'O', 'B'},
-			[]Msg{KeyMsg{Type: KeyDown}},
+			[]Msg{KeyPressMsg{Sym: KeyDown}},
 		},
-		{"right",
+		{
+			"right",
 			[]byte{'\x1b', 'O', 'C'},
-			[]Msg{KeyMsg{Type: KeyRight}},
+			[]Msg{KeyPressMsg{Sym: KeyRight}},
 		},
-		{"left",
+		{
+			"left",
 			[]byte{'\x1b', 'O', 'D'},
-			[]Msg{KeyMsg{Type: KeyLeft}},
+			[]Msg{KeyPressMsg{Sym: KeyLeft}},
 		},
-		{"alt+enter",
+		{
+			"alt+enter",
 			[]byte{'\x1b', '\x0d'},
-			[]Msg{KeyMsg{Type: KeyEnter, Alt: true}},
+			[]Msg{KeyPressMsg{Sym: KeyEnter, Mod: ModAlt}},
 		},
-		{"alt+backspace",
+		{
+			"alt+backspace",
 			[]byte{'\x1b', '\x7f'},
-			[]Msg{KeyMsg{Type: KeyBackspace, Alt: true}},
+			[]Msg{KeyPressMsg{Sym: KeyBackspace, Mod: ModAlt}},
 		},
-		{"ctrl+@",
+		{
+			"ctrl+space",
 			[]byte{'\x00'},
-			[]Msg{KeyMsg{Type: KeyCtrlAt}},
+			[]Msg{KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModCtrl}},
 		},
-		{"alt+ctrl+@",
+		{
+			"ctrl+alt+space",
 			[]byte{'\x1b', '\x00'},
-			[]Msg{KeyMsg{Type: KeyCtrlAt, Alt: true}},
+			[]Msg{KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModCtrl | ModAlt}},
 		},
-		{"esc",
+		{
+			"esc",
 			[]byte{'\x1b'},
-			[]Msg{KeyMsg{Type: KeyEsc}},
+			[]Msg{KeyPressMsg{Sym: KeyEscape}},
 		},
-		{"alt+esc",
+		{
+			"alt+esc",
 			[]byte{'\x1b', '\x1b'},
-			[]Msg{KeyMsg{Type: KeyEsc, Alt: true}},
+			[]Msg{KeyPressMsg{Sym: KeyEscape, Mod: ModAlt}},
 		},
-		{"[a b] o",
+		{
+			"a b o",
 			[]byte{
 				'\x1b', '[', '2', '0', '0', '~',
 				'a', ' ', 'b',
@@ -442,38 +450,42 @@ func TestReadInput(t *testing.T) {
 				'o',
 			},
 			[]Msg{
-				KeyMsg{Type: KeyRunes, Runes: []rune("a b"), Paste: true},
-				KeyMsg{Type: KeyRunes, Runes: []rune("o")},
+				PasteStartMsg{},
+				PasteMsg("a b"),
+				PasteEndMsg{},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'o'}},
 			},
 		},
-		{"[a\x03\nb]",
+		{
+			"a\x03\nb",
 			[]byte{
 				'\x1b', '[', '2', '0', '0', '~',
 				'a', '\x03', '\n', 'b',
-				'\x1b', '[', '2', '0', '1', '~'},
+				'\x1b', '[', '2', '0', '1', '~',
+			},
 			[]Msg{
-				KeyMsg{Type: KeyRunes, Runes: []rune("a\x03\nb"), Paste: true},
+				PasteStartMsg{},
+				PasteMsg("a\x03\nb"),
+				PasteEndMsg{},
 			},
 		},
-	}
-	if runtime.GOOS != "windows" {
-		// Sadly, utf8.DecodeRune([]byte(0xfe)) returns a valid rune on windows.
-		// This is incorrect, but it makes our test fail if we try it out.
-		testData = append(testData,
-			test{"?0xfe?",
-				[]byte{'\xfe'},
-				[]Msg{unknownInputByteMsg(0xfe)},
+		{
+			"?0xfe?",
+			[]byte{'\xfe'},
+			[]Msg{
+				UnknownMsg(rune(0xfe)),
 			},
-			test{"a ?0xfe?   b",
-				[]byte{'a', '\xfe', ' ', 'b'},
-				[]Msg{
-					KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
-					unknownInputByteMsg(0xfe),
-					KeyMsg{Type: KeySpace, Runes: []rune{' '}},
-					KeyMsg{Type: KeyRunes, Runes: []rune{'b'}},
-				},
+		},
+		{
+			"a ?0xfe?   b",
+			[]byte{'a', '\xfe', ' ', 'b'},
+			[]Msg{
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
+				UnknownMsg(rune(0xfe)),
+				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}},
+				KeyPressMsg{Sym: KeyNone, Runes: []rune{'b'}},
 			},
-		)
+		},
 	}
 
 	for i, td := range testData {
@@ -491,13 +503,8 @@ func TestReadInput(t *testing.T) {
 				}
 			}
 
-			title := buf.String()
-			if title != td.keyname {
-				t.Errorf("expected message titles:\n  %s\ngot:\n  %s", td.keyname, title)
-			}
-
 			if len(msgs) != len(td.out) {
-				t.Fatalf("unexpected message list length: got %d, expected %d\n%#v", len(msgs), len(td.out), msgs)
+				t.Fatalf("unexpected message list length: got %d, expected %d\n  got: %#v\n  expected: %#v\n", len(msgs), len(td.out), msgs, td.out)
 			}
 
 			if !reflect.DeepEqual(td.out, msgs) {
@@ -521,6 +528,11 @@ func testReadInputs(t *testing.T, input io.Reader) []Msg {
 		}
 	}()
 
+	dr, err := newDriver(input, "dumb", 0)
+	if err != nil {
+		t.Fatalf("unexpected input driver error: %v", err)
+	}
+
 	// The messages we're consuming.
 	msgsC := make(chan Msg)
 
@@ -528,7 +540,16 @@ func testReadInputs(t *testing.T, input io.Reader) []Msg {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		inputErr = readAnsiInputs(ctx, msgsC, input)
+		var events []Msg
+		events, inputErr = dr.ReadEvents()
+	out:
+		for _, ev := range events {
+			select {
+			case msgsC <- ev:
+			case <-ctx.Done():
+				break out
+			}
+		}
 		msgsC <- nil
 	}()
 
@@ -612,14 +633,14 @@ func genRandomDataWithSeed(s int64, length int) randTest {
 				res.data = append(res.data, '\x1b')
 			}
 			res.data = append(res.data, 1)
-			res.names = append(res.names, prefix+"ctrl+a")
+			res.names = append(res.names, "ctrl+"+prefix+"a")
 			res.lengths = append(res.lengths, 1+esclen)
 
 		case 1, 2:
 			// A sequence.
 			seqi := r.Intn(len(allseqs))
 			s := allseqs[seqi]
-			if strings.HasPrefix(s.name, "alt+") {
+			if strings.Contains(s.name, "alt+") || strings.Contains(s.name, "meta+") {
 				esclen = 0
 				prefix = ""
 				alt = 0
@@ -628,58 +649,31 @@ func genRandomDataWithSeed(s int64, length int) randTest {
 				res.data = append(res.data, '\x1b')
 			}
 			res.data = append(res.data, s.seq...)
-			res.names = append(res.names, prefix+s.name)
+			if strings.HasPrefix(s.name, "ctrl+") {
+				prefix = "ctrl+" + prefix
+			}
+			name := prefix + strings.TrimPrefix(s.name, "ctrl+")
+			res.names = append(res.names, name)
 			res.lengths = append(res.lengths, len(s.seq)+esclen)
 		}
 	}
 	return res
 }
 
-// TestDetectRandomSequencesLex checks that the lex-generated sequence
-// detector works over concatenations of random sequences.
-func TestDetectRandomSequencesLex(t *testing.T) {
-	runTestDetectSequence(t, detectSequence)
-}
-
-func runTestDetectSequence(
-	t *testing.T, detectSequence func(input []byte) (hasSeq bool, width int, msg Msg),
-) {
-	for i := 0; i < 10; i++ {
-		t.Run("", func(t *testing.T) {
-			td := genRandomData(func(s int64) { t.Logf("using random seed: %d", s) }, 1000)
-
-			t.Logf("%#v", td)
-
-			// tn is the event number in td.
-			// i is the cursor in the input data.
-			// w is the length of the last sequence detected.
-			for tn, i, w := 0, 0, 0; i < len(td.data); tn, i = tn+1, i+w {
-				hasSequence, width, msg := detectSequence(td.data[i:])
-				if !hasSequence {
-					t.Fatalf("at %d (ev %d): failed to find sequence", i, tn)
-				}
-				if width != td.lengths[tn] {
-					t.Errorf("at %d (ev %d): expected width %d, got %d", i, tn, td.lengths[tn], width)
-				}
-				w = width
-
-				s, ok := msg.(fmt.Stringer)
-				if !ok {
-					t.Errorf("at %d (ev %d): expected stringer event, got %T", i, tn, msg)
-				} else {
-					if td.names[tn] != s.String() {
-						t.Errorf("at %d (ev %d): expected event %q, got %q", i, tn, td.names[tn], s.String())
-					}
-				}
-			}
-		})
+func FuzzParseSequence(f *testing.F) {
+	for seq := range sequences {
+		f.Add(seq)
 	}
-}
-
-// TestDetectRandomSequencesMap checks that the map-based sequence
-// detector works over concatenations of random sequences.
-func TestDetectRandomSequencesMap(t *testing.T) {
-	runTestDetectSequence(t, detectSequence)
+	f.Add("\x1b]52;?\x07")                      // OSC 52
+	f.Add("\x1b]11;rgb:0000/0000/0000\x1b\\")   // OSC 11
+	f.Add("\x1bP>|charm terminal(0.1.2)\x1b\\") // DCS (XTVERSION)
+	f.Add("\x1b_Gi=123\x1b\\")                  // APC
+	f.Fuzz(func(t *testing.T, seq string) {
+		n, _ := parseSequence([]byte(seq))
+		if n == 0 && seq != "" {
+			t.Errorf("expected a non-zero width for %q", seq)
+		}
+	})
 }
 
 // BenchmarkDetectSequenceMap benchmarks the map-based sequence
@@ -688,7 +682,7 @@ func BenchmarkDetectSequenceMap(b *testing.B) {
 	td := genRandomDataWithSeed(123, 10000)
 	for i := 0; i < b.N; i++ {
 		for j, w := 0, 0; j < len(td.data); j += w {
-			_, w, _ = detectSequence(td.data[j:])
+			w, _ = parseSequence(td.data[j:])
 		}
 	}
 }
