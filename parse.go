@@ -300,23 +300,26 @@ func parseCsi(b []byte) (int, Msg) {
 		return i, BlurMsg{}
 	case 'R':
 		// Cursor position report OR modified F3
-		if paramsLen == 0 {
-			return i, KeyPressMsg{Sym: KeyF3}
-		} else if paramsLen != 2 {
-			break
+		if paramsLen == 2 {
+			m := CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
+			if csi.Param(0) == 1 && csi.Param(1)-1 <= int(ModMeta|ModShift|ModAlt|ModCtrl) {
+				// XXX: We cannot differentiate between cursor position report and
+				// CSI 1 ; <mod> R (which is modified F3) when the cursor is at the
+				// row 1. In this case, we report both messages.
+				//
+				// For a non ambiguous cursor position report, use
+				// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
+				return i, multiMsg{KeyPressMsg{Sym: KeyF3, Mod: KeyMod(csi.Param(1) - 1)}, m}
+			}
+
+			return i, m
 		}
 
-		// XXX: We cannot differentiate between cursor position report and
-		// CSI 1 ; <mod> R (which is modified F3) when the cursor is at the
-		// row 1. In this case, we report a modified F3 event since it's more
-		// likely to be the case than the cursor being at the first row.
-		//
-		// For a non ambiguous cursor position report, use
-		// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
-		if csi.Param(0) != 1 {
-			return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
+		if paramsLen != 0 {
+			return i, UnknownMsg(b[:i])
 		}
 
+		// Unmodified key F3 (CSI R)
 		fallthrough
 	case 'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'P', 'Q', 'S', 'Z':
 		var k KeyPressMsg
