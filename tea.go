@@ -21,6 +21,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"golang.org/x/sync/errgroup"
 )
@@ -320,9 +321,9 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 }
 
 func (p *Program) disableMouse() {
-	p.renderer.disableMouseCellMotion()
-	p.renderer.disableMouseAllMotion()
-	p.renderer.disableMouseSGRMode()
+	p.renderer.execute(ansi.DisableMouseAllMotion)
+	p.renderer.execute(ansi.DisableMouseCellMotion)
+	p.renderer.execute(ansi.DisableMouseSgrExt)
 }
 
 // eventLoop is the central message loop. It receives and handles the default
@@ -367,12 +368,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case enableMouseCellMotionMsg, enableMouseAllMotionMsg:
 				switch msg.(type) {
 				case enableMouseCellMotionMsg:
-					p.renderer.enableMouseCellMotion()
+					p.renderer.execute(ansi.EnableMouseCellMotion)
 				case enableMouseAllMotionMsg:
-					p.renderer.enableMouseAllMotion()
+					p.renderer.execute(ansi.EnableMouseAllMotion)
 				}
 				// mouse mode (1006) is a no-op if the terminal doesn't support it.
-				p.renderer.enableMouseSGRMode()
+				p.renderer.execute(ansi.EnableMouseSgrExt)
 
 			case disableMouseMsg:
 				p.disableMouse()
@@ -384,10 +385,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.hideCursor()
 
 			case enableBracketedPasteMsg:
-				p.renderer.enableBracketedPaste()
+				p.renderer.execute(ansi.EnableBracketedPaste)
+				p.renderer.execute(ansi.EnableMouseSgrExt)
 
 			case disableBracketedPasteMsg:
-				p.renderer.disableBracketedPaste()
+				p.renderer.execute(ansi.DisableBracketedPaste)
 
 			case execMsg:
 				// NB: this blocks.
@@ -526,20 +528,20 @@ func (p *Program) Run() (Model, error) {
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
-		p.renderer.setWindowTitle(p.startupTitle)
+		p.renderer.execute(ansi.SetWindowTitle(p.startupTitle))
 	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.renderer.enterAltScreen()
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
-		p.renderer.enableBracketedPaste()
+		p.renderer.execute(ansi.EnableBracketedPaste)
 	}
 	if p.startupOptions&withMouseCellMotion != 0 {
-		p.renderer.enableMouseCellMotion()
-		p.renderer.enableMouseSGRMode()
+		p.renderer.execute(ansi.EnableMouseCellMotion)
+		p.renderer.execute(ansi.EnableMouseSgrExt)
 	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.renderer.enableMouseAllMotion()
-		p.renderer.enableMouseSGRMode()
+		p.renderer.execute(ansi.EnableMouseAllMotion)
+		p.renderer.execute(ansi.EnableMouseSgrExt)
 	}
 
 	// Init the input reader and initial model.
@@ -720,7 +722,7 @@ func (p *Program) RestoreTerminal() error {
 		p.renderer.start()
 	}
 	if p.bpWasActive {
-		p.renderer.enableBracketedPaste()
+		p.renderer.execute(ansi.EnableBracketedPaste)
 	}
 
 	// If the output is a terminal, it may have been resized while another

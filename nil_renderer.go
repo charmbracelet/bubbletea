@@ -13,13 +13,5 @@ func (n nilRenderer) enterAltScreen()            {}
 func (n nilRenderer) exitAltScreen()             {}
 func (n nilRenderer) showCursor()                {}
 func (n nilRenderer) hideCursor()                {}
-func (n nilRenderer) enableMouseCellMotion()     {}
-func (n nilRenderer) disableMouseCellMotion()    {}
-func (n nilRenderer) enableMouseAllMotion()      {}
-func (n nilRenderer) disableMouseAllMotion()     {}
-func (n nilRenderer) enableBracketedPaste()      {}
-func (n nilRenderer) disableBracketedPaste()     {}
-func (n nilRenderer) enableMouseSGRMode()        {}
-func (n nilRenderer) disableMouseSGRMode()       {}
+func (n nilRenderer) execute(_ string)           {}
 func (n nilRenderer) bracketedPasteActive() bool { return false }
-func (n nilRenderer) setWindowTitle(_ string)    {}
