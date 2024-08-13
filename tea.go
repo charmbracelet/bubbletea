@@ -391,6 +391,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case disableBracketedPasteMsg:
 				p.renderer.execute(ansi.DisableBracketedPaste)
 
+			case executeSequenceMsg:
+				p.renderer.execute(string(msg))
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
