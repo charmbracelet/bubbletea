@@ -393,81 +393,11 @@ func (r *standardRenderer) hideCursor() {
 	r.execute(ansi.HideCursor)
 }
 
-func (r *standardRenderer) enableMouseCellMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableMouseCellMotion)
-}
-
-func (r *standardRenderer) disableMouseCellMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableMouseCellMotion)
-}
-
-func (r *standardRenderer) enableMouseAllMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableMouseAllMotion)
-}
-
-func (r *standardRenderer) disableMouseAllMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableMouseAllMotion)
-}
-
-func (r *standardRenderer) enableMouseSGRMode() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableMouseSgrExt)
-}
-
-func (r *standardRenderer) disableMouseSGRMode() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableMouseSgrExt)
-}
-
-func (r *standardRenderer) enableBracketedPaste() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableBracketedPaste)
-	r.bpActive = true
-}
-
-func (r *standardRenderer) disableBracketedPaste() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableBracketedPaste)
-	r.bpActive = false
-}
-
 func (r *standardRenderer) bracketedPasteActive() bool {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	return r.bpActive
-}
-
-func (r *standardRenderer) enableReportFocus() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableReportFocus)
-}
-
-// setWindowTitle sets the terminal window title.
-func (r *standardRenderer) setWindowTitle(title string) {
-	r.execute(ansi.SetWindowTitle(title))
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea

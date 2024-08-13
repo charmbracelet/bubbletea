@@ -3,11 +3,11 @@ package tea
 import (
 	"encoding/base64"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/parser"
 	"github.com/erikgeiser/coninput"
+	"github.com/rivo/uniseg"
 )
 
 // Flags to control the behavior of the parser.
@@ -246,7 +246,7 @@ func parseCsi(b []byte) (int, Msg) {
 				if paramsLen != 2 {
 					return i, UnknownMsg(b[:i])
 				}
-				return i, ReportModeEvent{Mode: csi.Param(0), Value: csi.Param(1)}
+				return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
 			}
 		case 'c':
 			// Primary Device Attributes
@@ -260,7 +260,7 @@ func parseCsi(b []byte) (int, Msg) {
 			// This report may return a third parameter representing the page
 			// number, but we don't really need it.
 			if paramsLen >= 2 {
-				return i, CursorPositionEvent{Row: csi.Param(0), Column: csi.Param(1)}
+				return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
 			}
 		}
 		return i, UnknownMsg(b[:i])
@@ -283,7 +283,7 @@ func parseCsi(b []byte) (int, Msg) {
 				return i, UnknownMsg(b[:i])
 			}
 
-			return i, ModifyOtherKeysEvent(csi.Param(1))
+			return i, ModifyOtherKeysMsg(csi.Param(1))
 		default:
 			return i, UnknownMsg(b[:i])
 		}
@@ -313,7 +313,7 @@ func parseCsi(b []byte) (int, Msg) {
 		// For a non ambiguous cursor position report, use
 		// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
 		if csi.Param(0) != 1 {
-			return i, CursorPositionEvent{Row: csi.Param(0), Column: csi.Param(1)}
+			return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
 		}
 
 		fallthrough
@@ -353,7 +353,7 @@ func parseCsi(b []byte) (int, Msg) {
 		if paramsLen != 2 {
 			return i, UnknownMsg(b[:i])
 		}
-		return i, ReportModeEvent{Mode: csi.Param(0), Value: csi.Param(1)}
+		return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
 	case 'u':
 		// Kitty keyboard protocol & CSI u (fixterms)
 		if paramsLen == 0 {
@@ -599,22 +599,22 @@ func parseOsc(b []byte) (int, Msg) {
 	data := string(b[start:end])
 	switch cmd {
 	case 10:
-		return i, ForegroundColorEvent{xParseColor(data)}
+		return i, ForegroundColorMsg{xParseColor(data)}
 	case 11:
-		return i, BackgroundColorEvent{xParseColor(data)}
+		return i, BackgroundColorMsg{xParseColor(data)}
 	case 12:
-		return i, CursorColorEvent{xParseColor(data)}
+		return i, CursorColorMsg{xParseColor(data)}
 	case 52:
 		parts := strings.Split(data, ";")
 		if len(parts) == 0 {
-			return i, ClipboardEvent("")
+			return i, ClipboardMsg("")
 		}
 		b64 := parts[len(parts)-1]
 		bts, err := base64.StdEncoding.DecodeString(b64)
 		if err != nil {
-			return i, ClipboardEvent("")
+			return i, ClipboardMsg("")
 		}
-		return i, ClipboardEvent(bts)
+		return i, ClipboardMsg(bts)
 	default:
 		return i, UnknownMsg(b[:i])
 	}
@@ -775,14 +775,8 @@ func parseApc(b []byte) (int, Msg) {
 }
 
 func parseUtf8(b []byte) (int, Msg) {
-	r, rw := utf8.DecodeRune(b)
-	if r <= ansi.US || r == ansi.DEL || r == ansi.SP {
-		// Control codes get handled by parseControl
-		return 1, parseControl(byte(r))
-	} else if r == utf8.RuneError {
-		return 1, UnknownMsg(b[0])
-	}
-	return rw, KeyPressMsg{Runes: []rune{r}}
+	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
+	return len(cluster), KeyPressMsg{Runes: []rune(string(cluster))}
 }
 
 func parseControl(b byte) Msg {

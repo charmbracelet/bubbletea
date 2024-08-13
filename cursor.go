@@ -1,7 +1,7 @@
 package tea
 
-// CursorPositionEvent represents a cursor position event.
-type CursorPositionEvent struct {
+// CursorPositionMsg is a message that represents the terminal cursor position.
+type CursorPositionMsg struct {
 	// Row is the row number.
 	Row int
 

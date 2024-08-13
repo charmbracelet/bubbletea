@@ -29,7 +29,9 @@ func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 	}
 }
 
-// ModifyOtherKeysEvent represents a modifyOtherKeys event.
+// ModifyOtherKeysMsg is a message that represents XTerm modifyOtherKeys
+// report. Querying the terminal for the modifyOtherKeys mode will return a
+// ModifyOtherKeysMsg message with the current mode set.
 //
 //	0: disable
 //	1: enable mode 1
@@ -37,4 +39,4 @@ func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 //
 // See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
 // See: https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-type ModifyOtherKeysEvent uint8
+type ModifyOtherKeysMsg uint8

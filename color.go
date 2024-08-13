@@ -7,27 +7,32 @@ import (
 	"strings"
 )
 
-// ForegroundColorEvent represents a foreground color change event.
-type ForegroundColorEvent struct{ color.Color }
+// ForegroundColorMsg represents a foreground color message.
+// This message is emitted when the program requests the terminal foreground
+// color.
+type ForegroundColorMsg struct{ color.Color }
 
-// String implements fmt.Stringer.
-func (e ForegroundColorEvent) String() string {
+// String returns the hex representation of the color.
+func (e ForegroundColorMsg) String() string {
 	return colorToHex(e)
 }
 
-// BackgroundColorEvent represents a background color change event.
-type BackgroundColorEvent struct{ color.Color }
+// BackgroundColorMsg represents a background color message.
+// This message is emitted when the program requests the terminal background
+// color.
+type BackgroundColorMsg struct{ color.Color }
 
-// String implements fmt.Stringer.
-func (e BackgroundColorEvent) String() string {
+// String returns the hex representation of the color.
+func (e BackgroundColorMsg) String() string {
 	return colorToHex(e)
 }
 
-// CursorColorEvent represents a cursor color change event.
-type CursorColorEvent struct{ color.Color }
+// CursorColorMsg represents a cursor color change message.
+// This message is emitted when the program requests the terminal cursor color.
+type CursorColorMsg struct{ color.Color }
 
-// String implements fmt.Stringer.
-func (e CursorColorEvent) String() string {
+// String returns the hex representation of the color.
+func (e CursorColorMsg) String() string {
 	return colorToHex(e)
 }
 
