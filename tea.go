@@ -166,7 +166,7 @@ type Program struct {
 	altScreenWasActive bool
 	ignoreSignals      uint32
 
-	bpWasActive bool // was the bracketed paste mode active before releasing the terminal?
+	bpActive bool // was the bracketed paste mode active before releasing the terminal?
 
 	filter func(Model, Msg) Msg
 
@@ -386,9 +386,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case enableBracketedPasteMsg:
 				p.renderer.execute(ansi.EnableBracketedPaste)
+				p.bpActive = true
 
 			case disableBracketedPasteMsg:
 				p.renderer.execute(ansi.DisableBracketedPaste)
+				p.bpActive = false
 
 			case execMsg:
 				// NB: this blocks.
@@ -545,6 +547,7 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.renderer.execute(ansi.EnableBracketedPaste)
+		p.bpActive = true
 	}
 	if p.startupOptions&withMouseCellMotion != 0 {
 		p.renderer.execute(ansi.EnableMouseCellMotion)
@@ -696,7 +699,6 @@ func (p *Program) ReleaseTerminal() error {
 	if p.renderer != nil {
 		p.renderer.stop()
 		p.altScreenWasActive = p.renderer.altScreen()
-		p.bpWasActive = p.renderer.bracketedPasteActive()
 	}
 
 	return p.restoreTerminalState()
@@ -724,6 +726,7 @@ func (p *Program) RestoreTerminal() error {
 		p.renderer.start()
 		p.renderer.hideCursor()
 		p.renderer.execute(ansi.EnableBracketedPaste)
+		p.bpActive = true
 	}
 
 	// If the output is a terminal, it may have been resized while another

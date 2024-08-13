@@ -34,6 +34,7 @@ func (p *Program) initTerminal() error {
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
 		p.renderer.execute(ansi.DisableBracketedPaste)
+		p.bpActive = false
 		p.renderer.showCursor()
 		p.disableMouse()
 

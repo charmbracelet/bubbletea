@@ -36,10 +36,6 @@ type renderer interface {
 	// Hide the cursor.
 	hideCursor()
 
-	// bracketedPasteActive reports whether bracketed paste mode is
-	// currently enabled.
-	bracketedPasteActive() bool
-
 	// execute writes a sequence to the terminal.
 	execute(string)
 }
