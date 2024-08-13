@@ -7,6 +7,47 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+// setKittyKeyboardFlagsMsg is a message to set Kitty keyboard progressive
+// enhancement protocol flags.
+type setKittyKeyboardFlagsMsg int
+
+// EnableKittyKeyboard is a command to enable Kitty keyboard progressive
+// enhancement protocol.
+//
+// The flags parameter is a bitmask of the following
+//
+//	0:  Disable all features
+//	1:  Disambiguate escape codes
+//	2:  Report event types
+//	4:  Report alternate keys
+//	8:  Report all keys as escape codes
+//	16: Report associated text
+//
+// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
+func EnableKittyKeyboard(flags int) Cmd {
+	return func() Msg {
+		return setKittyKeyboardFlagsMsg(flags)
+	}
+}
+
+// DisableKittyKeyboard is a command to disable Kitty keyboard progressive
+// enhancement protocol.
+func DisableKittyKeyboard() Msg {
+	return setKittyKeyboardFlagsMsg(0)
+}
+
+// EnableEnhancedKeyboard is a command to enable enhanced keyboard features.
+// This unambiguously reports more key combinations than traditional terminal
+// keyboard sequences. This will also enable reporting of release key events.
+func EnableEnhancedKeyboard() Msg {
+	return setKittyKeyboardFlagsMsg(3)
+}
+
+// DisableEnhancedKeyboard is a command to disable enhanced keyboard features.
+func DisableEnhancedKeyboard() Msg {
+	return setKittyKeyboardFlagsMsg(0)
+}
+
 // KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
 type KittyKeyboardMsg int
 
