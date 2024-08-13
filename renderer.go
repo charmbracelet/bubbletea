@@ -46,14 +46,3 @@ type renderer interface {
 
 // repaintMsg forces a full repaint.
 type repaintMsg struct{}
-
-// executeSequenceMsg is a message that writes a sequence to the terminal.
-type executeSequenceMsg string
-
-// ExecuteSequence is a command that writes a sequence to the terminal. Use
-// this with extreme caution as it can mess up the terminal and your program.
-func ExecuteSequence(seq string) Cmd {
-	return func() Msg {
-		return executeSequenceMsg(seq)
-	}
-}

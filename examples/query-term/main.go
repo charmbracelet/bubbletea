@@ -4,7 +4,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -57,7 +59,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			// write the sequence to the terminal
-			return m, tea.ExecuteSequence(seq)
+			return m, func() tea.Msg {
+				io.WriteString(os.Stdout, seq)
+				return nil
+			}
 		}
 	default:
 		typ := strings.TrimPrefix(fmt.Sprintf("%T", msg), "tea.")
