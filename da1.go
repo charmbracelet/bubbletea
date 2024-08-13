@@ -2,7 +2,8 @@ package tea
 
 import "github.com/charmbracelet/x/ansi"
 
-// PrimaryDeviceAttributesMsg represents a primary device attributes message.
+// PrimaryDeviceAttributesMsg is a message that represents the terminal primary
+// device attributes.
 type PrimaryDeviceAttributesMsg []uint
 
 func parsePrimaryDevAttrs(csi *ansi.CsiSequence) Msg {
