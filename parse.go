@@ -3,11 +3,11 @@ package tea
 import (
 	"encoding/base64"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/parser"
 	"github.com/erikgeiser/coninput"
+	"github.com/rivo/uniseg"
 )
 
 // Flags to control the behavior of the parser.
@@ -775,14 +775,8 @@ func parseApc(b []byte) (int, Msg) {
 }
 
 func parseUtf8(b []byte) (int, Msg) {
-	r, rw := utf8.DecodeRune(b)
-	if r <= ansi.US || r == ansi.DEL || r == ansi.SP {
-		// Control codes get handled by parseControl
-		return 1, parseControl(byte(r))
-	} else if r == utf8.RuneError {
-		return 1, UnknownMsg(b[0])
-	}
-	return rw, KeyPressMsg{Runes: []rune{r}}
+	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
+	return len(cluster), KeyPressMsg{Runes: []rune(string(cluster))}
 }
 
 func parseControl(b byte) Msg {
