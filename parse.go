@@ -3,6 +3,7 @@ package tea
 import (
 	"encoding/base64"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/parser"
@@ -775,6 +776,23 @@ func parseApc(b []byte) (int, Msg) {
 }
 
 func parseUtf8(b []byte) (int, Msg) {
+	if len(b) == 0 {
+		return 0, nil
+	}
+
+	c := b[0]
+	if c <= ansi.US || c == ansi.DEL || c == ansi.SP {
+		// Control codes get handled by parseControl
+		return 1, parseControl(c)
+	} else if c > ansi.US && c < ansi.DEL {
+		// ASCII printable characters
+		return 1, KeyPressMsg{Runes: []rune{rune(c)}}
+	}
+
+	if r, _ := utf8.DecodeRune(b); r == utf8.RuneError {
+		return 1, UnknownMsg(b[0])
+	}
+
 	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
 	return len(cluster), KeyPressMsg{Runes: []rune(string(cluster))}
 }
