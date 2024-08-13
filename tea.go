@@ -321,8 +321,8 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 }
 
 func (p *Program) disableMouse() {
-	p.renderer.execute(ansi.DisableMouseAllMotion)
 	p.renderer.execute(ansi.DisableMouseCellMotion)
+	p.renderer.execute(ansi.DisableMouseAllMotion)
 	p.renderer.execute(ansi.DisableMouseSgrExt)
 }
 
@@ -386,7 +386,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case enableBracketedPasteMsg:
 				p.renderer.execute(ansi.EnableBracketedPaste)
-				p.renderer.execute(ansi.EnableMouseSgrExt)
 
 			case disableBracketedPasteMsg:
 				p.renderer.execute(ansi.DisableBracketedPaste)
