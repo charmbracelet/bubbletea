@@ -68,6 +68,9 @@ type renderer interface {
 	// currently enabled.
 	bracketedPasteActive() bool
 
+	// enable focus/blur reports.
+	enableReportFocus()
+
 	// setWindowTitle sets the terminal window title.
 	setWindowTitle(string)
 }

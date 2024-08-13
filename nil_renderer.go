@@ -2,24 +2,25 @@ package tea
 
 type nilRenderer struct{}
 
-func (n nilRenderer) start()                     {}
-func (n nilRenderer) stop()                      {}
-func (n nilRenderer) kill()                      {}
-func (n nilRenderer) write(_ string)             {}
-func (n nilRenderer) repaint()                   {}
-func (n nilRenderer) clearScreen()               {}
-func (n nilRenderer) altScreen() bool            { return false }
-func (n nilRenderer) enterAltScreen()            {}
-func (n nilRenderer) exitAltScreen()             {}
-func (n nilRenderer) showCursor()                {}
-func (n nilRenderer) hideCursor()                {}
-func (n nilRenderer) enableMouseCellMotion()     {}
-func (n nilRenderer) disableMouseCellMotion()    {}
-func (n nilRenderer) enableMouseAllMotion()      {}
-func (n nilRenderer) disableMouseAllMotion()     {}
-func (n nilRenderer) enableBracketedPaste()      {}
-func (n nilRenderer) disableBracketedPaste()     {}
-func (n nilRenderer) enableMouseSGRMode()        {}
-func (n nilRenderer) disableMouseSGRMode()       {}
-func (n nilRenderer) bracketedPasteActive() bool { return false }
-func (n nilRenderer) setWindowTitle(_ string)    {}
+func (nilRenderer) start()                     {}
+func (nilRenderer) stop()                      {}
+func (nilRenderer) kill()                      {}
+func (nilRenderer) write(string)               {}
+func (nilRenderer) repaint()                   {}
+func (nilRenderer) clearScreen()               {}
+func (nilRenderer) altScreen() bool            { return false }
+func (nilRenderer) enterAltScreen()            {}
+func (nilRenderer) exitAltScreen()             {}
+func (nilRenderer) showCursor()                {}
+func (nilRenderer) hideCursor()                {}
+func (nilRenderer) enableMouseCellMotion()     {}
+func (nilRenderer) disableMouseCellMotion()    {}
+func (nilRenderer) enableMouseAllMotion()      {}
+func (nilRenderer) disableMouseAllMotion()     {}
+func (nilRenderer) enableBracketedPaste()      {}
+func (nilRenderer) disableBracketedPaste()     {}
+func (nilRenderer) enableMouseSGRMode()        {}
+func (nilRenderer) disableMouseSGRMode()       {}
+func (nilRenderer) enableReportFocus()         {}
+func (nilRenderer) bracketedPasteActive() bool { return false }
+func (nilRenderer) setWindowTitle(string)      {}

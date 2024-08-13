@@ -96,6 +96,7 @@ const (
 	// feature is on by default.
 	withoutCatchPanics
 	withoutBracketedPaste
+	withReportFocus
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -540,6 +541,10 @@ func (p *Program) Run() (Model, error) {
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.renderer.enableMouseAllMotion()
 		p.renderer.enableMouseSGRMode()
+	}
+
+	if p.startupOptions&withReportFocus != 0 {
+		p.renderer.enableReportFocus()
 	}
 
 	// Init the input reader and initial model.

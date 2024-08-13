@@ -458,6 +458,13 @@ func (r *standardRenderer) bracketedPasteActive() bool {
 	return r.bpActive
 }
 
+func (r *standardRenderer) enableReportFocus() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.execute(ansi.EnableReportFocus)
+}
+
 // setWindowTitle sets the terminal window title.
 func (r *standardRenderer) setWindowTitle(title string) {
 	r.execute(ansi.SetWindowTitle(title))
