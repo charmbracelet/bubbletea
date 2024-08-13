@@ -514,16 +514,27 @@ func (p *Program) Run() (Model, error) {
 		}()
 	}
 
-	// If no renderer is set use the standard one.
-	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
-	}
-
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
+
+	// If no renderer is set use the standard one.
+	if p.renderer == nil {
+		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
+	}
+
+	// Init the input reader and initial model.
+	model := p.initialModel
+	if p.input != nil {
+		if err := p.initInputReader(); err != nil {
+			return model, err
+		}
+	}
+
+	// Hide the cursor before starting the renderer.
+	p.renderer.hideCursor()
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
@@ -541,14 +552,6 @@ func (p *Program) Run() (Model, error) {
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.renderer.execute(ansi.EnableMouseAllMotion)
 		p.renderer.execute(ansi.EnableMouseSgrExt)
-	}
-
-	// Init the input reader and initial model.
-	model := p.initialModel
-	if p.input != nil {
-		if err := p.initInputReader(); err != nil {
-			return model, err
-		}
 	}
 
 	// Start the renderer.
@@ -719,8 +722,7 @@ func (p *Program) RestoreTerminal() error {
 	}
 	if p.renderer != nil {
 		p.renderer.start()
-	}
-	if p.bpWasActive {
+		p.renderer.hideCursor()
 		p.renderer.execute(ansi.EnableBracketedPaste)
 	}
 

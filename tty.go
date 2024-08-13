@@ -26,12 +26,7 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if err := p.initInput(); err != nil {
-		return err
-	}
-
-	p.renderer.hideCursor()
-	return nil
+	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
