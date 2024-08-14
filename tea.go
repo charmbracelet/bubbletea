@@ -392,6 +392,30 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.execute(ansi.DisableBracketedPaste)
 				p.bpActive = false
 
+			case setBackgroundColorMsg:
+				if msg.Color != nil {
+					p.renderer.execute(ansi.SetBackgroundColor(msg.Color))
+				}
+
+			case setForegroundColorMsg:
+				if msg.Color != nil {
+					p.renderer.execute(ansi.SetForegroundColor(msg.Color))
+				}
+
+			case setCursorColorMsg:
+				if msg.Color != nil {
+					p.renderer.execute(ansi.SetCursorColor(msg.Color))
+				}
+
+			case backgroundColorMsg:
+				p.renderer.execute(ansi.RequestBackgroundColor)
+
+			case foregroundColorMsg:
+				p.renderer.execute(ansi.RequestForegroundColor)
+
+			case cursorColorMsg:
+				p.renderer.execute(ansi.RequestCursorColor)
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
