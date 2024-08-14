@@ -9,6 +9,7 @@ import (
 	"io"
 	"math/rand"
 	"reflect"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -63,12 +64,23 @@ type seqTest struct {
 	msgs []Msg
 }
 
+var f3CurPosRegexp = regexp.MustCompile(`\x1b\[1;(\d+)R`)
+
 // buildBaseSeqTests returns sequence tests that are valid for the
 // detectSequence() function.
 func buildBaseSeqTests() []seqTest {
 	td := []seqTest{}
 	for seq, key := range sequences {
-		td = append(td, seqTest{[]byte(seq), []Msg{KeyPressMsg(key)}})
+		k := KeyPressMsg(key)
+		st := seqTest{seq: []byte(seq), msgs: []Msg{k}}
+
+		// XXX: This is a special case to handle F3 key sequence and cursor
+		// position report having the same sequence. See [parseCsi] for more
+		// information.
+		if f3CurPosRegexp.MatchString(seq) {
+			st.msgs = []Msg{k, CursorPositionMsg{Row: 1, Column: int(key.Mod) + 1}}
+		}
+		td = append(td, st)
 	}
 
 	// Additional special cases.
@@ -219,7 +231,12 @@ func TestParseSequence(t *testing.T) {
 			buf := tc.seq
 			for len(buf) > 0 {
 				width, msg := parseSequence(buf)
-				events = append(events, msg)
+				switch msg := msg.(type) {
+				case multiMsg:
+					events = append(events, msg...)
+				default:
+					events = append(events, msg)
+				}
 				buf = buf[width:]
 			}
 			if !reflect.DeepEqual(tc.msgs, events) {

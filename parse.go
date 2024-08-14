@@ -3,6 +3,7 @@ package tea
 import (
 	"encoding/base64"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/parser"
@@ -235,87 +236,62 @@ func parseCsi(b []byte) (int, Msg) {
 	i++
 
 	csi.Params = params[:paramsLen]
-	marker, cmd := csi.Marker(), csi.Command()
-	switch marker {
-	case '?':
-		switch cmd {
-		case 'y':
-			switch intermed {
-			case '$':
-				// Report Mode (DECRPM)
-				if paramsLen != 2 {
-					return i, UnknownMsg(b[:i])
-				}
-				return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
-			}
-		case 'c':
-			// Primary Device Attributes
-			return i, parsePrimaryDevAttrs(&csi)
-		case 'u':
-			// Kitty keyboard flags
-			if param := csi.Param(0); param != -1 {
-				return i, KittyKeyboardMsg(param)
-			}
-		case 'R':
-			// This report may return a third parameter representing the page
-			// number, but we don't really need it.
-			if paramsLen >= 2 {
-				return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
-			}
+	switch cmd := csi.Cmd; cmd {
+	case 'y' | '?'<<parser.MarkerShift | '$'<<parser.IntermedShift:
+		// Report Mode (DECRPM)
+		if paramsLen == 2 {
+			return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
 		}
-		return i, UnknownMsg(b[:i])
-	case '<':
-		switch cmd {
-		case 'm', 'M':
-			// Handle SGR mouse
-			if paramsLen != 3 {
-				return i, UnknownMsg(b[:i])
-			}
+	case 'c' | '?'<<parser.MarkerShift:
+		// Primary Device Attributes
+		return i, parsePrimaryDevAttrs(&csi)
+	case 'u' | '?'<<parser.MarkerShift:
+		// Kitty keyboard flags
+		if param := csi.Param(0); param != -1 {
+			return i, KittyKeyboardMsg(param)
+		}
+	case 'R' | '?'<<parser.MarkerShift:
+		// This report may return a third parameter representing the page
+		// number, but we don't really need it.
+		if paramsLen >= 2 {
+			return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
+		}
+	case 'm' | '<'<<parser.MarkerShift, 'M' | '<'<<parser.MarkerShift:
+		// Handle SGR mouse
+		if paramsLen == 3 {
 			return i, parseSGRMouseEvent(&csi)
-		default:
-			return i, UnknownMsg(b[:i])
 		}
-	case '>':
-		switch cmd {
-		case 'm':
-			// XTerm modifyOtherKeys
-			if paramsLen != 2 || csi.Param(0) != 4 {
-				return i, UnknownMsg(b[:i])
-			}
-
+	case 'm' | '>'<<parser.MarkerShift:
+		// XTerm modifyOtherKeys
+		if paramsLen == 2 && csi.Param(0) == 4 {
 			return i, ModifyOtherKeysMsg(csi.Param(1))
-		default:
-			return i, UnknownMsg(b[:i])
 		}
-	case '=':
-		// We don't support any of these yet
-		return i, UnknownMsg(b[:i])
-	}
-
-	switch cmd := csi.Command(); cmd {
 	case 'I':
 		return i, FocusMsg{}
 	case 'O':
 		return i, BlurMsg{}
 	case 'R':
 		// Cursor position report OR modified F3
-		if paramsLen == 0 {
-			return i, KeyPressMsg{Sym: KeyF3}
-		} else if paramsLen != 2 {
+		if paramsLen == 2 {
+			m := CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
+			if csi.Param(0) == 1 && csi.Param(1)-1 <= int(ModMeta|ModShift|ModAlt|ModCtrl) {
+				// XXX: We cannot differentiate between cursor position report and
+				// CSI 1 ; <mod> R (which is modified F3) when the cursor is at the
+				// row 1. In this case, we report both messages.
+				//
+				// For a non ambiguous cursor position report, use
+				// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
+				return i, multiMsg{KeyPressMsg{Sym: KeyF3, Mod: KeyMod(csi.Param(1) - 1)}, m}
+			}
+
+			return i, m
+		}
+
+		if paramsLen != 0 {
 			break
 		}
 
-		// XXX: We cannot differentiate between cursor position report and
-		// CSI 1 ; <mod> R (which is modified F3) when the cursor is at the
-		// row 1. In this case, we report a modified F3 event since it's more
-		// likely to be the case than the cursor being at the first row.
-		//
-		// For a non ambiguous cursor position report, use
-		// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
-		if csi.Param(0) != 1 {
-			return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
-		}
-
+		// Unmodified key F3 (CSI R)
 		fallthrough
 	case 'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'P', 'Q', 'S', 'Z':
 		var k KeyPressMsg
@@ -410,13 +386,11 @@ func parseCsi(b []byte) (int, Msg) {
 		}
 
 		switch param {
-		case 1, 2, 3, 4, 5, 6, 7, 8:
-			fallthrough
-		case 11, 12, 13, 14, 15:
-			fallthrough
-		case 17, 18, 19, 20, 21, 23, 24, 25, 26:
-			fallthrough
-		case 28, 29, 31, 32, 33, 34:
+		case 1, 2, 3, 4, 5, 6, 7, 8,
+			11, 12, 13, 14, 15,
+			17, 18, 19, 20, 21,
+			23, 24, 25, 26,
+			28, 29, 31, 32, 33, 34:
 			var k KeyPressMsg
 			switch param {
 			case 1:
@@ -775,6 +749,23 @@ func parseApc(b []byte) (int, Msg) {
 }
 
 func parseUtf8(b []byte) (int, Msg) {
+	if len(b) == 0 {
+		return 0, nil
+	}
+
+	c := b[0]
+	if c <= ansi.US || c == ansi.DEL || c == ansi.SP {
+		// Control codes get handled by parseControl
+		return 1, parseControl(c)
+	} else if c > ansi.US && c < ansi.DEL {
+		// ASCII printable characters
+		return 1, KeyPressMsg{Runes: []rune{rune(c)}}
+	}
+
+	if r, _ := utf8.DecodeRune(b); r == utf8.RuneError {
+		return 1, UnknownMsg(b[0])
+	}
+
 	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
 	return len(cluster), KeyPressMsg{Runes: []rune(string(cluster))}
 }

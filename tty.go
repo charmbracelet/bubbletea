@@ -26,12 +26,7 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if err := p.initInput(); err != nil {
-		return err
-	}
-
-	p.renderer.hideCursor()
-	return nil
+	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
@@ -39,6 +34,7 @@ func (p *Program) initTerminal() error {
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
 		p.renderer.execute(ansi.DisableBracketedPaste)
+		p.bpActive = false
 		p.renderer.showCursor()
 		p.disableMouse()
 

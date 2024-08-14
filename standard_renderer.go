@@ -44,9 +44,6 @@ type standardRenderer struct {
 	// essentially whether or not we're using the full size of the terminal
 	altScreenActive bool
 
-	// whether or not we're currently using bracketed paste
-	bpActive bool
-
 	// renderer dimensions; usually the size of the window
 	width  int
 	height int
@@ -391,13 +388,6 @@ func (r *standardRenderer) hideCursor() {
 
 	r.cursorHidden = true
 	r.execute(ansi.HideCursor)
-}
-
-func (r *standardRenderer) bracketedPasteActive() bool {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	return r.bpActive
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
