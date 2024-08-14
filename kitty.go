@@ -45,18 +45,6 @@ func KittyKeyboard() Msg {
 	return kittyKeyboardMsg{}
 }
 
-// EnableEnhancedKeyboard is a command to enable enhanced keyboard features.
-// This unambiguously reports more key combinations than traditional terminal
-// keyboard sequences. This will also enable reporting of release key events.
-func EnableEnhancedKeyboard() Msg {
-	return setKittyKeyboardFlagsMsg(3)
-}
-
-// DisableEnhancedKeyboard is a command to disable enhanced keyboard features.
-func DisableEnhancedKeyboard() Msg {
-	return setKittyKeyboardFlagsMsg(0)
-}
-
 // KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
 type KittyKeyboardMsg int
 

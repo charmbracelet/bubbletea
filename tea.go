@@ -98,6 +98,7 @@ const (
 	withoutCatchPanics
 	withoutBracketedPaste
 	withKittyKeyboard
+	withModifyOtherKeys
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -177,6 +178,9 @@ type Program struct {
 
 	// kittyFlags stores kitty keyboard protocol progressive enhancement flags.
 	kittyFlags int
+
+	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
+	modifyOtherKeys int
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -407,6 +411,21 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case kittyKeyboardMsg:
 				p.renderer.execute(ansi.RequestKittyKeyboard)
 
+			case setModifyOtherKeysMsg:
+				p.modifyOtherKeys = int(msg)
+				p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+
+			case setEnhancedKeyboardMsg:
+				if bool(msg) {
+					p.kittyFlags = 3
+					p.modifyOtherKeys = 1
+				} else {
+					p.kittyFlags = 0
+					p.modifyOtherKeys = 0
+				}
+				p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+				p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
@@ -570,6 +589,9 @@ func (p *Program) Run() (Model, error) {
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.renderer.execute(ansi.EnableMouseAllMotion)
 		p.renderer.execute(ansi.EnableMouseSgrExt)
+	}
+	if p.startupOptions&withModifyOtherKeys != 0 {
+		p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
 	}
 	if p.startupOptions&withKittyKeyboard != 0 {
 		p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
@@ -745,6 +767,9 @@ func (p *Program) RestoreTerminal() error {
 		p.renderer.hideCursor()
 		p.renderer.execute(ansi.EnableBracketedPaste)
 		p.bpActive = true
+		if p.modifyOtherKeys != 0 {
+			p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+		}
 		if p.kittyFlags != 0 {
 			p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
 		}
