@@ -235,7 +235,7 @@ func WithFPS(fps int) ProgramOption {
 	}
 }
 
-//	WithReportFocus enables reporting when the terminal gains and lost focus.
+// WithReportFocus enables reporting when the terminal gains and lost focus.
 //
 // You can then check for FocusMsg and BlurMsg in your model's Update method.
 func WithReportFocus() ProgramOption {

@@ -11,7 +11,8 @@ import (
 func main() {
 	p := tea.NewProgram(model{
 		// assume we start focused...
-		focused: true,
+		focused:   true,
+		reporting: true,
 	}, tea.WithReportFocus())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
@@ -19,7 +20,8 @@ func main() {
 }
 
 type model struct {
-	focused bool
+	focused   bool
+	reporting bool
 }
 
 func (m model) Init() tea.Cmd {
@@ -34,10 +36,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.focused = false
 	case tea.KeyPressMsg:
 		switch msg.String() {
+		case "t":
+			m.reporting = !m.reporting
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "ctrl+z":
-			return m, tea.Suspend
 		}
 	}
 
@@ -45,11 +47,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "Hi. "
-	if m.focused {
-		s += "This program is currently focused!"
+	s := "Hi. Focus report is currently "
+	if m.reporting {
+		s += "enabled"
 	} else {
-		s += "This program is currently blurred!"
+		s += "disabled"
 	}
-	return s + "\n\nTo quit sooner press ctrl-c, or press ctrl-z to suspend...\n"
+	s += ".\n\n"
+
+	if m.reporting {
+		if m.focused {
+			s += "This program is currently focused!"
+		} else {
+			s += "This program is currently blurred!"
+		}
+	}
+	return s + "\n\nTo quit sooner press ctrl-c, or t to toggle focus reporting...\n"
 }

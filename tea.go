@@ -393,6 +393,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.execute(ansi.DisableBracketedPaste)
 				p.bpActive = false
 
+			case enableReportFocusMsg:
+				p.renderer.execute(ansi.EnableReportFocus)
+
+			case disableReportFocusMsg:
+				p.renderer.execute(ansi.DisableReportFocus)
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
