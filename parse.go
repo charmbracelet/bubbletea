@@ -125,8 +125,11 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 			return parseApc(buf)
 		default:
 			n, e := parseSequence(buf[1:])
-			if k, ok := e.(KeyPressMsg); ok && !k.Mod.HasAlt() {
+			if k, ok := e.(KeyPressMsg); ok {
 				k.Mod |= ModAlt
+				if k.Sym == KeyRunes {
+					k.Sym = KeyNone
+				}
 				return n + 1, k
 			}
 
@@ -759,7 +762,7 @@ func parseUtf8(b []byte) (int, Msg) {
 		return 1, parseControl(c)
 	} else if c > ansi.US && c < ansi.DEL {
 		// ASCII printable characters
-		return 1, KeyPressMsg{Runes: []rune{rune(c)}}
+		return 1, KeyPressMsg{Sym: KeyRunes, Runes: []rune{rune(c)}}
 	}
 
 	if r, _ := utf8.DecodeRune(b); r == utf8.RuneError {
@@ -767,7 +770,7 @@ func parseUtf8(b []byte) (int, Msg) {
 	}
 
 	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
-	return len(cluster), KeyPressMsg{Runes: []rune(string(cluster))}
+	return len(cluster), KeyPressMsg{Sym: KeyRunes, Runes: []rune(string(cluster))}
 }
 
 func parseControl(b byte) Msg {

@@ -144,7 +144,7 @@ func TestParseSequence(t *testing.T) {
 		seqTest{
 			[]byte{'a'},
 			[]Msg{
-				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
 			},
 		},
 		seqTest{
@@ -156,16 +156,16 @@ func TestParseSequence(t *testing.T) {
 		seqTest{
 			[]byte{'a', 'a', 'a'},
 			[]Msg{
-				KeyPressMsg{Runes: []rune{'a'}},
-				KeyPressMsg{Runes: []rune{'a'}},
-				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
 			},
 		},
 		// Multi-byte rune.
 		seqTest{
 			[]byte("☃"),
 			[]Msg{
-				KeyPressMsg{Runes: []rune{'☃'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'☃'}},
 			},
 		},
 		seqTest{
@@ -249,7 +249,7 @@ func TestParseSequence(t *testing.T) {
 func TestReadLongInput(t *testing.T) {
 	expect := make([]Msg, 1000)
 	for i := 0; i < 1000; i++ {
-		expect[i] = KeyPressMsg{Runes: []rune{'a'}}
+		expect[i] = KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}}
 	}
 	input := strings.Repeat("a", 1000)
 	drv, err := newDriver(strings.NewReader(input), "dumb", 0)
@@ -285,7 +285,7 @@ func TestReadInput(t *testing.T) {
 			"a",
 			[]byte{'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
 			},
 		},
 		{
@@ -299,17 +299,17 @@ func TestReadInput(t *testing.T) {
 			"a alt+a",
 			[]byte{'a', '\x1b', 'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}, Mod: ModAlt},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModAlt},
 			},
 		},
 		{
 			"a alt+a a",
 			[]byte{'a', '\x1b', 'a', 'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}, Mod: ModAlt},
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}, Mod: ModAlt},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
 			},
 		},
 		{
@@ -338,10 +338,10 @@ func TestReadInput(t *testing.T) {
 			"a b c d",
 			[]byte{'a', 'b', 'c', 'd'},
 			[]Msg{
-				KeyPressMsg{Runes: []rune{'a'}},
-				KeyPressMsg{Runes: []rune{'b'}},
-				KeyPressMsg{Runes: []rune{'c'}},
-				KeyPressMsg{Runes: []rune{'d'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'b'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'c'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'d'}},
 			},
 		},
 		{
@@ -470,7 +470,7 @@ func TestReadInput(t *testing.T) {
 				PasteStartMsg{},
 				PasteMsg("a b"),
 				PasteEndMsg{},
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'o'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'o'}},
 			},
 		},
 		{
@@ -497,10 +497,10 @@ func TestReadInput(t *testing.T) {
 			"a ?0xfe?   b",
 			[]byte{'a', '\xfe', ' ', 'b'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'a'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
 				UnknownMsg(rune(0xfe)),
 				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}},
-				KeyPressMsg{Sym: KeyNone, Runes: []rune{'b'}},
+				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'b'}},
 			},
 		},
 	}

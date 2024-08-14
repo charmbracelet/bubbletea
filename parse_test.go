@@ -10,11 +10,11 @@ func TestParseSequence_Events(t *testing.T) {
 	input := []byte("\x1b\x1b[Ztest\x00\x1b]10;rgb:1234/1234/1234\x07\x1b[27;2;27~\x1b[?1049;2$y")
 	want := []Msg{
 		KeyPressMsg{Sym: KeyTab, Mod: ModShift | ModAlt},
-		KeyPressMsg{Runes: []rune{'t'}},
-		KeyPressMsg{Runes: []rune{'e'}},
-		KeyPressMsg{Runes: []rune{'s'}},
-		KeyPressMsg{Runes: []rune{'t'}},
-		KeyPressMsg{Runes: []rune{' '}, Sym: KeySpace, Mod: ModCtrl},
+		KeyPressMsg{Sym: KeyRunes, Runes: []rune{'t'}},
+		KeyPressMsg{Sym: KeyRunes, Runes: []rune{'e'}},
+		KeyPressMsg{Sym: KeyRunes, Runes: []rune{'s'}},
+		KeyPressMsg{Sym: KeyRunes, Runes: []rune{'t'}},
+		KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModCtrl},
 		ForegroundColorMsg{color.RGBA{R: 0x12, G: 0x12, B: 0x12, A: 0xff}},
 		KeyPressMsg{Sym: KeyEscape, Mod: ModShift},
 		ReportModeMsg{Mode: 1049, Value: 2},

@@ -223,6 +223,7 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 				r = utf8.RuneError
 			}
 
+			key.Sym = KeyRunes
 			key.Runes = []rune{r}
 
 			// alternate key reporting
@@ -257,6 +258,9 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 		mod := params[0]
 		if mod > 1 {
 			key.Mod = fromKittyMod(mod - 1)
+			if key.Sym == KeyRunes {
+				key.Sym = KeyNone
+			}
 		}
 		if len(params) > 1 {
 			switch params[1] {

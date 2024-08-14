@@ -3,9 +3,16 @@ package tea
 // KeySym is a keyboard symbol.
 type KeySym int
 
-// Key Symbol constants.
+// Special key symbols.
 const (
-	KeyNone KeySym = iota
+	// KeyRunes indicates that the key represents rune(s), like 'a', 'b', 'c',
+	// and so on.
+	KeyRunes KeySym = iota - 1
+
+	// KeyNone indicates that this key is not a special key. Combined with
+	// `len(k.Runes) > 0`, this indicates that the key represents rune(s) with
+	// modifiers like [ModCtrl], [ModAlt], [ModShift], and so on.
+	KeyNone
 
 	// Special names in C0
 
@@ -177,7 +184,39 @@ const (
 	KeyIsoLevel5Shift
 )
 
-// Key represents a key event.
+// Key contains information about a key or release. Keys are always sent to the
+// program's update function. There are a couple general patterns you could use
+// to check for key presses or releases:
+//
+//	// Switch on the string representation of the key (shorter)
+//	switch msg := msg.(type) {
+//	case KeyPressMsg:
+//	    switch msg.String() {
+//	    case "enter":
+//	        fmt.Println("you pressed enter!")
+//	    case "a":
+//	        fmt.Println("you pressed a!")
+//	    }
+//	}
+//
+//	// Switch on the key type (more foolproof)
+//	switch msg := msg.(type) {
+//	case KeyReleaseMsg:
+//	    switch msg.Sym {
+//	    case KeyEnter:
+//	        fmt.Println("you pressed enter!")
+//	    case KeyRunes:
+//	        switch string(msg.Runes) {
+//	        case "a":
+//	            fmt.Println("you pressed a!")
+//	        }
+//	    }
+//	}
+//
+// Note that Key.Runes will always contain at least one character, so you can
+// always safely call Key.Runes[0]. In most cases Key.Runes will only contain
+// one character, though certain input method editors (most notably Chinese
+// IMEs) can input multiple runes at once.
 type Key struct {
 	// Sym is a special key, like enter, tab, backspace, and so on.
 	Sym KeySym
