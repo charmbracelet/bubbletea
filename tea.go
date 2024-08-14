@@ -396,9 +396,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.execute(ansi.DisableBracketedPaste)
 				p.bpActive = false
 
+			case KittyKeyboardMsg:
+				// Store the kitty flags whenever they are queried.
+				p.kittyFlags = int(msg)
+
 			case setKittyKeyboardFlagsMsg:
 				p.kittyFlags = int(msg)
 				p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+
+			case requestKittyKeyboardFlagsMsg:
+				p.renderer.execute(ansi.RequestKittyKeyboard)
 
 			case execMsg:
 				// NB: this blocks.

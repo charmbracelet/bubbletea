@@ -36,6 +36,16 @@ func DisableKittyKeyboard() Msg {
 	return setKittyKeyboardFlagsMsg(0)
 }
 
+// requestKittyKeyboardFlagsMsg is a message to request the current Kitty keyboard
+// progressive enhancement protocol flags.
+type requestKittyKeyboardFlagsMsg struct{}
+
+// RequestKittyKeyboardFlags is a command to request the current Kitty keyboard
+// progressive enhancement protocol flags from the terminal.
+func RequestKittyKeyboardFlags() Msg {
+	return requestKittyKeyboardFlagsMsg{}
+}
+
 // EnableEnhancedKeyboard is a command to enable enhanced keyboard features.
 // This unambiguously reports more key combinations than traditional terminal
 // keyboard sequences. This will also enable reporting of release key events.
@@ -51,28 +61,28 @@ func DisableEnhancedKeyboard() Msg {
 // KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
 type KittyKeyboardMsg int
 
-// IsDisambiguateEscapeCodes returns true if the DisambiguateEscapeCodes flag is set.
-func (e KittyKeyboardMsg) IsDisambiguateEscapeCodes() bool {
+// HasDisambiguateEscapeCodes returns true if the DisambiguateEscapeCodes flag is set.
+func (e KittyKeyboardMsg) HasDisambiguateEscapeCodes() bool {
 	return e&ansi.KittyDisambiguateEscapeCodes != 0
 }
 
-// IsReportEventTypes returns true if the ReportEventTypes flag is set.
-func (e KittyKeyboardMsg) IsReportEventTypes() bool {
+// HasReportEventTypes returns true if the ReportEventTypes flag is set.
+func (e KittyKeyboardMsg) HasReportEventTypes() bool {
 	return e&ansi.KittyReportEventTypes != 0
 }
 
-// IsReportAlternateKeys returns true if the ReportAlternateKeys flag is set.
-func (e KittyKeyboardMsg) IsReportAlternateKeys() bool {
+// HasReportAlternateKeys returns true if the ReportAlternateKeys flag is set.
+func (e KittyKeyboardMsg) HasReportAlternateKeys() bool {
 	return e&ansi.KittyReportAlternateKeys != 0
 }
 
-// IsReportAllKeys returns true if the ReportAllKeys flag is set.
-func (e KittyKeyboardMsg) IsReportAllKeys() bool {
+// HasReportAllKeys returns true if the ReportAllKeys flag is set.
+func (e KittyKeyboardMsg) HasReportAllKeys() bool {
 	return e&ansi.KittyReportAllKeys != 0
 }
 
-// IsReportAssociatedKeys returns true if the ReportAssociatedKeys flag is set.
-func (e KittyKeyboardMsg) IsReportAssociatedKeys() bool {
+// HasReportAssociatedKeys returns true if the ReportAssociatedKeys flag is set.
+func (e KittyKeyboardMsg) HasReportAssociatedKeys() bool {
 	return e&ansi.KittyReportAssociatedKeys != 0
 }
 
