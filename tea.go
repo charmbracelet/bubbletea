@@ -396,6 +396,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
 
+			case terminalVersion:
+				p.renderer.execute(ansi.RequestXTVersion)
+
+			case primaryDeviceAttrsMsg:
+				p.renderer.execute(ansi.RequestPrimaryDeviceAttributes)
+
 			case BatchMsg:
 				for _, cmd := range msg {
 					cmds <- cmd

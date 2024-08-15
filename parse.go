@@ -713,24 +713,24 @@ func parseDcs(b []byte) (int, Msg) {
 	}
 
 	dcs.Params = params[:paramsLen]
-	switch cmd := dcs.Command(); cmd {
-	case 'r':
-		switch dcs.Intermediate() {
-		case '+':
-			// XTGETTCAP responses
-			switch param := dcs.Param(0); param {
-			case 0, 1:
-				tc := parseTermcap(b[start:end])
-				// XXX: some terminals like KiTTY report invalid responses with
-				// their queries i.e. sending a query for "Tc" using "\x1bP+q5463\x1b\\"
-				// returns "\x1bP0+r5463\x1b\\".
-				// The specs says that invalid responses should be in the form of
-				// DCS 0 + r ST "\x1bP0+r\x1b\\"
-				//
-				// See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
-				return i, tc
-			}
+	switch cmd := dcs.Cmd; cmd {
+	case 'r' | '+'<<parser.IntermedShift:
+		// XTGETTCAP responses
+		switch param := dcs.Param(0); param {
+		case 0, 1:
+			tc := parseTermcap(b[start:end])
+			// XXX: some terminals like KiTTY report invalid responses with
+			// their queries i.e. sending a query for "Tc" using "\x1bP+q5463\x1b\\"
+			// returns "\x1bP0+r5463\x1b\\".
+			// The specs says that invalid responses should be in the form of
+			// DCS 0 + r ST "\x1bP0+r\x1b\\"
+			//
+			// See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
+			return i, tc
 		}
+	case '|' | '>'<<parser.MarkerShift:
+		// XTVersion response
+		return i, TerminalVersionMsg(b[start:end])
 	}
 
 	return i, UnknownMsg(b[:i])

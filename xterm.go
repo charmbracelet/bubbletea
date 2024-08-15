@@ -40,3 +40,16 @@ func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 // See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
 // See: https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
 type ModifyOtherKeysMsg uint8
+
+// TerminalVersionMsg is a message that represents the terminal version.
+type TerminalVersionMsg string
+
+// terminalVersion is an internal message that queries the terminal for its
+// version using XTVERSION.
+type terminalVersion struct{}
+
+// TerminalVersion is a command that queries the terminal for its version using
+// XTVERSION. Note that some terminals may not support this command.
+func TerminalVersion() Msg {
+	return terminalVersion{}
+}
