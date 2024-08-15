@@ -319,13 +319,13 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 			}
 		}
 	}
-	// TODO: Associated keys are not support yet.
-	// if params := csi.Subparams(2); len(params) > 0 {
-	// 	r := rune(params[0])
-	// 	if unicode.IsPrint(r) {
-	// 		key.AltRune = r
-	// 	}
-	// }
+	if params := csi.Subparams(2); len(params) > 0 {
+		r := rune(params[0])
+		if unicode.IsPrint(r) {
+			key.altRune = key.Rune()
+			key.Runes = []rune{r}
+		}
+	}
 	if isRelease {
 		return KeyReleaseMsg(key)
 	}
