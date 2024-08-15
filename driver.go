@@ -5,7 +5,6 @@ import (
 	"io"
 	"unicode/utf8"
 
-	"github.com/erikgeiser/coninput"
 	"github.com/muesli/cancelreader"
 )
 
@@ -26,11 +25,11 @@ type driver struct {
 
 	// prevMouseState keeps track of the previous mouse state to determine mouse
 	// up button events.
-	prevMouseState coninput.ButtonState // nolint: unused
+	prevMouseState uint32 // nolint: unused
 
 	// lastWinsizeEvent keeps track of the last window size event to prevent
 	// multiple size events from firing.
-	lastWinsizeEvent coninput.WindowBufferSizeEventRecord // nolint: unused
+	lastWinsizeEventX, lastWinsizeEventY int16 // nolint: unused
 
 	flags int // control the behavior of the driver.
 }
