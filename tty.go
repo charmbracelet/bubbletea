@@ -118,23 +118,23 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *driver) error {
 				k := KeyMsg{
 					Alt:   e.Mod.HasAlt(),
 					Runes: e.Runes,
-					Type:  e.Sym,
+					Type:  e.Type,
 				}
 
 				// Backwards compatibility for ctrl- and shift- keys
 				switch {
 				case e.Mod.HasCtrl() && e.Mod.HasShift():
-					switch e.Sym {
+					switch e.Type {
 					case KeyUp, KeyDown, KeyRight, KeyLeft:
 						k.Runes = nil
-						k.Type = KeyCtrlShiftUp - e.Sym + KeyUp
+						k.Type = KeyCtrlShiftUp - e.Type + KeyUp
 					case KeyHome, KeyEnd:
 						k.Runes = nil
-						k.Type = KeyCtrlShiftHome - e.Sym + KeyHome
+						k.Type = KeyCtrlShiftHome - e.Type + KeyHome
 					}
 				case e.Mod.HasCtrl():
-					switch e.Sym {
-					case KeyNone: // KeyRunes
+					switch e.Type {
+					case KeyRunes: // KeyRunes
 						switch r := e.Rune(); r {
 						case ' ':
 							k.Runes = nil
@@ -153,28 +153,28 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *driver) error {
 						}
 					case KeyPgUp, KeyPgDown, KeyHome, KeyEnd:
 						k.Runes = nil
-						k.Type = KeyCtrlPgUp - e.Sym + KeyPgUp
+						k.Type = KeyCtrlPgUp - e.Type + KeyPgUp
 					case KeyUp, KeyDown, KeyRight, KeyLeft:
 						k.Runes = nil
-						k.Type = KeyCtrlUp - e.Sym + KeyUp
+						k.Type = KeyCtrlUp - e.Type + KeyUp
 					}
 				case e.Mod.HasShift():
-					switch e.Sym {
+					switch e.Type {
 					case KeyTab:
 						k.Runes = nil
 						k.Type = KeyShiftTab
 					case KeyUp, KeyDown, KeyRight, KeyLeft:
 						k.Runes = nil
-						k.Type = KeyShiftUp - e.Sym + KeyUp
+						k.Type = KeyShiftUp - e.Type + KeyUp
 						k.Runes = nil
 					case KeyHome, KeyEnd:
 						k.Runes = nil
-						k.Type = KeyShiftHome - e.Sym + KeyHome
+						k.Type = KeyShiftHome - e.Type + KeyHome
 					}
 				}
 
 				switch k.Type {
-				case KeyNone: // KeyRunes
+				case KeyRunes: // KeyRunes
 					if len(k.Runes) > 0 {
 						incomingMsgs = append(incomingMsgs, k)
 					}

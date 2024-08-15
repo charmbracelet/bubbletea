@@ -11,15 +11,15 @@ func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 
 	switch r {
 	case ansi.BS:
-		return KeyPressMsg{Mod: mod, Sym: KeyBackspace}
+		return KeyPressMsg{Mod: mod, Type: KeyBackspace}
 	case ansi.HT:
-		return KeyPressMsg{Mod: mod, Sym: KeyTab}
+		return KeyPressMsg{Mod: mod, Type: KeyTab}
 	case ansi.CR:
-		return KeyPressMsg{Mod: mod, Sym: KeyEnter}
+		return KeyPressMsg{Mod: mod, Type: KeyEnter}
 	case ansi.ESC:
-		return KeyPressMsg{Mod: mod, Sym: KeyEscape}
+		return KeyPressMsg{Mod: mod, Type: KeyEscape}
 	case ansi.DEL:
-		return KeyPressMsg{Mod: mod, Sym: KeyBackspace}
+		return KeyPressMsg{Mod: mod, Type: KeyBackspace}
 	}
 
 	// CSI 27 ; <modifier> ; <code> ~ keys defined in XTerm modifyOtherKeys

@@ -79,22 +79,6 @@ func (k KeyMsg) String() (str string) {
 	return ""
 }
 
-// KeyType indicates the key pressed, such as KeyEnter or KeyBreak or KeyCtrlC.
-// All other keys will be type KeyRunes. To get the rune value, check the Rune
-// method on a Key struct, or use the Key.String() method:
-//
-//	k := Key{Type: KeyRunes, Runes: []rune{'a'}, Alt: true}
-//	if k.Type == KeyRunes {
-//
-//	    fmt.Println(k.Runes)
-//	    // Output: a
-//
-//	    fmt.Println(k.String())
-//	    // Output: alt+a
-//
-//	}
-type KeyType = KeySym
-
 // Control key aliases.
 const (
 	KeyNull KeyType = -iota - 10

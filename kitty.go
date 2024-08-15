@@ -36,7 +36,7 @@ func (e KittyKeyboardMsg) IsReportAssociatedKeys() bool {
 }
 
 // Kitty Clipboard Control Sequences
-var kittyKeyMap = map[int]KeySym{
+var kittyKeyMap = map[int]KeyType{
 	ansi.BS:  KeyBackspace,
 	ansi.HT:  KeyTab,
 	ansi.CR:  KeyEnter,
@@ -216,14 +216,14 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 	if params := csi.Subparams(0); len(params) > 0 {
 		code := params[0]
 		if sym, ok := kittyKeyMap[code]; ok {
-			key.Sym = sym
+			key.Type = sym
 		} else {
 			r := rune(code)
 			if !utf8.ValidRune(r) {
 				r = utf8.RuneError
 			}
 
-			key.Sym = KeyRunes
+			key.Type = KeyRunes
 			key.Runes = []rune{r}
 
 			// alternate key reporting
@@ -258,9 +258,6 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 		mod := params[0]
 		if mod > 1 {
 			key.Mod = fromKittyMod(mod - 1)
-			if key.Sym == KeyRunes {
-				key.Sym = KeyNone
-			}
 		}
 		if len(params) > 1 {
 			switch params[1] {

@@ -24,7 +24,7 @@ var sequences = buildKeysTable(_FlagTerminfo, "dumb")
 
 func TestKeyString(t *testing.T) {
 	t.Run("alt+space", func(t *testing.T) {
-		k := KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModAlt}
+		k := KeyPressMsg{Type: KeySpace, Runes: []rune{' '}, Mod: ModAlt}
 		if got := k.String(); got != "alt+space" {
 			t.Fatalf(`expected a "alt+space ", got %q`, got)
 		}
@@ -38,8 +38,8 @@ func TestKeyString(t *testing.T) {
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		k := KeyPressMsg{Sym: 99999}
-		if got := k.String(); got != "unknown" {
+		k := KeyPressMsg{Type: 99999}
+		if got := k.String(); got != "" {
 			t.Fatalf(`expected a "unknown", got %q`, got)
 		}
 	})
@@ -53,7 +53,7 @@ func TestKeyTypeString(t *testing.T) {
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		if got := KeySym(99999).String(); got != "unknown" {
+		if got := KeyType(99999).String(); got != "" {
 			t.Fatalf(`expected a "unknown", got %q`, got)
 		}
 	})
@@ -96,14 +96,14 @@ func buildBaseSeqTests() []seqTest {
 		seqTest{
 			[]byte{' '},
 			[]Msg{
-				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}},
+				KeyPressMsg{Type: KeySpace, Runes: []rune{' '}},
 			},
 		},
 		// An escape character with the alt modifier.
 		seqTest{
 			[]byte{'\x1b', ' '},
 			[]Msg{
-				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModAlt},
+				KeyPressMsg{Type: KeySpace, Runes: []rune{' '}, Mod: ModAlt},
 			},
 		},
 	)
@@ -144,7 +144,7 @@ func TestParseSequence(t *testing.T) {
 		seqTest{
 			[]byte{'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
 			},
 		},
 		seqTest{
@@ -156,16 +156,16 @@ func TestParseSequence(t *testing.T) {
 		seqTest{
 			[]byte{'a', 'a', 'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
 			},
 		},
 		// Multi-byte rune.
 		seqTest{
 			[]byte("☃"),
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'☃'}},
+				KeyPressMsg{Runes: []rune{'☃'}},
 			},
 		},
 		seqTest{
@@ -178,7 +178,7 @@ func TestParseSequence(t *testing.T) {
 		seqTest{
 			[]byte{'\x1b'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyEscape},
+				KeyPressMsg{Type: KeyEscape},
 			},
 		},
 		seqTest{
@@ -196,13 +196,13 @@ func TestParseSequence(t *testing.T) {
 		seqTest{
 			[]byte{ansi.NUL},
 			[]Msg{
-				KeyPressMsg{Runes: []rune{' '}, Sym: KeySpace, Mod: ModCtrl},
+				KeyPressMsg{Runes: []rune{' '}, Type: KeySpace, Mod: ModCtrl},
 			},
 		},
 		seqTest{
 			[]byte{'\x1b', ansi.NUL},
 			[]Msg{
-				KeyPressMsg{Runes: []rune{' '}, Sym: KeySpace, Mod: ModCtrl | ModAlt},
+				KeyPressMsg{Runes: []rune{' '}, Type: KeySpace, Mod: ModCtrl | ModAlt},
 			},
 		},
 		// C1 control characters.
@@ -249,7 +249,7 @@ func TestParseSequence(t *testing.T) {
 func TestReadLongInput(t *testing.T) {
 	expect := make([]Msg, 1000)
 	for i := 0; i < 1000; i++ {
-		expect[i] = KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}}
+		expect[i] = KeyPressMsg{Runes: []rune{'a'}}
 	}
 	input := strings.Repeat("a", 1000)
 	drv, err := newDriver(strings.NewReader(input), "dumb", 0)
@@ -285,21 +285,21 @@ func TestReadInput(t *testing.T) {
 			"a",
 			[]byte{'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
 			},
 		},
 		{
 			"space",
 			[]byte{' '},
 			[]Msg{
-				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}},
+				KeyPressMsg{Type: KeySpace, Runes: []rune{' '}},
 			},
 		},
 		{
 			"a alt+a",
 			[]byte{'a', '\x1b', 'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
 				KeyPressMsg{Runes: []rune{'a'}, Mod: ModAlt},
 			},
 		},
@@ -307,9 +307,9 @@ func TestReadInput(t *testing.T) {
 			"a alt+a a",
 			[]byte{'a', '\x1b', 'a', 'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
 				KeyPressMsg{Runes: []rune{'a'}, Mod: ModAlt},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
 			},
 		},
 		{
@@ -331,24 +331,24 @@ func TestReadInput(t *testing.T) {
 			"alt+a",
 			[]byte{byte(0x1b), 'a'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyNone, Mod: ModAlt, Runes: []rune{'a'}},
+				KeyPressMsg{Mod: ModAlt, Runes: []rune{'a'}},
 			},
 		},
 		{
 			"a b c d",
 			[]byte{'a', 'b', 'c', 'd'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'b'}},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'c'}},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'d'}},
+				KeyPressMsg{Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'b'}},
+				KeyPressMsg{Runes: []rune{'c'}},
+				KeyPressMsg{Runes: []rune{'d'}},
 			},
 		},
 		{
 			"up",
 			[]byte("\x1b[A"),
 			[]Msg{
-				KeyPressMsg{Sym: KeyUp},
+				KeyPressMsg{Type: KeyUp},
 			},
 		},
 		{
@@ -373,26 +373,26 @@ func TestReadInput(t *testing.T) {
 			"shift+tab",
 			[]byte{'\x1b', '[', 'Z'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyTab, Mod: ModShift},
+				KeyPressMsg{Type: KeyTab, Mod: ModShift},
 			},
 		},
 		{
 			"enter",
 			[]byte{'\r'},
-			[]Msg{KeyPressMsg{Sym: KeyEnter}},
+			[]Msg{KeyPressMsg{Type: KeyEnter}},
 		},
 		{
 			"alt+enter",
 			[]byte{'\x1b', '\r'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyEnter, Mod: ModAlt},
+				KeyPressMsg{Type: KeyEnter, Mod: ModAlt},
 			},
 		},
 		{
 			"insert",
 			[]byte{'\x1b', '[', '2', '~'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyInsert},
+				KeyPressMsg{Type: KeyInsert},
 			},
 		},
 		{
@@ -411,52 +411,52 @@ func TestReadInput(t *testing.T) {
 		{
 			"up",
 			[]byte{'\x1b', 'O', 'A'},
-			[]Msg{KeyPressMsg{Sym: KeyUp}},
+			[]Msg{KeyPressMsg{Type: KeyUp}},
 		},
 		{
 			"down",
 			[]byte{'\x1b', 'O', 'B'},
-			[]Msg{KeyPressMsg{Sym: KeyDown}},
+			[]Msg{KeyPressMsg{Type: KeyDown}},
 		},
 		{
 			"right",
 			[]byte{'\x1b', 'O', 'C'},
-			[]Msg{KeyPressMsg{Sym: KeyRight}},
+			[]Msg{KeyPressMsg{Type: KeyRight}},
 		},
 		{
 			"left",
 			[]byte{'\x1b', 'O', 'D'},
-			[]Msg{KeyPressMsg{Sym: KeyLeft}},
+			[]Msg{KeyPressMsg{Type: KeyLeft}},
 		},
 		{
 			"alt+enter",
 			[]byte{'\x1b', '\x0d'},
-			[]Msg{KeyPressMsg{Sym: KeyEnter, Mod: ModAlt}},
+			[]Msg{KeyPressMsg{Type: KeyEnter, Mod: ModAlt}},
 		},
 		{
 			"alt+backspace",
 			[]byte{'\x1b', '\x7f'},
-			[]Msg{KeyPressMsg{Sym: KeyBackspace, Mod: ModAlt}},
+			[]Msg{KeyPressMsg{Type: KeyBackspace, Mod: ModAlt}},
 		},
 		{
 			"ctrl+space",
 			[]byte{'\x00'},
-			[]Msg{KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModCtrl}},
+			[]Msg{KeyPressMsg{Type: KeySpace, Runes: []rune{' '}, Mod: ModCtrl}},
 		},
 		{
 			"ctrl+alt+space",
 			[]byte{'\x1b', '\x00'},
-			[]Msg{KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}, Mod: ModCtrl | ModAlt}},
+			[]Msg{KeyPressMsg{Type: KeySpace, Runes: []rune{' '}, Mod: ModCtrl | ModAlt}},
 		},
 		{
 			"esc",
 			[]byte{'\x1b'},
-			[]Msg{KeyPressMsg{Sym: KeyEscape}},
+			[]Msg{KeyPressMsg{Type: KeyEscape}},
 		},
 		{
 			"alt+esc",
 			[]byte{'\x1b', '\x1b'},
-			[]Msg{KeyPressMsg{Sym: KeyEscape, Mod: ModAlt}},
+			[]Msg{KeyPressMsg{Type: KeyEscape, Mod: ModAlt}},
 		},
 		{
 			"a b o",
@@ -470,7 +470,7 @@ func TestReadInput(t *testing.T) {
 				PasteStartMsg{},
 				PasteMsg("a b"),
 				PasteEndMsg{},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'o'}},
+				KeyPressMsg{Runes: []rune{'o'}},
 			},
 		},
 		{
@@ -497,10 +497,10 @@ func TestReadInput(t *testing.T) {
 			"a ?0xfe?   b",
 			[]byte{'a', '\xfe', ' ', 'b'},
 			[]Msg{
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'a'}},
+				KeyPressMsg{Runes: []rune{'a'}},
 				UnknownMsg(rune(0xfe)),
-				KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}},
-				KeyPressMsg{Sym: KeyRunes, Runes: []rune{'b'}},
+				KeyPressMsg{Type: KeySpace, Runes: []rune{' '}},
+				KeyPressMsg{Runes: []rune{'b'}},
 			},
 		},
 	}
