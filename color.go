@@ -152,6 +152,7 @@ func xParseColor(s string) color.Color {
 }
 
 func getMaxMin(a, b, c float64) (max, min float64) {
+	// TODO: use go1.21 min/max functions
 	if a > b {
 		max = a
 		min = b
