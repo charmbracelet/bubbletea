@@ -12,11 +12,10 @@ import (
 type setKittyKeyboardFlagsMsg int
 
 // EnableKittyKeyboard is a command to enable Kitty keyboard progressive
-// enhancement protocol.
+// enhancements.
 //
 // The flags parameter is a bitmask of the following
 //
-//	0:  Disable all features
 //	1:  Disambiguate escape codes
 //	2:  Report event types
 //	4:  Report alternate keys
@@ -31,19 +30,19 @@ func EnableKittyKeyboard(flags int) Cmd {
 }
 
 // DisableKittyKeyboard is a command to disable Kitty keyboard progressive
-// enhancement protocol.
+// enhancements.
 func DisableKittyKeyboard() Msg {
 	return setKittyKeyboardFlagsMsg(0)
 }
 
-// requestKittyKeyboardFlagsMsg is a message to request the current Kitty keyboard
-// progressive enhancement protocol flags.
-type requestKittyKeyboardFlagsMsg struct{}
+// kittyKeyboardMsg is a message that queries the current Kitty keyboard
+// progressive enhancement flags.
+type kittyKeyboardMsg struct{}
 
-// RequestKittyKeyboardFlags is a command to request the current Kitty keyboard
-// progressive enhancement protocol flags from the terminal.
-func RequestKittyKeyboardFlags() Msg {
-	return requestKittyKeyboardFlagsMsg{}
+// KittyKeyboard is a command that queries the current Kitty keyboard
+// progressive enhancement flags from the terminal.
+func KittyKeyboard() Msg {
+	return kittyKeyboardMsg{}
 }
 
 // EnableEnhancedKeyboard is a command to enable enhanced keyboard features.

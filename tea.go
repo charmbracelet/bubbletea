@@ -404,7 +404,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.kittyFlags = int(msg)
 				p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
 
-			case requestKittyKeyboardFlagsMsg:
+			case kittyKeyboardMsg:
 				p.renderer.execute(ansi.RequestKittyKeyboard)
 
 			case execMsg:
