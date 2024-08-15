@@ -56,6 +56,11 @@ func TestClearMsg(t *testing.T) {
 			cmds:     []Cmd{DisableBracketedPaste, EnableBracketedPaste},
 			expected: "\x1b[?25l\x1b[?2004h\x1b[?2004l\x1b[?2004h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
+		{
+			name:     "read_set_clipboard",
+			cmds:     []Cmd{ReadClipboard, SetClipboard("success")},
+			expected: "\x1b[?25l\x1b[?2004h\x1b]52;c;?\a\x1b]52;c;c3VjY2Vzcw==\a\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
 	}
 
 	for _, test := range tests {

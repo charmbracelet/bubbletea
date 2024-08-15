@@ -392,6 +392,18 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.execute(ansi.DisableBracketedPaste)
 				p.bpActive = false
 
+			case readClipboardMsg:
+				p.renderer.execute(ansi.RequestSystemClipboard)
+
+			case setClipboardMsg:
+				p.renderer.execute(ansi.SetSystemClipboard(string(msg)))
+
+			case readPrimaryClipboardMsg:
+				p.renderer.execute(ansi.RequestPrimaryClipboard)
+
+			case setPrimaryClipboardMsg:
+				p.renderer.execute(ansi.SetPrimaryClipboard(string(msg)))
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
