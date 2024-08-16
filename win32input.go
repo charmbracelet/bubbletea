@@ -13,30 +13,30 @@ func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uin
 		return nil
 	case _VK_MENU:
 		if cks&_LEFT_ALT_PRESSED != 0 {
-			key = Key{Type: KeyLeftAlt}
+			key.Type = KeyLeftAlt
 		} else if cks&_RIGHT_ALT_PRESSED != 0 {
-			key = Key{Type: KeyRightAlt}
+			key.Type = KeyRightAlt
 		} else if !keyDown {
 			return nil
 		}
 	case _VK_CONTROL:
 		if cks&_LEFT_CTRL_PRESSED != 0 {
-			key = Key{Type: KeyLeftCtrl}
+			key.Type = KeyLeftCtrl
 		} else if cks&_RIGHT_CTRL_PRESSED != 0 {
-			key = Key{Type: KeyRightCtrl}
+			key.Type = KeyRightCtrl
 		} else if !keyDown {
 			return nil
 		}
 	case _VK_CAPITAL:
-		key = Key{Type: KeyCapsLock}
+		key.Type = KeyCapsLock
 	default:
 		var ok bool
 		key, ok = vkKeyEvent[vkc]
 		if !ok {
 			if isCtrl {
-				key = vkCtrlRune(key, r, vkc)
+				key.Runes = []rune{vkCtrlRune(key, r, vkc)}
 			} else {
-				key = Key{Runes: []rune{r}}
+				key.Runes = []rune{r}
 			}
 		}
 	}
@@ -61,10 +61,15 @@ func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uin
 	}
 
 	// Use the unshifted key
+	keyRune := key.Rune()
 	if cks&(_SHIFT_PRESSED^_CAPSLOCK_ON) != 0 {
-		key.altRune = unicode.ToUpper(key.Rune())
+		if unicode.IsLower(keyRune) {
+			key.altRune = unicode.ToUpper(key.Rune())
+		}
 	} else {
-		key.altRune = unicode.ToLower(key.Rune())
+		if unicode.IsUpper(keyRune) {
+			key.altRune = unicode.ToLower(keyRune)
+		}
 	}
 
 	var e Msg = KeyPressMsg(key)
@@ -158,85 +163,84 @@ var vkKeyEvent = map[uint16]Key{
 	// TODO: add more keys
 }
 
-func vkCtrlRune(k Key, r rune, kc uint16) Key {
+func vkCtrlRune(k Key, r rune, kc uint16) rune {
 	switch r {
-	case '@':
-		k.Runes = []rune{'@'}
-	case '\x01':
-		k.Runes = []rune{'a'}
-	case '\x02':
-		k.Runes = []rune{'b'}
-	case '\x03':
-		k.Runes = []rune{'c'}
-	case '\x04':
-		k.Runes = []rune{'d'}
-	case '\x05':
-		k.Runes = []rune{'e'}
-	case '\x06':
-		k.Runes = []rune{'f'}
+	case 0x01:
+		return 'a'
+	case 0x02:
+		return 'b'
+	case 0x03:
+		return 'c'
+	case 0x04:
+		return 'd'
+	case 0x05:
+		return 'e'
+	case 0x06:
+		return 'f'
 	case '\a':
-		k.Runes = []rune{'g'}
+		return 'g'
 	case '\b':
-		k.Runes = []rune{'h'}
+		return 'h'
 	case '\t':
-		k.Runes = []rune{'i'}
+		return 'i'
 	case '\n':
-		k.Runes = []rune{'j'}
+		return 'j'
 	case '\v':
-		k.Runes = []rune{'k'}
+		return 'k'
 	case '\f':
-		k.Runes = []rune{'l'}
+		return 'l'
 	case '\r':
-		k.Runes = []rune{'m'}
-	case '\x0e':
-		k.Runes = []rune{'n'}
-	case '\x0f':
-		k.Runes = []rune{'o'}
-	case '\x10':
-		k.Runes = []rune{'p'}
-	case '\x11':
-		k.Runes = []rune{'q'}
-	case '\x12':
-		k.Runes = []rune{'r'}
-	case '\x13':
-		k.Runes = []rune{'s'}
-	case '\x14':
-		k.Runes = []rune{'t'}
-	case '\x15':
-		k.Runes = []rune{'u'}
-	case '\x16':
-		k.Runes = []rune{'v'}
-	case '\x17':
-		k.Runes = []rune{'w'}
-	case '\x18':
-		k.Runes = []rune{'x'}
-	case '\x19':
-		k.Runes = []rune{'y'}
-	case '\x1a':
-		k.Runes = []rune{'z'}
-	case '\x1b':
-		k.Runes = []rune{']'}
-	case '\x1c':
-		k.Runes = []rune{'\\'}
-	case '\x1f':
-		k.Runes = []rune{'_'}
+		return 'm'
+	case 0x0e:
+		return 'n'
+	case 0x0f:
+		return 'o'
+	case 0x10:
+		return 'p'
+	case 0x11:
+		return 'q'
+	case 0x12:
+		return 'r'
+	case 0x13:
+		return 's'
+	case 0x14:
+		return 't'
+	case 0x15:
+		return 'u'
+	case 0x16:
+		return 'v'
+	case 0x17:
+		return 'w'
+	case 0x18:
+		return 'x'
+	case 0x19:
+		return 'y'
+	case 0x1a:
+		return 'z'
+	case 0x1b:
+		return ']'
+	case 0x1c:
+		return '\\'
+	case 0x1f:
+		return '_'
 	}
 
 	switch kc {
 	case _VK_OEM_4:
-		k.Runes = []rune{'['}
+		return '['
 	}
 
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 	if len(k.Runes) == 0 &&
 		(kc >= 0x30 && kc <= 0x39) ||
 		(kc >= 0x41 && kc <= 0x5a) {
-		k.Runes = []rune{rune(kc)}
+		return rune(kc)
 	}
 
-	return k
+	return r
 }
 
+//nolint:revive
 const (
 	_VK_LBUTTON             = 0x01
 	_VK_RBUTTON             = 0x02
@@ -437,19 +441,7 @@ const (
 	_VK_OEM_CLEAR           = 0xFE
 )
 
-// Mouse button constants.
-// https://docs.microsoft.com/en-us/windows/console/mouse-event-record-str
-const (
-	_FROM_LEFT_1ST_BUTTON_PRESSED = 0x0001
-	_RIGHTMOST_BUTTON_PRESSED     = 0x0002
-	_FROM_LEFT_2ND_BUTTON_PRESSED = 0x0004
-	_FROM_LEFT_3RD_BUTTON_PRESSED = 0x0008
-	_FROM_LEFT_4TH_BUTTON_PRESSED = 0x0010
-)
-
-// Control key state constaints.
-// https://docs.microsoft.com/en-us/windows/console/key-event-record-str
-// https://docs.microsoft.com/en-us/windows/console/mouse-event-record-str
+//nolint:revive
 const (
 	_CAPSLOCK_ON        = 0x0080
 	_ENHANCED_KEY       = 0x0100
@@ -461,14 +453,4 @@ const (
 	_SCROLLLOCK_ON      = 0x0040
 	_SHIFT_PRESSED      = 0x0010
 	_NO_CONTROL_KEY     = 0x0000
-)
-
-// Mouse event record event flags.
-// https://docs.microsoft.com/en-us/windows/console/mouse-event-record-str
-const (
-	_CLICK          = 0x0000
-	_MOUSE_MOVED    = 0x0001
-	_DOUBLE_CLICK   = 0x0002
-	_MOUSE_WHEELED  = 0x0004
-	_MOUSE_HWHEELED = 0x0008
 )
