@@ -116,14 +116,14 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *driver) error {
 				incomingMsgs = append(incomingMsgs, k)
 			case KeyPressMsg:
 				k := KeyMsg{
-					Alt:   e.Mod.HasAlt(),
+					Alt:   e.Mod.Contains(ModAlt),
 					Runes: e.Runes,
 					Type:  e.Type,
 				}
 
 				// Backwards compatibility for ctrl- and shift- keys
 				switch {
-				case e.Mod.HasCtrl() && e.Mod.HasShift():
+				case e.Mod.Contains(ModCtrl | ModShift):
 					switch e.Type {
 					case KeyUp, KeyDown, KeyRight, KeyLeft:
 						k.Runes = nil
@@ -132,7 +132,7 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *driver) error {
 						k.Runes = nil
 						k.Type = KeyCtrlShiftHome - e.Type + KeyHome
 					}
-				case e.Mod.HasCtrl():
+				case e.Mod.Contains(ModCtrl):
 					switch e.Type {
 					case KeyRunes: // KeyRunes
 						switch r := e.Rune(); r {
@@ -158,7 +158,7 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *driver) error {
 						k.Runes = nil
 						k.Type = KeyCtrlUp - e.Type + KeyUp
 					}
-				case e.Mod.HasShift():
+				case e.Mod.Contains(ModShift):
 					switch e.Type {
 					case KeyTab:
 						k.Runes = nil

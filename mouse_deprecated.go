@@ -154,9 +154,9 @@ func toMouseMsg(m Mouse) MouseMsg {
 	return MouseMsg{
 		X:      m.X,
 		Y:      m.Y,
-		Shift:  m.Mod.HasShift(),
-		Alt:    m.Mod.HasAlt(),
-		Ctrl:   m.Mod.HasCtrl(),
+		Shift:  m.Mod.Contains(ModShift),
+		Alt:    m.Mod.Contains(ModAlt),
+		Ctrl:   m.Mod.Contains(ModCtrl),
 		Button: m.Button,
 	}
 }

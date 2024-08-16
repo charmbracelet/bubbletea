@@ -323,22 +323,22 @@ func (k Key) Rune() rune {
 // "shift+ctrl+alt+a".
 func (k Key) String() string {
 	var s string
-	if k.Mod.HasCtrl() && k.Type != KeyLeftCtrl && k.Type != KeyRightCtrl {
+	if k.Mod.Contains(ModCtrl) && k.Type != KeyLeftCtrl && k.Type != KeyRightCtrl {
 		s += "ctrl+"
 	}
-	if k.Mod.HasAlt() && k.Type != KeyLeftAlt && k.Type != KeyRightAlt {
+	if k.Mod.Contains(ModAlt) && k.Type != KeyLeftAlt && k.Type != KeyRightAlt {
 		s += "alt+"
 	}
-	if k.Mod.HasShift() && k.Type != KeyLeftShift && k.Type != KeyRightShift {
+	if k.Mod.Contains(ModShift) && k.Type != KeyLeftShift && k.Type != KeyRightShift {
 		s += "shift+"
 	}
-	if k.Mod.HasMeta() && k.Type != KeyLeftMeta && k.Type != KeyRightMeta {
+	if k.Mod.Contains(ModMeta) && k.Type != KeyLeftMeta && k.Type != KeyRightMeta {
 		s += "meta+"
 	}
-	if k.Mod.HasHyper() && k.Type != KeyLeftHyper && k.Type != KeyRightHyper {
+	if k.Mod.Contains(ModHyper) && k.Type != KeyLeftHyper && k.Type != KeyRightHyper {
 		s += "hyper+"
 	}
-	if k.Mod.HasSuper() && k.Type != KeyLeftSuper && k.Type != KeyRightSuper {
+	if k.Mod.Contains(ModSuper) && k.Type != KeyLeftSuper && k.Type != KeyRightSuper {
 		s += "super+"
 	}
 
