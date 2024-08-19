@@ -60,29 +60,18 @@ func DisableEnhancedKeyboard() Msg {
 // KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
 type KittyKeyboardMsg int
 
-// HasDisambiguateEscapeCodes returns true if the DisambiguateEscapeCodes flag is set.
-func (e KittyKeyboardMsg) HasDisambiguateEscapeCodes() bool {
-	return e&ansi.KittyDisambiguateEscapeCodes != 0
-}
+// Kitty Keyboard Protocol flags.
+const (
+	KittyDisambiguateEscapeCodes KittyKeyboardMsg = 1 << iota
+	KittyReportEventTypes
+	KittyReportAlternateKeys
+	KittyReportAllKeys
+	KittyReportAssociatedKeys
+)
 
-// HasReportEventTypes returns true if the ReportEventTypes flag is set.
-func (e KittyKeyboardMsg) HasReportEventTypes() bool {
-	return e&ansi.KittyReportEventTypes != 0
-}
-
-// HasReportAlternateKeys returns true if the ReportAlternateKeys flag is set.
-func (e KittyKeyboardMsg) HasReportAlternateKeys() bool {
-	return e&ansi.KittyReportAlternateKeys != 0
-}
-
-// HasReportAllKeys returns true if the ReportAllKeys flag is set.
-func (e KittyKeyboardMsg) HasReportAllKeys() bool {
-	return e&ansi.KittyReportAllKeys != 0
-}
-
-// HasReportAssociatedKeys returns true if the ReportAssociatedKeys flag is set.
-func (e KittyKeyboardMsg) HasReportAssociatedKeys() bool {
-	return e&ansi.KittyReportAssociatedKeys != 0
+// Contains reports whether m contains the given flags.
+func (m KittyKeyboardMsg) Contains(flags KittyKeyboardMsg) bool {
+	return m&flags == flags
 }
 
 // Kitty Clipboard Control Sequences
