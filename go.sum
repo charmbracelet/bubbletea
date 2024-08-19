@@ -1,7 +1,7 @@
-github.com/charmbracelet/x/ansi v0.1.5-0.20240814160751-e2dc8b53b604 h1:UBOeE/UdmNlTa7KVGdCdYGYpOBZPD0LMMw0Bcp6fCj4=
-github.com/charmbracelet/x/ansi v0.1.5-0.20240814160751-e2dc8b53b604/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
-github.com/charmbracelet/x/term v0.1.2-0.20240815203630-995b29f8f65d h1:o0+oB7Z+7+hsAa11Iy6+SqRN9cgiIKcDjnP9behh3s8=
-github.com/charmbracelet/x/term v0.1.2-0.20240815203630-995b29f8f65d/go.mod h1:Z0CWXkZPRKJnigvhan+83fErODxx9DrlYFj6rFjD8kY=
+github.com/charmbracelet/x/ansi v0.2.1 h1:8G2jgVEHdyFJJwToL/gWvxH1/qmEY7bybjacefoffxk=
+github.com/charmbracelet/x/ansi v0.2.1/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
+github.com/charmbracelet/x/term v0.2.0 h1:cNB9Ot9q8I711MyZ7myUR5HFWL/lc3OpU8jZ4hwm0x0=
+github.com/charmbracelet/x/term v0.2.0/go.mod h1:GVxgxAbjUrmpvIINHIQnJJKpMlHiZ4cktEQCN6GWyF0=
 github.com/charmbracelet/x/windows v0.2.0 h1:ilXA1GJjTNkgOm94CLPeSz7rar54jtFatdmoiONPuEw=
 github.com/charmbracelet/x/windows v0.2.0/go.mod h1:ZibNFR49ZFqCXgP76sYanisxRyC+EYrBE7TTknD8s1s=
 github.com/mattn/go-runewidth v0.0.15 h1:UNAjwbU9l54TA3KzvqLGxwWjHmMgBUVhBiTjelZgg3U=

@@ -3,8 +3,8 @@ module github.com/charmbracelet/bubbletea
 go 1.18
 
 require (
-	github.com/charmbracelet/x/ansi v0.1.5-0.20240814160751-e2dc8b53b604
-	github.com/charmbracelet/x/term v0.1.2-0.20240815203630-995b29f8f65d
+	github.com/charmbracelet/x/ansi v0.2.1
+	github.com/charmbracelet/x/term v0.2.0
 	github.com/charmbracelet/x/windows v0.2.0
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6
 	github.com/muesli/cancelreader v0.2.2
