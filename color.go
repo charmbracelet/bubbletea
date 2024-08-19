@@ -151,7 +151,7 @@ func xParseColor(s string) color.Color {
 	return color.Black
 }
 
-func getMaxMin(a, b, c float64) (max, min float64) {
+func getMaxMin(a, b, c float64) (max, min float64) { //nolint:predeclared
 	// TODO: use go1.21 min/max functions
 	if a > b {
 		max = a
