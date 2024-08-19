@@ -1,11 +1,26 @@
 package tea
 
-// KeySym is a keyboard symbol.
-type KeySym int
+// KeyType indicates whether the key is a special key or runes. Special
+// keys are things like KeyEnter, KeyBackspace, and so on. Runes keys are just
+// regular characters like 'a', '你', 'ض', '🦄', and so on.
+//
+//	k := Key{Type: KeyRunes, Runes: []rune{'A'}, Mod: ModShift}
+//	if k.Type == KeyRunes {
+//
+//	    fmt.Println(k.Runes)
+//	    // Output: A
+//
+//	    fmt.Println(k.String())
+//	    // Output: shift+a
+//
+//	}
+type KeyType int
 
-// Key Symbol constants.
+// Special key symbols.
 const (
-	KeyNone KeySym = iota
+	// KeyRunes indicates that the key represents rune(s), like 'a', 'b', 'c',
+	// and so on.
+	KeyRunes KeyType = iota
 
 	// Special names in C0
 
@@ -177,15 +192,47 @@ const (
 	KeyIsoLevel5Shift
 )
 
-// Key represents a key event.
+// Key contains information about a key or release. Keys are always sent to the
+// program's update function. There are a couple general patterns you could use
+// to check for key presses or releases:
+//
+//	// Switch on the string representation of the key (shorter)
+//	switch msg := msg.(type) {
+//	case KeyPressMsg:
+//	    switch msg.String() {
+//	    case "enter":
+//	        fmt.Println("you pressed enter!")
+//	    case "a":
+//	        fmt.Println("you pressed a!")
+//	    }
+//	}
+//
+//	// Switch on the key type (more foolproof)
+//	switch msg := msg.(type) {
+//	case KeyReleaseMsg:
+//	    switch msg.Sym {
+//	    case KeyEnter:
+//	        fmt.Println("you pressed enter!")
+//	    case KeyRunes:
+//	        switch string(msg.Runes) {
+//	        case "a":
+//	            fmt.Println("you pressed a!")
+//	        }
+//	    }
+//	}
+//
+// Note that Key.Runes will always contain at least one character, so you can
+// always safely call Key.Runes[0]. In most cases Key.Runes will only contain
+// one character, though certain input method editors (most notably Chinese
+// IMEs) can input multiple runes at once.
 type Key struct {
-	// Sym is a special key, like enter, tab, backspace, and so on.
-	Sym KeySym
-
 	// Runes contains the actual characters received. This usually has a length
 	// of 1. Use [Rune()] to get the first key rune received. If the user
 	// presses shift+a, the Runes will be `[]rune{'A'}`.
 	Runes []rune
+
+	// Type is a special key, like enter, tab, backspace, and so on.
+	Type KeyType
 
 	// altRune is the actual, unshifted key pressed by the user. For example,
 	// if the user presses shift+a, or caps lock is on, the altRune will be
@@ -276,22 +323,22 @@ func (k Key) Rune() rune {
 // "shift+ctrl+alt+a".
 func (k Key) String() string {
 	var s string
-	if k.Mod.HasCtrl() && k.Sym != KeyLeftCtrl && k.Sym != KeyRightCtrl {
+	if k.Mod.Contains(ModCtrl) && k.Type != KeyLeftCtrl && k.Type != KeyRightCtrl {
 		s += "ctrl+"
 	}
-	if k.Mod.HasAlt() && k.Sym != KeyLeftAlt && k.Sym != KeyRightAlt {
+	if k.Mod.Contains(ModAlt) && k.Type != KeyLeftAlt && k.Type != KeyRightAlt {
 		s += "alt+"
 	}
-	if k.Mod.HasShift() && k.Sym != KeyLeftShift && k.Sym != KeyRightShift {
+	if k.Mod.Contains(ModShift) && k.Type != KeyLeftShift && k.Type != KeyRightShift {
 		s += "shift+"
 	}
-	if k.Mod.HasMeta() && k.Sym != KeyLeftMeta && k.Sym != KeyRightMeta {
+	if k.Mod.Contains(ModMeta) && k.Type != KeyLeftMeta && k.Type != KeyRightMeta {
 		s += "meta+"
 	}
-	if k.Mod.HasHyper() && k.Sym != KeyLeftHyper && k.Sym != KeyRightHyper {
+	if k.Mod.Contains(ModHyper) && k.Type != KeyLeftHyper && k.Type != KeyRightHyper {
 		s += "hyper+"
 	}
-	if k.Mod.HasSuper() && k.Sym != KeyLeftSuper && k.Sym != KeyRightSuper {
+	if k.Mod.Contains(ModSuper) && k.Type != KeyLeftSuper && k.Type != KeyRightSuper {
 		s += "super+"
 	}
 
@@ -317,22 +364,21 @@ func (k Key) String() string {
 			s += runeStr(k.Rune())
 		}
 	} else {
-		s += k.Sym.String()
+		s += k.Type.String()
 	}
 	return s
 }
 
-// String implements fmt.Stringer and prints the string representation of a of
-// a Symbol key.
-func (k KeySym) String() string {
-	s, ok := keySymString[k]
-	if !ok {
-		return "unknown"
+// String returns the string representation of the key type.
+func (k KeyType) String() string {
+	if s, ok := keyTypeString[k]; ok {
+		return s
 	}
-	return s
+	return ""
 }
 
-var keySymString = map[KeySym]string{
+var keyTypeString = map[KeyType]string{
+	KeyRunes:      "runes",
 	KeyEnter:      "enter",
 	KeyTab:        "tab",
 	KeyBackspace:  "backspace",

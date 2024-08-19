@@ -63,13 +63,13 @@ type Mouse struct {
 
 // String returns a string representation of the mouse message.
 func (m Mouse) String() (s string) {
-	if m.Mod.HasCtrl() {
+	if m.Mod.Contains(ModCtrl) {
 		s += "ctrl+"
 	}
-	if m.Mod.HasAlt() {
+	if m.Mod.Contains(ModAlt) {
 		s += "alt+"
 	}
-	if m.Mod.HasShift() {
+	if m.Mod.Contains(ModShift) {
 		s += "shift+"
 	}
 

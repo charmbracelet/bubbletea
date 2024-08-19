@@ -10,39 +10,39 @@ import (
 // events based on the VT100/VT200, XTerm, and Urxvt terminal specs.
 // TODO: Use flags?
 func buildKeysTable(flags int, term string) map[string]Key {
-	nul := Key{Runes: []rune{' '}, Sym: KeySpace, Mod: ModCtrl} // ctrl+@ or ctrl+space
+	nul := Key{Runes: []rune{' '}, Type: KeySpace, Mod: ModCtrl} // ctrl+@ or ctrl+space
 	if flags&_FlagCtrlAt != 0 {
 		nul = Key{Runes: []rune{'@'}, Mod: ModCtrl}
 	}
 
-	tab := Key{Sym: KeyTab} // ctrl+i or tab
+	tab := Key{Type: KeyTab} // ctrl+i or tab
 	if flags&_FlagCtrlI != 0 {
 		tab = Key{Runes: []rune{'i'}, Mod: ModCtrl}
 	}
 
-	enter := Key{Sym: KeyEnter} // ctrl+m or enter
+	enter := Key{Type: KeyEnter} // ctrl+m or enter
 	if flags&_FlagCtrlM != 0 {
 		enter = Key{Runes: []rune{'m'}, Mod: ModCtrl}
 	}
 
-	esc := Key{Sym: KeyEscape} // ctrl+[ or escape
+	esc := Key{Type: KeyEscape} // ctrl+[ or escape
 	if flags&_FlagCtrlOpenBracket != 0 {
 		esc = Key{Runes: []rune{'['}, Mod: ModCtrl} // ctrl+[ or escape
 	}
 
-	del := Key{Sym: KeyBackspace}
+	del := Key{Type: KeyBackspace}
 	if flags&_FlagBackspace != 0 {
-		del.Sym = KeyDelete
+		del.Type = KeyDelete
 	}
 
-	find := Key{Sym: KeyHome}
+	find := Key{Type: KeyHome}
 	if flags&_FlagFind != 0 {
-		find.Sym = KeyFind
+		find.Type = KeyFind
 	}
 
-	sel := Key{Sym: KeyEnd}
+	sel := Key{Type: KeyEnd}
 	if flags&_FlagSelect != 0 {
-		sel.Sym = KeySelect
+		sel.Type = KeySelect
 	}
 
 	// The following is a table of key sequences and their corresponding key
@@ -89,122 +89,122 @@ func buildKeysTable(flags int, term string) map[string]Key {
 		string(byte(ansi.US)):  {Runes: []rune{'_'}, Mod: ModCtrl},
 
 		// Special keys in G0
-		string(byte(ansi.SP)):  {Sym: KeySpace, Runes: []rune{' '}},
+		string(byte(ansi.SP)):  {Type: KeySpace, Runes: []rune{' '}},
 		string(byte(ansi.DEL)): del,
 
 		// Special keys
 
-		"\x1b[Z": {Sym: KeyTab, Mod: ModShift},
+		"\x1b[Z": {Type: KeyTab, Mod: ModShift},
 
 		"\x1b[1~": find,
-		"\x1b[2~": {Sym: KeyInsert},
-		"\x1b[3~": {Sym: KeyDelete},
+		"\x1b[2~": {Type: KeyInsert},
+		"\x1b[3~": {Type: KeyDelete},
 		"\x1b[4~": sel,
-		"\x1b[5~": {Sym: KeyPgUp},
-		"\x1b[6~": {Sym: KeyPgDown},
-		"\x1b[7~": {Sym: KeyHome},
-		"\x1b[8~": {Sym: KeyEnd},
+		"\x1b[5~": {Type: KeyPgUp},
+		"\x1b[6~": {Type: KeyPgDown},
+		"\x1b[7~": {Type: KeyHome},
+		"\x1b[8~": {Type: KeyEnd},
 
 		// Normal mode
-		"\x1b[A": {Sym: KeyUp},
-		"\x1b[B": {Sym: KeyDown},
-		"\x1b[C": {Sym: KeyRight},
-		"\x1b[D": {Sym: KeyLeft},
-		"\x1b[E": {Sym: KeyBegin},
-		"\x1b[F": {Sym: KeyEnd},
-		"\x1b[H": {Sym: KeyHome},
-		"\x1b[P": {Sym: KeyF1},
-		"\x1b[Q": {Sym: KeyF2},
-		"\x1b[R": {Sym: KeyF3},
-		"\x1b[S": {Sym: KeyF4},
+		"\x1b[A": {Type: KeyUp},
+		"\x1b[B": {Type: KeyDown},
+		"\x1b[C": {Type: KeyRight},
+		"\x1b[D": {Type: KeyLeft},
+		"\x1b[E": {Type: KeyBegin},
+		"\x1b[F": {Type: KeyEnd},
+		"\x1b[H": {Type: KeyHome},
+		"\x1b[P": {Type: KeyF1},
+		"\x1b[Q": {Type: KeyF2},
+		"\x1b[R": {Type: KeyF3},
+		"\x1b[S": {Type: KeyF4},
 
 		// Application Cursor Key Mode (DECCKM)
-		"\x1bOA": {Sym: KeyUp},
-		"\x1bOB": {Sym: KeyDown},
-		"\x1bOC": {Sym: KeyRight},
-		"\x1bOD": {Sym: KeyLeft},
-		"\x1bOE": {Sym: KeyBegin},
-		"\x1bOF": {Sym: KeyEnd},
-		"\x1bOH": {Sym: KeyHome},
-		"\x1bOP": {Sym: KeyF1},
-		"\x1bOQ": {Sym: KeyF2},
-		"\x1bOR": {Sym: KeyF3},
-		"\x1bOS": {Sym: KeyF4},
+		"\x1bOA": {Type: KeyUp},
+		"\x1bOB": {Type: KeyDown},
+		"\x1bOC": {Type: KeyRight},
+		"\x1bOD": {Type: KeyLeft},
+		"\x1bOE": {Type: KeyBegin},
+		"\x1bOF": {Type: KeyEnd},
+		"\x1bOH": {Type: KeyHome},
+		"\x1bOP": {Type: KeyF1},
+		"\x1bOQ": {Type: KeyF2},
+		"\x1bOR": {Type: KeyF3},
+		"\x1bOS": {Type: KeyF4},
 
 		// Keypad Application Mode (DECKPAM)
 
-		"\x1bOM": {Sym: KeyKpEnter},
-		"\x1bOX": {Sym: KeyKpEqual},
-		"\x1bOj": {Sym: KeyKpMultiply},
-		"\x1bOk": {Sym: KeyKpPlus},
-		"\x1bOl": {Sym: KeyKpComma},
-		"\x1bOm": {Sym: KeyKpMinus},
-		"\x1bOn": {Sym: KeyKpDecimal},
-		"\x1bOo": {Sym: KeyKpDivide},
-		"\x1bOp": {Sym: KeyKp0},
-		"\x1bOq": {Sym: KeyKp1},
-		"\x1bOr": {Sym: KeyKp2},
-		"\x1bOs": {Sym: KeyKp3},
-		"\x1bOt": {Sym: KeyKp4},
-		"\x1bOu": {Sym: KeyKp5},
-		"\x1bOv": {Sym: KeyKp6},
-		"\x1bOw": {Sym: KeyKp7},
-		"\x1bOx": {Sym: KeyKp8},
-		"\x1bOy": {Sym: KeyKp9},
+		"\x1bOM": {Type: KeyKpEnter},
+		"\x1bOX": {Type: KeyKpEqual},
+		"\x1bOj": {Type: KeyKpMultiply},
+		"\x1bOk": {Type: KeyKpPlus},
+		"\x1bOl": {Type: KeyKpComma},
+		"\x1bOm": {Type: KeyKpMinus},
+		"\x1bOn": {Type: KeyKpDecimal},
+		"\x1bOo": {Type: KeyKpDivide},
+		"\x1bOp": {Type: KeyKp0},
+		"\x1bOq": {Type: KeyKp1},
+		"\x1bOr": {Type: KeyKp2},
+		"\x1bOs": {Type: KeyKp3},
+		"\x1bOt": {Type: KeyKp4},
+		"\x1bOu": {Type: KeyKp5},
+		"\x1bOv": {Type: KeyKp6},
+		"\x1bOw": {Type: KeyKp7},
+		"\x1bOx": {Type: KeyKp8},
+		"\x1bOy": {Type: KeyKp9},
 
 		// Function keys
 
-		"\x1b[11~": {Sym: KeyF1},
-		"\x1b[12~": {Sym: KeyF2},
-		"\x1b[13~": {Sym: KeyF3},
-		"\x1b[14~": {Sym: KeyF4},
-		"\x1b[15~": {Sym: KeyF5},
-		"\x1b[17~": {Sym: KeyF6},
-		"\x1b[18~": {Sym: KeyF7},
-		"\x1b[19~": {Sym: KeyF8},
-		"\x1b[20~": {Sym: KeyF9},
-		"\x1b[21~": {Sym: KeyF10},
-		"\x1b[23~": {Sym: KeyF11},
-		"\x1b[24~": {Sym: KeyF12},
-		"\x1b[25~": {Sym: KeyF13},
-		"\x1b[26~": {Sym: KeyF14},
-		"\x1b[28~": {Sym: KeyF15},
-		"\x1b[29~": {Sym: KeyF16},
-		"\x1b[31~": {Sym: KeyF17},
-		"\x1b[32~": {Sym: KeyF18},
-		"\x1b[33~": {Sym: KeyF19},
-		"\x1b[34~": {Sym: KeyF20},
+		"\x1b[11~": {Type: KeyF1},
+		"\x1b[12~": {Type: KeyF2},
+		"\x1b[13~": {Type: KeyF3},
+		"\x1b[14~": {Type: KeyF4},
+		"\x1b[15~": {Type: KeyF5},
+		"\x1b[17~": {Type: KeyF6},
+		"\x1b[18~": {Type: KeyF7},
+		"\x1b[19~": {Type: KeyF8},
+		"\x1b[20~": {Type: KeyF9},
+		"\x1b[21~": {Type: KeyF10},
+		"\x1b[23~": {Type: KeyF11},
+		"\x1b[24~": {Type: KeyF12},
+		"\x1b[25~": {Type: KeyF13},
+		"\x1b[26~": {Type: KeyF14},
+		"\x1b[28~": {Type: KeyF15},
+		"\x1b[29~": {Type: KeyF16},
+		"\x1b[31~": {Type: KeyF17},
+		"\x1b[32~": {Type: KeyF18},
+		"\x1b[33~": {Type: KeyF19},
+		"\x1b[34~": {Type: KeyF20},
 	}
 
 	// CSI ~ sequence keys
 	csiTildeKeys := map[string]Key{
-		"1": find, "2": {Sym: KeyInsert},
-		"3": {Sym: KeyDelete}, "4": sel,
-		"5": {Sym: KeyPgUp}, "6": {Sym: KeyPgDown},
-		"7": {Sym: KeyHome}, "8": {Sym: KeyEnd},
+		"1": find, "2": {Type: KeyInsert},
+		"3": {Type: KeyDelete}, "4": sel,
+		"5": {Type: KeyPgUp}, "6": {Type: KeyPgDown},
+		"7": {Type: KeyHome}, "8": {Type: KeyEnd},
 		// There are no 9 and 10 keys
-		"11": {Sym: KeyF1}, "12": {Sym: KeyF2},
-		"13": {Sym: KeyF3}, "14": {Sym: KeyF4},
-		"15": {Sym: KeyF5}, "17": {Sym: KeyF6},
-		"18": {Sym: KeyF7}, "19": {Sym: KeyF8},
-		"20": {Sym: KeyF9}, "21": {Sym: KeyF10},
-		"23": {Sym: KeyF11}, "24": {Sym: KeyF12},
-		"25": {Sym: KeyF13}, "26": {Sym: KeyF14},
-		"28": {Sym: KeyF15}, "29": {Sym: KeyF16},
-		"31": {Sym: KeyF17}, "32": {Sym: KeyF18},
-		"33": {Sym: KeyF19}, "34": {Sym: KeyF20},
+		"11": {Type: KeyF1}, "12": {Type: KeyF2},
+		"13": {Type: KeyF3}, "14": {Type: KeyF4},
+		"15": {Type: KeyF5}, "17": {Type: KeyF6},
+		"18": {Type: KeyF7}, "19": {Type: KeyF8},
+		"20": {Type: KeyF9}, "21": {Type: KeyF10},
+		"23": {Type: KeyF11}, "24": {Type: KeyF12},
+		"25": {Type: KeyF13}, "26": {Type: KeyF14},
+		"28": {Type: KeyF15}, "29": {Type: KeyF16},
+		"31": {Type: KeyF17}, "32": {Type: KeyF18},
+		"33": {Type: KeyF19}, "34": {Type: KeyF20},
 	}
 
 	// URxvt keys
 	// See https://manpages.ubuntu.com/manpages/trusty/man7/urxvt.7.html#key%20codes
-	table["\x1b[a"] = Key{Sym: KeyUp, Mod: ModShift}
-	table["\x1b[b"] = Key{Sym: KeyDown, Mod: ModShift}
-	table["\x1b[c"] = Key{Sym: KeyRight, Mod: ModShift}
-	table["\x1b[d"] = Key{Sym: KeyLeft, Mod: ModShift}
-	table["\x1bOa"] = Key{Sym: KeyUp, Mod: ModCtrl}
-	table["\x1bOb"] = Key{Sym: KeyDown, Mod: ModCtrl}
-	table["\x1bOc"] = Key{Sym: KeyRight, Mod: ModCtrl}
-	table["\x1bOd"] = Key{Sym: KeyLeft, Mod: ModCtrl}
+	table["\x1b[a"] = Key{Type: KeyUp, Mod: ModShift}
+	table["\x1b[b"] = Key{Type: KeyDown, Mod: ModShift}
+	table["\x1b[c"] = Key{Type: KeyRight, Mod: ModShift}
+	table["\x1b[d"] = Key{Type: KeyLeft, Mod: ModShift}
+	table["\x1bOa"] = Key{Type: KeyUp, Mod: ModCtrl}
+	table["\x1bOb"] = Key{Type: KeyDown, Mod: ModCtrl}
+	table["\x1bOc"] = Key{Type: KeyRight, Mod: ModCtrl}
+	table["\x1bOd"] = Key{Type: KeyLeft, Mod: ModCtrl}
 	// TODO: invistigate if shift-ctrl arrow keys collide with DECCKM keys i.e.
 	// "\x1bOA", "\x1bOB", "\x1bOC", "\x1bOD"
 
@@ -232,46 +232,46 @@ func buildKeysTable(flags int, term string) map[string]Key {
 	// different escapes like XTerm, or switch to a better terminal ¯\_(ツ)_/¯
 	//
 	// See https://manpages.ubuntu.com/manpages/trusty/man7/urxvt.7.html#key%20codes
-	table["\x1b[23$"] = Key{Sym: KeyF11, Mod: ModShift}
-	table["\x1b[24$"] = Key{Sym: KeyF12, Mod: ModShift}
-	table["\x1b[25$"] = Key{Sym: KeyF13, Mod: ModShift}
-	table["\x1b[26$"] = Key{Sym: KeyF14, Mod: ModShift}
-	table["\x1b[28$"] = Key{Sym: KeyF15, Mod: ModShift}
-	table["\x1b[29$"] = Key{Sym: KeyF16, Mod: ModShift}
-	table["\x1b[31$"] = Key{Sym: KeyF17, Mod: ModShift}
-	table["\x1b[32$"] = Key{Sym: KeyF18, Mod: ModShift}
-	table["\x1b[33$"] = Key{Sym: KeyF19, Mod: ModShift}
-	table["\x1b[34$"] = Key{Sym: KeyF20, Mod: ModShift}
-	table["\x1b[11^"] = Key{Sym: KeyF1, Mod: ModCtrl}
-	table["\x1b[12^"] = Key{Sym: KeyF2, Mod: ModCtrl}
-	table["\x1b[13^"] = Key{Sym: KeyF3, Mod: ModCtrl}
-	table["\x1b[14^"] = Key{Sym: KeyF4, Mod: ModCtrl}
-	table["\x1b[15^"] = Key{Sym: KeyF5, Mod: ModCtrl}
-	table["\x1b[17^"] = Key{Sym: KeyF6, Mod: ModCtrl}
-	table["\x1b[18^"] = Key{Sym: KeyF7, Mod: ModCtrl}
-	table["\x1b[19^"] = Key{Sym: KeyF8, Mod: ModCtrl}
-	table["\x1b[20^"] = Key{Sym: KeyF9, Mod: ModCtrl}
-	table["\x1b[21^"] = Key{Sym: KeyF10, Mod: ModCtrl}
-	table["\x1b[23^"] = Key{Sym: KeyF11, Mod: ModCtrl}
-	table["\x1b[24^"] = Key{Sym: KeyF12, Mod: ModCtrl}
-	table["\x1b[25^"] = Key{Sym: KeyF13, Mod: ModCtrl}
-	table["\x1b[26^"] = Key{Sym: KeyF14, Mod: ModCtrl}
-	table["\x1b[28^"] = Key{Sym: KeyF15, Mod: ModCtrl}
-	table["\x1b[29^"] = Key{Sym: KeyF16, Mod: ModCtrl}
-	table["\x1b[31^"] = Key{Sym: KeyF17, Mod: ModCtrl}
-	table["\x1b[32^"] = Key{Sym: KeyF18, Mod: ModCtrl}
-	table["\x1b[33^"] = Key{Sym: KeyF19, Mod: ModCtrl}
-	table["\x1b[34^"] = Key{Sym: KeyF20, Mod: ModCtrl}
-	table["\x1b[23@"] = Key{Sym: KeyF11, Mod: ModShift | ModCtrl}
-	table["\x1b[24@"] = Key{Sym: KeyF12, Mod: ModShift | ModCtrl}
-	table["\x1b[25@"] = Key{Sym: KeyF13, Mod: ModShift | ModCtrl}
-	table["\x1b[26@"] = Key{Sym: KeyF14, Mod: ModShift | ModCtrl}
-	table["\x1b[28@"] = Key{Sym: KeyF15, Mod: ModShift | ModCtrl}
-	table["\x1b[29@"] = Key{Sym: KeyF16, Mod: ModShift | ModCtrl}
-	table["\x1b[31@"] = Key{Sym: KeyF17, Mod: ModShift | ModCtrl}
-	table["\x1b[32@"] = Key{Sym: KeyF18, Mod: ModShift | ModCtrl}
-	table["\x1b[33@"] = Key{Sym: KeyF19, Mod: ModShift | ModCtrl}
-	table["\x1b[34@"] = Key{Sym: KeyF20, Mod: ModShift | ModCtrl}
+	table["\x1b[23$"] = Key{Type: KeyF11, Mod: ModShift}
+	table["\x1b[24$"] = Key{Type: KeyF12, Mod: ModShift}
+	table["\x1b[25$"] = Key{Type: KeyF13, Mod: ModShift}
+	table["\x1b[26$"] = Key{Type: KeyF14, Mod: ModShift}
+	table["\x1b[28$"] = Key{Type: KeyF15, Mod: ModShift}
+	table["\x1b[29$"] = Key{Type: KeyF16, Mod: ModShift}
+	table["\x1b[31$"] = Key{Type: KeyF17, Mod: ModShift}
+	table["\x1b[32$"] = Key{Type: KeyF18, Mod: ModShift}
+	table["\x1b[33$"] = Key{Type: KeyF19, Mod: ModShift}
+	table["\x1b[34$"] = Key{Type: KeyF20, Mod: ModShift}
+	table["\x1b[11^"] = Key{Type: KeyF1, Mod: ModCtrl}
+	table["\x1b[12^"] = Key{Type: KeyF2, Mod: ModCtrl}
+	table["\x1b[13^"] = Key{Type: KeyF3, Mod: ModCtrl}
+	table["\x1b[14^"] = Key{Type: KeyF4, Mod: ModCtrl}
+	table["\x1b[15^"] = Key{Type: KeyF5, Mod: ModCtrl}
+	table["\x1b[17^"] = Key{Type: KeyF6, Mod: ModCtrl}
+	table["\x1b[18^"] = Key{Type: KeyF7, Mod: ModCtrl}
+	table["\x1b[19^"] = Key{Type: KeyF8, Mod: ModCtrl}
+	table["\x1b[20^"] = Key{Type: KeyF9, Mod: ModCtrl}
+	table["\x1b[21^"] = Key{Type: KeyF10, Mod: ModCtrl}
+	table["\x1b[23^"] = Key{Type: KeyF11, Mod: ModCtrl}
+	table["\x1b[24^"] = Key{Type: KeyF12, Mod: ModCtrl}
+	table["\x1b[25^"] = Key{Type: KeyF13, Mod: ModCtrl}
+	table["\x1b[26^"] = Key{Type: KeyF14, Mod: ModCtrl}
+	table["\x1b[28^"] = Key{Type: KeyF15, Mod: ModCtrl}
+	table["\x1b[29^"] = Key{Type: KeyF16, Mod: ModCtrl}
+	table["\x1b[31^"] = Key{Type: KeyF17, Mod: ModCtrl}
+	table["\x1b[32^"] = Key{Type: KeyF18, Mod: ModCtrl}
+	table["\x1b[33^"] = Key{Type: KeyF19, Mod: ModCtrl}
+	table["\x1b[34^"] = Key{Type: KeyF20, Mod: ModCtrl}
+	table["\x1b[23@"] = Key{Type: KeyF11, Mod: ModShift | ModCtrl}
+	table["\x1b[24@"] = Key{Type: KeyF12, Mod: ModShift | ModCtrl}
+	table["\x1b[25@"] = Key{Type: KeyF13, Mod: ModShift | ModCtrl}
+	table["\x1b[26@"] = Key{Type: KeyF14, Mod: ModShift | ModCtrl}
+	table["\x1b[28@"] = Key{Type: KeyF15, Mod: ModShift | ModCtrl}
+	table["\x1b[29@"] = Key{Type: KeyF16, Mod: ModShift | ModCtrl}
+	table["\x1b[31@"] = Key{Type: KeyF17, Mod: ModShift | ModCtrl}
+	table["\x1b[32@"] = Key{Type: KeyF18, Mod: ModShift | ModCtrl}
+	table["\x1b[33@"] = Key{Type: KeyF19, Mod: ModShift | ModCtrl}
+	table["\x1b[34@"] = Key{Type: KeyF20, Mod: ModShift | ModCtrl}
 
 	// Register Alt + <key> combinations
 	// XXX: this must come after URxvt but before XTerm keys to register URxvt
@@ -312,34 +312,34 @@ func buildKeysTable(flags int, term string) map[string]Key {
 		// These are defined in XTerm
 		// Taken from Foot keymap.h and XTerm modifyOtherKeys
 		// https://codeberg.org/dnkl/foot/src/branch/master/keymap.h
-		"M": {Sym: KeyKpEnter}, "X": {Sym: KeyKpEqual},
-		"j": {Sym: KeyKpMultiply}, "k": {Sym: KeyKpPlus},
-		"l": {Sym: KeyKpComma}, "m": {Sym: KeyKpMinus},
-		"n": {Sym: KeyKpDecimal}, "o": {Sym: KeyKpDivide},
-		"p": {Sym: KeyKp0}, "q": {Sym: KeyKp1},
-		"r": {Sym: KeyKp2}, "s": {Sym: KeyKp3},
-		"t": {Sym: KeyKp4}, "u": {Sym: KeyKp5},
-		"v": {Sym: KeyKp6}, "w": {Sym: KeyKp7},
-		"x": {Sym: KeyKp8}, "y": {Sym: KeyKp9},
+		"M": {Type: KeyKpEnter}, "X": {Type: KeyKpEqual},
+		"j": {Type: KeyKpMultiply}, "k": {Type: KeyKpPlus},
+		"l": {Type: KeyKpComma}, "m": {Type: KeyKpMinus},
+		"n": {Type: KeyKpDecimal}, "o": {Type: KeyKpDivide},
+		"p": {Type: KeyKp0}, "q": {Type: KeyKp1},
+		"r": {Type: KeyKp2}, "s": {Type: KeyKp3},
+		"t": {Type: KeyKp4}, "u": {Type: KeyKp5},
+		"v": {Type: KeyKp6}, "w": {Type: KeyKp7},
+		"x": {Type: KeyKp8}, "y": {Type: KeyKp9},
 	}
 
 	// XTerm keys
 	csiFuncKeys := map[string]Key{
-		"A": {Sym: KeyUp}, "B": {Sym: KeyDown},
-		"C": {Sym: KeyRight}, "D": {Sym: KeyLeft},
-		"E": {Sym: KeyBegin}, "F": {Sym: KeyEnd},
-		"H": {Sym: KeyHome}, "P": {Sym: KeyF1},
-		"Q": {Sym: KeyF2}, "R": {Sym: KeyF3},
-		"S": {Sym: KeyF4},
+		"A": {Type: KeyUp}, "B": {Type: KeyDown},
+		"C": {Type: KeyRight}, "D": {Type: KeyLeft},
+		"E": {Type: KeyBegin}, "F": {Type: KeyEnd},
+		"H": {Type: KeyHome}, "P": {Type: KeyF1},
+		"Q": {Type: KeyF2}, "R": {Type: KeyF3},
+		"S": {Type: KeyF4},
 	}
 
 	// CSI 27 ; <modifier> ; <code> ~ keys defined in XTerm modifyOtherKeys
 	modifyOtherKeys := map[int]Key{
-		ansi.BS:  {Sym: KeyBackspace},
-		ansi.HT:  {Sym: KeyTab},
-		ansi.CR:  {Sym: KeyEnter},
-		ansi.ESC: {Sym: KeyEscape},
-		ansi.DEL: {Sym: KeyBackspace},
+		ansi.BS:  {Type: KeyBackspace},
+		ansi.HT:  {Type: KeyTab},
+		ansi.CR:  {Type: KeyEnter},
+		ansi.ESC: {Type: KeyEscape},
+		ansi.DEL: {Type: KeyBackspace},
 	}
 
 	for _, m := range modifiers {

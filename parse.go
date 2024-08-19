@@ -109,7 +109,7 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 	case ansi.ESC:
 		if len(buf) == 1 {
 			// Escape key
-			return 1, KeyPressMsg{Sym: KeyEscape}
+			return 1, KeyPressMsg{Type: KeyEscape}
 		}
 
 		switch b := buf[1]; b {
@@ -125,14 +125,14 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 			return parseApc(buf)
 		default:
 			n, e := parseSequence(buf[1:])
-			if k, ok := e.(KeyPressMsg); ok && !k.Mod.HasAlt() {
+			if k, ok := e.(KeyPressMsg); ok {
 				k.Mod |= ModAlt
 				return n + 1, k
 			}
 
 			// Not a key sequence, nor an alt modified key sequence. In that
 			// case, just report a single escape key.
-			return 1, KeyPressMsg{Sym: KeyEscape}
+			return 1, KeyPressMsg{Type: KeyEscape}
 		}
 	case ansi.SS3:
 		return parseSs3(buf)
@@ -239,7 +239,7 @@ func parseCsi(b []byte) (int, Msg) {
 	switch cmd := csi.Cmd; cmd {
 	case 'y' | '?'<<parser.MarkerShift | '$'<<parser.IntermedShift:
 		// Report Mode (DECRPM)
-		if paramsLen == 2 {
+		if paramsLen == 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
 			return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
 		}
 	case 'c' | '?'<<parser.MarkerShift:
@@ -253,7 +253,7 @@ func parseCsi(b []byte) (int, Msg) {
 	case 'R' | '?'<<parser.MarkerShift:
 		// This report may return a third parameter representing the page
 		// number, but we don't really need it.
-		if paramsLen >= 2 {
+		if paramsLen >= 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
 			return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
 		}
 	case 'm' | '<'<<parser.MarkerShift, 'M' | '<'<<parser.MarkerShift:
@@ -263,7 +263,7 @@ func parseCsi(b []byte) (int, Msg) {
 		}
 	case 'm' | '>'<<parser.MarkerShift:
 		// XTerm modifyOtherKeys
-		if paramsLen == 2 && csi.Param(0) == 4 {
+		if paramsLen == 2 && csi.Param(0) == 4 && csi.Param(1) != -1 {
 			return i, ModifyOtherKeysMsg(csi.Param(1))
 		}
 	case 'I':
@@ -272,7 +272,7 @@ func parseCsi(b []byte) (int, Msg) {
 		return i, BlurMsg{}
 	case 'R':
 		// Cursor position report OR modified F3
-		if paramsLen == 2 {
+		if paramsLen == 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
 			m := CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
 			if csi.Param(0) == 1 && csi.Param(1)-1 <= int(ModMeta|ModShift|ModAlt|ModCtrl) {
 				// XXX: We cannot differentiate between cursor position report and
@@ -281,7 +281,7 @@ func parseCsi(b []byte) (int, Msg) {
 				//
 				// For a non ambiguous cursor position report, use
 				// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
-				return i, multiMsg{KeyPressMsg{Sym: KeyF3, Mod: KeyMod(csi.Param(1) - 1)}, m}
+				return i, multiMsg{KeyPressMsg{Type: KeyF3, Mod: KeyMod(csi.Param(1) - 1)}, m}
 			}
 
 			return i, m
@@ -297,25 +297,23 @@ func parseCsi(b []byte) (int, Msg) {
 		var k KeyPressMsg
 		switch cmd {
 		case 'a', 'b', 'c', 'd':
-			k = KeyPressMsg{Sym: KeyUp + KeySym(cmd-'a'), Mod: ModShift}
+			k = KeyPressMsg{Type: KeyUp + KeyType(cmd-'a'), Mod: ModShift}
 		case 'A', 'B', 'C', 'D':
-			k = KeyPressMsg{Sym: KeyUp + KeySym(cmd-'A')}
+			k = KeyPressMsg{Type: KeyUp + KeyType(cmd-'A')}
 		case 'E':
-			k = KeyPressMsg{Sym: KeyBegin}
+			k = KeyPressMsg{Type: KeyBegin}
 		case 'F':
-			k = KeyPressMsg{Sym: KeyEnd}
+			k = KeyPressMsg{Type: KeyEnd}
 		case 'H':
-			k = KeyPressMsg{Sym: KeyHome}
+			k = KeyPressMsg{Type: KeyHome}
 		case 'P', 'Q', 'R', 'S':
-			k = KeyPressMsg{Sym: KeyF1 + KeySym(cmd-'P')}
+			k = KeyPressMsg{Type: KeyF1 + KeyType(cmd-'P')}
 		case 'Z':
-			k = KeyPressMsg{Sym: KeyTab, Mod: ModShift}
+			k = KeyPressMsg{Type: KeyTab, Mod: ModShift}
 		}
-		if paramsLen > 1 && csi.Param(0) == 1 {
+		if paramsLen > 1 && csi.Param(0) == 1 && csi.Param(1) != -1 {
 			// CSI 1 ; <modifiers> A
-			if paramsLen > 1 {
-				k.Mod |= KeyMod(csi.Param(1) - 1)
-			}
+			k.Mod |= KeyMod(csi.Param(1) - 1)
 		}
 		return i, k
 	case 'M':
@@ -326,7 +324,7 @@ func parseCsi(b []byte) (int, Msg) {
 		return i + 3, parseX10MouseEvent(append(b[:i], b[i:i+3]...))
 	case 'y':
 		// Report Mode (DECRPM)
-		if paramsLen != 2 {
+		if paramsLen != 2 && csi.Param(0) != -1 && csi.Param(0) != -1 {
 			return i, UnknownMsg(b[:i])
 		}
 		return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
@@ -395,42 +393,42 @@ func parseCsi(b []byte) (int, Msg) {
 			switch param {
 			case 1:
 				if flags&_FlagFind != 0 {
-					k = KeyPressMsg{Sym: KeyFind}
+					k = KeyPressMsg{Type: KeyFind}
 				} else {
-					k = KeyPressMsg{Sym: KeyHome}
+					k = KeyPressMsg{Type: KeyHome}
 				}
 			case 2:
-				k = KeyPressMsg{Sym: KeyInsert}
+				k = KeyPressMsg{Type: KeyInsert}
 			case 3:
-				k = KeyPressMsg{Sym: KeyDelete}
+				k = KeyPressMsg{Type: KeyDelete}
 			case 4:
 				if flags&_FlagSelect != 0 {
-					k = KeyPressMsg{Sym: KeySelect}
+					k = KeyPressMsg{Type: KeySelect}
 				} else {
-					k = KeyPressMsg{Sym: KeyEnd}
+					k = KeyPressMsg{Type: KeyEnd}
 				}
 			case 5:
-				k = KeyPressMsg{Sym: KeyPgUp}
+				k = KeyPressMsg{Type: KeyPgUp}
 			case 6:
-				k = KeyPressMsg{Sym: KeyPgDown}
+				k = KeyPressMsg{Type: KeyPgDown}
 			case 7:
-				k = KeyPressMsg{Sym: KeyHome}
+				k = KeyPressMsg{Type: KeyHome}
 			case 8:
-				k = KeyPressMsg{Sym: KeyEnd}
+				k = KeyPressMsg{Type: KeyEnd}
 			case 11, 12, 13, 14, 15:
-				k = KeyPressMsg{Sym: KeyF1 + KeySym(param-11)}
+				k = KeyPressMsg{Type: KeyF1 + KeyType(param-11)}
 			case 17, 18, 19, 20, 21:
-				k = KeyPressMsg{Sym: KeyF6 + KeySym(param-17)}
+				k = KeyPressMsg{Type: KeyF6 + KeyType(param-17)}
 			case 23, 24, 25, 26:
-				k = KeyPressMsg{Sym: KeyF11 + KeySym(param-23)}
+				k = KeyPressMsg{Type: KeyF11 + KeyType(param-23)}
 			case 28, 29:
-				k = KeyPressMsg{Sym: KeyF15 + KeySym(param-28)}
+				k = KeyPressMsg{Type: KeyF15 + KeyType(param-28)}
 			case 31, 32, 33, 34:
-				k = KeyPressMsg{Sym: KeyF17 + KeySym(param-31)}
+				k = KeyPressMsg{Type: KeyF17 + KeyType(param-31)}
 			}
 
 			// modifiers
-			if paramsLen > 1 {
+			if paramsLen > 1 && csi.Param(1) != -1 {
 				k.Mod |= KeyMod(csi.Param(1) - 1)
 			}
 
@@ -485,23 +483,23 @@ func parseSs3(b []byte) (int, Msg) {
 	var k KeyPressMsg
 	switch gl {
 	case 'a', 'b', 'c', 'd':
-		k = KeyPressMsg{Sym: KeyUp + KeySym(gl-'a'), Mod: ModCtrl}
+		k = KeyPressMsg{Type: KeyUp + KeyType(gl-'a'), Mod: ModCtrl}
 	case 'A', 'B', 'C', 'D':
-		k = KeyPressMsg{Sym: KeyUp + KeySym(gl-'A')}
+		k = KeyPressMsg{Type: KeyUp + KeyType(gl-'A')}
 	case 'E':
-		k = KeyPressMsg{Sym: KeyBegin}
+		k = KeyPressMsg{Type: KeyBegin}
 	case 'F':
-		k = KeyPressMsg{Sym: KeyEnd}
+		k = KeyPressMsg{Type: KeyEnd}
 	case 'H':
-		k = KeyPressMsg{Sym: KeyHome}
+		k = KeyPressMsg{Type: KeyHome}
 	case 'P', 'Q', 'R', 'S':
-		k = KeyPressMsg{Sym: KeyF1 + KeySym(gl-'P')}
+		k = KeyPressMsg{Type: KeyF1 + KeyType(gl-'P')}
 	case 'M':
-		k = KeyPressMsg{Sym: KeyKpEnter}
+		k = KeyPressMsg{Type: KeyKpEnter}
 	case 'X':
-		k = KeyPressMsg{Sym: KeyKpEqual}
+		k = KeyPressMsg{Type: KeyKpEqual}
 	case 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y':
-		k = KeyPressMsg{Sym: KeyKpMultiply + KeySym(gl-'j')}
+		k = KeyPressMsg{Type: KeyKpMultiply + KeyType(gl-'j')}
 	default:
 		return i, UnknownMsg(b[:i])
 	}
@@ -715,24 +713,24 @@ func parseDcs(b []byte) (int, Msg) {
 	}
 
 	dcs.Params = params[:paramsLen]
-	switch cmd := dcs.Command(); cmd {
-	case 'r':
-		switch dcs.Intermediate() {
-		case '+':
-			// XTGETTCAP responses
-			switch param := dcs.Param(0); param {
-			case 0, 1:
-				tc := parseTermcap(b[start:end])
-				// XXX: some terminals like KiTTY report invalid responses with
-				// their queries i.e. sending a query for "Tc" using "\x1bP+q5463\x1b\\"
-				// returns "\x1bP0+r5463\x1b\\".
-				// The specs says that invalid responses should be in the form of
-				// DCS 0 + r ST "\x1bP0+r\x1b\\"
-				//
-				// See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
-				return i, tc
-			}
+	switch cmd := dcs.Cmd; cmd {
+	case 'r' | '+'<<parser.IntermedShift:
+		// XTGETTCAP responses
+		switch param := dcs.Param(0); param {
+		case 0, 1:
+			tc := parseTermcap(b[start:end])
+			// XXX: some terminals like KiTTY report invalid responses with
+			// their queries i.e. sending a query for "Tc" using "\x1bP+q5463\x1b\\"
+			// returns "\x1bP0+r5463\x1b\\".
+			// The specs says that invalid responses should be in the form of
+			// DCS 0 + r ST "\x1bP0+r\x1b\\"
+			//
+			// See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
+			return i, tc
 		}
+	case '|' | '>'<<parser.MarkerShift:
+		// XTVersion response
+		return i, TerminalVersionMsg(b[start:end])
 	}
 
 	return i, UnknownMsg(b[:i])
@@ -776,31 +774,31 @@ func parseControl(b byte) Msg {
 		if flags&_FlagCtrlAt != 0 {
 			return KeyPressMsg{Runes: []rune{'@'}, Mod: ModCtrl}
 		}
-		return KeyPressMsg{Runes: []rune{' '}, Sym: KeySpace, Mod: ModCtrl}
+		return KeyPressMsg{Runes: []rune{' '}, Type: KeySpace, Mod: ModCtrl}
 	case ansi.BS:
 		return KeyPressMsg{Runes: []rune{'h'}, Mod: ModCtrl}
 	case ansi.HT:
 		if flags&_FlagCtrlI != 0 {
 			return KeyPressMsg{Runes: []rune{'i'}, Mod: ModCtrl}
 		}
-		return KeyPressMsg{Sym: KeyTab}
+		return KeyPressMsg{Type: KeyTab}
 	case ansi.CR:
 		if flags&_FlagCtrlM != 0 {
 			return KeyPressMsg{Runes: []rune{'m'}, Mod: ModCtrl}
 		}
-		return KeyPressMsg{Sym: KeyEnter}
+		return KeyPressMsg{Type: KeyEnter}
 	case ansi.ESC:
 		if flags&_FlagCtrlOpenBracket != 0 {
 			return KeyPressMsg{Runes: []rune{'['}, Mod: ModCtrl}
 		}
-		return KeyPressMsg{Sym: KeyEscape}
+		return KeyPressMsg{Type: KeyEscape}
 	case ansi.DEL:
 		if flags&_FlagBackspace != 0 {
-			return KeyPressMsg{Sym: KeyDelete}
+			return KeyPressMsg{Type: KeyDelete}
 		}
-		return KeyPressMsg{Sym: KeyBackspace}
+		return KeyPressMsg{Type: KeyBackspace}
 	case ansi.SP:
-		return KeyPressMsg{Sym: KeySpace, Runes: []rune{' '}}
+		return KeyPressMsg{Type: KeySpace, Runes: []rune{' '}}
 	default:
 		if b >= ansi.SOH && b <= ansi.SUB {
 			// Use lower case letters for control codes

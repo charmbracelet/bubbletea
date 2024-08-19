@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"image/color"
 	"testing"
 )
 
@@ -55,6 +56,21 @@ func TestClearMsg(t *testing.T) {
 			name:     "bp_stop_start",
 			cmds:     []Cmd{DisableBracketedPaste, EnableBracketedPaste},
 			expected: "\x1b[?25l\x1b[?2004h\x1b[?2004l\x1b[?2004h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "bg_fg_cur_color",
+			cmds:     []Cmd{ForegroundColor, BackgroundColor, CursorColor},
+			expected: "\x1b[?25l\x1b[?2004h\x1b]10;?\a\x1b]11;?\a\x1b]12;?\a\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "bg_set_color",
+			cmds:     []Cmd{SetBackgroundColor(color.RGBA{255, 255, 255, 255})},
+			expected: "\x1b[?25l\x1b[?2004h\x1b]11;#ffffff\a\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+		},
+		{
+			name:     "kitty_start",
+			cmds:     []Cmd{DisableKittyKeyboard, EnableKittyKeyboard(3)},
+			expected: "\x1b[?25l\x1b[?2004h\x1b[>u\x1b[>3u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[>0u",
 		},
 	}
 

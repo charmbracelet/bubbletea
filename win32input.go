@@ -15,22 +15,22 @@ func parseWin32InputKeyEvent(vkc coninput.VirtualKeyCode, _ coninput.VirtualKeyC
 		return nil
 	case coninput.VK_MENU:
 		if cks.Contains(coninput.LEFT_ALT_PRESSED) {
-			key = Key{Sym: KeyLeftAlt}
+			key = Key{Type: KeyLeftAlt}
 		} else if cks.Contains(coninput.RIGHT_ALT_PRESSED) {
-			key = Key{Sym: KeyRightAlt}
+			key = Key{Type: KeyRightAlt}
 		} else if !keyDown {
 			return nil
 		}
 	case coninput.VK_CONTROL:
 		if cks.Contains(coninput.LEFT_CTRL_PRESSED) {
-			key = Key{Sym: KeyLeftCtrl}
+			key = Key{Type: KeyLeftCtrl}
 		} else if cks.Contains(coninput.RIGHT_CTRL_PRESSED) {
-			key = Key{Sym: KeyRightCtrl}
+			key = Key{Type: KeyRightCtrl}
 		} else if !keyDown {
 			return nil
 		}
 	case coninput.VK_CAPITAL:
-		key = Key{Sym: KeyCapsLock}
+		key = Key{Type: KeyCapsLock}
 	default:
 		var ok bool
 		key, ok = vkKeyEvent[vkc]
@@ -88,74 +88,74 @@ func parseWin32InputKeyEvent(vkc coninput.VirtualKeyCode, _ coninput.VirtualKeyC
 }
 
 var vkKeyEvent = map[coninput.VirtualKeyCode]Key{
-	coninput.VK_RETURN:    {Sym: KeyEnter},
-	coninput.VK_BACK:      {Sym: KeyBackspace},
-	coninput.VK_TAB:       {Sym: KeyTab},
-	coninput.VK_ESCAPE:    {Sym: KeyEscape},
-	coninput.VK_SPACE:     {Sym: KeySpace, Runes: []rune{' '}},
-	coninput.VK_UP:        {Sym: KeyUp},
-	coninput.VK_DOWN:      {Sym: KeyDown},
-	coninput.VK_RIGHT:     {Sym: KeyRight},
-	coninput.VK_LEFT:      {Sym: KeyLeft},
-	coninput.VK_HOME:      {Sym: KeyHome},
-	coninput.VK_END:       {Sym: KeyEnd},
-	coninput.VK_PRIOR:     {Sym: KeyPgUp},
-	coninput.VK_NEXT:      {Sym: KeyPgDown},
-	coninput.VK_DELETE:    {Sym: KeyDelete},
-	coninput.VK_SELECT:    {Sym: KeySelect},
-	coninput.VK_SNAPSHOT:  {Sym: KeyPrintScreen},
-	coninput.VK_INSERT:    {Sym: KeyInsert},
-	coninput.VK_LWIN:      {Sym: KeyLeftSuper},
-	coninput.VK_RWIN:      {Sym: KeyRightSuper},
-	coninput.VK_APPS:      {Sym: KeyMenu},
-	coninput.VK_NUMPAD0:   {Sym: KeyKp0},
-	coninput.VK_NUMPAD1:   {Sym: KeyKp1},
-	coninput.VK_NUMPAD2:   {Sym: KeyKp2},
-	coninput.VK_NUMPAD3:   {Sym: KeyKp3},
-	coninput.VK_NUMPAD4:   {Sym: KeyKp4},
-	coninput.VK_NUMPAD5:   {Sym: KeyKp5},
-	coninput.VK_NUMPAD6:   {Sym: KeyKp6},
-	coninput.VK_NUMPAD7:   {Sym: KeyKp7},
-	coninput.VK_NUMPAD8:   {Sym: KeyKp8},
-	coninput.VK_NUMPAD9:   {Sym: KeyKp9},
-	coninput.VK_MULTIPLY:  {Sym: KeyKpMultiply},
-	coninput.VK_ADD:       {Sym: KeyKpPlus},
-	coninput.VK_SEPARATOR: {Sym: KeyKpComma},
-	coninput.VK_SUBTRACT:  {Sym: KeyKpMinus},
-	coninput.VK_DECIMAL:   {Sym: KeyKpDecimal},
-	coninput.VK_DIVIDE:    {Sym: KeyKpDivide},
-	coninput.VK_F1:        {Sym: KeyF1},
-	coninput.VK_F2:        {Sym: KeyF2},
-	coninput.VK_F3:        {Sym: KeyF3},
-	coninput.VK_F4:        {Sym: KeyF4},
-	coninput.VK_F5:        {Sym: KeyF5},
-	coninput.VK_F6:        {Sym: KeyF6},
-	coninput.VK_F7:        {Sym: KeyF7},
-	coninput.VK_F8:        {Sym: KeyF8},
-	coninput.VK_F9:        {Sym: KeyF9},
-	coninput.VK_F10:       {Sym: KeyF10},
-	coninput.VK_F11:       {Sym: KeyF11},
-	coninput.VK_F12:       {Sym: KeyF12},
-	coninput.VK_F13:       {Sym: KeyF13},
-	coninput.VK_F14:       {Sym: KeyF14},
-	coninput.VK_F15:       {Sym: KeyF15},
-	coninput.VK_F16:       {Sym: KeyF16},
-	coninput.VK_F17:       {Sym: KeyF17},
-	coninput.VK_F18:       {Sym: KeyF18},
-	coninput.VK_F19:       {Sym: KeyF19},
-	coninput.VK_F20:       {Sym: KeyF20},
-	coninput.VK_F21:       {Sym: KeyF21},
-	coninput.VK_F22:       {Sym: KeyF22},
-	coninput.VK_F23:       {Sym: KeyF23},
-	coninput.VK_F24:       {Sym: KeyF24},
-	coninput.VK_NUMLOCK:   {Sym: KeyNumLock},
-	coninput.VK_SCROLL:    {Sym: KeyScrollLock},
-	coninput.VK_LSHIFT:    {Sym: KeyLeftShift},
-	coninput.VK_RSHIFT:    {Sym: KeyRightShift},
-	coninput.VK_LCONTROL:  {Sym: KeyLeftCtrl},
-	coninput.VK_RCONTROL:  {Sym: KeyRightCtrl},
-	coninput.VK_LMENU:     {Sym: KeyLeftAlt},
-	coninput.VK_RMENU:     {Sym: KeyRightAlt},
+	coninput.VK_RETURN:    {Type: KeyEnter},
+	coninput.VK_BACK:      {Type: KeyBackspace},
+	coninput.VK_TAB:       {Type: KeyTab},
+	coninput.VK_ESCAPE:    {Type: KeyEscape},
+	coninput.VK_SPACE:     {Type: KeySpace, Runes: []rune{' '}},
+	coninput.VK_UP:        {Type: KeyUp},
+	coninput.VK_DOWN:      {Type: KeyDown},
+	coninput.VK_RIGHT:     {Type: KeyRight},
+	coninput.VK_LEFT:      {Type: KeyLeft},
+	coninput.VK_HOME:      {Type: KeyHome},
+	coninput.VK_END:       {Type: KeyEnd},
+	coninput.VK_PRIOR:     {Type: KeyPgUp},
+	coninput.VK_NEXT:      {Type: KeyPgDown},
+	coninput.VK_DELETE:    {Type: KeyDelete},
+	coninput.VK_SELECT:    {Type: KeySelect},
+	coninput.VK_SNAPSHOT:  {Type: KeyPrintScreen},
+	coninput.VK_INSERT:    {Type: KeyInsert},
+	coninput.VK_LWIN:      {Type: KeyLeftSuper},
+	coninput.VK_RWIN:      {Type: KeyRightSuper},
+	coninput.VK_APPS:      {Type: KeyMenu},
+	coninput.VK_NUMPAD0:   {Type: KeyKp0},
+	coninput.VK_NUMPAD1:   {Type: KeyKp1},
+	coninput.VK_NUMPAD2:   {Type: KeyKp2},
+	coninput.VK_NUMPAD3:   {Type: KeyKp3},
+	coninput.VK_NUMPAD4:   {Type: KeyKp4},
+	coninput.VK_NUMPAD5:   {Type: KeyKp5},
+	coninput.VK_NUMPAD6:   {Type: KeyKp6},
+	coninput.VK_NUMPAD7:   {Type: KeyKp7},
+	coninput.VK_NUMPAD8:   {Type: KeyKp8},
+	coninput.VK_NUMPAD9:   {Type: KeyKp9},
+	coninput.VK_MULTIPLY:  {Type: KeyKpMultiply},
+	coninput.VK_ADD:       {Type: KeyKpPlus},
+	coninput.VK_SEPARATOR: {Type: KeyKpComma},
+	coninput.VK_SUBTRACT:  {Type: KeyKpMinus},
+	coninput.VK_DECIMAL:   {Type: KeyKpDecimal},
+	coninput.VK_DIVIDE:    {Type: KeyKpDivide},
+	coninput.VK_F1:        {Type: KeyF1},
+	coninput.VK_F2:        {Type: KeyF2},
+	coninput.VK_F3:        {Type: KeyF3},
+	coninput.VK_F4:        {Type: KeyF4},
+	coninput.VK_F5:        {Type: KeyF5},
+	coninput.VK_F6:        {Type: KeyF6},
+	coninput.VK_F7:        {Type: KeyF7},
+	coninput.VK_F8:        {Type: KeyF8},
+	coninput.VK_F9:        {Type: KeyF9},
+	coninput.VK_F10:       {Type: KeyF10},
+	coninput.VK_F11:       {Type: KeyF11},
+	coninput.VK_F12:       {Type: KeyF12},
+	coninput.VK_F13:       {Type: KeyF13},
+	coninput.VK_F14:       {Type: KeyF14},
+	coninput.VK_F15:       {Type: KeyF15},
+	coninput.VK_F16:       {Type: KeyF16},
+	coninput.VK_F17:       {Type: KeyF17},
+	coninput.VK_F18:       {Type: KeyF18},
+	coninput.VK_F19:       {Type: KeyF19},
+	coninput.VK_F20:       {Type: KeyF20},
+	coninput.VK_F21:       {Type: KeyF21},
+	coninput.VK_F22:       {Type: KeyF22},
+	coninput.VK_F23:       {Type: KeyF23},
+	coninput.VK_F24:       {Type: KeyF24},
+	coninput.VK_NUMLOCK:   {Type: KeyNumLock},
+	coninput.VK_SCROLL:    {Type: KeyScrollLock},
+	coninput.VK_LSHIFT:    {Type: KeyLeftShift},
+	coninput.VK_RSHIFT:    {Type: KeyRightShift},
+	coninput.VK_LCONTROL:  {Type: KeyLeftCtrl},
+	coninput.VK_RCONTROL:  {Type: KeyRightCtrl},
+	coninput.VK_LMENU:     {Type: KeyLeftAlt},
+	coninput.VK_RMENU:     {Type: KeyRightAlt},
 	coninput.VK_OEM_4:     {Runes: []rune{'['}},
 	// TODO: add more keys
 }

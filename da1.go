@@ -6,6 +6,17 @@ import "github.com/charmbracelet/x/ansi"
 // device attributes.
 type PrimaryDeviceAttributesMsg []uint
 
+// primaryDeviceAttrsMsg is an internal message that queries the terminal for
+// its primary device attributes (DA1).
+type primaryDeviceAttrsMsg struct{}
+
+// PrimaryDeviceAttributes is a command that queries the terminal for its
+// primary device attributes (DA1). This command is used to determine some of
+// the terminal capabilities.
+func PrimaryDeviceAttributes() Msg {
+	return primaryDeviceAttrsMsg{}
+}
+
 func parsePrimaryDevAttrs(csi *ansi.CsiSequence) Msg {
 	// Primary Device Attributes
 	da1 := make(PrimaryDeviceAttributesMsg, len(csi.Params))
