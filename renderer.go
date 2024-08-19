@@ -1,43 +1,46 @@
 package tea
 
-// renderer is the interface for Bubble Tea renderers.
-type renderer interface {
-	// Start the renderer.
-	start()
-
-	// Stop the renderer, but render the final frame in the buffer, if any.
-	stop()
-
-	// Stop the renderer without doing any final rendering.
-	kill()
+// Renderer is the interface for Bubble Tea renderers.
+type Renderer interface {
+	// Close closes the renderer and flushes any remaining data.
+	Close() error
 
 	// Write a frame to the renderer. The renderer can write this data to
 	// output at its discretion.
-	write(string)
+	Write([]byte) (int, error)
+
+	// WriteString a frame to the renderer. The renderer can WriteString this
+	// data to output at its discretion.
+	WriteString(string) (int, error)
+
+	// Flush flushes the renderer's buffer to the output.
+	Flush() error
 
 	// Request a full re-render. Note that this will not trigger a render
 	// immediately. Rather, this method causes the next render to be a full
-	// repaint. Because of this, it's safe to call this method multiple times
+	// Repaint. Because of this, it's safe to call this method multiple times
 	// in succession.
-	repaint()
+	Repaint()
 
-	// Clears the terminal.
-	clearScreen()
+	// ClearScreen clear the terminal screen.
+	ClearScreen()
 
 	// Whether or not the alternate screen buffer is enabled.
-	altScreen() bool
+	AltScreen() bool
 	// Enable the alternate screen buffer.
-	enterAltScreen()
+	EnterAltScreen()
 	// Disable the alternate screen buffer.
-	exitAltScreen()
+	ExitAltScreen()
 
+	// CursorVisibility returns whether the cursor is visible.
+	CursorVisibility() bool
 	// Show the cursor.
-	showCursor()
+	ShowCursor()
 	// Hide the cursor.
-	hideCursor()
+	HideCursor()
 
-	// execute writes a sequence to the terminal.
-	execute(string)
+	// Execute writes a sequence to the underlying output.
+	Execute(string)
 }
 
 // repaintMsg forces a full repaint.

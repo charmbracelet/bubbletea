@@ -168,7 +168,7 @@ func DisabledReportFocus() Msg { return disableReportFocusMsg{} }
 // Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
-		p.renderer.enterAltScreen()
+		p.renderer.EnterAltScreen()
 	} else {
 		p.startupOptions |= withAltScreen
 	}
@@ -179,7 +179,7 @@ func (p *Program) EnterAltScreen() {
 // Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
-		p.renderer.exitAltScreen()
+		p.renderer.ExitAltScreen()
 	} else {
 		p.startupOptions &^= withAltScreen
 	}
@@ -191,7 +191,7 @@ func (p *Program) ExitAltScreen() {
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
 	if p.renderer != nil {
-		p.renderer.execute(ansi.EnableMouseCellMotion)
+		p.renderer.Execute(ansi.EnableMouseCellMotion)
 	} else {
 		p.startupOptions |= withMouseCellMotion
 	}
@@ -203,7 +203,7 @@ func (p *Program) EnableMouseCellMotion() {
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
 	if p.renderer != nil {
-		p.renderer.execute(ansi.DisableMouseCellMotion)
+		p.renderer.Execute(ansi.DisableMouseCellMotion)
 	} else {
 		p.startupOptions &^= withMouseCellMotion
 	}
@@ -216,7 +216,7 @@ func (p *Program) DisableMouseCellMotion() {
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
 	if p.renderer != nil {
-		p.renderer.execute(ansi.EnableMouseAllMotion)
+		p.renderer.Execute(ansi.EnableMouseAllMotion)
 	} else {
 		p.startupOptions |= withMouseAllMotion
 	}
@@ -228,7 +228,7 @@ func (p *Program) EnableMouseAllMotion() {
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
 	if p.renderer != nil {
-		p.renderer.execute(ansi.DisableMouseAllMotion)
+		p.renderer.Execute(ansi.DisableMouseAllMotion)
 	} else {
 		p.startupOptions &^= withMouseAllMotion
 	}
@@ -239,7 +239,7 @@ func (p *Program) DisableMouseAllMotion() {
 // Deprecated: Use the SetWindowTitle command instead.
 func (p *Program) SetWindowTitle(title string) {
 	if p.renderer != nil {
-		p.renderer.execute(ansi.SetWindowTitle(title))
+		p.renderer.Execute(ansi.SetWindowTitle(title))
 	} else {
 		p.startupTitle = title
 	}

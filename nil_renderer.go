@@ -2,15 +2,18 @@ package tea
 
 type nilRenderer struct{}
 
-func (nilRenderer) start()          {}
-func (nilRenderer) stop()           {}
-func (nilRenderer) kill()           {}
-func (nilRenderer) write(string)    {}
-func (nilRenderer) repaint()        {}
-func (nilRenderer) clearScreen()    {}
-func (nilRenderer) altScreen() bool { return false }
-func (nilRenderer) enterAltScreen() {}
-func (nilRenderer) exitAltScreen()  {}
-func (nilRenderer) showCursor()     {}
-func (nilRenderer) hideCursor()     {}
-func (nilRenderer) execute(string)  {}
+var _ Renderer = nilRenderer{}
+
+func (nilRenderer) Flush() error                    { return nil }
+func (nilRenderer) Close() error                    { return nil }
+func (nilRenderer) Write([]byte) (int, error)       { return 0, nil }
+func (nilRenderer) WriteString(string) (int, error) { return 0, nil }
+func (nilRenderer) Repaint()                        {}
+func (nilRenderer) ClearScreen()                    {}
+func (nilRenderer) AltScreen() bool                 { return false }
+func (nilRenderer) EnterAltScreen()                 {}
+func (nilRenderer) ExitAltScreen()                  {}
+func (nilRenderer) CursorVisibility() bool          { return false }
+func (nilRenderer) ShowCursor()                     {}
+func (nilRenderer) HideCursor()                     {}
+func (nilRenderer) Execute(string)                  {}

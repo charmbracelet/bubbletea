@@ -33,19 +33,19 @@ func (p *Program) initTerminal() error {
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
-		p.renderer.execute(ansi.DisableBracketedPaste)
+		p.renderer.Execute(ansi.DisableBracketedPaste)
 		p.bpActive = false
-		p.renderer.showCursor()
+		p.renderer.ShowCursor()
 		p.disableMouse()
 		if p.modifyOtherKeys != 0 {
-			p.renderer.execute(ansi.DisableModifyOtherKeys)
+			p.renderer.Execute(ansi.DisableModifyOtherKeys)
 		}
 		if p.kittyFlags != 0 {
-			p.renderer.execute(ansi.DisableKittyKeyboard)
+			p.renderer.Execute(ansi.DisableKittyKeyboard)
 		}
 
-		if p.renderer.altScreen() {
-			p.renderer.exitAltScreen()
+		if p.renderer.AltScreen() {
+			p.renderer.ExitAltScreen()
 
 			// give the terminal a moment to catch up
 			time.Sleep(time.Millisecond * 10) //nolint:gomnd

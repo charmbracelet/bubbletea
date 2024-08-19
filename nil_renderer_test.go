@@ -4,18 +4,13 @@ import "testing"
 
 func TestNilRenderer(t *testing.T) {
 	r := nilRenderer{}
-	r.start()
-	r.stop()
-	r.kill()
-	r.write("a")
-	r.repaint()
-	r.enterAltScreen()
-	if r.altScreen() {
+	r.Repaint()
+	r.EnterAltScreen()
+	if r.AltScreen() {
 		t.Errorf("altScreen should always return false")
 	}
-	r.exitAltScreen()
-	r.clearScreen()
-	r.showCursor()
-	r.hideCursor()
-	r.execute("")
+	r.ExitAltScreen()
+	r.ClearScreen()
+	r.ShowCursor()
+	r.HideCursor()
 }
