@@ -37,6 +37,9 @@ func (p *Program) restoreTerminalState() error {
 		p.bpActive = false
 		p.renderer.showCursor()
 		p.disableMouse()
+		if p.modifyOtherKeys != 0 {
+			p.renderer.execute(ansi.DisableModifyOtherKeys)
+		}
 		if p.kittyFlags != 0 {
 			p.renderer.execute(ansi.DisableKittyKeyboard)
 		}

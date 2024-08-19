@@ -113,6 +113,28 @@ func buildBaseSeqTests() []seqTest {
 func TestParseSequence(t *testing.T) {
 	td := buildBaseSeqTests()
 	td = append(td,
+		// Xterm modifyOtherKeys CSI 27 ; <modifier> ; <code> ~
+		seqTest{
+			[]byte("\x1b[27;3;20320~"),
+			[]Msg{KeyPressMsg{Runes: []rune{'你'}, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;65~"),
+			[]Msg{KeyPressMsg{Runes: []rune{'A'}, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;8~"),
+			[]Msg{KeyPressMsg{Type: KeyBackspace, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;27~"),
+			[]Msg{KeyPressMsg{Type: KeyEscape, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;127~"),
+			[]Msg{KeyPressMsg{Type: KeyBackspace, Mod: ModAlt}},
+		},
+
 		// Kitty keyboard / CSI u (fixterms)
 		seqTest{
 			[]byte("\x1b[1B"),
