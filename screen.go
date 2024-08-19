@@ -1,5 +1,7 @@
 package tea
 
+import "github.com/charmbracelet/x/ansi"
+
 // WindowSizeMsg is used to report the terminal size. It's sent to Update once
 // initially and then on every terminal resize. Note that Windows does not
 // have support for reporting when resizes occur as it does not support the
@@ -173,7 +175,7 @@ func (p *Program) ExitAltScreen() {
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
 	if p.renderer != nil {
-		p.renderer.enableMouseCellMotion()
+		p.renderer.execute(ansi.EnableMouseCellMotion)
 	} else {
 		p.startupOptions |= withMouseCellMotion
 	}
@@ -185,7 +187,7 @@ func (p *Program) EnableMouseCellMotion() {
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
 	if p.renderer != nil {
-		p.renderer.disableMouseCellMotion()
+		p.renderer.execute(ansi.DisableMouseCellMotion)
 	} else {
 		p.startupOptions &^= withMouseCellMotion
 	}
@@ -198,7 +200,7 @@ func (p *Program) DisableMouseCellMotion() {
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
 	if p.renderer != nil {
-		p.renderer.enableMouseAllMotion()
+		p.renderer.execute(ansi.EnableMouseAllMotion)
 	} else {
 		p.startupOptions |= withMouseAllMotion
 	}
@@ -210,7 +212,7 @@ func (p *Program) EnableMouseAllMotion() {
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
 	if p.renderer != nil {
-		p.renderer.disableMouseAllMotion()
+		p.renderer.execute(ansi.DisableMouseAllMotion)
 	} else {
 		p.startupOptions &^= withMouseAllMotion
 	}
@@ -221,7 +223,7 @@ func (p *Program) DisableMouseAllMotion() {
 // Deprecated: Use the SetWindowTitle command instead.
 func (p *Program) SetWindowTitle(title string) {
 	if p.renderer != nil {
-		p.renderer.setWindowTitle(title)
+		p.renderer.execute(ansi.SetWindowTitle(title))
 	} else {
 		p.startupTitle = title
 	}

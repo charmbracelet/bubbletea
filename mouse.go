@@ -1,89 +1,10 @@
 package tea
 
-import "strconv"
-
-// MouseMsg contains information about a mouse event and are sent to a programs
-// update function when mouse activity occurs. Note that the mouse must first
-// be enabled in order for the mouse events to be received.
-type MouseMsg MouseEvent
-
-// String returns a string representation of a mouse event.
-func (m MouseMsg) String() string {
-	return MouseEvent(m).String()
-}
-
-// MouseEvent represents a mouse event, which could be a click, a scroll wheel
-// movement, a cursor movement, or a combination.
-type MouseEvent struct {
-	X      int
-	Y      int
-	Shift  bool
-	Alt    bool
-	Ctrl   bool
-	Action MouseAction
-	Button MouseButton
-
-	// Deprecated: Use MouseAction & MouseButton instead.
-	Type MouseEventType
-}
-
-// IsWheel returns true if the mouse event is a wheel event.
-func (m MouseEvent) IsWheel() bool {
-	return m.Button == MouseButtonWheelUp || m.Button == MouseButtonWheelDown ||
-		m.Button == MouseButtonWheelLeft || m.Button == MouseButtonWheelRight
-}
-
-// String returns a string representation of a mouse event.
-func (m MouseEvent) String() (s string) {
-	if m.Ctrl {
-		s += "ctrl+"
-	}
-	if m.Alt {
-		s += "alt+"
-	}
-	if m.Shift {
-		s += "shift+"
-	}
-
-	if m.Button == MouseButtonNone { //nolint:nestif
-		if m.Action == MouseActionMotion || m.Action == MouseActionRelease {
-			s += mouseActions[m.Action]
-		} else {
-			s += "unknown"
-		}
-	} else if m.IsWheel() {
-		s += mouseButtons[m.Button]
-	} else {
-		btn := mouseButtons[m.Button]
-		if btn != "" {
-			s += btn
-		}
-		act := mouseActions[m.Action]
-		if act != "" {
-			s += " " + act
-		}
-	}
-
-	return s
-}
-
-// MouseAction represents the action that occurred during a mouse event.
-type MouseAction int
-
-// Mouse event actions.
-const (
-	MouseActionPress MouseAction = iota
-	MouseActionRelease
-	MouseActionMotion
+import (
+	"github.com/charmbracelet/x/ansi"
 )
 
-var mouseActions = map[MouseAction]string{
-	MouseActionPress:   "press",
-	MouseActionRelease: "release",
-	MouseActionMotion:  "motion",
-}
-
-// MouseButton represents the button that was pressed during a mouse event.
+// MouseButton represents the button that was pressed during a mouse message.
 type MouseButton int
 
 // Mouse event buttons
@@ -104,57 +25,99 @@ type MouseButton int
 //
 // Other buttons are not supported.
 const (
-	MouseButtonNone MouseButton = iota
-	MouseButtonLeft
-	MouseButtonMiddle
-	MouseButtonRight
-	MouseButtonWheelUp
-	MouseButtonWheelDown
-	MouseButtonWheelLeft
-	MouseButtonWheelRight
-	MouseButtonBackward
-	MouseButtonForward
-	MouseButton10
-	MouseButton11
-)
-
-var mouseButtons = map[MouseButton]string{
-	MouseButtonNone:       "none",
-	MouseButtonLeft:       "left",
-	MouseButtonMiddle:     "middle",
-	MouseButtonRight:      "right",
-	MouseButtonWheelUp:    "wheel up",
-	MouseButtonWheelDown:  "wheel down",
-	MouseButtonWheelLeft:  "wheel left",
-	MouseButtonWheelRight: "wheel right",
-	MouseButtonBackward:   "backward",
-	MouseButtonForward:    "forward",
-	MouseButton10:         "button 10",
-	MouseButton11:         "button 11",
-}
-
-// MouseEventType indicates the type of mouse event occurring.
-//
-// Deprecated: Use MouseAction & MouseButton instead.
-type MouseEventType int
-
-// Mouse event types.
-//
-// Deprecated: Use MouseAction & MouseButton instead.
-const (
-	MouseUnknown MouseEventType = iota
+	MouseNone MouseButton = iota
 	MouseLeft
-	MouseRight
 	MouseMiddle
-	MouseRelease // mouse button release (X10 only)
+	MouseRight
 	MouseWheelUp
 	MouseWheelDown
 	MouseWheelLeft
 	MouseWheelRight
 	MouseBackward
 	MouseForward
-	MouseMotion
+	MouseExtra1
+	MouseExtra2
 )
+
+var mouseButtons = map[MouseButton]string{
+	MouseNone:       "none",
+	MouseLeft:       "left",
+	MouseMiddle:     "middle",
+	MouseRight:      "right",
+	MouseWheelUp:    "wheelup",
+	MouseWheelDown:  "wheeldown",
+	MouseWheelLeft:  "wheelleft",
+	MouseWheelRight: "wheelright",
+	MouseBackward:   "backward",
+	MouseForward:    "forward",
+	MouseExtra1:     "button10",
+	MouseExtra2:     "button11",
+}
+
+// Mouse represents a mouse message.
+type Mouse struct {
+	X, Y   int
+	Button MouseButton
+	Mod    KeyMod
+}
+
+// String returns a string representation of the mouse message.
+func (m Mouse) String() (s string) {
+	if m.Mod.Contains(ModCtrl) {
+		s += "ctrl+"
+	}
+	if m.Mod.Contains(ModAlt) {
+		s += "alt+"
+	}
+	if m.Mod.Contains(ModShift) {
+		s += "shift+"
+	}
+
+	str, ok := mouseButtons[m.Button]
+	if !ok {
+		s += "unknown"
+	} else if str != "none" { // motion events don't have a button
+		s += str
+	}
+
+	return s
+}
+
+// MouseClickMsg represents a mouse button click message.
+type MouseClickMsg Mouse
+
+// String returns a string representation of the mouse click message.
+func (e MouseClickMsg) String() string {
+	return Mouse(e).String()
+}
+
+// MouseReleaseMsg represents a mouse button release message.
+type MouseReleaseMsg Mouse
+
+// String returns a string representation of the mouse release message.
+func (e MouseReleaseMsg) String() string {
+	return Mouse(e).String()
+}
+
+// MouseWheelMsg represents a mouse wheel message event.
+type MouseWheelMsg Mouse
+
+// String returns a string representation of the mouse wheel message.
+func (e MouseWheelMsg) String() string {
+	return Mouse(e).String()
+}
+
+// MouseMotionMsg represents a mouse motion message.
+type MouseMotionMsg Mouse
+
+// String returns a string representation of the mouse motion message.
+func (e MouseMotionMsg) String() string {
+	m := Mouse(e)
+	if m.Button != 0 {
+		return m.String() + "+motion"
+	}
+	return m.String() + "motion"
+}
 
 // Parse SGR-encoded mouse events; SGR extended mouse events. SGR mouse events
 // look like:
@@ -169,35 +132,28 @@ const (
 //	M is for button press, m is for button release
 //
 // https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates
-func parseSGRMouseEvent(buf []byte) MouseEvent {
-	str := string(buf[3:])
-	matches := mouseSGRRegex.FindStringSubmatch(str)
-	if len(matches) != 5 { //nolint:gomnd
-		// Unreachable, we already checked the regex in `detectOneMsg`.
-		panic("invalid mouse event")
-	}
+func parseSGRMouseEvent(csi *ansi.CsiSequence) Msg {
+	x := csi.Param(1)
+	y := csi.Param(2)
+	release := csi.Command() == 'm'
+	mod, btn, _, isMotion := parseMouseButton(csi.Param(0))
 
-	b, _ := strconv.Atoi(matches[1])
-	px := matches[2]
-	py := matches[3]
-	release := matches[4] == "m"
-	m := parseMouseButton(b, true)
+	// (1,1) is the upper left. We subtract 1 to normalize it to (0,0).
+	x--
+	y--
+
+	m := Mouse{X: x, Y: y, Button: btn, Mod: mod}
 
 	// Wheel buttons don't have release events
 	// Motion can be reported as a release event in some terminals (Windows Terminal)
-	if m.Action != MouseActionMotion && !m.IsWheel() && release {
-		m.Action = MouseActionRelease
-		m.Type = MouseRelease
+	if isWheel(m.Button) {
+		return MouseWheelMsg(m)
+	} else if !isMotion && release {
+		return MouseReleaseMsg(m)
+	} else if isMotion {
+		return MouseMotionMsg(m)
 	}
-
-	x, _ := strconv.Atoi(px)
-	y, _ := strconv.Atoi(py)
-
-	// (1,1) is the upper left. We subtract 1 to normalize it to (0,0).
-	m.X = x - 1
-	m.Y = y - 1
-
-	return m
+	return MouseClickMsg(m)
 }
 
 const x10MouseByteOffset = 32
@@ -211,25 +167,34 @@ const x10MouseByteOffset = 32
 //	ESC [M Cb Cx Cy
 //
 // See: http://www.xfree86.org/current/ctlseqs.html#Mouse%20Tracking
-func parseX10MouseEvent(buf []byte) MouseEvent {
+func parseX10MouseEvent(buf []byte) Msg {
 	v := buf[3:6]
-	m := parseMouseButton(int(v[0]), false)
+	b := int(v[0])
+	if b >= x10MouseByteOffset {
+		// XXX: b < 32 should be impossible, but we're being defensive.
+		b -= x10MouseByteOffset
+	}
+
+	mod, btn, isRelease, isMotion := parseMouseButton(b)
 
 	// (1,1) is the upper left. We subtract 1 to normalize it to (0,0).
-	m.X = int(v[1]) - x10MouseByteOffset - 1
-	m.Y = int(v[2]) - x10MouseByteOffset - 1
+	x := int(v[1]) - x10MouseByteOffset - 1
+	y := int(v[2]) - x10MouseByteOffset - 1
 
-	return m
+	m := Mouse{X: x, Y: y, Button: btn, Mod: mod}
+	if isWheel(m.Button) {
+		return MouseWheelMsg(m)
+	} else if isMotion {
+		return MouseMotionMsg(m)
+	} else if isRelease {
+		return MouseReleaseMsg(m)
+	}
+	return MouseClickMsg(m)
 }
 
 // See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates
-func parseMouseButton(b int, isSGR bool) MouseEvent {
-	var m MouseEvent
-	e := b
-	if !isSGR {
-		e -= x10MouseByteOffset
-	}
-
+func parseMouseButton(b int) (mod KeyMod, btn MouseButton, isRelease bool, isMotion bool) {
+	// mouse bit shifts
 	const (
 		bitShift  = 0b0000_0100
 		bitAlt    = 0b0000_1000
@@ -241,68 +206,39 @@ func parseMouseButton(b int, isSGR bool) MouseEvent {
 		bitsMask = 0b0000_0011
 	)
 
-	if e&bitAdd != 0 {
-		m.Button = MouseButtonBackward + MouseButton(e&bitsMask)
-	} else if e&bitWheel != 0 {
-		m.Button = MouseButtonWheelUp + MouseButton(e&bitsMask)
+	// Modifiers
+	if b&bitAlt != 0 {
+		mod |= ModAlt
+	}
+	if b&bitCtrl != 0 {
+		mod |= ModCtrl
+	}
+	if b&bitShift != 0 {
+		mod |= ModShift
+	}
+
+	if b&bitAdd != 0 {
+		btn = MouseBackward + MouseButton(b&bitsMask)
+	} else if b&bitWheel != 0 {
+		btn = MouseWheelUp + MouseButton(b&bitsMask)
 	} else {
-		m.Button = MouseButtonLeft + MouseButton(e&bitsMask)
+		btn = MouseLeft + MouseButton(b&bitsMask)
 		// X10 reports a button release as 0b0000_0011 (3)
-		if e&bitsMask == bitsMask {
-			m.Action = MouseActionRelease
-			m.Button = MouseButtonNone
+		if b&bitsMask == bitsMask {
+			btn = MouseNone
+			isRelease = true
 		}
 	}
 
 	// Motion bit doesn't get reported for wheel events.
-	if e&bitMotion != 0 && !m.IsWheel() {
-		m.Action = MouseActionMotion
+	if b&bitMotion != 0 && !isWheel(btn) {
+		isMotion = true
 	}
 
-	// Modifiers
-	m.Alt = e&bitAlt != 0
-	m.Ctrl = e&bitCtrl != 0
-	m.Shift = e&bitShift != 0
+	return
+}
 
-	// backward compatibility
-	switch {
-	case m.Button == MouseButtonLeft && m.Action == MouseActionPress:
-		m.Type = MouseLeft
-	case m.Button == MouseButtonMiddle && m.Action == MouseActionPress:
-		m.Type = MouseMiddle
-	case m.Button == MouseButtonRight && m.Action == MouseActionPress:
-		m.Type = MouseRight
-	case m.Button == MouseButtonNone && m.Action == MouseActionRelease:
-		m.Type = MouseRelease
-	case m.Button == MouseButtonWheelUp && m.Action == MouseActionPress:
-		m.Type = MouseWheelUp
-	case m.Button == MouseButtonWheelDown && m.Action == MouseActionPress:
-		m.Type = MouseWheelDown
-	case m.Button == MouseButtonWheelLeft && m.Action == MouseActionPress:
-		m.Type = MouseWheelLeft
-	case m.Button == MouseButtonWheelRight && m.Action == MouseActionPress:
-		m.Type = MouseWheelRight
-	case m.Button == MouseButtonBackward && m.Action == MouseActionPress:
-		m.Type = MouseBackward
-	case m.Button == MouseButtonForward && m.Action == MouseActionPress:
-		m.Type = MouseForward
-	case m.Action == MouseActionMotion:
-		m.Type = MouseMotion
-		switch m.Button { //nolint:exhaustive
-		case MouseButtonLeft:
-			m.Type = MouseLeft
-		case MouseButtonMiddle:
-			m.Type = MouseMiddle
-		case MouseButtonRight:
-			m.Type = MouseRight
-		case MouseButtonBackward:
-			m.Type = MouseBackward
-		case MouseButtonForward:
-			m.Type = MouseForward
-		}
-	default:
-		m.Type = MouseUnknown
-	}
-
-	return m
+// isWheel returns true if the mouse event is a wheel event.
+func isWheel(btn MouseButton) bool {
+	return btn >= MouseWheelUp && btn <= MouseWheelRight
 }

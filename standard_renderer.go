@@ -44,9 +44,6 @@ type standardRenderer struct {
 	// essentially whether or not we're using the full size of the terminal
 	altScreenActive bool
 
-	// whether or not we're currently using bracketed paste
-	bpActive bool
-
 	// renderer dimensions; usually the size of the window
 	width  int
 	height int
@@ -391,76 +388,6 @@ func (r *standardRenderer) hideCursor() {
 
 	r.cursorHidden = true
 	r.execute(ansi.HideCursor)
-}
-
-func (r *standardRenderer) enableMouseCellMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableMouseCellMotion)
-}
-
-func (r *standardRenderer) disableMouseCellMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableMouseCellMotion)
-}
-
-func (r *standardRenderer) enableMouseAllMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableMouseAllMotion)
-}
-
-func (r *standardRenderer) disableMouseAllMotion() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableMouseAllMotion)
-}
-
-func (r *standardRenderer) enableMouseSGRMode() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableMouseSgrExt)
-}
-
-func (r *standardRenderer) disableMouseSGRMode() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableMouseSgrExt)
-}
-
-func (r *standardRenderer) enableBracketedPaste() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EnableBracketedPaste)
-	r.bpActive = true
-}
-
-func (r *standardRenderer) disableBracketedPaste() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.DisableBracketedPaste)
-	r.bpActive = false
-}
-
-func (r *standardRenderer) bracketedPasteActive() bool {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	return r.bpActive
-}
-
-// setWindowTitle sets the terminal window title.
-func (r *standardRenderer) setWindowTitle(title string) {
-	r.execute(ansi.SetWindowTitle(title))
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
