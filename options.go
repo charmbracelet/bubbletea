@@ -235,6 +235,15 @@ func WithFPS(fps int) ProgramOption {
 	}
 }
 
+// WithReportFocus enables reporting when the terminal gains and lost focus.
+//
+// You can then check for FocusMsg and BlurMsg in your model's Update method.
+func WithReportFocus() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withReportFocus
+  }
+}
+
 // WithEnhancedKeyboard enables support for enhanced keyboard features. This
 // unambiguously reports more key combinations than traditional terminal
 // keyboard sequences. This might also enable reporting of release key events

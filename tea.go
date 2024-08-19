@@ -97,6 +97,7 @@ const (
 	// feature is on by default.
 	withoutCatchPanics
 	withoutBracketedPaste
+	withReportFocus
 	withKittyKeyboard
 	withModifyOtherKeys
 )
@@ -400,6 +401,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.execute(ansi.DisableBracketedPaste)
 				p.bpActive = false
 
+			case enableReportFocusMsg:
+				p.renderer.execute(ansi.EnableReportFocus)
+
+			case disableReportFocusMsg:
+				p.renderer.execute(ansi.DisableReportFocus)
+
 			case readClipboardMsg:
 				p.renderer.execute(ansi.RequestSystemClipboard)
 
@@ -637,6 +644,10 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withKittyKeyboard != 0 {
 		p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+	}
+
+	if p.startupOptions&withReportFocus != 0 {
+		p.renderer.execute(ansi.EnableReportFocus)
 	}
 
 	// Start the renderer.
