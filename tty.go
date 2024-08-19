@@ -37,6 +37,9 @@ func (p *Program) restoreTerminalState() error {
 		p.bpActive = false
 		p.renderer.showCursor()
 		p.disableMouse()
+		if p.kittyFlags != 0 {
+			p.renderer.execute(ansi.DisableKittyKeyboard)
+		}
 
 		if p.renderer.altScreen() {
 			p.renderer.exitAltScreen()

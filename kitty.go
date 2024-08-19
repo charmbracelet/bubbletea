@@ -7,32 +7,71 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+// setKittyKeyboardFlagsMsg is a message to set Kitty keyboard progressive
+// enhancement protocol flags.
+type setKittyKeyboardFlagsMsg int
+
+// EnableKittyKeyboard is a command to enable Kitty keyboard progressive
+// enhancements.
+//
+// The flags parameter is a bitmask of the following
+//
+//	1:  Disambiguate escape codes
+//	2:  Report event types
+//	4:  Report alternate keys
+//	8:  Report all keys as escape codes
+//	16: Report associated text
+//
+// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
+func EnableKittyKeyboard(flags int) Cmd {
+	return func() Msg {
+		return setKittyKeyboardFlagsMsg(flags)
+	}
+}
+
+// DisableKittyKeyboard is a command to disable Kitty keyboard progressive
+// enhancements.
+func DisableKittyKeyboard() Msg {
+	return setKittyKeyboardFlagsMsg(0)
+}
+
+// kittyKeyboardMsg is a message that queries the current Kitty keyboard
+// progressive enhancement flags.
+type kittyKeyboardMsg struct{}
+
+// KittyKeyboard is a command that queries the current Kitty keyboard
+// progressive enhancement flags from the terminal.
+func KittyKeyboard() Msg {
+	return kittyKeyboardMsg{}
+}
+
+// EnableEnhancedKeyboard is a command to enable enhanced keyboard features.
+// This unambiguously reports more key combinations than traditional terminal
+// keyboard sequences. This will also enable reporting of release key events.
+func EnableEnhancedKeyboard() Msg {
+	return setKittyKeyboardFlagsMsg(3)
+}
+
+// DisableEnhancedKeyboard is a command to disable enhanced keyboard features.
+func DisableEnhancedKeyboard() Msg {
+	return setKittyKeyboardFlagsMsg(0)
+}
+
 // KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
 type KittyKeyboardMsg int
 
-// IsDisambiguateEscapeCodes returns true if the DisambiguateEscapeCodes flag is set.
-func (e KittyKeyboardMsg) IsDisambiguateEscapeCodes() bool {
-	return e&ansi.KittyDisambiguateEscapeCodes != 0
-}
+// Kitty Keyboard Protocol flags.
+const (
+	KittyDisambiguateEscapeCodes KittyKeyboardMsg = 1 << iota
+	KittyReportEventTypes
+	KittyReportAlternateKeys
+	KittyReportAllKeys
+	KittyReportAssociatedKeys
+)
 
-// IsReportEventTypes returns true if the ReportEventTypes flag is set.
-func (e KittyKeyboardMsg) IsReportEventTypes() bool {
-	return e&ansi.KittyReportEventTypes != 0
-}
-
-// IsReportAlternateKeys returns true if the ReportAlternateKeys flag is set.
-func (e KittyKeyboardMsg) IsReportAlternateKeys() bool {
-	return e&ansi.KittyReportAlternateKeys != 0
-}
-
-// IsReportAllKeys returns true if the ReportAllKeys flag is set.
-func (e KittyKeyboardMsg) IsReportAllKeys() bool {
-	return e&ansi.KittyReportAllKeys != 0
-}
-
-// IsReportAssociatedKeys returns true if the ReportAssociatedKeys flag is set.
-func (e KittyKeyboardMsg) IsReportAssociatedKeys() bool {
-	return e&ansi.KittyReportAssociatedKeys != 0
+// Contains reports whether m contains the given flags.
+func (m KittyKeyboardMsg) Contains(flags KittyKeyboardMsg) bool {
+	return m&flags == flags
 }
 
 // Kitty Clipboard Control Sequences
@@ -268,13 +307,13 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 			}
 		}
 	}
-	// TODO: Associated keys are not support yet.
-	// if params := csi.Subparams(2); len(params) > 0 {
-	// 	r := rune(params[0])
-	// 	if unicode.IsPrint(r) {
-	// 		key.AltRune = r
-	// 	}
-	// }
+	if params := csi.Subparams(2); len(params) > 0 {
+		r := rune(params[0])
+		if unicode.IsPrint(r) {
+			key.altRune = key.Rune()
+			key.Runes = []rune{r}
+		}
+	}
 	if isRelease {
 		return KeyReleaseMsg(key)
 	}

@@ -234,3 +234,33 @@ func WithFPS(fps int) ProgramOption {
 		p.fps = fps
 	}
 }
+
+// WithEnhancedKeyboard enables support for enhanced keyboard features. This
+// unambiguously reports more key combinations than traditional terminal
+// keyboard sequences. This will also enable reporting of release key events.
+//
+// This is a syntactic sugar for WithKittyKeyboard(3).
+func WithEnhancedKeyboard() ProgramOption {
+	return WithKittyKeyboard(3)
+}
+
+// WithKittyKeyboard enables support for the Kitty keyboard protocol. This
+// protocol enables more key combinations and events than the traditional
+// ambiguous terminal keyboard sequences.
+//
+// Use flags to specify which features you want to enable.
+//
+//	0:  Disable all features
+//	1:  Disambiguate escape codes
+//	2:  Report event types
+//	4:  Report alternate keys
+//	8:  Report all keys as escape codes
+//	16: Report associated text
+//
+// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
+func WithKittyKeyboard(flags int) ProgramOption {
+	return func(p *Program) {
+		p.kittyFlags = flags
+		p.startupOptions |= withKittyKeyboard
+	}
+}
