@@ -185,6 +185,9 @@ func WithoutRenderer() ProgramOption {
 //
 // This feature is provisional, and may be changed or removed in a future version
 // of this package.
+//
+// Deprecated: This option is deprecated and will be removed in a future
+// version of this package.
 func WithANSICompressor() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withANSICompressor
