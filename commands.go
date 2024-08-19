@@ -214,3 +214,25 @@ func WindowSize() Cmd {
 		return windowSizeMsg{}
 	}
 }
+
+// setEnhancedKeyboardMsg is a message to enable/disable enhanced keyboard
+// features.
+type setEnhancedKeyboardMsg bool
+
+// EnableEnhancedKeyboard is a command to enable enhanced keyboard features.
+// This unambiguously reports more key combinations than traditional terminal
+// keyboard sequences. This might also enable reporting of release key events
+// depending on the terminal emulator supporting it.
+//
+// This is equivalent to calling EnablieKittyKeyboard(3) and
+// EnableModifyOtherKeys(1).
+func EnableEnhancedKeyboard() Msg {
+	return setEnhancedKeyboardMsg(true)
+}
+
+// DisableEnhancedKeyboard is a command to disable enhanced keyboard features.
+//
+// This is equivalent to calling DisableKittyKeyboard() and DisableModifyOtherKeys().
+func DisableEnhancedKeyboard() Msg {
+	return setEnhancedKeyboardMsg(false)
+}
