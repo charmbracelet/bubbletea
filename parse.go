@@ -581,15 +581,28 @@ func parseOsc(b []byte) (int, Msg) {
 		if len(parts) == 0 {
 			return i, ClipboardMsg("")
 		}
-		b64 := parts[len(parts)-1]
-		bts, err := base64.StdEncoding.DecodeString(b64)
-		if err != nil {
-			return i, ClipboardMsg("")
+		if len(parts) != 2 {
+			break
 		}
-		return i, ClipboardMsg(bts)
-	default:
-		return i, UnknownMsg(b[:i])
+
+		b64 := parts[1]
+		bts, err := base64.StdEncoding.DecodeString(b64)
+
+		switch parts[0] {
+		case "c":
+			if err != nil {
+				return i, ClipboardMsg("")
+			}
+			return i, ClipboardMsg(string(bts))
+		case "p":
+			if err != nil {
+				return i, PrimaryClipboardMsg("")
+			}
+			return i, PrimaryClipboardMsg(string(bts))
+		}
 	}
+
+	return i, UnknownMsg(b[:i])
 }
 
 // parseStTerminated parses a control sequence that gets terminated by a ST character.

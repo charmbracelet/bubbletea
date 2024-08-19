@@ -400,7 +400,19 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.execute(ansi.DisableBracketedPaste)
 				p.bpActive = false
 
-			case setBackgroundColorMsg:
+			case readClipboardMsg:
+				p.renderer.execute(ansi.RequestSystemClipboard)
+
+			case setClipboardMsg:
+				p.renderer.execute(ansi.SetSystemClipboard(string(msg)))
+
+			case readPrimaryClipboardMsg:
+				p.renderer.execute(ansi.RequestPrimaryClipboard)
+
+			case setPrimaryClipboardMsg:
+				p.renderer.execute(ansi.SetPrimaryClipboard(string(msg)))
+
+      case setBackgroundColorMsg:
 				if msg.Color != nil {
 					p.renderer.execute(ansi.SetBackgroundColor(msg.Color))
 				}
