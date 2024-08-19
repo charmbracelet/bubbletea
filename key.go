@@ -226,13 +226,13 @@ const (
 // one character, though certain input method editors (most notably Chinese
 // IMEs) can input multiple runes at once.
 type Key struct {
-	// Type is a special key, like enter, tab, backspace, and so on.
-	Type KeyType
-
 	// Runes contains the actual characters received. This usually has a length
 	// of 1. Use [Rune()] to get the first key rune received. If the user
 	// presses shift+a, the Runes will be `[]rune{'A'}`.
 	Runes []rune
+
+	// Type is a special key, like enter, tab, backspace, and so on.
+	Type KeyType
 
 	// altRune is the actual, unshifted key pressed by the user. For example,
 	// if the user presses shift+a, or caps lock is on, the altRune will be
