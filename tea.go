@@ -305,9 +305,6 @@ func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
 
 	if p.ttyOutput != nil {
-		// Get the initial terminal size and send it to the program.
-		go p.checkResize()
-
 		// Listen for window resizes.
 		go p.listenForResize(ch)
 	} else {
@@ -556,8 +553,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.Resize(msg.Width, msg.Height)
 
 			case printLineMessage:
-				p.renderer.InsertAbove(msg.messageBody)
-
+				p.renderer.InsertAbove(msg.messageBody) //nolint:errcheck
 			}
 
 			// Process internal messages for the renderer.
@@ -652,6 +648,22 @@ func (p *Program) Run() (Model, error) {
 			output = &compressor.Writer{Forward: output}
 		}
 		p.renderer = NewStandardRenderer(output)
+	}
+
+	if p.ttyOutput != nil {
+		// Set the initial size of the terminal.
+		w, h, err := term.GetSize(p.ttyOutput.Fd())
+		if err != nil {
+			return p.initialModel, err
+		}
+
+		p.renderer.Resize(w, h)
+
+		// Send the initial size to the program.
+		go p.Send(WindowSizeMsg{
+			Width:  w,
+			Height: h,
+		})
 	}
 
 	// Init the input reader and initial model.
