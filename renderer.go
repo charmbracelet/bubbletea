@@ -16,6 +16,13 @@ type Renderer interface {
 	// Flush flushes the renderer's buffer to the output.
 	Flush() error
 
+	// InsertAbove inserts lines above the current frame. This only works in
+	// inline mode.
+	InsertAbove(string) error
+
+	// Resize sets the size of the terminal.
+	Resize(w int, h int)
+
 	// Request a full re-render. Note that this will not trigger a render
 	// immediately. Rather, this method causes the next render to be a full
 	// Repaint. Because of this, it's safe to call this method multiple times

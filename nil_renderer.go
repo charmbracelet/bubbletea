@@ -17,3 +17,5 @@ func (nilRenderer) CursorVisibility() bool          { return false }
 func (nilRenderer) ShowCursor()                     {}
 func (nilRenderer) HideCursor()                     {}
 func (nilRenderer) Execute(string)                  {}
+func (nilRenderer) InsertAbove(string) error        { return nil }
+func (nilRenderer) Resize(int, int)                 {}

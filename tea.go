@@ -551,6 +551,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case windowSizeMsg:
 				go p.checkResize()
+
+			case WindowSizeMsg:
+				p.renderer.Resize(msg.Width, msg.Height)
+
+			case printLineMessage:
+				p.renderer.InsertAbove(msg.messageBody)
+
 			}
 
 			// Process internal messages for the renderer.

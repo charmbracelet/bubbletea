@@ -443,13 +443,6 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		r.Repaint()
 		r.mtx.Unlock()
 
-	case WindowSizeMsg:
-		r.mtx.Lock()
-		r.width = msg.Width
-		r.height = msg.Height
-		r.Repaint()
-		r.mtx.Unlock()
-
 	case clearScrollAreaMsg:
 		r.clearIgnoredLines()
 
@@ -476,15 +469,32 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
 
-	case printLineMessage:
-		if !r.altScreenActive {
-			lines := strings.Split(msg.messageBody, "\n")
-			r.mtx.Lock()
-			r.queuedMessageLines = append(r.queuedMessageLines, lines...)
-			r.Repaint()
-			r.mtx.Unlock()
-		}
 	}
+}
+
+// Resize sets the size of the terminal.
+func (r *standardRenderer) Resize(w int, h int) {
+	r.mtx.Lock()
+	r.width = w
+	r.height = h
+	r.Repaint()
+	r.mtx.Unlock()
+}
+
+// InsertAbove inserts lines above the current frame. This only works in
+// inline mode.
+func (r *standardRenderer) InsertAbove(s string) error {
+	if r.altScreenActive {
+		return nil
+	}
+
+	lines := strings.Split(s, "\n")
+	r.mtx.Lock()
+	r.queuedMessageLines = append(r.queuedMessageLines, lines...)
+	r.Repaint()
+	r.mtx.Unlock()
+
+	return nil
 }
 
 // HIGH-PERFORMANCE RENDERING STUFF
