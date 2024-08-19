@@ -24,6 +24,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
+	"github.com/muesli/ansi/compressor"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -560,7 +561,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			var cmd Cmd
 			model, cmd = model.Update(msg)       // run update
 			cmds <- cmd                          // process command (if any)
-			p.renderer.WriteString(model.View()) // send view to renderer
+			p.renderer.WriteString(model.View()) //nolint:errcheck // send view to renderer
 		}
 	}
 }
@@ -639,7 +640,11 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor))
+		output := p.output
+		if p.startupOptions.has(withANSICompressor) {
+			output = &compressor.Writer{Forward: output}
+		}
+		p.renderer = NewStandardRenderer(output)
 	}
 
 	// Init the input reader and initial model.

@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/ansi/compressor"
 )
 
 const (
@@ -31,7 +30,6 @@ type standardRenderer struct {
 	queuedMessageLines []string
 	lastRender         string
 	linesRendered      int
-	useANSICompressor  bool
 
 	// cursor visibility state
 	cursorHidden bool
@@ -47,17 +45,13 @@ type standardRenderer struct {
 	ignoreLines map[int]struct{}
 }
 
-// newRenderer creates a new renderer. Normally you'll want to initialize it
+// NewStandardRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out io.Writer, useANSICompressor bool) Renderer {
+func NewStandardRenderer(out io.Writer) Renderer {
 	r := &standardRenderer{
 		out:                out,
 		mtx:                &sync.Mutex{},
-		useANSICompressor:  useANSICompressor,
 		queuedMessageLines: []string{},
-	}
-	if r.useANSICompressor {
-		r.out = &compressor.Writer{Forward: out}
 	}
 	return r
 }
