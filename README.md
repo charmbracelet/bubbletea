@@ -43,7 +43,7 @@ Bubble Tea is based on the functional design paradigms of [The Elm
 Architecture][elm], which happens to work nicely with Go. It's a delightful way
 to build applications.
 
-This tutorial assumes you have a working knowledge of Go and you have installed the Bubbltea package.
+This tutorial assumes you have a working knowledge of Go and you have installed the Bubble Tea library.
 
 ```bash
 go get github.com/charmbracelet/bubbletea
