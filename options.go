@@ -241,7 +241,7 @@ func WithFPS(fps int) ProgramOption {
 func WithReportFocus() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withReportFocus
-  }
+	}
 }
 
 // WithEnhancedKeyboard enables support for enhanced keyboard features. This
@@ -294,5 +294,19 @@ func WithModifyOtherKeys(mode int) ProgramOption {
 	return func(p *Program) {
 		p.modifyOtherKeys = mode
 		p.startupOptions |= withModifyOtherKeys
+	}
+}
+
+// WithWindowsInputMode enables Windows Input Mode (win32-input-mode) which
+// allows for more advanced input handling and reporting. This is experimental
+// and may not work on all terminals.
+//
+// See
+// https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
+// for more information.
+func WithWindowsInputMode() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withWindowsInputMode
+		p.win32Input = true
 	}
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/parser"
-	"github.com/erikgeiser/coninput"
 	"github.com/rivo/uniseg"
 )
 
@@ -346,12 +345,12 @@ func parseCsi(b []byte) (int, Msg) {
 		}
 
 		event := parseWin32InputKeyEvent(
-			coninput.VirtualKeyCode(csi.Param(0)),  // Vk wVirtualKeyCode
-			coninput.VirtualKeyCode(csi.Param(1)),  // Sc wVirtualScanCode
-			rune(csi.Param(2)),                     // Uc UnicodeChar
-			csi.Param(3) == 1,                      // Kd bKeyDown
-			coninput.ControlKeyState(csi.Param(4)), // Cs dwControlKeyState
-			rc,                                     // Rc wRepeatCount
+			uint16(csi.Param(0)), // Vk wVirtualKeyCode
+			uint16(csi.Param(1)), // Sc wVirtualScanCode
+			rune(csi.Param(2)),   // Uc UnicodeChar
+			csi.Param(3) == 1,    // Kd bKeyDown
+			uint32(csi.Param(4)), // Cs dwControlKeyState
+			rc,                   // Rc wRepeatCount
 		)
 
 		if event == nil {

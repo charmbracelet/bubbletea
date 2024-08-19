@@ -100,6 +100,7 @@ const (
 	withReportFocus
 	withKittyKeyboard
 	withModifyOtherKeys
+	withWindowsInputMode
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -182,6 +183,9 @@ type Program struct {
 
 	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
 	modifyOtherKeys int
+
+	// win32Input indicates whether the program has win32-input-mode enabled.
+	win32Input bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -419,7 +423,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case setPrimaryClipboardMsg:
 				p.renderer.execute(ansi.SetPrimaryClipboard(string(msg)))
 
-      case setBackgroundColorMsg:
+			case setBackgroundColorMsg:
 				if msg.Color != nil {
 					p.renderer.execute(ansi.SetBackgroundColor(msg.Color))
 				}
@@ -468,6 +472,14 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 				p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
 				p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+
+			case enableWin32InputMsg:
+				p.renderer.execute(ansi.EnableWin32Input)
+				p.win32Input = true
+
+			case disableWin32InputMsg:
+				p.renderer.execute(ansi.DisableWin32Input)
+				p.win32Input = false
 
 			case execMsg:
 				// NB: this blocks.
@@ -648,6 +660,9 @@ func (p *Program) Run() (Model, error) {
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.renderer.execute(ansi.EnableReportFocus)
+	}
+	if p.startupOptions&withWindowsInputMode != 0 {
+		p.renderer.execute(ansi.EnableWin32Input)
 	}
 
 	// Start the renderer.

@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/erikgeiser/coninput"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/sys/windows"
 )
@@ -43,7 +42,7 @@ func newCancelreader(r io.Reader) (cancelreader.CancelReader, error) {
 		return fallback(r)
 	}
 
-	conin, err := coninput.NewStdinHandle()
+	conin, err := windows.GetStdHandle(windows.STD_INPUT_HANDLE)
 	if err != nil {
 		return fallback(r)
 	}
@@ -136,7 +135,10 @@ func prepareConsole(input windows.Handle, modes ...uint32) (originalMode uint32,
 		return 0, fmt.Errorf("get console mode: %w", err)
 	}
 
-	newMode := coninput.AddInputModes(0, modes...)
+	var newMode uint32
+	for _, mode := range modes {
+		newMode |= mode
+	}
 
 	err = windows.SetConsoleMode(input, newMode)
 	if err != nil {

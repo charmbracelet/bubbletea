@@ -53,7 +53,7 @@ const (
 	KittyDisambiguateEscapeCodes KittyKeyboardMsg = 1 << iota
 	KittyReportEventTypes
 	KittyReportAlternateKeys
-	KittyReportAllKeys
+	KittyReportAllKeysAsEscapeCodes
 	KittyReportAssociatedKeys
 )
 
