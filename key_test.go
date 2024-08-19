@@ -113,6 +113,106 @@ func buildBaseSeqTests() []seqTest {
 func TestParseSequence(t *testing.T) {
 	td := buildBaseSeqTests()
 	td = append(td,
+		// Xterm modifyOtherKeys CSI 27 ; <modifier> ; <code> ~
+		seqTest{
+			[]byte("\x1b[27;3;20320~"),
+			[]Msg{KeyPressMsg{Runes: []rune{'你'}, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;65~"),
+			[]Msg{KeyPressMsg{Runes: []rune{'A'}, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;8~"),
+			[]Msg{KeyPressMsg{Type: KeyBackspace, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;27~"),
+			[]Msg{KeyPressMsg{Type: KeyEscape, Mod: ModAlt}},
+		},
+		seqTest{
+			[]byte("\x1b[27;3;127~"),
+			[]Msg{KeyPressMsg{Type: KeyBackspace, Mod: ModAlt}},
+		},
+
+		// Kitty keyboard / CSI u (fixterms)
+		seqTest{
+			[]byte("\x1b[1B"),
+			[]Msg{KeyPressMsg{Type: KeyDown}},
+		},
+		seqTest{
+			[]byte("\x1b[1;B"),
+			[]Msg{KeyPressMsg{Type: KeyDown}},
+		},
+		seqTest{
+			[]byte("\x1b[1;4B"),
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Type: KeyDown}},
+		},
+		seqTest{
+			[]byte("\x1b[8~"),
+			[]Msg{KeyPressMsg{Type: KeyEnd}},
+		},
+		seqTest{
+			[]byte("\x1b[8;~"),
+			[]Msg{KeyPressMsg{Type: KeyEnd}},
+		},
+		seqTest{
+			[]byte("\x1b[8;10~"),
+			[]Msg{KeyPressMsg{Mod: ModShift | ModMeta, Type: KeyEnd}},
+		},
+		seqTest{
+			[]byte("\x1b[27;4u"),
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Type: KeyEscape}},
+		},
+		seqTest{
+			[]byte("\x1b[127;4u"),
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Type: KeyBackspace}},
+		},
+		seqTest{
+			[]byte("\x1b[57358;4u"),
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Type: KeyCapsLock}},
+		},
+		seqTest{
+			[]byte("\x1b[9;2u"),
+			[]Msg{KeyPressMsg{Mod: ModShift, Type: KeyTab}},
+		},
+		seqTest{
+			[]byte("\x1b[195;u"),
+			[]Msg{KeyPressMsg{Runes: []rune{'Ã'}, Type: KeyRunes}},
+		},
+		seqTest{
+			[]byte("\x1b[20320;2u"),
+			[]Msg{KeyPressMsg{Runes: []rune{'你'}, Mod: ModShift, Type: KeyRunes}},
+		},
+		seqTest{
+			[]byte("\x1b[195;:1u"),
+			[]Msg{KeyPressMsg{Runes: []rune{'Ã'}, Type: KeyRunes}},
+		},
+		seqTest{
+			[]byte("\x1b[195;2:3u"),
+			[]Msg{KeyReleaseMsg{Runes: []rune{'Ã'}, Mod: ModShift}},
+		},
+		seqTest{
+			[]byte("\x1b[195;2:2u"),
+			[]Msg{KeyPressMsg{Runes: []rune{'Ã'}, IsRepeat: true, Mod: ModShift}},
+		},
+		seqTest{
+			[]byte("\x1b[195;2:1u"),
+			[]Msg{KeyPressMsg{Runes: []rune{'Ã'}, Mod: ModShift}},
+		},
+		seqTest{
+			[]byte("\x1b[195;2:3u"),
+			[]Msg{KeyReleaseMsg{Runes: []rune{'Ã'}, Mod: ModShift}},
+		},
+		seqTest{
+			[]byte("\x1b[97;2;65u"),
+			[]Msg{KeyPressMsg{Runes: []rune{'A'}, Mod: ModShift, altRune: 'a'}},
+		},
+		seqTest{
+			[]byte("\x1b[97;;229u"),
+			[]Msg{KeyPressMsg{Runes: []rune{'å'}, altRune: 'a'}},
+		},
+
 		// focus/blur
 		seqTest{
 			[]byte{'\x1b', '[', 'I'},

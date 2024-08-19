@@ -234,3 +234,56 @@ func WithFPS(fps int) ProgramOption {
 		p.fps = fps
 	}
 }
+
+// WithEnhancedKeyboard enables support for enhanced keyboard features. This
+// unambiguously reports more key combinations than traditional terminal
+// keyboard sequences. This might also enable reporting of release key events
+// depending on the terminal emulator supporting it.
+//
+// This is a syntactic sugar for WithKittyKeyboard(3) and WithXtermModifyOtherKeys(1).
+func WithEnhancedKeyboard() ProgramOption {
+	return func(p *Program) {
+		WithKittyKeyboard(3)(p)
+		WithModifyOtherKeys(1)(p)
+	}
+}
+
+// WithKittyKeyboard enables support for the Kitty keyboard protocol. This
+// protocol enables more key combinations and events than the traditional
+// ambiguous terminal keyboard sequences.
+//
+// Use flags to specify which features you want to enable.
+//
+//	0:  Disable all features
+//	1:  Disambiguate escape codes
+//	2:  Report event types
+//	4:  Report alternate keys
+//	8:  Report all keys as escape codes
+//	16: Report associated text
+//
+// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
+func WithKittyKeyboard(flags int) ProgramOption {
+	return func(p *Program) {
+		p.kittyFlags = flags
+		p.startupOptions |= withKittyKeyboard
+	}
+}
+
+// WithModifyOtherKeys enables support for the XTerm modifyOtherKeys feature.
+// This feature allows the terminal to report ambiguous keys as escape codes.
+// This is useful for terminals that don't support the Kitty keyboard protocol.
+//
+// The mode can be one of the following:
+//
+//	0: Disable modifyOtherKeys
+//	1: Report ambiguous keys as escape codes
+//	2: Report ambiguous keys as escape codes including modified keys like Alt-<key>
+//	   and Meta-<key>
+//
+// See https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
+func WithModifyOtherKeys(mode int) ProgramOption {
+	return func(p *Program) {
+		p.modifyOtherKeys = mode
+		p.startupOptions |= withModifyOtherKeys
+	}
+}

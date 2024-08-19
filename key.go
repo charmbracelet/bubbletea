@@ -226,13 +226,13 @@ const (
 // one character, though certain input method editors (most notably Chinese
 // IMEs) can input multiple runes at once.
 type Key struct {
-	// Type is a special key, like enter, tab, backspace, and so on.
-	Type KeyType
-
 	// Runes contains the actual characters received. This usually has a length
 	// of 1. Use [Rune()] to get the first key rune received. If the user
 	// presses shift+a, the Runes will be `[]rune{'A'}`.
 	Runes []rune
+
+	// Type is a special key, like enter, tab, backspace, and so on.
+	Type KeyType
 
 	// altRune is the actual, unshifted key pressed by the user. For example,
 	// if the user presses shift+a, or caps lock is on, the altRune will be
@@ -323,22 +323,22 @@ func (k Key) Rune() rune {
 // "shift+ctrl+alt+a".
 func (k Key) String() string {
 	var s string
-	if k.Mod.HasCtrl() && k.Type != KeyLeftCtrl && k.Type != KeyRightCtrl {
+	if k.Mod.Contains(ModCtrl) && k.Type != KeyLeftCtrl && k.Type != KeyRightCtrl {
 		s += "ctrl+"
 	}
-	if k.Mod.HasAlt() && k.Type != KeyLeftAlt && k.Type != KeyRightAlt {
+	if k.Mod.Contains(ModAlt) && k.Type != KeyLeftAlt && k.Type != KeyRightAlt {
 		s += "alt+"
 	}
-	if k.Mod.HasShift() && k.Type != KeyLeftShift && k.Type != KeyRightShift {
+	if k.Mod.Contains(ModShift) && k.Type != KeyLeftShift && k.Type != KeyRightShift {
 		s += "shift+"
 	}
-	if k.Mod.HasMeta() && k.Type != KeyLeftMeta && k.Type != KeyRightMeta {
+	if k.Mod.Contains(ModMeta) && k.Type != KeyLeftMeta && k.Type != KeyRightMeta {
 		s += "meta+"
 	}
-	if k.Mod.HasHyper() && k.Type != KeyLeftHyper && k.Type != KeyRightHyper {
+	if k.Mod.Contains(ModHyper) && k.Type != KeyLeftHyper && k.Type != KeyRightHyper {
 		s += "hyper+"
 	}
-	if k.Mod.HasSuper() && k.Type != KeyLeftSuper && k.Type != KeyRightSuper {
+	if k.Mod.Contains(ModSuper) && k.Type != KeyLeftSuper && k.Type != KeyRightSuper {
 		s += "super+"
 	}
 

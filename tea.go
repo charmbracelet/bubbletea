@@ -97,6 +97,8 @@ const (
 	// feature is on by default.
 	withoutCatchPanics
 	withoutBracketedPaste
+	withKittyKeyboard
+	withModifyOtherKeys
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -173,6 +175,12 @@ type Program struct {
 	// fps is the frames per second we should set on the renderer, if
 	// applicable,
 	fps int
+
+	// kittyFlags stores kitty keyboard protocol progressive enhancement flags.
+	kittyFlags int
+
+	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
+	modifyOtherKeys int
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -416,6 +424,32 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case cursorColorMsg:
 				p.renderer.execute(ansi.RequestCursorColor)
 
+			case KittyKeyboardMsg:
+				// Store the kitty flags whenever they are queried.
+				p.kittyFlags = int(msg)
+
+			case setKittyKeyboardFlagsMsg:
+				p.kittyFlags = int(msg)
+				p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+
+			case kittyKeyboardMsg:
+				p.renderer.execute(ansi.RequestKittyKeyboard)
+
+			case setModifyOtherKeysMsg:
+				p.modifyOtherKeys = int(msg)
+				p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+
+			case setEnhancedKeyboardMsg:
+				if bool(msg) {
+					p.kittyFlags = 3
+					p.modifyOtherKeys = 1
+				} else {
+					p.kittyFlags = 0
+					p.modifyOtherKeys = 0
+				}
+				p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+				p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
@@ -579,6 +613,12 @@ func (p *Program) Run() (Model, error) {
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.renderer.execute(ansi.EnableMouseAllMotion)
 		p.renderer.execute(ansi.EnableMouseSgrExt)
+	}
+	if p.startupOptions&withModifyOtherKeys != 0 {
+		p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+	}
+	if p.startupOptions&withKittyKeyboard != 0 {
+		p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
 	}
 
 	// Start the renderer.
@@ -751,6 +791,12 @@ func (p *Program) RestoreTerminal() error {
 		p.renderer.hideCursor()
 		p.renderer.execute(ansi.EnableBracketedPaste)
 		p.bpActive = true
+		if p.modifyOtherKeys != 0 {
+			p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+		}
+		if p.kittyFlags != 0 {
+			p.renderer.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+		}
 	}
 
 	// If the output is a terminal, it may have been resized while another
