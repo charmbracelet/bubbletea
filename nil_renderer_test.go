@@ -3,7 +3,7 @@ package tea
 import "testing"
 
 func TestNilRenderer(t *testing.T) {
-	r := nilRenderer{}
+	r := NilRenderer{}
 	r.Repaint()
 	r.EnterAltScreen()
 	if r.AltScreen() {

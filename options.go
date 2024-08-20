@@ -186,10 +186,10 @@ func WithRenderer(renderer Renderer) ProgramOption {
 // not a TTY.
 //
 // Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
+// version of this package. Use [NilRenderer] with [WithRenderer] instead.
 func WithoutRenderer() ProgramOption {
 	return func(p *Program) {
-		p.renderer = &nilRenderer{}
+		p.renderer = &NilRenderer{}
 	}
 }
 
