@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -255,7 +257,8 @@ func WithReportFocus() ProgramOption {
 // This is a syntactic sugar for WithKittyKeyboard(3) and WithXtermModifyOtherKeys(1).
 func WithEnhancedKeyboard() ProgramOption {
 	return func(p *Program) {
-		_WithKittyKeyboard(3)(p)
+		_WithKittyKeyboard(ansi.KittyDisambiguateEscapeCodes |
+			ansi.KittyReportEventTypes)(p)
 		_WithModifyOtherKeys(1)(p)
 	}
 }
