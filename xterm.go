@@ -16,14 +16,14 @@ type setModifyOtherKeysMsg int
 //	   and Meta-<key>
 //
 // See https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-func EnableModifyOtherKeys(mode int) Cmd {
+func enableModifyOtherKeys(mode int) Cmd {
 	return func() Msg {
 		return setModifyOtherKeysMsg(mode)
 	}
 }
 
-// DisableModifyOtherKeys is a command to disable XTerm modifyOtherKeys mode.
-func DisableModifyOtherKeys() Msg {
+// disableModifyOtherKeys is a command to disable XTerm modifyOtherKeys mode.
+func disableModifyOtherKeys() Msg {
 	return setModifyOtherKeysMsg(0)
 }
 
@@ -56,15 +56,15 @@ func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 // modifyOtherKeys mode.
 type modifyOtherKeys struct{}
 
-// ModifyOtherKeys is a command that queries the terminal for its
+// _ModifyOtherKeys is a command that queries the terminal for its
 // modifyOtherKeys mode.
-func ModifyOtherKeys() Msg {
+func _ModifyOtherKeys() Msg {
 	return modifyOtherKeys{}
 }
 
-// ModifyOtherKeysMsg is a message that represents XTerm modifyOtherKeys
+// modifyOtherKeysMsg is a message that represents XTerm modifyOtherKeys
 // report. Querying the terminal for the modifyOtherKeys mode will return a
-// ModifyOtherKeysMsg message with the current mode set.
+// modifyOtherKeysMsg message with the current mode set.
 //
 //	0: disable
 //	1: enable mode 1
@@ -72,7 +72,7 @@ func ModifyOtherKeys() Msg {
 //
 // See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
 // See: https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-type ModifyOtherKeysMsg uint8
+type modifyOtherKeysMsg uint8
 
 // TerminalVersionMsg is a message that represents the terminal version.
 type TerminalVersionMsg string
