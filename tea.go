@@ -174,6 +174,12 @@ type Program struct {
 
 	bpActive bool // was the bracketed paste mode active before releasing the terminal?
 
+	cursorHidden bool // the cursor visibility state
+
+	mouseEnabled bool // whether mouse reporting is enabled
+
+	reportFocus bool // whether focus reporting is enabled
+
 	filter func(Model, Msg) Msg
 
 	// fps is the frames per second we should set on the renderer, if
@@ -402,9 +408,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 				// mouse mode (1006) is a no-op if the terminal doesn't support it.
 				p.execute(ansi.EnableMouseSgrExt)
+				p.mouseEnabled = true
 
 			case disableMouseMsg:
 				p.disableMouse()
+				p.mouseEnabled = false
 
 			case showCursorMsg:
 				p.renderer.ShowCursor()
@@ -422,9 +430,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case enableReportFocusMsg:
 				p.execute(ansi.EnableReportFocus)
+				p.reportFocus = true
 
 			case disableReportFocusMsg:
 				p.execute(ansi.DisableReportFocus)
+				p.reportFocus = false
 
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
@@ -694,9 +704,11 @@ func (p *Program) Run() (Model, error) {
 	if p.startupOptions&withMouseCellMotion != 0 {
 		p.execute(ansi.EnableMouseCellMotion)
 		p.execute(ansi.EnableMouseSgrExt)
+		p.mouseEnabled = true
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.execute(ansi.EnableMouseAllMotion)
 		p.execute(ansi.EnableMouseSgrExt)
+		p.mouseEnabled = true
 	}
 	if p.startupOptions&withModifyOtherKeys != 0 {
 		p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
@@ -707,9 +719,11 @@ func (p *Program) Run() (Model, error) {
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.execute(ansi.EnableReportFocus)
+		p.reportFocus = true
 	}
 	if p.startupOptions&withWindowsInputMode != 0 {
 		p.execute(ansi.EnableWin32Input)
+		p.win32Input = true
 	}
 
 	// Start the renderer.
@@ -855,6 +869,7 @@ func (p *Program) ReleaseTerminal() error {
 	if p.renderer != nil {
 		p.stopRenderer(false)
 		p.altScreenWasActive = p.renderer.AltScreen()
+		p.cursorHidden = !p.renderer.CursorVisibility()
 	}
 
 	return p.restoreTerminalState()
@@ -880,14 +895,31 @@ func (p *Program) RestoreTerminal() error {
 	}
 	if p.renderer != nil {
 		p.startRenderer()
-		p.renderer.HideCursor()
-		p.execute(ansi.EnableBracketedPaste)
-		p.bpActive = true
-		if p.modifyOtherKeys != 0 {
-			p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+		if p.cursorHidden {
+			p.renderer.HideCursor()
+		} else {
+			p.renderer.ShowCursor()
 		}
-		if p.kittyFlags != 0 {
-			p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+	}
+	if p.bpActive {
+		p.execute(ansi.EnableBracketedPaste)
+	}
+	if p.modifyOtherKeys != 0 {
+		p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+	}
+	if p.kittyFlags != 0 {
+		p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+	}
+	if p.reportFocus {
+		p.execute(ansi.EnableReportFocus)
+	}
+	if p.mouseEnabled {
+		if p.startupOptions&withMouseCellMotion != 0 {
+			p.execute(ansi.EnableMouseCellMotion)
+			p.execute(ansi.EnableMouseSgrExt)
+		} else if p.startupOptions&withMouseAllMotion != 0 {
+			p.execute(ansi.EnableMouseAllMotion)
+			p.execute(ansi.EnableMouseSgrExt)
 		}
 	}
 

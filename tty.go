@@ -32,18 +32,29 @@ func (p *Program) initTerminal() error {
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.renderer != nil {
+	if p.bpActive {
 		p.execute(ansi.DisableBracketedPaste)
-		p.bpActive = false
-		p.renderer.ShowCursor()
-		p.disableMouse()
-		if p.modifyOtherKeys != 0 {
-			p.execute(ansi.DisableModifyOtherKeys)
+	}
+	if p.renderer != nil {
+		if !p.cursorHidden {
+			p.renderer.ShowCursor()
 		}
-		if p.kittyFlags != 0 {
-			p.execute(ansi.DisableKittyKeyboard)
-		}
+	}
 
+	if p.mouseEnabled {
+		p.disableMouse()
+	}
+	if p.modifyOtherKeys != 0 {
+		p.execute(ansi.DisableModifyOtherKeys)
+	}
+	if p.kittyFlags != 0 {
+		p.execute(ansi.DisableKittyKeyboard)
+	}
+	if p.reportFocus {
+		p.execute(ansi.DisableReportFocus)
+	}
+
+	if p.renderer != nil {
 		if p.renderer.AltScreen() {
 			p.renderer.ExitAltScreen()
 
