@@ -56,6 +56,13 @@ func NewStandardRenderer(out io.Writer) Renderer {
 	return r
 }
 
+// SetOutput sets the output for the renderer.
+func (r *standardRenderer) SetOutput(out io.Writer) {
+	r.mtx.Lock()
+	r.out = out
+	r.mtx.Unlock()
+}
+
 // Close closes the renderer and flushes any remaining data.
 func (r *standardRenderer) Close() (err error) {
 	r.mtx.Lock()

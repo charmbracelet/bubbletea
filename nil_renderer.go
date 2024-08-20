@@ -1,9 +1,12 @@
 package tea
 
+import "io"
+
 type nilRenderer struct{}
 
 var _ Renderer = nilRenderer{}
 
+func (nilRenderer) SetOutput(io.Writer)             {}
 func (nilRenderer) Flush() error                    { return nil }
 func (nilRenderer) Close() error                    { return nil }
 func (nilRenderer) Write([]byte) (int, error)       { return 0, nil }

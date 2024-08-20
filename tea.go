@@ -648,6 +648,9 @@ func (p *Program) Run() (Model, error) {
 			output = &compressor.Writer{Forward: output}
 		}
 		p.renderer = NewStandardRenderer(output)
+	} else {
+		// Ensure the renderer has the correct output.
+		p.renderer.SetOutput(p.output)
 	}
 
 	if p.ttyOutput != nil {

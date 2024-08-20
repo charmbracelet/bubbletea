@@ -1,5 +1,7 @@
 package tea
 
+import "io"
+
 // Renderer is the interface for Bubble Tea renderers.
 type Renderer interface {
 	// Close closes the renderer and flushes any remaining data.
@@ -12,6 +14,9 @@ type Renderer interface {
 	// WriteString a frame to the renderer. The renderer can WriteString this
 	// data to output at its discretion.
 	WriteString(string) (int, error)
+
+	// SetOutput sets the output for the renderer.
+	SetOutput(io.Writer)
 
 	// Flush flushes the renderer's buffer to the output.
 	Flush() error
