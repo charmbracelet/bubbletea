@@ -48,20 +48,6 @@ func KittyKeyboard() Msg {
 // KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
 type KittyKeyboardMsg int
 
-// Kitty Keyboard Protocol flags.
-const (
-	KittyDisambiguateEscapeCodes KittyKeyboardMsg = 1 << iota
-	KittyReportEventTypes
-	KittyReportAlternateKeys
-	KittyReportAllKeysAsEscapeCodes
-	KittyReportAssociatedKeys
-)
-
-// Contains reports whether m contains the given flags.
-func (m KittyKeyboardMsg) Contains(flags KittyKeyboardMsg) bool {
-	return m&flags == flags
-}
-
 // Kitty Clipboard Control Sequences
 var kittyKeyMap = map[int]KeyType{
 	ansi.BS:  KeyBackspace,
