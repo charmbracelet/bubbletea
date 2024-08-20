@@ -474,7 +474,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.Execute(ansi.RequestKittyKeyboard)
 
 			case modifyOtherKeys:
-				p.renderer.execute(ansi.RequestModifyOtherKeys)
+				p.renderer.Execute(ansi.RequestModifyOtherKeys)
 
 			case setModifyOtherKeysMsg:
 				p.modifyOtherKeys = int(msg)
@@ -642,17 +642,17 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// If no renderer is set use the standard one.
+	output := p.output
 	if p.renderer == nil {
-		output := p.output
+		// TODO(v2): remove the ANSI compressor
 		if p.startupOptions.has(withANSICompressor) {
 			output = &compressor.Writer{Forward: output}
 		}
-		p.renderer = NewStandardRenderer(output)
-	} else {
-		// Ensure the renderer has the correct output.
-		p.renderer.SetOutput(p.output)
+		p.renderer = NewStandardRenderer()
 	}
 
+	// Set the renderer output.
+	p.renderer.SetOutput(output)
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())

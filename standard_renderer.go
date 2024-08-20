@@ -47,9 +47,8 @@ type standardRenderer struct {
 
 // NewStandardRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func NewStandardRenderer(out io.Writer) Renderer {
+func NewStandardRenderer() Renderer {
 	r := &standardRenderer{
-		out:                out,
 		mtx:                &sync.Mutex{},
 		queuedMessageLines: []string{},
 	}
