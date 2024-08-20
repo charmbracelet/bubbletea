@@ -458,6 +458,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case kittyKeyboardMsg:
 				p.renderer.execute(ansi.RequestKittyKeyboard)
 
+			case modifyOtherKeys:
+				p.renderer.execute(ansi.RequestModifyOtherKeys)
+
 			case setModifyOtherKeysMsg:
 				p.modifyOtherKeys = int(msg)
 				p.renderer.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))

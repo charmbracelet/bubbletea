@@ -52,6 +52,16 @@ func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 	}
 }
 
+// modifyOtherKeys is an internal message that queries the terminal for its
+// modifyOtherKeys mode.
+type modifyOtherKeys struct{}
+
+// ModifyOtherKeys is a command that queries the terminal for its
+// modifyOtherKeys mode.
+func ModifyOtherKeys() Msg {
+	return modifyOtherKeys{}
+}
+
 // ModifyOtherKeysMsg is a message that represents XTerm modifyOtherKeys
 // report. Querying the terminal for the modifyOtherKeys mode will return a
 // ModifyOtherKeysMsg message with the current mode set.
