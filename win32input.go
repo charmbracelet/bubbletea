@@ -7,26 +7,26 @@ import (
 // enableWin32InputMsg is a message that enables Windows input mode.
 type enableWin32InputMsg struct{}
 
-// EnableWindowsInputMode is a command that enables Windows input mode
+// enableWindowsInputMode is a command that enables Windows input mode
 // (win32-input-mode).
 //
 // See
 // https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
 // for more information.
-func EnableWindowsInputMode() Msg {
+func enableWindowsInputMode() Msg { //nolint:unused
 	return enableWin32InputMsg{}
 }
 
 // disableWin32InputMsg is a message that disables Windows input mode.
 type disableWin32InputMsg struct{}
 
-// DisableWindowsInputMode is a command that disables Windows input mode
+// disableWindowsInputMode is a command that disables Windows input mode
 // (win32-input-mode).
 //
 // See
 // https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
 // for more information.
-func DisableWindowsInputMode() Msg {
+func disableWindowsInputMode() Msg { //nolint:unused
 	return disableWin32InputMsg{}
 }
 

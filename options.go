@@ -307,7 +307,7 @@ func _WithModifyOtherKeys(mode int) ProgramOption {
 // See
 // https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
 // for more information.
-func _WithWindowsInputMode() ProgramOption {
+func _WithWindowsInputMode() ProgramOption { //nolint:unused
 	return func(p *Program) {
 		p.startupOptions |= withWindowsInputMode
 		p.win32Input = true
