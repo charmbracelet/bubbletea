@@ -61,9 +61,9 @@ func TestClearMsg(t *testing.T) {
 			name:     "read_set_clipboard",
 			cmds:     []Cmd{ReadClipboard, SetClipboard("success")},
 			expected: "\x1b[?25l\x1b[?2004h\x1b]52;c;?\a\x1b]52;c;c3VjY2Vzcw==\a\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
-    },
+		},
 		{
-      name:     "bg_fg_cur_color",
+			name:     "bg_fg_cur_color",
 			cmds:     []Cmd{ForegroundColor, BackgroundColor, CursorColor},
 			expected: "\x1b[?25l\x1b[?2004h\x1b]10;?\a\x1b]11;?\a\x1b]12;?\a\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
@@ -74,7 +74,7 @@ func TestClearMsg(t *testing.T) {
 		},
 		{
 			name:     "kitty_start",
-			cmds:     []Cmd{DisableKittyKeyboard, EnableKittyKeyboard(3)},
+			cmds:     []Cmd{disableKittyKeyboard, enableKittyKeyboard(3)},
 			expected: "\x1b[?25l\x1b[?2004h\x1b[>u\x1b[>3u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[>0u",
 		},
 	}

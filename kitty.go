@@ -11,7 +11,7 @@ import (
 // enhancement protocol flags.
 type setKittyKeyboardFlagsMsg int
 
-// EnableKittyKeyboard is a command to enable Kitty keyboard progressive
+// enableKittyKeyboard is a command to enable Kitty keyboard progressive
 // enhancements.
 //
 // The flags parameter is a bitmask of the following
@@ -23,15 +23,15 @@ type setKittyKeyboardFlagsMsg int
 //	16: Report associated text
 //
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func EnableKittyKeyboard(flags int) Cmd {
+func enableKittyKeyboard(flags int) Cmd {
 	return func() Msg {
 		return setKittyKeyboardFlagsMsg(flags)
 	}
 }
 
-// DisableKittyKeyboard is a command to disable Kitty keyboard progressive
+// disableKittyKeyboard is a command to disable Kitty keyboard progressive
 // enhancements.
-func DisableKittyKeyboard() Msg {
+func disableKittyKeyboard() Msg {
 	return setKittyKeyboardFlagsMsg(0)
 }
 
@@ -39,14 +39,14 @@ func DisableKittyKeyboard() Msg {
 // progressive enhancement flags.
 type kittyKeyboardMsg struct{}
 
-// KittyKeyboard is a command that queries the current Kitty keyboard
+// kittyKeyboard is a command that queries the current Kitty keyboard
 // progressive enhancement flags from the terminal.
-func KittyKeyboard() Msg {
+func kittyKeyboard() Msg {
 	return kittyKeyboardMsg{}
 }
 
-// KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
-type KittyKeyboardMsg int
+// _KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
+type _KittyKeyboardMsg int
 
 // Kitty Clipboard Control Sequences
 var kittyKeyMap = map[int]KeyType{

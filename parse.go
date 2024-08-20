@@ -247,7 +247,7 @@ func parseCsi(b []byte) (int, Msg) {
 	case 'u' | '?'<<parser.MarkerShift:
 		// Kitty keyboard flags
 		if param := csi.Param(0); param != -1 {
-			return i, KittyKeyboardMsg(param)
+			return i, _KittyKeyboardMsg(param)
 		}
 	case 'R' | '?'<<parser.MarkerShift:
 		// This report may return a third parameter representing the page

@@ -255,12 +255,12 @@ func WithReportFocus() ProgramOption {
 // This is a syntactic sugar for WithKittyKeyboard(3) and WithXtermModifyOtherKeys(1).
 func WithEnhancedKeyboard() ProgramOption {
 	return func(p *Program) {
-		WithKittyKeyboard(3)(p)
+		_WithKittyKeyboard(3)(p)
 		WithModifyOtherKeys(1)(p)
 	}
 }
 
-// WithKittyKeyboard enables support for the Kitty keyboard protocol. This
+// _WithKittyKeyboard enables support for the Kitty keyboard protocol. This
 // protocol enables more key combinations and events than the traditional
 // ambiguous terminal keyboard sequences.
 //
@@ -274,7 +274,7 @@ func WithEnhancedKeyboard() ProgramOption {
 //	16: Report associated text
 //
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func WithKittyKeyboard(flags int) ProgramOption {
+func _WithKittyKeyboard(flags int) ProgramOption {
 	return func(p *Program) {
 		p.kittyFlags = flags
 		p.startupOptions |= withKittyKeyboard
