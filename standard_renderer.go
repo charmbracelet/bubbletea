@@ -67,15 +67,15 @@ func (r *standardRenderer) Close() (err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.Execute(ansi.EraseEntireLine)
+	r.execute(ansi.EraseEntireLine)
 	// Move the cursor back to the beginning of the line
-	r.Execute("\r")
+	r.execute("\r")
 
 	return
 }
 
-// Execute writes a sequence to the terminal.
-func (r *standardRenderer) Execute(seq string) {
+// execute writes the given sequence to the output.
+func (r *standardRenderer) execute(seq string) {
 	_, _ = io.WriteString(r.out, seq)
 }
 
@@ -211,9 +211,9 @@ func (r *standardRenderer) Flush() (err error) {
 	return
 }
 
-// WriteString writes to the internal buffer. The buffer will be outputted via the
-// ticker which calls flush().
-func (r *standardRenderer) WriteString(s string) (int, error) {
+// Render renders the frame to the internal buffer. The buffer will be
+// outputted via the ticker which calls flush().
+func (r *standardRenderer) Render(s string) error {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
@@ -226,13 +226,8 @@ func (r *standardRenderer) WriteString(s string) (int, error) {
 		s = " "
 	}
 
-	return r.buf.WriteString(s)
-}
-
-// Write writes to the internal buffer. The buffer will be outputted via the
-// ticker which calls flush().
-func (r *standardRenderer) Write(p []byte) (int, error) {
-	return r.WriteString(string(p))
+	_, err := r.buf.WriteString(s)
+	return err
 }
 
 // Repaint forces a full repaint.
@@ -244,8 +239,8 @@ func (r *standardRenderer) ClearScreen() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.Execute(ansi.EraseEntireDisplay)
-	r.Execute(ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireDisplay)
+	r.execute(ansi.MoveCursorOrigin)
 
 	r.Repaint()
 }
@@ -266,7 +261,7 @@ func (r *standardRenderer) EnterAltScreen() {
 	}
 
 	r.altScreenActive = true
-	r.Execute(ansi.EnableAltScreenBuffer)
+	r.execute(ansi.EnableAltScreenBuffer)
 
 	// Ensure that the terminal is cleared, even when it doesn't support
 	// alt screen (or alt screen support is disabled, like GNU screen by
@@ -274,16 +269,16 @@ func (r *standardRenderer) EnterAltScreen() {
 	//
 	// Note: we can't use r.clearScreen() here because the mutex is already
 	// locked.
-	r.Execute(ansi.EraseEntireDisplay)
-	r.Execute(ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireDisplay)
+	r.execute(ansi.MoveCursorOrigin)
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
 	// whenever we enter AltScreen.
 	if r.cursorHidden {
-		r.Execute(ansi.HideCursor)
+		r.execute(ansi.HideCursor)
 	} else {
-		r.Execute(ansi.ShowCursor)
+		r.execute(ansi.ShowCursor)
 	}
 
 	r.Repaint()
@@ -298,15 +293,15 @@ func (r *standardRenderer) ExitAltScreen() {
 	}
 
 	r.altScreenActive = false
-	r.Execute(ansi.DisableAltScreenBuffer)
+	r.execute(ansi.DisableAltScreenBuffer)
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
 	// whenever we exit AltScreen.
 	if r.cursorHidden {
-		r.Execute(ansi.HideCursor)
+		r.execute(ansi.HideCursor)
 	} else {
-		r.Execute(ansi.ShowCursor)
+		r.execute(ansi.ShowCursor)
 	}
 
 	r.Repaint()
@@ -321,7 +316,7 @@ func (r *standardRenderer) ShowCursor() {
 	defer r.mtx.Unlock()
 
 	r.cursorHidden = false
-	r.Execute(ansi.ShowCursor)
+	r.execute(ansi.ShowCursor)
 }
 
 func (r *standardRenderer) HideCursor() {
@@ -329,7 +324,7 @@ func (r *standardRenderer) HideCursor() {
 	defer r.mtx.Unlock()
 
 	r.cursorHidden = true
-	r.Execute(ansi.HideCursor)
+	r.execute(ansi.HideCursor)
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea

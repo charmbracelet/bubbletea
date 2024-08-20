@@ -7,13 +7,8 @@ type Renderer interface {
 	// Close closes the renderer and flushes any remaining data.
 	Close() error
 
-	// Write a frame to the renderer. The renderer can write this data to
-	// output at its discretion.
-	Write([]byte) (int, error)
-
-	// WriteString a frame to the renderer. The renderer can WriteString this
-	// data to output at its discretion.
-	WriteString(string) (int, error)
+	// Render renders a frame to the output.
+	Render(string) error
 
 	// SetOutput sets the output for the renderer.
 	SetOutput(io.Writer)
@@ -50,9 +45,6 @@ type Renderer interface {
 	ShowCursor()
 	// Hide the cursor.
 	HideCursor()
-
-	// Execute writes a sequence to the underlying output.
-	Execute(string)
 }
 
 // repaintMsg forces a full repaint.

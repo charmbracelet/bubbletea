@@ -33,15 +33,15 @@ func (p *Program) initTerminal() error {
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
 	if p.renderer != nil {
-		p.renderer.Execute(ansi.DisableBracketedPaste)
+		p.execute(ansi.DisableBracketedPaste)
 		p.bpActive = false
 		p.renderer.ShowCursor()
 		p.disableMouse()
 		if p.modifyOtherKeys != 0 {
-			p.renderer.Execute(ansi.DisableModifyOtherKeys)
+			p.execute(ansi.DisableModifyOtherKeys)
 		}
 		if p.kittyFlags != 0 {
-			p.renderer.Execute(ansi.DisableKittyKeyboard)
+			p.execute(ansi.DisableKittyKeyboard)
 		}
 
 		if p.renderer.AltScreen() {
