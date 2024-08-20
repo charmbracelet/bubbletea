@@ -38,6 +38,9 @@ import (
 // one character, though certain input method editors (most notably Chinese
 // IMEs) can input multiple runes at once.
 //
+// TODO(v2): Add a KeyMsg interface that incorporates all the key message
+// types.
+//
 // Deprecated: KeyMsg is deprecated in favor of KeyPressMsg and KeyReleaseMsg.
 type KeyMsg struct {
 	Type  KeyType

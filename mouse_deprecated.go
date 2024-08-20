@@ -4,7 +4,10 @@ package tea
 // update function when mouse activity occurs. Note that the mouse must first
 // be enabled in order for the mouse events to be received.
 //
-// Deprecated in favor of MouseClickMsg, MouseReleaseMsg, MouseWheelMsg, and
+// TODO(v2): Add a MouseMsg interface that incorporates all the mouse message
+// types.
+//
+// Deprecated: in favor of MouseClickMsg, MouseReleaseMsg, MouseWheelMsg, and
 // MouseMotionMsg.
 type MouseMsg struct {
 	X      int
