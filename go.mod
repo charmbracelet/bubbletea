@@ -14,4 +14,7 @@ require (
 	golang.org/x/sys v0.24.0
 )
 
-require github.com/mattn/go-runewidth v0.0.15 // indirect
+require (
+	github.com/charmbracelet/bubbles v0.18.1-0.20240820020305-4f0c4d5e07e9 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
+)
