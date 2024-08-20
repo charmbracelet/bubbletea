@@ -405,6 +405,7 @@ For some Bubble Tea programs in production, see:
 * [superfile](https://github.com/MHNightCat/superfile)  a fancy, modern terminal-based file manager
 * [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
 * [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
+* [tetrigo](https://github.com/Broderick-Westrope/tetrigo): a Tetris implementation
 * [tgpt](https://github.com/aandrew-me/tgpt): conversational AI for the CLI; no API keys necessary
 * [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
 * [trainer](https://github.com/rusinikita/trainer): a Go concurrency coding interview simulator with learning materials 
