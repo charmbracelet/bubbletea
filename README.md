@@ -325,7 +325,6 @@ your program in another window.
 
 For Bubble Tea programs in production, check [charm-community/charm-in-the-wild](https://github.com/charm-community/charm-in-the-wild) and add your own Bubble Tea program in production by following the instructions on README!
 
-
 ## Feedback
 
 We'd love to hear your thoughts on this project. Feel free to drop us a note!
