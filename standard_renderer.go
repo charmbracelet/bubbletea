@@ -6,10 +6,8 @@ import (
 	"io"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/ansi/compressor"
 )
 
 const (
@@ -30,13 +28,8 @@ type standardRenderer struct {
 
 	buf                bytes.Buffer
 	queuedMessageLines []string
-	framerate          time.Duration
-	ticker             *time.Ticker
-	done               chan struct{}
 	lastRender         string
 	linesRendered      int
-	useANSICompressor  bool
-	once               sync.Once
 
 	// cursor visibility state
 	cursorHidden bool
@@ -52,55 +45,25 @@ type standardRenderer struct {
 	ignoreLines map[int]struct{}
 }
 
-// newRenderer creates a new renderer. Normally you'll want to initialize it
+// NewStandardRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out io.Writer, useANSICompressor bool, fps int) renderer {
-	if fps < 1 {
-		fps = defaultFPS
-	} else if fps > maxFPS {
-		fps = maxFPS
-	}
+func NewStandardRenderer() Renderer {
 	r := &standardRenderer{
-		out:                out,
 		mtx:                &sync.Mutex{},
-		done:               make(chan struct{}),
-		framerate:          time.Second / time.Duration(fps),
-		useANSICompressor:  useANSICompressor,
 		queuedMessageLines: []string{},
-	}
-	if r.useANSICompressor {
-		r.out = &compressor.Writer{Forward: out}
 	}
 	return r
 }
 
-// start starts the renderer.
-func (r *standardRenderer) start() {
-	if r.ticker == nil {
-		r.ticker = time.NewTicker(r.framerate)
-	} else {
-		// If the ticker already exists, it has been stopped and we need to
-		// reset it.
-		r.ticker.Reset(r.framerate)
-	}
-
-	// Since the renderer can be restarted after a stop, we need to reset
-	// the done channel and its corresponding sync.Once.
-	r.once = sync.Once{}
-
-	go r.listen()
+// SetOutput sets the output for the renderer.
+func (r *standardRenderer) SetOutput(out io.Writer) {
+	r.mtx.Lock()
+	r.out = out
+	r.mtx.Unlock()
 }
 
-// stop permanently halts the renderer, rendering the final frame.
-func (r *standardRenderer) stop() {
-	// Stop the renderer before acquiring the mutex to avoid a deadlock.
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
-
-	// flush locks the mutex
-	r.flush()
-
+// Close closes the renderer and flushes any remaining data.
+func (r *standardRenderer) Close() (err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -108,55 +71,22 @@ func (r *standardRenderer) stop() {
 	// Move the cursor back to the beginning of the line
 	r.execute("\r")
 
-	if r.useANSICompressor {
-		if w, ok := r.out.(io.WriteCloser); ok {
-			_ = w.Close()
-		}
-	}
+	return
 }
 
-// execute writes a sequence to the terminal.
+// execute writes the given sequence to the output.
 func (r *standardRenderer) execute(seq string) {
 	_, _ = io.WriteString(r.out, seq)
 }
 
-// kill halts the renderer. The final frame will not be rendered.
-func (r *standardRenderer) kill() {
-	// Stop the renderer before acquiring the mutex to avoid a deadlock.
-	r.once.Do(func() {
-		r.done <- struct{}{}
-	})
-
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EraseEntireLine)
-	// Move the cursor back to the beginning of the line
-	r.execute("\r")
-}
-
-// listen waits for ticks on the ticker, or a signal to stop the renderer.
-func (r *standardRenderer) listen() {
-	for {
-		select {
-		case <-r.done:
-			r.ticker.Stop()
-			return
-
-		case <-r.ticker.C:
-			r.flush()
-		}
-	}
-}
-
-// flush renders the buffer.
-func (r *standardRenderer) flush() {
+// Flush renders the buffer.
+func (r *standardRenderer) Flush() (err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	if r.buf.Len() == 0 || r.buf.String() == r.lastRender {
 		// Nothing to do
-		return
+		return nil
 	}
 
 	// Output buffer
@@ -275,14 +205,15 @@ func (r *standardRenderer) flush() {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
 
-	_, _ = r.out.Write(buf.Bytes())
+	_, err = r.out.Write(buf.Bytes())
 	r.lastRender = r.buf.String()
 	r.buf.Reset()
+	return
 }
 
-// write writes to the internal buffer. The buffer will be outputted via the
-// ticker which calls flush().
-func (r *standardRenderer) write(s string) {
+// Render renders the frame to the internal buffer. The buffer will be
+// outputted via the ticker which calls flush().
+func (r *standardRenderer) Render(s string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
@@ -298,96 +229,86 @@ func (r *standardRenderer) write(s string) {
 	_, _ = r.buf.WriteString(s)
 }
 
-func (r *standardRenderer) repaint() {
+// Repaint forces a full repaint.
+func (r *standardRenderer) Repaint() {
 	r.lastRender = ""
 }
 
-func (r *standardRenderer) clearScreen() {
+func (r *standardRenderer) ClearScreen() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	r.execute(ansi.EraseEntireDisplay)
 	r.execute(ansi.MoveCursorOrigin)
 
-	r.repaint()
+	r.Repaint()
 }
 
-func (r *standardRenderer) altScreen() bool {
+// SetMode sets a terminal mode on/off.
+func (r *standardRenderer) SetMode(mode int, on bool) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	return r.altScreenActive
+	switch mode {
+	case altScreenMode:
+		if on == r.altScreenActive {
+			return
+		}
+
+		r.altScreenActive = on
+		if on {
+			r.execute(ansi.EnableAltScreenBuffer)
+
+			// Ensure that the terminal is cleared, even when it doesn't support
+			// alt screen (or alt screen support is disabled, like GNU screen by
+			// default).
+			//
+			// Note: we can't use r.clearScreen() here because the mutex is already
+			// locked.
+			r.execute(ansi.EraseEntireDisplay)
+			r.execute(ansi.MoveCursorOrigin)
+		} else {
+			r.execute(ansi.DisableAltScreenBuffer)
+		}
+
+		// cmd.exe and other terminals keep separate cursor states for the AltScreen
+		// and the main buffer. We have to explicitly reset the cursor visibility
+		// whenever we exit AltScreen.
+		if r.cursorHidden {
+			r.execute(ansi.HideCursor)
+		} else {
+			r.execute(ansi.ShowCursor)
+		}
+
+		r.Repaint()
+
+	case hideCursor:
+		if on == r.cursorHidden {
+			return
+		}
+
+		r.cursorHidden = on
+		if on {
+			r.execute(ansi.HideCursor)
+		} else {
+			r.execute(ansi.ShowCursor)
+		}
+	}
 }
 
-func (r *standardRenderer) enterAltScreen() {
+// Mode returns whether the render has a mode enabled.
+func (r *standardRenderer) Mode(mode int) bool {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	if r.altScreenActive {
-		return
+	switch mode {
+	case altScreenMode:
+		return r.altScreenActive
+	case hideCursor:
+		return r.cursorHidden
 	}
 
-	r.altScreenActive = true
-	r.execute(ansi.EnableAltScreenBuffer)
-
-	// Ensure that the terminal is cleared, even when it doesn't support
-	// alt screen (or alt screen support is disabled, like GNU screen by
-	// default).
-	//
-	// Note: we can't use r.clearScreen() here because the mutex is already
-	// locked.
-	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorOrigin)
-
-	// cmd.exe and other terminals keep separate cursor states for the AltScreen
-	// and the main buffer. We have to explicitly reset the cursor visibility
-	// whenever we enter AltScreen.
-	if r.cursorHidden {
-		r.execute(ansi.HideCursor)
-	} else {
-		r.execute(ansi.ShowCursor)
-	}
-
-	r.repaint()
-}
-
-func (r *standardRenderer) exitAltScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	if !r.altScreenActive {
-		return
-	}
-
-	r.altScreenActive = false
-	r.execute(ansi.DisableAltScreenBuffer)
-
-	// cmd.exe and other terminals keep separate cursor states for the AltScreen
-	// and the main buffer. We have to explicitly reset the cursor visibility
-	// whenever we exit AltScreen.
-	if r.cursorHidden {
-		r.execute(ansi.HideCursor)
-	} else {
-		r.execute(ansi.ShowCursor)
-	}
-
-	r.repaint()
-}
-
-func (r *standardRenderer) showCursor() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.cursorHidden = false
-	r.execute(ansi.ShowCursor)
-}
-
-func (r *standardRenderer) hideCursor() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.cursorHidden = true
-	r.execute(ansi.HideCursor)
+	return false
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
@@ -504,14 +425,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		// Force a repaint by clearing the render cache as we slide into a
 		// render.
 		r.mtx.Lock()
-		r.repaint()
-		r.mtx.Unlock()
-
-	case WindowSizeMsg:
-		r.mtx.Lock()
-		r.width = msg.Width
-		r.height = msg.Height
-		r.repaint()
+		r.Repaint()
 		r.mtx.Unlock()
 
 	case clearScrollAreaMsg:
@@ -520,7 +434,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		// Force a repaint on the area where the scrollable stuff was in this
 		// update cycle
 		r.mtx.Lock()
-		r.repaint()
+		r.Repaint()
 		r.mtx.Unlock()
 
 	case syncScrollAreaMsg:
@@ -531,7 +445,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 		// Force non-scrolling stuff to repaint in this update cycle
 		r.mtx.Lock()
-		r.repaint()
+		r.Repaint()
 		r.mtx.Unlock()
 
 	case scrollUpMsg:
@@ -539,16 +453,32 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
-	case printLineMessage:
-		if !r.altScreenActive {
-			lines := strings.Split(msg.messageBody, "\n")
-			r.mtx.Lock()
-			r.queuedMessageLines = append(r.queuedMessageLines, lines...)
-			r.repaint()
-			r.mtx.Unlock()
-		}
 	}
+}
+
+// Resize sets the size of the terminal.
+func (r *standardRenderer) Resize(w int, h int) {
+	r.mtx.Lock()
+	r.width = w
+	r.height = h
+	r.Repaint()
+	r.mtx.Unlock()
+}
+
+// InsertAbove inserts lines above the current frame. This only works in
+// inline mode.
+func (r *standardRenderer) InsertAbove(s string) error {
+	if r.altScreenActive {
+		return nil
+	}
+
+	lines := strings.Split(s, "\n")
+	r.mtx.Lock()
+	r.queuedMessageLines = append(r.queuedMessageLines, lines...)
+	r.Repaint()
+	r.mtx.Unlock()
+
+	return nil
 }
 
 // HIGH-PERFORMANCE RENDERING STUFF

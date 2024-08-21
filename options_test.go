@@ -30,7 +30,7 @@ func TestOptions(t *testing.T) {
 	t.Run("renderer", func(t *testing.T) {
 		p := NewProgram(nil, WithoutRenderer())
 		switch p.renderer.(type) {
-		case *nilRenderer:
+		case *NilRenderer:
 			return
 		default:
 			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)

@@ -168,7 +168,7 @@ func DisabledReportFocus() Msg { return disableReportFocusMsg{} }
 // Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
-		p.renderer.enterAltScreen()
+		p.renderer.SetMode(altScreenMode, true)
 	} else {
 		p.startupOptions |= withAltScreen
 	}
@@ -179,7 +179,7 @@ func (p *Program) EnterAltScreen() {
 // Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
-		p.renderer.exitAltScreen()
+		p.renderer.SetMode(altScreenMode, false)
 	} else {
 		p.startupOptions &^= withAltScreen
 	}
@@ -190,11 +190,7 @@ func (p *Program) ExitAltScreen() {
 //
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
-	if p.renderer != nil {
-		p.renderer.execute(ansi.EnableMouseCellMotion)
-	} else {
-		p.startupOptions |= withMouseCellMotion
-	}
+	p.execute(ansi.EnableMouseCellMotion)
 }
 
 // DisableMouseCellMotion disables Mouse Cell Motion tracking. This will be
@@ -202,11 +198,7 @@ func (p *Program) EnableMouseCellMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
-	if p.renderer != nil {
-		p.renderer.execute(ansi.DisableMouseCellMotion)
-	} else {
-		p.startupOptions &^= withMouseCellMotion
-	}
+	p.execute(ansi.DisableMouseCellMotion)
 }
 
 // EnableMouseAllMotion enables mouse click, release, wheel and motion events,
@@ -215,11 +207,7 @@ func (p *Program) DisableMouseCellMotion() {
 //
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
-	if p.renderer != nil {
-		p.renderer.execute(ansi.EnableMouseAllMotion)
-	} else {
-		p.startupOptions |= withMouseAllMotion
-	}
+	p.execute(ansi.EnableMouseAllMotion)
 }
 
 // DisableMouseAllMotion disables All Motion mouse tracking. This will be
@@ -227,20 +215,12 @@ func (p *Program) EnableMouseAllMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
-	if p.renderer != nil {
-		p.renderer.execute(ansi.DisableMouseAllMotion)
-	} else {
-		p.startupOptions &^= withMouseAllMotion
-	}
+	p.execute(ansi.DisableMouseAllMotion)
 }
 
 // SetWindowTitle sets the terminal window title.
 //
 // Deprecated: Use the SetWindowTitle command instead.
 func (p *Program) SetWindowTitle(title string) {
-	if p.renderer != nil {
-		p.renderer.execute(ansi.SetWindowTitle(title))
-	} else {
-		p.startupTitle = title
-	}
+	p.execute(ansi.SetWindowTitle(title))
 }

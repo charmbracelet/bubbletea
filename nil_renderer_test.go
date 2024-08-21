@@ -3,19 +3,14 @@ package tea
 import "testing"
 
 func TestNilRenderer(t *testing.T) {
-	r := nilRenderer{}
-	r.start()
-	r.stop()
-	r.kill()
-	r.write("a")
-	r.repaint()
-	r.enterAltScreen()
-	if r.altScreen() {
+	r := NilRenderer{}
+	r.Repaint()
+	r.SetMode(altScreenMode, true)
+	if r.Mode(altScreenMode) {
 		t.Errorf("altScreen should always return false")
 	}
-	r.exitAltScreen()
-	r.clearScreen()
-	r.showCursor()
-	r.hideCursor()
-	r.execute("")
+	r.SetMode(altScreenMode, false)
+	r.ClearScreen()
+	r.SetMode(hideCursor, false)
+	r.SetMode(hideCursor, true)
 }

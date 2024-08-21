@@ -32,20 +32,31 @@ func (p *Program) initTerminal() error {
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
+	if p.bpActive {
+		p.execute(ansi.DisableBracketedPaste)
+	}
 	if p.renderer != nil {
-		p.renderer.execute(ansi.DisableBracketedPaste)
-		p.bpActive = false
-		p.renderer.showCursor()
-		p.disableMouse()
-		if p.modifyOtherKeys != 0 {
-			p.renderer.execute(ansi.DisableModifyOtherKeys)
+		if !p.cursorHidden {
+			p.renderer.SetMode(hideCursor, false)
 		}
-		if p.kittyFlags != 0 {
-			p.renderer.execute(ansi.DisableKittyKeyboard)
-		}
+	}
 
-		if p.renderer.altScreen() {
-			p.renderer.exitAltScreen()
+	if p.mouseEnabled {
+		p.disableMouse()
+	}
+	if p.modifyOtherKeys != 0 {
+		p.execute(ansi.DisableModifyOtherKeys)
+	}
+	if p.kittyFlags != 0 {
+		p.execute(ansi.DisableKittyKeyboard)
+	}
+	if p.reportFocus {
+		p.execute(ansi.DisableReportFocus)
+	}
+
+	if p.renderer != nil {
+		if p.renderer.Mode(altScreenMode) {
+			p.renderer.SetMode(altScreenMode, false)
 
 			// give the terminal a moment to catch up
 			time.Sleep(time.Millisecond * 10) //nolint:gomnd
