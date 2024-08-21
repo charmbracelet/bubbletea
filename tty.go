@@ -36,7 +36,7 @@ func (p *Program) restoreTerminalState() error {
 		p.execute(ansi.DisableBracketedPaste)
 	}
 	if p.renderer != nil {
-		if !p.cursorHidden {
+		if p.renderer.Mode(hideCursor) {
 			p.renderer.SetMode(hideCursor, false)
 		}
 	}
