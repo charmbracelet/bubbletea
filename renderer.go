@@ -34,14 +34,15 @@ type Renderer interface {
 	// `CSI H`.
 	ClearScreen()
 
-	// SetMode sets a terminal mode on/off. The mode argument is an int
-	// consisting of the mode identifier.
-	// For example, to set alt-screen mode, you would call SetMode(1049, true).
+	// SetMode toggles a terminal mode such as bracketed paste, the altscreen,
+	// and so on.
+	//
+	// The mode argument is an int consisting of the mode identifier. For
+	// example, to set alt-screen mode, you would call SetMode(1049, true).
 	SetMode(mode int, on bool)
 
-	// Mode returns whether the render has a mode enabled.
-	// For example, to check if alt-screen mode is enabled, you would call
-	// Mode(1049).
+	// Mode returns whether the render has a mode enabled. For example, to
+	// check if alt-screen mode is enabled, you would call Mode(1049).
 	Mode(mode int) bool
 }
 
