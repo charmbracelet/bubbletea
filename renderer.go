@@ -29,23 +29,27 @@ type Renderer interface {
 	// in succession.
 	Repaint()
 
-	// ClearScreen clear the terminal screen.
+	// ClearScreen clear the terminal screen. This should always have the same
+	// behavior as the "clear" command which is equivalent to `CSI 2 J` and
+	// `CSI H`.
 	ClearScreen()
 
-	// Whether or not the alternate screen buffer is enabled.
-	AltScreen() bool
-	// Enable the alternate screen buffer.
-	EnterAltScreen()
-	// Disable the alternate screen buffer.
-	ExitAltScreen()
+	// SetMode sets a terminal mode on/off. The mode argument is an int
+	// consisting of the mode identifier.
+	// For example, to set alt-screen mode, you would call SetMode(1049, true).
+	SetMode(mode int, on bool)
 
-	// CursorVisibility returns whether the cursor is visible.
-	CursorVisibility() bool
-	// Show the cursor.
-	ShowCursor()
-	// Hide the cursor.
-	HideCursor()
+	// Mode returns whether the render has a mode enabled.
+	// For example, to check if alt-screen mode is enabled, you would call
+	// Mode(1049).
+	Mode(mode int) bool
 }
 
 // repaintMsg forces a full repaint.
 type repaintMsg struct{}
+
+// Terminal modes used by SetMode and Mode in Bubble Tea.
+const (
+	altScreenMode = 1049
+	hideCursor    = 25
+)

@@ -5,12 +5,12 @@ import "testing"
 func TestNilRenderer(t *testing.T) {
 	r := NilRenderer{}
 	r.Repaint()
-	r.EnterAltScreen()
-	if r.AltScreen() {
+	r.SetMode(altScreenMode, true)
+	if r.Mode(altScreenMode) {
 		t.Errorf("altScreen should always return false")
 	}
-	r.ExitAltScreen()
+	r.SetMode(altScreenMode, false)
 	r.ClearScreen()
-	r.ShowCursor()
-	r.HideCursor()
+	r.SetMode(hideCursor, false)
+	r.SetMode(hideCursor, true)
 }

@@ -168,7 +168,7 @@ func DisabledReportFocus() Msg { return disableReportFocusMsg{} }
 // Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
-		p.renderer.EnterAltScreen()
+		p.renderer.SetMode(altScreenMode, true)
 	} else {
 		p.startupOptions |= withAltScreen
 	}
@@ -179,7 +179,7 @@ func (p *Program) EnterAltScreen() {
 // Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
-		p.renderer.ExitAltScreen()
+		p.renderer.SetMode(altScreenMode, false)
 	} else {
 		p.startupOptions &^= withAltScreen
 	}

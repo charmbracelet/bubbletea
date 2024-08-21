@@ -45,12 +45,12 @@ func TestClearMsg(t *testing.T) {
 		{
 			name:     "cursor_hide",
 			cmds:     []Cmd{HideCursor},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
+			expected: "\x1b[?25l\x1b[?2004h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
 		},
 		{
 			name:     "cursor_hideshow",
 			cmds:     []Cmd{HideCursor, ShowCursor},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\x1b[?25h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?25h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l",
 		},
 		{
 			name:     "bp_stop_start",

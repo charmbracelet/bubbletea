@@ -394,10 +394,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.ClearScreen()
 
 			case enterAltScreenMsg:
-				p.renderer.EnterAltScreen()
+				p.renderer.SetMode(altScreenMode, true)
 
 			case exitAltScreenMsg:
-				p.renderer.ExitAltScreen()
+				p.renderer.SetMode(altScreenMode, false)
 
 			case enableMouseCellMotionMsg, enableMouseAllMotionMsg:
 				switch msg.(type) {
@@ -415,10 +415,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.mouseEnabled = false
 
 			case showCursorMsg:
-				p.renderer.ShowCursor()
+				p.renderer.SetMode(hideCursor, false)
 
 			case hideCursorMsg:
-				p.renderer.HideCursor()
+				p.renderer.SetMode(hideCursor, true)
 
 			case enableBracketedPasteMsg:
 				p.execute(ansi.EnableBracketedPaste)
@@ -688,14 +688,14 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Hide the cursor before starting the renderer.
-	p.renderer.HideCursor()
+	p.renderer.SetMode(hideCursor, true)
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
 		p.execute(ansi.SetWindowTitle(p.startupTitle))
 	}
 	if p.startupOptions&withAltScreen != 0 {
-		p.renderer.EnterAltScreen()
+		p.renderer.SetMode(altScreenMode, true)
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.EnableBracketedPaste)
@@ -868,8 +868,8 @@ func (p *Program) ReleaseTerminal() error {
 
 	if p.renderer != nil {
 		p.stopRenderer(false)
-		p.altScreenWasActive = p.renderer.AltScreen()
-		p.cursorHidden = !p.renderer.CursorVisibility()
+		p.altScreenWasActive = p.renderer.Mode(altScreenMode)
+		p.cursorHidden = p.renderer.Mode(hideCursor)
 	}
 
 	return p.restoreTerminalState()
@@ -888,7 +888,7 @@ func (p *Program) RestoreTerminal() error {
 		return err
 	}
 	if p.altScreenWasActive {
-		p.renderer.EnterAltScreen()
+		p.renderer.SetMode(altScreenMode, true)
 	} else {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
@@ -896,9 +896,9 @@ func (p *Program) RestoreTerminal() error {
 	if p.renderer != nil {
 		p.startRenderer()
 		if p.cursorHidden {
-			p.renderer.HideCursor()
+			p.renderer.SetMode(hideCursor, true)
 		} else {
-			p.renderer.ShowCursor()
+			p.renderer.SetMode(hideCursor, false)
 		}
 	}
 	if p.bpActive {

@@ -37,7 +37,7 @@ func (p *Program) restoreTerminalState() error {
 	}
 	if p.renderer != nil {
 		if !p.cursorHidden {
-			p.renderer.ShowCursor()
+			p.renderer.SetMode(hideCursor, false)
 		}
 	}
 
@@ -55,8 +55,8 @@ func (p *Program) restoreTerminalState() error {
 	}
 
 	if p.renderer != nil {
-		if p.renderer.AltScreen() {
-			p.renderer.ExitAltScreen()
+		if p.renderer.Mode(altScreenMode) {
+			p.renderer.SetMode(altScreenMode, false)
 
 			// give the terminal a moment to catch up
 			time.Sleep(time.Millisecond * 10) //nolint:gomnd

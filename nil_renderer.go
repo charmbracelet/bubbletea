@@ -26,26 +26,14 @@ func (NilRenderer) Repaint() {}
 // ClearScreen implements the Renderer interface.
 func (NilRenderer) ClearScreen() {}
 
-// AltScreen implements the Renderer interface.
-func (NilRenderer) AltScreen() bool { return false }
-
-// EnterAltScreen implements the Renderer interface.
-func (NilRenderer) EnterAltScreen() {}
-
-// ExitAltScreen implements the Renderer interface.
-func (NilRenderer) ExitAltScreen() {}
-
-// CursorVisibility implements the Renderer interface.
-func (NilRenderer) CursorVisibility() bool { return false }
-
-// ShowCursor implements the Renderer interface.
-func (NilRenderer) ShowCursor() {}
-
-// HideCursor implements the Renderer interface.
-func (NilRenderer) HideCursor() {}
-
 // InsertAbove implements the Renderer interface.
 func (NilRenderer) InsertAbove(string) error { return nil }
 
 // Resize implements the Renderer interface.
 func (NilRenderer) Resize(int, int) {}
+
+// SetMode implements the Renderer interface.
+func (NilRenderer) SetMode(int, bool) {}
+
+// Mode implements the Renderer interface.
+func (NilRenderer) Mode(int) bool { return false }

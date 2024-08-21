@@ -245,86 +245,71 @@ func (r *standardRenderer) ClearScreen() {
 	r.Repaint()
 }
 
-func (r *standardRenderer) AltScreen() bool {
+// SetMode sets a terminal mode on/off.
+func (r *standardRenderer) SetMode(mode int, on bool) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	return r.altScreenActive
+	switch mode {
+	case altScreenMode:
+		if on == r.altScreenActive {
+			return
+		}
+
+		r.altScreenActive = on
+		if on {
+			r.execute(ansi.EnableAltScreenBuffer)
+
+			// Ensure that the terminal is cleared, even when it doesn't support
+			// alt screen (or alt screen support is disabled, like GNU screen by
+			// default).
+			//
+			// Note: we can't use r.clearScreen() here because the mutex is already
+			// locked.
+			r.execute(ansi.EraseEntireDisplay)
+			r.execute(ansi.MoveCursorOrigin)
+		} else {
+			r.execute(ansi.DisableAltScreenBuffer)
+		}
+
+		// cmd.exe and other terminals keep separate cursor states for the AltScreen
+		// and the main buffer. We have to explicitly reset the cursor visibility
+		// whenever we exit AltScreen.
+		if r.cursorHidden {
+			r.execute(ansi.HideCursor)
+		} else {
+			r.execute(ansi.ShowCursor)
+		}
+
+		r.Repaint()
+
+	case hideCursor:
+		if on == r.cursorHidden {
+			return
+		}
+
+		r.cursorHidden = on
+		if on {
+			r.execute(ansi.HideCursor)
+		} else {
+			r.execute(ansi.ShowCursor)
+		}
+	}
 }
 
-func (r *standardRenderer) EnterAltScreen() {
+// Mode returns whether the render has a mode enabled.
+func (r *standardRenderer) Mode(mode int) bool {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	if r.altScreenActive {
-		return
+	switch mode {
+	case altScreenMode:
+		return r.altScreenActive
+	case hideCursor:
+		return r.cursorHidden
 	}
 
-	r.altScreenActive = true
-	r.execute(ansi.EnableAltScreenBuffer)
-
-	// Ensure that the terminal is cleared, even when it doesn't support
-	// alt screen (or alt screen support is disabled, like GNU screen by
-	// default).
-	//
-	// Note: we can't use r.clearScreen() here because the mutex is already
-	// locked.
-	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorOrigin)
-
-	// cmd.exe and other terminals keep separate cursor states for the AltScreen
-	// and the main buffer. We have to explicitly reset the cursor visibility
-	// whenever we enter AltScreen.
-	if r.cursorHidden {
-		r.execute(ansi.HideCursor)
-	} else {
-		r.execute(ansi.ShowCursor)
-	}
-
-	r.Repaint()
-}
-
-func (r *standardRenderer) ExitAltScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	if !r.altScreenActive {
-		return
-	}
-
-	r.altScreenActive = false
-	r.execute(ansi.DisableAltScreenBuffer)
-
-	// cmd.exe and other terminals keep separate cursor states for the AltScreen
-	// and the main buffer. We have to explicitly reset the cursor visibility
-	// whenever we exit AltScreen.
-	if r.cursorHidden {
-		r.execute(ansi.HideCursor)
-	} else {
-		r.execute(ansi.ShowCursor)
-	}
-
-	r.Repaint()
-}
-
-func (r *standardRenderer) CursorVisibility() bool {
-	return !r.cursorHidden
-}
-
-func (r *standardRenderer) ShowCursor() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.cursorHidden = false
-	r.execute(ansi.ShowCursor)
-}
-
-func (r *standardRenderer) HideCursor() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.cursorHidden = true
-	r.execute(ansi.HideCursor)
+	return false
 }
 
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
