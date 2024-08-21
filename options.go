@@ -327,3 +327,18 @@ func _WithWindowsInputMode() ProgramOption { //nolint:unused
 		p.win32Input = true
 	}
 }
+
+// WithoutGraphemeClustering disables grapheme clustering. This is useful if you
+// want to disable grapheme clustering for your program.
+//
+// Grapheme clustering is a character width calculation method that accurately
+// calculates the width of wide characters in a terminal. This is useful for
+// properly rendering double width characters such as emojis and CJK
+// characters.
+//
+// See https://mitchellh.com/writing/grapheme-clusters-in-terminals
+func WithoutGraphemeClustering() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutGraphemeClustering
+	}
+}
