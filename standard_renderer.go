@@ -213,7 +213,7 @@ func (r *standardRenderer) Flush() (err error) {
 
 // Render renders the frame to the internal buffer. The buffer will be
 // outputted via the ticker which calls flush().
-func (r *standardRenderer) Render(s string) error {
+func (r *standardRenderer) Render(s string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
@@ -226,8 +226,7 @@ func (r *standardRenderer) Render(s string) error {
 		s = " "
 	}
 
-	_, err := r.buf.WriteString(s)
-	return err
+	_, _ = r.buf.WriteString(s)
 }
 
 // Repaint forces a full repaint.
@@ -454,7 +453,6 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
 	}
 }
 

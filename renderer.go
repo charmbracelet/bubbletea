@@ -8,7 +8,7 @@ type Renderer interface {
 	Close() error
 
 	// Render renders a frame to the output.
-	Render(string) error
+	Render(string)
 
 	// SetOutput sets the output for the renderer.
 	SetOutput(io.Writer)

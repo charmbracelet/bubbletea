@@ -18,7 +18,7 @@ func (NilRenderer) Flush() error { return nil }
 func (NilRenderer) Close() error { return nil }
 
 // Render implements the Renderer interface.
-func (NilRenderer) Render(string) error { return nil }
+func (NilRenderer) Render(string) {}
 
 // Repaint implements the Renderer interface.
 func (NilRenderer) Repaint() {}
