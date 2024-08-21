@@ -901,6 +901,9 @@ func (p *Program) RestoreTerminal() error {
 			p.renderer.SetMode(hideCursor, false)
 		}
 	}
+	if p.cursorHidden {
+		p.execute(ansi.HideCursor)
+	}
 	if p.bpActive {
 		p.execute(ansi.EnableBracketedPaste)
 	}
