@@ -108,7 +108,7 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 	case ansi.ESC:
 		if len(buf) == 1 {
 			// Escape key
-			return 1, KeyPressMsg{Type: KeyEscape}
+			return 1, KeyPressMsg{typ: KeyEscape}
 		}
 
 		switch b := buf[1]; b {
@@ -125,13 +125,13 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 		default:
 			n, e := parseSequence(buf[1:])
 			if k, ok := e.(KeyPressMsg); ok {
-				k.Mod |= ModAlt
+				k.mod |= ModAlt
 				return n + 1, k
 			}
 
 			// Not a key sequence, nor an alt modified key sequence. In that
 			// case, just report a single escape key.
-			return 1, KeyPressMsg{Type: KeyEscape}
+			return 1, KeyPressMsg{typ: KeyEscape}
 		}
 	case ansi.SS3:
 		return parseSs3(buf)
@@ -150,7 +150,7 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 			// C1 control code
 			// UTF-8 never starts with a C1 control code
 			// Encode these as Ctrl+Alt+<code - 0x40>
-			return 1, KeyPressMsg{Runes: []rune{rune(b) - 0x40}, Mod: ModCtrl | ModAlt}
+			return 1, KeyPressMsg{runes: []rune{rune(b) - 0x40}, mod: ModCtrl | ModAlt}
 		}
 		return parseUtf8(buf)
 	}
@@ -159,7 +159,7 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 func parseCsi(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+[ key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{runes: []rune{rune(b[1])}, mod: ModAlt}
 	}
 
 	var csi ansi.CsiSequence
@@ -223,7 +223,7 @@ func parseCsi(b []byte) (int, Msg) {
 		if b[i-1] == '$' {
 			n, ev := parseCsi(append(b[:i-1], '~'))
 			if k, ok := ev.(KeyPressMsg); ok {
-				k.Mod |= ModShift
+				k.mod |= ModShift
 				return n, k
 			}
 		}
@@ -280,7 +280,7 @@ func parseCsi(b []byte) (int, Msg) {
 				//
 				// For a non ambiguous cursor position report, use
 				// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
-				return i, multiMsg{KeyPressMsg{Type: KeyF3, Mod: KeyMod(csi.Param(1) - 1)}, m}
+				return i, multiMsg{KeyPressMsg{typ: KeyF3, mod: KeyMod(csi.Param(1) - 1)}, m}
 			}
 
 			return i, m
@@ -296,23 +296,23 @@ func parseCsi(b []byte) (int, Msg) {
 		var k KeyPressMsg
 		switch cmd {
 		case 'a', 'b', 'c', 'd':
-			k = KeyPressMsg{Type: KeyUp + KeyType(cmd-'a'), Mod: ModShift}
+			k = KeyPressMsg{typ: KeyUp + KeyType(cmd-'a'), mod: ModShift}
 		case 'A', 'B', 'C', 'D':
-			k = KeyPressMsg{Type: KeyUp + KeyType(cmd-'A')}
+			k = KeyPressMsg{typ: KeyUp + KeyType(cmd-'A')}
 		case 'E':
-			k = KeyPressMsg{Type: KeyBegin}
+			k = KeyPressMsg{typ: KeyBegin}
 		case 'F':
-			k = KeyPressMsg{Type: KeyEnd}
+			k = KeyPressMsg{typ: KeyEnd}
 		case 'H':
-			k = KeyPressMsg{Type: KeyHome}
+			k = KeyPressMsg{typ: KeyHome}
 		case 'P', 'Q', 'R', 'S':
-			k = KeyPressMsg{Type: KeyF1 + KeyType(cmd-'P')}
+			k = KeyPressMsg{typ: KeyF1 + KeyType(cmd-'P')}
 		case 'Z':
-			k = KeyPressMsg{Type: KeyTab, Mod: ModShift}
+			k = KeyPressMsg{typ: KeyTab, mod: ModShift}
 		}
 		if paramsLen > 1 && csi.Param(0) == 1 && csi.Param(1) != -1 {
 			// CSI 1 ; <modifiers> A
-			k.Mod |= KeyMod(csi.Param(1) - 1)
+			k.mod |= KeyMod(csi.Param(1) - 1)
 		}
 		return i, k
 	case 'M':
@@ -392,51 +392,51 @@ func parseCsi(b []byte) (int, Msg) {
 			switch param {
 			case 1:
 				if flags&_FlagFind != 0 {
-					k = KeyPressMsg{Type: KeyFind}
+					k = KeyPressMsg{typ: KeyFind}
 				} else {
-					k = KeyPressMsg{Type: KeyHome}
+					k = KeyPressMsg{typ: KeyHome}
 				}
 			case 2:
-				k = KeyPressMsg{Type: KeyInsert}
+				k = KeyPressMsg{typ: KeyInsert}
 			case 3:
-				k = KeyPressMsg{Type: KeyDelete}
+				k = KeyPressMsg{typ: KeyDelete}
 			case 4:
 				if flags&_FlagSelect != 0 {
-					k = KeyPressMsg{Type: KeySelect}
+					k = KeyPressMsg{typ: KeySelect}
 				} else {
-					k = KeyPressMsg{Type: KeyEnd}
+					k = KeyPressMsg{typ: KeyEnd}
 				}
 			case 5:
-				k = KeyPressMsg{Type: KeyPgUp}
+				k = KeyPressMsg{typ: KeyPgUp}
 			case 6:
-				k = KeyPressMsg{Type: KeyPgDown}
+				k = KeyPressMsg{typ: KeyPgDown}
 			case 7:
-				k = KeyPressMsg{Type: KeyHome}
+				k = KeyPressMsg{typ: KeyHome}
 			case 8:
-				k = KeyPressMsg{Type: KeyEnd}
+				k = KeyPressMsg{typ: KeyEnd}
 			case 11, 12, 13, 14, 15:
-				k = KeyPressMsg{Type: KeyF1 + KeyType(param-11)}
+				k = KeyPressMsg{typ: KeyF1 + KeyType(param-11)}
 			case 17, 18, 19, 20, 21:
-				k = KeyPressMsg{Type: KeyF6 + KeyType(param-17)}
+				k = KeyPressMsg{typ: KeyF6 + KeyType(param-17)}
 			case 23, 24, 25, 26:
-				k = KeyPressMsg{Type: KeyF11 + KeyType(param-23)}
+				k = KeyPressMsg{typ: KeyF11 + KeyType(param-23)}
 			case 28, 29:
-				k = KeyPressMsg{Type: KeyF15 + KeyType(param-28)}
+				k = KeyPressMsg{typ: KeyF15 + KeyType(param-28)}
 			case 31, 32, 33, 34:
-				k = KeyPressMsg{Type: KeyF17 + KeyType(param-31)}
+				k = KeyPressMsg{typ: KeyF17 + KeyType(param-31)}
 			}
 
 			// modifiers
 			if paramsLen > 1 && csi.Param(1) != -1 {
-				k.Mod |= KeyMod(csi.Param(1) - 1)
+				k.mod |= KeyMod(csi.Param(1) - 1)
 			}
 
 			// Handle URxvt weird keys
 			switch cmd {
 			case '^':
-				k.Mod |= ModCtrl
+				k.mod |= ModCtrl
 			case '@':
-				k.Mod |= ModCtrl | ModShift
+				k.mod |= ModCtrl | ModShift
 			}
 
 			return i, k
@@ -450,7 +450,7 @@ func parseCsi(b []byte) (int, Msg) {
 func parseSs3(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+O key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{runes: []rune{rune(b[1])}, mod: ModAlt}
 	}
 
 	var i int
@@ -482,30 +482,30 @@ func parseSs3(b []byte) (int, Msg) {
 	var k KeyPressMsg
 	switch gl {
 	case 'a', 'b', 'c', 'd':
-		k = KeyPressMsg{Type: KeyUp + KeyType(gl-'a'), Mod: ModCtrl}
+		k = KeyPressMsg{typ: KeyUp + KeyType(gl-'a'), mod: ModCtrl}
 	case 'A', 'B', 'C', 'D':
-		k = KeyPressMsg{Type: KeyUp + KeyType(gl-'A')}
+		k = KeyPressMsg{typ: KeyUp + KeyType(gl-'A')}
 	case 'E':
-		k = KeyPressMsg{Type: KeyBegin}
+		k = KeyPressMsg{typ: KeyBegin}
 	case 'F':
-		k = KeyPressMsg{Type: KeyEnd}
+		k = KeyPressMsg{typ: KeyEnd}
 	case 'H':
-		k = KeyPressMsg{Type: KeyHome}
+		k = KeyPressMsg{typ: KeyHome}
 	case 'P', 'Q', 'R', 'S':
-		k = KeyPressMsg{Type: KeyF1 + KeyType(gl-'P')}
+		k = KeyPressMsg{typ: KeyF1 + KeyType(gl-'P')}
 	case 'M':
-		k = KeyPressMsg{Type: KeyKpEnter}
+		k = KeyPressMsg{typ: KeyKpEnter}
 	case 'X':
-		k = KeyPressMsg{Type: KeyKpEqual}
+		k = KeyPressMsg{typ: KeyKpEqual}
 	case 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y':
-		k = KeyPressMsg{Type: KeyKpMultiply + KeyType(gl-'j')}
+		k = KeyPressMsg{typ: KeyKpMultiply + KeyType(gl-'j')}
 	default:
 		return i, UnknownMsg(b[:i])
 	}
 
 	// Handle weird SS3 <modifier> Func
 	if mod > 0 {
-		k.Mod |= KeyMod(mod - 1)
+		k.mod |= KeyMod(mod - 1)
 	}
 
 	return i, k
@@ -514,7 +514,7 @@ func parseSs3(b []byte) (int, Msg) {
 func parseOsc(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+] key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{runes: []rune{rune(b[1])}, mod: ModAlt}
 	}
 
 	var i int
@@ -639,7 +639,7 @@ func parseStTerminated(intro8, intro7 byte) func([]byte) (int, Msg) {
 func parseDcs(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+P key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{runes: []rune{rune(b[1])}, mod: ModAlt}
 	}
 
 	var params [16]int
@@ -751,7 +751,7 @@ func parseDcs(b []byte) (int, Msg) {
 func parseApc(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+_ key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{runes: []rune{rune(b[1])}, mod: ModAlt}
 	}
 
 	// APC sequences are introduced by APC (0x9f) or ESC _ (0x1b 0x5f)
@@ -769,7 +769,7 @@ func parseUtf8(b []byte) (int, Msg) {
 		return 1, parseControl(c)
 	} else if c > ansi.US && c < ansi.DEL {
 		// ASCII printable characters
-		return 1, KeyPressMsg{Runes: []rune{rune(c)}}
+		return 1, KeyPressMsg{runes: []rune{rune(c)}}
 	}
 
 	if r, _ := utf8.DecodeRune(b); r == utf8.RuneError {
@@ -777,46 +777,46 @@ func parseUtf8(b []byte) (int, Msg) {
 	}
 
 	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
-	return len(cluster), KeyPressMsg{Runes: []rune(string(cluster))}
+	return len(cluster), KeyPressMsg{runes: []rune(string(cluster))}
 }
 
 func parseControl(b byte) Msg {
 	switch b {
 	case ansi.NUL:
 		if flags&_FlagCtrlAt != 0 {
-			return KeyPressMsg{Runes: []rune{'@'}, Mod: ModCtrl}
+			return KeyPressMsg{runes: []rune{'@'}, mod: ModCtrl}
 		}
-		return KeyPressMsg{Runes: []rune{' '}, Type: KeySpace, Mod: ModCtrl}
+		return KeyPressMsg{runes: []rune{' '}, typ: KeySpace, mod: ModCtrl}
 	case ansi.BS:
-		return KeyPressMsg{Runes: []rune{'h'}, Mod: ModCtrl}
+		return KeyPressMsg{runes: []rune{'h'}, mod: ModCtrl}
 	case ansi.HT:
 		if flags&_FlagCtrlI != 0 {
-			return KeyPressMsg{Runes: []rune{'i'}, Mod: ModCtrl}
+			return KeyPressMsg{runes: []rune{'i'}, mod: ModCtrl}
 		}
-		return KeyPressMsg{Type: KeyTab}
+		return KeyPressMsg{typ: KeyTab}
 	case ansi.CR:
 		if flags&_FlagCtrlM != 0 {
-			return KeyPressMsg{Runes: []rune{'m'}, Mod: ModCtrl}
+			return KeyPressMsg{runes: []rune{'m'}, mod: ModCtrl}
 		}
-		return KeyPressMsg{Type: KeyEnter}
+		return KeyPressMsg{typ: KeyEnter}
 	case ansi.ESC:
 		if flags&_FlagCtrlOpenBracket != 0 {
-			return KeyPressMsg{Runes: []rune{'['}, Mod: ModCtrl}
+			return KeyPressMsg{runes: []rune{'['}, mod: ModCtrl}
 		}
-		return KeyPressMsg{Type: KeyEscape}
+		return KeyPressMsg{typ: KeyEscape}
 	case ansi.DEL:
 		if flags&_FlagBackspace != 0 {
-			return KeyPressMsg{Type: KeyDelete}
+			return KeyPressMsg{typ: KeyDelete}
 		}
-		return KeyPressMsg{Type: KeyBackspace}
+		return KeyPressMsg{typ: KeyBackspace}
 	case ansi.SP:
-		return KeyPressMsg{Type: KeySpace, Runes: []rune{' '}}
+		return KeyPressMsg{typ: KeySpace, runes: []rune{' '}}
 	default:
 		if b >= ansi.SOH && b <= ansi.SUB {
 			// Use lower case letters for control codes
-			return KeyPressMsg{Runes: []rune{rune(b + 0x60)}, Mod: ModCtrl}
+			return KeyPressMsg{runes: []rune{rune(b + 0x60)}, mod: ModCtrl}
 		} else if b >= ansi.FS && b <= ansi.US {
-			return KeyPressMsg{Runes: []rune{rune(b + 0x40)}, Mod: ModCtrl}
+			return KeyPressMsg{runes: []rune{rune(b + 0x40)}, mod: ModCtrl}
 		}
 		return UnknownMsg(b)
 	}

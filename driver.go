@@ -13,7 +13,7 @@ import (
 // buffer.
 type driver struct {
 	rd    cancelreader.CancelReader
-	table map[string]Key // table is a lookup table for key sequences.
+	table map[string]key // table is a lookup table for key sequences.
 
 	term string // term is the terminal name $TERM.
 

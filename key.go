@@ -192,12 +192,15 @@ const (
 	KeyIsoLevel5Shift
 )
 
-// Key contains information about a key or release. Keys are always sent to the
+// KeyMsg represents an interface that all key messages must implement.
+// KeyMsg contains information about a key or release. Keys are always sent to the
 // program's update function. There are a couple general patterns you could use
 // to check for key presses or releases:
 //
 //	// Switch on the string representation of the key (shorter)
 //	switch msg := msg.(type) {
+//	case KeyMsg: // catch all key messages (presses and releases)
+//	    fmt.Println(msg.String())
 //	case KeyPressMsg:
 //	    switch msg.String() {
 //	    case "enter":
@@ -210,29 +213,67 @@ const (
 //	// Switch on the key type (more foolproof)
 //	switch msg := msg.(type) {
 //	case KeyReleaseMsg:
-//	    switch msg.Sym {
+//	    switch msg.Type() {
 //	    case KeyEnter:
 //	        fmt.Println("you pressed enter!")
 //	    case KeyRunes:
-//	        switch string(msg.Runes) {
+//	        switch string(msg.Runes()) {
 //	        case "a":
 //	            fmt.Println("you pressed a!")
 //	        }
 //	    }
 //	}
 //
-// Note that Key.Runes will always contain at least one character, so you can
-// always safely call Key.Runes[0]. In most cases Key.Runes will only contain
-// one character, though certain input method editors (most notably Chinese
-// IMEs) can input multiple runes at once.
-type Key struct {
-	// Runes contains the actual characters received. This usually has a length
-	// of 1. Use [Rune()] to get the first key rune received. If the user
-	// presses shift+a, the Runes will be `[]rune{'A'}`.
-	Runes []rune
+// Note that in the case of [KeyRunes], `key.Runes()` will always contain at
+// least one character, so you can always safely call `key.Runes()[0]`.
+// Instead, use `key.Rune()` to get the first key rune received. Though, in
+// certain input method editors (most notably Chinese IMEs) can input multiple
+// runes at once.
+type KeyMsg interface {
+	// String returns a friendly string representation for a key. It's safe (and
+	// encouraged) for use in key comparison.
+	//
+	// For example:
+	// 	k := Key{Type: KeyEnter}
+	// 	fmt.Println(k) // Output: enter
+	// 	k = Key{Type: KeyRunes, Runes: []rune{'A'}, Mod: ModShift}
+	// 	fmt.Println(k) // Output: shift+a
+	// 	k = Key{Type: KeySpace, Runes: []rune{' '}, Mod: ModCtrl|ModShift}
+	// 	fmt.Println(k) // Output: ctrl+shift+space
+	String() string
 
-	// Type is a special key, like enter, tab, backspace, and so on.
-	Type KeyType
+	// Type returns the key type. A key type is either a special key or
+	// KeyRunes. Special keys are things like KeyEnter, KeyBackspace, and so
+	// on.
+	Type() KeyType
+
+	// Rune returns the first rune in the Runes field. If the Runes field is
+	// empty, it returns 0.
+	Rune() rune
+
+	// Runes returns the runes of the key. If the key is a special key, this
+	// will return nil. Use [Rune()] if you only care about the first rune.
+	Runes() []rune
+
+	// Mod returns the key modifiers. Modifiers are things like ModCtrl,
+	// ModAlt, ModShift, and so on.
+	Mod() KeyMod
+
+	// IsRepeat indicates whether the key is being held down and sending events
+	// repeatedly.
+	IsRepeat() bool
+}
+
+// key represents a key press or release event. It contains information about
+// the key pressed, like the runes, the type of key, and the modifiers pressed.
+type key struct {
+	// runes contains the actual characters received. This usually has a length
+	// of 1. Use [Rune()] to get the first key rune received. If the user
+	// presses shift+a, the runes will be `[]rune{'A'}`.
+	runes []rune
+
+	// typ is a special key, like enter, tab, backspace, and so on.
+	typ KeyType
 
 	// altRune is the actual, unshifted key pressed by the user. For example,
 	// if the user presses shift+a, or caps lock is on, the altRune will be
@@ -256,54 +297,130 @@ type Key struct {
 	// Console API.
 	baseRune rune
 
-	// Mod is a modifier key, like ctrl, alt, and so on.
-	Mod KeyMod
+	// mod is a modifier key, like ctrl, alt, and so on.
+	mod KeyMod
 
-	// IsRepeat indicates whether the key is being held down and sending events
+	// isRepeat indicates whether the key is being held down and sending events
 	// repeatedly.
 	//
 	// This is only available with the Kitty Keyboard Protocol or the Windows
 	// Console API.
-	IsRepeat bool
+	isRepeat bool
+}
+
+// Mod represents a key modifier. Modifiers are things like ModCtrl, ModAlt,
+// ModShift, and so on.
+func (k key) Mod() KeyMod {
+	return k.mod
+}
+
+// IsRepeat indicates whether the key is being held down and sending events
+// repeatedly.
+func (k key) IsRepeat() bool {
+	return k.isRepeat
 }
 
 // KeyPressMsg represents a key press message.
-type KeyPressMsg Key
+type KeyPressMsg key
+
+var _ KeyMsg = KeyPressMsg{}
 
 // String implements fmt.Stringer and is quite useful for matching key
-// events. For details, on what this returns see [Key.String].
+// events. For details, on what this returns see [key.String].
 func (k KeyPressMsg) String() string {
-	return Key(k).String()
+	return key(k).String()
 }
 
 // Rune returns the first rune in the Runes field. If the Runes field is empty,
 // it returns 0.
 func (k KeyPressMsg) Rune() rune {
-	return Key(k).Rune()
+	return key(k).Rune()
+}
+
+// Runes returns the runes of the key. If the key is a special key, this will
+// return nil.
+func (k KeyPressMsg) Runes() []rune {
+	return key(k).Runes()
+}
+
+// Type returns the key type. A key type is either a special key or KeyRunes.
+// Special keys are things like KeyEnter, KeyBackspace, and so on.
+func (k KeyPressMsg) Type() KeyType {
+	return key(k).Type()
+}
+
+// Mod returns the key modifiers. Modifiers are things like ModCtrl, ModAlt,
+// ModShift, and so on.
+func (k KeyPressMsg) Mod() KeyMod {
+	return key(k).Mod()
+}
+
+// IsRepeat indicates whether the key is being held down and sending events
+// repeatedly.
+func (k KeyPressMsg) IsRepeat() bool {
+	return key(k).IsRepeat()
 }
 
 // KeyReleaseMsg represents a key release message.
-type KeyReleaseMsg Key
+type KeyReleaseMsg key
+
+var _ KeyMsg = KeyReleaseMsg{}
 
 // String implements fmt.Stringer and is quite useful for matching complex key
-// events. For details, on what this returns see [Key.String].
+// events. For details, on what this returns see [key.String].
 func (k KeyReleaseMsg) String() string {
-	return Key(k).String()
+	return key(k).String()
 }
 
 // Rune returns the first rune in the Runes field. If the Runes field is empty,
 // it returns 0.
 func (k KeyReleaseMsg) Rune() rune {
-	return Key(k).Rune()
+	return key(k).Rune()
+}
+
+// Runes returns the runes of the key. If the key is a special key, this will
+// return nil.
+func (k KeyReleaseMsg) Runes() []rune {
+	return key(k).Runes()
+}
+
+// Type returns the key type. A key type is either a special key or KeyRunes.
+// Special keys are things like KeyEnter, KeyBackspace, and so on.
+func (k KeyReleaseMsg) Type() KeyType {
+	return key(k).Type()
+}
+
+// Mod returns the key modifiers. Modifiers are things like ModCtrl, ModAlt,
+// ModShift, and so on.
+func (k KeyReleaseMsg) Mod() KeyMod {
+	return key(k).Mod()
+}
+
+// IsRepeat indicates whether the key is being held down and sending events
+// repeatedly.
+func (k KeyReleaseMsg) IsRepeat() bool {
+	return key(k).IsRepeat()
+}
+
+// Runes returns the runes of the key. If the key is a special key, this will
+// return nil.
+func (k key) Runes() []rune {
+	return k.runes
 }
 
 // Rune returns the first rune in the Runes field. If the Runes field is empty,
 // it returns 0.
-func (k Key) Rune() rune {
-	if len(k.Runes) == 0 {
+func (k key) Rune() rune {
+	if len(k.runes) == 0 {
 		return 0
 	}
-	return k.Runes[0]
+	return k.runes[0]
+}
+
+// Type returns the key type. A key type is either a special key or KeyRunes.
+// Special keys are things like KeyEnter, KeyBackspace, and so on.
+func (k key) Type() KeyType {
+	return k.typ
 }
 
 // String implements fmt.Stringer and is used to convert a key to a string.
@@ -321,24 +438,24 @@ func (k Key) Rune() rune {
 //
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
-func (k Key) String() string {
+func (k key) String() string {
 	var s string
-	if k.Mod.Contains(ModCtrl) && k.Type != KeyLeftCtrl && k.Type != KeyRightCtrl {
+	if k.mod.Contains(ModCtrl) && k.typ != KeyLeftCtrl && k.typ != KeyRightCtrl {
 		s += "ctrl+"
 	}
-	if k.Mod.Contains(ModAlt) && k.Type != KeyLeftAlt && k.Type != KeyRightAlt {
+	if k.mod.Contains(ModAlt) && k.typ != KeyLeftAlt && k.typ != KeyRightAlt {
 		s += "alt+"
 	}
-	if k.Mod.Contains(ModShift) && k.Type != KeyLeftShift && k.Type != KeyRightShift {
+	if k.mod.Contains(ModShift) && k.typ != KeyLeftShift && k.typ != KeyRightShift {
 		s += "shift+"
 	}
-	if k.Mod.Contains(ModMeta) && k.Type != KeyLeftMeta && k.Type != KeyRightMeta {
+	if k.mod.Contains(ModMeta) && k.typ != KeyLeftMeta && k.typ != KeyRightMeta {
 		s += "meta+"
 	}
-	if k.Mod.Contains(ModHyper) && k.Type != KeyLeftHyper && k.Type != KeyRightHyper {
+	if k.mod.Contains(ModHyper) && k.typ != KeyLeftHyper && k.typ != KeyRightHyper {
 		s += "hyper+"
 	}
-	if k.Mod.Contains(ModSuper) && k.Type != KeyLeftSuper && k.Type != KeyRightSuper {
+	if k.mod.Contains(ModSuper) && k.typ != KeyLeftSuper && k.typ != KeyRightSuper {
 		s += "super+"
 	}
 
@@ -356,15 +473,15 @@ func (k Key) String() string {
 	} else if k.altRune != 0 {
 		// Otherwise, use the AltRune aka the non-shifted one if present.
 		s += runeStr(k.altRune)
-	} else if len(k.Runes) > 0 {
+	} else if len(k.runes) > 0 {
 		// Else, just print the rune.
-		if len(k.Runes) > 1 {
-			s += string(k.Runes)
+		if len(k.runes) > 1 {
+			s += string(k.runes)
 		} else {
 			s += runeStr(k.Rune())
 		}
 	} else {
-		s += k.Type.String()
+		s += k.typ.String()
 	}
 	return s
 }

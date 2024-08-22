@@ -224,20 +224,20 @@ func fromKittyMod(mod int) KeyMod {
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 	var isRelease bool
-	key := Key{}
+	key := key{}
 
 	if params := csi.Subparams(0); len(params) > 0 {
 		code := params[0]
 		if sym, ok := kittyKeyMap[code]; ok {
-			key.Type = sym
+			key.typ = sym
 		} else {
 			r := rune(code)
 			if !utf8.ValidRune(r) {
 				r = utf8.RuneError
 			}
 
-			key.Type = KeyRunes
-			key.Runes = []rune{r}
+			key.typ = KeyRunes
+			key.runes = []rune{r}
 
 			// alternate key reporting
 			switch len(params) {
@@ -262,7 +262,7 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 					// In such a case, we set AltRune to the original key "a"
 					// and Rune to "A".
 					key.altRune = key.Rune()
-					key.Runes = []rune{s}
+					key.runes = []rune{s}
 				}
 			}
 		}
@@ -270,12 +270,12 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 	if params := csi.Subparams(1); len(params) > 0 {
 		mod := params[0]
 		if mod > 1 {
-			key.Mod = fromKittyMod(mod - 1)
+			key.mod = fromKittyMod(mod - 1)
 		}
 		if len(params) > 1 {
 			switch params[1] {
 			case 2:
-				key.IsRepeat = true
+				key.isRepeat = true
 			case 3:
 				isRelease = true
 			}
@@ -285,7 +285,7 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 		r := rune(params[0])
 		if unicode.IsPrint(r) {
 			key.altRune = key.Rune()
-			key.Runes = []rune{r}
+			key.runes = []rune{r}
 		}
 	}
 	if isRelease {
