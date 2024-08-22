@@ -1,5 +1,5 @@
-github.com/charmbracelet/x/ansi v0.2.1 h1:8G2jgVEHdyFJJwToL/gWvxH1/qmEY7bybjacefoffxk=
-github.com/charmbracelet/x/ansi v0.2.1/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
+github.com/charmbracelet/x/ansi v0.2.2 h1:BC7xzaVpfWIYZRNE8NhO9zo8KA4eGUL6L/JWXDh3GF0=
+github.com/charmbracelet/x/ansi v0.2.2/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/term v0.2.0 h1:cNB9Ot9q8I711MyZ7myUR5HFWL/lc3OpU8jZ4hwm0x0=
 github.com/charmbracelet/x/term v0.2.0/go.mod h1:GVxgxAbjUrmpvIINHIQnJJKpMlHiZ4cktEQCN6GWyF0=
 github.com/charmbracelet/x/windows v0.2.0 h1:ilXA1GJjTNkgOm94CLPeSz7rar54jtFatdmoiONPuEw=
