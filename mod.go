@@ -1,7 +1,7 @@
 package tea
 
 // KeyMod represents modifier keys.
-type KeyMod uint16
+type KeyMod int
 
 // Modifier keys.
 const (
