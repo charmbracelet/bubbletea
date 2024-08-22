@@ -23,7 +23,7 @@ type setKittyKeyboardFlagsMsg int
 //	16: Report associated text
 //
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func enableKittyKeyboard(flags int) Cmd {
+func enableKittyKeyboard(flags int) Cmd { //nolint:unused
 	return func() Msg {
 		return setKittyKeyboardFlagsMsg(flags)
 	}
@@ -31,7 +31,7 @@ func enableKittyKeyboard(flags int) Cmd {
 
 // disableKittyKeyboard is a command to disable Kitty keyboard progressive
 // enhancements.
-func disableKittyKeyboard() Msg {
+func disableKittyKeyboard() Msg { //nolint:unused
 	return setKittyKeyboardFlagsMsg(0)
 }
 
@@ -41,7 +41,7 @@ type kittyKeyboardMsg struct{}
 
 // kittyKeyboard is a command that queries the current Kitty keyboard
 // progressive enhancement flags from the terminal.
-func kittyKeyboard() Msg {
+func kittyKeyboard() Msg { //nolint:unused
 	return kittyKeyboardMsg{}
 }
 
