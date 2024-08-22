@@ -5,9 +5,10 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,15 +17,10 @@ import (
 
 func main() {
 	p := tea.NewProgram(initialModel())
-
 	if _, err := p.Run(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "Oof: %v\n", err)
 	}
 }
-
-type (
-	errMsg error
-)
 
 type model struct {
 	viewport    viewport.Model
@@ -70,34 +66,49 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		tiCmd tea.Cmd
-		vpCmd tea.Cmd
-	)
-
-	m.textarea, tiCmd = m.textarea.Update(msg)
-	m.viewport, vpCmd = m.viewport.Update(msg)
-
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.viewport.Width = msg.Width
+		m.textarea.SetWidth(msg.Width)
+		return m, nil
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		switch msg.String() {
+		case "esc", "ctrl+c":
+			// Quit.
 			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
-		case tea.KeyEnter:
-			m.messages = append(m.messages, m.senderStyle.Render("You: ")+m.textarea.Value())
+		case "enter":
+			v := m.textarea.Value()
+
+			if v == "" {
+				// Don't send empty messages.
+				return m, nil
+			}
+
+			// Simulate sending a message. In your application you'll want to
+			// also return a custom command to send the message off to
+			// a server.
+			m.messages = append(m.messages, m.senderStyle.Render("You: ")+v)
 			m.viewport.SetContent(strings.Join(m.messages, "\n"))
 			m.textarea.Reset()
 			m.viewport.GotoBottom()
+			return m, nil
+		default:
+			// Send all other keypresses to the textarea.
+			var cmd tea.Cmd
+			m.textarea, cmd = m.textarea.Update(msg)
+			return m, cmd
 		}
 
-	// We handle errors just like any other message
-	case errMsg:
-		m.err = msg
+	case cursor.BlinkMsg:
+		// Textarea should also process cursor blinks.
+		var cmd tea.Cmd
+		m.textarea, cmd = m.textarea.Update(msg)
+		return m, cmd
+
+	default:
 		return m, nil
 	}
-
-	return m, tea.Batch(tiCmd, vpCmd)
 }
 
 func (m model) View() string {
