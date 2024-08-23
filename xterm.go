@@ -16,14 +16,14 @@ type setModifyOtherKeysMsg int
 //	   and Meta-<key>
 //
 // See https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-func enableModifyOtherKeys(mode int) Cmd {
+func enableModifyOtherKeys(mode int) Cmd { //nolint:unused
 	return func() Msg {
 		return setModifyOtherKeysMsg(mode)
 	}
 }
 
 // disableModifyOtherKeys is a command to disable XTerm modifyOtherKeys mode.
-func disableModifyOtherKeys() Msg {
+func disableModifyOtherKeys() Msg { //nolint:unused
 	return setModifyOtherKeysMsg(0)
 }
 
@@ -58,7 +58,7 @@ type modifyOtherKeys struct{}
 
 // _ModifyOtherKeys is a command that queries the terminal for its
 // modifyOtherKeys mode.
-func _ModifyOtherKeys() Msg {
+func _ModifyOtherKeys() Msg { //nolint:unused
 	return modifyOtherKeys{}
 }
 
