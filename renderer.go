@@ -51,6 +51,7 @@ type repaintMsg struct{}
 
 // Terminal modes used by SetMode and Mode in Bubble Tea.
 const (
-	altScreenMode = 1049
-	hideCursor    = 25
+	graphemeClustering = 2027
+	altScreenMode      = 1049
+	hideCursor         = 25
 )

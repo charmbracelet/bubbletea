@@ -146,6 +146,27 @@ func DisableBracketedPaste() Msg {
 // disableBracketedPasteMsg with DisableBracketedPaste.
 type disableBracketedPasteMsg struct{}
 
+// enableGraphemeClusteringMsg is an internal message that signals that
+// grapheme clustering should be enabled.
+type enableGraphemeClusteringMsg struct{}
+
+// EnableGraphemeClustering is a special command that tells the Bubble Tea
+// program to enable grapheme clustering. This is enabled by default.
+func EnableGraphemeClustering() Msg {
+	return enableGraphemeClusteringMsg{}
+}
+
+// disableGraphemeClusteringMsg is an internal message that signals that
+// grapheme clustering should be disabled.
+type disableGraphemeClusteringMsg struct{}
+
+// DisableGraphemeClustering is a special command that tells the Bubble Tea
+// program to disable grapheme clustering. This mode will be disabled
+// automatically when the program quits.
+func DisableGraphemeClustering() Msg {
+	return disableGraphemeClusteringMsg{}
+}
+
 // enableReportFocusMsg is an internal message that signals that focus
 // reporting should be enabled.
 type enableReportFocusMsg struct{}

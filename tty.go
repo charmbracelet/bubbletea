@@ -53,6 +53,9 @@ func (p *Program) restoreTerminalState() error {
 	if p.reportFocus {
 		p.execute(ansi.DisableReportFocus)
 	}
+	if p.graphemeClustering {
+		p.execute(ansi.DisableGraphemeClustering)
+	}
 
 	if p.renderer != nil {
 		if p.renderer.Mode(altScreenMode) {

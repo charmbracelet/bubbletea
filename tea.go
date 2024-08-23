@@ -103,6 +103,7 @@ const (
 	withKittyKeyboard
 	withModifyOtherKeys
 	withWindowsInputMode
+	withoutGraphemeClustering
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -173,6 +174,8 @@ type Program struct {
 	ignoreSignals      uint32
 
 	bpActive bool // was the bracketed paste mode active before releasing the terminal?
+
+	graphemeClustering bool // whether grapheme clustering is enabled
 
 	cursorHidden bool // the cursor visibility state
 
@@ -390,6 +393,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.suspend()
 				}
 
+			case ReportModeMsg:
+				switch msg.Mode {
+				case graphemeClustering:
+					// 1 means mode is set (see DECRPM).
+					p.graphemeClustering = msg.Value == 1
+					if p.graphemeClustering {
+						p.renderer.SetMode(graphemeClustering, true)
+					}
+				}
+
 			case clearScreenMsg:
 				p.renderer.ClearScreen()
 
@@ -427,6 +440,19 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case disableBracketedPasteMsg:
 				p.execute(ansi.DisableBracketedPaste)
 				p.bpActive = false
+
+			case enableGraphemeClusteringMsg:
+				p.execute(ansi.EnableGraphemeClustering)
+				p.execute(ansi.RequestGraphemeClustering)
+				// We store the state of grapheme clustering after we enable it
+				// and get a response in the eventLoop.
+
+			case disableGraphemeClusteringMsg:
+				if p.graphemeClustering {
+					// We only disable grapheme clustering if it was enabled.
+					p.execute(ansi.DisableGraphemeClustering)
+					p.renderer.SetMode(graphemeClustering, false)
+				}
 
 			case enableReportFocusMsg:
 				p.execute(ansi.EnableReportFocus)
@@ -701,6 +727,12 @@ func (p *Program) Run() (Model, error) {
 		p.execute(ansi.EnableBracketedPaste)
 		p.bpActive = true
 	}
+	if p.startupOptions&withoutGraphemeClustering == 0 {
+		p.execute(ansi.EnableGraphemeClustering)
+		p.execute(ansi.RequestGraphemeClustering)
+		// We store the state of grapheme clustering after we query it and get
+		// a response in the eventLoop.
+	}
 	if p.startupOptions&withMouseCellMotion != 0 {
 		p.execute(ansi.EnableMouseCellMotion)
 		p.execute(ansi.EnableMouseSgrExt)
@@ -868,6 +900,7 @@ func (p *Program) ReleaseTerminal() error {
 
 	if p.renderer != nil {
 		p.stopRenderer(false)
+		// TODO: store these values when they're set in the eventLoop and [Run].
 		p.altScreenWasActive = p.renderer.Mode(altScreenMode)
 		p.cursorHidden = p.renderer.Mode(hideCursor)
 	}
@@ -924,6 +957,9 @@ func (p *Program) RestoreTerminal() error {
 			p.execute(ansi.EnableMouseAllMotion)
 			p.execute(ansi.EnableMouseSgrExt)
 		}
+	}
+	if p.graphemeClustering {
+		p.execute(ansi.EnableGraphemeClustering)
 	}
 
 	// If the output is a terminal, it may have been resized while another
