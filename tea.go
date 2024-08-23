@@ -39,7 +39,7 @@ type Msg interface{}
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
-	Init() Cmd
+	Init() (Model, Cmd)
 
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
@@ -762,7 +762,9 @@ func (p *Program) Run() (Model, error) {
 	p.startRenderer()
 
 	// Initialize the program.
-	if initCmd := model.Init(); initCmd != nil {
+	var initCmd Cmd
+	model, initCmd = model.Init()
+	if initCmd != nil {
 		ch := make(chan struct{})
 		handlers.add(ch)
 
