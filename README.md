@@ -392,6 +392,7 @@ For some Bubble Tea programs in production, see:
 * [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis database browser
 * [redis_tui](https://github.com/mat2cc/redis_tui): a Redis database browser
 * [schemas](https://github.com/dhth/schemas): lets you inspect postgres schemas in the terminal
+* [skeleton](https://github.com/termkit/skeleton): a multi-tab (TUI) library based on Bubble Tea framework
 * [scrabbler](https://github.com/wI2L/scrabbler): an automatic draw tool for your duplicate Scrabble games
 * [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
 * [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
