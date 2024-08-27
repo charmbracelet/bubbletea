@@ -24,36 +24,22 @@ var sequences = buildKeysTable(_FlagTerminfo, "dumb")
 
 func TestKeyString(t *testing.T) {
 	t.Run("alt+space", func(t *testing.T) {
-		k := KeyPressMsg{typ: KeySpace, runes: []rune{' '}, mod: ModAlt}
+		k := KeyPressMsg{Code: KeySpace, Text: " ", Mod: ModAlt}
 		if got := k.String(); got != "alt+space" {
 			t.Fatalf(`expected a "alt+space ", got %q`, got)
 		}
 	})
 
 	t.Run("runes", func(t *testing.T) {
-		k := KeyPressMsg{runes: []rune{'a'}}
+		k := KeyPressMsg{Code: 'a', Text: "a"}
 		if got := k.String(); got != "a" {
 			t.Fatalf(`expected an "a", got %q`, got)
 		}
 	})
 
 	t.Run("invalid", func(t *testing.T) {
-		k := KeyPressMsg{typ: 99999}
-		if got := k.String(); got != "" {
-			t.Fatalf(`expected a "unknown", got %q`, got)
-		}
-	})
-}
-
-func TestKeyTypeString(t *testing.T) {
-	t.Run("space", func(t *testing.T) {
-		if got := KeySpace.String(); got != "space" {
-			t.Fatalf(`expected a "space", got %q`, got)
-		}
-	})
-
-	t.Run("invalid", func(t *testing.T) {
-		if got := KeyType(99999).String(); got != "" {
+		k := KeyPressMsg{Code: 99999}
+		if got := k.String(); got != "𘚟" {
 			t.Fatalf(`expected a "unknown", got %q`, got)
 		}
 	})
@@ -78,7 +64,7 @@ func buildBaseSeqTests() []seqTest {
 		// position report having the same sequence. See [parseCsi] for more
 		// information.
 		if f3CurPosRegexp.MatchString(seq) {
-			st.msgs = []Msg{k, CursorPositionMsg{Row: 1, Column: int(key.mod) + 1}}
+			st.msgs = []Msg{k, CursorPositionMsg{Row: 1, Column: int(key.Mod) + 1}}
 		}
 		td = append(td, st)
 	}
@@ -96,14 +82,14 @@ func buildBaseSeqTests() []seqTest {
 		seqTest{
 			[]byte{' '},
 			[]Msg{
-				KeyPressMsg{typ: KeySpace, runes: []rune{' '}},
+				KeyPressMsg{Code: KeySpace, Text: " "},
 			},
 		},
 		// An escape character with the alt modifier.
 		seqTest{
 			[]byte{'\x1b', ' '},
 			[]Msg{
-				KeyPressMsg{typ: KeySpace, runes: []rune{' '}, mod: ModAlt},
+				KeyPressMsg{Code: KeySpace, Mod: ModAlt},
 			},
 		},
 	)
@@ -116,101 +102,101 @@ func TestParseSequence(t *testing.T) {
 		// Xterm modifyOtherKeys CSI 27 ; <modifier> ; <code> ~
 		seqTest{
 			[]byte("\x1b[27;3;20320~"),
-			[]Msg{KeyPressMsg{runes: []rune{'你'}, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: '你', Mod: ModAlt}},
 		},
 		seqTest{
 			[]byte("\x1b[27;3;65~"),
-			[]Msg{KeyPressMsg{runes: []rune{'A'}, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: 'A', Mod: ModAlt}},
 		},
 		seqTest{
 			[]byte("\x1b[27;3;8~"),
-			[]Msg{KeyPressMsg{typ: KeyBackspace, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: KeyBackspace, Mod: ModAlt}},
 		},
 		seqTest{
 			[]byte("\x1b[27;3;27~"),
-			[]Msg{KeyPressMsg{typ: KeyEscape, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: KeyEscape, Mod: ModAlt}},
 		},
 		seqTest{
 			[]byte("\x1b[27;3;127~"),
-			[]Msg{KeyPressMsg{typ: KeyBackspace, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: KeyBackspace, Mod: ModAlt}},
 		},
 
 		// Kitty keyboard / CSI u (fixterms)
 		seqTest{
 			[]byte("\x1b[1B"),
-			[]Msg{KeyPressMsg{typ: KeyDown}},
+			[]Msg{KeyPressMsg{Code: KeyDown}},
 		},
 		seqTest{
 			[]byte("\x1b[1;B"),
-			[]Msg{KeyPressMsg{typ: KeyDown}},
+			[]Msg{KeyPressMsg{Code: KeyDown}},
 		},
 		seqTest{
 			[]byte("\x1b[1;4B"),
-			[]Msg{KeyPressMsg{mod: ModShift | ModAlt, typ: KeyDown}},
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Code: KeyDown}},
 		},
 		seqTest{
 			[]byte("\x1b[8~"),
-			[]Msg{KeyPressMsg{typ: KeyEnd}},
+			[]Msg{KeyPressMsg{Code: KeyEnd}},
 		},
 		seqTest{
 			[]byte("\x1b[8;~"),
-			[]Msg{KeyPressMsg{typ: KeyEnd}},
+			[]Msg{KeyPressMsg{Code: KeyEnd}},
 		},
 		seqTest{
 			[]byte("\x1b[8;10~"),
-			[]Msg{KeyPressMsg{mod: ModShift | ModMeta, typ: KeyEnd}},
+			[]Msg{KeyPressMsg{Mod: ModShift | ModMeta, Code: KeyEnd}},
 		},
 		seqTest{
 			[]byte("\x1b[27;4u"),
-			[]Msg{KeyPressMsg{mod: ModShift | ModAlt, typ: KeyEscape}},
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Code: KeyEscape}},
 		},
 		seqTest{
 			[]byte("\x1b[127;4u"),
-			[]Msg{KeyPressMsg{mod: ModShift | ModAlt, typ: KeyBackspace}},
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Code: KeyBackspace}},
 		},
 		seqTest{
 			[]byte("\x1b[57358;4u"),
-			[]Msg{KeyPressMsg{mod: ModShift | ModAlt, typ: KeyCapsLock}},
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Code: KeyCapsLock}},
 		},
 		seqTest{
 			[]byte("\x1b[9;2u"),
-			[]Msg{KeyPressMsg{mod: ModShift, typ: KeyTab}},
+			[]Msg{KeyPressMsg{Mod: ModShift, Code: KeyTab}},
 		},
 		seqTest{
 			[]byte("\x1b[195;u"),
-			[]Msg{KeyPressMsg{runes: []rune{'Ã'}, typ: KeyRunes}},
+			[]Msg{KeyPressMsg{Text: "Ã", Code: 'Ã'}},
 		},
 		seqTest{
 			[]byte("\x1b[20320;2u"),
-			[]Msg{KeyPressMsg{runes: []rune{'你'}, mod: ModShift, typ: KeyRunes}},
+			[]Msg{KeyPressMsg{Text: "你", Mod: ModShift, Code: '你'}},
 		},
 		seqTest{
 			[]byte("\x1b[195;:1u"),
-			[]Msg{KeyPressMsg{runes: []rune{'Ã'}, typ: KeyRunes}},
+			[]Msg{KeyPressMsg{Text: "Ã", Code: 'Ã'}},
 		},
 		seqTest{
 			[]byte("\x1b[195;2:3u"),
-			[]Msg{KeyReleaseMsg{runes: []rune{'Ã'}, mod: ModShift}},
+			[]Msg{KeyReleaseMsg{Code: 'Ã', Text: "Ã", Mod: ModShift}},
 		},
 		seqTest{
 			[]byte("\x1b[195;2:2u"),
-			[]Msg{KeyPressMsg{runes: []rune{'Ã'}, isRepeat: true, mod: ModShift}},
+			[]Msg{KeyPressMsg{Code: 'Ã', Text: "Ã", IsRepeat: true, Mod: ModShift}},
 		},
 		seqTest{
 			[]byte("\x1b[195;2:1u"),
-			[]Msg{KeyPressMsg{runes: []rune{'Ã'}, mod: ModShift}},
+			[]Msg{KeyPressMsg{Code: 'Ã', Text: "Ã", Mod: ModShift}},
 		},
 		seqTest{
 			[]byte("\x1b[195;2:3u"),
-			[]Msg{KeyReleaseMsg{runes: []rune{'Ã'}, mod: ModShift}},
+			[]Msg{KeyReleaseMsg{Code: 'Ã', Text: "Ã", Mod: ModShift}},
 		},
 		seqTest{
 			[]byte("\x1b[97;2;65u"),
-			[]Msg{KeyPressMsg{runes: []rune{'A'}, mod: ModShift, altRune: 'a'}},
+			[]Msg{KeyPressMsg{Code: 'a', Text: "A", Mod: ModShift}},
 		},
 		seqTest{
 			[]byte("\x1b[97;;229u"),
-			[]Msg{KeyPressMsg{runes: []rune{'å'}, altRune: 'a'}},
+			[]Msg{KeyPressMsg{Code: 'a', Text: "å"}},
 		},
 
 		// focus/blur
@@ -230,86 +216,86 @@ func TestParseSequence(t *testing.T) {
 		seqTest{
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
 			[]Msg{
-				MouseWheelMsg{x: 32, y: 16, button: MouseWheelUp},
+				MouseWheelMsg{X: 32, Y: 16, Button: MouseWheelUp},
 			},
 		},
 		// SGR Mouse event.
 		seqTest{
 			[]byte("\x1b[<0;33;17M"),
 			[]Msg{
-				MouseClickMsg{x: 32, y: 16, button: MouseLeft},
+				MouseClickMsg{X: 32, Y: 16, Button: MouseLeft},
 			},
 		},
 		// Runes.
 		seqTest{
 			[]byte{'a'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}},
+				KeyPressMsg{Code: 'a', Text: "a"},
 			},
 		},
 		seqTest{
 			[]byte{'\x1b', 'a'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}, mod: ModAlt},
+				KeyPressMsg{Code: 'a', Mod: ModAlt},
 			},
 		},
 		seqTest{
 			[]byte{'a', 'a', 'a'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}},
-				KeyPressMsg{runes: []rune{'a'}},
-				KeyPressMsg{runes: []rune{'a'}},
+				KeyPressMsg{Code: 'a', Text: "a"},
+				KeyPressMsg{Code: 'a', Text: "a"},
+				KeyPressMsg{Code: 'a', Text: "a"},
 			},
 		},
 		// Multi-byte rune.
 		seqTest{
 			[]byte("☃"),
 			[]Msg{
-				KeyPressMsg{runes: []rune{'☃'}},
+				KeyPressMsg{Code: '☃', Text: "☃"},
 			},
 		},
 		seqTest{
 			[]byte("\x1b☃"),
 			[]Msg{
-				KeyPressMsg{runes: []rune{'☃'}, mod: ModAlt},
+				KeyPressMsg{Code: '☃', Mod: ModAlt},
 			},
 		},
-		// Standalone control chacters.
+		// Standalone control characters.
 		seqTest{
 			[]byte{'\x1b'},
 			[]Msg{
-				KeyPressMsg{typ: KeyEscape},
+				KeyPressMsg{Code: KeyEscape},
 			},
 		},
 		seqTest{
 			[]byte{ansi.SOH},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}, mod: ModCtrl},
+				KeyPressMsg{Code: 'a', Mod: ModCtrl},
 			},
 		},
 		seqTest{
 			[]byte{'\x1b', ansi.SOH},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}, mod: ModCtrl | ModAlt},
+				KeyPressMsg{Code: 'a', Mod: ModCtrl | ModAlt},
 			},
 		},
 		seqTest{
 			[]byte{ansi.NUL},
 			[]Msg{
-				KeyPressMsg{runes: []rune{' '}, typ: KeySpace, mod: ModCtrl},
+				KeyPressMsg{Code: KeySpace, Mod: ModCtrl},
 			},
 		},
 		seqTest{
 			[]byte{'\x1b', ansi.NUL},
 			[]Msg{
-				KeyPressMsg{runes: []rune{' '}, typ: KeySpace, mod: ModCtrl | ModAlt},
+				KeyPressMsg{Code: KeySpace, Mod: ModCtrl | ModAlt},
 			},
 		},
 		// C1 control characters.
 		seqTest{
 			[]byte{'\x80'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{0x80 - '@'}, mod: ModCtrl | ModAlt},
+				KeyPressMsg{Code: rune(0x80 - '@'), Mod: ModCtrl | ModAlt},
 			},
 		},
 	)
@@ -340,7 +326,7 @@ func TestParseSequence(t *testing.T) {
 				buf = buf[width:]
 			}
 			if !reflect.DeepEqual(tc.msgs, events) {
-				t.Errorf("\nexpected event:\n    %#v\ngot:\n    %#v", tc.msgs, events)
+				t.Errorf("\nexpected event for %q:\n    %#v\ngot:\n    %#v", tc.seq, tc.msgs, events)
 			}
 		})
 	}
@@ -349,7 +335,7 @@ func TestParseSequence(t *testing.T) {
 func TestReadLongInput(t *testing.T) {
 	expect := make([]Msg, 1000)
 	for i := 0; i < 1000; i++ {
-		expect[i] = KeyPressMsg{runes: []rune{'a'}}
+		expect[i] = KeyPressMsg{Code: 'a', Text: "a"}
 	}
 	input := strings.Repeat("a", 1000)
 	drv, err := newDriver(strings.NewReader(input), "dumb", 0)
@@ -385,77 +371,77 @@ func TestReadInput(t *testing.T) {
 			"a",
 			[]byte{'a'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}},
+				KeyPressMsg{Code: 'a', Text: "a"},
 			},
 		},
 		{
 			"space",
 			[]byte{' '},
 			[]Msg{
-				KeyPressMsg{typ: KeySpace, runes: []rune{' '}},
+				KeyPressMsg{Code: KeySpace, Text: " "},
 			},
 		},
 		{
 			"a alt+a",
 			[]byte{'a', '\x1b', 'a'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}},
-				KeyPressMsg{runes: []rune{'a'}, mod: ModAlt},
+				KeyPressMsg{Code: 'a', Text: "a"},
+				KeyPressMsg{Code: 'a', Mod: ModAlt},
 			},
 		},
 		{
 			"a alt+a a",
 			[]byte{'a', '\x1b', 'a', 'a'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}},
-				KeyPressMsg{runes: []rune{'a'}, mod: ModAlt},
-				KeyPressMsg{runes: []rune{'a'}},
+				KeyPressMsg{Code: 'a', Text: "a"},
+				KeyPressMsg{Code: 'a', Mod: ModAlt},
+				KeyPressMsg{Code: 'a', Text: "a"},
 			},
 		},
 		{
 			"ctrl+a",
 			[]byte{byte(ansi.SOH)},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}, mod: ModCtrl},
+				KeyPressMsg{Code: 'a', Mod: ModCtrl},
 			},
 		},
 		{
 			"ctrl+a ctrl+b",
 			[]byte{byte(ansi.SOH), byte(ansi.STX)},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}, mod: ModCtrl},
-				KeyPressMsg{runes: []rune{'b'}, mod: ModCtrl},
+				KeyPressMsg{Code: 'a', Mod: ModCtrl},
+				KeyPressMsg{Code: 'b', Mod: ModCtrl},
 			},
 		},
 		{
 			"alt+a",
 			[]byte{byte(0x1b), 'a'},
 			[]Msg{
-				KeyPressMsg{mod: ModAlt, runes: []rune{'a'}},
+				KeyPressMsg{Code: 'a', Mod: ModAlt},
 			},
 		},
 		{
 			"a b c d",
 			[]byte{'a', 'b', 'c', 'd'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}},
-				KeyPressMsg{runes: []rune{'b'}},
-				KeyPressMsg{runes: []rune{'c'}},
-				KeyPressMsg{runes: []rune{'d'}},
+				KeyPressMsg{Code: 'a', Text: "a"},
+				KeyPressMsg{Code: 'b', Text: "b"},
+				KeyPressMsg{Code: 'c', Text: "c"},
+				KeyPressMsg{Code: 'd', Text: "d"},
 			},
 		},
 		{
 			"up",
 			[]byte("\x1b[A"),
 			[]Msg{
-				KeyPressMsg{typ: KeyUp},
+				KeyPressMsg{Code: KeyUp},
 			},
 		},
 		{
 			"wheel up",
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
 			[]Msg{
-				MouseWheelMsg{x: 32, y: 16, button: MouseWheelUp},
+				MouseWheelMsg{X: 32, Y: 16, Button: MouseWheelUp},
 			},
 		},
 		{
@@ -465,41 +451,41 @@ func TestReadInput(t *testing.T) {
 				'\x1b', '[', 'M', byte(32) + 0b0000_0011, byte(64 + 33), byte(32 + 33),
 			},
 			[]Msg{
-				MouseMotionMsg{x: 32, y: 16, button: MouseLeft},
-				MouseReleaseMsg{x: 64, y: 32, button: MouseNone},
+				MouseMotionMsg{X: 32, Y: 16, Button: MouseLeft},
+				MouseReleaseMsg{X: 64, Y: 32, Button: MouseNone},
 			},
 		},
 		{
 			"shift+tab",
 			[]byte{'\x1b', '[', 'Z'},
 			[]Msg{
-				KeyPressMsg{typ: KeyTab, mod: ModShift},
+				KeyPressMsg{Code: KeyTab, Mod: ModShift},
 			},
 		},
 		{
 			"enter",
 			[]byte{'\r'},
-			[]Msg{KeyPressMsg{typ: KeyEnter}},
+			[]Msg{KeyPressMsg{Code: KeyEnter}},
 		},
 		{
 			"alt+enter",
 			[]byte{'\x1b', '\r'},
 			[]Msg{
-				KeyPressMsg{typ: KeyEnter, mod: ModAlt},
+				KeyPressMsg{Code: KeyEnter, Mod: ModAlt},
 			},
 		},
 		{
 			"insert",
 			[]byte{'\x1b', '[', '2', '~'},
 			[]Msg{
-				KeyPressMsg{typ: KeyInsert},
+				KeyPressMsg{Code: KeyInsert},
 			},
 		},
 		{
 			"ctrl+alt+a",
 			[]byte{'\x1b', byte(ansi.SOH)},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}, mod: ModCtrl | ModAlt},
+				KeyPressMsg{Code: 'a', Mod: ModCtrl | ModAlt},
 			},
 		},
 		{
@@ -511,52 +497,52 @@ func TestReadInput(t *testing.T) {
 		{
 			"up",
 			[]byte{'\x1b', 'O', 'A'},
-			[]Msg{KeyPressMsg{typ: KeyUp}},
+			[]Msg{KeyPressMsg{Code: KeyUp}},
 		},
 		{
 			"down",
 			[]byte{'\x1b', 'O', 'B'},
-			[]Msg{KeyPressMsg{typ: KeyDown}},
+			[]Msg{KeyPressMsg{Code: KeyDown}},
 		},
 		{
 			"right",
 			[]byte{'\x1b', 'O', 'C'},
-			[]Msg{KeyPressMsg{typ: KeyRight}},
+			[]Msg{KeyPressMsg{Code: KeyRight}},
 		},
 		{
 			"left",
 			[]byte{'\x1b', 'O', 'D'},
-			[]Msg{KeyPressMsg{typ: KeyLeft}},
+			[]Msg{KeyPressMsg{Code: KeyLeft}},
 		},
 		{
 			"alt+enter",
 			[]byte{'\x1b', '\x0d'},
-			[]Msg{KeyPressMsg{typ: KeyEnter, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: KeyEnter, Mod: ModAlt}},
 		},
 		{
 			"alt+backspace",
 			[]byte{'\x1b', '\x7f'},
-			[]Msg{KeyPressMsg{typ: KeyBackspace, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: KeyBackspace, Mod: ModAlt}},
 		},
 		{
 			"ctrl+space",
 			[]byte{'\x00'},
-			[]Msg{KeyPressMsg{typ: KeySpace, runes: []rune{' '}, mod: ModCtrl}},
+			[]Msg{KeyPressMsg{Code: KeySpace, Mod: ModCtrl}},
 		},
 		{
 			"ctrl+alt+space",
 			[]byte{'\x1b', '\x00'},
-			[]Msg{KeyPressMsg{typ: KeySpace, runes: []rune{' '}, mod: ModCtrl | ModAlt}},
+			[]Msg{KeyPressMsg{Code: KeySpace, Mod: ModCtrl | ModAlt}},
 		},
 		{
 			"esc",
 			[]byte{'\x1b'},
-			[]Msg{KeyPressMsg{typ: KeyEscape}},
+			[]Msg{KeyPressMsg{Code: KeyEscape}},
 		},
 		{
 			"alt+esc",
 			[]byte{'\x1b', '\x1b'},
-			[]Msg{KeyPressMsg{typ: KeyEscape, mod: ModAlt}},
+			[]Msg{KeyPressMsg{Code: KeyEscape, Mod: ModAlt}},
 		},
 		{
 			"a b o",
@@ -570,7 +556,7 @@ func TestReadInput(t *testing.T) {
 				PasteStartMsg{},
 				PasteMsg("a b"),
 				PasteEndMsg{},
-				KeyPressMsg{runes: []rune{'o'}},
+				KeyPressMsg{Code: 'o', Text: "o"},
 			},
 		},
 		{
@@ -597,10 +583,10 @@ func TestReadInput(t *testing.T) {
 			"a ?0xfe?   b",
 			[]byte{'a', '\xfe', ' ', 'b'},
 			[]Msg{
-				KeyPressMsg{runes: []rune{'a'}},
+				KeyPressMsg{Code: 'a', Text: "a"},
 				UnknownMsg(rune(0xfe)),
-				KeyPressMsg{typ: KeySpace, runes: []rune{' '}},
-				KeyPressMsg{runes: []rune{'b'}},
+				KeyPressMsg{Code: KeySpace, Text: " "},
+				KeyPressMsg{Code: 'b', Text: "b"},
 			},
 		},
 	}

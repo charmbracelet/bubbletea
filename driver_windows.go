@@ -64,7 +64,7 @@ loop:
 	for i, e := range events {
 		switch e := e.(type) {
 		case KeyPressMsg:
-			switch e.Rune() {
+			switch e.Code {
 			case ansi.ESC, ansi.CSI, ansi.OSC, ansi.DCS, ansi.APC:
 				// start of a sequence
 				if start == -1 {
@@ -85,7 +85,7 @@ loop:
 	for i := start; i <= end; i++ {
 		switch e := events[i].(type) {
 		case KeyPressMsg:
-			seq = append(seq, byte(e.Rune()))
+			seq = append(seq, byte(e.Code))
 		}
 	}
 
@@ -127,7 +127,7 @@ func parseConInputEvent(event xwindows.InputRecord, buttonState *uint32, windowS
 		// (e.g. function keys, arrows, etc.)
 		// Otherwise, try to translate it to a rune based on the active keyboard
 		// layout.
-		if len(key.Runes) == 0 {
+		if len(key.Text) == 0 {
 			return event
 		}
 
@@ -163,7 +163,7 @@ func parseConInputEvent(event xwindows.InputRecord, buttonState *uint32, windowS
 			return event
 		}
 
-		key.baseRune = runes[0]
+		key.baseCode = runes[0]
 		if kevent.KeyDown {
 			return KeyPressMsg(key)
 		}

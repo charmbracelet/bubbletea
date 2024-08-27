@@ -31,7 +31,7 @@ func disableWindowsInputMode() Msg { //nolint:unused
 }
 
 func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) Msg {
-	var key key
+	var key Key
 	isCtrl := cks&(_LEFT_CTRL_PRESSED|_RIGHT_CTRL_PRESSED) != 0
 	switch vkc {
 	case _VK_SHIFT:
@@ -39,67 +39,67 @@ func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uin
 		return nil
 	case _VK_MENU:
 		if cks&_LEFT_ALT_PRESSED != 0 {
-			key.typ = KeyLeftAlt
+			key.Code = KeyLeftAlt
 		} else if cks&_RIGHT_ALT_PRESSED != 0 {
-			key.typ = KeyRightAlt
+			key.Code = KeyRightAlt
 		} else if !keyDown {
 			return nil
 		}
 	case _VK_CONTROL:
 		if cks&_LEFT_CTRL_PRESSED != 0 {
-			key.typ = KeyLeftCtrl
+			key.Code = KeyLeftCtrl
 		} else if cks&_RIGHT_CTRL_PRESSED != 0 {
-			key.typ = KeyRightCtrl
+			key.Code = KeyRightCtrl
 		} else if !keyDown {
 			return nil
 		}
 	case _VK_CAPITAL:
-		key.typ = KeyCapsLock
+		key.Code = KeyCapsLock
 	default:
 		var ok bool
 		key, ok = vkKeyEvent[vkc]
 		if !ok {
 			if isCtrl {
-				key.runes = []rune{vkCtrlRune(key, r, vkc)}
+				key.Text = string(vkCtrlRune(key, r, vkc))
 			} else {
-				key.runes = []rune{r}
+				key.Text = string(r)
 			}
 		}
 	}
 
 	if isCtrl {
-		key.mod |= ModCtrl
+		key.Mod |= ModCtrl
 	}
 	if cks&(_LEFT_ALT_PRESSED|_RIGHT_ALT_PRESSED) != 0 {
-		key.mod |= ModAlt
+		key.Mod |= ModAlt
 	}
 	if cks&_SHIFT_PRESSED != 0 {
-		key.mod |= ModShift
+		key.Mod |= ModShift
 	}
 	if cks&_CAPSLOCK_ON != 0 {
-		key.mod |= ModCapsLock
+		key.Mod |= ModCapsLock
 	}
 	if cks&_NUMLOCK_ON != 0 {
-		key.mod |= ModNumLock
+		key.Mod |= ModNumLock
 	}
 	if cks&_SCROLLLOCK_ON != 0 {
-		key.mod |= ModScrollLock
+		key.Mod |= ModScrollLock
 	}
 
 	// Use the unshifted key
-	keyRune := key.Rune()
+	keyRune := key.Code
 	if cks&(_SHIFT_PRESSED^_CAPSLOCK_ON) != 0 {
 		if unicode.IsLower(keyRune) {
-			key.altRune = unicode.ToUpper(key.Rune())
+			key.ShiftedCode = unicode.ToUpper(key.Code)
 		}
 	} else {
 		if unicode.IsUpper(keyRune) {
-			key.altRune = unicode.ToLower(keyRune)
+			key.ShiftedCode = unicode.ToLower(keyRune)
 		}
 	}
 
 	var e Msg = KeyPressMsg(key)
-	key.isRepeat = repeatCount > 1
+	key.IsRepeat = repeatCount > 1
 	if !keyDown {
 		e = KeyReleaseMsg(key)
 	}
@@ -116,80 +116,80 @@ func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uin
 	return multiMsg(kevents)
 }
 
-var vkKeyEvent = map[uint16]key{
-	_VK_RETURN:    {typ: KeyEnter},
-	_VK_BACK:      {typ: KeyBackspace},
-	_VK_TAB:       {typ: KeyTab},
-	_VK_ESCAPE:    {typ: KeyEscape},
-	_VK_SPACE:     {typ: KeySpace, runes: []rune{' '}},
-	_VK_UP:        {typ: KeyUp},
-	_VK_DOWN:      {typ: KeyDown},
-	_VK_RIGHT:     {typ: KeyRight},
-	_VK_LEFT:      {typ: KeyLeft},
-	_VK_HOME:      {typ: KeyHome},
-	_VK_END:       {typ: KeyEnd},
-	_VK_PRIOR:     {typ: KeyPgUp},
-	_VK_NEXT:      {typ: KeyPgDown},
-	_VK_DELETE:    {typ: KeyDelete},
-	_VK_SELECT:    {typ: KeySelect},
-	_VK_SNAPSHOT:  {typ: KeyPrintScreen},
-	_VK_INSERT:    {typ: KeyInsert},
-	_VK_LWIN:      {typ: KeyLeftSuper},
-	_VK_RWIN:      {typ: KeyRightSuper},
-	_VK_APPS:      {typ: KeyMenu},
-	_VK_NUMPAD0:   {typ: KeyKp0},
-	_VK_NUMPAD1:   {typ: KeyKp1},
-	_VK_NUMPAD2:   {typ: KeyKp2},
-	_VK_NUMPAD3:   {typ: KeyKp3},
-	_VK_NUMPAD4:   {typ: KeyKp4},
-	_VK_NUMPAD5:   {typ: KeyKp5},
-	_VK_NUMPAD6:   {typ: KeyKp6},
-	_VK_NUMPAD7:   {typ: KeyKp7},
-	_VK_NUMPAD8:   {typ: KeyKp8},
-	_VK_NUMPAD9:   {typ: KeyKp9},
-	_VK_MULTIPLY:  {typ: KeyKpMultiply},
-	_VK_ADD:       {typ: KeyKpPlus},
-	_VK_SEPARATOR: {typ: KeyKpComma},
-	_VK_SUBTRACT:  {typ: KeyKpMinus},
-	_VK_DECIMAL:   {typ: KeyKpDecimal},
-	_VK_DIVIDE:    {typ: KeyKpDivide},
-	_VK_F1:        {typ: KeyF1},
-	_VK_F2:        {typ: KeyF2},
-	_VK_F3:        {typ: KeyF3},
-	_VK_F4:        {typ: KeyF4},
-	_VK_F5:        {typ: KeyF5},
-	_VK_F6:        {typ: KeyF6},
-	_VK_F7:        {typ: KeyF7},
-	_VK_F8:        {typ: KeyF8},
-	_VK_F9:        {typ: KeyF9},
-	_VK_F10:       {typ: KeyF10},
-	_VK_F11:       {typ: KeyF11},
-	_VK_F12:       {typ: KeyF12},
-	_VK_F13:       {typ: KeyF13},
-	_VK_F14:       {typ: KeyF14},
-	_VK_F15:       {typ: KeyF15},
-	_VK_F16:       {typ: KeyF16},
-	_VK_F17:       {typ: KeyF17},
-	_VK_F18:       {typ: KeyF18},
-	_VK_F19:       {typ: KeyF19},
-	_VK_F20:       {typ: KeyF20},
-	_VK_F21:       {typ: KeyF21},
-	_VK_F22:       {typ: KeyF22},
-	_VK_F23:       {typ: KeyF23},
-	_VK_F24:       {typ: KeyF24},
-	_VK_NUMLOCK:   {typ: KeyNumLock},
-	_VK_SCROLL:    {typ: KeyScrollLock},
-	_VK_LSHIFT:    {typ: KeyLeftShift},
-	_VK_RSHIFT:    {typ: KeyRightShift},
-	_VK_LCONTROL:  {typ: KeyLeftCtrl},
-	_VK_RCONTROL:  {typ: KeyRightCtrl},
-	_VK_LMENU:     {typ: KeyLeftAlt},
-	_VK_RMENU:     {typ: KeyRightAlt},
-	_VK_OEM_4:     {runes: []rune{'['}},
+var vkKeyEvent = map[uint16]Key{
+	_VK_RETURN:    {Code: KeyEnter},
+	_VK_BACK:      {Code: KeyBackspace},
+	_VK_TAB:       {Code: KeyTab},
+	_VK_ESCAPE:    {Code: KeyEscape},
+	_VK_SPACE:     {Code: KeySpace, Text: " "},
+	_VK_UP:        {Code: KeyUp},
+	_VK_DOWN:      {Code: KeyDown},
+	_VK_RIGHT:     {Code: KeyRight},
+	_VK_LEFT:      {Code: KeyLeft},
+	_VK_HOME:      {Code: KeyHome},
+	_VK_END:       {Code: KeyEnd},
+	_VK_PRIOR:     {Code: KeyPgUp},
+	_VK_NEXT:      {Code: KeyPgDown},
+	_VK_DELETE:    {Code: KeyDelete},
+	_VK_SELECT:    {Code: KeySelect},
+	_VK_SNAPSHOT:  {Code: KeyPrintScreen},
+	_VK_INSERT:    {Code: KeyInsert},
+	_VK_LWIN:      {Code: KeyLeftSuper},
+	_VK_RWIN:      {Code: KeyRightSuper},
+	_VK_APPS:      {Code: KeyMenu},
+	_VK_NUMPAD0:   {Code: KeyKp0},
+	_VK_NUMPAD1:   {Code: KeyKp1},
+	_VK_NUMPAD2:   {Code: KeyKp2},
+	_VK_NUMPAD3:   {Code: KeyKp3},
+	_VK_NUMPAD4:   {Code: KeyKp4},
+	_VK_NUMPAD5:   {Code: KeyKp5},
+	_VK_NUMPAD6:   {Code: KeyKp6},
+	_VK_NUMPAD7:   {Code: KeyKp7},
+	_VK_NUMPAD8:   {Code: KeyKp8},
+	_VK_NUMPAD9:   {Code: KeyKp9},
+	_VK_MULTIPLY:  {Code: KeyKpMultiply},
+	_VK_ADD:       {Code: KeyKpPlus},
+	_VK_SEPARATOR: {Code: KeyKpComma},
+	_VK_SUBTRACT:  {Code: KeyKpMinus},
+	_VK_DECIMAL:   {Code: KeyKpDecimal},
+	_VK_DIVIDE:    {Code: KeyKpDivide},
+	_VK_F1:        {Code: KeyF1},
+	_VK_F2:        {Code: KeyF2},
+	_VK_F3:        {Code: KeyF3},
+	_VK_F4:        {Code: KeyF4},
+	_VK_F5:        {Code: KeyF5},
+	_VK_F6:        {Code: KeyF6},
+	_VK_F7:        {Code: KeyF7},
+	_VK_F8:        {Code: KeyF8},
+	_VK_F9:        {Code: KeyF9},
+	_VK_F10:       {Code: KeyF10},
+	_VK_F11:       {Code: KeyF11},
+	_VK_F12:       {Code: KeyF12},
+	_VK_F13:       {Code: KeyF13},
+	_VK_F14:       {Code: KeyF14},
+	_VK_F15:       {Code: KeyF15},
+	_VK_F16:       {Code: KeyF16},
+	_VK_F17:       {Code: KeyF17},
+	_VK_F18:       {Code: KeyF18},
+	_VK_F19:       {Code: KeyF19},
+	_VK_F20:       {Code: KeyF20},
+	_VK_F21:       {Code: KeyF21},
+	_VK_F22:       {Code: KeyF22},
+	_VK_F23:       {Code: KeyF23},
+	_VK_F24:       {Code: KeyF24},
+	_VK_NUMLOCK:   {Code: KeyNumLock},
+	_VK_SCROLL:    {Code: KeyScrollLock},
+	_VK_LSHIFT:    {Code: KeyLeftShift},
+	_VK_RSHIFT:    {Code: KeyRightShift},
+	_VK_LCONTROL:  {Code: KeyLeftCtrl},
+	_VK_RCONTROL:  {Code: KeyRightCtrl},
+	_VK_LMENU:     {Code: KeyLeftAlt},
+	_VK_RMENU:     {Code: KeyRightAlt},
+	_VK_OEM_4:     {Text: "["},
 	// TODO: add more keys
 }
 
-func vkCtrlRune(k key, r rune, kc uint16) rune {
+func vkCtrlRune(k Key, r rune, kc uint16) rune {
 	switch r {
 	case 0x01:
 		return 'a'
@@ -257,7 +257,7 @@ func vkCtrlRune(k key, r rune, kc uint16) rune {
 	}
 
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	if len(k.runes) == 0 &&
+	if len(k.Text) == 0 &&
 		(kc >= 0x30 && kc <= 0x39) ||
 		(kc >= 0x41 && kc <= 0x5a) {
 		return rune(kc)

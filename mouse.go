@@ -1,6 +1,8 @@
 package tea
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -54,48 +56,35 @@ var mouseButtons = map[MouseButton]string{
 	MouseExtra2:     "button11",
 }
 
-// mouse represents a mouse message.
-type mouse struct {
-	x, y   int
-	button MouseButton
-	mod    KeyMod
+// MouseMsg represents a mouse message. This is a generic mouse message that
+// can represent any kind of mouse event.
+type MouseMsg interface {
+	fmt.Stringer
+
+	// Mouse returns the underlying mouse event.
+	Mouse() Mouse
 }
 
-var _ MouseMsg = mouse{}
-
-// Button implements MouseMsg.
-func (m mouse) Button() MouseButton {
-	return m.button
-}
-
-// Mod implements MouseMsg.
-func (m mouse) Mod() KeyMod {
-	return m.mod
-}
-
-// X implements MouseMsg.
-func (m mouse) X() int {
-	return m.x
-}
-
-// Y implements MouseMsg.
-func (m mouse) Y() int {
-	return m.y
+// Mouse represents a Mouse message.
+type Mouse struct {
+	X, Y   int
+	Button MouseButton
+	Mod    KeyMod
 }
 
 // String returns a string representation of the mouse message.
-func (m mouse) String() (s string) {
-	if m.mod.Contains(ModCtrl) {
+func (m Mouse) String() (s string) {
+	if m.Mod.Contains(ModCtrl) {
 		s += "ctrl+"
 	}
-	if m.mod.Contains(ModAlt) {
+	if m.Mod.Contains(ModAlt) {
 		s += "alt+"
 	}
-	if m.mod.Contains(ModShift) {
+	if m.Mod.Contains(ModShift) {
 		s += "shift+"
 	}
 
-	str, ok := mouseButtons[m.button]
+	str, ok := mouseButtons[m.Button]
 	if !ok {
 		s += "unknown"
 	} else if str != "none" { // motion events don't have a button
@@ -105,148 +94,68 @@ func (m mouse) String() (s string) {
 	return s
 }
 
-// MouseMsg contains information about a mouse event and are sent to a programs
-// update function when mouse activity occurs. Note that the mouse must first
-// be enabled in order for the mouse events to be received.
-type MouseMsg interface {
-	// String returns a string representation of the mouse event.
-	String() string
-
-	// X returns the x-coordinate of the mouse event.
-	X() int
-
-	// Y returns the y-coordinate of the mouse event.
-	Y() int
-
-	// Button returns the button that was pressed during the mouse event.
-	Button() MouseButton
-
-	// Mod returns any modifier keys that were pressed during the mouse event.
-	Mod() KeyMod
-}
-
 // MouseClickMsg represents a mouse button click message.
-type MouseClickMsg mouse
-
-var _ MouseMsg = MouseClickMsg{}
-
-// Button implements MouseMsg.
-func (e MouseClickMsg) Button() MouseButton {
-	return mouse(e).Button()
-}
-
-// Mod implements MouseMsg.
-func (e MouseClickMsg) Mod() KeyMod {
-	return mouse(e).Mod()
-}
-
-// X implements MouseMsg.
-func (e MouseClickMsg) X() int {
-	return mouse(e).X()
-}
-
-// Y implements MouseMsg.
-func (e MouseClickMsg) Y() int {
-	return mouse(e).Y()
-}
+type MouseClickMsg Mouse
 
 // String returns a string representation of the mouse click message.
 func (e MouseClickMsg) String() string {
-	return mouse(e).String()
+	return Mouse(e).String()
 }
 
-var _ MouseMsg = MouseReleaseMsg{}
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseClickMsg) Mouse() Mouse {
+	return Mouse(e)
+}
 
 // MouseReleaseMsg represents a mouse button release message.
-type MouseReleaseMsg mouse
-
-// Button implements MouseMsg.
-func (e MouseReleaseMsg) Button() MouseButton {
-	return mouse(e).Button()
-}
-
-// Mod implements MouseMsg.
-func (e MouseReleaseMsg) Mod() KeyMod {
-	return mouse(e).Mod()
-}
-
-// X implements MouseMsg.
-func (e MouseReleaseMsg) X() int {
-	return mouse(e).X()
-}
-
-// Y implements MouseMsg.
-func (e MouseReleaseMsg) Y() int {
-	return mouse(e).Y()
-}
+type MouseReleaseMsg Mouse
 
 // String returns a string representation of the mouse release message.
 func (e MouseReleaseMsg) String() string {
-	return mouse(e).String()
+	return Mouse(e).String()
 }
 
-var _ MouseMsg = MouseWheelMsg{}
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseReleaseMsg) Mouse() Mouse {
+	return Mouse(e)
+}
 
 // MouseWheelMsg represents a mouse wheel message event.
-type MouseWheelMsg mouse
-
-// Button implements MouseMsg.
-func (e MouseWheelMsg) Button() MouseButton {
-	return mouse(e).Button()
-}
-
-// Mod implements MouseMsg.
-func (e MouseWheelMsg) Mod() KeyMod {
-	return mouse(e).Mod()
-}
-
-// X implements MouseMsg.
-func (e MouseWheelMsg) X() int {
-	return mouse(e).X()
-}
-
-// Y implements MouseMsg.
-func (e MouseWheelMsg) Y() int {
-	return mouse(e).Y()
-}
+type MouseWheelMsg Mouse
 
 // String returns a string representation of the mouse wheel message.
 func (e MouseWheelMsg) String() string {
-	return mouse(e).String()
+	return Mouse(e).String()
+}
+
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseWheelMsg) Mouse() Mouse {
+	return Mouse(e)
 }
 
 // MouseMotionMsg represents a mouse motion message.
-type MouseMotionMsg mouse
-
-var _ MouseMsg = MouseMotionMsg{}
-
-// Button implements MouseMsg.
-func (e MouseMotionMsg) Button() MouseButton {
-	return mouse(e).Button()
-}
-
-// Mod implements MouseMsg.
-func (e MouseMotionMsg) Mod() KeyMod {
-	return mouse(e).Mod()
-}
-
-// X implements MouseMsg.
-func (e MouseMotionMsg) X() int {
-	return mouse(e).X()
-}
-
-// Y implements MouseMsg.
-func (e MouseMotionMsg) Y() int {
-	return mouse(e).Y()
-}
+type MouseMotionMsg Mouse
 
 // String returns a string representation of the mouse motion message.
 func (e MouseMotionMsg) String() string {
-	m := mouse(e)
-	if m.button != 0 {
+	m := Mouse(e)
+	if m.Button != 0 {
 		return m.String() + "+motion"
 	}
 	return m.String() + "motion"
+}
+
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseMotionMsg) Mouse() Mouse {
+	return Mouse(e)
 }
 
 // Parse SGR-encoded mouse events; SGR extended mouse events. SGR mouse events
@@ -272,11 +181,11 @@ func parseSGRMouseEvent(csi *ansi.CsiSequence) Msg {
 	x--
 	y--
 
-	m := mouse{x: x, y: y, button: btn, mod: mod}
+	m := Mouse{X: x, Y: y, Button: btn, Mod: mod}
 
 	// Wheel buttons don't have release events
 	// Motion can be reported as a release event in some terminals (Windows Terminal)
-	if isWheel(m.button) {
+	if isWheel(m.Button) {
 		return MouseWheelMsg(m)
 	} else if !isMotion && release {
 		return MouseReleaseMsg(m)
@@ -311,8 +220,8 @@ func parseX10MouseEvent(buf []byte) Msg {
 	x := int(v[1]) - x10MouseByteOffset - 1
 	y := int(v[2]) - x10MouseByteOffset - 1
 
-	m := mouse{x: x, y: y, button: btn, mod: mod}
-	if isWheel(m.button) {
+	m := Mouse{X: x, Y: y, Button: btn, Mod: mod}
+	if isWheel(m.Button) {
 		return MouseWheelMsg(m)
 	} else if isMotion {
 		return MouseMotionMsg(m)

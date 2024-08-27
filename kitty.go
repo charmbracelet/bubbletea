@@ -49,7 +49,7 @@ func kittyKeyboard() Msg { //nolint:unused
 type _KittyKeyboardMsg int
 
 // Kitty Clipboard Control Sequences
-var kittyKeyMap = map[int]KeyType{
+var kittyKeyMap = map[int]rune{
 	ansi.BS:  KeyBackspace,
 	ansi.HT:  KeyTab,
 	ansi.CR:  KeyEnter,
@@ -224,72 +224,88 @@ func fromKittyMod(mod int) KeyMod {
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 	var isRelease bool
-	key := key{}
+	key := Key{}
 
 	if params := csi.Subparams(0); len(params) > 0 {
 		code := params[0]
 		if sym, ok := kittyKeyMap[code]; ok {
-			key.typ = sym
+			key.Code = sym
 		} else {
 			r := rune(code)
 			if !utf8.ValidRune(r) {
 				r = utf8.RuneError
 			}
 
-			key.typ = KeyRunes
-			key.runes = []rune{r}
+			key.Code = r
+		}
 
-			// alternate key reporting
-			switch len(params) {
-			case 3:
-				// shifted key + base key
-				if b := rune(params[2]); unicode.IsPrint(b) {
-					// XXX: When alternate key reporting is enabled, the protocol
-					// can return 3 things, the unicode codepoint of the key,
-					// the shifted codepoint of the key, and the standard
-					// PC-101 key layout codepoint.
-					// This is useful to create an unambiguous mapping of keys
-					// when using a different language layout.
-					key.baseRune = b
-				}
-				fallthrough
-			case 2:
-				// shifted key
-				if s := rune(params[1]); unicode.IsPrint(s) {
-					// XXX: We swap keys here because we want the shifted key
-					// to be the Rune that is returned by the event.
-					// For example, shift+a should produce "A" not "a".
-					// In such a case, we set AltRune to the original key "a"
-					// and Rune to "A".
-					key.altRune = key.Rune()
-					key.runes = []rune{s}
-				}
+		// alternate key reporting
+		switch len(params) {
+		case 3:
+			// shifted key + base key
+			if b := rune(params[2]); unicode.IsPrint(b) {
+				// XXX: When alternate key reporting is enabled, the protocol
+				// can return 3 things, the unicode codepoint of the key,
+				// the shifted codepoint of the key, and the standard
+				// PC-101 key layout codepoint.
+				// This is useful to create an unambiguous mapping of keys
+				// when using a different language layout.
+				key.BaseCode = b
+			}
+			fallthrough
+		case 2:
+			// shifted key
+			if s := rune(params[1]); unicode.IsPrint(s) {
+				// XXX: We swap keys here because we want the shifted key
+				// to be the Rune that is returned by the event.
+				// For example, shift+a should produce "A" not "a".
+				// In such a case, we set AltRune to the original key "a"
+				// and Rune to "A".
+				key.ShiftedCode = s
 			}
 		}
 	}
+
 	if params := csi.Subparams(1); len(params) > 0 {
 		mod := params[0]
 		if mod > 1 {
-			key.mod = fromKittyMod(mod - 1)
+			key.Mod = fromKittyMod(mod - 1)
+			if key.Mod > ModShift {
+				// XXX: We need to clear the text if we have a modifier key
+				// other than a [ModShift] key.
+				key.Text = ""
+			}
 		}
 		if len(params) > 1 {
 			switch params[1] {
 			case 2:
-				key.isRepeat = true
+				key.IsRepeat = true
 			case 3:
 				isRelease = true
 			}
 		}
 	}
+
 	if params := csi.Subparams(2); len(params) > 0 {
-		r := rune(params[0])
-		if unicode.IsPrint(r) {
-			key.altRune = key.Rune()
-			key.runes = []rune{r}
+		for _, code := range params {
+			if code != 0 {
+				key.Text += string(rune(code))
+			}
 		}
 	}
+
+	isShifted := key.Mod <= ModShift && key.Code != KeyLeftShift && key.Code != KeyRightShift
+	if len(key.Text) == 0 && isShifted {
+		if key.ShiftedCode != 0 {
+			key.Text = string(key.ShiftedCode)
+		} else {
+			key.Text = string(key.Code)
+		}
+	}
+
 	if isRelease {
 		return KeyReleaseMsg(key)
 	}
+
 	return KeyPressMsg(key)
 }
