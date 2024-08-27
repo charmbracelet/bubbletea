@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/parser"
@@ -783,13 +782,18 @@ func parseUtf8(b []byte) (int, Msg) {
 		return 1, k
 	}
 
-	r, _ := utf8.DecodeRune(b)
-	if r == utf8.RuneError {
-		return 1, UnknownMsg(b[0])
+	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
+	text := string(cluster)
+	var code rune
+	for i, r := range text {
+		if i > 0 {
+			code = KeyExtended
+			break
+		}
+		code = r
 	}
 
-	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
-	return len(cluster), KeyPressMsg{Code: r, Text: string(cluster)}
+	return len(cluster), KeyPressMsg{Code: code, Text: text}
 }
 
 func parseControl(b byte) Msg {

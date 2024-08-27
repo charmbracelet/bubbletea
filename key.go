@@ -9,7 +9,9 @@ import (
 )
 
 const (
-	extended = unicode.MaxRune + 1
+	// KeyExtended is a special key code used to signify that a key event
+	// contains multiple runes.
+	KeyExtended = unicode.MaxRune + 1
 )
 
 // Special key symbols.
@@ -17,7 +19,7 @@ const (
 
 	// Special keys
 
-	KeyUp rune = extended + iota
+	KeyUp rune = KeyExtended + iota + 1
 	KeyDown
 	KeyRight
 	KeyLeft
