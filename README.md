@@ -414,6 +414,7 @@ For some Bubble Tea programs in production, see:
 * [typioca](https://github.com/bloznelis/typioca): a typing test
 * [tz](https://github.com/oz/tz): a scheduling aid for people in multiple time zones
 * [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
+* [vault](https://github.com/athulreji/vault-client): a terminal based chat application
 * [walk](https://github.com/antonmedv/walk): a terminal navigator
 * [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
 * [WG Commander](https://github.com/AndrianBdn/wg-cmd): a TUI for a simple WireGuard VPN setup 
