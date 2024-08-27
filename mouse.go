@@ -65,7 +65,24 @@ type MouseMsg interface {
 	Mouse() Mouse
 }
 
-// Mouse represents a Mouse message.
+// Mouse represents a Mouse message. Use [MouseMsg] to represent all mouse
+// messages.
+//
+// The X and Y coordinates are zero-based, with (0,0) being the upper left
+// corner of the terminal.
+//
+//	// Catch all mouse events
+//	switch msg := msg.(type) {
+//	case MouseMsg:
+//	    m := msg.Mouse()
+//	    fmt.Println("Mouse event:", m.X, m.Y, m)
+//	}
+//
+//	// Only catch mouse click events
+//	switch msg := msg.(type) {
+//	case MouseClickMsg:
+//	    fmt.Println("Mouse click event:", msg.X, msg.Y, msg)
+//	}
 type Mouse struct {
 	X, Y   int
 	Button MouseButton

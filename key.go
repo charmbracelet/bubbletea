@@ -231,6 +231,40 @@ type KeyMsg interface {
 
 // Key represents a Key press or release event. It contains information about
 // the Key pressed, like the runes, the type of Key, and the modifiers pressed.
+// There are a couple general patterns you could use to check for key presses
+// or releases:
+//
+//	// Switch on the string representation of the key (shorter)
+//	switch msg := msg.(type) {
+//	case KeyPressMsg:
+//	    switch msg.String() {
+//	    case "enter":
+//	        fmt.Println("you pressed enter!")
+//	    case "a":
+//	        fmt.Println("you pressed a!")
+//	    }
+//	}
+//
+//	// Switch on the key type (more foolproof)
+//	switch msg := msg.(type) {
+//	case KeyMsg:
+//	    // catch both KeyPressMsg and KeyReleaseMsg
+//	    switch key := msg.Key(); key.Code {
+//	    case KeyEnter:
+//	        fmt.Println("you pressed enter!")
+//	    default:
+//	        switch key.Text {
+//	        case "a":
+//	            fmt.Println("you pressed a!")
+//	        }
+//	    }
+//	}
+//
+// Note that [Key.Text] will be empty for special keys like [KeyEnter],
+// [KeyTab], and for keys that don't represent printable characters like key
+// combos with modifier keys. In other words, [Key.Text] is populated only for
+// keys that represent printable characters shifted or unshifted (like 'a',
+// 'A', '1', '!', etc.).
 type Key struct {
 	// Text contains the actual characters received. This usually the same as
 	// [Key.Code]. When [Key.Text] is non-empty, it indicates that the key
