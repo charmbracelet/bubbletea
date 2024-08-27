@@ -1,7 +1,5 @@
 package tea
 
-import "github.com/charmbracelet/x/ansi"
-
 // WindowSizeMsg is used to report the terminal size. It's sent to Update once
 // initially and then on every terminal resize. Note that Windows does not
 // have support for reporting when resizes occur as it does not support the
@@ -146,50 +144,13 @@ func DisableBracketedPaste() Msg {
 // disableBracketedPasteMsg with DisableBracketedPaste.
 type disableBracketedPasteMsg struct{}
 
-// enableGraphemeClusteringMsg is an internal message that signals that
-// grapheme clustering should be enabled.
-type enableGraphemeClusteringMsg struct{}
-
-// EnableGraphemeClustering is a special command that tells the Bubble Tea
-// program to enable grapheme clustering. This is enabled by default.
-func EnableGraphemeClustering() Msg {
-	return enableGraphemeClusteringMsg{}
-}
-
-// disableGraphemeClusteringMsg is an internal message that signals that
-// grapheme clustering should be disabled.
-type disableGraphemeClusteringMsg struct{}
-
-// DisableGraphemeClustering is a special command that tells the Bubble Tea
-// program to disable grapheme clustering. This mode will be disabled
-// automatically when the program quits.
-func DisableGraphemeClustering() Msg {
-	return disableGraphemeClusteringMsg{}
-}
-
-// enableReportFocusMsg is an internal message that signals that focus
-// reporting should be enabled.
-type enableReportFocusMsg struct{}
-
-// EnabledReportFocus is a special command that tells the Bubble Tea program
-// to enable focus reporting.
-func EnabledReportFocus() Msg { return enableReportFocusMsg{} }
-
-// disableReportFocusMsg is an internal message that signals that focus
-// reporting should be disabled.
-type disableReportFocusMsg struct{}
-
-// DisabledReportFocus is a special command that tells the Bubble Tea program
-// to disable focus reporting.
-func DisabledReportFocus() Msg { return disableReportFocusMsg{} }
-
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
 // Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
-		p.renderer.SetMode(altScreenMode, true)
+		p.renderer.enterAltScreen()
 	} else {
 		p.startupOptions |= withAltScreen
 	}
@@ -200,7 +161,7 @@ func (p *Program) EnterAltScreen() {
 // Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
-		p.renderer.SetMode(altScreenMode, false)
+		p.renderer.exitAltScreen()
 	} else {
 		p.startupOptions &^= withAltScreen
 	}
@@ -211,7 +172,11 @@ func (p *Program) ExitAltScreen() {
 //
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
-	p.execute(ansi.EnableMouseCellMotion)
+	if p.renderer != nil {
+		p.renderer.enableMouseCellMotion()
+	} else {
+		p.startupOptions |= withMouseCellMotion
+	}
 }
 
 // DisableMouseCellMotion disables Mouse Cell Motion tracking. This will be
@@ -219,7 +184,11 @@ func (p *Program) EnableMouseCellMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
-	p.execute(ansi.DisableMouseCellMotion)
+	if p.renderer != nil {
+		p.renderer.disableMouseCellMotion()
+	} else {
+		p.startupOptions &^= withMouseCellMotion
+	}
 }
 
 // EnableMouseAllMotion enables mouse click, release, wheel and motion events,
@@ -228,7 +197,11 @@ func (p *Program) DisableMouseCellMotion() {
 //
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
-	p.execute(ansi.EnableMouseAllMotion)
+	if p.renderer != nil {
+		p.renderer.enableMouseAllMotion()
+	} else {
+		p.startupOptions |= withMouseAllMotion
+	}
 }
 
 // DisableMouseAllMotion disables All Motion mouse tracking. This will be
@@ -236,12 +209,20 @@ func (p *Program) EnableMouseAllMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
-	p.execute(ansi.DisableMouseAllMotion)
+	if p.renderer != nil {
+		p.renderer.disableMouseAllMotion()
+	} else {
+		p.startupOptions &^= withMouseAllMotion
+	}
 }
 
 // SetWindowTitle sets the terminal window title.
 //
 // Deprecated: Use the SetWindowTitle command instead.
 func (p *Program) SetWindowTitle(title string) {
-	p.execute(ansi.SetWindowTitle(title))
+	if p.renderer != nil {
+		p.renderer.setWindowTitle(title)
+	} else {
+		p.startupTitle = title
+	}
 }

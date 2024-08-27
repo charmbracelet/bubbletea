@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
-
-	"github.com/charmbracelet/x/ansi"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -168,14 +166,6 @@ func WithMouseAllMotion() ProgramOption {
 	}
 }
 
-// WithRenderer sets a custom renderer. This is useful if you want to use a
-// custom renderer to process the output of the program differently.
-func WithRenderer(renderer Renderer) ProgramOption {
-	return func(p *Program) {
-		p.renderer = renderer
-	}
-}
-
 // WithoutRenderer disables the renderer. When this is set output and log
 // statements will be plainly sent to stdout (or another output if one is set)
 // without any rendering and redrawing logic. In other words, printing and
@@ -184,12 +174,9 @@ func WithRenderer(renderer Renderer) ProgramOption {
 // application, or to provide an additional non-TUI mode to your Bubble Tea
 // programs. For example, your program could behave like a daemon if output is
 // not a TTY.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package. Use [NilRenderer] with [WithRenderer] instead.
 func WithoutRenderer() ProgramOption {
 	return func(p *Program) {
-		p.renderer = &NilRenderer{}
+		p.renderer = &nilRenderer{}
 	}
 }
 
@@ -198,9 +185,6 @@ func WithoutRenderer() ProgramOption {
 //
 // This feature is provisional, and may be changed or removed in a future version
 // of this package.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
 func WithANSICompressor() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withANSICompressor
@@ -248,97 +232,5 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 func WithFPS(fps int) ProgramOption {
 	return func(p *Program) {
 		p.fps = fps
-	}
-}
-
-// WithReportFocus enables reporting when the terminal gains and lost focus.
-//
-// You can then check for FocusMsg and BlurMsg in your model's Update method.
-func WithReportFocus() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withReportFocus
-	}
-}
-
-// WithEnhancedKeyboard enables support for enhanced keyboard features. This
-// unambiguously reports more key combinations than traditional terminal
-// keyboard sequences. This might also enable reporting of release key events
-// depending on the terminal emulator supporting it.
-//
-// This is a syntactic sugar for WithKittyKeyboard(3) and WithXtermModifyOtherKeys(1).
-func WithEnhancedKeyboard() ProgramOption {
-	return func(p *Program) {
-		_WithKittyKeyboard(ansi.KittyDisambiguateEscapeCodes |
-			ansi.KittyReportEventTypes)(p)
-		_WithModifyOtherKeys(1)(p)
-	}
-}
-
-// _WithKittyKeyboard enables support for the Kitty keyboard protocol. This
-// protocol enables more key combinations and events than the traditional
-// ambiguous terminal keyboard sequences.
-//
-// Use flags to specify which features you want to enable.
-//
-//	0:  Disable all features
-//	1:  Disambiguate escape codes
-//	2:  Report event types
-//	4:  Report alternate keys
-//	8:  Report all keys as escape codes
-//	16: Report associated text
-//
-// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func _WithKittyKeyboard(flags int) ProgramOption {
-	return func(p *Program) {
-		p.kittyFlags = flags
-		p.startupOptions |= withKittyKeyboard
-	}
-}
-
-// _WithModifyOtherKeys enables support for the XTerm modifyOtherKeys feature.
-// This feature allows the terminal to report ambiguous keys as escape codes.
-// This is useful for terminals that don't support the Kitty keyboard protocol.
-//
-// The mode can be one of the following:
-//
-//	0: Disable modifyOtherKeys
-//	1: Report ambiguous keys as escape codes
-//	2: Report ambiguous keys as escape codes including modified keys like Alt-<key>
-//	   and Meta-<key>
-//
-// See https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-func _WithModifyOtherKeys(mode int) ProgramOption {
-	return func(p *Program) {
-		p.modifyOtherKeys = mode
-		p.startupOptions |= withModifyOtherKeys
-	}
-}
-
-// _WithWindowsInputMode enables Windows Input Mode (win32-input-mode) which
-// allows for more advanced input handling and reporting. This is experimental
-// and may not work on all terminals.
-//
-// See
-// https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
-// for more information.
-func _WithWindowsInputMode() ProgramOption { //nolint:unused
-	return func(p *Program) {
-		p.startupOptions |= withWindowsInputMode
-		p.win32Input = true
-	}
-}
-
-// WithoutGraphemeClustering disables grapheme clustering. This is useful if you
-// want to disable grapheme clustering for your program.
-//
-// Grapheme clustering is a character width calculation method that accurately
-// calculates the width of wide characters in a terminal. This is useful for
-// properly rendering double width characters such as emojis and CJK
-// characters.
-//
-// See https://mitchellh.com/writing/grapheme-clusters-in-terminals
-func WithoutGraphemeClustering() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutGraphemeClustering
 	}
 }

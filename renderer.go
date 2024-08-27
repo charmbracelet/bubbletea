@@ -1,57 +1,76 @@
 package tea
 
-import "io"
+// renderer is the interface for Bubble Tea renderers.
+type renderer interface {
+	// Start the renderer.
+	start()
 
-// Renderer is the interface for Bubble Tea renderers.
-type Renderer interface {
-	// Close closes the renderer and flushes any remaining data.
-	Close() error
+	// Stop the renderer, but render the final frame in the buffer, if any.
+	stop()
 
-	// Render renders a frame to the output.
-	Render(string)
+	// Stop the renderer without doing any final rendering.
+	kill()
 
-	// SetOutput sets the output for the renderer.
-	SetOutput(io.Writer)
-
-	// Flush flushes the renderer's buffer to the output.
-	Flush() error
-
-	// InsertAbove inserts lines above the current frame. This only works in
-	// inline mode.
-	InsertAbove(string) error
-
-	// Resize sets the size of the terminal.
-	Resize(w int, h int)
+	// Write a frame to the renderer. The renderer can write this data to
+	// output at its discretion.
+	write(string)
 
 	// Request a full re-render. Note that this will not trigger a render
 	// immediately. Rather, this method causes the next render to be a full
-	// Repaint. Because of this, it's safe to call this method multiple times
+	// repaint. Because of this, it's safe to call this method multiple times
 	// in succession.
-	Repaint()
+	repaint()
 
-	// ClearScreen clear the terminal screen. This should always have the same
-	// behavior as the "clear" command which is equivalent to `CSI 2 J` and
-	// `CSI H`.
-	ClearScreen()
+	// Clears the terminal.
+	clearScreen()
 
-	// SetMode toggles a terminal mode such as bracketed paste, the altscreen,
-	// and so on.
-	//
-	// The mode argument is an int consisting of the mode identifier. For
-	// example, to set alt-screen mode, you would call SetMode(1049, true).
-	SetMode(mode int, on bool)
+	// Whether or not the alternate screen buffer is enabled.
+	altScreen() bool
+	// Enable the alternate screen buffer.
+	enterAltScreen()
+	// Disable the alternate screen buffer.
+	exitAltScreen()
 
-	// Mode returns whether the render has a mode enabled. For example, to
-	// check if alt-screen mode is enabled, you would call Mode(1049).
-	Mode(mode int) bool
+	// Show the cursor.
+	showCursor()
+	// Hide the cursor.
+	hideCursor()
+
+	// enableMouseCellMotion enables mouse click, release, wheel and motion
+	// events if a mouse button is pressed (i.e., drag events).
+	enableMouseCellMotion()
+
+	// disableMouseCellMotion disables Mouse Cell Motion tracking.
+	disableMouseCellMotion()
+
+	// enableMouseAllMotion enables mouse click, release, wheel and motion
+	// events, regardless of whether a mouse button is pressed. Many modern
+	// terminals support this, but not all.
+	enableMouseAllMotion()
+
+	// disableMouseAllMotion disables All Motion mouse tracking.
+	disableMouseAllMotion()
+
+	// enableMouseSGRMode enables mouse extended mode (SGR).
+	enableMouseSGRMode()
+
+	// disableMouseSGRMode disables mouse extended mode (SGR).
+	disableMouseSGRMode()
+
+	// enableBracketedPaste enables bracketed paste, where characters
+	// inside the input are not interpreted when pasted as a whole.
+	enableBracketedPaste()
+
+	// disableBracketedPaste disables bracketed paste.
+	disableBracketedPaste()
+
+	// bracketedPasteActive reports whether bracketed paste mode is
+	// currently enabled.
+	bracketedPasteActive() bool
+
+	// setWindowTitle sets the terminal window title.
+	setWindowTitle(string)
 }
 
 // repaintMsg forces a full repaint.
 type repaintMsg struct{}
-
-// Terminal modes used by SetMode and Mode in Bubble Tea.
-const (
-	graphemeClustering = 2027
-	altScreenMode      = 1049
-	hideCursor         = 25
-)
