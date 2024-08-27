@@ -364,6 +364,7 @@ For some Bubble Tea programs in production, see:
 * [go-sweep](https://github.com/maxpaulus43/go-sweep): Minesweeper in the terminal
 * [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
 * [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app built on simplytranslate's APIs
+* [goread](https://github.com/TypicalAM/goread): yassified RSS & Atom reader
 * [gum](https://github.com/charmbracelet/gum): interactivity and styling for shells and shell scripts
 * [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context: synced, and queryable
 * [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
