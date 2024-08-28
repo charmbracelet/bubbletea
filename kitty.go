@@ -294,11 +294,11 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 		}
 	}
 
-	isShifted := key.Mod <= ModShift && key.Code != KeyLeftShift && key.Code != KeyRightShift
-	if len(key.Text) == 0 && isShifted {
-		if key.ShiftedCode != 0 {
+	noneOrShifted := key.Mod <= ModShift && key.Code != KeyLeftShift && key.Code != KeyRightShift
+	if len(key.Text) == 0 && noneOrShifted {
+		if key.ShiftedCode != 0 && unicode.IsPrint(key.ShiftedCode) {
 			key.Text = string(key.ShiftedCode)
-		} else {
+		} else if unicode.IsPrint(key.Code) {
 			key.Text = string(key.Code)
 		}
 	}

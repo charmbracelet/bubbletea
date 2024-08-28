@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/parser"
@@ -774,6 +775,7 @@ func parseUtf8(b []byte) (int, Msg) {
 		code := rune(c)
 		k := KeyPressMsg{Code: code, Text: string(code)}
 		if unicode.IsUpper(code) {
+			// Convert upper case letters to lower case + shift modifier
 			k.Code = unicode.ToLower(code)
 			k.ShiftedCode = code
 			k.Mod |= ModShift
@@ -782,15 +784,19 @@ func parseUtf8(b []byte) (int, Msg) {
 		return 1, k
 	}
 
+	code, _ := utf8.DecodeRune(b)
+	if code == utf8.RuneError {
+		return 1, UnknownMsg(b[0])
+	}
+
 	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
 	text := string(cluster)
-	var code rune
-	for i, r := range text {
+	for i := range text {
 		if i > 0 {
+			// Use [KeyExtended] for multi-rune graphemes
 			code = KeyExtended
 			break
 		}
-		code = r
 	}
 
 	return len(cluster), KeyPressMsg{Code: code, Text: text}
