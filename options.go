@@ -265,11 +265,13 @@ func WithReportFocus() ProgramOption {
 // keyboard sequences. This might also enable reporting of release key events
 // depending on the terminal emulator supporting it.
 //
-// This is a syntactic sugar for WithKittyKeyboard(3) and WithXtermModifyOtherKeys(1).
+// This is a syntactic sugar for WithKittyKeyboard(7) and WithXtermModifyOtherKeys(1).
 func WithEnhancedKeyboard() ProgramOption {
 	return func(p *Program) {
 		_WithKittyKeyboard(ansi.KittyDisambiguateEscapeCodes |
-			ansi.KittyReportEventTypes)(p)
+			ansi.KittyReportEventTypes |
+			ansi.KittyReportAlternateKeys,
+		)(p)
 		_WithModifyOtherKeys(1)(p)
 	}
 }
