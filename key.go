@@ -354,10 +354,15 @@ func (k Key) String() string {
 			code = k.BaseCode
 		}
 
-		if code == ' ' {
+		switch code {
+		case KeySpace:
 			// Space is the only invisible printable character.
 			sb.WriteString("space")
-		} else {
+		case KeyExtended:
+			// Write the actual text of the key when the key contains multiple
+			// runes.
+			sb.WriteString(k.Text)
+		default:
 			sb.WriteRune(code)
 		}
 	}
