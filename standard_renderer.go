@@ -47,6 +47,9 @@ type standardRenderer struct {
 	// whether or not we're currently using bracketed paste
 	bpActive bool
 
+	// reportingFocus whether reporting focus events is enabled
+	reportingFocus bool
+
 	// renderer dimensions; usually the size of the window
 	width  int
 	height int
@@ -456,6 +459,29 @@ func (r *standardRenderer) bracketedPasteActive() bool {
 	defer r.mtx.Unlock()
 
 	return r.bpActive
+}
+
+func (r *standardRenderer) enableReportFocus() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.execute(ansi.EnableReportFocus)
+	r.reportingFocus = true
+}
+
+func (r *standardRenderer) disableReportFocus() {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	r.execute(ansi.DisableReportFocus)
+	r.reportingFocus = false
+}
+
+func (r *standardRenderer) reportFocus() bool {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	return r.reportingFocus
 }
 
 // setWindowTitle sets the terminal window title.

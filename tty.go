@@ -44,6 +44,10 @@ func (p *Program) restoreTerminalState() error {
 		p.renderer.showCursor()
 		p.disableMouse()
 
+		if p.renderer.reportFocus() {
+			p.renderer.disableReportFocus()
+		}
+
 		if p.renderer.altScreen() {
 			p.renderer.exitAltScreen()
 

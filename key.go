@@ -628,6 +628,13 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 		}
 	}
 
+	// Detect focus events.
+	var foundRF bool
+	foundRF, w, msg = detectReportFocus(b)
+	if foundRF {
+		return w, msg
+	}
+
 	// Detect bracketed paste.
 	var foundbp bool
 	foundbp, w, msg = detectBracketedPaste(b)
