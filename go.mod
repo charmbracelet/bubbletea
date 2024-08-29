@@ -1,6 +1,6 @@
 module github.com/charmbracelet/bubbletea
 
-go 1.18
+go 1.21
 
 require (
 	github.com/charmbracelet/lipgloss v0.13.0

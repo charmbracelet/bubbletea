@@ -1,6 +1,6 @@
 module tutorial
 
-go 1.18
+go 1.21
 
 require github.com/charmbracelet/bubbletea v0.25.0
 
