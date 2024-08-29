@@ -23,6 +23,11 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
+	if _, ok := p.renderer.(*nilRenderer); ok {
+		// No need to initialize the terminal if we're not rendering
+		return nil
+	}
+
 	if err := p.initInput(); err != nil {
 		return err
 	}
