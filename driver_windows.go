@@ -163,7 +163,7 @@ func parseConInputEvent(event xwindows.InputRecord, buttonState *uint32, windowS
 			return event
 		}
 
-		key.baseCode = runes[0]
+		key.BaseCode = runes[0]
 		if kevent.KeyDown {
 			return KeyPressMsg(key)
 		}
