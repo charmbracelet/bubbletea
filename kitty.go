@@ -11,7 +11,7 @@ import (
 // enhancement protocol flags.
 type setKittyKeyboardFlagsMsg int
 
-// enableKittyKeyboard is a command to enable Kitty keyboard progressive
+// EnableKittyKeyboard is a command to enable Kitty keyboard progressive
 // enhancements.
 //
 // The flags parameter is a bitmask of the following
@@ -23,15 +23,15 @@ type setKittyKeyboardFlagsMsg int
 //	16: Report associated text
 //
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func enableKittyKeyboard(flags int) Cmd { //nolint:unused
+func EnableKittyKeyboard(flags int) Cmd { //nolint:unused
 	return func() Msg {
 		return setKittyKeyboardFlagsMsg(flags)
 	}
 }
 
-// disableKittyKeyboard is a command to disable Kitty keyboard progressive
+// DisableKittyKeyboard is a command to disable Kitty keyboard progressive
 // enhancements.
-func disableKittyKeyboard() Msg { //nolint:unused
+func DisableKittyKeyboard() Msg { //nolint:unused
 	return setKittyKeyboardFlagsMsg(0)
 }
 
@@ -39,14 +39,26 @@ func disableKittyKeyboard() Msg { //nolint:unused
 // progressive enhancement flags.
 type kittyKeyboardMsg struct{}
 
-// kittyKeyboard is a command that queries the current Kitty keyboard
+// KittyKeyboard is a command that queries the current Kitty keyboard
 // progressive enhancement flags from the terminal.
-func kittyKeyboard() Msg { //nolint:unused
+func KittyKeyboard() Msg { //nolint:unused
 	return kittyKeyboardMsg{}
 }
 
-// _KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
-type _KittyKeyboardMsg int
+// KittyKeyboardMsg is a bitmask message representing Kitty keyboard
+// progressive enhancement flags.
+//
+// The bitmaps represents the following:
+//
+//	0:  Disable all features
+//	1:  Disambiguate escape codes
+//	2:  Report event types
+//	4:  Report alternate keys
+//	8:  Report all keys as escape codes
+//	16: Report associated text
+//
+// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
+type KittyKeyboardMsg int
 
 // Kitty Clipboard Control Sequences
 var kittyKeyMap = map[int]rune{

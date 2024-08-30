@@ -498,7 +498,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case cursorColorMsg:
 				p.execute(ansi.RequestCursorColor)
 
-			case _KittyKeyboardMsg:
+			case KittyKeyboardMsg:
 				// Store the kitty flags whenever they are queried.
 				p.kittyFlags = int(msg)
 
