@@ -3,8 +3,8 @@ module github.com/charmbracelet/bubbletea
 go 1.18
 
 require (
-	github.com/charmbracelet/x/ansi v0.2.3
 	github.com/charmbracelet/lipgloss v0.13.0
+	github.com/charmbracelet/x/ansi v0.2.3
 	github.com/charmbracelet/x/term v0.2.0
 	github.com/charmbracelet/x/windows v0.2.0
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6

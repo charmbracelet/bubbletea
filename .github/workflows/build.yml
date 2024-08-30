@@ -3,48 +3,17 @@ on: [push, pull_request]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        go-version: [~1.18, ^1]
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    env:
-      GO111MODULE: "on"
-    steps:
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
+    uses: charmbracelet/meta/.github/workflows/build.yml@main
 
-      - name: Checkout code
-        uses: actions/checkout@v4
+  build-go-mod:
+    uses: charmbracelet/meta/.github/workflows/build.yml@main
+    with:
+      go-version: ""
+      go-version-file: ./go.mod
 
-      - name: Download Go modules
-        run: go mod download
-
-      - name: Build
-        run: |
-          go mod tidy
-          go build -v ./...
-
-      - name: Test
-        run: go test ./...
-
-      - name: Build examples
-        if: ${{ matrix.go-version != '~1.18' }}
-        run: |
-          go mod tidy
-          go build -v ./...
-        working-directory: ./examples
-
-      - name: Test examples
-        if: ${{ matrix.go-version != '~1.18' }}
-        run: go test -v ./...
-        working-directory: ./examples
-
-      - name: Build tutorials
-        if: ${{ matrix.go-version != '~1.18' }}
-        run: |
-          go mod tidy
-          go build -v ./...
-        working-directory: ./tutorials
+  build-examples:
+    uses: charmbracelet/meta/.github/workflows/build.yml@main
+    with:
+      go-version: ""
+      go-version-file: ./examples/go.mod
+      working-directory: ./examples
