@@ -1,6 +1,8 @@
 package tea
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -54,7 +56,33 @@ var mouseButtons = map[MouseButton]string{
 	MouseExtra2:     "button11",
 }
 
-// Mouse represents a mouse message.
+// MouseMsg represents a mouse message. This is a generic mouse message that
+// can represent any kind of mouse event.
+type MouseMsg interface {
+	fmt.Stringer
+
+	// Mouse returns the underlying mouse event.
+	Mouse() Mouse
+}
+
+// Mouse represents a Mouse message. Use [MouseMsg] to represent all mouse
+// messages.
+//
+// The X and Y coordinates are zero-based, with (0,0) being the upper left
+// corner of the terminal.
+//
+//	// Catch all mouse events
+//	switch msg := msg.(type) {
+//	case MouseMsg:
+//	    m := msg.Mouse()
+//	    fmt.Println("Mouse event:", m.X, m.Y, m)
+//	}
+//
+//	// Only catch mouse click events
+//	switch msg := msg.(type) {
+//	case MouseClickMsg:
+//	    fmt.Println("Mouse click event:", msg.X, msg.Y, msg)
+//	}
 type Mouse struct {
 	X, Y   int
 	Button MouseButton
@@ -91,6 +119,13 @@ func (e MouseClickMsg) String() string {
 	return Mouse(e).String()
 }
 
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseClickMsg) Mouse() Mouse {
+	return Mouse(e)
+}
+
 // MouseReleaseMsg represents a mouse button release message.
 type MouseReleaseMsg Mouse
 
@@ -99,12 +134,26 @@ func (e MouseReleaseMsg) String() string {
 	return Mouse(e).String()
 }
 
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseReleaseMsg) Mouse() Mouse {
+	return Mouse(e)
+}
+
 // MouseWheelMsg represents a mouse wheel message event.
 type MouseWheelMsg Mouse
 
 // String returns a string representation of the mouse wheel message.
 func (e MouseWheelMsg) String() string {
 	return Mouse(e).String()
+}
+
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseWheelMsg) Mouse() Mouse {
+	return Mouse(e)
 }
 
 // MouseMotionMsg represents a mouse motion message.
@@ -117,6 +166,13 @@ func (e MouseMotionMsg) String() string {
 		return m.String() + "+motion"
 	}
 	return m.String() + "motion"
+}
+
+// Mouse returns the underlying mouse event. This is a convenience method and
+// syntactic sugar to satisfy the [MouseMsg] interface, and cast the mouse
+// event to [Mouse].
+func (e MouseMotionMsg) Mouse() Mouse {
+	return Mouse(e)
 }
 
 // Parse SGR-encoded mouse events; SGR extended mouse events. SGR mouse events

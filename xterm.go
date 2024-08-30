@@ -34,22 +34,24 @@ func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 
 	switch r {
 	case ansi.BS:
-		return KeyPressMsg{Mod: mod, Type: KeyBackspace}
+		return KeyPressMsg{Mod: mod, Code: KeyBackspace}
 	case ansi.HT:
-		return KeyPressMsg{Mod: mod, Type: KeyTab}
+		return KeyPressMsg{Mod: mod, Code: KeyTab}
 	case ansi.CR:
-		return KeyPressMsg{Mod: mod, Type: KeyEnter}
+		return KeyPressMsg{Mod: mod, Code: KeyEnter}
 	case ansi.ESC:
-		return KeyPressMsg{Mod: mod, Type: KeyEscape}
+		return KeyPressMsg{Mod: mod, Code: KeyEscape}
 	case ansi.DEL:
-		return KeyPressMsg{Mod: mod, Type: KeyBackspace}
+		return KeyPressMsg{Mod: mod, Code: KeyBackspace}
 	}
 
 	// CSI 27 ; <modifier> ; <code> ~ keys defined in XTerm modifyOtherKeys
-	return KeyPressMsg{
-		Mod:   mod,
-		Runes: []rune{r},
+	k := KeyPressMsg{Code: r, Mod: mod}
+	if k.Mod <= ModShift {
+		k.Text = string(r)
 	}
+
+	return k
 }
 
 // modifyOtherKeys is an internal message that queries the terminal for its
