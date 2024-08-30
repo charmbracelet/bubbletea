@@ -235,9 +235,13 @@ func WithFPS(fps int) ProgramOption {
 	}
 }
 
-// WithReportFocus enables reporting when the terminal gains and lost focus.
+// WithReportFocus enables reporting when the terminal gains and loses
+// focus. When this is enabled [FocusMsg] and [BlurMsg] messages will be sent
+// to your Update method.
 //
-// You can then check for FocusMsg and BlurMsg in your model's Update method.
+// Note that while most terminals and multiplexers support focus reporting,
+// some do not. Also note that tmux needs to be configured to report focus
+// events.
 func WithReportFocus() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withReportFocus
