@@ -23,3 +23,6 @@ func (n nilRenderer) enableMouseSGRMode()        {}
 func (n nilRenderer) disableMouseSGRMode()       {}
 func (n nilRenderer) bracketedPasteActive() bool { return false }
 func (n nilRenderer) setWindowTitle(_ string)    {}
+func (n nilRenderer) reportFocus() bool          { return false }
+func (n nilRenderer) enableReportFocus()         {}
+func (n nilRenderer) disableReportFocus()        {}

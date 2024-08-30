@@ -97,6 +97,7 @@ const (
 	// feature is on by default.
 	withoutCatchPanics
 	withoutBracketedPaste
+	withReportFocus
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -167,6 +168,7 @@ type Program struct {
 	ignoreSignals      uint32
 
 	bpWasActive bool // was the bracketed paste mode active before releasing the terminal?
+	reportFocus bool // was focus reporting active before releasing the terminal?
 
 	filter func(Model, Msg) Msg
 
@@ -390,6 +392,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case disableBracketedPasteMsg:
 				p.renderer.disableBracketedPaste()
 
+			case enableReportFocusMsg:
+				p.renderer.enableReportFocus()
+
+			case disableReportFocusMsg:
+				p.renderer.disableReportFocus()
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
@@ -541,6 +549,9 @@ func (p *Program) Run() (Model, error) {
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.renderer.enableMouseAllMotion()
 		p.renderer.enableMouseSGRMode()
+	}
+	if p.startupOptions&withReportFocus != 0 {
+		p.renderer.enableReportFocus()
 	}
 
 	// Start the renderer.
@@ -694,6 +705,7 @@ func (p *Program) ReleaseTerminal() error {
 		p.renderer.stop()
 		p.altScreenWasActive = p.renderer.altScreen()
 		p.bpWasActive = p.renderer.bracketedPasteActive()
+		p.reportFocus = p.renderer.reportFocus()
 	}
 
 	return p.restoreTerminalState()
@@ -722,6 +734,9 @@ func (p *Program) RestoreTerminal() error {
 	}
 	if p.bpWasActive {
 		p.renderer.enableBracketedPaste()
+	}
+	if p.reportFocus {
+		p.renderer.enableReportFocus()
 	}
 
 	// If the output is a terminal, it may have been resized while another

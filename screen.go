@@ -144,6 +144,26 @@ func DisableBracketedPaste() Msg {
 // disableBracketedPasteMsg with DisableBracketedPaste.
 type disableBracketedPasteMsg struct{}
 
+// enableReportFocusMsg is an internal message that signals to enable focus
+// reporting. You can send an enableReportFocusMsg with EnableReportFocus.
+type enableReportFocusMsg struct{}
+
+// EnableReportFocus is a special command that tells the Bubble Tea program to
+// report focus events to the program.
+func EnableReportFocus() Msg {
+	return enableReportFocusMsg{}
+}
+
+// disableReportFocusMsg is an internal message that signals to disable focus
+// reporting. You can send an disableReportFocusMsg with DisableReportFocus.
+type disableReportFocusMsg struct{}
+
+// DisableReportFocus is a special command that tells the Bubble Tea program to
+// stop reporting focus events to the program.
+func DisableReportFocus() Msg {
+	return disableReportFocusMsg{}
+}
+
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
