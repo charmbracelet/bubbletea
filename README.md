@@ -323,30 +323,40 @@ your program in another window.
 
 ## Bubble Tea in the Wild
 
+There are over 8k applications built with Bubble Tea! Here are a handful of ’em.
+
 ### Staff favourites
 
 - [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
 - [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
 - [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
+- [Tetrigo](https://github.com/Broderick-Westrope/tetrigo): Tetris in the terminal
 
-### Built by companies
+### In Industry
 
-- [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
-- [Daytona](https://github.com/daytonaio/daytona): an development environment manager
+- Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
+- Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
+- Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
+- NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary) from NVIDIA: a container validator
+- AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) from AWS: a tool for visualizing dynamic node usage within an EKS cluster
+- MinIO – [mc](https://github.com/minio/mc) from Min.io: the official [MinIO](https://min.io) client
+
+### Charm stuff
+
 - [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
 - [Huh?](https://github.com/charmbracelet/huh): an interactive prompt and form toolkit
-- [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
-- [container-canary](https://github.com/NVIDIA/container-canary): a container validator
-- [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
-- [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
-- [mods](https://github.com/charmbracelet/mods): AI on the CLI, built for pipelines
-- [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+- [Mods](https://github.com/charmbracelet/mods): AI on the CLI, built for pipelines
+- [Wishlist](https://github.com/charmbracelet/wishlist): an SSH directory (and bastion!)
 
-See [more][community] projects built by the community...
+### There’s so much more where that came from
+
+For more applications built with Bubble Tea see [Charm & Friends][community].
+Is there something cool you made with Bubble Tea you want to share? PRs are
+welcome!
 
 ## Feedback
 
-We'd love to hear your thoughts on this project. Feel free to drop us a note!
+We’d love to hear your thoughts on this project. Feel free to drop us a note!
 
 - [Twitter](https://twitter.com/charmcli)
 - [The Fediverse](https://mastodon.social/@charmcli)
