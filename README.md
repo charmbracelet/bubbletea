@@ -35,7 +35,7 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
-***
+---
 
 ## Tutorial
 
@@ -49,7 +49,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]:https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[tut-source]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
 
 ### Enough! Let's get to it.
 
@@ -72,9 +72,9 @@ import (
 Bubble Tea programs are comprised of a **model** that describes the application
 state and three simple methods on that model:
 
-* **Init**, a function that returns an initial command for the application to run.
-* **Update**, a function that handles incoming events and updates the model accordingly.
-* **View**, a function that renders the UI based on the data in the model.
+- **Init**, a function that returns an initial command for the application to run.
+- **Update**, a function that handles incoming events and updates the model accordingly.
+- **View**, a function that renders the UI based on the data in the model.
 
 ### The Model
 
@@ -275,11 +275,11 @@ $ dlv connect 127.0.0.1:43000
 ```
 
 If you do not explicitly supply the `--listen` flag, the port used will vary
-per run, so passing this in makes the debugger easier to use from a script 
-or your IDE of choice. 
+per run, so passing this in makes the debugger easier to use from a script
+or your IDE of choice.
 
-Additionally, we pass in `--api-version=2` because delve defaults to version 1 
-for backwards compatibility reasons. However, delve recommends using version 2 
+Additionally, we pass in `--api-version=2` because delve defaults to version 1
+for backwards compatibility reasons. However, delve recommends using version 2
 for all new development and some clients may no longer work with version 1.
 For more information, see the [Delve documentation](https://github.com/go-delve/delve/tree/master/Documentation/api).
 
@@ -305,13 +305,13 @@ your program in another window.
 
 ## Libraries we use with Bubble Tea
 
-* [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
-* [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
-* [Harmonica][harmonica]: A spring animation library for smooth, natural motion
-* [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
-* [ntcharts][ntcharts]: A terminal charting library built for Bubble Tea and [Lip Gloss][lipgloss]
-* [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: Advanced ANSI-aware methods for working with text
+- [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
+- [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
+- [Harmonica][harmonica]: A spring animation library for smooth, natural motion
+- [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
+- [ntcharts][ntcharts]: A terminal charting library built for Bubble Tea and [Lip Gloss][lipgloss]
+- [Termenv][termenv]: Advanced ANSI styling for terminal applications
+- [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
 [bubbles]: https://github.com/charmbracelet/bubbles
 [lipgloss]: https://github.com/charmbracelet/lipgloss
@@ -325,22 +325,22 @@ your program in another window.
 
 ### Staff favourites
 
-* [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
-* [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
-* [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
+- [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
+- [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
+- [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
 
 ### Built by companies
 
-* [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
-* [Daytona](https://github.com/daytonaio/daytona): an development environment manager
-* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
-* [Huh?](https://github.com/charmbracelet/huh): an interactive prompt and form toolkit
-* [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
-* [container-canary](https://github.com/NVIDIA/container-canary): a container validator
-* [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
-* [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
-* [mods](https://github.com/charmbracelet/mods): AI on the CLI, built for pipelines
-* [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+- [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
+- [Daytona](https://github.com/daytonaio/daytona): an development environment manager
+- [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
+- [Huh?](https://github.com/charmbracelet/huh): an interactive prompt and form toolkit
+- [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
+- [container-canary](https://github.com/NVIDIA/container-canary): a container validator
+- [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
+- [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+- [mods](https://github.com/charmbracelet/mods): AI on the CLI, built for pipelines
+- [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
 
 See [more][community] projects built by the community...
 
@@ -348,9 +348,9 @@ See [more][community] projects built by the community...
 
 We'd love to hear your thoughts on this project. Feel free to drop us a note!
 
-* [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.social/@charmcli)
-* [Discord](https://charm.sh/chat)
+- [Twitter](https://twitter.com/charmcli)
+- [The Fediverse](https://mastodon.social/@charmcli)
+- [Discord](https://charm.sh/chat)
 
 ## Acknowledgments
 
@@ -368,7 +368,7 @@ of days past.
 
 [MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
 
-***
+---
 
 Part of [Charm](https://charm.sh).
 
