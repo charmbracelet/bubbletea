@@ -14,47 +14,47 @@ func TestClearMsg(t *testing.T) {
 		{
 			name:     "clear_screen",
 			cmds:     []Cmd{ClearScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[2J\x1b[1;1H\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[2J\x1b[1;1H\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "altscreen",
 			cmds:     []Cmd{EnterAltScreen, ExitAltScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[?25l\x1b[?1049l\x1b[?25l\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[?25l\x1b[?1049l\x1b[?25l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "altscreen_autoexit",
 			cmds:     []Cmd{EnterAltScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[?25l\rsuccess\r\n\x1b[2;0H\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?1049l\x1b[?25h",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[?25l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[2;0H\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?1049l\x1b[?25h",
 		},
 		{
 			name:     "mouse_cellmotion",
 			cmds:     []Cmd{EnableMouseCellMotion},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1002h\x1b[?1006h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1002h\x1b[?1006h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "mouse_allmotion",
 			cmds:     []Cmd{EnableMouseAllMotion},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "mouse_disable",
 			cmds:     []Cmd{EnableMouseAllMotion, DisableMouse},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\x1b[?1002l\x1b[?1003l\x1b[?1006l\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\x1b[?1002l\x1b[?1003l\x1b[?1006l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "cursor_hide",
 			cmds:     []Cmd{HideCursor},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "cursor_hideshow",
 			cmds:     []Cmd{HideCursor, ShowCursor},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\x1b[?25h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\x1b[?25h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "bp_stop_start",
 			cmds:     []Cmd{DisableBracketedPaste, EnableBracketedPaste},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?2004l\x1b[?2004h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?2004l\x1b[?2004h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 	}
 
