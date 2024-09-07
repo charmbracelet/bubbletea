@@ -161,15 +161,17 @@ func (r *standardRenderer) flush() {
 	defer r.mtx.Unlock()
 
 	if r.buf.Len() == 0 || r.buf.String() == r.lastRender {
-		// Nothing to do
+		// Nothing to do.
 		return
 	}
 
-	// Output buffer
+	// Output buffer.
 	buf := &bytes.Buffer{}
 
 	// Moving to the begining of the section, that we rendered.
-	buf.WriteString(ansi.CursorUp(r.linesRendered-1) + ansi.CursorLeft(r.width))
+	if r.linesRendered > 0 {
+		buf.WriteString(ansi.CursorUp(r.linesRendered - 1))
+	}
 
 	newLines := strings.Split(r.buf.String(), "\n")
 
@@ -214,7 +216,7 @@ func (r *standardRenderer) flush() {
 
 			line := newLines[i]
 
-			// Removing left over content from previous render at the end of the line.
+			// Removing previousy rendered content at the end of line.
 			line = line + ansi.EraseLineRight
 
 			// Truncate lines wider than the width of the window to avoid
@@ -235,10 +237,13 @@ func (r *standardRenderer) flush() {
 			}
 		}
 	}
-	r.linesRendered = numLinesThisFlush
 
-	// Clearing left over content from last render (if our new frame contains less lines).
-	buf.WriteString(ansi.EraseDisplayRight)
+	// Clearing left over content from last render.
+	if r.linesRendered > numLinesThisFlush {
+		buf.WriteString(ansi.EraseDisplayRight)
+	}
+
+	r.linesRendered = numLinesThisFlush
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
