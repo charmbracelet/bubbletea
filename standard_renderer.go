@@ -168,6 +168,9 @@ func (r *standardRenderer) flush() {
 	// Output buffer
 	buf := &bytes.Buffer{}
 
+	// Moving to the begining of the section, that we rendered.
+	buf.WriteString(ansi.CursorUp(r.linesRendered-1) + ansi.CursorLeft(r.width))
+
 	newLines := strings.Split(r.buf.String(), "\n")
 
 	// If we know the output's height, we can use it to determine how many
@@ -179,64 +182,25 @@ func (r *standardRenderer) flush() {
 	}
 
 	numLinesThisFlush := len(newLines)
-	oldLines := strings.Split(r.lastRender, "\n")
-	skipLines := make(map[int]struct{})
 	flushQueuedMessages := len(r.queuedMessageLines) > 0 && !r.altScreenActive
 
-	// Clear any lines we painted in the last render.
-	if r.linesRendered > 0 {
-		for i := r.linesRendered - 1; i > 0; i-- {
-			// if we are clearing queued messages, we want to clear all lines, since
-			// printing messages allows for native terminal word-wrap, we
-			// don't have control over the queued lines
-			if flushQueuedMessages {
-				buf.WriteString(ansi.EraseEntireLine)
-			} else if (len(newLines) <= len(oldLines)) && (len(newLines) > i && len(oldLines) > i) && (newLines[i] == oldLines[i]) {
-				// If the number of lines we want to render hasn't increased and
-				// new line is the same as the old line we can skip rendering for
-				// this line as a performance optimization.
-				skipLines[i] = struct{}{}
-			} else if _, exists := r.ignoreLines[i]; !exists {
-				buf.WriteString(ansi.EraseEntireLine)
-			}
-
-			buf.WriteString(ansi.CursorUp1)
-		}
-
-		if _, exists := r.ignoreLines[0]; !exists {
-			// We need to return to the start of the line here to properly
-			// erase it. Going back the entire width of the terminal will
-			// usually be farther than we need to go, but terminal emulators
-			// will stop the cursor at the start of the line as a rule.
-			//
-			// We use this sequence in particular because it's part of the ANSI
-			// standard (whereas others are proprietary to, say, VT100/VT52).
-			// If cursor previous line (ESC[ + <n> + F) were better supported
-			// we could use that above to eliminate this step.
-			buf.WriteString(ansi.CursorLeft(r.width))
-			buf.WriteString(ansi.EraseEntireLine)
-		}
-	}
-
-	// Merge the set of lines we're skipping as a rendering optimization with
-	// the set of lines we've explicitly asked the renderer to ignore.
-	for k, v := range r.ignoreLines {
-		skipLines[k] = v
-	}
-
 	if flushQueuedMessages {
-		// Dump the lines we've queued up for printing
+		// Dump the lines we've queued up for printing.
 		for _, line := range r.queuedMessageLines {
+
+			// Removing previousy rendered content at the end of line.
+			line = line + ansi.EraseLineRight
+
 			_, _ = buf.WriteString(line)
 			_, _ = buf.WriteString("\r\n")
 		}
-		// clear the queued message lines
+		// Clear the queued message lines.
 		r.queuedMessageLines = []string{}
 	}
 
-	// Paint new lines
+	// Paint new lines.
 	for i := 0; i < len(newLines); i++ {
-		if _, skip := skipLines[i]; skip {
+		if _, skip := r.ignoreLines[i]; skip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
 				buf.WriteString(ansi.CursorDown1)
@@ -249,6 +213,9 @@ func (r *standardRenderer) flush() {
 			}
 
 			line := newLines[i]
+
+			// Removing left over content from previous render at the end of the line.
+			line = line + ansi.EraseLineRight
 
 			// Truncate lines wider than the width of the window to avoid
 			// wrapping, which will mess up rendering. If we don't have the
@@ -269,6 +236,9 @@ func (r *standardRenderer) flush() {
 		}
 	}
 	r.linesRendered = numLinesThisFlush
+
+	// Clearing left over content from last render (if our new frame contains less lines).
+	buf.WriteString(ansi.EraseDisplayRight)
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
