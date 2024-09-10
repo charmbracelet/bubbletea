@@ -666,9 +666,10 @@ func (p *Program) Quit() {
 
 // Kill stops the program immediately and restores the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
-// [program.Run] returns a [ErrProgramKilled] error.
+// [Program.Run] returns a [ErrProgramKilled] error.
 func (p *Program) Kill() {
 	p.cancel()
+	p.shutdown(true)
 }
 
 // Wait waits/blocks until the underlying Program finished shutting down.
