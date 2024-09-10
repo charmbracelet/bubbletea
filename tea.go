@@ -312,6 +312,11 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				// possible to cancel them so we'll have to leak the goroutine
 				// until Cmd returns.
 				go func() {
+					// Recover from panics.
+					if !p.startupOptions.has(withoutCatchPanics) {
+						defer p.recoverFromPanic()
+					}
+
 					msg := cmd() // this can be long.
 					p.Send(msg)
 				}()
@@ -512,14 +517,7 @@ func (p *Program) Run() (Model, error) {
 
 	// Recover from panics.
 	if !p.startupOptions.has(withoutCatchPanics) {
-		defer func() {
-			if r := recover(); r != nil {
-				p.shutdown(true)
-				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-				debug.PrintStack()
-				return
-			}
-		}()
+		defer p.recoverFromPanic()
 	}
 
 	// If no renderer is set use the standard one.
@@ -689,6 +687,16 @@ func (p *Program) shutdown(kill bool) {
 
 	_ = p.restoreTerminalState()
 	p.finished <- struct{}{}
+}
+
+// recoverFromPanic recovers from a panic, prints the stack trace, and restores
+// the terminal to a usable state.
+func (p *Program) recoverFromPanic() {
+	if r := recover(); r != nil {
+		p.shutdown(true)
+		fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+		debug.PrintStack()
+	}
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
