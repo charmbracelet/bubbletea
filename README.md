@@ -351,7 +351,7 @@ There are over 8k applications built with Bubble Tea! Here are a handful of ’e
 ### There’s so much more where that came from
 
 For more applications built with Bubble Tea see [Charm & Friends][community].
-Is there something cool you made with Bubble Tea you want to share? PRs are
+Is there something cool you made with Bubble Tea you want to share? [PRs][community] are
 welcome!
 
 ## Feedback
