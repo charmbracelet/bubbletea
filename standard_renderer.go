@@ -45,9 +45,9 @@ type standardRenderer struct {
 	ignoreLines map[int]struct{}
 }
 
-// NewStandardRenderer creates a new renderer. Normally you'll want to initialize it
+// newStandardRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func NewStandardRenderer() renderer {
+func newStandardRenderer() renderer {
 	r := &standardRenderer{
 		mtx:                &sync.Mutex{},
 		queuedMessageLines: []string{},

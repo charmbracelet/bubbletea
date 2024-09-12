@@ -622,7 +622,7 @@ func (p *Program) Run() (Model, error) {
 		if p.startupOptions.has(withANSICompressor) {
 			output = &compressor.Writer{Forward: output}
 		}
-		p.renderer = NewStandardRenderer()
+		p.renderer = newStandardRenderer()
 	}
 
 	// Set the renderer output.
