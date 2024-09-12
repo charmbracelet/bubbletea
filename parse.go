@@ -732,13 +732,14 @@ func parseDcs(b []byte) (int, Msg) {
 	case 'r' | '+'<<parser.IntermedShift:
 		// XTGETTCAP responses
 		switch param := dcs.Param(0); param {
-		case 0, 1:
+		case 1: // 1 means valid response, 0 means invalid response
 			tc := parseTermcap(b[start:end])
 			// XXX: some terminals like KiTTY report invalid responses with
 			// their queries i.e. sending a query for "Tc" using "\x1bP+q5463\x1b\\"
 			// returns "\x1bP0+r5463\x1b\\".
 			// The specs says that invalid responses should be in the form of
 			// DCS 0 + r ST "\x1bP0+r\x1b\\"
+			// We ignore invalid responses and only send valid ones to the program.
 			//
 			// See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 			return i, tc
