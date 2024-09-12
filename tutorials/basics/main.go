@@ -24,8 +24,8 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.SetWindowTitle("Grocery List")
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.SetWindowTitle("Grocery List")
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
