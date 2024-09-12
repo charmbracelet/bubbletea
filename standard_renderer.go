@@ -64,19 +64,18 @@ func (r *standardRenderer) setOutput(out io.Writer) {
 
 // close closes the renderer and flushes any remaining data.
 func (r *standardRenderer) close() (err error) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EraseEntireLine)
 	// Move the cursor back to the beginning of the line
-	r.execute("\r")
+	// NOTE: execute locks the mutex
+	r.execute(ansi.EraseEntireLine + "\r")
 
 	return
 }
 
 // execute writes the given sequence to the output.
 func (r *standardRenderer) execute(seq string) {
+	r.mtx.Lock()
 	_, _ = io.WriteString(r.out, seq)
+	r.mtx.Unlock()
 }
 
 // flush renders the buffer.
@@ -240,11 +239,7 @@ func (r *standardRenderer) reset() {
 }
 
 func (r *standardRenderer) clearScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireDisplay + ansi.MoveCursorOrigin)
 
 	r.repaint()
 }

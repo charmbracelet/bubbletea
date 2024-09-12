@@ -109,18 +109,27 @@ const (
 // channelHandlers manages the series of channels returned by various processes.
 // It allows us to wait for those processes to terminate before exiting the
 // program.
-type channelHandlers []chan struct{}
+type channelHandlers struct {
+	handlers []chan struct{}
+	mu       sync.RWMutex
+}
 
 // Adds a channel to the list of handlers. We wait for all handlers to terminate
 // gracefully on shutdown.
 func (h *channelHandlers) add(ch chan struct{}) {
-	*h = append(*h, ch)
+	h.mu.Lock()
+	h.handlers = append(h.handlers, ch)
+	h.mu.Unlock()
 }
 
 // shutdown waits for all handlers to terminate.
-func (h channelHandlers) shutdown() {
+func (h *channelHandlers) shutdown() {
 	var wg sync.WaitGroup
-	for _, ch := range h {
+
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	for _, ch := range h.handlers {
 		wg.Add(1)
 		go func(ch chan struct{}) {
 			<-ch
@@ -156,7 +165,8 @@ type Program struct {
 	finished chan struct{}
 
 	// where to send output, this will usually be os.Stdout.
-	output io.Writer
+	output *safeWriter
+
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
 	previousOutputState *term.State
@@ -248,7 +258,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
-		p.output = os.Stdout
+		p.output = newSafeWriter(os.Stdout)
 	}
 
 	// if no environment was set, set it to os.Environ()
@@ -616,7 +626,8 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// If no renderer is set use the standard one.
-	output := p.output
+	var output io.Writer
+	output = p.output
 	if p.renderer == nil {
 		// TODO(v2): remove the ANSI compressor
 		if p.startupOptions.has(withANSICompressor) {
@@ -995,7 +1006,7 @@ func (p *Program) stopRenderer(kill bool) {
 	p.renderer.close() //nolint:errcheck
 
 	if !kill && p.startupOptions.has(withANSICompressor) {
-		if w, ok := p.output.(io.WriteCloser); ok {
+		if w, ok := p.output.Writer().(io.WriteCloser); ok {
 			_ = w.Close()
 		}
 	}
