@@ -242,7 +242,7 @@ func parseCsi(b []byte) (int, Msg) {
 	case 'y' | '?'<<parser.MarkerShift | '$'<<parser.IntermedShift:
 		// Report Mode (DECRPM)
 		if paramsLen == 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
-			return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
+			return i, modeReportMsg{Mode: csi.Param(0), Value: csi.Param(1)}
 		}
 	case 'c' | '?'<<parser.MarkerShift:
 		// Primary Device Attributes
@@ -329,7 +329,7 @@ func parseCsi(b []byte) (int, Msg) {
 		if paramsLen != 2 && csi.Param(0) != -1 && csi.Param(0) != -1 {
 			return i, UnknownMsg(b[:i])
 		}
-		return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
+		return i, modeReportMsg{Mode: csi.Param(0), Value: csi.Param(1)}
 	case 'u':
 		// Kitty keyboard protocol & CSI u (fixterms)
 		if paramsLen == 0 {

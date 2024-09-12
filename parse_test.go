@@ -17,7 +17,7 @@ func TestParseSequence_Events(t *testing.T) {
 		KeyPressMsg{Code: KeySpace, Mod: ModCtrl},
 		ForegroundColorMsg{color.RGBA{R: 0x12, G: 0x12, B: 0x12, A: 0xff}},
 		KeyPressMsg{Code: KeyEscape, Mod: ModShift},
-		ReportModeMsg{Mode: 1049, Value: 2},
+		modeReportMsg{Mode: 1049, Value: 2},
 	}
 	for i := 0; len(input) != 0; i++ {
 		if i >= len(want) {

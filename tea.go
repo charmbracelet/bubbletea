@@ -395,7 +395,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.suspend()
 				}
 
-			case ReportModeMsg:
+			case modeReportMsg:
 				switch msg.Mode {
 				case graphemeClustering:
 					// 1 means mode is set (see DECRPM).
@@ -502,8 +502,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case terminalVersion:
 				p.execute(ansi.RequestXTVersion)
 
-			case primaryDeviceAttrsMsg:
-				p.execute(ansi.RequestPrimaryDeviceAttributes)
+			case requestCapabilityMsg:
+				p.execute(ansi.RequestTermcap(string(msg)))
 
 			case BatchMsg:
 				for _, cmd := range msg {
