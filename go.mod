@@ -17,8 +17,11 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/charmbracelet/x/cellbuf v0.0.0-20240912161436-28d4efd6a289 // indirect
+	github.com/charmbracelet/x/wcwidth v0.0.0-20240910151828-580711411937 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
+	golang.org/x/text v0.18.0 // indirect
 )
