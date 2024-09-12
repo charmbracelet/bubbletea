@@ -160,9 +160,10 @@ type Program struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	msgs     chan Msg
-	errs     chan error
-	finished chan struct{}
+	msgs         chan Msg
+	errs         chan error
+	finished     chan struct{}
+	shutdownOnce sync.Once
 
 	// where to send output, this will usually be os.Stdout.
 	output *safeWriter
@@ -820,30 +821,32 @@ func (p *Program) execute(seq string) {
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
-	p.cancel()
+	p.shutdownOnce.Do(func() {
+		p.cancel()
 
-	// Wait for all handlers to finish.
-	p.handlers.shutdown()
+		// Wait for all handlers to finish.
+		p.handlers.shutdown()
 
-	// Check if the cancel reader has been setup before waiting and closing.
-	if p.inputReader != nil {
-		// Wait for input loop to finish.
-		if p.inputReader.Cancel() {
-			if !kill {
-				p.waitForReadLoop()
+		// Check if the cancel reader has been setup before waiting and closing.
+		if p.inputReader != nil {
+			// Wait for input loop to finish.
+			if p.inputReader.Cancel() {
+				if !kill {
+					p.waitForReadLoop()
+				}
 			}
+			_ = p.inputReader.Close()
 		}
-		_ = p.inputReader.Close()
-	}
 
-	if p.renderer != nil {
-		p.stopRenderer(kill)
-	}
+		if p.renderer != nil {
+			p.stopRenderer(kill)
+		}
 
-	_ = p.restoreTerminalState()
-	if !kill {
-		p.finished <- struct{}{}
-	}
+		_ = p.restoreTerminalState()
+		if !kill {
+			p.finished <- struct{}{}
+		}
+	})
 }
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
