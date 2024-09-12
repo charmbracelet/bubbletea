@@ -178,7 +178,7 @@ func WithMouseAllMotion() ProgramOption {
 // not a TTY.
 func WithoutRenderer() ProgramOption {
 	return func(p *Program) {
-		p.renderer = &NilRenderer{}
+		p.renderer = &nilRenderer{}
 	}
 }
 
