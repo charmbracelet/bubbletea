@@ -495,8 +495,7 @@ type syncScrollAreaMsg struct {
 //
 // For high-performance, scroll-based rendering only.
 //
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
+// Deprecated: This option will be removed in a future version of this package.
 func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
 	return func() Msg {
 		return syncScrollAreaMsg{
@@ -514,8 +513,7 @@ type clearScrollAreaMsg struct{}
 //
 // For high-performance, scroll-based rendering only.
 //
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
+// Deprecated: This option will be removed in a future version of this package.
 func ClearScrollArea() Msg {
 	return clearScrollAreaMsg{}
 }
@@ -532,8 +530,7 @@ type scrollUpMsg struct {
 //
 // For high-performance, scroll-based rendering only.
 //
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
+// Deprecated: This option will be removed in a future version of this package.
 func ScrollUp(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollUpMsg{
@@ -556,8 +553,7 @@ type scrollDownMsg struct {
 //
 // For high-performance, scroll-based rendering only.
 //
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
+// Deprecated: This option will be removed in a future version of this package.
 func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollDownMsg{
