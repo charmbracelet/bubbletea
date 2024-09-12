@@ -160,7 +160,7 @@ type Program struct {
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
 	previousOutputState *term.State
-	renderer            Renderer
+	renderer            renderer
 
 	// the environment variables for the program, defaults to os.Environ().
 	environ []string
@@ -173,19 +173,9 @@ type Program struct {
 	inputReader           *driver
 	readLoopDone          chan struct{}
 
-	// was the altscreen active before releasing the terminal?
-	altScreenWasActive bool
-	ignoreSignals      uint32
-
-	bpActive bool // was the bracketed paste mode active before releasing the terminal?
-
-	graphemeClustering bool // whether grapheme clustering is enabled
-
-	cursorHidden bool // the cursor visibility state
-
-	mouseEnabled bool // whether mouse reporting is enabled
-
-	reportFocus bool // whether focus reporting is enabled
+	// modes keeps track of terminal modes that have been enabled or disabled.
+	modes         map[string]bool
+	ignoreSignals uint32
 
 	filter func(Model, Msg) Msg
 
@@ -207,9 +197,6 @@ type Program struct {
 
 	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
 	modifyOtherKeys int
-
-	// win32Input indicates whether the program has win32-input-mode enabled.
-	win32Input bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -243,6 +230,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
+		modes:        make(map[string]bool),
 	}
 
 	// Apply all options to the program.
@@ -366,12 +354,6 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	return ch
 }
 
-func (p *Program) disableMouse() {
-	p.execute(ansi.DisableMouseCellMotion)
-	p.execute(ansi.DisableMouseAllMotion)
-	p.execute(ansi.DisableMouseSgrExt)
-}
-
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
@@ -406,70 +388,36 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				switch msg.Mode {
 				case graphemeClustering:
 					// 1 means mode is set (see DECRPM).
-					p.graphemeClustering = msg.Value == 1
-					if p.graphemeClustering {
-						p.renderer.SetMode(graphemeClustering, true)
-					}
+					p.modes[ansi.GraphemeClusteringMode] = msg.Value == 1 || msg.Value == 3
 				}
 
-			case clearScreenMsg:
-				p.renderer.ClearScreen()
-
-			case enterAltScreenMsg:
-				p.renderer.SetMode(altScreenMode, true)
-
-			case exitAltScreenMsg:
-				p.renderer.SetMode(altScreenMode, false)
-
-			case enableMouseCellMotionMsg, enableMouseAllMotionMsg:
-				switch msg.(type) {
-				case enableMouseCellMotionMsg:
-					p.execute(ansi.EnableMouseCellMotion)
-				case enableMouseAllMotionMsg:
-					p.execute(ansi.EnableMouseAllMotion)
-				}
-				// mouse mode (1006) is a no-op if the terminal doesn't support it.
-				p.execute(ansi.EnableMouseSgrExt)
-				p.mouseEnabled = true
-
-			case disableMouseMsg:
-				p.disableMouse()
-				p.mouseEnabled = false
-
-			case showCursorMsg:
-				p.renderer.SetMode(hideCursor, false)
-
-			case hideCursorMsg:
-				p.renderer.SetMode(hideCursor, true)
-
-			case enableBracketedPasteMsg:
-				p.execute(ansi.EnableBracketedPaste)
-				p.bpActive = true
-
-			case disableBracketedPasteMsg:
-				p.execute(ansi.DisableBracketedPaste)
-				p.bpActive = false
-
-			case enableGraphemeClusteringMsg:
-				p.execute(ansi.EnableGraphemeClustering)
-				p.execute(ansi.RequestGraphemeClustering)
-				// We store the state of grapheme clustering after we enable it
-				// and get a response in the eventLoop.
-
-			case disableGraphemeClusteringMsg:
-				if p.graphemeClustering {
-					// We only disable grapheme clustering if it was enabled.
-					p.execute(ansi.DisableGraphemeClustering)
-					p.renderer.SetMode(graphemeClustering, false)
+			case enableModeMsg:
+				if on, ok := p.modes[string(msg)]; ok && on {
+					break
 				}
 
-			case enableReportFocusMsg:
-				p.execute(ansi.EnableReportFocus)
-				p.reportFocus = true
+				p.execute(fmt.Sprintf("\x1b[%sh", string(msg)))
+				p.modes[string(msg)] = true
+				switch string(msg) {
+				case ansi.AltScreenBufferMode:
+					p.setAltScreenBuffer(true)
+				case ansi.GraphemeClusteringMode:
+					// We store the state of grapheme clustering after we enable it
+					// and get a response in the eventLoop.
+					p.execute(ansi.RequestGraphemeClustering)
+				}
 
-			case disableReportFocusMsg:
-				p.execute(ansi.DisableReportFocus)
-				p.reportFocus = false
+			case disableModeMsg:
+				if on, ok := p.modes[string(msg)]; ok && !on {
+					break
+				}
+
+				p.execute(fmt.Sprintf("\x1b[%sl", string(msg)))
+				p.modes[string(msg)] = false
+				switch string(msg) {
+				case ansi.AltScreenBufferMode:
+					p.setAltScreenBuffer(false)
+				}
 
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
@@ -536,14 +484,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
 				p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
 
-			case enableWin32InputMsg:
-				p.execute(ansi.EnableWin32Input)
-				p.win32Input = true
-
-			case disableWin32InputMsg:
-				p.execute(ansi.DisableWin32Input)
-				p.win32Input = false
-
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
@@ -597,23 +537,17 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case windowSizeMsg:
 				go p.checkResize()
-
-			case WindowSizeMsg:
-				p.renderer.Resize(msg.Width, msg.Height)
-
-			case printLineMessage:
-				p.renderer.InsertAbove(msg.messageBody) //nolint:errcheck
 			}
 
 			// Process internal messages for the renderer.
-			if r, ok := p.renderer.(*standardRenderer); ok {
-				r.handleMessages(msg)
+			if cmd := p.renderer.update(msg); cmd != nil {
+				cmds <- cmd
 			}
 
 			var cmd Cmd
 			model, cmd = model.Update(msg)  // run update
 			cmds <- cmd                     // process command (if any)
-			p.renderer.Render(model.View()) //nolint:errcheck // send view to renderer
+			p.renderer.render(model.View()) //nolint:errcheck // send view to renderer
 		}
 	}
 }
@@ -694,15 +628,15 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Set the renderer output.
-	p.renderer.SetOutput(output)
+	if cmd := p.renderer.update(rendererWriter{output}); cmd != nil {
+		go func() { cmds <- cmd }()
+	}
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
 			return p.initialModel, err
 		}
-
-		p.renderer.Resize(w, h)
 
 		// Send the initial size to the program.
 		go p.Send(WindowSizeMsg{
@@ -720,18 +654,26 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Hide the cursor before starting the renderer.
-	p.renderer.SetMode(hideCursor, true)
+	p.modes[ansi.CursorVisibilityMode] = false
+	p.execute(ansi.HideCursor)
+	if cmd := p.renderer.update(disableMode(ansi.CursorVisibilityMode)); cmd != nil {
+		go func() { cmds <- cmd }()
+	}
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
 		p.execute(ansi.SetWindowTitle(p.startupTitle))
 	}
 	if p.startupOptions&withAltScreen != 0 {
-		p.renderer.SetMode(altScreenMode, true)
+		p.execute(ansi.EnableAltScreenBuffer)
+		p.modes[ansi.AltScreenBufferMode] = true
+		if cmd := p.renderer.update(enableMode(ansi.AltScreenBufferMode)); cmd != nil {
+			go func() { cmds <- cmd }()
+		}
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.EnableBracketedPaste)
-		p.bpActive = true
+		p.modes[ansi.BracketedPasteMode] = true
 	}
 	if p.startupOptions&withoutGraphemeClustering == 0 {
 		p.execute(ansi.EnableGraphemeClustering)
@@ -742,11 +684,13 @@ func (p *Program) Run() (Model, error) {
 	if p.startupOptions&withMouseCellMotion != 0 {
 		p.execute(ansi.EnableMouseCellMotion)
 		p.execute(ansi.EnableMouseSgrExt)
-		p.mouseEnabled = true
+		p.modes[ansi.MouseCellMotionMode] = true
+		p.modes[ansi.MouseSgrExtMode] = true
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.execute(ansi.EnableMouseAllMotion)
 		p.execute(ansi.EnableMouseSgrExt)
-		p.mouseEnabled = true
+		p.modes[ansi.MouseAllMotionMode] = true
+		p.modes[ansi.MouseSgrExtMode] = true
 	}
 	if p.startupOptions&withModifyOtherKeys != 0 {
 		p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
@@ -757,11 +701,11 @@ func (p *Program) Run() (Model, error) {
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.execute(ansi.EnableReportFocus)
-		p.reportFocus = true
+		p.modes[ansi.ReportFocusMode] = true
 	}
 	if p.startupOptions&withWindowsInputMode != 0 {
 		p.execute(ansi.EnableWin32Input)
-		p.win32Input = true
+		p.modes[ansi.Win32InputMode] = true
 	}
 
 	// Start the renderer.
@@ -785,7 +729,7 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Render the initial view.
-	p.renderer.Render(model.View()) //nolint:errcheck
+	p.renderer.render(model.View()) //nolint:errcheck
 
 	// Handle resize events.
 	p.handlers.add(p.handleResize())
@@ -800,7 +744,7 @@ func (p *Program) Run() (Model, error) {
 		err = fmt.Errorf("%w: %s", ErrProgramKilled, p.ctx.Err())
 	} else {
 		// Ensure we rendered the final state of the model.
-		p.renderer.Render(model.View()) //nolint:errcheck
+		p.renderer.render(model.View()) //nolint:errcheck
 	}
 
 	// Restore terminal state.
@@ -921,9 +865,6 @@ func (p *Program) ReleaseTerminal() error {
 
 	if p.renderer != nil {
 		p.stopRenderer(false)
-		// TODO: store these values when they're set in the eventLoop and [Run].
-		p.altScreenWasActive = p.renderer.Mode(altScreenMode)
-		p.cursorHidden = p.renderer.Mode(hideCursor)
 	}
 
 	return p.restoreTerminalState()
@@ -941,24 +882,20 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initInputReader(); err != nil {
 		return err
 	}
-	if p.altScreenWasActive {
-		p.renderer.SetMode(altScreenMode, true)
+	if p.modes[ansi.AltScreenBufferMode] {
+		p.execute(ansi.EnableAltScreenBuffer)
 	} else {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
 	}
-	if p.renderer != nil {
-		p.startRenderer()
-		if p.cursorHidden {
-			p.renderer.SetMode(hideCursor, true)
-		} else {
-			p.renderer.SetMode(hideCursor, false)
-		}
-	}
-	if p.cursorHidden {
+
+	p.startRenderer()
+	if !p.modes[ansi.CursorVisibilityMode] {
 		p.execute(ansi.HideCursor)
+	} else {
+		p.execute(ansi.ShowCursor)
 	}
-	if p.bpActive {
+	if p.modes[ansi.BracketedPasteMode] {
 		p.execute(ansi.EnableBracketedPaste)
 	}
 	if p.modifyOtherKeys != 0 {
@@ -967,10 +904,10 @@ func (p *Program) RestoreTerminal() error {
 	if p.kittyFlags != 0 {
 		p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
 	}
-	if p.reportFocus {
+	if p.modes[ansi.ReportFocusMode] {
 		p.execute(ansi.EnableReportFocus)
 	}
-	if p.mouseEnabled {
+	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
 		if p.startupOptions&withMouseCellMotion != 0 {
 			p.execute(ansi.EnableMouseCellMotion)
 			p.execute(ansi.EnableMouseSgrExt)
@@ -979,7 +916,7 @@ func (p *Program) RestoreTerminal() error {
 			p.execute(ansi.EnableMouseSgrExt)
 		}
 	}
-	if p.graphemeClustering {
+	if p.modes[ansi.GraphemeClusteringMode] {
 		p.execute(ansi.EnableGraphemeClustering)
 	}
 
@@ -1032,6 +969,9 @@ func (p *Program) startRenderer() {
 	p.once = sync.Once{}
 
 	// Start the renderer.
+	if p.renderer != nil {
+		p.renderer.reset()
+	}
 	go func() {
 		for {
 			select {
@@ -1040,7 +980,7 @@ func (p *Program) startRenderer() {
 				return
 
 			case <-p.ticker.C:
-				p.renderer.Flush() //nolint:errcheck
+				p.renderer.flush() //nolint:errcheck
 			}
 		}
 	}()
@@ -1057,10 +997,10 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		p.renderer.Flush() //nolint:errcheck
+		p.renderer.flush() //nolint:errcheck
 	}
 
-	p.renderer.Close() //nolint:errcheck
+	p.renderer.close() //nolint:errcheck
 
 	if !kill && p.startupOptions.has(withANSICompressor) {
 		if w, ok := p.output.(io.WriteCloser); ok {
