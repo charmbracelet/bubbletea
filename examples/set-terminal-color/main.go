@@ -49,8 +49,8 @@ type model struct {
 	cursor      color.Color
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.Batch(
 		textinput.Blink,
 		tea.BackgroundColor,
 		tea.ForegroundColor,

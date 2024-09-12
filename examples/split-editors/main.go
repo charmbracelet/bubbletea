@@ -110,8 +110,8 @@ func newModel() model {
 	return m
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

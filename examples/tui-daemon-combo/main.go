@@ -74,9 +74,9 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m model) Init() (tea.Model, tea.Cmd) {
 	log.Println("Starting work...")
-	return tea.Batch(
+	return m, tea.Batch(
 		m.spinner.Tick,
 		runPretendProcess,
 	)

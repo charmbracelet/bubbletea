@@ -26,8 +26,10 @@ func clearErrorAfter(t time.Duration) tea.Cmd {
 	})
 }
 
-func (m model) Init() tea.Cmd {
-	return m.filepicker.Init()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	fp, cmd := m.filepicker.Init()
+	m.filepicker = fp
+	return m, cmd
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

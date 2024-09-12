@@ -75,8 +75,8 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -92,7 +92,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.saveText = ""
 		switch {
 		case key.Matches(msg, m.keymap.save):
@@ -101,7 +101,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.quit):
 			m.quitting = true
 			return m, tea.Quit
-		case msg.Type == tea.KeyRunes:
+		case len(msg.Text) > 0:
 			m.saveText = ""
 			m.hasChanges = true
 			fallthrough

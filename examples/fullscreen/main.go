@@ -22,8 +22,8 @@ func main() {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tick()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tick()
 }
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {

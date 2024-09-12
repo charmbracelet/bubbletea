@@ -14,23 +14,31 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
+	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
+		case "q", "esc":
 			return m, tea.Quit
+		case "x":
+			return m, func() tea.Msg {
+				panic("oh no!")
+				return nil
+			}
+		case "y":
+			panic("oh no!")
 		}
-		return m, tea.Printf("You pressed: %s\n", msg.String())
 	}
 	return m, nil
 }
 
 func (m model) View() string {
-	return "Press any key to see it printed to the terminal. Press 'ctrl+c' to quit."
+	return "Hello, World!"
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithEnhancedKeyboard())
-	if _, err := p.Run(); err != nil {
-		log.Printf("Error running program: %v", err)
+	p := tea.NewProgram(model{})
+
+	_, err := p.Run()
+	if err != nil {
+		log.Fatal(err)
 	}
 }

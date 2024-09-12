@@ -16,6 +16,8 @@ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuP
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/charmbracelet/bubbles v0.20.0 h1:jSZu6qD8cRQ6k9OMfR1WlM+ruM8fkPWkHvQWD9LIutE=
 github.com/charmbracelet/bubbles v0.20.0/go.mod h1:39slydyswPy+uVOHZ5x/GjwVAFkCsV8IIVy+4MhzwwU=
+github.com/charmbracelet/bubbles v0.20.1-0.20240910180436-8972b56c9dde h1:/u+F3xZsfJYhEQ3MjKvqiXb2Y6LV8/4YHAMICxjGVhY=
+github.com/charmbracelet/bubbles v0.20.1-0.20240910180436-8972b56c9dde/go.mod h1:M5Z4yZGaxq8TZoEY2rs529UxFTeZLnAhmAzqd2wd48M=
 github.com/charmbracelet/glamour v0.8.0 h1:tPrjL3aRcQbn++7t18wOpgLyl8wrOHUEDS7IZ68QtZs=
 github.com/charmbracelet/glamour v0.8.0/go.mod h1:ViRgmKkf3u5S7uakt2czJ272WSg2ZenlYEZXT2x7Bjw=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
@@ -28,6 +30,8 @@ github.com/charmbracelet/x/exp/golden v0.0.0-20240815200342-61de596daa2b h1:MnAM
 github.com/charmbracelet/x/exp/golden v0.0.0-20240815200342-61de596daa2b/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28 h1:sOWKNRjt8uOEVgPiJVIJCse1+mUDM2F/vYY6W0Go640=
 github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28/go.mod h1:l1w+LTJZCCozeGzMEWGxRw6Mo2DfcZUvupz8HGubdes=
+github.com/charmbracelet/x/exp/teatest v0.0.0-20240912153648-d6041061ead9 h1:2q41wBBupsw4GATbF/C3NZ3JtccZ/iYu7cL3doHOnuo=
+github.com/charmbracelet/x/exp/teatest v0.0.0-20240912153648-d6041061ead9/go.mod h1:WPIoTqLbtPGmiv83mabqvIYOrwa1vUZMdp3urF4gQrk=
 github.com/charmbracelet/x/term v0.2.0 h1:cNB9Ot9q8I711MyZ7myUR5HFWL/lc3OpU8jZ4hwm0x0=
 github.com/charmbracelet/x/term v0.2.0/go.mod h1:GVxgxAbjUrmpvIINHIQnJJKpMlHiZ4cktEQCN6GWyF0=
 github.com/charmbracelet/x/windows v0.2.0 h1:ilXA1GJjTNkgOm94CLPeSz7rar54jtFatdmoiONPuEw=
