@@ -18,7 +18,7 @@ type renderer interface {
 
 	// update updates the renderer's state with the given message. It returns a
 	// [tea.Cmd] that can be used to send messages back to the program.
-	update(Msg) Cmd
+	update(Msg)
 }
 
 // repaintMsg forces a full repaint.
