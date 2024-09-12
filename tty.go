@@ -34,20 +34,42 @@ func (p *Program) initTerminal() error {
 	return p.initInput()
 }
 
+// setAltScreenBuffer restores the terminal screen buffer state.
+func (p *Program) setAltScreenBuffer(on bool) {
+	if on {
+		// Ensure that the terminal is cleared, even when it doesn't support
+		// alt screen (or alt screen support is disabled, like GNU screen by
+		// default).
+		//
+		// Note: we can't use r.clearScreen() here because the mutex is already
+		// locked.
+		p.execute(ansi.EraseEntireDisplay)
+		p.execute(ansi.MoveCursorOrigin)
+	}
+
+	// cmd.exe and other terminals keep separate cursor states for the AltScreen
+	// and the main buffer. We have to explicitly reset the cursor visibility
+	// whenever we exit AltScreen.
+	if !p.modes[ansi.CursorVisibilityMode] {
+		p.execute(ansi.HideCursor)
+	} else {
+		p.execute(ansi.ShowCursor)
+	}
+}
+
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.bpActive {
+	if p.modes[ansi.BracketedPasteMode] {
 		p.execute(ansi.DisableBracketedPaste)
 	}
-	if p.renderer != nil {
-		if p.renderer.Mode(hideCursor) {
-			p.renderer.SetMode(hideCursor, false)
-		}
+	if !p.modes[ansi.CursorVisibilityMode] {
+		p.execute(ansi.ShowCursor)
 	}
-
-	if p.mouseEnabled {
-		p.disableMouse()
+	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
+		p.execute(ansi.DisableMouseCellMotion)
+		p.execute(ansi.DisableMouseAllMotion)
+		p.execute(ansi.DisableMouseSgrExt)
 	}
 	if p.modifyOtherKeys != 0 {
 		p.execute(ansi.DisableModifyOtherKeys)
@@ -55,20 +77,21 @@ func (p *Program) restoreTerminalState() error {
 	if p.kittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
 	}
-	if p.reportFocus {
+	if p.modes[ansi.ReportFocusMode] {
 		p.execute(ansi.DisableReportFocus)
 	}
-	if p.graphemeClustering {
+	if p.modes[ansi.GraphemeClusteringMode] {
 		p.execute(ansi.DisableGraphemeClustering)
 	}
+	if p.modes[ansi.AltScreenBufferMode] {
+		p.execute(ansi.DisableAltScreenBuffer)
+		// cmd.exe and other terminals keep separate cursor states for the AltScreen
+		// and the main buffer. We have to explicitly reset the cursor visibility
+		// whenever we exit AltScreen.
+		p.execute(ansi.ShowCursor)
 
-	if p.renderer != nil {
-		if p.renderer.Mode(altScreenMode) {
-			p.renderer.SetMode(altScreenMode, false)
-
-			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10) //nolint:gomnd
-		}
+		// give the terminal a moment to catch up
+		time.Sleep(time.Millisecond * 10) //nolint:gomnd
 	}
 
 	return p.restoreInput()

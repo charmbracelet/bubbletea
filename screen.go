@@ -32,13 +32,8 @@ type clearScreenMsg struct{}
 // model's Init function. To initialize your program with the altscreen enabled
 // use the WithAltScreen ProgramOption instead.
 func EnterAltScreen() Msg {
-	return enterAltScreenMsg{}
+	return enableMode(ansi.AltScreenBufferMode)
 }
-
-// enterAltScreenMsg in an internal message signals that the program should
-// enter alternate screen buffer. You can send a enterAltScreenMsg with
-// EnterAltScreen.
-type enterAltScreenMsg struct{}
 
 // ExitAltScreen is a special command that tells the Bubble Tea program to exit
 // the alternate screen buffer. This command should be used to exit the
@@ -47,12 +42,8 @@ type enterAltScreenMsg struct{}
 // Note that the alternate screen buffer will be automatically exited when the
 // program quits.
 func ExitAltScreen() Msg {
-	return exitAltScreenMsg{}
+	return disableMode(ansi.AltScreenBufferMode)
 }
-
-// exitAltScreenMsg in an internal message signals that the program should exit
-// alternate screen buffer. You can send a exitAltScreenMsg with ExitAltScreen.
-type exitAltScreenMsg struct{}
 
 // EnableMouseCellMotion is a special command that enables mouse click,
 // release, and wheel events. Mouse movement events are also captured if
@@ -61,13 +52,11 @@ type exitAltScreenMsg struct{}
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. Use the WithMouseCellMotion ProgramOption instead.
 func EnableMouseCellMotion() Msg {
-	return enableMouseCellMotionMsg{}
+	return sequenceMsg{
+		func() Msg { return enableMode(ansi.MouseCellMotionMode) },
+		func() Msg { return enableMode(ansi.MouseSgrExtMode) },
+	}
 }
-
-// enableMouseCellMotionMsg is a special command that signals to start
-// listening for "cell motion" type mouse events (ESC[?1002l). To send an
-// enableMouseCellMotionMsg, use the EnableMouseCellMotion command.
-type enableMouseCellMotionMsg struct{}
 
 // EnableMouseAllMotion is a special command that enables mouse click, release,
 // wheel, and motion events, which are delivered regardless of whether a mouse
@@ -79,44 +68,34 @@ type enableMouseCellMotionMsg struct{}
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. Use the WithMouseAllMotion ProgramOption instead.
 func EnableMouseAllMotion() Msg {
-	return enableMouseAllMotionMsg{}
+	return sequenceMsg{
+		func() Msg { return enableMode(ansi.MouseAllMotionMode) },
+		func() Msg { return enableMode(ansi.MouseSgrExtMode) },
+	}
 }
-
-// enableMouseAllMotionMsg is a special command that signals to start listening
-// for "all motion" type mouse events (ESC[?1003l). To send an
-// enableMouseAllMotionMsg, use the EnableMouseAllMotion command.
-type enableMouseAllMotionMsg struct{}
 
 // DisableMouse is a special command that stops listening for mouse events.
 func DisableMouse() Msg {
-	return disableMouseMsg{}
+	return sequenceMsg{
+		func() Msg { return disableMode(ansi.MouseCellMotionMode) },
+		func() Msg { return disableMode(ansi.MouseAllMotionMode) },
+		func() Msg { return disableMode(ansi.MouseSgrExtMode) },
+	}
 }
-
-// disableMouseMsg is an internal message that signals to stop listening
-// for mouse events. To send a disableMouseMsg, use the DisableMouse command.
-type disableMouseMsg struct{}
 
 // HideCursor is a special command for manually instructing Bubble Tea to hide
 // the cursor. In some rare cases, certain operations will cause the terminal
 // to show the cursor, which is normally hidden for the duration of a Bubble
 // Tea program's lifetime. You will most likely not need to use this command.
 func HideCursor() Msg {
-	return hideCursorMsg{}
+	return disableMode(ansi.CursorVisibilityMode)
 }
-
-// hideCursorMsg is an internal command used to hide the cursor. You can send
-// this message with HideCursor.
-type hideCursorMsg struct{}
 
 // ShowCursor is a special command for manually instructing Bubble Tea to show
 // the cursor.
 func ShowCursor() Msg {
-	return showCursorMsg{}
+	return enableMode(ansi.CursorVisibilityMode)
 }
-
-// showCursorMsg is an internal command used to show the cursor. You can send
-// this message with ShowCursor.
-type showCursorMsg struct{}
 
 // EnableBracketedPaste is a special command that tells the Bubble Tea program
 // to accept bracketed paste input.
@@ -124,13 +103,8 @@ type showCursorMsg struct{}
 // Note that bracketed paste will be automatically disabled when the
 // program quits.
 func EnableBracketedPaste() Msg {
-	return enableBracketedPasteMsg{}
+	return enableMode(ansi.BracketedPasteMode)
 }
-
-// enableBracketedPasteMsg in an internal message signals that
-// bracketed paste should be enabled. You can send an
-// enableBracketedPasteMsg with EnableBracketedPaste.
-type enableBracketedPasteMsg struct{}
 
 // DisableBracketedPaste is a special command that tells the Bubble Tea program
 // to accept bracketed paste input.
@@ -138,50 +112,45 @@ type enableBracketedPasteMsg struct{}
 // Note that bracketed paste will be automatically disabled when the
 // program quits.
 func DisableBracketedPaste() Msg {
-	return disableBracketedPasteMsg{}
+	return disableMode(ansi.BracketedPasteMode)
 }
-
-// disableBracketedPasteMsg in an internal message signals that
-// bracketed paste should be disabled. You can send an
-// disableBracketedPasteMsg with DisableBracketedPaste.
-type disableBracketedPasteMsg struct{}
-
-// enableGraphemeClusteringMsg is an internal message that signals that
-// grapheme clustering should be enabled.
-type enableGraphemeClusteringMsg struct{}
 
 // EnableGraphemeClustering is a special command that tells the Bubble Tea
 // program to enable grapheme clustering. This is enabled by default.
 func EnableGraphemeClustering() Msg {
-	return enableGraphemeClusteringMsg{}
+	return enableMode(ansi.GraphemeClusteringMode)
 }
-
-// disableGraphemeClusteringMsg is an internal message that signals that
-// grapheme clustering should be disabled.
-type disableGraphemeClusteringMsg struct{}
 
 // DisableGraphemeClustering is a special command that tells the Bubble Tea
 // program to disable grapheme clustering. This mode will be disabled
 // automatically when the program quits.
 func DisableGraphemeClustering() Msg {
-	return disableGraphemeClusteringMsg{}
+	return disableMode(ansi.GraphemeClusteringMode)
 }
-
-// enableReportFocusMsg is an internal message that signals that focus
-// reporting should be enabled.
-type enableReportFocusMsg struct{}
 
 // EnabledReportFocus is a special command that tells the Bubble Tea program
 // to enable focus reporting.
-func EnabledReportFocus() Msg { return enableReportFocusMsg{} }
-
-// disableReportFocusMsg is an internal message that signals that focus
-// reporting should be disabled.
-type disableReportFocusMsg struct{}
+func EnabledReportFocus() Msg { return enableMode(ansi.ReportFocusMode) }
 
 // DisabledReportFocus is a special command that tells the Bubble Tea program
 // to disable focus reporting.
-func DisabledReportFocus() Msg { return disableReportFocusMsg{} }
+func DisabledReportFocus() Msg { return disableMode(ansi.ReportFocusMode) }
+
+// enableModeMsg is an internal message that signals to set a terminal mode.
+type enableModeMsg string
+
+// enableMode is an internal command that signals to set a terminal mode.
+func enableMode(mode string) Msg {
+	return enableModeMsg(mode)
+}
+
+// disableModeMsg is an internal message that signals to unset a terminal mode.
+type disableModeMsg string
+
+// disableMode is an internal command that signals to unset a terminal mode.
+func disableMode(mode string) Msg {
+	return disableModeMsg(mode)
+}
 
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
@@ -189,7 +158,7 @@ func DisabledReportFocus() Msg { return disableReportFocusMsg{} }
 // Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
-		p.renderer.SetMode(altScreenMode, true)
+		_ = p.renderer.update(enableMode(ansi.AltScreenBufferMode))
 	} else {
 		p.startupOptions |= withAltScreen
 	}
@@ -200,7 +169,7 @@ func (p *Program) EnterAltScreen() {
 // Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
-		p.renderer.SetMode(altScreenMode, false)
+		_ = p.renderer.update(disableMode(ansi.AltScreenBufferMode))
 	} else {
 		p.startupOptions &^= withAltScreen
 	}

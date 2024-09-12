@@ -168,14 +168,6 @@ func WithMouseAllMotion() ProgramOption {
 	}
 }
 
-// WithRenderer sets a custom renderer. This is useful if you want to use a
-// custom renderer to process the output of the program differently.
-func WithRenderer(renderer Renderer) ProgramOption {
-	return func(p *Program) {
-		p.renderer = renderer
-	}
-}
-
 // WithoutRenderer disables the renderer. When this is set output and log
 // statements will be plainly sent to stdout (or another output if one is set)
 // without any rendering and redrawing logic. In other words, printing and
@@ -184,9 +176,6 @@ func WithRenderer(renderer Renderer) ProgramOption {
 // application, or to provide an additional non-TUI mode to your Bubble Tea
 // programs. For example, your program could behave like a daemon if output is
 // not a TTY.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package. Use [NilRenderer] with [WithRenderer] instead.
 func WithoutRenderer() ProgramOption {
 	return func(p *Program) {
 		p.renderer = &NilRenderer{}
@@ -330,7 +319,6 @@ func WithModifyOtherKeys(mode int) ProgramOption {
 func WithWindowsInputMode() ProgramOption { //nolint:unused
 	return func(p *Program) {
 		p.startupOptions |= withWindowsInputMode
-		p.win32Input = true
 	}
 }
 

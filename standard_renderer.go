@@ -47,7 +47,7 @@ type standardRenderer struct {
 
 // NewStandardRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func NewStandardRenderer() Renderer {
+func NewStandardRenderer() renderer {
 	r := &standardRenderer{
 		mtx:                &sync.Mutex{},
 		queuedMessageLines: []string{},
@@ -55,15 +55,15 @@ func NewStandardRenderer() Renderer {
 	return r
 }
 
-// SetOutput sets the output for the renderer.
-func (r *standardRenderer) SetOutput(out io.Writer) {
+// setOutput sets the output for the renderer.
+func (r *standardRenderer) setOutput(out io.Writer) {
 	r.mtx.Lock()
 	r.out = out
 	r.mtx.Unlock()
 }
 
-// Close closes the renderer and flushes any remaining data.
-func (r *standardRenderer) Close() (err error) {
+// close closes the renderer and flushes any remaining data.
+func (r *standardRenderer) close() (err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -79,8 +79,8 @@ func (r *standardRenderer) execute(seq string) {
 	_, _ = io.WriteString(r.out, seq)
 }
 
-// Flush renders the buffer.
-func (r *standardRenderer) Flush() (err error) {
+// flush renders the buffer.
+func (r *standardRenderer) flush() (err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -211,9 +211,9 @@ func (r *standardRenderer) Flush() (err error) {
 	return
 }
 
-// Render renders the frame to the internal buffer. The buffer will be
+// render renders the frame to the internal buffer. The buffer will be
 // outputted via the ticker which calls flush().
-func (r *standardRenderer) Render(s string) {
+func (r *standardRenderer) render(s string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
@@ -229,23 +229,28 @@ func (r *standardRenderer) Render(s string) {
 	_, _ = r.buf.WriteString(s)
 }
 
-// Repaint forces a full repaint.
-func (r *standardRenderer) Repaint() {
+// repaint forces a full repaint.
+func (r *standardRenderer) repaint() {
 	r.lastRender = ""
 }
 
-func (r *standardRenderer) ClearScreen() {
+// reset resets the standardRenderer to its initial state.
+func (r *standardRenderer) reset() {
+	r.repaint()
+}
+
+func (r *standardRenderer) clearScreen() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	r.execute(ansi.EraseEntireDisplay)
 	r.execute(ansi.MoveCursorOrigin)
 
-	r.Repaint()
+	r.repaint()
 }
 
-// SetMode sets a terminal mode on/off.
-func (r *standardRenderer) SetMode(mode int, on bool) {
+// setMode sets a terminal mode on/off.
+func (r *standardRenderer) setMode(mode int, on bool) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -280,7 +285,7 @@ func (r *standardRenderer) SetMode(mode int, on bool) {
 			r.execute(ansi.ShowCursor)
 		}
 
-		r.Repaint()
+		r.repaint()
 
 	case hideCursor:
 		if on == r.cursorHidden {
@@ -296,8 +301,8 @@ func (r *standardRenderer) SetMode(mode int, on bool) {
 	}
 }
 
-// Mode returns whether the render has a mode enabled.
-func (r *standardRenderer) Mode(mode int) bool {
+// mode returns whether the render has a mode enabled.
+func (r *standardRenderer) mode(mode int) bool {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -418,14 +423,60 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 	_, _ = r.out.Write(buf.Bytes())
 }
 
-// handleMessages handles internal messages for the renderer.
-func (r *standardRenderer) handleMessages(msg Msg) {
+// update handles internal messages for the renderer.
+func (r *standardRenderer) update(msg Msg) Cmd {
 	switch msg := msg.(type) {
+	case enableModeMsg:
+		switch string(msg) {
+		case ansi.AltScreenBufferMode:
+			if r.altScreenActive {
+				return nil
+			}
+
+			r.altScreenActive = true
+			r.repaint()
+		case ansi.CursorVisibilityMode:
+			if !r.cursorHidden {
+				return nil
+			}
+
+			r.cursorHidden = false
+		}
+
+	case disableModeMsg:
+		switch string(msg) {
+		case ansi.AltScreenBufferMode:
+			if !r.altScreenActive {
+				return nil
+			}
+
+			r.altScreenActive = false
+			r.repaint()
+		case ansi.CursorVisibilityMode:
+			if r.cursorHidden {
+				return nil
+			}
+
+			r.cursorHidden = true
+		}
+
+	case rendererWriter:
+		r.setOutput(msg.Writer)
+
+	case WindowSizeMsg:
+		r.resize(msg.Width, msg.Height)
+
+	case clearScreenMsg:
+		r.clearScreen()
+
+	case printLineMessage:
+		r.insertAbove(msg.messageBody)
+
 	case repaintMsg:
 		// Force a repaint by clearing the render cache as we slide into a
 		// render.
 		r.mtx.Lock()
-		r.Repaint()
+		r.repaint()
 		r.mtx.Unlock()
 
 	case clearScrollAreaMsg:
@@ -434,7 +485,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 		// Force a repaint on the area where the scrollable stuff was in this
 		// update cycle
 		r.mtx.Lock()
-		r.Repaint()
+		r.repaint()
 		r.mtx.Unlock()
 
 	case syncScrollAreaMsg:
@@ -445,7 +496,7 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 
 		// Force non-scrolling stuff to repaint in this update cycle
 		r.mtx.Lock()
-		r.Repaint()
+		r.repaint()
 		r.mtx.Unlock()
 
 	case scrollUpMsg:
@@ -454,20 +505,22 @@ func (r *standardRenderer) handleMessages(msg Msg) {
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
 	}
+
+	return nil
 }
 
-// Resize sets the size of the terminal.
-func (r *standardRenderer) Resize(w int, h int) {
+// resize sets the size of the terminal.
+func (r *standardRenderer) resize(w int, h int) {
 	r.mtx.Lock()
 	r.width = w
 	r.height = h
-	r.Repaint()
+	r.repaint()
 	r.mtx.Unlock()
 }
 
-// InsertAbove inserts lines above the current frame. This only works in
+// insertAbove inserts lines above the current frame. This only works in
 // inline mode.
-func (r *standardRenderer) InsertAbove(s string) error {
+func (r *standardRenderer) insertAbove(s string) error {
 	if r.altScreenActive {
 		return nil
 	}
@@ -475,7 +528,7 @@ func (r *standardRenderer) InsertAbove(s string) error {
 	lines := strings.Split(s, "\n")
 	r.mtx.Lock()
 	r.queuedMessageLines = append(r.queuedMessageLines, lines...)
-	r.Repaint()
+	r.repaint()
 	r.mtx.Unlock()
 
 	return nil

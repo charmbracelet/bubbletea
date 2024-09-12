@@ -2,10 +2,9 @@ package tea
 
 import (
 	"unicode"
-)
 
-// enableWin32InputMsg is a message that enables Windows input mode.
-type enableWin32InputMsg struct{}
+	"github.com/charmbracelet/x/ansi"
+)
 
 // EnableWindowsInputMode is a command that enables Windows input mode
 // (win32-input-mode).
@@ -14,11 +13,8 @@ type enableWin32InputMsg struct{}
 // https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
 // for more information.
 func EnableWindowsInputMode() Msg { //nolint:unused
-	return enableWin32InputMsg{}
+	return enableModeMsg(ansi.Win32InputMode)
 }
-
-// disableWin32InputMsg is a message that disables Windows input mode.
-type disableWin32InputMsg struct{}
 
 // DisableWindowsInputMode is a command that disables Windows input mode
 // (win32-input-mode).
@@ -27,7 +23,7 @@ type disableWin32InputMsg struct{}
 // https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
 // for more information.
 func DisableWindowsInputMode() Msg { //nolint:unused
-	return disableWin32InputMsg{}
+	return disableModeMsg(ansi.Win32InputMode)
 }
 
 func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) Msg {

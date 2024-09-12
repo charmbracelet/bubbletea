@@ -1,39 +1,22 @@
 package tea
 
-import "io"
-
 // NilRenderer is a no-op renderer. It implements the Renderer interface but
 // doesn't render anything to the terminal.
 type NilRenderer struct{}
 
-var _ Renderer = NilRenderer{}
+var _ renderer = NilRenderer{}
 
-// SetOutput implements the Renderer interface.
-func (NilRenderer) SetOutput(io.Writer) {}
+// flush implements the Renderer interface.
+func (NilRenderer) flush() error { return nil }
 
-// Flush implements the Renderer interface.
-func (NilRenderer) Flush() error { return nil }
+// close implements the Renderer interface.
+func (NilRenderer) close() error { return nil }
 
-// Close implements the Renderer interface.
-func (NilRenderer) Close() error { return nil }
+// render implements the Renderer interface.
+func (NilRenderer) render(string) {}
 
-// Render implements the Renderer interface.
-func (NilRenderer) Render(string) {}
+// reset implements the Renderer interface.
+func (NilRenderer) reset() {}
 
-// Repaint implements the Renderer interface.
-func (NilRenderer) Repaint() {}
-
-// ClearScreen implements the Renderer interface.
-func (NilRenderer) ClearScreen() {}
-
-// InsertAbove implements the Renderer interface.
-func (NilRenderer) InsertAbove(string) error { return nil }
-
-// Resize implements the Renderer interface.
-func (NilRenderer) Resize(int, int) {}
-
-// SetMode implements the Renderer interface.
-func (NilRenderer) SetMode(int, bool) {}
-
-// Mode implements the Renderer interface.
-func (NilRenderer) Mode(int) bool { return false }
+// update implements the Renderer interface.
+func (NilRenderer) update(Msg) Cmd { return nil }
