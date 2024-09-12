@@ -69,12 +69,12 @@ type ForegroundColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
 func (e ForegroundColorMsg) String() string {
-	return colorToHex(e)
+	return colorToHex(e.Color)
 }
 
 // IsDark returns whether the color is dark.
 func (e ForegroundColorMsg) IsDark() bool {
-	return isDarkColor(e)
+	return isDarkColor(e.Color)
 }
 
 // BackgroundColorMsg represents a background color message.
@@ -89,7 +89,7 @@ func (e BackgroundColorMsg) String() string {
 
 // IsDark returns whether the color is dark.
 func (e BackgroundColorMsg) IsDark() bool {
-	return isDarkColor(e)
+	return isDarkColor(e.Color)
 }
 
 // CursorColorMsg represents a cursor color change message.
@@ -118,6 +118,9 @@ func shift[T shiftable](x T) T {
 }
 
 func colorToHex(c color.Color) string {
+	if c == nil {
+		return ""
+	}
 	r, g, b, _ := c.RGBA()
 	return fmt.Sprintf("#%02x%02x%02x", shift(r), shift(g), shift(b))
 }
@@ -148,7 +151,7 @@ func xParseColor(s string) color.Color {
 
 		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), uint8(shift(a))} //nolint:gosec
 	}
-	return color.Black
+	return nil
 }
 
 func getMaxMin(a, b, c float64) (max, min float64) { //nolint:predeclared
