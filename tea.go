@@ -540,9 +540,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			// Process internal messages for the renderer.
-			if cmd := p.renderer.update(msg); cmd != nil {
-				cmds <- cmd
-			}
+			p.renderer.update(msg)
 
 			var cmd Cmd
 			model, cmd = model.Update(msg)  // run update
@@ -628,9 +626,7 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Set the renderer output.
-	if cmd := p.renderer.update(rendererWriter{output}); cmd != nil {
-		go func() { cmds <- cmd }()
-	}
+	p.renderer.update(rendererWriter{output})
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
@@ -656,9 +652,7 @@ func (p *Program) Run() (Model, error) {
 	// Hide the cursor before starting the renderer.
 	p.modes[ansi.CursorVisibilityMode] = false
 	p.execute(ansi.HideCursor)
-	if cmd := p.renderer.update(disableMode(ansi.CursorVisibilityMode)); cmd != nil {
-		go func() { cmds <- cmd }()
-	}
+	p.renderer.update(disableMode(ansi.CursorVisibilityMode))
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
@@ -667,9 +661,7 @@ func (p *Program) Run() (Model, error) {
 	if p.startupOptions&withAltScreen != 0 {
 		p.execute(ansi.EnableAltScreenBuffer)
 		p.modes[ansi.AltScreenBufferMode] = true
-		if cmd := p.renderer.update(enableMode(ansi.AltScreenBufferMode)); cmd != nil {
-			go func() { cmds <- cmd }()
-		}
+		p.renderer.update(enableMode(ansi.AltScreenBufferMode))
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.EnableBracketedPaste)

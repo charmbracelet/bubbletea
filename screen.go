@@ -158,7 +158,7 @@ func disableMode(mode string) Msg {
 // Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
-		_ = p.renderer.update(enableMode(ansi.AltScreenBufferMode))
+		p.renderer.update(enableMode(ansi.AltScreenBufferMode))
 	} else {
 		p.startupOptions |= withAltScreen
 	}
@@ -169,7 +169,7 @@ func (p *Program) EnterAltScreen() {
 // Deprecated: The altscreen will exited automatically when the program exits.
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
-		_ = p.renderer.update(disableMode(ansi.AltScreenBufferMode))
+		p.renderer.update(disableMode(ansi.AltScreenBufferMode))
 	} else {
 		p.startupOptions &^= withAltScreen
 	}

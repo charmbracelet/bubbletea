@@ -19,4 +19,4 @@ func (NilRenderer) render(string) {}
 func (NilRenderer) reset() {}
 
 // update implements the Renderer interface.
-func (NilRenderer) update(Msg) Cmd { return nil }
+func (NilRenderer) update(Msg) {}

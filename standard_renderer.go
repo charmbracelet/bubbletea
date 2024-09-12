@@ -424,20 +424,20 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 }
 
 // update handles internal messages for the renderer.
-func (r *standardRenderer) update(msg Msg) Cmd {
+func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
 	case enableModeMsg:
 		switch string(msg) {
 		case ansi.AltScreenBufferMode:
 			if r.altScreenActive {
-				return nil
+				return
 			}
 
 			r.altScreenActive = true
 			r.repaint()
 		case ansi.CursorVisibilityMode:
 			if !r.cursorHidden {
-				return nil
+				return
 			}
 
 			r.cursorHidden = false
@@ -447,14 +447,14 @@ func (r *standardRenderer) update(msg Msg) Cmd {
 		switch string(msg) {
 		case ansi.AltScreenBufferMode:
 			if !r.altScreenActive {
-				return nil
+				return
 			}
 
 			r.altScreenActive = false
 			r.repaint()
 		case ansi.CursorVisibilityMode:
 			if r.cursorHidden {
-				return nil
+				return
 			}
 
 			r.cursorHidden = true
@@ -505,8 +505,6 @@ func (r *standardRenderer) update(msg Msg) Cmd {
 	case scrollDownMsg:
 		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
 	}
-
-	return nil
 }
 
 // resize sets the size of the terminal.
