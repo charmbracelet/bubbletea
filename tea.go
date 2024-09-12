@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/color"
 	"io"
 	"os"
 	"os/signal"
@@ -208,6 +209,16 @@ type Program struct {
 
 	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
 	modifyOtherKeys int
+
+	// terminal colors are stored here so they can be restored when the program
+	// exits. nil means the color could not be determined and should not be
+	// restored.
+	bg, fg, cc color.Color
+
+	// When a program is suspended, the terminal state is saved and the program
+	// is paused. This saves the terminal colors state so they can be restored
+	// when the program is resumed.
+	setBg, setFg, setCc color.Color
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -395,6 +406,21 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.suspend()
 				}
 
+			case BackgroundColorMsg:
+				if p.bg == nil {
+					p.bg = msg
+				}
+
+			case ForegroundColorMsg:
+				if p.fg == nil {
+					p.fg = msg
+				}
+
+			case CursorColorMsg:
+				if p.cc == nil {
+					p.cc = msg
+				}
+
 			case modeReportMsg:
 				switch msg.Mode {
 				case graphemeClustering:
@@ -445,16 +471,19 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case setBackgroundColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetBackgroundColor(msg.Color))
+					p.setBg = msg.Color
 				}
 
 			case setForegroundColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetForegroundColor(msg.Color))
+					p.setFg = msg.Color
 				}
 
 			case setCursorColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetCursorColor(msg.Color))
+					p.setCc = msg.Color
 				}
 
 			case backgroundColorMsg:
@@ -712,6 +741,13 @@ func (p *Program) Run() (Model, error) {
 		p.modes[ansi.Win32InputMode] = true
 	}
 
+	// Query terminal colors
+	// This is then used to restore the colors when the program exits.
+	p.execute(ansi.RequestBackgroundColor +
+		ansi.RequestForegroundColor +
+		ansi.RequestCursorColor,
+	)
+
 	// Start the renderer.
 	p.startRenderer()
 
@@ -924,6 +960,17 @@ func (p *Program) RestoreTerminal() error {
 	}
 	if p.modes[ansi.GraphemeClusteringMode] {
 		p.execute(ansi.EnableGraphemeClustering)
+	}
+
+	// Restore terminal colors.
+	if p.setBg != nil {
+		p.execute(ansi.SetBackgroundColor(p.setBg))
+	}
+	if p.setFg != nil {
+		p.execute(ansi.SetForegroundColor(p.setFg))
+	}
+	if p.setCc != nil {
+		p.execute(ansi.SetCursorColor(p.setCc))
 	}
 
 	// If the output is a terminal, it may have been resized while another

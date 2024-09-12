@@ -94,6 +94,17 @@ func (p *Program) restoreTerminalState() error {
 		time.Sleep(time.Millisecond * 10) //nolint:gomnd
 	}
 
+	// Restore terminal colors.
+	if p.bg != nil {
+		p.execute(ansi.SetBackgroundColor(p.bg))
+	}
+	if p.fg != nil {
+		p.execute(ansi.SetForegroundColor(p.fg))
+	}
+	if p.cc != nil {
+		p.execute(ansi.SetCursorColor(p.cc))
+	}
+
 	return p.restoreInput()
 }
 

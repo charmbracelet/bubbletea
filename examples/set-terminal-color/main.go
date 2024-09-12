@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	"log"
 	"strings"
 
@@ -44,18 +43,10 @@ type model struct {
 	state       state
 	choiceIndex int
 	err         error
-	bg          color.Color
-	fg          color.Color
-	cursor      color.Color
 }
 
 func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(
-		textinput.Blink,
-		tea.BackgroundColor,
-		tea.ForegroundColor,
-		tea.CursorColor,
-	)
+	return m, textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -63,18 +54,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			var cmds []tea.Cmd
-			if m.fg != nil {
-				cmds = append(cmds, tea.SetForegroundColor(m.fg))
-			}
-			if m.bg != nil {
-				cmds = append(cmds, tea.SetBackgroundColor(m.bg))
-			}
-			if m.cursor != nil {
-				cmds = append(cmds, tea.SetCursorColor(m.cursor))
-			}
-			cmds = append(cmds, tea.Quit)
-			return m, tea.Batch(cmds...)
+			return m, tea.Quit
 		}
 
 		switch m.state {
@@ -121,6 +101,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.choiceIndex = 0
 					m.state = chooseState
 
+					// Reset the text input
+					m.ti.Reset()
+
 					switch choice {
 					case foreground:
 						return m, tea.SetForegroundColor(col)
@@ -137,16 +120,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 		}
-
-	case tea.BackgroundColorMsg:
-		m.bg = msg.Color
-
-	case tea.ForegroundColorMsg:
-		m.fg = msg.Color
-
-	case tea.CursorColorMsg:
-		m.cursor = msg.Color
-
 	}
 
 	return m, nil
