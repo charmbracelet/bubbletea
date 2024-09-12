@@ -29,7 +29,7 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		p.output = output
+		p.output = newSafeWriter(output)
 	}
 }
 

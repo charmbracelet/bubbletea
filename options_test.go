@@ -11,7 +11,7 @@ func TestOptions(t *testing.T) {
 	t.Run("output", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithOutput(&b))
-		if f, ok := p.output.(*os.File); ok {
+		if f, ok := p.output.Writer().(*os.File); ok {
 			t.Errorf("expected output to custom, got %v", f.Fd())
 		}
 	})
