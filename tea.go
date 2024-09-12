@@ -219,6 +219,9 @@ type Program struct {
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
 	setBg, setFg, setCc color.Color
+
+	// profile stores the color profile of the terminal.
+	profile Profile
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -420,6 +423,19 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				if p.cc == nil {
 					p.cc = msg
 				}
+
+			case CapabilityMsg:
+				switch string(msg) {
+				case "RGB", "Tc":
+					p.profile = TrueColor
+					go p.Send(ColorProfileMsg{p.profile})
+				}
+
+			case colorProfileMsg:
+				go p.Send(ColorProfileMsg{p.profile})
+
+			case setColorProfileMsg:
+				p.profile = Profile(msg)
 
 			case modeReportMsg:
 				switch msg.Mode {
@@ -654,6 +670,13 @@ func (p *Program) Run() (Model, error) {
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
+
+	// Get the color profile.
+	p.profile = detectColorProfile(p.output.Writer(), p.environ)
+	// Send the color profile msg to the program.
+	// TODO: Consider querying XTGETTCAP "RGB" and "Tc" to determine the color
+	// profile when not "TrueColor".
+	go p.Send(ColorProfileMsg{p.profile})
 
 	// If no renderer is set use the standard one.
 	var output io.Writer

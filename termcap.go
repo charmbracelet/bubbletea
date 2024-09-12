@@ -12,6 +12,27 @@ type requestCapabilityMsg string
 
 // RequestCapability is a command that requests the terminal to send its
 // Termcap/Terminfo response for the given capability.
+//
+// Bubble Tea recognizes the following capabilities and will use them to set
+// the program's color profile:
+//   - "RGB" Xterm direct color
+//   - "Tc" True color support
+//
+// Note: that some terminal's like Apple's Terminal.app do not support this and
+// will send the wrong response to the terminal breaking the program's output.
+//
+// When the Bubble Tea advertises a non-TrueColor profile, you can use this
+// command to query the terminal for its color capabilities. Example:
+//
+//	switch msg := msg.(type) {
+//	case tea.ColorProfileMsg:
+//	  if msg.Profile != tea.TrueColor {
+//	    return m, tea.Batch(
+//	      tea.RequestCapability("RGB"),
+//	      tea.RequestCapability("Tc"),
+//	    )
+//	  }
+//	}
 func RequestCapability(s string) Cmd {
 	return func() Msg {
 		return requestCapabilityMsg(s)
