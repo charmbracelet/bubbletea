@@ -74,7 +74,7 @@ func ModifyOtherKeys() Msg { //nolint:unused
 //
 // See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
 // See: https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-type ModifyOtherKeysMsg uint8
+type ModifyOtherKeysMsg int
 
 // TerminalVersionMsg is a message that represents the terminal version.
 type TerminalVersionMsg string

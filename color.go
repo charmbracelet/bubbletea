@@ -134,7 +134,7 @@ func xParseColor(s string) color.Color {
 		g, _ := strconv.ParseUint(parts[1], 16, 32)
 		b, _ := strconv.ParseUint(parts[2], 16, 32)
 
-		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), 255}
+		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), 255} //nolint:gosec
 	case strings.HasPrefix(s, "rgba:"):
 		parts := strings.Split(s[5:], "/")
 		if len(parts) != 4 {
@@ -146,7 +146,7 @@ func xParseColor(s string) color.Color {
 		b, _ := strconv.ParseUint(parts[2], 16, 32)
 		a, _ := strconv.ParseUint(parts[3], 16, 32)
 
-		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), uint8(shift(a))}
+		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), uint8(shift(a))} //nolint:gosec
 	}
 	return color.Black
 }
@@ -213,6 +213,6 @@ func isDarkColor(c color.Color) bool {
 	}
 
 	r, g, b, _ := c.RGBA()
-	_, _, l := rgbToHSL(uint8(r>>8), uint8(g>>8), uint8(b>>8))
+	_, _, l := rgbToHSL(uint8(r>>8), uint8(g>>8), uint8(b>>8)) //nolint:gosec
 	return l < 0.5
 }

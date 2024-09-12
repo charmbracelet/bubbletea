@@ -342,17 +342,17 @@ func parseCsi(b []byte) (int, Msg) {
 			return i, UnknownMsg(b[:i])
 		}
 
-		rc := uint16(csi.Param(5))
+		rc := uint16(csi.Param(5)) //nolint:gosec
 		if rc == 0 {
 			rc = 1
 		}
 
 		event := parseWin32InputKeyEvent(
-			uint16(csi.Param(0)), // Vk wVirtualKeyCode
-			uint16(csi.Param(1)), // Sc wVirtualScanCode
+			uint16(csi.Param(0)), //nolint:gosec // Vk wVirtualKeyCode
+			uint16(csi.Param(1)), //nolint:gosec // Sc wVirtualScanCode
 			rune(csi.Param(2)),   // Uc UnicodeChar
 			csi.Param(3) == 1,    // Kd bKeyDown
-			uint32(csi.Param(4)), // Cs dwControlKeyState
+			uint32(csi.Param(4)), //nolint:gosec // Cs dwControlKeyState
 			rc,                   // Rc wRepeatCount
 		)
 

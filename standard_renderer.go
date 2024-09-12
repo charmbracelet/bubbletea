@@ -249,73 +249,6 @@ func (r *standardRenderer) clearScreen() {
 	r.repaint()
 }
 
-// setMode sets a terminal mode on/off.
-func (r *standardRenderer) setMode(mode int, on bool) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	switch mode {
-	case altScreenMode:
-		if on == r.altScreenActive {
-			return
-		}
-
-		r.altScreenActive = on
-		if on {
-			r.execute(ansi.EnableAltScreenBuffer)
-
-			// Ensure that the terminal is cleared, even when it doesn't support
-			// alt screen (or alt screen support is disabled, like GNU screen by
-			// default).
-			//
-			// Note: we can't use r.clearScreen() here because the mutex is already
-			// locked.
-			r.execute(ansi.EraseEntireDisplay)
-			r.execute(ansi.MoveCursorOrigin)
-		} else {
-			r.execute(ansi.DisableAltScreenBuffer)
-		}
-
-		// cmd.exe and other terminals keep separate cursor states for the AltScreen
-		// and the main buffer. We have to explicitly reset the cursor visibility
-		// whenever we exit AltScreen.
-		if r.cursorHidden {
-			r.execute(ansi.HideCursor)
-		} else {
-			r.execute(ansi.ShowCursor)
-		}
-
-		r.repaint()
-
-	case hideCursor:
-		if on == r.cursorHidden {
-			return
-		}
-
-		r.cursorHidden = on
-		if on {
-			r.execute(ansi.HideCursor)
-		} else {
-			r.execute(ansi.ShowCursor)
-		}
-	}
-}
-
-// mode returns whether the render has a mode enabled.
-func (r *standardRenderer) mode(mode int) bool {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	switch mode {
-	case altScreenMode:
-		return r.altScreenActive
-	case hideCursor:
-		return r.cursorHidden
-	}
-
-	return false
-}
-
 // setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
 // renderer.
 func (r *standardRenderer) setIgnoredLines(from int, to int) {
@@ -518,9 +451,9 @@ func (r *standardRenderer) resize(w int, h int) {
 
 // insertAbove inserts lines above the current frame. This only works in
 // inline mode.
-func (r *standardRenderer) insertAbove(s string) error {
+func (r *standardRenderer) insertAbove(s string) {
 	if r.altScreenActive {
-		return nil
+		return
 	}
 
 	lines := strings.Split(s, "\n")
@@ -528,8 +461,6 @@ func (r *standardRenderer) insertAbove(s string) error {
 	r.queuedMessageLines = append(r.queuedMessageLines, lines...)
 	r.repaint()
 	r.mtx.Unlock()
-
-	return nil
 }
 
 // HIGH-PERFORMANCE RENDERING STUFF

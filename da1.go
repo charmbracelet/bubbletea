@@ -4,7 +4,7 @@ import "github.com/charmbracelet/x/ansi"
 
 // PrimaryDeviceAttributesMsg is a message that represents the terminal primary
 // device attributes.
-type PrimaryDeviceAttributesMsg []uint
+type PrimaryDeviceAttributesMsg []int
 
 // primaryDeviceAttrsMsg is an internal message that queries the terminal for
 // its primary device attributes (DA1).
@@ -22,7 +22,7 @@ func parsePrimaryDevAttrs(csi *ansi.CsiSequence) Msg {
 	da1 := make(PrimaryDeviceAttributesMsg, len(csi.Params))
 	csi.Range(func(i int, p int, hasMore bool) bool {
 		if !hasMore {
-			da1[i] = uint(p)
+			da1[i] = p
 		}
 		return true
 	})
