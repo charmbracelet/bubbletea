@@ -568,10 +568,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 							continue
 						}
 
-						msg := cmd()
-						if batchMsg, ok := msg.(BatchMsg); ok {
+						switch msg := cmd().(type) {
+						case BatchMsg:
 							g, _ := errgroup.WithContext(p.ctx)
-							for _, cmd := range batchMsg {
+							for _, cmd := range msg {
 								cmd := cmd
 								g.Go(func() error {
 									p.Send(cmd())
@@ -582,9 +582,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 							//nolint:errcheck
 							g.Wait() // wait for all commands from batch msg to finish
 							continue
+						case sequenceMsg:
+							for _, cmd := range msg {
+								p.Send(cmd())
+							}
+						default:
+							p.Send(msg)
 						}
-
-						p.Send(msg)
 					}
 				}()
 
