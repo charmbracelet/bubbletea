@@ -128,6 +128,10 @@ func (h channelHandlers) shutdown() {
 type Program struct {
 	initialModel Model
 
+	// handlers is a list of channels that need to be waited on before the
+	// program can exit.
+	handlers channelHandlers
+
 	// Configuration options that will set as the program is initializing,
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
@@ -312,6 +316,11 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				// possible to cancel them so we'll have to leak the goroutine
 				// until Cmd returns.
 				go func() {
+					// Recover from panics.
+					if !p.startupOptions.has(withoutCatchPanics) {
+						defer p.recoverFromPanic()
+					}
+
 					msg := cmd() // this can be long.
 					p.Send(msg)
 				}()
@@ -460,7 +469,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
 func (p *Program) Run() (Model, error) {
-	handlers := channelHandlers{}
+	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 	p.finished = make(chan struct{}, 1)
@@ -507,19 +516,12 @@ func (p *Program) Run() (Model, error) {
 
 	// Handle signals.
 	if !p.startupOptions.has(withoutSignalHandler) {
-		handlers.add(p.handleSignals())
+		p.handlers.add(p.handleSignals())
 	}
 
 	// Recover from panics.
 	if !p.startupOptions.has(withoutCatchPanics) {
-		defer func() {
-			if r := recover(); r != nil {
-				p.shutdown(true)
-				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-				debug.PrintStack()
-				return
-			}
-		}()
+		defer p.recoverFromPanic()
 	}
 
 	// If no renderer is set use the standard one.
@@ -561,7 +563,7 @@ func (p *Program) Run() (Model, error) {
 	model := p.initialModel
 	if initCmd := model.Init(); initCmd != nil {
 		ch := make(chan struct{})
-		handlers.add(ch)
+		p.handlers.add(ch)
 
 		go func() {
 			defer close(ch)
@@ -584,10 +586,10 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Handle resize events.
-	handlers.add(p.handleResize())
+	p.handlers.add(p.handleResize())
 
 	// Process commands.
-	handlers.add(p.handleCommands(cmds))
+	p.handlers.add(p.handleCommands(cmds))
 
 	// Run event loop, handle updates and draw.
 	model, err := p.eventLoop(model, cmds)
@@ -598,21 +600,6 @@ func (p *Program) Run() (Model, error) {
 		// Ensure we rendered the final state of the model.
 		p.renderer.write(model.View())
 	}
-
-	// Tear down.
-	p.cancel()
-
-	// Check if the cancel reader has been setup before waiting and closing.
-	if p.cancelReader != nil {
-		// Wait for input loop to finish.
-		if p.cancelReader.Cancel() {
-			p.waitForReadLoop()
-		}
-		_ = p.cancelReader.Close()
-	}
-
-	// Wait for all handlers to finish.
-	handlers.shutdown()
 
 	// Restore terminal state.
 	p.shutdown(killed)
@@ -668,7 +655,7 @@ func (p *Program) Quit() {
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
 func (p *Program) Kill() {
-	p.cancel()
+	p.shutdown(true)
 }
 
 // Wait waits/blocks until the underlying Program finished shutting down.
@@ -679,6 +666,22 @@ func (p *Program) Wait() {
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
+	p.cancel()
+
+	// Wait for all handlers to finish.
+	p.handlers.shutdown()
+
+	// Check if the cancel reader has been setup before waiting and closing.
+	if p.cancelReader != nil {
+		// Wait for input loop to finish.
+		if p.cancelReader.Cancel() {
+			if !kill {
+				p.waitForReadLoop()
+			}
+		}
+		_ = p.cancelReader.Close()
+	}
+
 	if p.renderer != nil {
 		if kill {
 			p.renderer.kill()
@@ -688,7 +691,19 @@ func (p *Program) shutdown(kill bool) {
 	}
 
 	_ = p.restoreTerminalState()
-	p.finished <- struct{}{}
+	if !kill {
+		p.finished <- struct{}{}
+	}
+}
+
+// recoverFromPanic recovers from a panic, prints the stack trace, and restores
+// the terminal to a usable state.
+func (p *Program) recoverFromPanic() {
+	if r := recover(); r != nil {
+		p.shutdown(true)
+		fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+		debug.PrintStack()
+	}
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input

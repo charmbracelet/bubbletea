@@ -521,6 +521,9 @@ func (r *standardRenderer) clearIgnoredLines() {
 // use in high-performance rendering, such as a pager that could potentially
 // be rendering very complicated ansi. In cases where the content is simpler
 // standard Bubble Tea rendering should suffice.
+//
+// Deprecated: This option is deprecated and will be removed in a future
+// version of this package.
 func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
@@ -548,6 +551,9 @@ func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary
 // See note in insertTop() for caveats, how this function only makes sense for
 // full-window applications, and how it differs from the normal way we do
 // rendering in Bubble Tea.
+//
+// Deprecated: This option is deprecated and will be removed in a future
+// version of this package.
 func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBoundary int) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
@@ -632,6 +638,8 @@ type syncScrollAreaMsg struct {
 // should also be called on resize (WindowSizeMsg).
 //
 // For high-performance, scroll-based rendering only.
+//
+// Deprecated: This option will be removed in a future version of this package.
 func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
 	return func() Msg {
 		return syncScrollAreaMsg{
@@ -648,6 +656,8 @@ type clearScrollAreaMsg struct{}
 // those lines to the main rendering routine.
 //
 // For high-performance, scroll-based rendering only.
+//
+// Deprecated: This option will be removed in a future version of this package.
 func ClearScrollArea() Msg {
 	return clearScrollAreaMsg{}
 }
@@ -663,6 +673,8 @@ type scrollUpMsg struct {
 // from view.
 //
 // For high-performance, scroll-based rendering only.
+//
+// Deprecated: This option will be removed in a future version of this package.
 func ScrollUp(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollUpMsg{
@@ -684,6 +696,8 @@ type scrollDownMsg struct {
 // disappear from view.
 //
 // For high-performance, scroll-based rendering only.
+//
+// Deprecated: This option will be removed in a future version of this package.
 func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
 	return func() Msg {
 		return scrollDownMsg{
