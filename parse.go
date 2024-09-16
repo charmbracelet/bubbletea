@@ -317,7 +317,8 @@ func parseCsi(b []byte) (int, Msg) {
 			// CSI 1 ; <modifiers> A
 			k.Mod |= KeyMod(csi.Param(1) - 1)
 		}
-		return i, k
+		// Don't forget to handle Kitty keyboard protocol
+		return i, parseKittyKeyboardExt(&csi, k)
 	case 'M':
 		// Handle X10 mouse
 		if i+3 > len(b) {
@@ -436,6 +437,9 @@ func parseCsi(b []byte) (int, Msg) {
 
 			// Handle URxvt weird keys
 			switch cmd {
+			case '~':
+				// Don't forget to handle Kitty keyboard protocol
+				return i, parseKittyKeyboardExt(&csi, k)
 			case '^':
 				k.Mod |= ModCtrl
 			case '@':

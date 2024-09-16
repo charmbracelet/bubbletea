@@ -135,6 +135,18 @@ func TestParseSequence(t *testing.T) {
 			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Code: KeyDown}},
 		},
 		seqTest{
+			[]byte("\x1b[1;4:1B"),
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Code: KeyDown}},
+		},
+		seqTest{
+			[]byte("\x1b[1;4:2B"),
+			[]Msg{KeyPressMsg{Mod: ModShift | ModAlt, Code: KeyDown, IsRepeat: true}},
+		},
+		seqTest{
+			[]byte("\x1b[1;4:3B"),
+			[]Msg{KeyReleaseMsg{Mod: ModShift | ModAlt, Code: KeyDown}},
+		},
+		seqTest{
 			[]byte("\x1b[8~"),
 			[]Msg{KeyPressMsg{Code: KeyEnd}},
 		},
