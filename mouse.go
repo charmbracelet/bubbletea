@@ -41,6 +41,11 @@ const (
 	MouseExtra2
 )
 
+// String returns a string representation of the mouse button.
+func (b MouseButton) String() string {
+	return mouseButtons[b]
+}
+
 var mouseButtons = map[MouseButton]string{
 	MouseNone:       "none",
 	MouseLeft:       "left",
