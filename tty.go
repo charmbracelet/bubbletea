@@ -95,14 +95,14 @@ func (p *Program) restoreTerminalState() error {
 	}
 
 	// Restore terminal colors.
-	if p.setBg != nil && p.bg != nil {
-		p.execute(ansi.SetBackgroundColor(p.bg))
+	if p.setBg != nil {
+		p.execute(ansi.ResetBackgroundColor)
 	}
-	if p.setFg != nil && p.fg != nil {
-		p.execute(ansi.SetForegroundColor(p.fg))
+	if p.setFg != nil {
+		p.execute(ansi.ResetForegroundColor)
 	}
-	if p.setCc != nil && p.cc != nil {
-		p.execute(ansi.SetCursorColor(p.cc))
+	if p.setCc != nil {
+		p.execute(ansi.ResetCursorColor)
 	}
 
 	return p.restoreInput()

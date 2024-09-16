@@ -210,11 +210,6 @@ type Program struct {
 	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
 	modifyOtherKeys int
 
-	// terminal colors are stored here so they can be restored when the program
-	// exits. nil means the color could not be determined and should not be
-	// restored.
-	bg, fg, cc color.Color
-
 	// When a program is suspended, the terminal state is saved and the program
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
@@ -404,21 +399,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case SuspendMsg:
 				if suspendSupported {
 					p.suspend()
-				}
-
-			case BackgroundColorMsg:
-				if p.bg == nil {
-					p.bg = msg
-				}
-
-			case ForegroundColorMsg:
-				if p.fg == nil {
-					p.fg = msg
-				}
-
-			case CursorColorMsg:
-				if p.cc == nil {
-					p.cc = msg
 				}
 
 			case modeReportMsg:
@@ -740,13 +720,6 @@ func (p *Program) Run() (Model, error) {
 		p.execute(ansi.EnableWin32Input)
 		p.modes[ansi.Win32InputMode] = true
 	}
-
-	// Query terminal colors
-	// This is then used to restore the colors when the program exits.
-	p.execute(ansi.RequestBackgroundColor +
-		ansi.RequestForegroundColor +
-		ansi.RequestCursorColor,
-	)
 
 	// Start the renderer.
 	p.startRenderer()
