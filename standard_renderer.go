@@ -240,7 +240,7 @@ func (r *standardRenderer) flush() {
 
 	// Clearing left over content from last render.
 	if r.linesRendered > numLinesThisFlush {
-		buf.WriteString(ansi.EraseDisplayRight)
+		buf.WriteString(ansi.EraseDisplayBelow)
 	}
 
 	r.linesRendered = numLinesThisFlush
