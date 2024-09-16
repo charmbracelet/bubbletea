@@ -261,15 +261,15 @@ func WithReportFocus() ProgramOption {
 // This is a syntactic sugar for WithKittyKeyboard(7) and WithXtermModifyOtherKeys(1).
 func WithEnhancedKeyboard() ProgramOption {
 	return func(p *Program) {
-		WithKittyKeyboard(ansi.KittyDisambiguateEscapeCodes |
+		_WithKittyKeyboard(ansi.KittyDisambiguateEscapeCodes |
 			ansi.KittyReportEventTypes |
 			ansi.KittyReportAlternateKeys,
 		)(p)
-		WithModifyOtherKeys(1)(p)
+		_WithModifyOtherKeys(1)(p)
 	}
 }
 
-// WithKittyKeyboard enables support for the Kitty keyboard protocol. This
+// _WithKittyKeyboard enables support for the Kitty keyboard protocol. This
 // protocol enables more key combinations and events than the traditional
 // ambiguous terminal keyboard sequences.
 //
@@ -283,14 +283,14 @@ func WithEnhancedKeyboard() ProgramOption {
 //	16: Report associated text
 //
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func WithKittyKeyboard(flags int) ProgramOption {
+func _WithKittyKeyboard(flags int) ProgramOption {
 	return func(p *Program) {
 		p.kittyFlags = flags
 		p.startupOptions |= withKittyKeyboard
 	}
 }
 
-// WithModifyOtherKeys enables support for the XTerm modifyOtherKeys feature.
+// _WithModifyOtherKeys enables support for the XTerm modifyOtherKeys feature.
 // This feature allows the terminal to report ambiguous keys as escape codes.
 // This is useful for terminals that don't support the Kitty keyboard protocol.
 //
@@ -302,21 +302,21 @@ func WithKittyKeyboard(flags int) ProgramOption {
 //	   and Meta-<key>
 //
 // See https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-func WithModifyOtherKeys(mode int) ProgramOption {
+func _WithModifyOtherKeys(mode int) ProgramOption {
 	return func(p *Program) {
 		p.modifyOtherKeys = mode
 		p.startupOptions |= withModifyOtherKeys
 	}
 }
 
-// WithWindowsInputMode enables Windows Input Mode (win32-input-mode) which
+// _WithWindowsInputMode enables Windows Input Mode (win32-input-mode) which
 // allows for more advanced input handling and reporting. This is experimental
 // and may not work on all terminals.
 //
 // See
 // https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
 // for more information.
-func WithWindowsInputMode() ProgramOption { //nolint:unused
+func _WithWindowsInputMode() ProgramOption { //nolint:unused
 	return func(p *Program) {
 		p.startupOptions |= withWindowsInputMode
 	}
