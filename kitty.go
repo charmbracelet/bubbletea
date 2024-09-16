@@ -321,3 +321,20 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
 
 	return KeyPressMsg(key)
 }
+
+// parseKittyKeyboardExt parses a Kitty Keyboard Protocol sequence extensions
+// for non CSI u sequences. This includes things like CSI A, SS3 A and others,
+// and CSI ~.
+func parseKittyKeyboardExt(csi *ansi.CsiSequence, k KeyPressMsg) Msg {
+	// Handle Kitty keyboard protocol
+	if csi.HasMore(1) {
+		switch csi.Param(2) {
+		case 1:
+		case 2:
+			k.IsRepeat = true
+		case 3:
+			return KeyReleaseMsg(k)
+		}
+	}
+	return k
+}
