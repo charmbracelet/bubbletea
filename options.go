@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync/atomic"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -334,5 +335,17 @@ func _WithWindowsInputMode() ProgramOption { //nolint:unused
 func WithoutGraphemeClustering() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withoutGraphemeClustering
+	}
+}
+
+// WithColorProfile sets the color profile that the program will use. This is
+// useful when you want to force a specific color profile. By default, Bubble
+// Tea will try to detect the terminal's color profile from environment
+// variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
+// environment variables.
+func WithColorProfile(profile colorprofile.Profile) ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withColorProfile
+		p.profile = profile
 	}
 }
