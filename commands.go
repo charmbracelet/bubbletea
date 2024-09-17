@@ -222,14 +222,8 @@ type enableKeyboardEnhancementsMsg []KeyboardEnhancement
 // EnableKeyboardEnhancements is a command that enables keyboard enhancements
 // in the terminal.
 func EnableKeyboardEnhancements(enhancements ...KeyboardEnhancement) Cmd {
-	enhancements = append(enhancements, func(k *keyboardEnhancements) {
-		k.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
-		if k.modifyOtherKeys < 1 {
-			k.modifyOtherKeys = 1
-		}
-	})
 	return func() Msg {
-		return enableKeyboardEnhancementsMsg(enhancements)
+		return enableKeyboardEnhancementsMsg(append(enhancements, withDisambiguousKeys))
 	}
 }
 

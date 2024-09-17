@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
-
-	"github.com/charmbracelet/x/ansi"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -253,59 +251,15 @@ func WithReportFocus() ProgramOption {
 	}
 }
 
-// keyboardEnhancements is a type that represents a set of keyboard
-// enhancements.
-type keyboardEnhancements struct {
-	// Kitty progressive keyboard enhancements protocol. This can be used to
-	// enable different keyboard features.
-	//
-	//  - 0: disable all features
-	//  - 1: [ansi.DisambiguateEscapeCodes] Disambiguate escape codes such as
-	//  ctrl+i and tab, ctrl+[ and escape, ctrl+space and ctrl+@, etc.
-	//  - 2: [ansi.ReportEventTypes] Report event types such as key presses,
-	//  releases, and repeat events.
-	//  - 4: [ansi.ReportAlternateKeys] Report keypresses as though they were
-	//  on a PC-101 ANSI US keyboard layout regardless of what they layout
-	//  actually is. Also include information about whether or not is enabled,
-	//  - 8: [ansi.ReportAllKeysAsEscapeCodes] Report all key events as escape
-	//  codes. This includes simple printable keys like "a" and other Unicode
-	//  characters.
-	//  - 16: [ansi.ReportAssociatedText] Report associated text with key
-	//  events. This encodes multi-rune key events as escape codes instead of
-	//  individual runes.
-	//
-	kittyFlags int
-
-	// Xterm modifyOtherKeys feature.
-	//
-	//  - Mode 0 disables modifyOtherKeys.
-	//  - Mode 1 reports ambiguous keys as escape codes. This is similar to
-	//  [ansi.KittyDisambiguateEscapeCodes] but uses XTerm escape codes.
-	//  - Mode 2 reports all key as escape codes including printable keys like "a" and "shift+b".
-	modifyOtherKeys int
-}
-
-// KeyboardEnhancement is a type that represents a keyboard enhancement.
-type KeyboardEnhancement func(k *keyboardEnhancements)
-
-// WithReleaseKeys enables support for reporting release key events. This is
-// useful for terminals that support the Kitty keyboard protocol "Report event
-// types" progressive enhancement feature.
+// WithKeyboardEnhancements enables support for enhanced keyboard features. You
+// can enable different keyboard features by passing one or more
+// KeyboardEnhancement functions.
 //
-// Note that not all terminals support this feature.
-func WithReleaseKeys(k *keyboardEnhancements) {
-	k.kittyFlags |= ansi.KittyReportEventTypes
-}
-
-// WithKeyboardEnhancements enables support for enhanced keyboard features. This
-// unambiguously reports more key combinations than traditional terminal
-// keyboard sequences. This might also enable reporting of release key events
-// depending on the terminal emulator supporting it.
-//
-// This is a syntactic sugar for WithKittyKeyboard(1) and WithModifyOtherKeys(1).
+// This is not supported on all terminals. On Windows, these features are
+// enabled by default.
 func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption {
-	ke := keyboardEnhancements{kittyFlags: ansi.KittyDisambiguateEscapeCodes, modifyOtherKeys: 1}
-	for _, e := range enhancements {
+	var ke keyboardEnhancements
+	for _, e := range append(enhancements, withDisambiguousKeys) {
 		e(&ke)
 	}
 	return func(p *Program) {
