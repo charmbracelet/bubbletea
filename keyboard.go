@@ -1,6 +1,10 @@
 package tea
 
-import "github.com/charmbracelet/x/ansi"
+import (
+	"runtime"
+
+	"github.com/charmbracelet/x/ansi"
+)
 
 // keyboardEnhancements is a type that represents a set of keyboard
 // enhancements.
@@ -55,4 +59,46 @@ func withDisambiguousKeys(k *keyboardEnhancements) {
 	if k.modifyOtherKeys < 1 {
 		k.modifyOtherKeys = 1
 	}
+}
+
+type enableKeyboardEnhancementsMsg []KeyboardEnhancement
+
+// EnableKeyboardEnhancements is a command that enables keyboard enhancements
+// in the terminal.
+func EnableKeyboardEnhancements(enhancements ...KeyboardEnhancement) Cmd {
+	return func() Msg {
+		return enableKeyboardEnhancementsMsg(append(enhancements, withDisambiguousKeys))
+	}
+}
+
+type disableKeyboardEnhancementsMsg struct{}
+
+// DisableKeyboardEnhancements is a command that disables keyboard enhancements
+// in the terminal.
+func DisableKeyboardEnhancements() Msg {
+	return disableKeyboardEnhancementsMsg{}
+}
+
+// KeyboardEnhancementsMsg is a message that gets sent when the terminal
+// supports keyboard enhancements.
+type KeyboardEnhancementsMsg keyboardEnhancements
+
+// SupportsDisambiguousKeys returns whether the terminal supports reporting
+// disambiguous keys as escape codes.
+func (k KeyboardEnhancementsMsg) SupportsDisambiguousKeys() bool {
+	if runtime.GOOS == "windows" {
+		// We use Windows Console API which supports reporting disambiguous keys.
+		return true
+	}
+	return k.kittyFlags&ansi.KittyDisambiguateEscapeCodes != 0 || k.modifyOtherKeys >= 1
+}
+
+// SupportsReleaseKeys returns whether the terminal supports key release
+// events.
+func (k KeyboardEnhancementsMsg) SupportsReleaseKeys() bool {
+	if runtime.GOOS == "windows" {
+		// We use Windows Console API which supports key release events.
+		return true
+	}
+	return k.kittyFlags&ansi.KittyReportEventTypes != 0
 }

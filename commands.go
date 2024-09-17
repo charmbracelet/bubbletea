@@ -2,8 +2,6 @@ package tea
 
 import (
 	"time"
-
-	"github.com/charmbracelet/x/ansi"
 )
 
 // Batch performs a bunch of commands concurrently with no ordering guarantees
@@ -215,32 +213,4 @@ func WindowSize() Cmd {
 	return func() Msg {
 		return windowSizeMsg{}
 	}
-}
-
-type enableKeyboardEnhancementsMsg []KeyboardEnhancement
-
-// EnableKeyboardEnhancements is a command that enables keyboard enhancements
-// in the terminal.
-func EnableKeyboardEnhancements(enhancements ...KeyboardEnhancement) Cmd {
-	return func() Msg {
-		return enableKeyboardEnhancementsMsg(append(enhancements, withDisambiguousKeys))
-	}
-}
-
-type disableKeyboardEnhancementsMsg struct{}
-
-// DisableKeyboardEnhancements is a command that disables keyboard enhancements
-// in the terminal.
-func DisableKeyboardEnhancements() Msg {
-	return disableKeyboardEnhancementsMsg{}
-}
-
-// KeyboardEnhancementsMsg is a message that gets sent when the terminal
-// supports keyboard enhancements.
-type KeyboardEnhancementsMsg keyboardEnhancements
-
-// SupportsReleaseKeys returns whether the terminal supports key release
-// events.
-func (k KeyboardEnhancementsMsg) SupportsReleaseKeys() bool {
-	return k.kittyFlags&ansi.KittyReportEventTypes != 0
 }
