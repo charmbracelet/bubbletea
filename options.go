@@ -264,8 +264,9 @@ type keyboardEnhancements struct {
 	//  ctrl+i and tab, ctrl+[ and escape, ctrl+space and ctrl+@, etc.
 	//  - 2: [ansi.ReportEventTypes] Report event types such as key presses,
 	//  releases, and repeat events.
-	//  - 4: [ansi.ReportAlternateKeys] Report alternate keys such as shifted
-	//  keys and PC-101 ANSI US keyboard layout.
+	//  - 4: [ansi.ReportAlternateKeys] Report keypresses as though they were on a 
+	// PC-101 ANSI US keyboard layout regardless of what they layout actually is.
+	// Also include information about whether or not is enabled,
 	//  - 8: [ansi.ReportAllKeysAsEscapeCodes] Report all key events as escape
 	//  codes. This includes simple printable keys like "a" and other Unicode
 	//  characters.
