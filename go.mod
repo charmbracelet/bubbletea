@@ -3,6 +3,7 @@ module github.com/charmbracelet/bubbletea
 go 1.18
 
 require (
+	github.com/charmbracelet/colorprofile v0.1.1
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/charmbracelet/x/ansi v0.3.2
 	github.com/charmbracelet/x/term v0.2.0

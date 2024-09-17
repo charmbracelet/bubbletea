@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/ansi/compressor"
@@ -105,6 +106,7 @@ const (
 	withModifyOtherKeys
 	withWindowsInputMode
 	withoutGraphemeClustering
+	withColorProfile
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -165,6 +167,8 @@ type Program struct {
 	errs         chan error
 	finished     chan struct{}
 	shutdownOnce sync.Once
+
+	profile colorprofile.Profile // the terminal color profile
 
 	// where to send output, this will usually be os.Stdout.
 	output *safeWriter
@@ -401,6 +405,15 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.suspend()
 				}
 
+			case CapabilityMsg:
+				switch msg {
+				case "RGB", "Tc":
+					if p.profile != colorprofile.TrueColor {
+						p.profile = colorprofile.TrueColor
+						go p.Send(ColorProfileMsg{p.profile})
+					}
+				}
+
 			case modeReportMsg:
 				switch msg.Mode {
 				case graphemeClustering:
@@ -634,6 +647,12 @@ func (p *Program) Run() (Model, error) {
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
+
+	// Get the color profile and send it to the program.
+	if !p.startupOptions.has(withColorProfile) {
+		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
+	}
+	go p.Send(ColorProfileMsg{p.profile})
 
 	// If no renderer is set use the standard one.
 	var output io.Writer
