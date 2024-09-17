@@ -1,7 +1,5 @@
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
-github.com/charmbracelet/colorprofile v0.1.0 h1:klE4lnH3GpQ0iI05UqEhExt5JHZUJFEBR5VxGzbbGG4=
-github.com/charmbracelet/colorprofile v0.1.0/go.mod h1:Bx3b9S36dLIjuGZOO9z1WytjG4sALQQNtu97AmKYW24=
 github.com/charmbracelet/colorprofile v0.1.1 h1:YsvIsmZ2bazhejG+5g5MPPMpllc7Ks66Nk8l3IvGJ2g=
 github.com/charmbracelet/colorprofile v0.1.1/go.mod h1:1htIKZYeI4TQs+OykPvpuBTUbUJxBYeSYBDIZuejMj0=
 github.com/charmbracelet/lipgloss v0.13.0 h1:4X3PPeoWEDCMvzDvGmTajSyYPcZM4+y8sCA/SsA3cjw=
