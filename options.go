@@ -253,72 +253,63 @@ func WithReportFocus() ProgramOption {
 	}
 }
 
-// WithEnhancedKeyboard enables support for enhanced keyboard features. This
+// keyboardEnhancements is a type that represents a set of keyboard
+// enhancements.
+type keyboardEnhancements struct {
+	// Kitty progressive keyboard enhancements protocol. This can be used to
+	// enable different keyboard features.
+	//
+	//  - 0: disable all features
+	//  - 1: [ansi.DisambiguateEscapeCodes] Disambiguate escape codes such as
+	//  ctrl+i and tab, ctrl+[ and escape, ctrl+space and ctrl+@, etc.
+	//  - 2: [ansi.ReportEventTypes] Report event types such as key presses,
+	//  releases, and repeat events.
+	//  - 4: [ansi.ReportAlternateKeys] Report alternate keys such as shifted
+	//  keys and PC-101 ANSI US keyboard layout.
+	//  - 8: [ansi.ReportAllKeysAsEscapeCodes] Report all key events as escape
+	//  codes. This includes simple printable keys like "a" and other Unicode
+	//  characters.
+	//  - 16: [ansi.ReportAssociatedText] Report associated text with key
+	//  events. This encodes multi-rune key events as escape codes instead of
+	//  individual runes.
+	//
+	kittyFlags int
+
+	// Xterm modifyOtherKeys feature.
+	//
+	//  - Mode 0 disables modifyOtherKeys.
+	//  - Mode 1 reports ambiguous keys as escape codes. This is similar to
+	//  [ansi.KittyDisambiguateEscapeCodes] but uses XTerm escape codes.
+	//  - Mode 2 reports all key as escape codes including printable keys like "a" and "shift+b".
+	modifyOtherKeys int
+}
+
+// KeyboardEnhancement is a type that represents a keyboard enhancement.
+type KeyboardEnhancement func(k *keyboardEnhancements)
+
+// WithReleaseKeys enables support for reporting release key events. This is
+// useful for terminals that support the Kitty keyboard protocol "Report event
+// types" progressive enhancement feature.
+//
+// Note that not all terminals support this feature.
+func WithReleaseKeys(k *keyboardEnhancements) {
+	k.kittyFlags |= ansi.KittyReportEventTypes
+}
+
+// WithKeyboardEnhancements enables support for enhanced keyboard features. This
 // unambiguously reports more key combinations than traditional terminal
 // keyboard sequences. This might also enable reporting of release key events
 // depending on the terminal emulator supporting it.
 //
-// This is a syntactic sugar for WithKittyKeyboard(7) and WithXtermModifyOtherKeys(1).
-func WithEnhancedKeyboard() ProgramOption {
-	return func(p *Program) {
-		_WithKittyKeyboard(ansi.KittyDisambiguateEscapeCodes |
-			ansi.KittyReportEventTypes |
-			ansi.KittyReportAlternateKeys,
-		)(p)
-		_WithModifyOtherKeys(1)(p)
+// This is a syntactic sugar for WithKittyKeyboard(1) and WithModifyOtherKeys(1).
+func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption {
+	ke := keyboardEnhancements{kittyFlags: ansi.KittyDisambiguateEscapeCodes, modifyOtherKeys: 1}
+	for _, e := range enhancements {
+		e(&ke)
 	}
-}
-
-// _WithKittyKeyboard enables support for the Kitty keyboard protocol. This
-// protocol enables more key combinations and events than the traditional
-// ambiguous terminal keyboard sequences.
-//
-// Use flags to specify which features you want to enable.
-//
-//	0:  Disable all features
-//	1:  Disambiguate escape codes
-//	2:  Report event types
-//	4:  Report alternate keys
-//	8:  Report all keys as escape codes
-//	16: Report associated text
-//
-// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func _WithKittyKeyboard(flags int) ProgramOption {
 	return func(p *Program) {
-		p.kittyFlags = flags
-		p.startupOptions |= withKittyKeyboard
-	}
-}
-
-// _WithModifyOtherKeys enables support for the XTerm modifyOtherKeys feature.
-// This feature allows the terminal to report ambiguous keys as escape codes.
-// This is useful for terminals that don't support the Kitty keyboard protocol.
-//
-// The mode can be one of the following:
-//
-//	0: Disable modifyOtherKeys
-//	1: Report ambiguous keys as escape codes
-//	2: Report ambiguous keys as escape codes including modified keys like Alt-<key>
-//	   and Meta-<key>
-//
-// See https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-func _WithModifyOtherKeys(mode int) ProgramOption {
-	return func(p *Program) {
-		p.modifyOtherKeys = mode
-		p.startupOptions |= withModifyOtherKeys
-	}
-}
-
-// _WithWindowsInputMode enables Windows Input Mode (win32-input-mode) which
-// allows for more advanced input handling and reporting. This is experimental
-// and may not work on all terminals.
-//
-// See
-// https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
-// for more information.
-func _WithWindowsInputMode() ProgramOption { //nolint:unused
-	return func(p *Program) {
-		p.startupOptions |= withWindowsInputMode
+		p.startupOptions |= withKeyboardEnhancements
+		p.keyboard = ke
 	}
 }
 

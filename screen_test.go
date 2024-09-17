@@ -74,8 +74,8 @@ func TestClearMsg(t *testing.T) {
 		},
 		{
 			name:     "kitty_start",
-			cmds:     []Cmd{DisableKittyKeyboard, EnableKittyKeyboard(3)},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?2027h\x1b[?2027$p\x1b[>u\x1b[>3u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[>0u",
+			cmds:     []Cmd{DisableKeyboardEnhancements, EnableKeyboardEnhancements(WithReleaseKeys)},
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?2027h\x1b[?2027$p\x1b[>4;1m\x1b[>3u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[>4;0m\x1b[>0u",
 		},
 	}
 

@@ -2,6 +2,8 @@ package tea
 
 import (
 	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 // Batch performs a bunch of commands concurrently with no ordering guarantees
@@ -215,24 +217,36 @@ func WindowSize() Cmd {
 	}
 }
 
-// setEnhancedKeyboardMsg is a message to enable/disable enhanced keyboard
-// features.
-type setEnhancedKeyboardMsg bool
+type enableKeyboardEnhancementsMsg []KeyboardEnhancement
 
-// EnableEnhancedKeyboard is a command to enable enhanced keyboard features.
-// This unambiguously reports more key combinations than traditional terminal
-// keyboard sequences. This might also enable reporting of release key events
-// depending on the terminal emulator supporting it.
-//
-// This is equivalent to calling EnablieKittyKeyboard(3) and
-// EnableModifyOtherKeys(1).
-func EnableEnhancedKeyboard() Msg {
-	return setEnhancedKeyboardMsg(true)
+// EnableKeyboardEnhancements is a command that enables keyboard enhancements
+// in the terminal.
+func EnableKeyboardEnhancements(enhancements ...KeyboardEnhancement) Cmd {
+	enhancements = append(enhancements, func(k *keyboardEnhancements) {
+		k.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
+		if k.modifyOtherKeys < 1 {
+			k.modifyOtherKeys = 1
+		}
+	})
+	return func() Msg {
+		return enableKeyboardEnhancementsMsg(enhancements)
+	}
 }
 
-// DisableEnhancedKeyboard is a command to disable enhanced keyboard features.
-//
-// This is equivalent to calling DisableKittyKeyboard() and DisableModifyOtherKeys().
-func DisableEnhancedKeyboard() Msg {
-	return setEnhancedKeyboardMsg(false)
+type disableKeyboardEnhancementsMsg struct{}
+
+// DisableKeyboardEnhancements is a command that disables keyboard enhancements
+// in the terminal.
+func DisableKeyboardEnhancements() Msg {
+	return disableKeyboardEnhancementsMsg{}
+}
+
+// KeyboardEnhancementsMsg is a message that gets sent when the terminal
+// supports keyboard enhancements.
+type KeyboardEnhancementsMsg keyboardEnhancements
+
+// SupportsReleaseKeys returns whether the terminal supports key release
+// events.
+func (k KeyboardEnhancementsMsg) SupportsReleaseKeys() bool {
+	return k.kittyFlags&ansi.KittyReportEventTypes != 0
 }
