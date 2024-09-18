@@ -89,34 +89,27 @@ type model struct {
 }
 ```
 
-### Initialization
+## Initialization
 
-Next, we’ll define our application’s initial state. In this case, we’re defining
-a function to return our initial model, however, we could just as easily define
-the initial model as a variable elsewhere, too.
+Next, we’ll define our application’s initial state in the `Init` method. `Init`
+can return a `Cmd` that could perform some initial I/O. For now, we don't need
+to do any I/O, so for the command, we'll just return `nil`, which translates to
+"no command."
 
 ```go
-func initialModel() model {
-	return model{
+func (m model) Init() (tea.Model, tea.Cmd) {
+	m = {
 		// Our to-do list is a grocery list
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
 		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
+		// the map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
-}
-```
 
-Next, we define the `Init` method. `Init` can return a `Cmd` that could perform
-some initial I/O. For now, we don't need to do any I/O, so for the command,
-we'll just return `nil`, which translates to "no command."
-
-```go
-func (m model) Init() tea.Cmd {
     // Just return `nil`, which means "no I/O right now, please."
-    return nil
+    return m, nil
 }
 ```
 
@@ -137,15 +130,15 @@ tick, or a response from a server.
 We usually figure out which type of `Msg` we received with a type switch, but
 you could also use a type assertion.
 
-For now, we'll just deal with `tea.KeyMsg` messages, which are automatically
-sent to the update function when keys are pressed.
+For now, we'll just deal with `tea.KeyPressMsg` messages, which are
+automatically sent to the update function when keys are pressed.
 
 ```go
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
 
     // Is it a key press?
-    case tea.KeyMsg:
+    case tea.KeyPressMsg:
 
         // Cool, what was the actual key pressed?
         switch msg.String() {
@@ -166,9 +159,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 m.cursor++
             }
 
-        // The "enter" key and the spacebar (a literal space) toggle
-        // the selected state for the item that the cursor is pointing at.
-        case "enter", " ":
+        // The "enter" key and the space bar (a literal space) toggle the
+        // selected state for the item that the cursor is pointing at.
+        case "enter", "space":
             _, ok := m.selected[m.cursor]
             if ok {
                 delete(m.selected, m.cursor)

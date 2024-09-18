@@ -49,8 +49,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, tea.Quit
 
-	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
+	case tea.KeyPressMsg:
+		if msg.Mod == tea.ModCtrl && msg.Code == 'c' {
 			return m, tea.Quit
 		}
 	}
