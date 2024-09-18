@@ -15,7 +15,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyboardEnhancementsMsg:
-		return m, tea.Printf("Keyboard enhancements enabled! ReleaseKeys: %v\n", msg.SupportsReleaseKeys())
+		return m, tea.Printf("Keyboard enhancements enabled! ReleaseKeys: %v\n", msg.SupportsKeyReleases())
 	case tea.KeyMsg:
 		switch msg := msg.(type) {
 		case tea.KeyPressMsg:
@@ -34,7 +34,7 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithKeyboardEnhancements(tea.WithReleaseKeys))
+	p := tea.NewProgram(model{}, tea.WithKeyboardEnhancements(tea.WithKeyReleases))
 	if _, err := p.Run(); err != nil {
 		log.Printf("Error running program: %v", err)
 	}

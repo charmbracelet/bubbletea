@@ -41,20 +41,20 @@ type keyboardEnhancements struct {
 // KeyboardEnhancement is a type that represents a keyboard enhancement.
 type KeyboardEnhancement func(k *keyboardEnhancements)
 
-// WithReleaseKeys enables support for reporting release key events. This is
+// WithKeyReleases enables support for reporting release key events. This is
 // useful for terminals that support the Kitty keyboard protocol "Report event
 // types" progressive enhancement feature.
 //
 // Note that not all terminals support this feature.
-func WithReleaseKeys(k *keyboardEnhancements) {
+func WithKeyReleases(k *keyboardEnhancements) {
 	k.kittyFlags |= ansi.KittyReportEventTypes
 }
 
-// withDisambiguousKeys enables support for disambiguating keyboard escape
+// withKeyDisambiguation enables support for disambiguating keyboard escape
 // codes. This is useful for terminals that support the Kitty keyboard protocol
 // "Disambiguate escape codes" progressive enhancement feature or the XTerm
 // modifyOtherKeys mode 1 feature to report ambiguous keys as escape codes.
-func withDisambiguousKeys(k *keyboardEnhancements) {
+func withKeyDisambiguation(k *keyboardEnhancements) {
 	k.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
 	if k.modifyOtherKeys < 1 {
 		k.modifyOtherKeys = 1
@@ -67,7 +67,7 @@ type enableKeyboardEnhancementsMsg []KeyboardEnhancement
 // in the terminal.
 func EnableKeyboardEnhancements(enhancements ...KeyboardEnhancement) Cmd {
 	return func() Msg {
-		return enableKeyboardEnhancementsMsg(append(enhancements, withDisambiguousKeys))
+		return enableKeyboardEnhancementsMsg(append(enhancements, withKeyDisambiguation))
 	}
 }
 
@@ -83,9 +83,9 @@ func DisableKeyboardEnhancements() Msg {
 // supports keyboard enhancements.
 type KeyboardEnhancementsMsg keyboardEnhancements
 
-// SupportsDisambiguousKeys returns whether the terminal supports reporting
+// SupportsKeyDisambiguation returns whether the terminal supports reporting
 // disambiguous keys as escape codes.
-func (k KeyboardEnhancementsMsg) SupportsDisambiguousKeys() bool {
+func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
 	if runtime.GOOS == "windows" {
 		// We use Windows Console API which supports reporting disambiguous keys.
 		return true
@@ -93,9 +93,9 @@ func (k KeyboardEnhancementsMsg) SupportsDisambiguousKeys() bool {
 	return k.kittyFlags&ansi.KittyDisambiguateEscapeCodes != 0 || k.modifyOtherKeys >= 1
 }
 
-// SupportsReleaseKeys returns whether the terminal supports key release
+// SupportsKeyReleases returns whether the terminal supports key release
 // events.
-func (k KeyboardEnhancementsMsg) SupportsReleaseKeys() bool {
+func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
 	if runtime.GOOS == "windows" {
 		// We use Windows Console API which supports key release events.
 		return true

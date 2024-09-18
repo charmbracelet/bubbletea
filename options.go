@@ -259,7 +259,7 @@ func WithReportFocus() ProgramOption {
 // enabled by default.
 func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption {
 	var ke keyboardEnhancements
-	for _, e := range append(enhancements, withDisambiguousKeys) {
+	for _, e := range append(enhancements, withKeyDisambiguation) {
 		e(&ke)
 	}
 	return func(p *Program) {
