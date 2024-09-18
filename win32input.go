@@ -2,29 +2,7 @@ package tea
 
 import (
 	"unicode"
-
-	"github.com/charmbracelet/x/ansi"
 )
-
-// EnableWindowsInputMode is a command that enables Windows input mode
-// (win32-input-mode).
-//
-// See
-// https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
-// for more information.
-func EnableWindowsInputMode() Msg { //nolint:unused
-	return enableModeMsg(ansi.Win32InputMode)
-}
-
-// DisableWindowsInputMode is a command that disables Windows input mode
-// (win32-input-mode).
-//
-// See
-// https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
-// for more information.
-func DisableWindowsInputMode() Msg { //nolint:unused
-	return disableModeMsg(ansi.Win32InputMode)
-}
 
 func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) Msg {
 	var key Key
