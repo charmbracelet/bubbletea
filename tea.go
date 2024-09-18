@@ -101,9 +101,7 @@ const (
 	withoutCatchPanics
 	withoutBracketedPaste
 	withReportFocus
-	withKittyKeyboard
-	withModifyOtherKeys
-	withWindowsInputMode
+	withKeyboardEnhancements
 	withoutGraphemeClustering
 )
 
@@ -204,11 +202,7 @@ type Program struct {
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
 
-	// kittyFlags stores kitty keyboard protocol progressive enhancement flags.
-	kittyFlags int
-
-	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
-	modifyOtherKeys int
+	keyboard keyboardEnhancements
 
 	// When a program is suspended, the terminal state is saved and the program
 	// is paused. This saves the terminal colors state so they can be restored
@@ -475,34 +469,41 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case cursorColorMsg:
 				p.execute(ansi.RequestCursorColor)
 
-			case KittyKeyboardMsg:
-				// Store the kitty flags whenever they are queried.
-				p.kittyFlags = int(msg)
-
-			case setKittyKeyboardFlagsMsg:
-				p.kittyFlags = int(msg)
-				p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
-
-			case kittyKeyboardMsg:
-				p.execute(ansi.RequestKittyKeyboard)
-
-			case modifyOtherKeys:
-				p.execute(ansi.RequestModifyOtherKeys)
-
-			case setModifyOtherKeysMsg:
-				p.modifyOtherKeys = int(msg)
-				p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
-
-			case setEnhancedKeyboardMsg:
-				if bool(msg) {
-					p.kittyFlags = 3
-					p.modifyOtherKeys = 1
-				} else {
-					p.kittyFlags = 0
-					p.modifyOtherKeys = 0
+			case KeyboardEnhancementsMsg:
+				if msg.kittyFlags != p.keyboard.kittyFlags {
+					msg.kittyFlags |= p.keyboard.kittyFlags
 				}
-				p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
-				p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+				if msg.modifyOtherKeys == 0 {
+					msg.modifyOtherKeys = p.keyboard.modifyOtherKeys
+				}
+
+			case enableKeyboardEnhancementsMsg:
+				var ke keyboardEnhancements
+				for _, e := range msg {
+					e(&ke)
+				}
+
+				p.keyboard.kittyFlags |= ke.kittyFlags
+				if ke.modifyOtherKeys > p.keyboard.modifyOtherKeys {
+					p.keyboard.modifyOtherKeys = ke.modifyOtherKeys
+				}
+
+				if p.keyboard.modifyOtherKeys > 0 {
+					p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
+				}
+				if p.keyboard.kittyFlags > 0 {
+					p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
+				}
+
+			case disableKeyboardEnhancementsMsg:
+				if p.keyboard.modifyOtherKeys > 0 {
+					p.execute(ansi.DisableModifyOtherKeys)
+					p.keyboard.modifyOtherKeys = 0
+				}
+				if p.keyboard.kittyFlags > 0 {
+					p.execute(ansi.DisableKittyKeyboard)
+					p.keyboard.kittyFlags = 0
+				}
 
 			case execMsg:
 				// NB: this blocks.
@@ -705,20 +706,20 @@ func (p *Program) Run() (Model, error) {
 		p.modes[ansi.MouseAllMotionMode] = true
 		p.modes[ansi.MouseSgrExtMode] = true
 	}
-	if p.startupOptions&withModifyOtherKeys != 0 {
-		p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
-	}
-	if p.startupOptions&withKittyKeyboard != 0 {
-		p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
-	}
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.execute(ansi.EnableReportFocus)
 		p.modes[ansi.ReportFocusMode] = true
 	}
-	if p.startupOptions&withWindowsInputMode != 0 {
-		p.execute(ansi.EnableWin32Input)
-		p.modes[ansi.Win32InputMode] = true
+	if p.startupOptions&withKeyboardEnhancements != 0 {
+		if p.keyboard.modifyOtherKeys > 0 {
+			p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
+			p.execute(ansi.RequestModifyOtherKeys)
+		}
+		if p.keyboard.kittyFlags > 0 {
+			p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
+			p.execute(ansi.RequestKittyKeyboard)
+		}
 	}
 
 	// Start the renderer.
@@ -913,11 +914,11 @@ func (p *Program) RestoreTerminal() error {
 	if p.modes[ansi.BracketedPasteMode] {
 		p.execute(ansi.EnableBracketedPaste)
 	}
-	if p.modifyOtherKeys != 0 {
-		p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+	if p.keyboard.modifyOtherKeys != 0 {
+		p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
 	}
-	if p.kittyFlags != 0 {
-		p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+	if p.keyboard.kittyFlags != 0 {
+		p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
 	}
 	if p.modes[ansi.ReportFocusMode] {
 		p.execute(ansi.EnableReportFocus)

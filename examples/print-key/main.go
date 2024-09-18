@@ -14,12 +14,17 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
-		switch msg.String() {
-		case "ctrl+c":
-			return m, tea.Quit
+	case tea.KeyboardEnhancementsMsg:
+		return m, tea.Printf("Keyboard enhancements enabled! ReleaseKeys: %v\n", msg.SupportsKeyReleases())
+	case tea.KeyMsg:
+		switch msg := msg.(type) {
+		case tea.KeyPressMsg:
+			switch msg.String() {
+			case "ctrl+c":
+				return m, tea.Quit
+			}
 		}
-		return m, tea.Printf("You pressed: %s\n", msg.String())
+		return m, tea.Printf("You pressed: %s (%T)\n", msg.String(), msg)
 	}
 	return m, nil
 }
@@ -29,7 +34,7 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithEnhancedKeyboard())
+	p := tea.NewProgram(model{}, tea.WithKeyboardEnhancements(tea.WithKeyReleases))
 	if _, err := p.Run(); err != nil {
 		log.Printf("Error running program: %v", err)
 	}
