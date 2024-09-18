@@ -174,6 +174,7 @@ func (r *standardRenderer) flush() {
 	}
 
 	newLines := strings.Split(r.buf.String(), "\n")
+	oldLines := strings.Split(r.lastRender, "\n")
 
 	// If we know the output's height, we can use it to determine how many
 	// lines we can render. We drop lines from the top of the render buffer if
@@ -202,39 +203,43 @@ func (r *standardRenderer) flush() {
 
 	// Paint new lines.
 	for i := 0; i < len(newLines); i++ {
-		if _, skip := r.ignoreLines[i]; skip {
+		canSkip := !flushQueuedMessages && // Queuing messages triggers repaint -> we don't have access to previous frame content.
+			len(oldLines) > i && oldLines[i] == newLines[i] // Previously rendered line is the same.
+
+		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
 				buf.WriteString(ansi.CursorDown1)
 			}
-		} else {
-			if i == 0 && r.lastRender == "" {
-				// On first render, reset the cursor to the start of the line
-				// before writing anything.
-				buf.WriteByte('\r')
-			}
+			continue
+		}
 
-			line := newLines[i]
+		if i == 0 && r.lastRender == "" {
+			// On first render, reset the cursor to the start of the line
+			// before writing anything.
+			buf.WriteByte('\r')
+		}
 
-			// Removing previousy rendered content at the end of line.
-			line = line + ansi.EraseLineRight
+		line := newLines[i]
 
-			// Truncate lines wider than the width of the window to avoid
-			// wrapping, which will mess up rendering. If we don't have the
-			// width of the window this will be ignored.
-			//
-			// Note that on Windows we only get the width of the window on
-			// program initialization, so after a resize this won't perform
-			// correctly (signal SIGWINCH is not supported on Windows).
-			if r.width > 0 {
-				line = ansi.Truncate(line, r.width, "")
-			}
+		// Removing previousy rendered content at the end of line.
+		line = line + ansi.EraseLineRight
 
-			_, _ = buf.WriteString(line)
+		// Truncate lines wider than the width of the window to avoid
+		// wrapping, which will mess up rendering. If we don't have the
+		// width of the window this will be ignored.
+		//
+		// Note that on Windows we only get the width of the window on
+		// program initialization, so after a resize this won't perform
+		// correctly (signal SIGWINCH is not supported on Windows).
+		if r.width > 0 {
+			line = ansi.Truncate(line, r.width, "")
+		}
 
-			if i < len(newLines)-1 {
-				_, _ = buf.WriteString("\r\n")
-			}
+		_, _ = buf.WriteString(line)
+
+		if i < len(newLines)-1 {
+			_, _ = buf.WriteString("\r\n")
 		}
 	}
 
