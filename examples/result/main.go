@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 var choices = []string{"Taro", "Coffee", "Lychee"}

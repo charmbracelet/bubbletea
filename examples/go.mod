@@ -5,12 +5,12 @@ go 1.21
 toolchain go1.22.5
 
 require (
-	github.com/charmbracelet/bubbles v0.20.1-0.20240910180436-8972b56c9dde
-	github.com/charmbracelet/bubbletea v1.1.2-0.20240911170800-098540620292
+	github.com/charmbracelet/bubbles/v2 v2.0.0-20240918181255-a2602f85093b
+	github.com/charmbracelet/bubbletea/v2 v2.0.0-20240918180721-14cb6b5de1d2
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v0.13.0
-	github.com/charmbracelet/x/exp/teatest v0.0.0-20240912153648-d6041061ead9
+	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20240918160051-227168dc0568
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mattn/go-isatty v0.0.20
@@ -22,7 +22,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.3.1 // indirect
+	github.com/charmbracelet/x/ansi v0.3.2 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20240815200342-61de596daa2b // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect
@@ -46,4 +46,4 @@ require (
 	golang.org/x/term v0.22.0 // indirect
 )
 
-replace github.com/charmbracelet/bubbletea => ../
+replace github.com/charmbracelet/bubbletea/v2 => ../

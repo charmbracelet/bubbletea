@@ -2,12 +2,12 @@ module tutorial
 
 go 1.18
 
-require github.com/charmbracelet/bubbletea v0.25.0
+require github.com/charmbracelet/bubbletea/v2 v2.0.0-20240918180721-14cb6b5de1d2
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
-	github.com/charmbracelet/x/ansi v0.2.3 // indirect
+	github.com/charmbracelet/x/ansi v0.3.2 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -22,4 +22,4 @@ require (
 	golang.org/x/sys v0.25.0 // indirect
 )
 
-replace github.com/charmbracelet/bubbletea => ../
+replace github.com/charmbracelet/bubbletea/v2 => ../

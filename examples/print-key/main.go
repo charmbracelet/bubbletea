@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type model struct{}
