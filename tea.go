@@ -25,7 +25,6 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/ansi/compressor"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -92,7 +91,6 @@ const (
 	withAltScreen startupOptions = 1 << iota
 	withMouseCellMotion
 	withMouseAllMotion
-	withANSICompressor
 	withoutSignalHandler
 	// Catching panics is incredibly useful for restoring the terminal to a
 	// usable state after a panic occurs. When this is set, Bubble Tea will
@@ -554,7 +552,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}()
 
 			case setWindowTitleMsg:
-				p.SetWindowTitle(string(msg))
+				p.execute(ansi.SetWindowTitle(string(msg)))
 
 			case windowSizeMsg:
 				go p.checkResize()
@@ -640,10 +638,6 @@ func (p *Program) Run() (Model, error) {
 	var output io.Writer
 	output = p.output
 	if p.renderer == nil {
-		// TODO(v2): remove the ANSI compressor
-		if p.startupOptions.has(withANSICompressor) {
-			output = &compressor.Writer{Forward: output}
-		}
 		p.renderer = newStandardRenderer()
 	}
 
@@ -766,25 +760,6 @@ func (p *Program) Run() (Model, error) {
 	p.shutdown(killed)
 
 	return model, err
-}
-
-// StartReturningModel initializes the program and runs its event loops,
-// blocking until it gets terminated by either [Program.Quit], [Program.Kill],
-// or its signal handler. Returns the final model.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) StartReturningModel() (Model, error) {
-	return p.Run()
-}
-
-// Start initializes the program and runs its event loops, blocking until it
-// gets terminated by either [Program.Quit], [Program.Kill], or its signal
-// handler.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) Start() error {
-	_, err := p.Run()
-	return err
 }
 
 // Send sends a message to the main update function, effectively allowing
@@ -1030,7 +1005,7 @@ func (p *Program) stopRenderer(kill bool) {
 
 	p.renderer.close() //nolint:errcheck
 
-	if !kill && p.startupOptions.has(withANSICompressor) {
+	if !kill {
 		if w, ok := p.output.Writer().(io.WriteCloser); ok {
 			_ = w.Close()
 		}

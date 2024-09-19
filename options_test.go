@@ -85,10 +85,6 @@ func TestOptions(t *testing.T) {
 			exercise(t, WithoutBracketedPaste(), withoutBracketedPaste)
 		})
 
-		t.Run("ansi compression", func(t *testing.T) {
-			exercise(t, WithANSICompressor(), withANSICompressor)
-		})
-
 		t.Run("without catch panics", func(t *testing.T) {
 			exercise(t, WithoutCatchPanics(), withoutCatchPanics)
 		})
