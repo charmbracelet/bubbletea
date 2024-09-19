@@ -9,8 +9,8 @@ import (
 //
 // Example:
 //
-//	    func (m model) Init() Cmd {
-//		       return tea.Batch(someCommand, someOtherCommand)
+//	    func (m model) Init() (Model, Cmd) {
+//		       return m, tea.Batch(someCommand, someOtherCommand)
 //	    }
 func Batch(cmds ...Cmd) Cmd {
 	var validCmds []Cmd //nolint:prealloc
@@ -78,9 +78,9 @@ type sequenceMsg []Cmd
 //	    })
 //	}
 //
-//	func (m model) Init() Cmd {
+//	func (m model) Init() (Model, Cmd) {
 //	    // Start ticking.
-//	    return tickEvery()
+//	    return m, tickEvery()
 //	}
 //
 //	func (m model) Update(msg Msg) (Model, Cmd) {
@@ -132,9 +132,9 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 //	    })
 //	}
 //
-//	func (m model) Init() Cmd {
+//	func (m model) Init() (Model, Cmd) {
 //	    // Start ticking.
-//	    return doTick()
+//	    return m, doTick()
 //	}
 //
 //	func (m model) Update(msg Msg) (Model, Cmd) {
@@ -164,9 +164,9 @@ type setWindowTitleMsg string
 //
 // For example:
 //
-//	func (m model) Init() Cmd {
+//	func (m model) Init() (Model, Cmd) {
 //	    // Set title.
-//	    return tea.SetWindowTitle("My App")
+//	    return m, tea.SetWindowTitle("My App")
 //	}
 func SetWindowTitle(title string) Cmd {
 	return func() Msg {
