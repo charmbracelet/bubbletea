@@ -40,9 +40,6 @@ func (p *Program) setAltScreenBuffer(on bool) {
 		// Ensure that the terminal is cleared, even when it doesn't support
 		// alt screen (or alt screen support is disabled, like GNU screen by
 		// default).
-		//
-		// Note: we can't use r.clearScreen() here because the mutex is already
-		// locked.
 		p.execute(ansi.EraseEntireDisplay)
 		p.execute(ansi.MoveCursorOrigin)
 	}

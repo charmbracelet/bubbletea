@@ -682,6 +682,7 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.execute(ansi.EnableAltScreenBuffer)
+		p.setAltScreenBuffer(true)
 		p.modes[ansi.AltScreenBufferMode] = true
 		p.renderer.update(enableMode(ansi.AltScreenBufferMode))
 	}
