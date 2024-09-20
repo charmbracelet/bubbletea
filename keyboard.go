@@ -50,6 +50,17 @@ func WithKeyReleases(k *keyboardEnhancements) {
 	k.kittyFlags |= ansi.KittyReportEventTypes
 }
 
+// WithUniformKeyLayout enables support for reporting key events as though they
+// were on a PC-101 layout. This is useful for uniform key event reporting
+// across different keyboard layouts. This is equivalent to the Kitty keyboard
+// protocol "Report alternate keys" and "Report all keys as escape codes"
+// progressive enhancement features.
+//
+// Note that not all terminals support this feature.
+func WithUniformKeyLayout(k *keyboardEnhancements) {
+	k.kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
+}
+
 // withKeyDisambiguation enables support for disambiguating keyboard escape
 // codes. This is useful for terminals that support the Kitty keyboard protocol
 // "Disambiguate escape codes" progressive enhancement feature or the XTerm
@@ -101,4 +112,17 @@ func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
 		return true
 	}
 	return k.kittyFlags&ansi.KittyReportEventTypes != 0
+}
+
+// SupportsUniformKeyLayout returns whether the terminal supports reporting key
+// events as though they were on a PC-101 layout.
+func (k KeyboardEnhancementsMsg) SupportsUniformKeyLayout() bool {
+	if runtime.GOOS == "windows" {
+		// We use Windows Console API which supports reporting key events as
+		// though they were on a PC-101 layout.
+		return true
+	}
+	return k.SupportsKeyDisambiguation() &&
+		k.kittyFlags&ansi.KittyReportAlternateKeys != 0 &&
+		k.kittyFlags&ansi.KittyReportAllKeysAsEscapeCodes != 0
 }

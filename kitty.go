@@ -181,7 +181,7 @@ func fromKittyMod(mod int) KeyMod {
 //	CSI unicode-key-code:alternate-key-codes ; modifiers:event-type ; text-as-codepoints u
 //
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/
-func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
+func parseKittyKeyboard(csi *ansi.CsiSequence) (msg Msg) {
 	var isRelease bool
 	key := Key{}
 

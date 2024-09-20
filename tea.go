@@ -17,6 +17,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
@@ -476,6 +477,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case enableKeyboardEnhancementsMsg:
+				if runtime.GOOS == "windows" {
+					// We use the Windows Console API which supports keyboard
+					// enhancements.
+					break
+				}
+
 				var ke keyboardEnhancements
 				for _, e := range msg {
 					e(&ke)
@@ -494,6 +501,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case disableKeyboardEnhancementsMsg:
+				if runtime.GOOS == "windows" {
+					// We use the Windows Console API which supports keyboard
+					// enhancements.
+					break
+				}
+
 				if p.keyboard.modifyOtherKeys > 0 {
 					p.execute(ansi.DisableModifyOtherKeys)
 					p.keyboard.modifyOtherKeys = 0
@@ -706,7 +719,10 @@ func (p *Program) Run() (Model, error) {
 		p.execute(ansi.EnableReportFocus)
 		p.modes[ansi.ReportFocusMode] = true
 	}
-	if p.startupOptions&withKeyboardEnhancements != 0 {
+	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
+		// We use the Windows Console API which supports keyboard
+		// enhancements.
+
 		if p.keyboard.modifyOtherKeys > 0 {
 			p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
 			p.execute(ansi.RequestModifyOtherKeys)
