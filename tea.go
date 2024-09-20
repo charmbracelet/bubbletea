@@ -468,11 +468,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(ansi.RequestCursorColor)
 
 			case KeyboardEnhancementsMsg:
-				if msg.kittyFlags != p.keyboard.kittyFlags {
-					msg.kittyFlags |= p.keyboard.kittyFlags
+				if p.keyboard.kittyFlags != msg.kittyFlags {
+					p.keyboard.kittyFlags |= msg.kittyFlags
 				}
-				if msg.modifyOtherKeys == 0 {
-					msg.modifyOtherKeys = p.keyboard.modifyOtherKeys
+				if p.keyboard.modifyOtherKeys == 0 || msg.modifyOtherKeys > p.keyboard.modifyOtherKeys {
+					p.keyboard.modifyOtherKeys = msg.modifyOtherKeys
 				}
 
 			case enableKeyboardEnhancementsMsg:
