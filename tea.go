@@ -1004,10 +1004,4 @@ func (p *Program) stopRenderer(kill bool) {
 	}
 
 	p.renderer.close() //nolint:errcheck
-
-	if !kill {
-		if w, ok := p.output.Writer().(io.WriteCloser); ok {
-			_ = w.Close()
-		}
-	}
 }
