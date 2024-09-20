@@ -6,9 +6,7 @@ package tea
 import (
 	"errors"
 	"fmt"
-	"unicode/utf16"
 
-	"github.com/charmbracelet/x/ansi"
 	xwindows "github.com/charmbracelet/x/windows"
 	"golang.org/x/sys/windows"
 )
@@ -36,7 +34,7 @@ func (d *driver) handleConInput(
 
 	// read up to 256 events, this is to allow for sequences events reported as
 	// key events.
-	var events [256]xwindows.InputRecord
+	var events [numEvents]xwindows.InputRecord
 	_, err := finput(cc.conin, events[:])
 	if err != nil {
 		return nil, fmt.Errorf("read coninput events: %w", err)
@@ -44,131 +42,28 @@ func (d *driver) handleConInput(
 
 	var evs []Msg
 	for _, event := range events {
-		if e := parseConInputEvent(event, &d.prevMouseState, &d.lastWinsizeEventX, &d.lastWinsizeEventY); e != nil {
-			evs = append(evs, e)
-		}
-	}
-
-	return d.detectConInputQuerySequences(evs), nil
-}
-
-// Using ConInput API, Windows Terminal responds to sequence query events with
-// KEY_EVENT_RECORDs so we need to collect them and parse them as a single
-// sequence.
-// Is this a hack?
-func (d *driver) detectConInputQuerySequences(events []Msg) []Msg {
-	var newEvents []Msg
-	start, end := -1, -1
-
-loop:
-	for i, e := range events {
-		switch e := e.(type) {
-		case KeyPressMsg:
-			switch e.Code {
-			case ansi.ESC, ansi.CSI, ansi.OSC, ansi.DCS, ansi.APC:
-				// start of a sequence
-				if start == -1 {
-					start = i
-				}
+		if e := parseConInputEvent(event, &d.keyState, &d.prevMouseState, &d.lastWinsizeEventX, &d.lastWinsizeEventY); e != nil {
+			if multi, ok := e.(multiMsg); ok {
+				evs = append(evs, multi...)
+			} else {
+				evs = append(evs, e)
 			}
-		default:
-			break loop
-		}
-		end = i
-	}
-
-	if start == -1 || end <= start {
-		return events
-	}
-
-	var seq []byte
-	for i := start; i <= end; i++ {
-		switch e := events[i].(type) {
-		case KeyPressMsg:
-			seq = append(seq, byte(e.Code))
+			// if event.EventType == xwindows.KEY_EVENT {
+			// 	k := event.KeyEvent()
+			// 	evs = append(evs, printLineMessage{keyEventString(k.VirtualKeyCode, k.VirtualScanCode, k.Char, k.KeyDown, k.ControlKeyState, k.RepeatCount)})
+			// }
 		}
 	}
 
-	n, seqevent := parseSequence(seq)
-	switch seqevent.(type) {
-	case UnknownMsg:
-		// We're not interested in unknown events
-	default:
-		if start+n > len(events) {
-			return events
-		}
-		newEvents = events[:start]
-		newEvents = append(newEvents, seqevent)
-		newEvents = append(newEvents, events[start+n:]...)
-		return d.detectConInputQuerySequences(newEvents)
-	}
-
-	return events
+	return evs, nil
 }
 
-func parseConInputEvent(event xwindows.InputRecord, buttonState *uint32, windowSizeX, windowSizeY *int16) Msg {
+func parseConInputEvent(event xwindows.InputRecord, keyState *win32KeyState, buttonState *uint32, windowSizeX, windowSizeY *int16) Msg {
 	switch event.EventType {
 	case xwindows.KEY_EVENT:
 		kevent := event.KeyEvent()
-		event := parseWin32InputKeyEvent(kevent.VirtualKeyCode, kevent.VirtualScanCode,
+		return parseWin32InputKeyEvent(keyState, kevent.VirtualKeyCode, kevent.VirtualScanCode,
 			kevent.Char, kevent.KeyDown, kevent.ControlKeyState, kevent.RepeatCount)
-
-		var key Key
-		switch event := event.(type) {
-		case KeyPressMsg:
-			key = Key(event)
-		case KeyReleaseMsg:
-			key = Key(event)
-		default:
-			return nil
-		}
-
-		// If the key is not printable, return the event as is
-		// (e.g. function keys, arrows, etc.)
-		// Otherwise, try to translate it to a rune based on the active keyboard
-		// layout.
-		if len(key.Text) == 0 {
-			return event
-		}
-
-		// Always use US layout for translation
-		// This is to follow the behavior of the Kitty Keyboard base layout
-		// feature :eye_roll:
-		// https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-language-pack-default-values?view=windows-11
-		const usLayout = 0x409
-
-		// Translate key to rune
-		var keyState [256]byte
-		var utf16Buf [16]uint16
-		const dontChangeKernelKeyboardLayout = 0x4
-		ret := windows.ToUnicodeEx(
-			uint32(kevent.VirtualKeyCode),
-			uint32(kevent.VirtualScanCode),
-			&keyState[0],
-			&utf16Buf[0],
-			int32(len(utf16Buf)),
-			dontChangeKernelKeyboardLayout,
-			usLayout,
-		)
-
-		// -1 indicates a dead key
-		// 0 indicates no translation for this key
-		if ret < 1 {
-			return event
-		}
-
-		runes := utf16.Decode(utf16Buf[:ret])
-		if len(runes) != 1 {
-			// Key doesn't translate to a single rune
-			return event
-		}
-
-		key.BaseCode = runes[0]
-		if kevent.KeyDown {
-			return KeyPressMsg(key)
-		}
-
-		return KeyReleaseMsg(key)
 
 	case xwindows.WINDOW_BUFFER_SIZE_EVENT:
 		wevent := event.WindowBufferSizeEvent()

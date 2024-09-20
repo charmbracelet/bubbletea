@@ -31,6 +31,10 @@ type driver struct {
 	// multiple size events from firing.
 	lastWinsizeEventX, lastWinsizeEventY int16 // nolint: unused
 
+	// keyState keeps track of the current Windows Console API key events state.
+	// It is used to decode ANSI escape sequences and utf16 sequences.
+	keyState win32KeyState //nolint:unused
+
 	flags int // control the behavior of the driver.
 }
 

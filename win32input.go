@@ -1,243 +1,393 @@
 package tea
 
 import (
+	"fmt"
+	"strings"
 	"unicode"
+	"unicode/utf16"
+	"unicode/utf8"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
-func parseWin32InputKeyEvent(vkc uint16, _ uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) Msg {
+// numEvents is the number of events to read from the Windows Console API at a
+// time.
+const numEvents = 256
+
+// win32KeyState is a state machine for parsing key events from the Windows
+// Console API into escape sequences and utf8 runes.
+type win32KeyState struct {
+	ansiBuf   [numEvents]byte
+	ansiIdx   int
+	utf16Buf  [2]rune
+	utf16Half bool
+	lastCks   uint32 // the last control key state for the previous event
+}
+
+// parseWin32InputKeyEvent parses a single key event from either the Windows
+// Console API or win32-input-mode events. When state is nil, it means this is
+// an event from win32-input-mode. Otherwise, it's a key event from the Windows
+// Console API and needs a state to decode ANSI escape sequences and utf16
+// runes.
+func parseWin32InputKeyEvent(state *win32KeyState, vkc uint16, _ uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) (msg Msg) {
+	defer func() {
+		// Respect the repeat count.
+		if repeatCount > 1 {
+			var multi multiMsg
+			for i := 0; i < int(repeatCount); i++ {
+				multi = append(multi, msg)
+			}
+			msg = multi
+		}
+	}()
+	if state != nil {
+		defer func() {
+			state.lastCks = cks
+		}()
+	}
+
+	var utf8Buf [utf8.UTFMax]byte
 	var key Key
-	isCtrl := cks&(_LEFT_CTRL_PRESSED|_RIGHT_CTRL_PRESSED) != 0
-	switch vkc {
-	case _VK_SHIFT:
-		// We currently ignore these keys when they are pressed alone.
-		return nil
-	case _VK_MENU:
-		if cks&_LEFT_ALT_PRESSED != 0 {
-			key.Code = KeyLeftAlt
-		} else if cks&_RIGHT_ALT_PRESSED != 0 {
-			key.Code = KeyRightAlt
-		} else if !keyDown {
-			return nil
+	if state != nil && state.utf16Half {
+		state.utf16Half = false
+		state.utf16Buf[1] = r
+		codepoint := utf16.DecodeRune(state.utf16Buf[0], state.utf16Buf[1])
+		rw := utf8.EncodeRune(utf8Buf[:], codepoint)
+		r, _ = utf8.DecodeRune(utf8Buf[:rw])
+		key.Code = r
+		key.Text = string(r)
+		key.Mod = translateControlKeyState(cks)
+		key = ensureKeyCase(key, cks)
+		if keyDown {
+			return KeyPressMsg(key)
 		}
-	case _VK_CONTROL:
-		if cks&_LEFT_CTRL_PRESSED != 0 {
-			key.Code = KeyLeftCtrl
-		} else if cks&_RIGHT_CTRL_PRESSED != 0 {
-			key.Code = KeyRightCtrl
-		} else if !keyDown {
-			return nil
+		return KeyReleaseMsg(key)
+	}
+
+	var baseCode rune
+	switch {
+	case vkc == 0:
+		// Zero means this event is either an escape code or a unicode
+		// codepoint.
+		if state != nil && state.ansiIdx == 0 && r != ansi.ESC {
+			// This is a unicode codepoint.
+			baseCode = r
+			break
 		}
-	case _VK_CAPITAL:
-		key.Code = KeyCapsLock
-	default:
-		var ok bool
-		key, ok = vkKeyEvent[vkc]
-		if !ok {
-			if isCtrl {
-				key.Text = string(vkCtrlRune(key, r, vkc))
+
+		if state != nil {
+			// Collect ANSI escape code.
+			state.ansiBuf[state.ansiIdx] = byte(r)
+			state.ansiIdx++
+			if state.ansiIdx <= 2 {
+				// We haven't received enough bytes to determine if this is an
+				// ANSI escape code.
+				return nil
+			}
+
+			n, msg := parseSequence(state.ansiBuf[:state.ansiIdx])
+			if n == 0 {
+				return nil
+			}
+
+			if _, ok := msg.(UnknownMsg); ok {
+				return nil
+			}
+
+			state.ansiIdx = 0
+			return msg
+		}
+	case vkc == _VK_BACK:
+		baseCode = KeyBackspace
+	case vkc == _VK_TAB:
+		baseCode = KeyTab
+	case vkc == _VK_RETURN:
+		baseCode = KeyEnter
+	case vkc == _VK_SHIFT:
+		if cks&_SHIFT_PRESSED != 0 {
+			if cks&_ENHANCED_KEY != 0 {
+				baseCode = KeyRightShift
 			} else {
-				key.Text = string(r)
+				baseCode = KeyLeftShift
+			}
+		} else if state != nil {
+			if state.lastCks&_SHIFT_PRESSED != 0 {
+				if state.lastCks&_ENHANCED_KEY != 0 {
+					baseCode = KeyRightShift
+				} else {
+					baseCode = KeyLeftShift
+				}
 			}
 		}
+	case vkc == _VK_CONTROL:
+		if cks&_LEFT_CTRL_PRESSED != 0 {
+			baseCode = KeyLeftCtrl
+		} else if cks&_RIGHT_CTRL_PRESSED != 0 {
+			baseCode = KeyRightCtrl
+		} else if state != nil {
+			if state.lastCks&_LEFT_CTRL_PRESSED != 0 {
+				baseCode = KeyLeftCtrl
+			} else if state.lastCks&_RIGHT_CTRL_PRESSED != 0 {
+				baseCode = KeyRightCtrl
+			}
+		}
+	case vkc == _VK_MENU:
+		if cks&_LEFT_ALT_PRESSED != 0 {
+			baseCode = KeyLeftAlt
+		} else if cks&_RIGHT_ALT_PRESSED != 0 {
+			baseCode = KeyRightAlt
+		} else if state != nil {
+			if state.lastCks&_LEFT_ALT_PRESSED != 0 {
+				baseCode = KeyLeftAlt
+			} else if state.lastCks&_RIGHT_ALT_PRESSED != 0 {
+				baseCode = KeyRightAlt
+			}
+		}
+	case vkc == _VK_PAUSE:
+		baseCode = KeyPause
+	case vkc == _VK_CAPITAL:
+		baseCode = KeyCapsLock
+	case vkc == _VK_ESCAPE:
+		baseCode = KeyEscape
+	case vkc == _VK_SPACE:
+		baseCode = KeySpace
+	case vkc == _VK_PRIOR:
+		baseCode = KeyPgUp
+	case vkc == _VK_NEXT:
+		baseCode = KeyPgDown
+	case vkc == _VK_END:
+		baseCode = KeyEnd
+	case vkc == _VK_HOME:
+		baseCode = KeyHome
+	case vkc == _VK_LEFT:
+		baseCode = KeyLeft
+	case vkc == _VK_UP:
+		baseCode = KeyUp
+	case vkc == _VK_RIGHT:
+		baseCode = KeyRight
+	case vkc == _VK_DOWN:
+		baseCode = KeyDown
+	case vkc == _VK_SELECT:
+		baseCode = KeySelect
+	case vkc == _VK_SNAPSHOT:
+		baseCode = KeyPrintScreen
+	case vkc == _VK_INSERT:
+		baseCode = KeyInsert
+	case vkc == _VK_DELETE:
+		baseCode = KeyDelete
+	case vkc >= '0' && vkc <= '9':
+		baseCode = rune(vkc)
+	case vkc >= 'A' && vkc <= 'Z':
+		// Convert to lowercase.
+		baseCode = rune(vkc) + 32
+	case vkc == _VK_LWIN:
+		baseCode = KeyLeftSuper
+	case vkc == _VK_RWIN:
+		baseCode = KeyRightSuper
+	case vkc == _VK_APPS:
+		baseCode = KeyMenu
+	case vkc >= _VK_NUMPAD0 && vkc <= _VK_NUMPAD9:
+		baseCode = rune(vkc-_VK_NUMPAD0) + KeyKp0
+	case vkc == _VK_MULTIPLY:
+		baseCode = KeyKpMultiply
+	case vkc == _VK_ADD:
+		baseCode = KeyKpPlus
+	case vkc == _VK_SEPARATOR:
+		baseCode = KeyKpComma
+	case vkc == _VK_SUBTRACT:
+		baseCode = KeyKpMinus
+	case vkc == _VK_DECIMAL:
+		baseCode = KeyKpDecimal
+	case vkc == _VK_DIVIDE:
+		baseCode = KeyKpDivide
+	case vkc >= _VK_F1 && vkc <= _VK_F24:
+		baseCode = rune(vkc-_VK_F1) + KeyF1
+	case vkc == _VK_NUMLOCK:
+		baseCode = KeyNumLock
+	case vkc == _VK_SCROLL:
+		baseCode = KeyScrollLock
+	case vkc == _VK_LSHIFT:
+		baseCode = KeyLeftShift
+	case vkc == _VK_RSHIFT:
+		baseCode = KeyRightShift
+	case vkc == _VK_LCONTROL:
+		baseCode = KeyLeftCtrl
+	case vkc == _VK_RCONTROL:
+		baseCode = KeyRightCtrl
+	case vkc == _VK_LMENU:
+		baseCode = KeyLeftAlt
+	case vkc == _VK_RMENU:
+		baseCode = KeyRightAlt
+	case vkc == _VK_VOLUME_MUTE:
+		baseCode = KeyMute
+	case vkc == _VK_VOLUME_DOWN:
+		baseCode = KeyLowerVol
+	case vkc == _VK_VOLUME_UP:
+		baseCode = KeyRaiseVol
+	case vkc == _VK_MEDIA_NEXT_TRACK:
+		baseCode = KeyMediaNext
+	case vkc == _VK_MEDIA_PREV_TRACK:
+		baseCode = KeyMediaPrev
+	case vkc == _VK_MEDIA_STOP:
+		baseCode = KeyMediaStop
+	case vkc == _VK_MEDIA_PLAY_PAUSE:
+		baseCode = KeyMediaPlayPause
+	case vkc == _VK_OEM_1:
+		baseCode = ';'
+	case vkc == _VK_OEM_PLUS:
+		baseCode = '+'
+	case vkc == _VK_OEM_COMMA:
+		baseCode = ','
+	case vkc == _VK_OEM_MINUS:
+		baseCode = '-'
+	case vkc == _VK_OEM_PERIOD:
+		baseCode = '.'
+	case vkc == _VK_OEM_2:
+		baseCode = '/'
+	case vkc == _VK_OEM_3:
+		baseCode = '`'
+	case vkc == _VK_OEM_4:
+		baseCode = '['
+	case vkc == _VK_OEM_5:
+		baseCode = '\\'
+	case vkc == _VK_OEM_6:
+		baseCode = ']'
+	case vkc == _VK_OEM_7:
+		baseCode = '\''
 	}
 
-	if isCtrl {
-		key.Mod |= ModCtrl
-	}
-	if cks&(_LEFT_ALT_PRESSED|_RIGHT_ALT_PRESSED) != 0 {
-		key.Mod |= ModAlt
-	}
-	if cks&_SHIFT_PRESSED != 0 {
-		key.Mod |= ModShift
-	}
-	if cks&_CAPSLOCK_ON != 0 {
-		key.Mod |= ModCapsLock
-	}
-	if cks&_NUMLOCK_ON != 0 {
-		key.Mod |= ModNumLock
-	}
-	if cks&_SCROLLLOCK_ON != 0 {
-		key.Mod |= ModScrollLock
+	if utf16.IsSurrogate(r) {
+		if state != nil {
+			state.utf16Buf[0] = r
+			state.utf16Half = true
+		}
+		return nil
 	}
 
-	// Use the unshifted key
-	keyRune := key.Code
-	if cks&(_SHIFT_PRESSED^_CAPSLOCK_ON) != 0 {
-		if unicode.IsLower(keyRune) {
+	// AltGr is left ctrl + right alt. On non-US keyboards, this is used to type
+	// special characters and produce printable events.
+	// XXX: Should this be a KeyMod?
+	altGr := cks&(_LEFT_CTRL_PRESSED|_RIGHT_ALT_PRESSED) == _LEFT_CTRL_PRESSED|_RIGHT_ALT_PRESSED
+
+	var text string
+	keyCode := baseCode
+	if r >= ansi.NUL && r <= ansi.US {
+		// Control characters.
+	} else {
+		rw := utf8.EncodeRune(utf8Buf[:], r)
+		keyCode, _ = utf8.DecodeRune(utf8Buf[:rw])
+		if cks == _NO_CONTROL_KEY ||
+			cks == _SHIFT_PRESSED ||
+			cks == _CAPSLOCK_ON ||
+			altGr {
+			// If the control key state is 0, shift is pressed, or caps lock
+			// then the key event is a printable event i.e. [text] is not empty.
+			text = string(keyCode)
+		}
+	}
+
+	key.Code = keyCode
+	key.Text = text
+	key.Mod = translateControlKeyState(cks)
+	key.BaseCode = baseCode
+	key = ensureKeyCase(key, cks)
+	if keyDown {
+		return KeyPressMsg(key)
+	}
+
+	return KeyReleaseMsg(key)
+}
+
+// ensureKeyCase ensures that the key's text is in the correct case based on the
+// control key state.
+func ensureKeyCase(key Key, cks uint32) Key {
+	if len(key.Text) == 0 {
+		return key
+	}
+
+	hasShift := cks&_SHIFT_PRESSED != 0
+	hasCaps := cks&_CAPSLOCK_ON != 0
+	if hasShift || hasCaps {
+		if unicode.IsLower(key.Code) {
 			key.ShiftedCode = unicode.ToUpper(key.Code)
+			key.Text = string(key.ShiftedCode)
 		}
 	} else {
-		if unicode.IsUpper(keyRune) {
-			key.ShiftedCode = unicode.ToLower(keyRune)
+		if unicode.IsUpper(key.Code) {
+			key.ShiftedCode = unicode.ToLower(key.Code)
+			key.Text = string(key.ShiftedCode)
 		}
 	}
 
-	var e Msg = KeyPressMsg(key)
-	key.IsRepeat = repeatCount > 1
-	if !keyDown {
-		e = KeyReleaseMsg(key)
-	}
-
-	if repeatCount <= 1 {
-		return e
-	}
-
-	var kevents []Msg
-	for i := 0; i < int(repeatCount); i++ {
-		kevents = append(kevents, e)
-	}
-
-	return multiMsg(kevents)
+	return key
 }
 
-var vkKeyEvent = map[uint16]Key{
-	_VK_RETURN:    {Code: KeyEnter},
-	_VK_BACK:      {Code: KeyBackspace},
-	_VK_TAB:       {Code: KeyTab},
-	_VK_ESCAPE:    {Code: KeyEscape},
-	_VK_SPACE:     {Code: KeySpace, Text: " "},
-	_VK_UP:        {Code: KeyUp},
-	_VK_DOWN:      {Code: KeyDown},
-	_VK_RIGHT:     {Code: KeyRight},
-	_VK_LEFT:      {Code: KeyLeft},
-	_VK_HOME:      {Code: KeyHome},
-	_VK_END:       {Code: KeyEnd},
-	_VK_PRIOR:     {Code: KeyPgUp},
-	_VK_NEXT:      {Code: KeyPgDown},
-	_VK_DELETE:    {Code: KeyDelete},
-	_VK_SELECT:    {Code: KeySelect},
-	_VK_SNAPSHOT:  {Code: KeyPrintScreen},
-	_VK_INSERT:    {Code: KeyInsert},
-	_VK_LWIN:      {Code: KeyLeftSuper},
-	_VK_RWIN:      {Code: KeyRightSuper},
-	_VK_APPS:      {Code: KeyMenu},
-	_VK_NUMPAD0:   {Code: KeyKp0},
-	_VK_NUMPAD1:   {Code: KeyKp1},
-	_VK_NUMPAD2:   {Code: KeyKp2},
-	_VK_NUMPAD3:   {Code: KeyKp3},
-	_VK_NUMPAD4:   {Code: KeyKp4},
-	_VK_NUMPAD5:   {Code: KeyKp5},
-	_VK_NUMPAD6:   {Code: KeyKp6},
-	_VK_NUMPAD7:   {Code: KeyKp7},
-	_VK_NUMPAD8:   {Code: KeyKp8},
-	_VK_NUMPAD9:   {Code: KeyKp9},
-	_VK_MULTIPLY:  {Code: KeyKpMultiply},
-	_VK_ADD:       {Code: KeyKpPlus},
-	_VK_SEPARATOR: {Code: KeyKpComma},
-	_VK_SUBTRACT:  {Code: KeyKpMinus},
-	_VK_DECIMAL:   {Code: KeyKpDecimal},
-	_VK_DIVIDE:    {Code: KeyKpDivide},
-	_VK_F1:        {Code: KeyF1},
-	_VK_F2:        {Code: KeyF2},
-	_VK_F3:        {Code: KeyF3},
-	_VK_F4:        {Code: KeyF4},
-	_VK_F5:        {Code: KeyF5},
-	_VK_F6:        {Code: KeyF6},
-	_VK_F7:        {Code: KeyF7},
-	_VK_F8:        {Code: KeyF8},
-	_VK_F9:        {Code: KeyF9},
-	_VK_F10:       {Code: KeyF10},
-	_VK_F11:       {Code: KeyF11},
-	_VK_F12:       {Code: KeyF12},
-	_VK_F13:       {Code: KeyF13},
-	_VK_F14:       {Code: KeyF14},
-	_VK_F15:       {Code: KeyF15},
-	_VK_F16:       {Code: KeyF16},
-	_VK_F17:       {Code: KeyF17},
-	_VK_F18:       {Code: KeyF18},
-	_VK_F19:       {Code: KeyF19},
-	_VK_F20:       {Code: KeyF20},
-	_VK_F21:       {Code: KeyF21},
-	_VK_F22:       {Code: KeyF22},
-	_VK_F23:       {Code: KeyF23},
-	_VK_F24:       {Code: KeyF24},
-	_VK_NUMLOCK:   {Code: KeyNumLock},
-	_VK_SCROLL:    {Code: KeyScrollLock},
-	_VK_LSHIFT:    {Code: KeyLeftShift},
-	_VK_RSHIFT:    {Code: KeyRightShift},
-	_VK_LCONTROL:  {Code: KeyLeftCtrl},
-	_VK_RCONTROL:  {Code: KeyRightCtrl},
-	_VK_LMENU:     {Code: KeyLeftAlt},
-	_VK_RMENU:     {Code: KeyRightAlt},
-	_VK_OEM_4:     {Text: "["},
-	// TODO: add more keys
+// translateControlKeyState translates the control key state from the Windows
+// Console API into a Mod bitmask.
+func translateControlKeyState(cks uint32) (m KeyMod) {
+	if cks&_LEFT_CTRL_PRESSED != 0 || cks&_RIGHT_CTRL_PRESSED != 0 {
+		m |= ModCtrl
+	}
+	if cks&_LEFT_ALT_PRESSED != 0 || cks&_RIGHT_ALT_PRESSED != 0 {
+		m |= ModAlt
+	}
+	if cks&_SHIFT_PRESSED != 0 {
+		m |= ModShift
+	}
+	if cks&_CAPSLOCK_ON != 0 {
+		m |= ModCapsLock
+	}
+	if cks&_NUMLOCK_ON != 0 {
+		m |= ModNumLock
+	}
+	if cks&_SCROLLLOCK_ON != 0 {
+		m |= ModScrollLock
+	}
+	return
 }
 
-func vkCtrlRune(k Key, r rune, kc uint16) rune {
-	switch r {
-	case 0x01:
-		return 'a'
-	case 0x02:
-		return 'b'
-	case 0x03:
-		return 'c'
-	case 0x04:
-		return 'd'
-	case 0x05:
-		return 'e'
-	case 0x06:
-		return 'f'
-	case '\a':
-		return 'g'
-	case '\b':
-		return 'h'
-	case '\t':
-		return 'i'
-	case '\n':
-		return 'j'
-	case '\v':
-		return 'k'
-	case '\f':
-		return 'l'
-	case '\r':
-		return 'm'
-	case 0x0e:
-		return 'n'
-	case 0x0f:
-		return 'o'
-	case 0x10:
-		return 'p'
-	case 0x11:
-		return 'q'
-	case 0x12:
-		return 'r'
-	case 0x13:
-		return 's'
-	case 0x14:
-		return 't'
-	case 0x15:
-		return 'u'
-	case 0x16:
-		return 'v'
-	case 0x17:
-		return 'w'
-	case 0x18:
-		return 'x'
-	case 0x19:
-		return 'y'
-	case 0x1a:
-		return 'z'
-	case 0x1b:
-		return ']'
-	case 0x1c:
-		return '\\'
-	case 0x1f:
-		return '_'
+//nolint:unused
+func keyEventString(vkc, sc uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) string {
+	var s strings.Builder
+	s.WriteString("vkc: ")
+	s.WriteString(fmt.Sprintf("%d, 0x%02x", vkc, vkc))
+	s.WriteString(", sc: ")
+	s.WriteString(fmt.Sprintf("%d, 0x%02x", sc, sc))
+	s.WriteString(", r: ")
+	s.WriteString(fmt.Sprintf("%q", r))
+	s.WriteString(", down: ")
+	s.WriteString(fmt.Sprintf("%v", keyDown))
+	s.WriteString(", cks: [")
+	if cks&_LEFT_ALT_PRESSED != 0 {
+		s.WriteString("left alt, ")
 	}
-
-	switch kc {
-	case _VK_OEM_4:
-		return '['
+	if cks&_RIGHT_ALT_PRESSED != 0 {
+		s.WriteString("right alt, ")
 	}
-
-	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-	if len(k.Text) == 0 &&
-		(kc >= 0x30 && kc <= 0x39) ||
-		(kc >= 0x41 && kc <= 0x5a) {
-		return rune(kc)
+	if cks&_LEFT_CTRL_PRESSED != 0 {
+		s.WriteString("left ctrl, ")
 	}
-
-	return r
+	if cks&_RIGHT_CTRL_PRESSED != 0 {
+		s.WriteString("right ctrl, ")
+	}
+	if cks&_SHIFT_PRESSED != 0 {
+		s.WriteString("shift, ")
+	}
+	if cks&_CAPSLOCK_ON != 0 {
+		s.WriteString("caps lock, ")
+	}
+	if cks&_NUMLOCK_ON != 0 {
+		s.WriteString("num lock, ")
+	}
+	if cks&_SCROLLLOCK_ON != 0 {
+		s.WriteString("scroll lock, ")
+	}
+	if cks&_ENHANCED_KEY != 0 {
+		s.WriteString("enhanced key, ")
+	}
+	s.WriteString("], repeat count: ")
+	s.WriteString(fmt.Sprintf("%d", repeatCount))
+	return s.String()
 }
 
 //nolint:revive
