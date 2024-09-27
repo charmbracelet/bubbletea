@@ -63,8 +63,25 @@ func withKeyDisambiguation(k *keyboardEnhancements) {
 
 type enableKeyboardEnhancementsMsg []KeyboardEnhancement
 
-// EnableKeyboardEnhancements is a command that enables keyboard enhancements
-// in the terminal.
+// EnableKeyboardEnhancements is a [Cmd] for enables keyboard enhancements, in
+// supporting terminals. By default, keyboard enhancements do a couple things:
+//
+//   - It enables you to match all modifier keys such as super.
+//   - It enables you to match all keys that are ambiguous such as ctrl+i,
+//     which normally would be indistinguishable from tab.
+//
+// You can also enable specific enhancements, such as key releases, by passing
+// them as arguments to the command:
+//
+//	cmd := EnableKeyboardEnhancements(WithKeyReleases)
+//
+// For available enhancements options see [KeyboardEnhancement].
+//
+// Note that not all terminals support these features. You can check if the
+// terminal supports these features by matching on the
+// [KeyboardEnhancementsMsg] message.
+//
+// This feature is enabled by default on Windows.
 func EnableKeyboardEnhancements(enhancements ...KeyboardEnhancement) Cmd {
 	return func() Msg {
 		return enableKeyboardEnhancementsMsg(append(enhancements, withKeyDisambiguation))
@@ -80,7 +97,24 @@ func DisableKeyboardEnhancements() Msg {
 }
 
 // KeyboardEnhancementsMsg is a message that gets sent when the terminal
-// supports keyboard enhancements.
+// supports keyboard enhancements. For some background on what this does, see
+// the [EnableKeyboardEnhancements] command.
+//
+// Keyboard enhancements can be enabled when constructing a [Program] by using
+// the [WithKeyboardEnhancements] option:
+//
+//	p := tea.NewProgram(initialModel, tea.WithKeyboardEnhancements())
+//
+// Or with the [EnableKeyboardEnhancements] command:
+//
+//	cmd := EnableKeyboardEnhancements()
+//
+// You can also enable specific enhancements by passing them as arguments to
+// the [EnableKeyboardEnhancements] command:
+//
+//	cmd := EnableKeyboardEnhancements(WithKeyReleases, WithKeyDisambiguation)
+//
+// For available enhancements options see [KeyboardEnhancement].
 type KeyboardEnhancementsMsg keyboardEnhancements
 
 // SupportsKeyDisambiguation returns whether the terminal supports reporting

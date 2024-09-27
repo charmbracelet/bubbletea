@@ -251,12 +251,26 @@ func WithReportFocus() ProgramOption {
 	}
 }
 
-// WithKeyboardEnhancements enables support for enhanced keyboard features. You
-// can enable different keyboard features by passing one or more
-// KeyboardEnhancement functions.
+// WithKeyboardEnhancements is a program option that enables higher fidelity
+// keyboard input, in supporting terminals. By default, this means a couple
+// things:
 //
-// This is not supported on all terminals. On Windows, these features are
-// enabled by default.
+//   - It enables you to match all modifier keys such as super.
+//   - It enables you to match all keys that are ambiguous such as ctrl+i,
+//     which normally would be indistinguishable from tab.
+//
+// You can also enable specific enhancements, such as key releases, by passing
+// them as arguments to the command:
+//
+//	cmd := EnableKeyboardEnhancements(WithKeyReleases)
+//
+// For available enhancements options see [KeyboardEnhancement].
+//
+// Note that not all terminals support these features. You can check if the
+// terminal supports these features by matching on the
+// [KeyboardEnhancementsMsg] message.
+//
+// This feature is enabled by default on Windows.
 func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption {
 	var ke keyboardEnhancements
 	for _, e := range append(enhancements, withKeyDisambiguation) {
