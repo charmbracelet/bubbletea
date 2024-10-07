@@ -349,6 +349,7 @@ func parseCsi(b []byte) (int, Msg) {
 		}
 
 		event := parseWin32InputKeyEvent(
+			nil,
 			uint16(csi.Param(0)), //nolint:gosec // Vk wVirtualKeyCode
 			uint16(csi.Param(1)), //nolint:gosec // Sc wVirtualScanCode
 			rune(csi.Param(2)),   // Uc UnicodeChar
