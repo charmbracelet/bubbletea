@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/exp/teatest"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/x/exp/teatest/v2"
 )
 
 func TestApp(t *testing.T) {
@@ -26,8 +26,8 @@ func TestApp(t *testing.T) {
 	time.Sleep(time.Second + time.Millisecond*200)
 	tm.Type("I'm typing things, but it'll be ignored by my program")
 	tm.Send("ignored msg")
-	tm.Send(tea.KeyMsg{
-		Type: tea.KeyEnter,
+	tm.Send(tea.KeyPressMsg{
+		Code: tea.KeyEnter,
 	})
 
 	if err := tm.Quit(); err != nil {
@@ -63,8 +63,8 @@ func TestAppInteractive(t *testing.T) {
 		return bytes.Contains(out, []byte("This program will exit in 7 seconds"))
 	}, teatest.WithDuration(5*time.Second))
 
-	tm.Send(tea.KeyMsg{
-		Type: tea.KeyEnter,
+	tm.Send(tea.KeyPressMsg{
+		Code: tea.KeyEnter,
 	})
 
 	if err := tm.Quit(); err != nil {

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 const url = "https://charm.sh/"
@@ -31,8 +31,8 @@ func main() {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return checkServer
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, checkServer
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

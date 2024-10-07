@@ -8,7 +8,7 @@ import (
 	"log"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type model int
@@ -22,8 +22,8 @@ func main() {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tick()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tick()
 }
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {

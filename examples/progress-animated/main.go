@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/progress"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/progress"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -42,8 +42,8 @@ type model struct {
 	progress progress.Model
 }
 
-func (m model) Init() tea.Cmd {
-	return tickCmd()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tickCmd()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

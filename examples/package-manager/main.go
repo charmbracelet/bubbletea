@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/progress"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/progress"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -44,8 +44,8 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

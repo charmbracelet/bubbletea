@@ -8,10 +8,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/paginator"
+	"github.com/charmbracelet/bubbles/v2/paginator"
 	"github.com/charmbracelet/lipgloss"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 func newModel() model {
@@ -39,8 +39,8 @@ type model struct {
 	paginator paginator.Model
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

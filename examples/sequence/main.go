@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type model struct{}
 
-func (m model) Init() tea.Cmd {
-	return tea.Sequence(
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.Sequence(
 		tea.Batch(
 			tea.Println("A"),
 			tea.Println("B"),

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fogleman/ease"
 	"github.com/lucasb-eyer/go-colorful"
@@ -75,8 +75,8 @@ type model struct {
 	Quitting bool
 }
 
-func (m model) Init() tea.Cmd {
-	return tick()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tick()
 }
 
 // Main update function.

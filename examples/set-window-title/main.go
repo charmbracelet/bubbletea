@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type model struct{}
 
-func (m model) Init() tea.Cmd {
-	return tea.SetWindowTitle("Bubble Tea Example")
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.SetWindowTitle("Bubble Tea Example")
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

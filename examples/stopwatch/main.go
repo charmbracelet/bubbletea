@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/stopwatch"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/stopwatch"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type model struct {
@@ -25,8 +25,10 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() tea.Cmd {
-	return m.stopwatch.Init()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	sw, cmd := m.stopwatch.Init()
+	m.stopwatch = sw
+	return m, cmd
 }
 
 func (m model) View() string {

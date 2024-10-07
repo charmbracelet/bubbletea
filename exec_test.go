@@ -13,9 +13,9 @@ type testExecModel struct {
 	err error
 }
 
-func (m testExecModel) Init() Cmd {
+func (m *testExecModel) Init() (Model, Cmd) {
 	c := exec.Command(m.cmd) //nolint:gosec
-	return ExecProcess(c, func(err error) Msg {
+	return m, ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
 	})
 }

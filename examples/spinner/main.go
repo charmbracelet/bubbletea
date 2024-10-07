@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -27,8 +27,8 @@ func initialModel() model {
 	return model{spinner: s}
 }
 
-func (m model) Init() tea.Cmd {
-	return m.spinner.Tick
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

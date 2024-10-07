@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/textarea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -110,8 +110,8 @@ func newModel() model {
 	return m
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
