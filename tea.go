@@ -683,7 +683,8 @@ func (p *Program) Run() (Model, error) {
 	var output io.Writer
 	output = p.output
 	if p.renderer == nil {
-		p.renderer = newStandardRenderer()
+		// p.renderer = newStandardRenderer()
+		p.renderer = newCellRenderer()
 	}
 
 	// Set the renderer output.
