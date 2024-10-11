@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"unsafe"
 
 	"github.com/charmbracelet/x/term"
 	"github.com/erikgeiser/coninput"
@@ -73,9 +74,20 @@ func (r *conInputReader) Close() error {
 }
 
 // Read implements cancelreader.CancelReader.
-func (*conInputReader) Read(_ []byte) (n int, err error) {
-	return 0, nil
+func (r *conInputReader) Read(p []byte) (n int, err error) {
+    var inputBuf [128]uint16 // Increase buffer size
+    var read uint32
+
+    err = windows.ReadConsole(r.conin, (*uint16)(unsafe.Pointer(&inputBuf[0])), uint32(len(inputBuf)), &read, nil)
+    if err != nil {
+        return 0, fmt.Errorf("failed to read console input: %w", err)
+    }
+
+    n = copy(p, windows.UTF16ToString(inputBuf[:read]))
+    return n, nil
 }
+
+
 
 func prepareConsole(input windows.Handle, modes ...uint32) (originalMode uint32, err error) {
 	err = windows.GetConsoleMode(input, &originalMode)
