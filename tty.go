@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/x/ansi"
@@ -122,17 +121,7 @@ func (p *Program) restoreInput() error {
 
 // initInputReader (re)commences reading inputs.
 func (p *Program) initInputReader() error {
-	var term string
-	for i := len(p.environ) - 1; i >= 0; i-- {
-		// We iterate backwards to find the last TERM variable set in the
-		// environment. This is because the last one is the one that will be
-		// used by the terminal.
-		parts := strings.SplitN(p.environ[i], "=", 2)
-		if len(parts) == 2 && parts[0] == "TERM" {
-			term = parts[1]
-			break
-		}
-	}
+	term := p.getenv("TERM")
 
 	// Initialize the input reader.
 	// This need to be done after the terminal has been initialized and set to
