@@ -268,3 +268,24 @@ func WithoutGraphemeClustering() ProgramOption {
 		p.startupOptions |= withoutGraphemeClustering
 	}
 }
+
+// experimentalOptions are experimental features that are not yet stable. These
+// features may change or be removed in future versions.
+type experimentalOptions []string
+
+// has returns true if the experimental option is enabled.
+func (e experimentalOptions) has(option string) bool {
+	for _, o := range e {
+		if o == option {
+			return true
+		}
+	}
+	return false
+}
+
+const (
+	// experimentalCellbuf is an experimental feature that enables a cell buffer
+	// for the renderer. This can be useful for rendering performance and
+	// efficiency.
+	experimentalCellbuf = "cellbuf"
+)
