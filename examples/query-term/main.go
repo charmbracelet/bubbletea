@@ -16,7 +16,7 @@ import (
 )
 
 func newModel() model {
-	ti := textinput.NewModel()
+	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20

@@ -28,7 +28,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.ResumeMsg:
 		m.suspending = false
 		return m, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			m.quitting = true
@@ -36,7 +36,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+z":
 			m.suspending = true
 			return m, tea.Suspend
-		case " ":
+		case "space":
 			var cmd tea.Cmd
 			if m.altscreen {
 				cmd = tea.ExitAltScreen
