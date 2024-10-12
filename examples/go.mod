@@ -44,3 +44,7 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 )
+
+replace github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1 => ../../lipgloss
+
+replace github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1 => ../../bubbles
