@@ -244,6 +244,26 @@ func (r *standardRenderer) clearScreen() {
 	r.repaint()
 }
 
+// setAltScreenBuffer restores the terminal screen buffer state.
+func (r *standardRenderer) setAltScreenBuffer(on bool) {
+	if on {
+		// Ensure that the terminal is cleared, even when it doesn't support
+		// alt screen (or alt screen support is disabled, like GNU screen by
+		// default).
+		r.execute(ansi.EraseEntireDisplay)
+		r.execute(ansi.MoveCursorOrigin)
+	}
+
+	// cmd.exe and other terminals keep separate cursor states for the AltScreen
+	// and the main buffer. We have to explicitly reset the cursor visibility
+	// whenever we exit AltScreen.
+	if r.cursorHidden {
+		r.execute(ansi.HideCursor)
+	} else {
+		r.execute(ansi.ShowCursor)
+	}
+}
+
 // update handles internal messages for the renderer.
 func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
@@ -254,6 +274,7 @@ func (r *standardRenderer) update(msg Msg) {
 				return
 			}
 
+			r.setAltScreenBuffer(true)
 			r.altScreenActive = true
 			r.repaint()
 		case ansi.CursorVisibilityMode:
@@ -271,6 +292,7 @@ func (r *standardRenderer) update(msg Msg) {
 				return
 			}
 
+			r.setAltScreenBuffer(false)
 			r.altScreenActive = false
 			r.repaint()
 		case ansi.CursorVisibilityMode:

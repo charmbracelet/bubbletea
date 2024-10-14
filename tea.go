@@ -458,8 +458,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprintf("\x1b[%sh", string(msg)))
 				p.modes[string(msg)] = true
 				switch string(msg) {
-				case ansi.AltScreenBufferMode:
-					p.setAltScreenBuffer(true)
 				case ansi.GraphemeClusteringMode:
 					// We store the state of grapheme clustering after we enable it
 					// and get a response in the eventLoop.
@@ -473,10 +471,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 				p.execute(fmt.Sprintf("\x1b[%sl", string(msg)))
 				p.modes[string(msg)] = false
-				switch string(msg) {
-				case ansi.AltScreenBufferMode:
-					p.setAltScreenBuffer(false)
-				}
 
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
@@ -740,7 +734,6 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.execute(ansi.EnableAltScreenBuffer)
-		p.setAltScreenBuffer(true)
 		p.modes[ansi.AltScreenBufferMode] = true
 		p.renderer.update(enableMode(ansi.AltScreenBufferMode))
 	}
