@@ -9,3 +9,9 @@ package tea
 func (d *driver) ReadEvents() ([]Msg, error) {
 	return d.readEvents()
 }
+
+// parseWin32InputKeyEvent parses a Win32 input key events. This function is
+// only available on Windows.
+func parseWin32InputKeyEvent(*win32InputState, uint16, uint16, rune, bool, uint32, uint16) Msg {
+	return nil
+}
