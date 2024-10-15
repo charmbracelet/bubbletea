@@ -271,14 +271,18 @@ func parseKittyKeyboard(csi *ansi.CsiSequence) (msg Msg) {
 
 	if len(key.Text) == 0 && unicode.IsPrint(key.Code) &&
 		(key.Mod <= ModShift || key.Mod == ModCapsLock) {
-		desiredCase := unicode.ToLower
-		if key.Mod == ModShift || key.Mod == ModCapsLock {
-			desiredCase = unicode.ToUpper
-		}
-		if key.ShiftedCode != 0 {
-			key.Text = string(key.ShiftedCode)
+		if key.Mod == 0 {
+			key.Text = string(key.Code)
 		} else {
-			key.Text = string(desiredCase(key.Code))
+			desiredCase := unicode.ToLower
+			if key.Mod == ModShift || key.Mod == ModCapsLock {
+				desiredCase = unicode.ToUpper
+			}
+			if key.ShiftedCode != 0 {
+				key.Text = string(key.ShiftedCode)
+			} else {
+				key.Text = string(desiredCase(key.Code))
+			}
 		}
 	}
 
