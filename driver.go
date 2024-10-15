@@ -13,6 +13,8 @@ import (
 // control key state to determine modifier key changes. It also keeps track of
 // the last mouse button state and window size changes to determine which mouse
 // buttons were released and to prevent multiple size events from firing.
+//
+//nolint:unused
 type win32InputState struct {
 	ansiBuf                    [256]byte
 	ansiIdx                    int
