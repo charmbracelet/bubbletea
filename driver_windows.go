@@ -83,9 +83,9 @@ func parseConInputEvent(event xwindows.InputRecord, keyState *win32InputState) M
 	case xwindows.FOCUS_EVENT:
 		fevent := event.FocusEvent()
 		if fevent.SetFocus {
-			return []Msg{FocusMsg{}}
+			return FocusMsg{}
 		}
-		return []Msg{BlurMsg{}}
+		return BlurMsg{}
 	case xwindows.MENU_EVENT:
 		// ignore
 	}
