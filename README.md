@@ -354,6 +354,10 @@ For more applications built with Bubble Tea see [Charm & Friends][community].
 Is there something cool you made with Bubble Tea you want to share? [PRs][community] are
 welcome!
 
+## Contributing
+
+See [contributing](/contributing).
+
 ## Feedback
 
 We’d love to hear your thoughts on this project. Feel free to drop us a note!
