@@ -169,7 +169,7 @@ func (r *standardRenderer) flush() {
 	buf := &bytes.Buffer{}
 
 	// Moving to the beginning of the section, that we rendered.
-	if r.linesRendered > 0 {
+	if r.linesRendered > 1 {
 		buf.WriteString(ansi.CursorUp(r.linesRendered - 1))
 	}
 
