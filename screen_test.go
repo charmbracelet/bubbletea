@@ -3,15 +3,17 @@ package tea
 import (
 	"bytes"
 	"image/color"
+	"runtime"
 	"testing"
 )
 
 func TestClearMsg(t *testing.T) {
-	tests := []struct {
+	type test struct {
 		name     string
 		cmds     sequenceMsg
 		expected string
-	}{
+	}
+	tests := []test{
 		{
 			name:     "clear_screen",
 			cmds:     []Cmd{ClearScreen},
@@ -72,11 +74,21 @@ func TestClearMsg(t *testing.T) {
 			cmds:     []Cmd{SetBackgroundColor(color.RGBA{255, 255, 255, 255})},
 			expected: "\x1b[?25l\x1b[?2004h\x1b[?2027h\x1b[?2027$p\x1b]11;#ffffff\a\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b]111\a",
 		},
-		{
+	}
+
+	if runtime.GOOS == "windows" {
+		// Windows supports enhanced keyboard features through the Windows API, not through ANSI sequences.
+		tests = append(tests, test{
+			name:     "kitty_start",
+			cmds:     []Cmd{DisableKeyboardEnhancements, EnableKeyboardEnhancements(WithKeyReleases)},
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?2027h\x1b[?2027$p\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
+		})
+	} else {
+		tests = append(tests, test{
 			name:     "kitty_start",
 			cmds:     []Cmd{DisableKeyboardEnhancements, EnableKeyboardEnhancements(WithKeyReleases)},
 			expected: "\x1b[?25l\x1b[?2004h\x1b[?2027h\x1b[?2027$p\x1b[>4;1m\x1b[>3u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[>4;0m\x1b[>0u",
-		},
+		})
 	}
 
 	for _, test := range tests {

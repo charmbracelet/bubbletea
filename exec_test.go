@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"os/exec"
+	"runtime"
 	"testing"
 )
 
@@ -37,27 +38,34 @@ func (m *testExecModel) View() string {
 }
 
 func TestTeaExec(t *testing.T) {
-	tests := []struct {
+	type test struct {
 		name      string
 		cmd       string
 		expectErr bool
-	}{
-		{
-			name:      "true",
-			cmd:       "true",
-			expectErr: false,
-		},
-		{
-			name:      "false",
-			cmd:       "false",
-			expectErr: true,
-		},
-		{
-			name:      "invalid command",
-			cmd:       "invalid",
-			expectErr: true,
-		},
 	}
+
+	var tests []test
+	// TODO: add more tests for windows
+	if runtime.GOOS != "windows" {
+		tests = append(tests, []test{
+			{
+				name:      "true",
+				cmd:       "true",
+				expectErr: false,
+			},
+			{
+				name:      "false",
+				cmd:       "false",
+				expectErr: true,
+			},
+		}...)
+	}
+
+	tests = append(tests, test{
+		name:      "invalid command",
+		cmd:       "invalid",
+		expectErr: true,
+	})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
