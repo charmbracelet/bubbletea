@@ -356,7 +356,9 @@ welcome!
 
 ## Contributing
 
-See [contributing](/contributing).
+See [contributing][contribute].
+
+[contribute]: http://github.com/charmbracelet/bubbletea/contribute
 
 ## Feedback
 
