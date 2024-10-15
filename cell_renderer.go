@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"image"
 	"io"
 	"strings"
 	"sync"
@@ -12,7 +13,7 @@ import (
 
 // cursor represents a terminal cursor.
 type cursor struct {
-	cellbuf.Position
+	image.Point
 	visible bool
 }
 
@@ -215,7 +216,7 @@ func (c *cellRenderer) reset() {
 	// alt-screen buffer cursor always starts from where the main buffer cursor
 	// is. We need to set it to (-1,-1) to force the cursor to be moved to the
 	// origin on the first render.
-	c.scrs[1].cur.Position = cellbuf.Pos(-1, -1)
+	c.scrs[1].cur.Point = image.Pt(-1, -1)
 	if c.altScreen {
 		c.scr = &c.scrs[1]
 		c.lastRender = &c.lastRenders[1]
@@ -363,7 +364,7 @@ func (c *cellRenderer) changes() {
 			cell, _ := c.scr.At(x, y)
 			if !c.scr.isDirty(x, y) {
 				if seg != nil {
-					erased := c.flushSegment(seg, cellbuf.Pos(segX, y), eraser)
+					erased := c.flushSegment(seg, image.Pt(segX, y), eraser)
 					seg = nil
 					if erased {
 						// If the segment erased the rest of the line, we don't need to
@@ -387,7 +388,7 @@ func (c *cellRenderer) changes() {
 			}
 
 			if !seg.Style.Equal(cell.Style) || seg.Link != cell.Link {
-				erased := c.flushSegment(seg, cellbuf.Pos(segX, y), eraser)
+				erased := c.flushSegment(seg, image.Pt(segX, y), eraser)
 				if erased {
 					seg = nil
 					// If the segment erased the rest of the line, we don't need to
@@ -411,7 +412,7 @@ func (c *cellRenderer) changes() {
 		}
 
 		if seg != nil {
-			c.flushSegment(seg, cellbuf.Pos(segX, y), eraser)
+			c.flushSegment(seg, image.Pt(segX, y), eraser)
 			seg = nil
 		}
 	}
@@ -437,8 +438,8 @@ func (c *cellRenderer) changes() {
 
 // flushSegment flushes the segment to the buffer. It returns true if the
 // segment the rest of the line was erased.
-func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to cellbuf.Position, eraser bool) (erased bool) {
-	if c.scr.cur.Position != to {
+func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser bool) (erased bool) {
+	if c.scr.cur.Point != to {
 		c.renderReset(seg)
 		c.moveCursor(to.X, to.Y)
 	}
