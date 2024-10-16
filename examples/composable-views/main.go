@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/timer"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	"github.com/charmbracelet/bubbles/v2/timer"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -72,16 +72,18 @@ func newModel(timeout time.Duration) mainModel {
 	return m
 }
 
-func (m mainModel) Init() tea.Cmd {
+func (m mainModel) Init() (tea.Model, tea.Cmd) {
 	// start the timer and spinner on program start
-	return tea.Batch(m.timer.Init(), m.spinner.Tick)
+	timer, cmd := m.timer.Init()
+	m.timer = timer
+	return m, tea.Batch(cmd, m.spinner.Tick)
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -94,7 +96,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "n":
 			if m.state == timerView {
 				m.timer = timer.New(defaultTime)
-				cmds = append(cmds, m.timer.Init())
+				m.timer, cmd = m.timer.Init()
+				cmds = append(cmds, cmd)
 			} else {
 				m.Next()
 				m.resetSpinner()

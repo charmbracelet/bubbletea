@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/harmonica"
 )
 
@@ -142,13 +142,13 @@ type model struct {
 	xVelocity, yVelocity float64
 }
 
-func (m model) Init() tea.Cmd {
-	return animate()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, animate()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m, tea.Quit
 	case tea.WindowSizeMsg:
 		if !m.cells.ready() {
@@ -156,11 +156,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.cells.init(msg.Width, msg.Height)
 		return m, nil
-	case tea.MouseMsg:
+	case tea.MouseClickMsg:
 		if !m.cells.ready() {
 			return m, nil
 		}
-		m.targetX, m.targetY = float64(msg.X), float64(msg.Y)
+		mouse := msg.Mouse()
+		m.targetX, m.targetY = float64(mouse.X), float64(mouse.Y)
 		return m, nil
 
 	case frameMsg:

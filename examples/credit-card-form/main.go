@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -126,26 +126,26 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd = make([]tea.Cmd, len(m.inputs))
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "enter":
 			if m.focused == len(m.inputs)-1 {
 				return m, tea.Quit
 			}
 			m.nextInput()
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case "ctrl+c", "esc":
 			return m, tea.Quit
-		case tea.KeyShiftTab, tea.KeyCtrlP:
+		case "shift+tab", "ctrl+p":
 			m.prevInput()
-		case tea.KeyTab, tea.KeyCtrlN:
+		case "tab", "ctrl+n":
 			m.nextInput()
 		}
 		for i := range m.inputs {

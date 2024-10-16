@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/textarea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 func main() {
@@ -37,8 +37,8 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,13 +46,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEsc:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "esc":
 			if m.textarea.Focused() {
 				m.textarea.Blur()
 			}
-		case tea.KeyCtrlC:
+		case "ctrl+c":
 			return m, tea.Quit
 		default:
 			if !m.textarea.Focused() {

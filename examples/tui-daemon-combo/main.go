@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-isatty"
 )
@@ -74,9 +74,9 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m model) Init() (tea.Model, tea.Cmd) {
 	log.Println("Starting work...")
-	return tea.Batch(
+	return m, tea.Batch(
 		m.spinner.Tick,
 		runPretendProcess,
 	)
@@ -84,7 +84,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.quitting = true
 		return m, tea.Quit
 	case spinner.TickMsg:
