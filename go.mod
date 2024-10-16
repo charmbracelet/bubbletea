@@ -10,5 +10,5 @@ require (
 	github.com/rivo/uniseg v0.4.7
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.25.0
+	golang.org/x/sys v0.26.0
 )
