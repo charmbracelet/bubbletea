@@ -283,6 +283,33 @@ for backwards compatibility reasons. However, delve recommends using version 2
 for all new development and some clients may no longer work with version 1.
 For more information, see the [Delve documentation](https://github.com/go-delve/delve/tree/master/Documentation/api).
 
+### Debugging with Delve using VS Code
+If you're using VS Code and want to debug your Bubble Tea app with delve, you'll need to run delve in headless mode as mentioned earlier.
+Here are the steps that you can follow to perform headless delve debugging in VS Code:
+- Please install delve following the instructions [here](https://github.com/go-delve/delve/tree/master/Documentation/installation)
+- Please create a new `launch.json` file or add this object under 'configurations' in the existing `launch.json` file.
+ ```json
+            {
+                "name": "Debug Bubble Tea App",
+                "type": "go",
+                "request": "attach",
+                "mode": "remote",
+                "remotePath": "${workspaceFolder}",
+                "port": 2345, // port on which your delve headless is running
+                "host": "127.0.0.1" // host on which your delve headless is running
+            }
+ ```
+- After adding or updating the `launch.json`, please start delve in a new or separate terminal using this command 
+```bash
+dlv debug --headless --listen=:2345 --api-version=2 --accept-multiclient
+```
+- Now, in VS Code, set breakpoints in your code where you want to pause execution.
+- Go to the "Run and Debug" view and select "Debug Bubble Tea App" from the dropdown.
+- Click the "Start Debugging" button (green play button) or press F5.
+- Your Bubble Tea app should start, and the debugger will attach to it. When execution reaches a breakpoint, VS Code will pause and allow you to step through the code, inspect variables, etc.
+
+This setup allows you to debug your Bubble Tea app while still running it in the terminal, which is necessary for CLI apps that require terminal input/output.
+
 ### Logging Stuff
 
 You can’t really log to stdout with Bubble Tea because your TUI is busy
