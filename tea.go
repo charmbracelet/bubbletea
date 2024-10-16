@@ -291,6 +291,9 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 			if output, _ := strconv.ParseBool(p.getenv("TEA_TRACE_OUTPUT")); output {
 				p.tracer = p.tracer.withOutput()
 			}
+			if input, _ := strconv.ParseBool(p.getenv("TEA_TRACE_INPUT")); input {
+				p.tracer = p.tracer.withInput()
+			}
 		}
 	}
 
@@ -680,14 +683,12 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// If no renderer is set use the standard one.
-	var output io.Writer
-	output = p.output
 	if p.renderer == nil {
 		p.renderer = newStandardRenderer()
 	}
 
 	// Set the renderer output.
-	p.renderer.update(rendererWriter{output})
+	p.renderer.update(rendererWriter{p.output})
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())

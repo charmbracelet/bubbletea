@@ -244,45 +244,6 @@ func (r *standardRenderer) clearScreen() {
 	r.repaint()
 }
 
-// setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
-// renderer.
-func (r *standardRenderer) setIgnoredLines(from int, to int) {
-	// Lock if we're going to be clearing some lines since we don't want
-	// anything jacking our cursor.
-	if r.linesRendered > 0 {
-		r.mtx.Lock()
-		defer r.mtx.Unlock()
-	}
-
-	if r.ignoreLines == nil {
-		r.ignoreLines = make(map[int]struct{})
-	}
-	for i := from; i < to; i++ {
-		r.ignoreLines[i] = struct{}{}
-	}
-
-	// Erase ignored lines
-	if r.linesRendered > 0 {
-		buf := &bytes.Buffer{}
-
-		for i := r.linesRendered - 1; i >= 0; i-- {
-			if _, exists := r.ignoreLines[i]; exists {
-				buf.WriteString(ansi.EraseEntireLine)
-			}
-			buf.WriteString(ansi.CursorUp1)
-		}
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0)) // put cursor back
-		_, _ = r.out.Write(buf.Bytes())
-	}
-}
-
-// clearIgnoredLines returns control of any ignored lines to the standard
-// Bubble Tea renderer. That is, any lines previously set to be ignored can be
-// rendered to again.
-func (r *standardRenderer) clearIgnoredLines() {
-	r.ignoreLines = nil
-}
-
 // update handles internal messages for the renderer.
 func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
