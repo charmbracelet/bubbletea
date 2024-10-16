@@ -429,6 +429,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.suspend()
 				}
 
+			case setCursorStyle:
+				p.execute(ansi.SetCursorStyle(int(msg)))
+
 			case modeReportMsg:
 				switch msg.Mode {
 				case graphemeClustering:
