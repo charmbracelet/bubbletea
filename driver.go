@@ -8,6 +8,23 @@ import (
 	"github.com/muesli/cancelreader"
 )
 
+// win32InputState is a state machine for parsing key events from the Windows
+// Console API into escape sequences and utf8 runes, and keeps track of the last
+// control key state to determine modifier key changes. It also keeps track of
+// the last mouse button state and window size changes to determine which mouse
+// buttons were released and to prevent multiple size events from firing.
+//
+//nolint:unused
+type win32InputState struct {
+	ansiBuf                    [256]byte
+	ansiIdx                    int
+	utf16Buf                   [2]rune
+	utf16Half                  bool
+	lastCks                    uint32 // the last control key state for the previous event
+	lastMouseBtns              uint32 // the last mouse button state for the previous event
+	lastWinsizeX, lastWinsizeY int16  // the last window size for the previous event to prevent multiple size events from firing
+}
+
 // driver represents an ANSI terminal input driver.
 // It reads input events and parses ANSI sequences from the terminal input
 // buffer.
@@ -23,13 +40,9 @@ type driver struct {
 
 	buf [256]byte // do we need a larger buffer?
 
-	// prevMouseState keeps track of the previous mouse state to determine mouse
-	// up button events.
-	prevMouseState uint32 // nolint: unused
-
-	// lastWinsizeEvent keeps track of the last window size event to prevent
-	// multiple size events from firing.
-	lastWinsizeEventX, lastWinsizeEventY int16 // nolint: unused
+	// keyState keeps track of the current Windows Console API key events state.
+	// It is used to decode ANSI escape sequences and utf16 sequences.
+	keyState win32InputState //nolint:unused
 
 	flags int // control the behavior of the driver.
 }
