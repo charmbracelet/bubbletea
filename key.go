@@ -46,7 +46,7 @@ type KeyMsg Key
 
 // String returns a string representation for a key message. It's safe (and
 // encouraged) for use in key comparison.
-func (k KeyMsg) String() (str string) {
+func (k KeyMsg) String() (s string) {
 	return Key(k).String()
 }
 
@@ -64,7 +64,7 @@ type Key struct {
 //	k := Key{Type: KeyEnter}
 //	fmt.Println(k)
 //	// Output: enter
-func (k Key) String() (str string) {
+func (k Key) String() (s string) {
 	var buf strings.Builder
 	if k.Alt {
 		buf.WriteString("alt+")
@@ -107,7 +107,7 @@ func (k Key) String() (str string) {
 //	}
 type KeyType int
 
-func (k KeyType) String() (str string) {
+func (k KeyType) String() (s string) {
 	if s, ok := keyNames[k]; ok {
 		return s
 	}
