@@ -11,6 +11,60 @@ import (
 	"github.com/charmbracelet/x/cellbuf"
 )
 
+// moveCursorMsg represents a message to move the cursor.
+type moveCursorMsg struct {
+	x, y int
+}
+
+// MoveCursor moves the cursor to the given position.
+func MoveCursor(x, y int) Msg {
+	return moveCursorMsg{x, y}
+}
+
+// cursorUpMsg represents a message to move the cursor up.
+type cursorUpMsg int
+
+// CursorUp moves the cursor up by n cells.
+func CursorUp(n int) Msg {
+	if n <= 0 {
+		return nil
+	}
+	return cursorUpMsg(n)
+}
+
+// cursorDownMsg represents a message to move the cursor down.
+type cursorDownMsg int
+
+// CursorDown moves the cursor down by n cells.
+func CursorDown(n int) Msg {
+	if n <= 0 {
+		return nil
+	}
+	return cursorDownMsg(n)
+}
+
+// cursorLeftMsg represents a message to move the cursor left.
+type cursorLeftMsg int
+
+// CursorLeft moves the cursor left by n cells.
+func CursorLeft(n int) Msg {
+	if n <= 0 {
+		return nil
+	}
+	return cursorLeftMsg(n)
+}
+
+// cursorRightMsg represents a message to move the cursor right.
+type cursorRightMsg int
+
+// CursorRight moves the cursor right by n cells.
+func CursorRight(n int) Msg {
+	if n <= 0 {
+		return nil
+	}
+	return cursorRightMsg(n)
+}
+
 // cursor represents a terminal cursor.
 type cursor struct {
 	image.Point
@@ -322,6 +376,33 @@ func (c *cellRenderer) update(msg Msg) {
 
 			c.cursorHidden = true
 		}
+
+	case moveCursorMsg:
+		c.moveCursor(msg.x, msg.y)
+
+	case cursorUpMsg:
+		y := c.scr.cur.Y - int(msg)
+		if y >= 0 {
+			c.scr.cur.Y = y
+		}
+
+	case cursorDownMsg:
+		y := c.scr.cur.Y + int(msg)
+		if y < c.scr.Height() {
+			c.scr.cur.Y = y
+		}
+
+	case cursorLeftMsg:
+		x := c.scr.cur.X - int(msg)
+		if x >= 0 {
+			c.scr.cur.X = x
+		}
+
+	case cursorRightMsg:
+		x := c.scr.cur.X + int(msg)
+		if x < c.scr.Width() {
+			c.scr.cur.X = x
+		}
 	}
 }
 
@@ -336,10 +417,10 @@ func (c *cellRenderer) changes() {
 	}
 
 	height := c.scr.Height()
-	var x int
 	if *c.lastRender == "" {
 		// We render the changes line by line to be able to get the cursor
 		// position using the width of each line.
+		var x int
 		for y := 0; y < height; y++ {
 			var line string
 			x, line = cellbuf.RenderLine(c.scr, y)
@@ -456,7 +537,6 @@ func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser
 		erased = true
 	} else {
 		c.renderSegment(seg)
-		c.scr.cur.X += seg.Width
 	}
 	return
 }
@@ -486,6 +566,14 @@ func (c *cellRenderer) renderSegment(seg *cellbuf.Segment) {
 	}
 
 	c.buf.WriteString(seg.Content)
+	c.scr.cur.X += seg.Width
+
+	if c.scr.cur.X >= c.scr.Width() {
+		// NOTE: We need to reset the cursor when at phantom cell i.e. outside
+		// the screen, otherwise, the cursor position will be out of sync.
+		c.scr.cur.X = 0
+		c.buf.WriteByte(ansi.CR)
+	}
 }
 
 // moveCursor moves the cursor to the given position.
@@ -526,9 +614,9 @@ func (c *cellRenderer) moveCursor(x, y int) {
 				if dx >= 3 {
 					// [ansi.CursorLeft] is at least 3 bytes long, so we use [ansi.BS]
 					// when we can to avoid writing more bytes than necessary.
-					c.buf.WriteString(ansi.CursorLeft(c.scr.cur.X - x))
+					c.buf.WriteString(ansi.CursorLeft(dx))
 				} else {
-					c.buf.Write(bytes.Repeat([]byte{ansi.BS}, dx))
+					c.buf.WriteString(strings.Repeat("\b", dx))
 				}
 			}
 		}
