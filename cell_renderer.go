@@ -11,59 +11,7 @@ import (
 	"github.com/charmbracelet/x/cellbuf"
 )
 
-// moveCursorMsg represents a message to move the cursor.
-type moveCursorMsg struct {
-	x, y int
-}
-
-// MoveCursor moves the cursor to the given position.
-func MoveCursor(x, y int) Msg {
-	return moveCursorMsg{x, y}
-}
-
-// cursorUpMsg represents a message to move the cursor up.
-type cursorUpMsg int
-
-// CursorUp moves the cursor up by n cells.
-func CursorUp(n int) Msg {
-	if n <= 0 {
-		return nil
-	}
-	return cursorUpMsg(n)
-}
-
-// cursorDownMsg represents a message to move the cursor down.
-type cursorDownMsg int
-
-// CursorDown moves the cursor down by n cells.
-func CursorDown(n int) Msg {
-	if n <= 0 {
-		return nil
-	}
-	return cursorDownMsg(n)
-}
-
-// cursorLeftMsg represents a message to move the cursor left.
-type cursorLeftMsg int
-
-// CursorLeft moves the cursor left by n cells.
-func CursorLeft(n int) Msg {
-	if n <= 0 {
-		return nil
-	}
-	return cursorLeftMsg(n)
-}
-
-// cursorRightMsg represents a message to move the cursor right.
-type cursorRightMsg int
-
-// CursorRight moves the cursor right by n cells.
-func CursorRight(n int) Msg {
-	if n <= 0 {
-		return nil
-	}
-	return cursorRightMsg(n)
-}
+var undefPoint = image.Pt(-1, -1)
 
 // cursor represents a terminal cursor.
 type cursor struct {
@@ -121,6 +69,8 @@ type cellRenderer struct {
 	scrs [2]screen // Both inline and alt-screen
 	scr  *screen   // Points to the current used screen
 
+	finalCur image.Point // The final cursor position
+
 	method cellbuf.WidthMethod
 	pen    cellbuf.Style
 	link   cellbuf.Link
@@ -139,7 +89,8 @@ type cellRenderer struct {
 func newCellRenderer() *cellRenderer {
 	r := &cellRenderer{
 		// TODO: Update this if Grapheme Clustering is supported.
-		method: cellbuf.WcWidth,
+		method:   cellbuf.WcWidth,
+		finalCur: undefPoint,
 	}
 	r.reset()
 	return r
@@ -199,7 +150,8 @@ func (c *cellRenderer) flush() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.frame == *c.lastRender && c.lastHeight == c.scr.Height() {
+	if c.finalCur == c.scr.cur.Point && len(c.queueAbove) == 0 &&
+		c.frame == *c.lastRender && c.lastHeight == c.scr.Height() {
 		return nil
 	}
 
@@ -228,6 +180,17 @@ func (c *cellRenderer) flush() error {
 
 	c.changes()
 
+	// XXX: We need to move the cursor to the final position before rendering
+	// the frame to avoid flickering.
+	shouldHideCursor := !c.cursorHidden
+	if c.finalCur != image.Pt(-1, -1) {
+		shouldMove := c.finalCur != c.scr.cur.Point
+		shouldHideCursor = shouldHideCursor && shouldMove
+		if shouldMove {
+			c.moveCursor(c.finalCur.X, c.finalCur.Y)
+		}
+	}
+
 	c.scr.dirty = make(map[int]int)
 	c.lastHeight = cellbuf.Height(c.frame)
 	*c.lastRender = c.frame
@@ -237,7 +200,7 @@ func (c *cellRenderer) flush() error {
 		return nil
 	}
 
-	if !c.cursorHidden {
+	if shouldHideCursor {
 		// Hide the cursor while rendering to avoid flickering.
 		render = ansi.HideCursor + render + ansi.ShowCursor
 	}
@@ -270,7 +233,7 @@ func (c *cellRenderer) reset() {
 	// alt-screen buffer cursor always starts from where the main buffer cursor
 	// is. We need to set it to (-1,-1) to force the cursor to be moved to the
 	// origin on the first render.
-	c.scrs[1].cur.Point = image.Pt(-1, -1)
+	c.scrs[1].cur.Point = undefPoint
 	if c.altScreen {
 		c.scr = &c.scrs[1]
 		c.lastRender = &c.lastRenders[1]
@@ -377,32 +340,19 @@ func (c *cellRenderer) update(msg Msg) {
 			c.cursorHidden = true
 		}
 
-	case moveCursorMsg:
-		c.moveCursor(msg.x, msg.y)
-
-	case cursorUpMsg:
-		y := c.scr.cur.Y - int(msg)
-		if y >= 0 {
-			c.scr.cur.Y = y
+	case setCursorPosMsg:
+		x, y := msg.X, msg.Y
+		if x < 0 {
+			x = c.scr.cur.X
+		} else if x >= c.scr.Width() {
+			x = c.scr.Width() - 1
 		}
-
-	case cursorDownMsg:
-		y := c.scr.cur.Y + int(msg)
-		if y < c.scr.Height() {
-			c.scr.cur.Y = y
+		if y < 0 {
+			y = c.scr.cur.Y
+		} else if y >= c.scr.Height() {
+			y = c.scr.Height() - 1
 		}
-
-	case cursorLeftMsg:
-		x := c.scr.cur.X - int(msg)
-		if x >= 0 {
-			c.scr.cur.X = x
-		}
-
-	case cursorRightMsg:
-		x := c.scr.cur.X + int(msg)
-		if x < c.scr.Width() {
-			c.scr.cur.X = x
-		}
+		c.finalCur = image.Pt(x, y)
 	}
 }
 

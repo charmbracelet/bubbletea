@@ -1,5 +1,7 @@
 package tea
 
+import "image"
+
 // CursorPositionMsg is a message that represents the terminal cursor position.
 type CursorPositionMsg struct {
 	// Row is the row number.
@@ -42,5 +44,17 @@ func SetCursorStyle(style CursorStyle, steady bool) Cmd {
 	}
 	return func() Msg {
 		return setCursorStyle(style)
+	}
+}
+
+// setCursorPosMsg represents a message to set the cursor position.
+type setCursorPosMsg image.Point
+
+// SetCursorPosition sets the cursor position to the specified relative
+// coordinates. Using -1 for either x or y will not change the cursor position
+// for that axis.
+func SetCursorPosition(x, y int) Cmd {
+	return func() Msg {
+		return setCursorPosMsg{x, y}
 	}
 }
