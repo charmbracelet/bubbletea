@@ -35,15 +35,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) childWidth(child *tree.Node) int {
-	w := width - enumeratorWidth*child.Depth()
+	w := width - enumeratorWidth*child.Depth() + 1
 	if strings.HasPrefix(child.Value(), m.tree.OpenCharacter) {
-		w -= lipgloss.Width(m.tree.OpenCharacter)
+		w += lipgloss.Width(m.tree.OpenCharacter)
 	} else if strings.HasPrefix(child.Value(), m.tree.ClosedCharacter) {
-		w -= lipgloss.Width(m.tree.ClosedCharacter)
-	} else {
-		w -= lipgloss.Width("    ")
+		w += lipgloss.Width(m.tree.ClosedCharacter)
 	}
-
 	return w
 }
 
@@ -140,8 +137,8 @@ func main() {
 		width,
 		height,
 	)
-	t.OpenCharacter = "📖"
 	t.ClosedCharacter = "📘"
+	t.OpenCharacter = "📖"
 
 	if _, err := tea.NewProgram(model{tree: t}).Run(); err != nil {
 		fmt.Println("Oh no:", err)
