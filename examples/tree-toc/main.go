@@ -94,7 +94,7 @@ type page struct {
 }
 
 func (p page) String() string {
-	// TODO: overcompensating the number of dots
+	// TODO: overcompensating the number of dots, should I support a ValueFunc?
 	return p.title + strings.Repeat(".", width-len(p.title))
 }
 
