@@ -14,7 +14,7 @@ import (
 
 type model struct {
 	tree   tree.Model
-	choice *tree.Item
+	choice *tree.Node
 }
 
 func (m model) Init() tea.Cmd {
@@ -27,7 +27,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "e":
-			m.choice = m.tree.ItemAtCurrentOffset()
+			m.choice = m.tree.NodeAtCurrentOffset()
 			return m, tea.Quit
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -39,24 +39,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+func (m *model) childWidth(child *tree.Node) int {
+	w := width - enumeratorWidth*child.Depth()
+	if strings.HasPrefix(child.Value(), m.tree.OpenCharacter) {
+		w -= lipgloss.Width(m.tree.OpenCharacter)
+	} else if strings.HasPrefix(child.Value(), m.tree.ClosedCharacter) {
+		w -= lipgloss.Width(m.tree.ClosedCharacter)
+	} else {
+		w -= lipgloss.Width("⌯ ")
+	}
+	return w
+}
+
 func (m *model) updateStyles() {
-	m.tree.SetStyles(tree.Styles{ItemStyleFunc: func(children tree.Items, i int) lipgloss.Style {
-		child := children.At(i)
-		w := width - enumeratorWidth*child.Depth()
-		if strings.HasPrefix(child.Value(), m.tree.OpenCharacter) {
-			w -= lipgloss.Width(m.tree.OpenCharacter)
-		} else if strings.HasPrefix(child.Value(), m.tree.ClosedCharacter) {
-			w -= lipgloss.Width(m.tree.ClosedCharacter)
-		} else {
-			w -= lipgloss.Width("⌯ ")
-		}
+	m.tree.SetStyles(tree.Styles{
+		TreeStyle: lipgloss.NewStyle().Padding(1).Background(lipgloss.Color("234")),
+		NodeStyleFunc: func(children tree.Nodes, i int) lipgloss.Style {
+			child := children.At(i)
+			w := m.childWidth(child)
 
-		if child.YOffset() == m.tree.YOffset() {
-			return lipgloss.NewStyle().Width(w).Background(lipgloss.Color("8"))
-		}
+			return lipgloss.NewStyle().Width(w).Background(lipgloss.Color("234"))
+		},
+		SelectedNodeStyleFunc: func(children tree.Nodes, i int) lipgloss.Style {
+			child := children.At(i)
+			w := m.childWidth(child)
 
-		return lipgloss.NewStyle().Width(w).Background(lipgloss.Color("234"))
-	}})
+			return lipgloss.NewStyle().Bold(true).Width(w).Background(lipgloss.Color("8"))
+		},
+		HelpStyle: lipgloss.NewStyle().MarginTop(1),
+	})
 }
 
 func (m model) View() string {

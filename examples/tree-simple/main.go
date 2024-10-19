@@ -91,8 +91,8 @@ func main() {
 	t.SetShowHelp(false)
 	t.SetStyles(tree.Styles{
 		TreeStyle:         lipgloss.NewStyle().Background(lipgloss.Color("205")),
-		ItemStyle:         lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("205")),
-		SelectedItemStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("54")).Background(lipgloss.Color("205")).Bold(true).Underline(true),
+		NodeStyle:         lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("205")),
+		SelectedNodeStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("54")).Background(lipgloss.Color("205")).Bold(true).Underline(true),
 	})
 
 	if _, err := tea.NewProgram(model{tree: t, s: s}).Run(); err != nil {
