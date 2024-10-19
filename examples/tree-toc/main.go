@@ -75,7 +75,7 @@ func (m model) View() string {
 		if page, ok := v.(page); ok {
 			num := fmt.Sprintf("%d", page.page)
 			if i == m.tree.YOffset() {
-				num = lipgloss.NewStyle().Foreground(lipgloss.Color("92")).Render(fmt.Sprintf("%d", page.page))
+				num = lipgloss.NewStyle().Foreground(lipgloss.Color("92")).Bold(true).Render(fmt.Sprintf("%d", page.page))
 			}
 			pageNumbers[i] = num
 		} else {
