@@ -49,7 +49,6 @@ func (m *model) childWidth(child *tree.Node) int {
 
 func (m *model) updateStyles() {
 	m.tree.SetStyles(tree.Styles{
-		TreeStyle: lipgloss.NewStyle().Padding(1),
 		NodeStyleFunc: func(children tree.Nodes, i int) lipgloss.Style {
 			child := children.At(i)
 			w := m.childWidth(child)
@@ -72,7 +71,26 @@ func (m *model) updateStyles() {
 }
 
 func (m model) View() string {
-	return m.tree.View()
+	pageNumbers := make([]string, len(m.tree.FlatNodes()))
+	for i, node := range m.tree.FlatNodes() {
+		v := node.GivenValue()
+		// check if v is page
+		if page, ok := v.(page); ok {
+			num := fmt.Sprintf("%d", page.page)
+			if i == m.tree.YOffset() {
+				num = lipgloss.NewStyle().Foreground(lipgloss.Color("92")).Render(fmt.Sprintf("%d", page.page))
+			}
+			pageNumbers[i] = num
+		} else {
+			pageNumbers[i] = fmt.Sprintf("%T", v)
+		}
+	}
+	return lipgloss.NewStyle().Padding(1).Render(
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.tree.View(),
+			lipgloss.JoinVertical(lipgloss.Left, pageNumbers...)),
+	)
 }
 
 const (
@@ -91,6 +109,7 @@ func indenter(_ ltree.Children, _ int) string {
 
 type page struct {
 	title string
+	page  int
 }
 
 func (p page) String() string {
@@ -100,23 +119,23 @@ func (p page) String() string {
 
 func main() {
 	t := tree.New(
-		tree.Root("Go Mistakes").
+		tree.Root(page{"Go Mistakes", 1}).
 			Enumerator(enumerator).
 			Indenter(indenter).
 			Child(
-				tree.Root(page{"Code and Project Organization"}).
-					Child(page{"Unintended variable shadowing"}).
-					Child(page{"Unnecessary nested code"}),
+				tree.Root(page{"Code and Project Organization", 2}).
+					Child(page{"Unintended variable shadowing", 12}).
+					Child(page{"Unnecessary nested code", 22}),
 			).
 			Child(
-				tree.Root(page{"Data Types"}).
-					Child(page{"Creating confusion with octal literals"}).
-					Child(page{"Neglecting integer overflows"}),
+				tree.Root(page{"Data Types", 23}).
+					Child(page{"Creating confusion with octal literals", 28}).
+					Child(page{"Neglecting integer overflows", 52}),
 			).
 			Child(
-				tree.Root(page{"Strings"}).
-					Child(page{"Not understaing the concept of rune"}).
-					Child(page{"Misusing trim functions"}),
+				tree.Root(page{"Strings", 53}).
+					Child(page{"Not understaing the concept of rune", 59}).
+					Child(page{"Misusing trim functions", 61}),
 			),
 		width,
 		height,
