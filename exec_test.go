@@ -44,8 +44,15 @@ func TestTeaExec(t *testing.T) {
 		expectErr bool
 	}
 
-	var tests []test
 	// TODO: add more tests for windows
+	tests := []test{
+		{
+			name:      "invalid command",
+			cmd:       "invalid",
+			expectErr: true,
+		},
+	}
+
 	if runtime.GOOS != "windows" {
 		tests = append(tests, []test{
 			{
@@ -60,12 +67,6 @@ func TestTeaExec(t *testing.T) {
 			},
 		}...)
 	}
-
-	tests = append(tests, test{
-		name:      "invalid command",
-		cmd:       "invalid",
-		expectErr: true,
-	})
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
