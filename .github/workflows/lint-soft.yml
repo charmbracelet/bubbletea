@@ -11,7 +11,10 @@ permissions:
 jobs:
   golangci:
     name: lint-soft
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v5
