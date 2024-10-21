@@ -3,13 +3,7 @@ package tea
 import "image"
 
 // CursorPositionMsg is a message that represents the terminal cursor position.
-type CursorPositionMsg struct {
-	// Row is the row number.
-	Row int
-
-	// Column is the column number.
-	Column int
-}
+type CursorPositionMsg image.Point
 
 // CursorStyle is a style that represents the terminal cursor.
 type CursorStyle int
