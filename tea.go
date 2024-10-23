@@ -103,7 +103,7 @@ const (
 	withoutBracketedPaste
 	withReportFocus
 	withKeyboardEnhancements
-	withoutGraphemeClustering
+	withGraphemeClustering
 	withoutBackgroundColor
 )
 
@@ -734,7 +734,7 @@ func (p *Program) Run() (Model, error) {
 		p.execute(ansi.EnableBracketedPaste)
 		p.modes[ansi.BracketedPasteMode] = true
 	}
-	if p.startupOptions&withoutGraphemeClustering == 0 {
+	if p.startupOptions&withGraphemeClustering != 0 {
 		p.execute(ansi.EnableGraphemeClustering)
 		p.execute(ansi.RequestGraphemeClustering)
 		// We store the state of grapheme clustering after we query it and get
