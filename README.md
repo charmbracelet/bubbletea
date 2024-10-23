@@ -339,6 +339,7 @@ For some Bubble Tea programs in production, see:
 * [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving the terminal
 * [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
 * [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone
+* [clipse](https://github.com/savedra1/clipse) a configurable clipboard manager TUI for unix
 * [cLive](https://github.com/koki-develop/clive): automate terminal operations and view them live in a browser
 * [container-canary](https://github.com/NVIDIA/container-canary): a container validator
 * [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
