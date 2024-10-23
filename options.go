@@ -254,7 +254,7 @@ func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption
 	}
 }
 
-// WithoutGraphemeClustering disables grapheme clustering. This is useful if you
+// WithGraphemeClustering disables grapheme clustering. This is useful if you
 // want to disable grapheme clustering for your program.
 //
 // Grapheme clustering is a character width calculation method that accurately
@@ -263,9 +263,9 @@ func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption
 // characters.
 //
 // See https://mitchellh.com/writing/grapheme-clusters-in-terminals
-func WithoutGraphemeClustering() ProgramOption {
+func WithGraphemeClustering() ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withoutGraphemeClustering
+		p.startupOptions |= withGraphemeClustering
 	}
 }
 
