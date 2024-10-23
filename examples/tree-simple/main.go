@@ -15,10 +15,6 @@ type model struct {
 	s    styles
 }
 
-const (
-	width = 50
-)
-
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -43,18 +39,20 @@ func (m model) View() string {
 type styles struct {
 	base,
 	block,
+	node,
+	selected,
 	enumerator lipgloss.Style
 }
 
 func defaultStyles() styles {
 	var s styles
 	s.base = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("225"))
+		Background(lipgloss.Color("205"))
 	s.block = s.base.
-		Background(lipgloss.Color("205")).
 		Padding(1, 3).
-		Margin(1, 3).
-		Width(width)
+		Margin(1, 3)
+	s.node = s.base.Foreground(lipgloss.Color("0"))
+	s.selected = s.base.Foreground(lipgloss.Color("54")).Bold(true).Underline(true)
 
 	s.enumerator = s.base.
 		Background(lipgloss.Color("205")).
@@ -62,6 +60,11 @@ func defaultStyles() styles {
 		PaddingRight(1)
 	return s
 }
+
+const (
+	width  = 40
+	height = 11
+)
 
 func main() {
 	s := defaultStyles()
@@ -87,12 +90,12 @@ func main() {
 						),
 				),
 			"maas",
-		), 30, 10)
+		), width, height)
 	t.SetShowHelp(false)
 	t.SetStyles(tree.Styles{
-		TreeStyle:         lipgloss.NewStyle().Background(lipgloss.Color("205")),
-		NodeStyle:         lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("205")),
-		SelectedNodeStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("54")).Background(lipgloss.Color("205")).Bold(true).Underline(true),
+		TreeStyle:         s.base.Width(width),
+		NodeStyle:         s.node,
+		SelectedNodeStyle: s.selected,
 	})
 
 	if _, err := tea.NewProgram(model{tree: t, s: s}).Run(); err != nil {
