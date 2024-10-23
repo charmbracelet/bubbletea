@@ -11,7 +11,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]:https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[tut-source]:https://github.com/charmbracelet/bubbletea/blob/master/tutorials/basics/main.go
 
 ## Enough! Let's get to it.
 
