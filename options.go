@@ -268,3 +268,12 @@ func WithGraphemeClustering() ProgramOption {
 		p.startupOptions |= withGraphemeClustering
 	}
 }
+
+// WithoutBackgroundColor starts the program without querying the terminal for
+// its background color. This is useful if you want to disable automatic
+// background color detection for your program.
+func WithoutBackgroundColor() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutBackgroundColor
+	}
+}
