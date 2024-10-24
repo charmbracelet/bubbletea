@@ -3,7 +3,7 @@ module github.com/charmbracelet/bubbletea
 go 1.18
 
 require (
-	github.com/charmbracelet/lipgloss v0.13.0
+	github.com/charmbracelet/lipgloss v0.13.1
 	github.com/charmbracelet/x/ansi v0.4.0
 	github.com/charmbracelet/x/term v0.2.0
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f
