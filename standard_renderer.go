@@ -199,7 +199,7 @@ func (r *standardRenderer) flush() (err error) {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
+		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
 	} else {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
@@ -239,7 +239,7 @@ func (r *standardRenderer) reset() {
 }
 
 func (r *standardRenderer) clearScreen() {
-	r.execute(ansi.EraseEntireDisplay + ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireScreen + ansi.CursorOrigin)
 
 	r.repaint()
 }
@@ -249,14 +249,14 @@ func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
 	case enableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if r.altScreenActive {
 				return
 			}
 
 			r.altScreenActive = true
 			r.repaint()
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if !r.cursorHidden {
 				return
 			}
@@ -266,14 +266,14 @@ func (r *standardRenderer) update(msg Msg) {
 
 	case disableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if !r.altScreenActive {
 				return
 			}
 
 			r.altScreenActive = false
 			r.repaint()
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if r.cursorHidden {
 				return
 			}
