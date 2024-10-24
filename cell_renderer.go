@@ -11,6 +11,8 @@ import (
 	"github.com/charmbracelet/x/cellbuf"
 )
 
+var undefPoint = image.Pt(-1, -1)
+
 // cursor represents a terminal cursor.
 type cursor struct {
 	image.Point
@@ -67,6 +69,8 @@ type cellRenderer struct {
 	scrs [2]screen // Both inline and alt-screen
 	scr  *screen   // Points to the current used screen
 
+	finalCur image.Point // The final cursor position
+
 	method cellbuf.WidthMethod
 	pen    cellbuf.Style
 	link   cellbuf.Link
@@ -85,7 +89,8 @@ type cellRenderer struct {
 func newCellRenderer() *cellRenderer {
 	r := &cellRenderer{
 		// TODO: Update this if Grapheme Clustering is supported.
-		method: cellbuf.WcWidth,
+		method:   cellbuf.WcWidth,
+		finalCur: undefPoint,
 	}
 	r.reset()
 	return r
@@ -145,7 +150,8 @@ func (c *cellRenderer) flush() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.frame == *c.lastRender && c.lastHeight == c.scr.Height() {
+	if c.finalCur == c.scr.cur.Point && len(c.queueAbove) == 0 &&
+		c.frame == *c.lastRender && c.lastHeight == c.scr.Height() {
 		return nil
 	}
 
@@ -174,6 +180,17 @@ func (c *cellRenderer) flush() error {
 
 	c.changes()
 
+	// XXX: We need to move the cursor to the final position before rendering
+	// the frame to avoid flickering.
+	shouldHideCursor := !c.cursorHidden
+	if c.finalCur != image.Pt(-1, -1) {
+		shouldMove := c.finalCur != c.scr.cur.Point
+		shouldHideCursor = shouldHideCursor && shouldMove
+		if shouldMove {
+			c.moveCursor(c.finalCur.X, c.finalCur.Y)
+		}
+	}
+
 	c.scr.dirty = make(map[int]int)
 	c.lastHeight = cellbuf.Height(c.frame)
 	*c.lastRender = c.frame
@@ -183,7 +200,7 @@ func (c *cellRenderer) flush() error {
 		return nil
 	}
 
-	if !c.cursorHidden {
+	if shouldHideCursor {
 		// Hide the cursor while rendering to avoid flickering.
 		render = ansi.HideCursor + render + ansi.ShowCursor
 	}
@@ -216,7 +233,7 @@ func (c *cellRenderer) reset() {
 	// alt-screen buffer cursor always starts from where the main buffer cursor
 	// is. We need to set it to (-1,-1) to force the cursor to be moved to the
 	// origin on the first render.
-	c.scrs[1].cur.Point = image.Pt(-1, -1)
+	c.scrs[1].cur.Point = undefPoint
 	if c.altScreen {
 		c.scr = &c.scrs[1]
 		c.lastRender = &c.lastRenders[1]
@@ -263,6 +280,7 @@ func (c *cellRenderer) update(msg Msg) {
 
 	case clearScreenMsg:
 		io.WriteString(c.out, ansi.EraseEntireScreen+ansi.CursorOrigin) //nolint:errcheck
+		c.repaint()
 
 	case repaintMsg:
 		c.repaint()
@@ -321,6 +339,20 @@ func (c *cellRenderer) update(msg Msg) {
 
 			c.cursorHidden = true
 		}
+
+	case setCursorPosMsg:
+		x, y := msg.X, msg.Y
+		if x < 0 {
+			x = c.scr.cur.X
+		} else if x >= c.scr.Width() {
+			x = c.scr.Width() - 1
+		}
+		if y < 0 {
+			y = c.scr.cur.Y
+		} else if y >= c.scr.Height() {
+			y = c.scr.Height() - 1
+		}
+		c.finalCur = image.Pt(x, y)
 	}
 }
 
@@ -335,10 +367,10 @@ func (c *cellRenderer) changes() {
 	}
 
 	height := c.scr.Height()
-	var x int
 	if *c.lastRender == "" {
 		// We render the changes line by line to be able to get the cursor
 		// position using the width of each line.
+		var x int
 		for y := 0; y < height; y++ {
 			var line string
 			x, line = cellbuf.RenderLine(c.scr, y)
@@ -455,7 +487,6 @@ func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser
 		erased = true
 	} else {
 		c.renderSegment(seg)
-		c.scr.cur.X += seg.Width
 	}
 	return
 }
@@ -485,6 +516,14 @@ func (c *cellRenderer) renderSegment(seg *cellbuf.Segment) {
 	}
 
 	c.buf.WriteString(seg.Content)
+	c.scr.cur.X += seg.Width
+
+	if c.scr.cur.X >= c.scr.Width() {
+		// NOTE: We need to reset the cursor when at phantom cell i.e. outside
+		// the screen, otherwise, the cursor position will be out of sync.
+		c.scr.cur.X = 0
+		c.buf.WriteByte(ansi.CR)
+	}
 }
 
 // moveCursor moves the cursor to the given position.
@@ -525,9 +564,9 @@ func (c *cellRenderer) moveCursor(x, y int) {
 				if dx >= 3 {
 					// [ansi.CursorLeft] is at least 3 bytes long, so we use [ansi.BS]
 					// when we can to avoid writing more bytes than necessary.
-					c.buf.WriteString(ansi.CursorLeft(c.scr.cur.X - x))
+					c.buf.WriteString(ansi.CursorLeft(dx))
 				} else {
-					c.buf.Write(bytes.Repeat([]byte{ansi.BS}, dx))
+					c.buf.WriteString(strings.Repeat("\b", dx))
 				}
 			}
 		}
