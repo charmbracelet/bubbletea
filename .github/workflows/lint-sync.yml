@@ -1,0 +1,14 @@
+name: lint-sync
+on:
+  schedule:
+    # every Sunday at midnight
+    - cron: "0 0 * * 0"
+  workflow_dispatch: # allows manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  lint:
+    uses: charmbracelet/meta/.github/workflows/lint-sync.yml@main
