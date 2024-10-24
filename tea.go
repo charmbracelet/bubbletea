@@ -445,9 +445,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case modeReportMsg:
 				switch msg.Mode {
-				case graphemeClustering:
+				case int(ansi.GraphemeClusteringMode):
 					// 1 means mode is set (see DECRPM).
-					p.modes[ansi.GraphemeClusteringMode] = msg.Value == 1 || msg.Value == 3
+					p.modes[ansi.GraphemeClusteringMode.String()] = msg.Value == 1 || msg.Value == 3
 				}
 
 			case enableModeMsg:
@@ -458,7 +458,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprintf("\x1b[%sh", string(msg)))
 				p.modes[string(msg)] = true
 				switch string(msg) {
-				case ansi.GraphemeClusteringMode:
+				case ansi.GraphemeClusteringMode.String():
 					// We store the state of grapheme clustering after we enable it
 					// and get a response in the eventLoop.
 					p.execute(ansi.RequestGraphemeClustering)
@@ -724,9 +724,9 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Hide the cursor before starting the renderer.
-	p.modes[ansi.CursorVisibilityMode] = false
+	p.modes[ansi.CursorEnableMode.String()] = false
 	p.execute(ansi.HideCursor)
-	p.renderer.update(disableMode(ansi.CursorVisibilityMode))
+	p.renderer.update(disableMode(ansi.CursorEnableMode.String()))
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
@@ -734,12 +734,12 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.execute(ansi.EnableAltScreenBuffer)
-		p.modes[ansi.AltScreenBufferMode] = true
-		p.renderer.update(enableMode(ansi.AltScreenBufferMode))
+		p.modes[ansi.AltScreenBufferMode.String()] = true
+		p.renderer.update(enableMode(ansi.AltScreenBufferMode.String()))
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.EnableBracketedPaste)
-		p.modes[ansi.BracketedPasteMode] = true
+		p.modes[ansi.BracketedPasteMode.String()] = true
 	}
 	if p.startupOptions&withGraphemeClustering != 0 {
 		p.execute(ansi.EnableGraphemeClustering)
@@ -750,18 +750,18 @@ func (p *Program) Run() (Model, error) {
 	if p.startupOptions&withMouseCellMotion != 0 {
 		p.execute(ansi.EnableMouseCellMotion)
 		p.execute(ansi.EnableMouseSgrExt)
-		p.modes[ansi.MouseCellMotionMode] = true
-		p.modes[ansi.MouseSgrExtMode] = true
+		p.modes[ansi.MouseCellMotionMode.String()] = true
+		p.modes[ansi.MouseSgrExtMode.String()] = true
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.execute(ansi.EnableMouseAllMotion)
 		p.execute(ansi.EnableMouseSgrExt)
-		p.modes[ansi.MouseAllMotionMode] = true
-		p.modes[ansi.MouseSgrExtMode] = true
+		p.modes[ansi.MouseAllMotionMode.String()] = true
+		p.modes[ansi.MouseSgrExtMode.String()] = true
 	}
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.execute(ansi.EnableReportFocus)
-		p.modes[ansi.ReportFocusMode] = true
+		p.modes[ansi.ReportFocusMode.String()] = true
 	}
 	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
 		// We use the Windows Console API which supports keyboard
@@ -934,7 +934,7 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initInputReader(); err != nil {
 		return err
 	}
-	if p.modes[ansi.AltScreenBufferMode] {
+	if p.modes[ansi.AltScreenBufferMode.String()] {
 		p.execute(ansi.EnableAltScreenBuffer)
 	} else {
 		// entering alt screen already causes a repaint.
@@ -942,12 +942,12 @@ func (p *Program) RestoreTerminal() error {
 	}
 
 	p.startRenderer()
-	if !p.modes[ansi.CursorVisibilityMode] {
+	if !p.modes[ansi.CursorEnableMode.String()] {
 		p.execute(ansi.HideCursor)
 	} else {
 		p.execute(ansi.ShowCursor)
 	}
-	if p.modes[ansi.BracketedPasteMode] {
+	if p.modes[ansi.BracketedPasteMode.String()] {
 		p.execute(ansi.EnableBracketedPaste)
 	}
 	if p.keyboard.modifyOtherKeys != 0 {
@@ -956,10 +956,10 @@ func (p *Program) RestoreTerminal() error {
 	if p.keyboard.kittyFlags != 0 {
 		p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
 	}
-	if p.modes[ansi.ReportFocusMode] {
+	if p.modes[ansi.ReportFocusMode.String()] {
 		p.execute(ansi.EnableReportFocus)
 	}
-	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
+	if p.modes[ansi.MouseCellMotionMode.String()] || p.modes[ansi.MouseAllMotionMode.String()] {
 		if p.startupOptions&withMouseCellMotion != 0 {
 			p.execute(ansi.EnableMouseCellMotion)
 			p.execute(ansi.EnableMouseSgrExt)
@@ -968,7 +968,7 @@ func (p *Program) RestoreTerminal() error {
 			p.execute(ansi.EnableMouseSgrExt)
 		}
 	}
-	if p.modes[ansi.GraphemeClusteringMode] {
+	if p.modes[ansi.GraphemeClusteringMode.String()] {
 		p.execute(ansi.EnableGraphemeClustering)
 	}
 

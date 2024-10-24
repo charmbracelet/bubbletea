@@ -133,11 +133,11 @@ func (c *cellRenderer) close() error {
 func (c *cellRenderer) clearScreen() {
 	c.moveCursor(0, 0)
 	if c.altScreen {
-		c.buf.WriteString(ansi.EraseEntireDisplay) //nolint:errcheck
+		c.buf.WriteString(ansi.EraseEntireScreen) //nolint:errcheck
 		return
 	}
 
-	c.buf.WriteString(ansi.EraseDisplayBelow) //nolint:errcheck
+	c.buf.WriteString(ansi.EraseScreenBelow) //nolint:errcheck
 }
 
 // flush implements renderer.
@@ -262,7 +262,7 @@ func (c *cellRenderer) update(msg Msg) {
 		c.lastRenders[1] = ""
 
 	case clearScreenMsg:
-		io.WriteString(c.out, ansi.EraseEntireDisplay+ansi.MoveCursorOrigin) //nolint:errcheck
+		io.WriteString(c.out, ansi.EraseEntireScreen+ansi.CursorOrigin) //nolint:errcheck
 
 	case repaintMsg:
 		c.repaint()
@@ -274,7 +274,7 @@ func (c *cellRenderer) update(msg Msg) {
 
 	case enableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if c.altScreen {
 				return
 			}
@@ -291,7 +291,7 @@ func (c *cellRenderer) update(msg Msg) {
 			// whenever we enter or leave AltScreen.
 			c.updateCursorVisibility()
 
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if !c.cursorHidden {
 				return
 			}
@@ -301,7 +301,7 @@ func (c *cellRenderer) update(msg Msg) {
 
 	case disableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if !c.altScreen {
 				return
 			}
@@ -314,7 +314,7 @@ func (c *cellRenderer) update(msg Msg) {
 			// whenever we enter or leave AltScreen.
 			c.updateCursorVisibility()
 
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if c.cursorHidden {
 				return
 			}
@@ -432,7 +432,7 @@ func (c *cellRenderer) changes() {
 		// Move the cursor to the last line of this render and erase the rest
 		// of the screen.
 		c.moveCursor(c.scr.cur.X, height-1)
-		c.buf.WriteString(ansi.EraseDisplayBelow)
+		c.buf.WriteString(ansi.EraseScreenBelow)
 	}
 }
 
@@ -496,7 +496,7 @@ func (c *cellRenderer) moveCursor(x, y int) {
 	if c.altScreen {
 		// TODO: Optimize for small movements i.e. movements that cost less
 		// than 8 bytes in total. [ansi.MoveCursor] is at least 6 bytes long.
-		c.buf.WriteString(ansi.MoveCursor(y+1, x+1))
+		c.buf.WriteString(ansi.SetCursorPosition(x+1, y+1))
 	} else {
 		if c.scr.cur.X < x {
 			dx := x - c.scr.cur.X

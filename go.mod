@@ -3,7 +3,7 @@ module github.com/charmbracelet/bubbletea/v2
 go 1.18
 
 require (
-	github.com/charmbracelet/x/ansi v0.3.2
+	github.com/charmbracelet/x/ansi v0.4.0
 	github.com/charmbracelet/x/cellbuf v0.0.0-20241015153255-110a4e49aee6
 	github.com/charmbracelet/x/term v0.2.0
 	github.com/charmbracelet/x/windows v0.2.0
