@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/textarea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -75,8 +75,8 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -92,7 +92,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.saveText = ""
 		switch {
 		case key.Matches(msg, m.keymap.save):
@@ -101,7 +101,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.quit):
 			m.quitting = true
 			return m, tea.Quit
-		case msg.Type == tea.KeyRunes:
+		case len(msg.Text) > 0:
 			m.saveText = ""
 			m.hasChanges = true
 			fallthrough
@@ -119,7 +119,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// For simplicity's sake, we'll treat any key besides "y" as "no"
 		if key.Matches(msg, m.keymap.quit) || msg.String() == "y" {
 			m.hasChanges = false

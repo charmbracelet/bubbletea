@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 // A message used to indicate that activity has occurred. In the real world (for
@@ -44,8 +44,8 @@ type model struct {
 	quitting  bool
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.Batch(
 		m.spinner.Tick,
 		listenForActivity(m.sub), // generate activity
 		waitForActivity(m.sub),   // wait for activity
@@ -54,7 +54,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.quitting = true
 		return m, tea.Quit
 	case responseMsg:
