@@ -199,7 +199,7 @@ func (r *standardRenderer) flush() (err error) {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
+		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
 	} else {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
@@ -239,7 +239,7 @@ func (r *standardRenderer) reset() {
 }
 
 func (r *standardRenderer) clearScreen() {
-	r.execute(ansi.EraseEntireDisplay + ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireScreen + ansi.CursorOrigin)
 
 	r.repaint()
 }
@@ -250,8 +250,8 @@ func (r *standardRenderer) setAltScreenBuffer(on bool) {
 		// Ensure that the terminal is cleared, even when it doesn't support
 		// alt screen (or alt screen support is disabled, like GNU screen by
 		// default).
-		r.execute(ansi.EraseEntireDisplay)
-		r.execute(ansi.MoveCursorOrigin)
+		r.execute(ansi.EraseEntireScreen)
+		r.execute(ansi.CursorOrigin)
 	}
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
@@ -269,7 +269,7 @@ func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
 	case enableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if r.altScreenActive {
 				return
 			}
@@ -277,7 +277,7 @@ func (r *standardRenderer) update(msg Msg) {
 			r.setAltScreenBuffer(true)
 			r.altScreenActive = true
 			r.repaint()
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if !r.cursorHidden {
 				return
 			}
@@ -287,7 +287,7 @@ func (r *standardRenderer) update(msg Msg) {
 
 	case disableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if !r.altScreenActive {
 				return
 			}
@@ -295,7 +295,7 @@ func (r *standardRenderer) update(msg Msg) {
 			r.setAltScreenBuffer(false)
 			r.altScreenActive = false
 			r.repaint()
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if r.cursorHidden {
 				return
 			}

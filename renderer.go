@@ -28,10 +28,3 @@ type repaintMsg struct{}
 type rendererWriter struct {
 	io.Writer
 }
-
-// Terminal modes used by SetMode and Mode in Bubble Tea.
-const (
-	graphemeClustering = 2027
-	altScreenMode      = 1049
-	hideCursor         = 25
-)
