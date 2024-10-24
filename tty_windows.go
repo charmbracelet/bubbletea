@@ -46,7 +46,9 @@ func (p *Program) initInput() (err error) {
 			return fmt.Errorf("error getting console mode: %w", err)
 		}
 
-		if err := windows.SetConsoleMode(windows.Handle(p.ttyOutput.Fd()), mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
+		if err := windows.SetConsoleMode(windows.Handle(p.ttyOutput.Fd()),
+			mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING|
+				windows.DISABLE_NEWLINE_AUTO_RETURN); err != nil {
 			return fmt.Errorf("error setting console mode: %w", err)
 		}
 	}

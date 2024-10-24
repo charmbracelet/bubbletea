@@ -21,6 +21,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -212,6 +213,9 @@ type Program struct {
 
 	// tracer is used to trace the program's output and input.
 	tracer tracer
+
+	// exp stores program experimental features.
+	exp experimentalOptions
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -246,6 +250,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
 		modes:        make(map[string]bool),
+		exp:          experimentalOptions{},
 	}
 
 	// Apply all options to the program.
@@ -299,6 +304,12 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	if p.tracer.mask&traceOutput != 0 {
 		p.output.trace = true
+	}
+
+	// Experimental features. Right now, we only have one experimental feature
+	// to use the new cell buffer as a default renderer.
+	if exp := p.getenv("TEA_EXPERIMENTAL"); exp != "" {
+		p.exp = strings.Split(exp, ",")
 	}
 
 	return p
@@ -447,8 +458,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprintf("\x1b[%sh", string(msg)))
 				p.modes[string(msg)] = true
 				switch string(msg) {
-				case ansi.AltScreenBufferMode.String():
-					p.setAltScreenBuffer(true)
 				case ansi.GraphemeClusteringMode.String():
 					// We store the state of grapheme clustering after we enable it
 					// and get a response in the eventLoop.
@@ -462,10 +471,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 				p.execute(fmt.Sprintf("\x1b[%sl", string(msg)))
 				p.modes[string(msg)] = false
-				switch string(msg) {
-				case ansi.AltScreenBufferMode.String():
-					p.setAltScreenBuffer(false)
-				}
 
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
@@ -687,7 +692,11 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newStandardRenderer()
+		if p.exp.has(experimentalCellbuf) {
+			p.renderer = newCellRenderer()
+		} else {
+			p.renderer = newStandardRenderer()
+		}
 	}
 
 	// Set the renderer output.
@@ -725,7 +734,6 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.execute(ansi.EnableAltScreenBuffer)
-		p.setAltScreenBuffer(true)
 		p.modes[ansi.AltScreenBufferMode.String()] = true
 		p.renderer.update(enableMode(ansi.AltScreenBufferMode.String()))
 	}
