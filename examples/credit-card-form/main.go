@@ -29,12 +29,10 @@ const (
 	cvv
 )
 
-const (
+var (
 	hotPink  = lipgloss.Color("#FF06B7")
 	darkGray = lipgloss.Color("#767676")
-)
 
-var (
 	inputStyle    = lipgloss.NewStyle().Foreground(hotPink)
 	continueStyle = lipgloss.NewStyle().Foreground(darkGray)
 )
