@@ -254,8 +254,8 @@ look at the [Command Tutorial][cmd]. It's pretty simple.
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
-[examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
+[cmd]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
+[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
 ## Debugging
@@ -353,6 +353,12 @@ There are over 8k applications built with Bubble Tea! Here are a handful of ’e
 For more applications built with Bubble Tea see [Charm & Friends][community].
 Is there something cool you made with Bubble Tea you want to share? [PRs][community] are
 welcome!
+
+## Contributing
+
+See [contributing][contribute].
+
+[contribute]: https://github.com/charmbracelet/bubbletea/contribute
 
 ## Feedback
 

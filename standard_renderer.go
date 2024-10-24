@@ -256,7 +256,7 @@ func (r *standardRenderer) flush() {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
+		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
 	} else {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
@@ -292,8 +292,8 @@ func (r *standardRenderer) clearScreen() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireScreen)
+	r.execute(ansi.CursorOrigin)
 
 	r.repaint()
 }
@@ -322,8 +322,8 @@ func (r *standardRenderer) enterAltScreen() {
 	//
 	// Note: we can't use r.clearScreen() here because the mutex is already
 	// locked.
-	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireScreen)
+	r.execute(ansi.CursorOrigin)
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
@@ -496,7 +496,7 @@ func (r *standardRenderer) setIgnoredLines(from int, to int) {
 			}
 			buf.WriteString(ansi.CursorUp1)
 		}
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0)) // put cursor back
+		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered)) // put cursor back
 		_, _ = r.out.Write(buf.Bytes())
 	}
 }
@@ -536,13 +536,13 @@ func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary
 	buf := &bytes.Buffer{}
 
 	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.MoveCursor(topBoundary, 0))
+	buf.WriteString(ansi.SetCursorPosition(0, topBoundary))
 	buf.WriteString(ansi.InsertLine(len(lines)))
 	_, _ = buf.WriteString(strings.Join(lines, "\r\n"))
 	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
 
 	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
+	buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
 
 	_, _ = r.out.Write(buf.Bytes())
 }
@@ -566,12 +566,12 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 	buf := &bytes.Buffer{}
 
 	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.MoveCursor(bottomBoundary, 0))
+	buf.WriteString(ansi.SetCursorPosition(0, bottomBoundary))
 	_, _ = buf.WriteString("\r\n" + strings.Join(lines, "\r\n"))
 	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
 
 	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
+	buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
 
 	_, _ = r.out.Write(buf.Bytes())
 }
