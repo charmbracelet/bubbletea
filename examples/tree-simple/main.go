@@ -33,7 +33,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return m.s.block.Render(m.tree.View())
+	return m.s.block.Margin(1, 3).Render(m.tree.View())
 }
 
 type styles struct {
@@ -41,6 +41,8 @@ type styles struct {
 	block,
 	node,
 	selected,
+	cursor,
+	openCharacter,
 	enumerator lipgloss.Style
 }
 
@@ -49,8 +51,9 @@ func defaultStyles() styles {
 	s.base = lipgloss.NewStyle().
 		Background(lipgloss.Color("205"))
 	s.block = s.base.
-		Padding(1, 3).
-		Margin(1, 3)
+		PaddingTop(1).PaddingRight(3)
+	s.cursor = s.base.Padding(1, 1, 0, 3).Foreground(lipgloss.Color("54"))
+	s.openCharacter = s.base.Foreground(lipgloss.Color("54"))
 	s.node = s.base.Foreground(lipgloss.Color("0"))
 	s.selected = s.base.Foreground(lipgloss.Color("54")).Bold(true).Underline(true)
 
@@ -61,8 +64,8 @@ func defaultStyles() styles {
 }
 
 const (
-	width  = 35
-	height = 15
+	width  = 45
+	height = 13
 )
 
 func main() {
@@ -91,14 +94,14 @@ func main() {
 		), width, height)
 	t.SetShowHelp(false)
 	t.SetStyles(tree.Styles{
-		TreeStyle:          s.block,
-		CursorStyle:        s.base.PaddingRight(1),
+		TreeStyle:          s.block.Width(width - 5),
+		CursorStyle:        s.cursor,
 		NodeStyle:          s.node,
 		RootNodeStyle:      s.node,
 		ParentNodeStyle:    s.node,
 		SelectedNodeStyle:  s.selected,
 		EnumeratorStyle:    s.enumerator,
-		OpenIndicatorStyle: s.base,
+		OpenIndicatorStyle: s.openCharacter,
 	})
 
 	if _, err := tea.NewProgram(model{tree: t, s: s}).Run(); err != nil {

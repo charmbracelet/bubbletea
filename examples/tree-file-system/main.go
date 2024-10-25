@@ -41,13 +41,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *model) updateStyles() {
 	m.tree.SetStyles(tree.Styles{
-		TreeStyle:          lipgloss.NewStyle().Padding(3).Background(lipgloss.Color("234")),
+		TreeStyle:          lipgloss.NewStyle().Padding(3).PaddingLeft(0).Background(lipgloss.Color("234")),
 		RootNodeStyle:      lipgloss.NewStyle().Background(lipgloss.Color("234")),
 		NodeStyle:          lipgloss.NewStyle().Background(lipgloss.Color("234")),
 		ParentNodeStyle:    lipgloss.NewStyle().Background(lipgloss.Color("234")),
 		OpenIndicatorStyle: lipgloss.NewStyle().Background(lipgloss.Color("234")),
 		SelectedNodeStyle:  lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("8")),
-		CursorStyle:        lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("234")).Foreground(lipgloss.Color("1")).PaddingRight(1),
+		CursorStyle:        lipgloss.NewStyle().Padding(3, 1, 3, 3).Bold(true).Background(lipgloss.Color("234")).Foreground(lipgloss.Color("1")),
 		HelpStyle:          lipgloss.NewStyle().MarginTop(1),
 		EnumeratorStyle:    lipgloss.NewStyle().Foreground(lipgloss.Color("239")).Background(lipgloss.Color("234")),
 	})
