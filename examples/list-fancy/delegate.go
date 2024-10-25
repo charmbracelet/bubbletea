@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
-func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
+func newItemDelegate(keys *delegateKeyMap, styles *styles) list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
@@ -22,7 +22,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyPressMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
-				return m.NewStatusMessage(statusMessageStyle("You chose " + title))
+				return m.NewStatusMessage(styles.statusMessage.Render("You chose " + title))
 
 			case key.Matches(msg, keys.remove):
 				index := m.Index()
@@ -30,7 +30,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 				if len(m.Items()) == 0 {
 					keys.remove.SetEnabled(false)
 				}
-				return m.NewStatusMessage(statusMessageStyle("Deleted " + title))
+				return m.NewStatusMessage(styles.statusMessage.Render("Deleted " + title))
 			}
 		}
 
