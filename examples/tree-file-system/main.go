@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/tree"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	ltree "github.com/charmbracelet/lipgloss/tree"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -39,34 +39,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model) childWidth(child *tree.Node) int {
-	w := width - enumeratorWidth*child.Depth()
-	if strings.HasPrefix(child.Value(), m.tree.OpenCharacter) {
-		w -= lipgloss.Width(m.tree.OpenCharacter)
-	} else if strings.HasPrefix(child.Value(), m.tree.ClosedCharacter) {
-		w -= lipgloss.Width(m.tree.ClosedCharacter)
-	} else {
-		w -= lipgloss.Width("⌯ ")
-	}
-	return w
-}
-
 func (m *model) updateStyles() {
 	m.tree.SetStyles(tree.Styles{
-		TreeStyle: lipgloss.NewStyle().Padding(1).Background(lipgloss.Color("234")),
-		NodeStyleFunc: func(children tree.Nodes, i int) lipgloss.Style {
-			child := children.At(i)
-			w := m.childWidth(child)
-
-			return lipgloss.NewStyle().Width(w).Background(lipgloss.Color("234"))
-		},
-		SelectedNodeStyleFunc: func(children tree.Nodes, i int) lipgloss.Style {
-			child := children.At(i)
-			w := m.childWidth(child)
-
-			return lipgloss.NewStyle().Bold(true).Width(w).Background(lipgloss.Color("8"))
-		},
-		HelpStyle: lipgloss.NewStyle().MarginTop(1),
+		TreeStyle:          lipgloss.NewStyle().Padding(3).Background(lipgloss.Color("234")),
+		RootNodeStyle:      lipgloss.NewStyle().Background(lipgloss.Color("234")),
+		NodeStyle:          lipgloss.NewStyle().Background(lipgloss.Color("234")),
+		ParentNodeStyle:    lipgloss.NewStyle().Background(lipgloss.Color("234")),
+		OpenIndicatorStyle: lipgloss.NewStyle().Background(lipgloss.Color("234")),
+		SelectedNodeStyle:  lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("8")),
+		CursorStyle:        lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("234")).Foreground(lipgloss.Color("1")).PaddingRight(1),
+		HelpStyle:          lipgloss.NewStyle().MarginTop(1),
+		EnumeratorStyle:    lipgloss.NewStyle().Foreground(lipgloss.Color("239")).Background(lipgloss.Color("234")),
 	})
 }
 
@@ -80,8 +63,6 @@ type file struct {
 }
 
 func (f file) String() string {
-	// TODO: can't partially apply the foreground only to the icon
-	// This happens because creating the new style somehow resets the background of the selected node
 	return "⌯ " + lipgloss.NewStyle().Foreground(lipgloss.Color(f.color)).Render(f.name)
 }
 
@@ -94,15 +75,20 @@ func (d dir) String() string {
 }
 
 const (
-	width           = 50
-	height          = 30
+	width           = 70
+	height          = 21
 	enumeratorWidth = 3
 )
 
 func main() {
 	t := tree.New(
 		tree.Root(dir{"charmbracelet/lipgloss"}).
-			EnumeratorStyle(lipgloss.NewStyle().Background(lipgloss.Color("234"))).
+			Indenter(func(_ ltree.Children, _ int) string {
+				return "│ "
+			}).
+			Enumerator(func(_ ltree.Children, _ int) string {
+				return "│ "
+			}).
 			Child(
 				tree.Root(dir{"tree"}).
 					Child(file{"tree.go", "6"}).
@@ -115,7 +101,7 @@ func main() {
 							Child(file{"utils.go", "6"}),
 					),
 			).
-			Child(tree.Root(dir{"list"})).
+			Child(tree.Root(dir{"list"}).Child(lipgloss.NewStyle().Faint(true).Render("(empty)"))).
 			Child(file{"README.md", "3"}).
 			Child(file{"go.mod", "255"}).
 			Child(file{"go.sum", "255"}).
@@ -144,7 +130,6 @@ func main() {
 
 	// Assert the final tea.Model to our local model and print the choice.
 	if m, ok := m.(model); ok && m.choice != nil {
-		// TODO: should we expose a OriginalValue() method on Item?
 		fmt.Printf("---\nYou chose %s!\n", ansi.Strip(m.choice.Value()))
 	}
 }

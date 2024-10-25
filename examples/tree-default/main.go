@@ -53,7 +53,7 @@ func main() {
 						),
 				),
 			"maas",
-		), 30, 10)
+		), 30, 13)
 
 	if _, err := tea.NewProgram(model{tree: t}).Run(); err != nil {
 		fmt.Println("Oh no:", err)

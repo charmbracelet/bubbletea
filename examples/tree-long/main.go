@@ -51,7 +51,7 @@ func main() {
 		root.Child(yRoot)
 	}
 
-	t := tree.New(root, 30, 30)
+	t := tree.New(root, 80, 30)
 
 	if _, err := tea.NewProgram(model{tree: t}).Run(); err != nil {
 		fmt.Println("Oh no:", err)

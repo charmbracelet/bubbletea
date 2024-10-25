@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/tree"
 	tea "github.com/charmbracelet/bubbletea"
@@ -34,36 +33,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *model) childWidth(child *tree.Node) int {
-	w := width - enumeratorWidth*child.Depth() + 1
-	if strings.HasPrefix(child.Value(), m.tree.OpenCharacter) {
-		w += lipgloss.Width(m.tree.OpenCharacter)
-	} else if strings.HasPrefix(child.Value(), m.tree.ClosedCharacter) {
-		w += lipgloss.Width(m.tree.ClosedCharacter)
-	}
-	return w
-}
-
 func (m *model) updateStyles() {
 	m.tree.SetStyles(tree.Styles{
-		NodeStyleFunc: func(children tree.Nodes, i int) lipgloss.Style {
-			child := children.At(i)
-			w := m.childWidth(child)
-			s := lipgloss.NewStyle().Width(w).MaxWidth(w).Inline(true)
-			// TODO: should this be defined in a RootStyle?
-			if child.Children().Length() > 0 {
-				return s.Bold(true)
-			}
-
-			return s
-		},
-		SelectedNodeStyleFunc: func(children tree.Nodes, i int) lipgloss.Style {
-			child := children.At(i)
-			w := m.childWidth(child)
-
-			return lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("92")).Width(w).MaxWidth(w).Inline(true)
-		},
-		HelpStyle: lipgloss.NewStyle().MarginTop(1),
+		RootNodeStyle:     lipgloss.NewStyle().Foreground(lipgloss.Color("205")),
+		SelectedNodeStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8")).Bold(true),
+		CursorStyle:       lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8")).Bold(true),
+		HelpStyle:         lipgloss.NewStyle().MarginTop(1),
 	})
 }
 
@@ -71,15 +46,14 @@ func (m model) View() string {
 	pageNumbers := make([]string, len(m.tree.FlatNodes()))
 	for i, node := range m.tree.FlatNodes() {
 		v := node.GivenValue()
-		// check if v is page
 		if page, ok := v.(page); ok {
 			num := fmt.Sprintf("%d", page.page)
 			if i == m.tree.YOffset() {
-				num = lipgloss.NewStyle().Foreground(lipgloss.Color("92")).Bold(true).Render(fmt.Sprintf("%d", page.page))
+				num = lipgloss.NewStyle().Foreground(lipgloss.Color("#EE6FF8")).Bold(true).Render(num)
+			} else {
+				num = lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Render(num)
 			}
 			pageNumbers[i] = num
-		} else {
-			pageNumbers[i] = fmt.Sprintf("%T", v)
 		}
 	}
 	return lipgloss.NewStyle().Padding(1).Render(
@@ -92,7 +66,7 @@ func (m model) View() string {
 
 const (
 	width           = 60
-	height          = 30
+	height          = 12
 	enumeratorWidth = 3
 )
 
@@ -110,8 +84,7 @@ type page struct {
 }
 
 func (p page) String() string {
-	// TODO: overcompensating the number of dots, should I support a ValueFunc?
-	return p.title + strings.Repeat(".", width-len(p.title))
+	return p.title
 }
 
 func main() {

@@ -55,22 +55,20 @@ func defaultStyles() styles {
 	s.selected = s.base.Foreground(lipgloss.Color("54")).Bold(true).Underline(true)
 
 	s.enumerator = s.base.
-		Background(lipgloss.Color("205")).
 		Foreground(lipgloss.Color("126")).
 		PaddingRight(1)
 	return s
 }
 
 const (
-	width  = 40
-	height = 11
+	width  = 35
+	height = 15
 )
 
 func main() {
 	s := defaultStyles()
 	t := tree.New(tree.Root("~/charm").
 		Enumerator(ltree.RoundedEnumerator).
-		EnumeratorStyle(s.enumerator).
 		Child(
 			"ayman",
 			tree.Root("bash").
@@ -93,9 +91,14 @@ func main() {
 		), width, height)
 	t.SetShowHelp(false)
 	t.SetStyles(tree.Styles{
-		TreeStyle:         s.base.Width(width),
-		NodeStyle:         s.node,
-		SelectedNodeStyle: s.selected,
+		TreeStyle:          s.block,
+		CursorStyle:        s.base.PaddingRight(1),
+		NodeStyle:          s.node,
+		RootNodeStyle:      s.node,
+		ParentNodeStyle:    s.node,
+		SelectedNodeStyle:  s.selected,
+		EnumeratorStyle:    s.enumerator,
+		OpenIndicatorStyle: s.base,
 	})
 
 	if _, err := tea.NewProgram(model{tree: t, s: s}).Run(); err != nil {
