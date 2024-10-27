@@ -7,12 +7,15 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss"
 )
+
+const windowTitle = "Hello, Bubble Tea"
 
 type model struct{}
 
 func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.SetWindowTitle("Bubble Tea Example")
+	return m, tea.SetWindowTitle(windowTitle)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -24,7 +27,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return "\nPress any key to quit."
+	wrap := lipgloss.NewStyle().Width(78).Render
+	return wrap("The window title has been set to '"+windowTitle+"'. It will be cleared on exit.") +
+		"\n\nPress any key to quit."
 }
 
 func main() {
