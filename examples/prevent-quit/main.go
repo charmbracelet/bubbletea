@@ -16,7 +16,7 @@ import (
 var (
 	choiceStyle   = lipgloss.NewStyle().PaddingLeft(1).Foreground(lipgloss.Color("241"))
 	saveTextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("170"))
-	quitViewStyle = lipgloss.NewStyle().Padding(1).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("170"))
+	quitViewStyle = lipgloss.NewStyle().Padding(1, 3).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("170"))
 )
 
 func main() {
@@ -134,10 +134,10 @@ func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	if m.quitting {
 		if m.hasChanges {
-			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yn]"))
+			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yN]"))
 			return quitViewStyle.Render(text)
 		}
-		return "Very important, thank you\n"
+		return "Very important. Thank you.\n"
 	}
 
 	helpView := m.help.ShortHelpView([]key.Binding{
@@ -146,7 +146,7 @@ func (m model) View() string {
 	})
 
 	return fmt.Sprintf(
-		"\nType some important things.\n\n%s\n\n %s\n %s",
+		"Type some important things.\n%s\n %s\n %s",
 		m.textarea.View(),
 		saveTextStyle.Render(m.saveText),
 		helpView,
