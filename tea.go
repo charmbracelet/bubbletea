@@ -710,7 +710,7 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newStandardRenderer()
+		p.renderer = newStandardRenderer(p.profile)
 	}
 
 	// Set the renderer output.
