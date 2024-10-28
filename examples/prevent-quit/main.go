@@ -119,7 +119,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// For simplicity's sake, we'll treat any key besides "y" as "no"
 		if key.Matches(msg, m.keymap.quit) || msg.String() == "y" {
 			m.hasChanges = false

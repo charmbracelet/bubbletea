@@ -2,13 +2,15 @@ package tea
 
 import (
 	"io"
+	"log"
 	"sync"
 )
 
 // safeWriter is a thread-safe writer.
 type safeWriter struct {
-	w  io.Writer
-	mu sync.Mutex
+	w     io.Writer
+	mu    sync.Mutex
+	trace bool
 }
 
 var _ io.Writer = &safeWriter{}
@@ -27,5 +29,8 @@ func (w *safeWriter) Writer() io.Writer {
 func (w *safeWriter) Write(p []byte) (n int, err error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	if w.trace {
+		log.Printf("output %q", p)
+	}
 	return w.w.Write(p)
 }

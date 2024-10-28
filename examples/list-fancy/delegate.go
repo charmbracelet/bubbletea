@@ -19,7 +19,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		}
 
 		switch msg := msg.(type) {
-		case tea.KeyMsg:
+		case tea.KeyPressMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
 				return m.NewStatusMessage(statusMessageStyle("You chose " + title))
