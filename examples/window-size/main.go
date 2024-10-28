@@ -28,7 +28,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-		return m, tea.WindowSize()
+		return m, tea.RequestWindowSize()
 
 	case tea.WindowSizeMsg:
 		return m, tea.Printf("%dx%d", msg.Width, msg.Height)
