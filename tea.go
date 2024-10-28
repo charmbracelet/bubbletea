@@ -104,6 +104,7 @@ const (
 	withReportFocus
 	withKeyboardEnhancements
 	withGraphemeClustering
+	withRequestBackgroundColor
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -767,6 +768,9 @@ func (p *Program) Run() (Model, error) {
 			p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
 			p.execute(ansi.RequestKittyKeyboard)
 		}
+	}
+	if p.startupOptions.has(withRequestBackgroundColor) {
+		p.execute(ansi.RequestBackgroundColor)
 	}
 
 	// Start the renderer.

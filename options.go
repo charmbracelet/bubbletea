@@ -268,3 +268,14 @@ func WithGraphemeClustering() ProgramOption {
 		p.startupOptions |= withGraphemeClustering
 	}
 }
+
+// WithRequestBackground starts the program with a request to query the
+// background color of the terminal.
+//
+// This is useful if you want to know the background color of the terminal. The
+// background color will be sent to your program as a [BackgroundMsg].
+func WithRequestBackground() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withRequestBackgroundColor
+	}
+}
