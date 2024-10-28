@@ -11,24 +11,24 @@ import (
 // backgroundColorMsg is a message that requests the terminal background color.
 type backgroundColorMsg struct{}
 
-// BackgroundColor is a command that requests the terminal background color.
-func BackgroundColor() Msg {
+// RequestBackgroundColor is a command that requests the terminal background color.
+func RequestBackgroundColor() Msg {
 	return backgroundColorMsg{}
 }
 
 // foregroundColorMsg is a message that requests the terminal foreground color.
 type foregroundColorMsg struct{}
 
-// ForegroundColor is a command that requests the terminal foreground color.
-func ForegroundColor() Msg {
+// RequestForegroundColor is a command that requests the terminal foreground color.
+func RequestForegroundColor() Msg {
 	return foregroundColorMsg{}
 }
 
 // cursorColorMsg is a message that requests the terminal cursor color.
 type cursorColorMsg struct{}
 
-// CursorColor is a command that requests the terminal cursor color.
-func CursorColor() Msg {
+// RequestCursorColor is a command that requests the terminal cursor color.
+func RequestCursorColor() Msg {
 	return cursorColorMsg{}
 }
 
@@ -62,9 +62,9 @@ func SetCursorColor(c color.Color) Cmd {
 	}
 }
 
-// ForegroundColorMsg represents a foreground color message.
-// This message is emitted when the program requests the terminal foreground
-// color.
+// ForegroundColorMsg represents a foreground color message. This message is
+// emitted when the program requests the terminal foreground color with the
+// [RequestForegroundColor] Cmd.
 type ForegroundColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
@@ -77,9 +77,25 @@ func (e ForegroundColorMsg) IsDark() bool {
 	return isDarkColor(e.Color)
 }
 
-// BackgroundColorMsg represents a background color message.
-// This message is emitted when the program requests the terminal background
-// color.
+// BackgroundColorMsg represents a background color message. This message is
+// emitted when the program requests the terminal background color with the
+// [RequestBackgroundColor] Cmd.
+//
+// This is commonly used in [Update.Init] to get the terminal background color
+// for style definitions. For that you'll want to call
+// [BackgroundColorMsg.IsDark] to determine if the color is dark or light. For
+// example:
+//
+//	func (m Model) Init() (Model, Cmd) {
+//	  return m, RequestBackgroundColor()
+//	}
+//
+//	func (m Model) Update(msg Msg) (Model, Cmd) {
+//	  switch msg := msg.(type) {
+//	  case BackgroundColorMsg:
+//	      m.styles = newStyles(msg.IsDark())
+//	  }
+//	}
 type BackgroundColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
@@ -92,8 +108,8 @@ func (e BackgroundColorMsg) IsDark() bool {
 	return isDarkColor(e.Color)
 }
 
-// CursorColorMsg represents a cursor color change message.
-// This message is emitted when the program requests the terminal cursor color.
+// CursorColorMsg represents a cursor color change message. This message is
+// emitted when the program requests the terminal cursor color.
 type CursorColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
