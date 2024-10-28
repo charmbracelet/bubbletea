@@ -54,10 +54,14 @@ func (s *screen) SetCell(x, y int, cell cellbuf.Cell) (v bool) {
 		return
 	}
 
-	// Mark the cell as dirty. You nasty one ;)
-	idx := y*s.Width() + x
-	s.dirty[idx] = 1
-	return s.Buffer.SetCell(x, y, cell)
+	v = s.Buffer.SetCell(x, y, cell)
+	if v {
+		// Mark the cell as dirty. You nasty one ;)
+		idx := y*s.Width() + x
+		s.dirty[idx] = 1
+	}
+
+	return
 }
 
 // cellRenderer is a cell-based terminal renderer.
