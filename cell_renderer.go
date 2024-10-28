@@ -455,7 +455,6 @@ func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser
 		erased = true
 	} else {
 		c.renderSegment(seg)
-		c.scr.cur.X += seg.Width
 	}
 	return
 }
@@ -485,6 +484,14 @@ func (c *cellRenderer) renderSegment(seg *cellbuf.Segment) {
 	}
 
 	c.buf.WriteString(seg.Content)
+	c.scr.cur.X += seg.Width
+
+	if c.scr.cur.X >= c.scr.Width() {
+		// NOTE: We need to reset the cursor when at phantom cell i.e. outside
+		// the screen, otherwise, the cursor position will be out of sync.
+		c.scr.cur.X = 0
+		c.buf.WriteByte(ansi.CR)
+	}
 }
 
 // moveCursor moves the cursor to the given position.
