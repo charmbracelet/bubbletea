@@ -64,7 +64,7 @@ func TestClearMsg(t *testing.T) {
 		},
 		{
 			name:     "bg_fg_cur_color",
-			cmds:     []Cmd{ForegroundColor, BackgroundColor, CursorColor},
+			cmds:     []Cmd{RequestForegroundColor, RequestBackgroundColor, RequestCursorColor},
 			expected: "\x1b[?25l\x1b[?2004h\x1b[?2027h\x1b[?2027$p\x1b]10;?\a\x1b]11;?\a\x1b]12;?\a\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
 		},
 		{
