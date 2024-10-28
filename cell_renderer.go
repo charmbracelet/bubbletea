@@ -43,9 +43,9 @@ func (s *screen) reset() {
 }
 
 // Set implements [cellbuf.Grid] and marks changed cells as dirty.
-func (s *screen) Set(x, y int, cell cellbuf.Cell) (v bool) {
-	c, err := s.At(x, y)
-	if err != nil {
+func (s *screen) SetCell(x, y int, cell cellbuf.Cell) (v bool) {
+	c, ok := s.Cell(x, y)
+	if !ok {
 		return
 	}
 
@@ -57,7 +57,7 @@ func (s *screen) Set(x, y int, cell cellbuf.Cell) (v bool) {
 	// Mark the cell as dirty. You nasty one ;)
 	idx := y*s.Width() + x
 	s.dirty[idx] = 1
-	return s.Buffer.Set(x, y, cell)
+	return s.Buffer.SetCell(x, y, cell)
 }
 
 // cellRenderer is a cell-based terminal renderer.
@@ -69,11 +69,12 @@ type cellRenderer struct {
 	scrs [2]screen // Both inline and alt-screen
 	scr  *screen   // Points to the current used screen
 
+	method cellbuf.Method
+
 	finalCur image.Point // The final cursor position
 
-	method cellbuf.WidthMethod
-	pen    cellbuf.Style
-	link   cellbuf.Link
+	pen  cellbuf.Style
+	link cellbuf.Link
 
 	queueAbove  []string
 	lastRenders [2]string // The last render for both inline and alt-screen buffers
@@ -217,7 +218,7 @@ func (c *cellRenderer) render(s string) {
 	// Ensure the buffer is at least the height of the new frame.
 	height := cellbuf.Height(s)
 	c.scr.Resize(c.scr.Width(), height)
-	linew := c.method.SetContent(c.scr, s)
+	linew := cellbuf.SetContent(c.scr, c.method, s)
 	c.scr.linew = linew
 }
 
@@ -393,7 +394,10 @@ func (c *cellRenderer) changes() {
 		var segX int    // The start position of the current segment.
 		var eraser bool // Whether we're erasing using spaces and no styles or links.
 		for x := 0; x < width; x++ {
-			cell, _ := c.scr.At(x, y)
+			cell, ok := c.scr.Cell(x, y)
+			if !ok || cell.Width == 0 {
+				continue
+			}
 			if !c.scr.isDirty(x, y) {
 				if seg != nil {
 					erased := c.flushSegment(seg, image.Pt(segX, y), eraser)
@@ -483,6 +487,7 @@ func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser
 	// 2. The segment reaches the end of the line to erase i.e. the new line is shorter.
 	// 3. The segment takes more bytes than [ansi.EraseLineRight] to erase which is 4 bytes.
 	if eraser && to.Y < len(c.scr.linew) && seg.Width > 4 && (c.scr.linew)[to.Y] < seg.Width+to.X {
+		c.renderReset(seg)
 		c.buf.WriteString(ansi.EraseLineRight) //nolint:errcheck
 		erased = true
 	} else {
@@ -544,8 +549,8 @@ func (c *cellRenderer) moveCursor(x, y int) {
 				// OPTIM: We write the cell content under the cursor if it's the same
 				// style and link. This is more efficient than moving the cursor which
 				// costs at least 3 bytes [ansi.CursorRight].
-				cell, err := c.scr.At(c.scr.cur.X, c.scr.cur.Y)
-				if err == nil &&
+				cell, ok := c.scr.Cell(c.scr.cur.X, c.scr.cur.Y)
+				if ok &&
 					(cell.Style.Equal(c.pen) && cell.Link == c.link) {
 					c.buf.WriteString(cell.Content)
 					break
