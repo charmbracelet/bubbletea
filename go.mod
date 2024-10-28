@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/charmbracelet/x/ansi v0.4.0
-	github.com/charmbracelet/x/cellbuf v0.0.1
+	github.com/charmbracelet/x/cellbuf v0.0.2
 	github.com/charmbracelet/x/term v0.2.0
 	github.com/charmbracelet/x/windows v0.2.0
 	github.com/muesli/cancelreader v0.2.2

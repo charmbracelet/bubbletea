@@ -2,6 +2,8 @@ github.com/charmbracelet/x/ansi v0.4.0 h1:NqwHA4B23VwsDn4H3VcNX1W1tOmgnvY1NDx5tO
 github.com/charmbracelet/x/ansi v0.4.0/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/cellbuf v0.0.1 h1:us+C8dDO1NzO+2I8WItenR6V/oBZr7oVmhU4n3mi4Yg=
 github.com/charmbracelet/x/cellbuf v0.0.1/go.mod h1:mFpvlGowTd0Fiv4TdoKyGZaZdigSUHtBJralbADonwE=
+github.com/charmbracelet/x/cellbuf v0.0.2 h1:m2HAmB4I8Zf7cQhvVrm5AHiZGKtzMWJV3RvBuBXqSiU=
+github.com/charmbracelet/x/cellbuf v0.0.2/go.mod h1:lX6M1begBn73Vjeg85MfYIoIqUwo1T3KGr6sIAUnb0s=
 github.com/charmbracelet/x/term v0.2.0 h1:cNB9Ot9q8I711MyZ7myUR5HFWL/lc3OpU8jZ4hwm0x0=
 github.com/charmbracelet/x/term v0.2.0/go.mod h1:GVxgxAbjUrmpvIINHIQnJJKpMlHiZ4cktEQCN6GWyF0=
 github.com/charmbracelet/x/wcwidth v0.0.0-20241011142426-46044092ad91 h1:D5OO0lVavz7A+Swdhp62F9gbkibxmz9B2hZ/jVdMPf0=
