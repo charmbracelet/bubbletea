@@ -15,7 +15,7 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 const debounceDuration = time.Second
@@ -32,7 +32,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Increment the tag on the model...
 		m.tag++
 		return m, tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {

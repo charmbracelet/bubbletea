@@ -199,7 +199,7 @@ func (r *standardRenderer) flush() (err error) {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
+		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
 	} else {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
@@ -239,116 +239,9 @@ func (r *standardRenderer) reset() {
 }
 
 func (r *standardRenderer) clearScreen() {
-	r.execute(ansi.EraseEntireDisplay + ansi.MoveCursorOrigin)
+	r.execute(ansi.EraseEntireScreen + ansi.CursorOrigin)
 
 	r.repaint()
-}
-
-// setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
-// renderer.
-func (r *standardRenderer) setIgnoredLines(from int, to int) {
-	// Lock if we're going to be clearing some lines since we don't want
-	// anything jacking our cursor.
-	if r.linesRendered > 0 {
-		r.mtx.Lock()
-		defer r.mtx.Unlock()
-	}
-
-	if r.ignoreLines == nil {
-		r.ignoreLines = make(map[int]struct{})
-	}
-	for i := from; i < to; i++ {
-		r.ignoreLines[i] = struct{}{}
-	}
-
-	// Erase ignored lines
-	if r.linesRendered > 0 {
-		buf := &bytes.Buffer{}
-
-		for i := r.linesRendered - 1; i >= 0; i-- {
-			if _, exists := r.ignoreLines[i]; exists {
-				buf.WriteString(ansi.EraseEntireLine)
-			}
-			buf.WriteString(ansi.CursorUp1)
-		}
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0)) // put cursor back
-		_, _ = r.out.Write(buf.Bytes())
-	}
-}
-
-// clearIgnoredLines returns control of any ignored lines to the standard
-// Bubble Tea renderer. That is, any lines previously set to be ignored can be
-// rendered to again.
-func (r *standardRenderer) clearIgnoredLines() {
-	r.ignoreLines = nil
-}
-
-// insertTop effectively scrolls up. It inserts lines at the top of a given
-// area designated to be a scrollable region, pushing everything else down.
-// This is roughly how ncurses does it.
-//
-// To call this function use command ScrollUp().
-//
-// For this to work renderer.ignoreLines must be set to ignore the scrollable
-// region since we are bypassing the normal Bubble Tea renderer here.
-//
-// Because this method relies on the terminal dimensions, it's only valid for
-// full-window applications (generally those that use the alternate screen
-// buffer).
-//
-// This method bypasses the normal rendering buffer and is philosophically
-// different than the normal way we approach rendering in Bubble Tea. It's for
-// use in high-performance rendering, such as a pager that could potentially
-// be rendering very complicated ansi. In cases where the content is simpler
-// standard Bubble Tea rendering should suffice.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	buf := &bytes.Buffer{}
-
-	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.MoveCursor(topBoundary, 0))
-	buf.WriteString(ansi.InsertLine(len(lines)))
-	_, _ = buf.WriteString(strings.Join(lines, "\r\n"))
-	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
-
-	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
-
-	_, _ = r.out.Write(buf.Bytes())
-}
-
-// insertBottom effectively scrolls down. It inserts lines at the bottom of
-// a given area designated to be a scrollable region, pushing everything else
-// up. This is roughly how ncurses does it.
-//
-// To call this function use the command ScrollDown().
-//
-// See note in insertTop() for caveats, how this function only makes sense for
-// full-window applications, and how it differs from the normal way we do
-// rendering in Bubble Tea.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBoundary int) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	buf := &bytes.Buffer{}
-
-	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.MoveCursor(bottomBoundary, 0))
-	_, _ = buf.WriteString("\r\n" + strings.Join(lines, "\r\n"))
-	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
-
-	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
-
-	_, _ = r.out.Write(buf.Bytes())
 }
 
 // update handles internal messages for the renderer.
@@ -356,14 +249,14 @@ func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
 	case enableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if r.altScreenActive {
 				return
 			}
 
 			r.altScreenActive = true
 			r.repaint()
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if !r.cursorHidden {
 				return
 			}
@@ -373,14 +266,14 @@ func (r *standardRenderer) update(msg Msg) {
 
 	case disableModeMsg:
 		switch string(msg) {
-		case ansi.AltScreenBufferMode:
+		case ansi.AltScreenBufferMode.String():
 			if !r.altScreenActive {
 				return
 			}
 
 			r.altScreenActive = false
 			r.repaint()
-		case ansi.CursorVisibilityMode:
+		case ansi.CursorEnableMode.String():
 			if r.cursorHidden {
 				return
 			}
@@ -406,32 +299,6 @@ func (r *standardRenderer) update(msg Msg) {
 		r.mtx.Lock()
 		r.repaint()
 		r.mtx.Unlock()
-
-	case clearScrollAreaMsg:
-		r.clearIgnoredLines()
-
-		// Force a repaint on the area where the scrollable stuff was in this
-		// update cycle
-		r.mtx.Lock()
-		r.repaint()
-		r.mtx.Unlock()
-
-	case syncScrollAreaMsg:
-		// Re-render scrolling area
-		r.clearIgnoredLines()
-		r.setIgnoredLines(msg.topBoundary, msg.bottomBoundary)
-		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
-		// Force non-scrolling stuff to repaint in this update cycle
-		r.mtx.Lock()
-		r.repaint()
-		r.mtx.Unlock()
-
-	case scrollUpMsg:
-		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
-	case scrollDownMsg:
-		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
 	}
 }
 
@@ -456,89 +323,6 @@ func (r *standardRenderer) insertAbove(s string) {
 	r.queuedMessageLines = append(r.queuedMessageLines, lines...)
 	r.repaint()
 	r.mtx.Unlock()
-}
-
-// HIGH-PERFORMANCE RENDERING STUFF
-
-type syncScrollAreaMsg struct {
-	lines          []string
-	topBoundary    int
-	bottomBoundary int
-}
-
-// SyncScrollArea performs a paint of the entire region designated to be the
-// scrollable area. This is required to initialize the scrollable region and
-// should also be called on resize (WindowSizeMsg).
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option will be removed in a future version of this package.
-func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
-	return func() Msg {
-		return syncScrollAreaMsg{
-			lines:          lines,
-			topBoundary:    topBoundary,
-			bottomBoundary: bottomBoundary,
-		}
-	}
-}
-
-type clearScrollAreaMsg struct{}
-
-// ClearScrollArea deallocates the scrollable region and returns the control of
-// those lines to the main rendering routine.
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option will be removed in a future version of this package.
-func ClearScrollArea() Msg {
-	return clearScrollAreaMsg{}
-}
-
-type scrollUpMsg struct {
-	lines          []string
-	topBoundary    int
-	bottomBoundary int
-}
-
-// ScrollUp adds lines to the top of the scrollable region, pushing existing
-// lines below down. Lines that are pushed out the scrollable region disappear
-// from view.
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option will be removed in a future version of this package.
-func ScrollUp(newLines []string, topBoundary, bottomBoundary int) Cmd {
-	return func() Msg {
-		return scrollUpMsg{
-			lines:          newLines,
-			topBoundary:    topBoundary,
-			bottomBoundary: bottomBoundary,
-		}
-	}
-}
-
-type scrollDownMsg struct {
-	lines          []string
-	topBoundary    int
-	bottomBoundary int
-}
-
-// ScrollDown adds lines to the bottom of the scrollable region, pushing
-// existing lines above up. Lines that are pushed out of the scrollable region
-// disappear from view.
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option will be removed in a future version of this package.
-func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
-	return func() Msg {
-		return scrollDownMsg{
-			lines:          newLines,
-			topBoundary:    topBoundary,
-			bottomBoundary: bottomBoundary,
-		}
-	}
 }
 
 type printLineMessage struct {

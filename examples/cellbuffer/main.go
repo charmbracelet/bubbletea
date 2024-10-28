@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/harmonica"
 )
 
@@ -148,7 +148,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m, tea.Quit
 	case tea.WindowSizeMsg:
 		if !m.cells.ready() {
@@ -156,7 +156,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.cells.init(msg.Width, msg.Height)
 		return m, nil
-	case tea.MouseMsg:
+	case tea.MouseClickMsg:
 		if !m.cells.ready() {
 			return m, nil
 		}

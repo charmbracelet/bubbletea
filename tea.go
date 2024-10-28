@@ -15,9 +15,12 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/debug"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -26,7 +29,6 @@ import (
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/ansi/compressor"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -93,7 +95,6 @@ const (
 	withAltScreen startupOptions = 1 << iota
 	withMouseCellMotion
 	withMouseAllMotion
-	withANSICompressor
 	withoutSignalHandler
 	// Catching panics is incredibly useful for restoring the terminal to a
 	// usable state after a panic occurs. When this is set, Bubble Tea will
@@ -107,6 +108,8 @@ const (
 	withWindowsInputMode
 	withoutGraphemeClustering
 	withColorProfile
+	withKeyboardEnhancements
+	withGraphemeClustering
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -208,16 +211,15 @@ type Program struct {
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
 
-	// kittyFlags stores kitty keyboard protocol progressive enhancement flags.
-	kittyFlags int
-
-	// modifyOtherKeys stores the XTerm modifyOtherKeys mode.
-	modifyOtherKeys int
+	keyboard keyboardEnhancements
 
 	// When a program is suspended, the terminal state is saved and the program
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
 	setBg, setFg, setCc color.Color
+
+	// tracer is used to trace the program's output and input.
+	tracer tracer
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -281,6 +283,30 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		p.fps = defaultFPS
 	} else if p.fps > maxFPS {
 		p.fps = maxFPS
+	}
+
+	// Detect if tracing is enabled.
+	if tracePath := p.getenv("TEA_TRACE"); tracePath != "" {
+		switch tracePath {
+		case "0", "false", "off":
+			break
+		}
+
+		tracer, err := newTracer(tracePath)
+		if err == nil {
+			p.tracer = tracer
+			// Enable different types of tracing.
+			if output, _ := strconv.ParseBool(p.getenv("TEA_TRACE_OUTPUT")); output {
+				p.tracer = p.tracer.withOutput()
+			}
+			if input, _ := strconv.ParseBool(p.getenv("TEA_TRACE_INPUT")); input {
+				p.tracer = p.tracer.withInput()
+			}
+		}
+	}
+
+	if p.tracer.mask&traceOutput != 0 {
+		p.output.trace = true
 	}
 
 	return p
@@ -395,6 +421,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				continue
 			}
 
+			// XXX: Is this the right place to trace input? Perhaps inside
+			// [parseSequence]?
+			if p.tracer.mask&traceInput != 0 {
+				log.Printf("input %T %v", msg, msg)
+			}
+
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case QuitMsg:
@@ -414,11 +446,14 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					}
 				}
 
+			case setCursorStyle:
+				p.execute(ansi.SetCursorStyle(int(msg)))
+
 			case modeReportMsg:
 				switch msg.Mode {
-				case graphemeClustering:
+				case int(ansi.GraphemeClusteringMode):
 					// 1 means mode is set (see DECRPM).
-					p.modes[ansi.GraphemeClusteringMode] = msg.Value == 1 || msg.Value == 3
+					p.modes[ansi.GraphemeClusteringMode.String()] = msg.Value == 1 || msg.Value == 3
 				}
 
 			case enableModeMsg:
@@ -429,9 +464,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprintf("\x1b[%sh", string(msg)))
 				p.modes[string(msg)] = true
 				switch string(msg) {
-				case ansi.AltScreenBufferMode:
+				case ansi.AltScreenBufferMode.String():
 					p.setAltScreenBuffer(true)
-				case ansi.GraphemeClusteringMode:
+				case ansi.GraphemeClusteringMode.String():
 					// We store the state of grapheme clustering after we enable it
 					// and get a response in the eventLoop.
 					p.execute(ansi.RequestGraphemeClustering)
@@ -445,7 +480,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprintf("\x1b[%sl", string(msg)))
 				p.modes[string(msg)] = false
 				switch string(msg) {
-				case ansi.AltScreenBufferMode:
+				case ansi.AltScreenBufferMode.String():
 					p.setAltScreenBuffer(false)
 				}
 
@@ -488,34 +523,53 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case cursorColorMsg:
 				p.execute(ansi.RequestCursorColor)
 
-			case KittyKeyboardMsg:
-				// Store the kitty flags whenever they are queried.
-				p.kittyFlags = int(msg)
-
-			case setKittyKeyboardFlagsMsg:
-				p.kittyFlags = int(msg)
-				p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
-
-			case kittyKeyboardMsg:
-				p.execute(ansi.RequestKittyKeyboard)
-
-			case modifyOtherKeys:
-				p.execute(ansi.RequestModifyOtherKeys)
-
-			case setModifyOtherKeysMsg:
-				p.modifyOtherKeys = int(msg)
-				p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
-
-			case setEnhancedKeyboardMsg:
-				if bool(msg) {
-					p.kittyFlags = 3
-					p.modifyOtherKeys = 1
-				} else {
-					p.kittyFlags = 0
-					p.modifyOtherKeys = 0
+			case KeyboardEnhancementsMsg:
+				if p.keyboard.kittyFlags != msg.kittyFlags {
+					p.keyboard.kittyFlags |= msg.kittyFlags
 				}
-				p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
-				p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+				if p.keyboard.modifyOtherKeys == 0 || msg.modifyOtherKeys > p.keyboard.modifyOtherKeys {
+					p.keyboard.modifyOtherKeys = msg.modifyOtherKeys
+				}
+
+			case enableKeyboardEnhancementsMsg:
+				if runtime.GOOS == "windows" {
+					// We use the Windows Console API which supports keyboard
+					// enhancements.
+					break
+				}
+
+				var ke keyboardEnhancements
+				for _, e := range msg {
+					e(&ke)
+				}
+
+				p.keyboard.kittyFlags |= ke.kittyFlags
+				if ke.modifyOtherKeys > p.keyboard.modifyOtherKeys {
+					p.keyboard.modifyOtherKeys = ke.modifyOtherKeys
+				}
+
+				if p.keyboard.modifyOtherKeys > 0 {
+					p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
+				}
+				if p.keyboard.kittyFlags > 0 {
+					p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
+				}
+
+			case disableKeyboardEnhancementsMsg:
+				if runtime.GOOS == "windows" {
+					// We use the Windows Console API which supports keyboard
+					// enhancements.
+					break
+				}
+
+				if p.keyboard.modifyOtherKeys > 0 {
+					p.execute(ansi.DisableModifyOtherKeys)
+					p.keyboard.modifyOtherKeys = 0
+				}
+				if p.keyboard.kittyFlags > 0 {
+					p.execute(ansi.DisableKittyKeyboard)
+					p.keyboard.kittyFlags = 0
+				}
 
 			case execMsg:
 				// NB: this blocks.
@@ -566,7 +620,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}()
 
 			case setWindowTitleMsg:
-				p.SetWindowTitle(string(msg))
+				p.execute(ansi.SetWindowTitle(string(msg)))
 
 			case windowSizeMsg:
 				go p.checkResize()
@@ -655,18 +709,12 @@ func (p *Program) Run() (Model, error) {
 	go p.Send(ColorProfileMsg{p.profile})
 
 	// If no renderer is set use the standard one.
-	var output io.Writer
-	output = p.output
 	if p.renderer == nil {
-		// TODO(v2): remove the ANSI compressor
-		if p.startupOptions.has(withANSICompressor) {
-			output = &compressor.Writer{Forward: output}
-		}
 		p.renderer = newStandardRenderer()
 	}
 
 	// Set the renderer output.
-	p.renderer.update(rendererWriter{output})
+	p.renderer.update(rendererWriter{p.output})
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
@@ -690,9 +738,9 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Hide the cursor before starting the renderer.
-	p.modes[ansi.CursorVisibilityMode] = false
+	p.modes[ansi.CursorEnableMode.String()] = false
 	p.execute(ansi.HideCursor)
-	p.renderer.update(disableMode(ansi.CursorVisibilityMode))
+	p.renderer.update(disableMode(ansi.CursorEnableMode.String()))
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
@@ -700,14 +748,15 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.startupOptions&withAltScreen != 0 {
 		p.execute(ansi.EnableAltScreenBuffer)
-		p.modes[ansi.AltScreenBufferMode] = true
-		p.renderer.update(enableMode(ansi.AltScreenBufferMode))
+		p.setAltScreenBuffer(true)
+		p.modes[ansi.AltScreenBufferMode.String()] = true
+		p.renderer.update(enableMode(ansi.AltScreenBufferMode.String()))
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.EnableBracketedPaste)
-		p.modes[ansi.BracketedPasteMode] = true
+		p.modes[ansi.BracketedPasteMode.String()] = true
 	}
-	if p.startupOptions&withoutGraphemeClustering == 0 {
+	if p.startupOptions&withGraphemeClustering != 0 {
 		p.execute(ansi.EnableGraphemeClustering)
 		p.execute(ansi.RequestGraphemeClustering)
 		// We store the state of grapheme clustering after we query it and get
@@ -716,28 +765,31 @@ func (p *Program) Run() (Model, error) {
 	if p.startupOptions&withMouseCellMotion != 0 {
 		p.execute(ansi.EnableMouseCellMotion)
 		p.execute(ansi.EnableMouseSgrExt)
-		p.modes[ansi.MouseCellMotionMode] = true
-		p.modes[ansi.MouseSgrExtMode] = true
+		p.modes[ansi.MouseCellMotionMode.String()] = true
+		p.modes[ansi.MouseSgrExtMode.String()] = true
 	} else if p.startupOptions&withMouseAllMotion != 0 {
 		p.execute(ansi.EnableMouseAllMotion)
 		p.execute(ansi.EnableMouseSgrExt)
-		p.modes[ansi.MouseAllMotionMode] = true
-		p.modes[ansi.MouseSgrExtMode] = true
-	}
-	if p.startupOptions&withModifyOtherKeys != 0 {
-		p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
-	}
-	if p.startupOptions&withKittyKeyboard != 0 {
-		p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+		p.modes[ansi.MouseAllMotionMode.String()] = true
+		p.modes[ansi.MouseSgrExtMode.String()] = true
 	}
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.execute(ansi.EnableReportFocus)
-		p.modes[ansi.ReportFocusMode] = true
+		p.modes[ansi.ReportFocusMode.String()] = true
 	}
-	if p.startupOptions&withWindowsInputMode != 0 {
-		p.execute(ansi.EnableWin32Input)
-		p.modes[ansi.Win32InputMode] = true
+	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
+		// We use the Windows Console API which supports keyboard
+		// enhancements.
+
+		if p.keyboard.modifyOtherKeys > 0 {
+			p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
+			p.execute(ansi.RequestModifyOtherKeys)
+		}
+		if p.keyboard.kittyFlags > 0 {
+			p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
+			p.execute(ansi.RequestKittyKeyboard)
+		}
 	}
 
 	// Start the renderer.
@@ -783,25 +835,6 @@ func (p *Program) Run() (Model, error) {
 	p.shutdown(killed)
 
 	return model, err
-}
-
-// StartReturningModel initializes the program and runs its event loops,
-// blocking until it gets terminated by either [Program.Quit], [Program.Kill],
-// or its signal handler. Returns the final model.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) StartReturningModel() (Model, error) {
-	return p.Run()
-}
-
-// Start initializes the program and runs its event loops, blocking until it
-// gets terminated by either [Program.Quit], [Program.Kill], or its signal
-// handler.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) Start() error {
-	_, err := p.Run()
-	return err
 }
 
 // Send sends a message to the main update function, effectively allowing
@@ -916,7 +949,7 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initInputReader(); err != nil {
 		return err
 	}
-	if p.modes[ansi.AltScreenBufferMode] {
+	if p.modes[ansi.AltScreenBufferMode.String()] {
 		p.execute(ansi.EnableAltScreenBuffer)
 	} else {
 		// entering alt screen already causes a repaint.
@@ -924,24 +957,24 @@ func (p *Program) RestoreTerminal() error {
 	}
 
 	p.startRenderer()
-	if !p.modes[ansi.CursorVisibilityMode] {
+	if !p.modes[ansi.CursorEnableMode.String()] {
 		p.execute(ansi.HideCursor)
 	} else {
 		p.execute(ansi.ShowCursor)
 	}
-	if p.modes[ansi.BracketedPasteMode] {
+	if p.modes[ansi.BracketedPasteMode.String()] {
 		p.execute(ansi.EnableBracketedPaste)
 	}
-	if p.modifyOtherKeys != 0 {
-		p.execute(ansi.ModifyOtherKeys(p.modifyOtherKeys))
+	if p.keyboard.modifyOtherKeys != 0 {
+		p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
 	}
-	if p.kittyFlags != 0 {
-		p.execute(ansi.PushKittyKeyboard(p.kittyFlags))
+	if p.keyboard.kittyFlags != 0 {
+		p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
 	}
-	if p.modes[ansi.ReportFocusMode] {
+	if p.modes[ansi.ReportFocusMode.String()] {
 		p.execute(ansi.EnableReportFocus)
 	}
-	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
+	if p.modes[ansi.MouseCellMotionMode.String()] || p.modes[ansi.MouseAllMotionMode.String()] {
 		if p.startupOptions&withMouseCellMotion != 0 {
 			p.execute(ansi.EnableMouseCellMotion)
 			p.execute(ansi.EnableMouseSgrExt)
@@ -950,7 +983,7 @@ func (p *Program) RestoreTerminal() error {
 			p.execute(ansi.EnableMouseSgrExt)
 		}
 	}
-	if p.modes[ansi.GraphemeClusteringMode] {
+	if p.modes[ansi.GraphemeClusteringMode.String()] {
 		p.execute(ansi.EnableGraphemeClustering)
 	}
 
@@ -1046,10 +1079,4 @@ func (p *Program) stopRenderer(kill bool) {
 	}
 
 	p.renderer.close() //nolint:errcheck
-
-	if !kill && p.startupOptions.has(withANSICompressor) {
-		if w, ok := p.output.Writer().(io.WriteCloser); ok {
-			_ = w.Close()
-		}
-	}
 }

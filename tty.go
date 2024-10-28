@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/x/ansi"
@@ -40,17 +39,14 @@ func (p *Program) setAltScreenBuffer(on bool) {
 		// Ensure that the terminal is cleared, even when it doesn't support
 		// alt screen (or alt screen support is disabled, like GNU screen by
 		// default).
-		//
-		// Note: we can't use r.clearScreen() here because the mutex is already
-		// locked.
-		p.execute(ansi.EraseEntireDisplay)
-		p.execute(ansi.MoveCursorOrigin)
+		p.execute(ansi.EraseEntireScreen)
+		p.execute(ansi.CursorOrigin)
 	}
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
 	// whenever we exit AltScreen.
-	if !p.modes[ansi.CursorVisibilityMode] {
+	if !p.modes[ansi.CursorEnableMode.String()] {
 		p.execute(ansi.HideCursor)
 	} else {
 		p.execute(ansi.ShowCursor)
@@ -60,30 +56,30 @@ func (p *Program) setAltScreenBuffer(on bool) {
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.modes[ansi.BracketedPasteMode] {
+	if p.modes[ansi.BracketedPasteMode.String()] {
 		p.execute(ansi.DisableBracketedPaste)
 	}
-	if !p.modes[ansi.CursorVisibilityMode] {
+	if !p.modes[ansi.CursorEnableMode.String()] {
 		p.execute(ansi.ShowCursor)
 	}
-	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
+	if p.modes[ansi.MouseCellMotionMode.String()] || p.modes[ansi.MouseAllMotionMode.String()] {
 		p.execute(ansi.DisableMouseCellMotion)
 		p.execute(ansi.DisableMouseAllMotion)
 		p.execute(ansi.DisableMouseSgrExt)
 	}
-	if p.modifyOtherKeys != 0 {
+	if p.keyboard.modifyOtherKeys != 0 {
 		p.execute(ansi.DisableModifyOtherKeys)
 	}
-	if p.kittyFlags != 0 {
+	if p.keyboard.kittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
 	}
-	if p.modes[ansi.ReportFocusMode] {
+	if p.modes[ansi.ReportFocusMode.String()] {
 		p.execute(ansi.DisableReportFocus)
 	}
-	if p.modes[ansi.GraphemeClusteringMode] {
+	if p.modes[ansi.GraphemeClusteringMode.String()] {
 		p.execute(ansi.DisableGraphemeClustering)
 	}
-	if p.modes[ansi.AltScreenBufferMode] {
+	if p.modes[ansi.AltScreenBufferMode.String()] {
 		p.execute(ansi.DisableAltScreenBuffer)
 		// cmd.exe and other terminals keep separate cursor states for the AltScreen
 		// and the main buffer. We have to explicitly reset the cursor visibility
@@ -125,17 +121,7 @@ func (p *Program) restoreInput() error {
 
 // initInputReader (re)commences reading inputs.
 func (p *Program) initInputReader() error {
-	var term string
-	for i := len(p.environ) - 1; i >= 0; i-- {
-		// We iterate backwards to find the last TERM variable set in the
-		// environment. This is because the last one is the one that will be
-		// used by the terminal.
-		parts := strings.SplitN(p.environ[i], "=", 2)
-		if len(parts) == 2 && parts[0] == "TERM" {
-			term = parts[1]
-			break
-		}
-	}
+	term := p.getenv("TERM")
 
 	// Initialize the input reader.
 	// This need to be done after the terminal has been initialized and set to

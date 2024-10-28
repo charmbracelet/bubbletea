@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 
 	"github.com/charmbracelet/colorprofile"
-	"github.com/charmbracelet/x/ansi"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -183,20 +182,6 @@ func WithoutRenderer() ProgramOption {
 	}
 }
 
-// WithANSICompressor removes redundant ANSI sequences to produce potentially
-// smaller output, at the cost of some processing overhead.
-//
-// This feature is provisional, and may be changed or removed in a future version
-// of this package.
-//
-// Deprecated: this incurs a noticable performance hit. A future release will
-// optimize ANSI automatically without the performance penalty.
-func WithANSICompressor() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withANSICompressor
-	}
-}
-
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter
@@ -254,76 +239,24 @@ func WithReportFocus() ProgramOption {
 	}
 }
 
-// WithEnhancedKeyboard enables support for enhanced keyboard features. This
-// unambiguously reports more key combinations than traditional terminal
-// keyboard sequences. This might also enable reporting of release key events
-// depending on the terminal emulator supporting it.
+// WithKeyboardEnhancements enables support for enhanced keyboard features. You
+// can enable different keyboard features by passing one or more
+// KeyboardEnhancement functions.
 //
-// This is a syntactic sugar for WithKittyKeyboard(7) and WithXtermModifyOtherKeys(1).
-func WithEnhancedKeyboard() ProgramOption {
+// This is not supported on all terminals. On Windows, these features are
+// enabled by default.
+func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption {
+	var ke keyboardEnhancements
+	for _, e := range append(enhancements, withKeyDisambiguation) {
+		e(&ke)
+	}
 	return func(p *Program) {
-		_WithKittyKeyboard(ansi.KittyDisambiguateEscapeCodes |
-			ansi.KittyReportEventTypes |
-			ansi.KittyReportAlternateKeys,
-		)(p)
-		_WithModifyOtherKeys(1)(p)
+		p.startupOptions |= withKeyboardEnhancements
+		p.keyboard = ke
 	}
 }
 
-// _WithKittyKeyboard enables support for the Kitty keyboard protocol. This
-// protocol enables more key combinations and events than the traditional
-// ambiguous terminal keyboard sequences.
-//
-// Use flags to specify which features you want to enable.
-//
-//	0:  Disable all features
-//	1:  Disambiguate escape codes
-//	2:  Report event types
-//	4:  Report alternate keys
-//	8:  Report all keys as escape codes
-//	16: Report associated text
-//
-// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func _WithKittyKeyboard(flags int) ProgramOption {
-	return func(p *Program) {
-		p.kittyFlags = flags
-		p.startupOptions |= withKittyKeyboard
-	}
-}
-
-// _WithModifyOtherKeys enables support for the XTerm modifyOtherKeys feature.
-// This feature allows the terminal to report ambiguous keys as escape codes.
-// This is useful for terminals that don't support the Kitty keyboard protocol.
-//
-// The mode can be one of the following:
-//
-//	0: Disable modifyOtherKeys
-//	1: Report ambiguous keys as escape codes
-//	2: Report ambiguous keys as escape codes including modified keys like Alt-<key>
-//	   and Meta-<key>
-//
-// See https://invisible-island.net/xterm/manpage/xterm.html#VT100-Widget-Resources:modifyOtherKeys
-func _WithModifyOtherKeys(mode int) ProgramOption {
-	return func(p *Program) {
-		p.modifyOtherKeys = mode
-		p.startupOptions |= withModifyOtherKeys
-	}
-}
-
-// _WithWindowsInputMode enables Windows Input Mode (win32-input-mode) which
-// allows for more advanced input handling and reporting. This is experimental
-// and may not work on all terminals.
-//
-// See
-// https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
-// for more information.
-func _WithWindowsInputMode() ProgramOption { //nolint:unused
-	return func(p *Program) {
-		p.startupOptions |= withWindowsInputMode
-	}
-}
-
-// WithoutGraphemeClustering disables grapheme clustering. This is useful if you
+// WithGraphemeClustering disables grapheme clustering. This is useful if you
 // want to disable grapheme clustering for your program.
 //
 // Grapheme clustering is a character width calculation method that accurately
@@ -332,9 +265,9 @@ func _WithWindowsInputMode() ProgramOption { //nolint:unused
 // characters.
 //
 // See https://mitchellh.com/writing/grapheme-clusters-in-terminals
-func WithoutGraphemeClustering() ProgramOption {
+func WithGraphemeClustering() ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withoutGraphemeClustering
+		p.startupOptions |= withGraphemeClustering
 	}
 }
 

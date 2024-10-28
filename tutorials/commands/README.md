@@ -1,5 +1,4 @@
-Commands in Bubble Tea
-======================
+# Commands in Bubble Tea
 
 This is the second tutorial for Bubble Tea covering commands, which deal with
 I/O. The tutorial assumes you have a working knowledge of Go and a decent
@@ -27,7 +26,7 @@ import (
     "os"
     "time"
 
-    tea "github.com/charmbracelet/bubbletea"
+    tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 const url = "https://charm.sh/"
@@ -92,8 +91,8 @@ Note that we don't call the function; the Bubble Tea runtime will do that when
 the time is right.
 
 ```go
-func (m model) Init() (tea.Cmd) {
-    return checkServer
+func (m model) Init() (tea.Model, tea.Cmd) {
+    return m, checkServer
 }
 ```
 
@@ -122,13 +121,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         m.err = msg
         return m, tea.Quit
 
-    case tea.KeyMsg:
+    case tea.KeyPressMsg:
         // Ctrl+c exits. Even with short running programs it's good to have
         // a quit key, just in case your logic is off. Users will be very
         // annoyed if they can't exit.
-        if msg.Type == tea.KeyCtrlC {
-            return m, tea.Quit
-        }
+		if msg.Mod == tea.ModCtrl && msg.Code == 'c' {
+			return m, tea.Quit
+		}
     }
 
     // If we happen to get any other messages, don't do anything.
@@ -227,18 +226,18 @@ And, of course, check out the [Go Docs][docs].
 
 ## Additional Resources
 
-* [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
-* [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
+- [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
+- [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
 
 ### Feedback
 
 We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
-* [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.social/@charmcli)
-* [Discord](https://charm.sh/chat)
+- [Twitter](https://twitter.com/charmcli)
+- [The Fediverse](https://mastodon.social/@charmcli)
+- [Discord](https://charm.sh/chat)
 
-***
+---
 
 Part of [Charm](https://charm.sh).
 

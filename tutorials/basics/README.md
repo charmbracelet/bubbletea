@@ -1,5 +1,4 @@
-Bubble Tea Basics
-=================
+# Bubble Tea Basics
 
 Bubble Tea is based on the functional design paradigms of [The Elm
 Architecture][elm], which happens to work nicely with Go. It's a delightful way
@@ -11,7 +10,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]:https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[tut-source]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
 
 ## Enough! Let's get to it.
 
@@ -27,16 +26,16 @@ import (
     "fmt"
     "os"
 
-    tea "github.com/charmbracelet/bubbletea"
+    tea "github.com/charmbracelet/bubbletea/v2"
 )
 ```
 
 Bubble Tea programs are comprised of a **model** that describes the application
 state and three simple methods on that model:
 
-* **Init**, a function that returns an initial command for the application to run.
-* **Update**, a function that handles incoming events and updates the model accordingly.
-* **View**, a function that renders the UI based on the data in the model.
+- **Init**, a function that returns an initial command for the application to run.
+- **Update**, a function that handles incoming events and updates the model accordingly.
+- **View**, a function that renders the UI based on the data in the model.
 
 ## The Model
 
@@ -53,13 +52,14 @@ type model struct {
 
 ## Initialization
 
-Next, we’ll define our application’s initial state. In this case, we’re defining
-a function to return our initial model, however, we could just as easily define
-the initial model as a variable elsewhere, too.
+Next, we’ll define our application’s initial state in the `Init` method. `Init`
+can return a `Cmd` that could perform some initial I/O. For now, we don't need
+to do any I/O, so for the command, we'll just return `nil`, which translates to
+"no command."
 
 ```go
-func initialModel() model {
-	return model{
+func (m model) Init() (tea.Model, tea.Cmd) {
+	m = {
 		// Our to-do list is a grocery list
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
@@ -68,17 +68,9 @@ func initialModel() model {
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
-}
-```
 
-Next, we define the `Init` method. `Init` can return a `Cmd` that could perform
-some initial I/O. For now, we don't need to do any I/O, so for the command,
-we'll just return `nil`, which translates to "no command."
-
-```go
-func (m model) Init() (tea.Model, tea.Cmd) {
     // Just return `nil`, which means "no I/O right now, please."
-    return nil
+    return m, nil
 }
 ```
 
@@ -99,15 +91,15 @@ tick, or a response from a server.
 We usually figure out which type of `Msg` we received with a type switch, but
 you could also use a type assertion.
 
-For now, we'll just deal with `tea.KeyMsg` messages, which are automatically
-sent to the update function when keys are pressed.
+For now, we'll just deal with `tea.KeyPressMsg` messages, which are
+automatically sent to the update function when keys are pressed.
 
 ```go
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
 
     // Is it a key press?
-    case tea.KeyMsg:
+    case tea.KeyPressMsg:
 
         // Cool, what was the actual key pressed?
         switch msg.String() {
@@ -128,9 +120,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 m.cursor++
             }
 
-        // The "enter" key and the spacebar (a literal space) toggle
-        // the selected state for the item that the cursor is pointing at.
-        case "enter", " ":
+        // The enter key and the space bar toggle the selected state for the
+        // item that the cursor is pointing at.
+        case "enter", "space":
             _, ok := m.selected[m.cursor]
             if ok {
                 delete(m.selected, m.cursor)
@@ -194,12 +186,12 @@ func (m model) View() string {
 
 ## All Together Now
 
-The last step is to simply run our program. We pass our initial model to
+The last step is to simply run our program. We pass and empty model
 `tea.NewProgram` and let it rip:
 
 ```go
 func main() {
-    p := tea.NewProgram(initialModel())
+    p := tea.NewProgram(model{})
     if _, err := p.Run(); err != nil {
         fmt.Printf("Alas, there's been an error: %v", err)
         os.Exit(1)
@@ -222,18 +214,18 @@ there are [Go Docs][docs].
 
 ## Additional Resources
 
-* [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
-* [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
+- [Libraries we use with Bubble Tea](https://github.com/charmbracelet/bubbletea/#libraries-we-use-with-bubble-tea)
+- [Bubble Tea in the Wild](https://github.com/charmbracelet/bubbletea/#bubble-tea-in-the-wild)
 
 ### Feedback
 
 We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
-* [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.social/@charmcli)
-* [Discord](https://charm.sh/chat)
+- [Twitter](https://twitter.com/charmcli)
+- [The Fediverse](https://mastodon.social/@charmcli)
+- [Discord](https://charm.sh/chat)
 
-***
+---
 
 Part of [Charm](https://charm.sh).
 
