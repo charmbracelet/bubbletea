@@ -11,6 +11,8 @@ import (
 	"github.com/charmbracelet/x/cellbuf"
 )
 
+var undefPoint = image.Pt(-1, -1)
+
 // cursor represents a terminal cursor.
 type cursor struct {
 	image.Point
@@ -88,7 +90,8 @@ type cellRenderer struct {
 func newCellRenderer() *cellRenderer {
 	r := &cellRenderer{
 		// TODO: Update this if Grapheme Clustering is supported.
-		method: cellbuf.WcWidth,
+		method:   cellbuf.WcWidth,
+		finalCur: undefPoint,
 	}
 	r.reset()
 	return r
@@ -148,7 +151,8 @@ func (c *cellRenderer) flush() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if c.frame == *c.lastRender && c.lastHeight == c.scr.Height() {
+	if c.finalCur == c.scr.cur.Point && len(c.queueAbove) == 0 &&
+		c.frame == *c.lastRender && c.lastHeight == c.scr.Height() {
 		return nil
 	}
 
@@ -177,6 +181,17 @@ func (c *cellRenderer) flush() error {
 
 	c.changes()
 
+	// XXX: We need to move the cursor to the final position before rendering
+	// the frame to avoid flickering.
+	shouldHideCursor := !c.cursorHidden
+	if c.finalCur != image.Pt(-1, -1) {
+		shouldMove := c.finalCur != c.scr.cur.Point
+		shouldHideCursor = shouldHideCursor && shouldMove
+		if shouldMove {
+			c.moveCursor(c.finalCur.X, c.finalCur.Y)
+		}
+	}
+
 	c.scr.dirty = make(map[int]int)
 	c.lastHeight = cellbuf.Height(c.frame)
 	*c.lastRender = c.frame
@@ -186,7 +201,7 @@ func (c *cellRenderer) flush() error {
 		return nil
 	}
 
-	if !c.cursorHidden {
+	if shouldHideCursor {
 		// Hide the cursor while rendering to avoid flickering.
 		render = ansi.HideCursor + render + ansi.ShowCursor
 	}
@@ -219,7 +234,7 @@ func (c *cellRenderer) reset() {
 	// alt-screen buffer cursor always starts from where the main buffer cursor
 	// is. We need to set it to (-1,-1) to force the cursor to be moved to the
 	// origin on the first render.
-	c.scrs[1].cur.Point = image.Pt(-1, -1)
+	c.scrs[1].cur.Point = undefPoint
 	if c.altScreen {
 		c.scr = &c.scrs[1]
 		c.lastRender = &c.lastRenders[1]
@@ -325,6 +340,20 @@ func (c *cellRenderer) update(msg Msg) {
 
 			c.cursorHidden = true
 		}
+
+	case setCursorPosMsg:
+		x, y := msg.X, msg.Y
+		if x < 0 {
+			x = c.scr.cur.X
+		} else if x >= c.scr.Width() {
+			x = c.scr.Width() - 1
+		}
+		if y < 0 {
+			y = c.scr.cur.Y
+		} else if y >= c.scr.Height() {
+			y = c.scr.Height() - 1
+		}
+		c.finalCur = image.Pt(x, y)
 	}
 }
 
@@ -339,10 +368,10 @@ func (c *cellRenderer) changes() {
 	}
 
 	height := c.scr.Height()
-	var x int
 	if *c.lastRender == "" {
 		// We render the changes line by line to be able to get the cursor
 		// position using the width of each line.
+		var x int
 		for y := 0; y < height; y++ {
 			var line string
 			x, line = cellbuf.RenderLine(c.scr, y)
@@ -540,9 +569,9 @@ func (c *cellRenderer) moveCursor(x, y int) {
 				if dx >= 3 {
 					// [ansi.CursorLeft] is at least 3 bytes long, so we use [ansi.BS]
 					// when we can to avoid writing more bytes than necessary.
-					c.buf.WriteString(ansi.CursorLeft(c.scr.cur.X - x))
+					c.buf.WriteString(ansi.CursorLeft(dx))
 				} else {
-					c.buf.Write(bytes.Repeat([]byte{ansi.BS}, dx))
+					c.buf.WriteString(strings.Repeat("\b", dx))
 				}
 			}
 		}
