@@ -595,7 +595,7 @@ func (p *Program) Run() (Model, error) {
 	model, err := p.eventLoop(model, cmds)
 	killed := p.ctx.Err() != nil
 	if killed {
-		err = fmt.Errorf("%w: %w", ErrProgramKilled, p.ctx.Err())
+		err = fmt.Errorf("%w: %w", ErrProgramKilled, context.Cause(p.ctx))
 	} else {
 		// Ensure we rendered the final state of the model.
 		p.renderer.write(model.View())
