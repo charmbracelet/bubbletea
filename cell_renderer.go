@@ -278,6 +278,9 @@ func (c *cellRenderer) update(msg Msg) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	switch msg := msg.(type) {
+	case ColorProfileMsg:
+		c.profile = msg.Profile
+
 	case rendererWriter:
 		c.out = msg.Writer
 

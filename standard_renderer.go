@@ -275,6 +275,9 @@ func (r *standardRenderer) setAltScreenBuffer(on bool) {
 // update handles internal messages for the renderer.
 func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
+	case ColorProfileMsg:
+		r.profile = msg.Profile
+
 	case enableModeMsg:
 		switch string(msg) {
 		case ansi.AltScreenBufferMode.String():
