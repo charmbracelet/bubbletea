@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/cellbuf"
 )
@@ -89,13 +90,16 @@ type cellRenderer struct {
 	// modes
 	altScreen    bool
 	cursorHidden bool
+
+	profile colorprofile.Profile
 }
 
-func newCellRenderer() *cellRenderer {
+func newCellRenderer(p colorprofile.Profile) *cellRenderer {
 	r := &cellRenderer{
 		// TODO: Update this if Grapheme Clustering is supported.
 		method:   cellbuf.WcWidth,
 		finalCur: undefPoint,
+		profile:  p,
 	}
 	r.reset()
 	return r
@@ -124,7 +128,7 @@ func (c *cellRenderer) close() error {
 		seq += "\r"
 		c.scr.cur.X = 0
 	}
-	if _, line := cellbuf.RenderLine(c.scr, y); line != "" {
+	if _, line := cellbuf.RenderLineWithProfile(c.scr, y, c.profile); line != "" {
 		// OPTIM: We only clear the line if there's content on it.
 		seq += ansi.EraseEntireLine
 	}
@@ -378,7 +382,7 @@ func (c *cellRenderer) changes() {
 		var x int
 		for y := 0; y < height; y++ {
 			var line string
-			x, line = cellbuf.RenderLine(c.scr, y)
+			x, line = cellbuf.RenderLineWithProfile(c.scr, y, c.profile)
 			c.buf.WriteString(line)
 			if y < height-1 {
 				x = 0
@@ -402,6 +406,11 @@ func (c *cellRenderer) changes() {
 			if !ok || cell.Width == 0 {
 				continue
 			}
+
+			// Convert the cell to respect the current color profile.
+			cell.Style = cell.Style.Convert(c.profile)
+			cell.Link = cell.Link.Convert(c.profile)
+
 			if !c.scr.isDirty(x, y) {
 				if seg != nil {
 					erased := c.flushSegment(seg, image.Pt(segX, y), eraser)
