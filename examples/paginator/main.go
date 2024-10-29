@@ -48,7 +48,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 	m.paginator = p
 	m.items = items
 
-	return m, tea.BackgroundColor
+	return m, tea.RequestBackgroundColor
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
