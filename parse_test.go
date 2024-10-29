@@ -19,11 +19,13 @@ func TestParseSequence_Events(t *testing.T) {
 		KeyPressMsg{Code: KeyEscape, Mod: ModShift},
 		modeReportMsg{Mode: 1049, Value: 2},
 	}
+
+	var p inputParser
 	for i := 0; len(input) != 0; i++ {
 		if i >= len(want) {
 			t.Fatalf("reached end of want events")
 		}
-		n, got := parseSequence(input)
+		n, got := p.parseSequence(input)
 		if !reflect.DeepEqual(got, want[i]) {
 			t.Errorf("got %#v (%T), want %#v (%T)", got, got, want[i], want[i])
 		}
@@ -32,10 +34,11 @@ func TestParseSequence_Events(t *testing.T) {
 }
 
 func BenchmarkParseSequence(b *testing.B) {
+	var p inputParser
 	input := []byte("\x1b\x1b[Ztest\x00\x1b]10;1234/1234/1234\x07\x1b[27;2;27~")
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		parseSequence(input)
+		p.parseSequence(input)
 	}
 }

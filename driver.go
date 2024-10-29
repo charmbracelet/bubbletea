@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"io"
+	"log"
 	"unicode/utf8"
 
 	"github.com/muesli/cancelreader"
@@ -44,7 +45,8 @@ type driver struct {
 	// It is used to decode ANSI escape sequences and utf16 sequences.
 	keyState win32InputState //nolint:unused
 
-	flags int // control the behavior of the driver.
+	parser inputParser
+	trace  bool // trace enables input tracing and logging.
 }
 
 // newDriver returns a new ANSI input driver.
@@ -61,7 +63,7 @@ func newDriver(r io.Reader, term string, flags int) (*driver, error) {
 	d.rd = cr
 	d.table = buildKeysTable(flags, term)
 	d.term = term
-	d.flags = flags
+	d.parser.flags = flags
 	return d, nil
 }
 
@@ -93,7 +95,10 @@ func (d *driver) readEvents() (msgs []Msg, err error) {
 
 	var i int
 	for i < len(buf) {
-		nb, ev := parseSequence(buf[i:])
+		nb, ev := d.parser.parseSequence(buf[i:])
+		if d.trace {
+			log.Printf("input: %q", buf[i:i+nb])
+		}
 
 		// Handle bracketed-paste
 		if d.paste != nil {

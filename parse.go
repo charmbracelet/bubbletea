@@ -85,14 +85,16 @@ const (
 	_FlagFKeys
 )
 
-var flags int
+// inputParser is a parser for input escape sequences.
+// TODO: Use [ansi.DecodeSequence] instead of this parser.
+type inputParser struct {
+	flags int
+}
 
 // setFlags sets the flags for the parser.
 // This will control the behavior of ParseSequence.
-//
-//nolint:unused
-func setFlags(f int) {
-	flags = f
+func (p *inputParser) setFlags(f int) {
+	p.flags = f
 }
 
 // parseSequence finds the first recognized event sequence and returns it along
@@ -100,7 +102,7 @@ func setFlags(f int) {
 //
 // It will return zero and nil no sequence is recognized or when the buffer is
 // empty. If a sequence is not supported, an UnknownEvent is returned.
-func parseSequence(buf []byte) (n int, msg Msg) {
+func (p *inputParser) parseSequence(buf []byte) (n int, msg Msg) {
 	if len(buf) == 0 {
 		return 0, nil
 	}
@@ -114,17 +116,17 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 
 		switch b := buf[1]; b {
 		case 'O': // Esc-prefixed SS3
-			return parseSs3(buf)
+			return p.parseSs3(buf)
 		case 'P': // Esc-prefixed DCS
-			return parseDcs(buf)
+			return p.parseDcs(buf)
 		case '[': // Esc-prefixed CSI
-			return parseCsi(buf)
+			return p.parseCsi(buf)
 		case ']': // Esc-prefixed OSC
-			return parseOsc(buf)
+			return p.parseOsc(buf)
 		case '_': // Esc-prefixed APC
-			return parseApc(buf)
+			return p.parseApc(buf)
 		default:
-			n, e := parseSequence(buf[1:])
+			n, e := p.parseSequence(buf[1:])
 			if k, ok := e.(KeyPressMsg); ok {
 				k.Text = ""
 				k.Mod |= ModAlt
@@ -136,18 +138,18 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 			return 1, KeyPressMsg{Code: KeyEscape}
 		}
 	case ansi.SS3:
-		return parseSs3(buf)
+		return p.parseSs3(buf)
 	case ansi.DCS:
-		return parseDcs(buf)
+		return p.parseDcs(buf)
 	case ansi.CSI:
-		return parseCsi(buf)
+		return p.parseCsi(buf)
 	case ansi.OSC:
-		return parseOsc(buf)
+		return p.parseOsc(buf)
 	case ansi.APC:
-		return parseApc(buf)
+		return p.parseApc(buf)
 	default:
 		if b <= ansi.US || b == ansi.DEL || b == ansi.SP {
-			return 1, parseControl(b)
+			return 1, p.parseControl(b)
 		} else if b >= ansi.PAD && b <= ansi.APC {
 			// C1 control code
 			// UTF-8 never starts with a C1 control code
@@ -155,11 +157,11 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 			code := rune(b) - 0x40
 			return 1, KeyPressMsg{Code: code, Mod: ModCtrl | ModAlt}
 		}
-		return parseUtf8(buf)
+		return p.parseUtf8(buf)
 	}
 }
 
-func parseCsi(b []byte) (int, Msg) {
+func (p *inputParser) parseCsi(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+[ key
 		return 2, KeyPressMsg{Text: string(rune(b[1])), Mod: ModAlt}
@@ -224,7 +226,7 @@ func parseCsi(b []byte) (int, Msg) {
 		// CSI <number> $ is an invalid sequence, but URxvt uses it for
 		// shift modified keys.
 		if b[i-1] == '$' {
-			n, ev := parseCsi(append(b[:i-1], '~'))
+			n, ev := p.parseCsi(append(b[:i-1], '~'))
 			if k, ok := ev.(KeyPressMsg); ok {
 				k.Mod |= ModShift
 				return n, k
@@ -396,7 +398,7 @@ func parseCsi(b []byte) (int, Msg) {
 			var k KeyPressMsg
 			switch param {
 			case 1:
-				if flags&_FlagFind != 0 {
+				if p.flags&_FlagFind != 0 {
 					k = KeyPressMsg{Code: KeyFind}
 				} else {
 					k = KeyPressMsg{Code: KeyHome}
@@ -406,7 +408,7 @@ func parseCsi(b []byte) (int, Msg) {
 			case 3:
 				k = KeyPressMsg{Code: KeyDelete}
 			case 4:
-				if flags&_FlagSelect != 0 {
+				if p.flags&_FlagSelect != 0 {
 					k = KeyPressMsg{Code: KeySelect}
 				} else {
 					k = KeyPressMsg{Code: KeyEnd}
@@ -455,7 +457,7 @@ func parseCsi(b []byte) (int, Msg) {
 
 // parseSs3 parses a SS3 sequence.
 // See https://vt100.net/docs/vt220-rm/chapter4.html#S4.4.4.2
-func parseSs3(b []byte) (int, Msg) {
+func (p *inputParser) parseSs3(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+O key
 		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
@@ -519,7 +521,7 @@ func parseSs3(b []byte) (int, Msg) {
 	return i, k
 }
 
-func parseOsc(b []byte) (int, Msg) {
+func (p *inputParser) parseOsc(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+] key
 		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
@@ -613,7 +615,7 @@ func parseOsc(b []byte) (int, Msg) {
 }
 
 // parseStTerminated parses a control sequence that gets terminated by a ST character.
-func parseStTerminated(intro8, intro7 byte) func([]byte) (int, Msg) {
+func (p *inputParser) parseStTerminated(intro8, intro7 byte) func([]byte) (int, Msg) {
 	return func(b []byte) (int, Msg) {
 		var i int
 		if b[i] == intro8 || b[i] == ansi.ESC {
@@ -644,7 +646,7 @@ func parseStTerminated(intro8, intro7 byte) func([]byte) (int, Msg) {
 	}
 }
 
-func parseDcs(b []byte) (int, Msg) {
+func (p *inputParser) parseDcs(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+P key
 		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
@@ -757,17 +759,17 @@ func parseDcs(b []byte) (int, Msg) {
 	return i, UnknownMsg(b[:i])
 }
 
-func parseApc(b []byte) (int, Msg) {
+func (p *inputParser) parseApc(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+_ key
 		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
 	}
 
 	// APC sequences are introduced by APC (0x9f) or ESC _ (0x1b 0x5f)
-	return parseStTerminated(ansi.APC, '_')(b)
+	return p.parseStTerminated(ansi.APC, '_')(b)
 }
 
-func parseUtf8(b []byte) (int, Msg) {
+func (p *inputParser) parseUtf8(b []byte) (int, Msg) {
 	if len(b) == 0 {
 		return 0, nil
 	}
@@ -775,7 +777,7 @@ func parseUtf8(b []byte) (int, Msg) {
 	c := b[0]
 	if c <= ansi.US || c == ansi.DEL || c == ansi.SP {
 		// Control codes get handled by parseControl
-		return 1, parseControl(c)
+		return 1, p.parseControl(c)
 	} else if c > ansi.US && c < ansi.DEL {
 		// ASCII printable characters
 		code := rune(c)
@@ -808,32 +810,32 @@ func parseUtf8(b []byte) (int, Msg) {
 	return len(cluster), KeyPressMsg{Code: code, Text: text}
 }
 
-func parseControl(b byte) Msg {
+func (p *inputParser) parseControl(b byte) Msg {
 	switch b {
 	case ansi.NUL:
-		if flags&_FlagCtrlAt != 0 {
+		if p.flags&_FlagCtrlAt != 0 {
 			return KeyPressMsg{Code: '@', Mod: ModCtrl}
 		}
 		return KeyPressMsg{Code: KeySpace, Mod: ModCtrl}
 	case ansi.BS:
 		return KeyPressMsg{Code: 'h', Mod: ModCtrl}
 	case ansi.HT:
-		if flags&_FlagCtrlI != 0 {
+		if p.flags&_FlagCtrlI != 0 {
 			return KeyPressMsg{Code: 'i', Mod: ModCtrl}
 		}
 		return KeyPressMsg{Code: KeyTab}
 	case ansi.CR:
-		if flags&_FlagCtrlM != 0 {
+		if p.flags&_FlagCtrlM != 0 {
 			return KeyPressMsg{Code: 'm', Mod: ModCtrl}
 		}
 		return KeyPressMsg{Code: KeyEnter}
 	case ansi.ESC:
-		if flags&_FlagCtrlOpenBracket != 0 {
+		if p.flags&_FlagCtrlOpenBracket != 0 {
 			return KeyPressMsg{Code: '[', Mod: ModCtrl}
 		}
 		return KeyPressMsg{Code: KeyEscape}
 	case ansi.DEL:
-		if flags&_FlagBackspace != 0 {
+		if p.flags&_FlagBackspace != 0 {
 			return KeyPressMsg{Code: KeyDelete}
 		}
 		return KeyPressMsg{Code: KeyBackspace}
