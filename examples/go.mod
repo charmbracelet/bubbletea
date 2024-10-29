@@ -1,15 +1,15 @@
 module examples
 
-go 1.21
-
-toolchain go1.22.5
+go 1.23.1
 
 require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20240919174403-09242fdf671f
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.1.0.20240919172237-265996c29bea
+	github.com/charmbracelet/colorprofile v0.1.3
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v0.13.0
+	github.com/charmbracelet/x/ansi v0.4.0
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
@@ -22,7 +22,6 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.4.0 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20240815200342-61de596daa2b // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect

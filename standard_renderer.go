@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -25,6 +26,9 @@ const (
 type standardRenderer struct {
 	mtx *sync.Mutex
 	out io.Writer
+
+	// the color profile to use
+	profile colorprofile.Profile
 
 	buf                bytes.Buffer
 	queuedMessageLines []string
@@ -47,10 +51,11 @@ type standardRenderer struct {
 
 // newStandardRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newStandardRenderer() renderer {
+func newStandardRenderer(p colorprofile.Profile) renderer {
 	r := &standardRenderer{
 		mtx:                &sync.Mutex{},
 		queuedMessageLines: []string{},
+		profile:            p,
 	}
 	return r
 }
@@ -58,7 +63,10 @@ func newStandardRenderer() renderer {
 // setOutput sets the output for the renderer.
 func (r *standardRenderer) setOutput(out io.Writer) {
 	r.mtx.Lock()
-	r.out = out
+	r.out = &colorprofile.Writer{
+		Forward: out,
+		Profile: r.profile,
+	}
 	r.mtx.Unlock()
 }
 

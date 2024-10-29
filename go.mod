@@ -3,7 +3,7 @@ module github.com/charmbracelet/bubbletea/v2
 go 1.18
 
 require (
-	github.com/charmbracelet/lipgloss v0.13.0
+	github.com/charmbracelet/colorprofile v0.1.3
 	github.com/charmbracelet/x/ansi v0.4.0
 	github.com/charmbracelet/x/term v0.2.0
 	github.com/charmbracelet/x/windows v0.2.0
@@ -13,3 +13,5 @@ require (
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.26.0
 )
+
+require github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
