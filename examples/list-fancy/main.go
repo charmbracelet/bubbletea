@@ -108,7 +108,7 @@ type model struct {
 func (m model) Init() (tea.Model, tea.Cmd) {
 	m.once = new(sync.Once)
 	return m, tea.Batch(
-		tea.BackgroundColor,
+		tea.RequestBackgroundColor,
 		tea.EnterAltScreen,
 	)
 }
