@@ -27,6 +27,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"golang.org/x/sync/errgroup"
@@ -103,6 +104,11 @@ const (
 	withoutCatchPanics
 	withoutBracketedPaste
 	withReportFocus
+	withKittyKeyboard
+	withModifyOtherKeys
+	withWindowsInputMode
+	withoutGraphemeClustering
+	withColorProfile
 	withKeyboardEnhancements
 	withGraphemeClustering
 )
@@ -165,6 +171,8 @@ type Program struct {
 	errs         chan error
 	finished     chan struct{}
 	shutdownOnce sync.Once
+
+	profile colorprofile.Profile // the terminal color profile
 
 	// where to send output, this will usually be os.Stdout.
 	output *safeWriter
@@ -440,6 +448,15 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.suspend()
 				}
 
+			case CapabilityMsg:
+				switch msg {
+				case "RGB", "Tc":
+					if p.profile != colorprofile.TrueColor {
+						p.profile = colorprofile.TrueColor
+						go p.Send(ColorProfileMsg{p.profile})
+					}
+				}
+
 			case setCursorStyle:
 				p.execute(ansi.SetCursorStyle(int(msg)))
 
@@ -690,12 +707,18 @@ func (p *Program) Run() (Model, error) {
 		return p.initialModel, err
 	}
 
+	// Get the color profile and send it to the program.
+	if !p.startupOptions.has(withColorProfile) {
+		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
+	}
+	go p.Send(ColorProfileMsg{p.profile})
+
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
 		if p.exp.has(experimentalCellbuf) {
 			p.renderer = newCellRenderer()
 		} else {
-			p.renderer = newStandardRenderer()
+			p.renderer = newStandardRenderer(p.profile)
 		}
 	}
 

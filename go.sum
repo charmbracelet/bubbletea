@@ -1,3 +1,5 @@
+github.com/charmbracelet/colorprofile v0.1.3 h1:8l1qSZyfr/36f4ouijjpvMsbsIPzVrSC3q/XWoWQSDc=
+github.com/charmbracelet/colorprofile v0.1.3/go.mod h1:1htIKZYeI4TQs+OykPvpuBTUbUJxBYeSYBDIZuejMj0=
 github.com/charmbracelet/x/ansi v0.4.0 h1:NqwHA4B23VwsDn4H3VcNX1W1tOmgnvY1NDx5tOXdnOU=
 github.com/charmbracelet/x/ansi v0.4.0/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/cellbuf v0.0.2 h1:m2HAmB4I8Zf7cQhvVrm5AHiZGKtzMWJV3RvBuBXqSiU=
@@ -8,6 +10,8 @@ github.com/charmbracelet/x/wcwidth v0.0.0-20241011142426-46044092ad91 h1:D5OO0lV
 github.com/charmbracelet/x/wcwidth v0.0.0-20241011142426-46044092ad91/go.mod h1:Ey8PFmYwH+/td9bpiEx07Fdx9ZVkxfIjWXxBluxF4Nw=
 github.com/charmbracelet/x/windows v0.2.0 h1:ilXA1GJjTNkgOm94CLPeSz7rar54jtFatdmoiONPuEw=
 github.com/charmbracelet/x/windows v0.2.0/go.mod h1:ZibNFR49ZFqCXgP76sYanisxRyC+EYrBE7TTknD8s1s=
+github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
+github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/muesli/cancelreader v0.2.2 h1:3I4Kt4BQjOR54NavqnDogx/MIoWBFa0StPA8ELUXHmA=
 github.com/muesli/cancelreader v0.2.2/go.mod h1:3XuTXfFS2VjM+HTLZY9Ak0l6eUKfijIfMUZ4EgX0QYo=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=

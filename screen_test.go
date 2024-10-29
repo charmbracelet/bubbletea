@@ -5,6 +5,8 @@ import (
 	"image/color"
 	"runtime"
 	"testing"
+
+	"github.com/charmbracelet/colorprofile"
 )
 
 func TestClearMsg(t *testing.T) {
@@ -102,7 +104,9 @@ func TestClearMsg(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testModel{}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			p := NewProgram(m, WithInput(&in), WithOutput(&buf),
+				// Use ANSI256 to increase test coverage.
+				WithColorProfile(colorprofile.ANSI256))
 
 			test.cmds = append(test.cmds, Quit)
 			go p.Send(test.cmds)
