@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
+
+	"github.com/charmbracelet/colorprofile"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -266,5 +268,17 @@ func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption
 func WithGraphemeClustering() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withGraphemeClustering
+	}
+}
+
+// WithColorProfile sets the color profile that the program will use. This is
+// useful when you want to force a specific color profile. By default, Bubble
+// Tea will try to detect the terminal's color profile from environment
+// variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
+// environment variables.
+func WithColorProfile(profile colorprofile.Profile) ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withColorProfile
+		p.profile = profile
 	}
 }
