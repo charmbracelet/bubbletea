@@ -42,7 +42,7 @@ func initialModel() model {
 	ta.SetHeight(3)
 
 	// Remove cursor line styling
-	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	ta.Styles.Focused.CursorLine = lipgloss.NewStyle()
 
 	ta.ShowLineNumbers = false
 
