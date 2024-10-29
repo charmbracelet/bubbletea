@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.1.3
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss v0.13.0
+	github.com/charmbracelet/lipgloss v0.13.1
 	github.com/charmbracelet/x/ansi v0.4.0
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
