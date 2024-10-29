@@ -595,6 +595,7 @@ func (p *Program) Run() (Model, error) {
 	model, err := p.eventLoop(model, cmds)
 	killed := p.ctx.Err() != nil
 	if killed {
+		// TODO: change p.ctx.Err() to context.Cause(p.ctx) on upgrade to go 1.20 to take into account context.WithCancelCause
 		err = fmt.Errorf("%w: %w", ErrProgramKilled, p.ctx.Err())
 	} else {
 		// Ensure we rendered the final state of the model.
