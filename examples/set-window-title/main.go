@@ -7,7 +7,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 const windowTitle = "Hello, Bubble Tea"
