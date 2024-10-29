@@ -104,7 +104,12 @@ func main() {
 				return headerStyle
 			}
 
-			if rows[row-1][1] == "Pikachu" {
+			rowIndex := row - 1
+			if rowIndex < 0 || rowIndex >= len(rows) {
+				return baseStyle
+			}
+
+			if rows[rowIndex][1] == "Pikachu" {
 				return selectedStyle
 			}
 
@@ -117,7 +122,14 @@ func main() {
 					c = dimTypeColors
 				}
 
-				color := c[fmt.Sprint(rows[row-1][col])]
+				if col >= len(rows[rowIndex]) {
+					return baseStyle
+				}
+
+				color, ok := c[rows[rowIndex][col]]
+				if !ok {
+					return baseStyle
+				}
 				return baseStyle.Foreground(color)
 			}
 
