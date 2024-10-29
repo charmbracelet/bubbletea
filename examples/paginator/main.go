@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/v2/paginator"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
 )

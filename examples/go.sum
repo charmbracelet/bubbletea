@@ -14,8 +14,8 @@ github.com/aymanbagabas/go-udiff v0.2.0 h1:TK0fH4MteXUDspT88n8CKzvK0X9O2xu9yQjWp
 github.com/aymanbagabas/go-udiff v0.2.0/go.mod h1:RE4Ex0qsGkTAJoQdQQCA0uG+nAzJO/pI/QwceO5fgrA=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20241024212941-12271df0271a h1:HhnouTclU//H0P7ec2mtiMhlWL7zCfFgcrWruvVIv0Y=
-github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20241024212941-12271df0271a/go.mod h1:VEdxVsfMDila6ynCQhmhBLsQK2KCpI1sItJKi92aANQ=
+github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20241029195424-db64e3cd782c h1:GQXDDexYp4Y0tPLMPT2UCdOvEt1eX125BlU2KaJ+AtA=
+github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20241029195424-db64e3cd782c/go.mod h1:m1OsgLhZIiKx3O0R51XwnXwwm9vP/LFa8IBUMQiiZmw=
 github.com/charmbracelet/colorprofile v0.1.6 h1:nMMqCns0c0DfCwNGdagBh6SxutFqkltSxxKk5S9kt+Y=
 github.com/charmbracelet/colorprofile v0.1.6/go.mod h1:3EMXDxwRDJl0c17eJ1jX99MhtlP9OxE/9Qw0C5lvyUg=
 github.com/charmbracelet/glamour v0.8.0 h1:tPrjL3aRcQbn++7t18wOpgLyl8wrOHUEDS7IZ68QtZs=
@@ -24,6 +24,8 @@ github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
 github.com/charmbracelet/lipgloss v0.13.2-0.20241023173701-23b08d1d3588 h1:P0eMGSpqhHhVEN9HRD9Dl0ZaXIJWHINkW4DjPC/0EIQ=
 github.com/charmbracelet/lipgloss v0.13.2-0.20241023173701-23b08d1d3588/go.mod h1:S+zi6HCChYq08TKQZpf3KEi7D/RO62JjxwNXbv6KVxA=
+github.com/charmbracelet/lipgloss/v2 v2.0.0-20241029194924-049a2d260c67 h1:t/4KovO/31pdh9e74EVGVSbIlcY3bG4lmtrL3pD4fgU=
+github.com/charmbracelet/lipgloss/v2 v2.0.0-20241029194924-049a2d260c67/go.mod h1:EcAf9+4/UeilG4rNQmiRzrou258LAVjVK4YUh+BvfqQ=
 github.com/charmbracelet/x/ansi v0.4.2 h1:0JM6Aj/g/KC154/gOP4vfxun0ff6itogDYk41kof+qk=
 github.com/charmbracelet/x/ansi v0.4.2/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 h1:payRxjMjKgx2PaCWLZ4p3ro9y97+TVLZNaRZgJwSVDQ=
