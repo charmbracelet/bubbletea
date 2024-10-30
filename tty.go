@@ -114,6 +114,7 @@ func (p *Program) initInputReader() error {
 		return err
 	}
 
+	drv.trace = p.traceInput
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
 	go p.readLoop()

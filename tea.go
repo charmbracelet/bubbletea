@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"image/color"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -191,6 +190,7 @@ type Program struct {
 	ttyInput              term.File
 	previousTtyInputState *term.State
 	inputReader           *driver
+	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
@@ -218,9 +218,6 @@ type Program struct {
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
 	setBg, setFg, setCc color.Color
-
-	// tracer is used to trace the program's output and input.
-	tracer tracer
 
 	// exp stores program experimental features.
 	exp experimentalOptions
@@ -291,27 +288,21 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	}
 
 	// Detect if tracing is enabled.
-	if tracePath := p.getenv("TEA_TRACE"); tracePath != "" {
+	if tracePath := os.Getenv("TEA_TRACE"); tracePath != "" {
 		switch tracePath {
 		case "0", "false", "off":
 			break
 		}
 
-		tracer, err := newTracer(tracePath)
-		if err == nil {
-			p.tracer = tracer
+		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
 			// Enable different types of tracing.
-			if output, _ := strconv.ParseBool(p.getenv("TEA_TRACE_OUTPUT")); output {
-				p.tracer = p.tracer.withOutput()
+			if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
+				p.output.trace = true
 			}
-			if input, _ := strconv.ParseBool(p.getenv("TEA_TRACE_INPUT")); input {
-				p.tracer = p.tracer.withInput()
+			if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
+				p.traceInput = true
 			}
 		}
-	}
-
-	if p.tracer.mask&traceOutput != 0 {
-		p.output.trace = true
 	}
 
 	// Experimental features. Right now, we only have one experimental feature
@@ -430,12 +421,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 			if msg == nil {
 				continue
-			}
-
-			// XXX: Is this the right place to trace input? Perhaps inside
-			// [parseSequence]?
-			if p.tracer.mask&traceInput != 0 {
-				log.Printf("input %T %v", msg, msg)
 			}
 
 			// Handle special internal messages.

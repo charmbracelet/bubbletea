@@ -1,9 +1,9 @@
-github.com/charmbracelet/colorprofile v0.1.3 h1:8l1qSZyfr/36f4ouijjpvMsbsIPzVrSC3q/XWoWQSDc=
-github.com/charmbracelet/colorprofile v0.1.3/go.mod h1:1htIKZYeI4TQs+OykPvpuBTUbUJxBYeSYBDIZuejMj0=
-github.com/charmbracelet/x/ansi v0.4.0 h1:NqwHA4B23VwsDn4H3VcNX1W1tOmgnvY1NDx5tOXdnOU=
-github.com/charmbracelet/x/ansi v0.4.0/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
-github.com/charmbracelet/x/cellbuf v0.0.2 h1:m2HAmB4I8Zf7cQhvVrm5AHiZGKtzMWJV3RvBuBXqSiU=
-github.com/charmbracelet/x/cellbuf v0.0.2/go.mod h1:lX6M1begBn73Vjeg85MfYIoIqUwo1T3KGr6sIAUnb0s=
+github.com/charmbracelet/colorprofile v0.1.4 h1:UZm1273VW+rD7gfH6NqfTWi9TGyPsFvGDNcIFlZw/As=
+github.com/charmbracelet/colorprofile v0.1.4/go.mod h1:zZrJB+Qq2tyGEprGJwY1u05me+TmRqfECZOxWTxyoVU=
+github.com/charmbracelet/x/ansi v0.4.2 h1:0JM6Aj/g/KC154/gOP4vfxun0ff6itogDYk41kof+qk=
+github.com/charmbracelet/x/ansi v0.4.2/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
+github.com/charmbracelet/x/cellbuf v0.0.3 h1:HapUUjlo0pZ7iGijrTer1f4X8Uvq17l0zR+80Oh+iJg=
+github.com/charmbracelet/x/cellbuf v0.0.3/go.mod h1:SF8R3AqchNzYKKJCFT7co8wt1HgQDfAitQ+SBoxWLNc=
 github.com/charmbracelet/x/term v0.2.0 h1:cNB9Ot9q8I711MyZ7myUR5HFWL/lc3OpU8jZ4hwm0x0=
 github.com/charmbracelet/x/term v0.2.0/go.mod h1:GVxgxAbjUrmpvIINHIQnJJKpMlHiZ4cktEQCN6GWyF0=
 github.com/charmbracelet/x/wcwidth v0.0.0-20241011142426-46044092ad91 h1:D5OO0lVavz7A+Swdhp62F9gbkibxmz9B2hZ/jVdMPf0=
