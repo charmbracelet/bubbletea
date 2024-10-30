@@ -1,6 +1,6 @@
 module github.com/charmbracelet/bubbletea/v2
 
-go 1.18
+go 1.20
 
 require (
 	github.com/charmbracelet/colorprofile v0.1.3
