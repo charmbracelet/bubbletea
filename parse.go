@@ -350,7 +350,7 @@ func (p *inputParser) parseCsi(b []byte) (int, Msg) {
 			rc = 1
 		}
 
-		event := parseWin32InputKeyEvent(
+		event := p.parseWin32InputKeyEvent(
 			nil,
 			uint16(csi.Param(0)), //nolint:gosec // Vk wVirtualKeyCode
 			uint16(csi.Param(1)), //nolint:gosec // Sc wVirtualScanCode

@@ -47,7 +47,7 @@ func (d *driver) handleConInput(
 
 	var evs []Msg
 	for _, event := range events {
-		if e := parseConInputEvent(event, &d.keyState); e != nil {
+		if e := d.parseConInputEvent(event, &d.keyState); e != nil {
 			if multi, ok := e.(multiMsg); ok {
 				evs = append(evs, multi...)
 			} else {
@@ -59,11 +59,11 @@ func (d *driver) handleConInput(
 	return evs, nil
 }
 
-func parseConInputEvent(event xwindows.InputRecord, keyState *win32InputState) Msg {
+func (d *driver) parseConInputEvent(event xwindows.InputRecord, keyState *win32InputState) Msg {
 	switch event.EventType {
 	case xwindows.KEY_EVENT:
 		kevent := event.KeyEvent()
-		return parseWin32InputKeyEvent(keyState, kevent.VirtualKeyCode, kevent.VirtualScanCode,
+		return d.parser.parseWin32InputKeyEvent(keyState, kevent.VirtualKeyCode, kevent.VirtualScanCode,
 			kevent.Char, kevent.KeyDown, kevent.ControlKeyState, kevent.RepeatCount)
 
 	case xwindows.WINDOW_BUFFER_SIZE_EVENT:
@@ -212,7 +212,7 @@ func peekConsoleInput(console windows.Handle, inputRecords []xwindows.InputRecor
 // an event from win32-input-mode. Otherwise, it's a key event from the Windows
 // Console API and needs a state to decode ANSI escape sequences and utf16
 // runes.
-func parseWin32InputKeyEvent(state *win32InputState, vkc uint16, _ uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) (msg Msg) {
+func (p *inputParser) parseWin32InputKeyEvent(state *win32InputState, vkc uint16, _ uint16, r rune, keyDown bool, cks uint32, repeatCount uint16) (msg Msg) {
 	defer func() {
 		// Respect the repeat count.
 		if repeatCount > 1 {
@@ -268,7 +268,7 @@ func parseWin32InputKeyEvent(state *win32InputState, vkc uint16, _ uint16, r run
 				return nil
 			}
 
-			n, msg := parseSequence(state.ansiBuf[:state.ansiIdx])
+			n, msg := p.parseSequence(state.ansiBuf[:state.ansiIdx])
 			if n == 0 {
 				return nil
 			}
