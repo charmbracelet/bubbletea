@@ -5,7 +5,7 @@ go 1.23.1
 require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20240919174403-09242fdf671f
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.1.0.20240919172237-265996c29bea
-	github.com/charmbracelet/colorprofile v0.1.4
+	github.com/charmbracelet/colorprofile v0.1.6
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v0.13.2-0.20241023173701-23b08d1d3588
