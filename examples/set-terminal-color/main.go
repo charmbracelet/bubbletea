@@ -172,7 +172,7 @@ func main() {
 	ti.Placeholder = "#ff00ff"
 	ti.Focus()
 	ti.CharLimit = 156
-	ti.Width = 20
+	ti.SetWidth(20)
 	p := tea.NewProgram(model{
 		ti: ti,
 	})

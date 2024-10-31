@@ -46,7 +46,7 @@ func initialModel() model {
 
 	ta.ShowLineNumbers = false
 
-	vp := viewport.New(30, 5)
+	vp := viewport.New(viewport.WithWidth(30), viewport.WithHeight(5))
 	vp.SetContent(`Welcome to the chat room!
 Type a message and press Enter to send.`)
 
@@ -68,7 +68,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width
+		m.viewport.SetWidth(msg.Width)
 		m.textarea.SetWidth(msg.Width)
 		return m, nil
 	case tea.KeyPressMsg:

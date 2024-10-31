@@ -91,7 +91,7 @@ func initialModel() model {
 	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	ti.CharLimit = 50
-	ti.Width = 20
+	ti.SetWidth(20)
 	ti.ShowSuggestions = true
 
 	h := help.New()
