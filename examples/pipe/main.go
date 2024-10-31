@@ -59,7 +59,7 @@ func newModel(initialValue string) (m model) {
 	i := textinput.New()
 	i.Prompt = ""
 	i.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	i.Width = 48
+	i.SetWidth(48)
 	i.SetValue(initialValue)
 	i.CursorEnd()
 	i.Focus()

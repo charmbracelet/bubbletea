@@ -74,7 +74,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func main() {
 	m := model{
-		stopwatch: stopwatch.NewWithInterval(time.Millisecond),
+		stopwatch: stopwatch.New(stopwatch.WithInterval(time.Millisecond)),
 		keymap: keymap{
 			start: key.NewBinding(
 				key.WithKeys("s"),

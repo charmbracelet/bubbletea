@@ -3,7 +3,7 @@ module examples
 go 1.23.1
 
 require (
-	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20241029195424-db64e3cd782c
+	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.1.0.20241031195835-cc9a7270283d
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.1.0.20241024164833-a31857d07198
 	github.com/charmbracelet/colorprofile v0.1.6
 	github.com/charmbracelet/glamour v0.8.0
