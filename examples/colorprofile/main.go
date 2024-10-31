@@ -30,7 +30,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m, tea.Quit
 	case tea.ColorProfileMsg:
-		return m, tea.Println("Color profile changed to ", msg)
+		return m, tea.Println("Color profile manually set to ", msg)
 	}
 	return m, nil
 }
