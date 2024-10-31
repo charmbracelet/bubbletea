@@ -190,7 +190,6 @@ func (r *standardRenderer) flush() {
 	if flushQueuedMessages {
 		// Dump the lines we've queued up for printing.
 		for _, line := range r.queuedMessageLines {
-
 			// Removing previousy rendered content at the end of line.
 			line = line + ansi.EraseLineRight
 
