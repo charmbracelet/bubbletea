@@ -1,5 +1,5 @@
-github.com/charmbracelet/colorprofile v0.1.5 h1:oAklcLFRqk54TZbY6DnbN0lzXuM77FV12IH0Vrp2CCM=
-github.com/charmbracelet/colorprofile v0.1.5/go.mod h1:lNLOHYUKbCtTsRcD2M0U8bGXWbKs3m2llXPfDG51Fyo=
+github.com/charmbracelet/colorprofile v0.1.6 h1:nMMqCns0c0DfCwNGdagBh6SxutFqkltSxxKk5S9kt+Y=
+github.com/charmbracelet/colorprofile v0.1.6/go.mod h1:3EMXDxwRDJl0c17eJ1jX99MhtlP9OxE/9Qw0C5lvyUg=
 github.com/charmbracelet/x/ansi v0.4.2 h1:0JM6Aj/g/KC154/gOP4vfxun0ff6itogDYk41kof+qk=
 github.com/charmbracelet/x/ansi v0.4.2/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/term v0.2.0 h1:cNB9Ot9q8I711MyZ7myUR5HFWL/lc3OpU8jZ4hwm0x0=
