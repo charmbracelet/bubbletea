@@ -59,12 +59,13 @@ the initial model as a variable elsewhere, too.
 
 ```go
 func initialModel() model {
+	choices := []string{"Buy carrots", "Buy celery", "Buy kohlrabi"}
 	return model{
 		// Our to-do list is a grocery list
-		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+		choices: choices,
 
 		// A bool slice which indicates which choices are selected.
-		selected: []bool{false, false, false},
+		selected: make([]bool, len(choices)),
 	}
 }
 ```

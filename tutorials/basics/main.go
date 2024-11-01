@@ -14,11 +14,12 @@ type model struct {
 }
 
 func initialModel() model {
+	choices := []string{"Buy carrots", "Buy celery", "Buy kohlrabi"}
 	return model{
-		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+		choices: choices,
 
 		// A bool slice which indicates which choices are selected.
-		selected: []bool{false, false, false},
+		selected: make([]bool, len(choices)),
 	}
 }
 
