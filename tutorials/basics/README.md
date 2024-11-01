@@ -59,9 +59,9 @@ the initial model as a variable elsewhere, too.
 
 ```go
 func initialModel() model {
+	// Our to-do list is a grocery list
 	choices := []string{"Buy carrots", "Buy celery", "Buy kohlrabi"}
 	return model{
-		// Our to-do list is a grocery list
 		choices: choices,
 
 		// A bool slice which indicates which choices are selected.
