@@ -45,9 +45,9 @@ It can be any type, but a `struct` usually makes the most sense.
 
 ```go
 type model struct {
-    choices  []string           // items on the to-do list
-    cursor   int                // which to-do list item our cursor is pointing at
-    selected map[int]struct{}   // which to-do items are selected
+    choices  []string   // items on the to-do list
+    cursor   int        // which to-do list item our cursor is pointing at
+    selected []bool     // which to-do items are selected
 }
 ```
 
@@ -63,10 +63,8 @@ func initialModel() model {
 		// Our to-do list is a grocery list
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
-		// A map which indicates which choices are selected. We're using
-		// the map like a mathematical set. The keys refer to the indexes
-		// of the `choices` slice, above.
-		selected: make(map[int]struct{}),
+		// A bool slice which indicates which choices are selected.
+		selected: []bool{false, false, false},
 	}
 }
 ```
@@ -131,12 +129,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
         // The "enter" key and the spacebar (a literal space) toggle
         // the selected state for the item that the cursor is pointing at.
         case "enter", " ":
-            _, ok := m.selected[m.cursor]
-            if ok {
-                delete(m.selected, m.cursor)
-            } else {
-                m.selected[m.cursor] = struct{}{}
-            }
+            m.selected[m.cursor] = !m.selected[m.cursor]
         }
     }
 
@@ -176,7 +169,7 @@ func (m model) View() string {
 
         // Is this choice selected?
         checked := " " // not selected
-        if _, ok := m.selected[i]; ok {
+        if m.selected[i] {
             checked = "x" // selected!
         }
 
