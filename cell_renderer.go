@@ -358,18 +358,7 @@ func (c *cellRenderer) update(msg Msg) {
 		}
 
 	case setCursorPosMsg:
-		x, y := msg.X, msg.Y
-		if x < 0 {
-			x = c.scr.cur.X
-		} else if x >= c.scr.Width() {
-			x = c.scr.Width() - 1
-		}
-		if y < 0 {
-			y = c.scr.cur.Y
-		} else if y >= c.scr.Height() {
-			y = c.scr.Height() - 1
-		}
-		c.finalCur = image.Pt(x, y)
+		c.finalCur = image.Pt(clamp(msg.X, 0, c.scr.Width()-1), clamp(msg.Y, 0, c.scr.Height()-1))
 	}
 }
 
