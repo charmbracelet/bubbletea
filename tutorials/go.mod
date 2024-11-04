@@ -5,8 +5,8 @@ go 1.18
 require github.com/charmbracelet/bubbletea/v2 v2.0.0-20240918180721-14cb6b5de1d2
 
 require (
-	github.com/charmbracelet/colorprofile v0.1.3 // indirect
-	github.com/charmbracelet/x/ansi v0.4.2 // indirect
+	github.com/charmbracelet/colorprofile v0.1.6 // indirect
+	github.com/charmbracelet/x/ansi v0.4.3 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

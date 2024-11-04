@@ -26,8 +26,8 @@ github.com/charmbracelet/lipgloss v0.13.2-0.20241023173701-23b08d1d3588 h1:P0eMG
 github.com/charmbracelet/lipgloss v0.13.2-0.20241023173701-23b08d1d3588/go.mod h1:S+zi6HCChYq08TKQZpf3KEi7D/RO62JjxwNXbv6KVxA=
 github.com/charmbracelet/lipgloss/v2 v2.0.0-20241029194924-049a2d260c67 h1:t/4KovO/31pdh9e74EVGVSbIlcY3bG4lmtrL3pD4fgU=
 github.com/charmbracelet/lipgloss/v2 v2.0.0-20241029194924-049a2d260c67/go.mod h1:EcAf9+4/UeilG4rNQmiRzrou258LAVjVK4YUh+BvfqQ=
-github.com/charmbracelet/x/ansi v0.4.2 h1:0JM6Aj/g/KC154/gOP4vfxun0ff6itogDYk41kof+qk=
-github.com/charmbracelet/x/ansi v0.4.2/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
+github.com/charmbracelet/x/ansi v0.4.3 h1:wcdDrW0ejaaZGJxCyxVNzzmctqV+oARIudaFGQvsRkA=
+github.com/charmbracelet/x/ansi v0.4.3/go.mod h1:dk73KoMTT5AX5BsX0KrqhsTqAnhZZoCBjs7dGWp4Ktw=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 h1:payRxjMjKgx2PaCWLZ4p3ro9y97+TVLZNaRZgJwSVDQ=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
 github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233 h1:2bTR/MtnJuq9RrCZSPwCOO34YSDByKL6nzXQMnsKK6U=
