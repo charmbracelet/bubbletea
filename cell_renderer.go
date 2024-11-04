@@ -291,7 +291,12 @@ func (c *cellRenderer) update(msg Msg) {
 		c.lastRenders[1] = ""
 
 	case clearScreenMsg:
-		io.WriteString(c.out, ansi.EraseEntireScreen+ansi.CursorOrigin) //nolint:errcheck
+		seq := ansi.EraseEntireScreen + ansi.HomeCursorPosition
+		if !c.cursorHidden {
+			seq = ansi.HideCursor + seq + ansi.ShowCursor
+		}
+
+		io.WriteString(c.out, seq) //nolint:errcheck
 		c.repaint()
 
 	case repaintMsg:
