@@ -126,6 +126,9 @@ func TestWindowsInputEvents(t *testing.T) {
 		},
 	}
 
+	// p is the parser to parse the input events
+	var p inputParser
+
 	// keep track of the state of the driver to handle ANSI sequences and utf16
 	var state win32InputState
 	for _, tc := range cases {
@@ -138,7 +141,7 @@ func TestWindowsInputEvents(t *testing.T) {
 					}
 
 					key := ev.KeyEvent()
-					msg = parseWin32InputKeyEvent(&state, key.VirtualKeyCode, key.VirtualScanCode, key.Char, key.KeyDown, key.ControlKeyState, key.RepeatCount)
+					msg = p.parseWin32InputKeyEvent(&state, key.VirtualKeyCode, key.VirtualScanCode, key.Char, key.KeyDown, key.ControlKeyState, key.RepeatCount)
 				}
 				if len(tc.expected) != 1 {
 					t.Fatalf("expected 1 event, got %d", len(tc.expected))
@@ -151,7 +154,7 @@ func TestWindowsInputEvents(t *testing.T) {
 					t.Fatalf("expected %d events, got %d", len(tc.expected), len(tc.events))
 				}
 				for j, ev := range tc.events {
-					msg := parseConInputEvent(ev, &state)
+					msg := p.parseConInputEvent(ev, &state)
 					if !reflect.DeepEqual(msg, tc.expected[j]) {
 						t.Errorf("expected %#v, got %#v", tc.expected[j], msg)
 					}

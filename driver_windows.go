@@ -47,7 +47,7 @@ func (d *driver) handleConInput(
 
 	var evs []Msg
 	for _, event := range events {
-		if e := d.parseConInputEvent(event, &d.keyState); e != nil {
+		if e := d.parser.parseConInputEvent(event, &d.keyState); e != nil {
 			if multi, ok := e.(multiMsg); ok {
 				evs = append(evs, multi...)
 			} else {
@@ -59,11 +59,11 @@ func (d *driver) handleConInput(
 	return evs, nil
 }
 
-func (d *driver) parseConInputEvent(event xwindows.InputRecord, keyState *win32InputState) Msg {
+func (p *inputParser) parseConInputEvent(event xwindows.InputRecord, keyState *win32InputState) Msg {
 	switch event.EventType {
 	case xwindows.KEY_EVENT:
 		kevent := event.KeyEvent()
-		return d.parser.parseWin32InputKeyEvent(keyState, kevent.VirtualKeyCode, kevent.VirtualScanCode,
+		return p.parseWin32InputKeyEvent(keyState, kevent.VirtualKeyCode, kevent.VirtualScanCode,
 			kevent.Char, kevent.KeyDown, kevent.ControlKeyState, kevent.RepeatCount)
 
 	case xwindows.WINDOW_BUFFER_SIZE_EVENT:

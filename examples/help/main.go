@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/v2/help"
 	"github.com/charmbracelet/bubbles/v2/key"
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 // keyMap defines a set of keybindings. To work for help it must satisfy
@@ -127,7 +127,7 @@ func (m model) View() string {
 	helpView := m.help.View(m.keys)
 	height := 8 - strings.Count(status, "\n") - strings.Count(helpView, "\n")
 
-	return "\n" + status + strings.Repeat("\n", height) + helpView
+	return status + strings.Repeat("\n", height) + helpView
 }
 
 func main() {

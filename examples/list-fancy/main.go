@@ -2,28 +2,35 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
-	"time"
+	"sync"
 
 	"github.com/charmbracelet/bubbles/v2/key"
 	"github.com/charmbracelet/bubbles/v2/list"
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
-var (
-	appStyle = lipgloss.NewStyle().Padding(1, 2)
+type styles struct {
+	app           lipgloss.Style
+	title         lipgloss.Style
+	statusMessage lipgloss.Style
+}
 
-	titleStyle = lipgloss.NewStyle().
+func newStyles(darkBG bool) styles {
+	lightDark := lipgloss.LightDark(darkBG)
+
+	return styles{
+		app: lipgloss.NewStyle().
+			Padding(1, 2),
+		title: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFDF5")).
 			Background(lipgloss.Color("#25A065")).
-			Padding(0, 1)
-
-	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
-				Render
-)
+			Padding(0, 1),
+		statusMessage: lipgloss.NewStyle().
+			Foreground(lightDark("#04B575", "#04B575")),
+	}
+}
 
 type item struct {
 	title       string
@@ -72,63 +79,114 @@ func newListKeyMap() *listKeyMap {
 	}
 }
 
+// query tracks which terminal properties have been resolved.
+type query int
+
+const (
+	backgroundColor = 1 << iota
+	windowSize
+)
+
+// Ready returns true if all properties necessary for our app to function have
+// been resolved.
+func (q query) Ready() bool {
+	return q == backgroundColor|windowSize
+}
+
 type model struct {
+	styles        styles
+	queries       query
+	darkBG        bool
+	width, height int
+	once          *sync.Once
 	list          list.Model
 	itemGenerator *randomItemGenerator
 	keys          *listKeyMap
 	delegateKeys  *delegateKeyMap
 }
 
-func newModel() model {
-	var (
-		itemGenerator randomItemGenerator
-		delegateKeys  = newDelegateKeyMap()
-		listKeys      = newListKeyMap()
+func (m model) Init() (tea.Model, tea.Cmd) {
+	m.once = new(sync.Once)
+	return m, tea.Batch(
+		tea.RequestBackgroundColor,
+		tea.EnterAltScreen,
 	)
-
-	// Make initial list of items
-	const numItems = 24
-	items := make([]list.Item, numItems)
-	for i := 0; i < numItems; i++ {
-		items[i] = itemGenerator.next()
-	}
-
-	// Setup list
-	delegate := newItemDelegate(delegateKeys)
-	groceryList := list.New(items, delegate, 0, 0)
-	groceryList.Title = "Groceries"
-	groceryList.Styles.Title = titleStyle
-	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
-		return []key.Binding{
-			listKeys.toggleSpinner,
-			listKeys.insertItem,
-			listKeys.toggleTitleBar,
-			listKeys.toggleStatusBar,
-			listKeys.togglePagination,
-			listKeys.toggleHelpMenu,
-		}
-	}
-
-	return model{
-		list:          groceryList,
-		keys:          listKeys,
-		delegateKeys:  delegateKeys,
-		itemGenerator: &itemGenerator,
-	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m *model) updateListProperties() {
+	// Wait until we've queried for the necessary terminal
+	// properties. Specifically, we need to know the background color and the
+	// window size before we can construct the list.
+	if !m.queries.Ready() {
+		return
+	}
+
+	// Initialize the list, but only once.
+	m.once.Do(func() {
+		m.styles = newStyles(m.darkBG)
+
+		delegateKeys := newDelegateKeyMap()
+		listKeys := newListKeyMap()
+
+		// Make initial list of items.
+		var itemGenerator randomItemGenerator
+		const numItems = 24
+		items := make([]list.Item, numItems)
+		for i := 0; i < numItems; i++ {
+			items[i] = itemGenerator.next()
+		}
+
+		// Setup list.
+		delegate := newItemDelegate(delegateKeys, &m.styles)
+		groceryList := list.New(items, delegate, 0, 0)
+		groceryList.Title = "Groceries"
+		groceryList.Styles.Title = m.styles.title
+		groceryList.AdditionalFullHelpKeys = func() []key.Binding {
+			return []key.Binding{
+				listKeys.toggleSpinner,
+				listKeys.insertItem,
+				listKeys.toggleTitleBar,
+				listKeys.toggleStatusBar,
+				listKeys.togglePagination,
+				listKeys.toggleHelpMenu,
+			}
+		}
+
+		m.list = groceryList
+		m.keys = listKeys
+		m.delegateKeys = delegateKeys
+		m.itemGenerator = &itemGenerator
+	})
+
+	// Update list size.
+	h, v := m.styles.app.GetFrameSize()
+	m.list.SetSize(m.width-h, m.height-v)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		h, v := appStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
+	case tea.BackgroundColorMsg:
+		m.darkBG = msg.IsDark()
+		m.queries |= backgroundColor
+		m.updateListProperties()
+		return m, nil
 
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		m.queries |= windowSize
+		m.updateListProperties()
+		return m, nil
+	}
+
+	// Don't proceed until we've queried for the necessary terminal properties
+	// above.
+	if !m.queries.Ready() {
+		return m, nil
+	}
+
+	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {
@@ -163,7 +221,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.delegateKeys.remove.SetEnabled(true)
 			newItem := m.itemGenerator.next()
 			insCmd := m.list.InsertItem(0, newItem)
-			statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
+			statusCmd := m.list.NewStatusMessage(m.styles.statusMessage.Render("Added " + newItem.Title()))
 			return m, tea.Batch(insCmd, statusCmd)
 		}
 	}
@@ -177,13 +235,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return appStyle.Render(m.list.View())
+	// Don't render until we have everything we queried for.
+	if !m.queries.Ready() {
+		return ""
+	}
+
+	return m.styles.app.Render(m.list.View())
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
-	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

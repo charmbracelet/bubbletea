@@ -12,12 +12,17 @@ import (
 type model struct{}
 
 func (m model) Init() (tea.Model, tea.Cmd) {
+	// A tea.Sequence is a command that runs a series of commands in
+	// order. Contrast this with tea.Batch, which runs a series of commands
+	// concurrently, with no order guarantees.
 	return m, tea.Sequence(
 		tea.Batch(
+			// These will always resolve first, in any order.
 			tea.Println("A"),
 			tea.Println("B"),
 			tea.Println("C"),
 		),
+		// This will always resolve last.
 		tea.Println("Z"),
 		tea.Quit,
 	)

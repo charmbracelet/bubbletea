@@ -14,7 +14,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/v2/textinput"
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func main() {
@@ -59,7 +59,7 @@ func newModel(initialValue string) (m model) {
 	i := textinput.New()
 	i.Prompt = ""
 	i.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	i.Width = 48
+	i.SetWidth(48)
 	i.SetValue(initialValue)
 	i.CursorEnd()
 	i.Focus()

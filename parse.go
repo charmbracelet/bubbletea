@@ -91,12 +91,6 @@ type inputParser struct {
 	flags int
 }
 
-// setFlags sets the flags for the parser.
-// This will control the behavior of ParseSequence.
-func (p *inputParser) setFlags(f int) {
-	p.flags = f
-}
-
 // parseSequence finds the first recognized event sequence and returns it along
 // with its length.
 //

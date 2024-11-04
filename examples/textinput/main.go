@@ -32,7 +32,7 @@ func initialModel() model {
 	ti.Placeholder = "Pikachu"
 	ti.Focus()
 	ti.CharLimit = 156
-	ti.Width = 20
+	ti.SetWidth(20)
 
 	return model{
 		textInput: ti,

@@ -94,7 +94,7 @@ func (m model) View() string {
 
 func main() {
 	m := model{
-		timer: timer.NewWithInterval(timeout, time.Millisecond),
+		timer: timer.New(timeout, timer.WithInterval(time.Millisecond)),
 		keymap: keymap{
 			start: key.NewBinding(
 				key.WithKeys("s"),

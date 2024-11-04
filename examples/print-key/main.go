@@ -37,7 +37,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return "Press any key to see it printed to the terminal. Press 'ctrl+c' to quit."
+	return "Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit."
 }
 
 func main() {

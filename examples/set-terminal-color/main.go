@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/v2/textinput"
 	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -127,10 +128,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	var s strings.Builder
+	var instructions = lipgloss.NewStyle().Width(40).Render("Choose a terminal-wide color to set. All settings will be cleared on exit.")
 
 	switch m.state {
 	case chooseState:
-		s.WriteString("Choose a color to set:\n\n")
+		s.WriteString(instructions + "\n\n")
 		for i, c := range []colorType{foreground, background, cursor} {
 			if i == m.choiceIndex {
 				s.WriteString(" > ")
@@ -170,7 +172,7 @@ func main() {
 	ti.Placeholder = "#ff00ff"
 	ti.Focus()
 	ti.CharLimit = 156
-	ti.Width = 20
+	ti.SetWidth(20)
 	p := tea.NewProgram(model{
 		ti: ti,
 	})

@@ -8,7 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/v2/textinput"
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func main() {
@@ -29,12 +29,10 @@ const (
 	cvv
 )
 
-const (
+var (
 	hotPink  = lipgloss.Color("#FF06B7")
 	darkGray = lipgloss.Color("#767676")
-)
 
-var (
 	inputStyle    = lipgloss.NewStyle().Foreground(hotPink)
 	continueStyle = lipgloss.NewStyle().Foreground(darkGray)
 )
@@ -101,21 +99,21 @@ func initialModel() model {
 	inputs[ccn].Placeholder = "4505 **** **** 1234"
 	inputs[ccn].Focus()
 	inputs[ccn].CharLimit = 20
-	inputs[ccn].Width = 30
+	inputs[ccn].SetWidth(30)
 	inputs[ccn].Prompt = ""
 	inputs[ccn].Validate = ccnValidator
 
 	inputs[exp] = textinput.New()
 	inputs[exp].Placeholder = "MM/YY "
 	inputs[exp].CharLimit = 5
-	inputs[exp].Width = 5
+	inputs[exp].SetWidth(5)
 	inputs[exp].Prompt = ""
 	inputs[exp].Validate = expValidator
 
 	inputs[cvv] = textinput.New()
 	inputs[cvv].Placeholder = "XXX"
 	inputs[cvv].CharLimit = 3
-	inputs[cvv].Width = 5
+	inputs[cvv].SetWidth(5)
 	inputs[cvv].Prompt = ""
 	inputs[cvv].Validate = cvvValidator
 
