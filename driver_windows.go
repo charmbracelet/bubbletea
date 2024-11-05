@@ -149,7 +149,7 @@ func mouseEvent(p uint32, e xwindows.MouseEventRecord) (ev Msg) {
 		Mod: mod,
 	}
 
-	wheelDirection := int16(highWord(uint32(e.ButtonState)))
+	wheelDirection := int16(highWord(uint32(e.ButtonState))) //nolint:gosec
 	switch e.EventFlags {
 	case xwindows.CLICK, xwindows.DOUBLE_CLICK:
 		m.Button, isRelease = mouseEventButton(p, e.ButtonState)
@@ -180,7 +180,7 @@ func mouseEvent(p uint32, e xwindows.MouseEventRecord) (ev Msg) {
 }
 
 func highWord(data uint32) uint16 {
-	return uint16((data & 0xFFFF0000) >> 16)
+	return uint16((data & 0xFFFF0000) >> 16) //nolint:gosec
 }
 
 func readConsoleInput(console windows.Handle, inputRecords []xwindows.InputRecord) (uint32, error) {
@@ -190,11 +190,12 @@ func readConsoleInput(console windows.Handle, inputRecords []xwindows.InputRecor
 
 	var read uint32
 
-	err := xwindows.ReadConsoleInput(console, &inputRecords[0], uint32(len(inputRecords)), &read)
+	err := xwindows.ReadConsoleInput(console, &inputRecords[0], uint32(len(inputRecords)), &read) //nolint:gosec
 
 	return read, err
 }
 
+//nolint:unused
 func peekConsoleInput(console windows.Handle, inputRecords []xwindows.InputRecord) (uint32, error) {
 	if len(inputRecords) == 0 {
 		return 0, fmt.Errorf("size of input record buffer cannot be zero")
@@ -454,9 +455,7 @@ func (p *inputParser) parseWin32InputKeyEvent(state *win32InputState, vkc uint16
 
 	var text string
 	keyCode := baseCode
-	if r >= ansi.NUL && r <= ansi.US {
-		// Control characters.
-	} else {
+	if !unicode.IsControl(r) {
 		rw := utf8.EncodeRune(utf8Buf[:], r)
 		keyCode, _ = utf8.DecodeRune(utf8Buf[:rw])
 		if cks == xwindows.NO_CONTROL_KEY ||

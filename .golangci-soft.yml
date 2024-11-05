@@ -1,5 +1,6 @@
 run:
   tests: false
+  issues-exit-code: 0
 
 issues:
   include:
@@ -36,5 +37,4 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused

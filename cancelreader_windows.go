@@ -218,7 +218,7 @@ func (r overlappedReader) Read(data []byte) (int, error) {
 
 	err = windows.GetOverlappedResult(windows.Handle(r), &overlapped, &n, true)
 	if err != nil {
-		return int(n), nil
+		return int(n), err
 	}
 
 	return int(n), nil
