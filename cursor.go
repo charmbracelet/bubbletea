@@ -52,3 +52,12 @@ func SetCursorPosition(x, y int) Cmd {
 		return setCursorPosMsg{x, y}
 	}
 }
+
+// requestCursorPosMsg is a message that requests the cursor position.
+type requestCursorPosMsg struct{}
+
+// RequestCursorPosition is a command that requests the cursor position.
+// The cursor position will be sent as a [CursorPositionMsg] message.
+func RequestCursorPosition() Msg {
+	return requestCursorPosMsg{}
+}

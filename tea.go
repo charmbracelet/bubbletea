@@ -614,6 +614,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case windowSizeMsg:
 				go p.checkResize()
+
+			case requestCursorPosMsg:
+				p.execute(ansi.RequestCursorPosition)
 			}
 
 			// Process internal messages for the renderer.
