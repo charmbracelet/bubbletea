@@ -22,7 +22,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/lipgloss v0.13.2-0.20241023173701-23b08d1d3588 // indirect
+	github.com/charmbracelet/lipgloss v0.13.0 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 // indirect
 	github.com/charmbracelet/x/input v0.2.0 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
