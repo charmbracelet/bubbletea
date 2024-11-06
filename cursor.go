@@ -33,11 +33,11 @@ type setCursorStyle int
 
 // SetCursorStyle is a command that sets the terminal cursor style. Steady
 // determines if the cursor should blink or not.
-func SetCursorStyle(style CursorStyle, steady bool) Cmd {
+func SetCursorStyle(style CursorStyle, blink bool) Cmd {
 	// We're using the ANSI escape sequence values for cursor styles.
 	// We need to map both [style] and [steady] to the correct value.
 	style = (style * 2) + 1
-	if steady {
+	if !blink {
 		style++
 	}
 	return func() Msg {
