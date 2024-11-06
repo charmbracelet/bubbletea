@@ -108,7 +108,7 @@ func (p *inputParser) parseSequence(buf []byte) (n int, msg Msg) {
 			return 1, KeyPressMsg{Code: KeyEscape}
 		}
 
-		switch b := buf[1]; b {
+		switch bPrime := buf[1]; bPrime {
 		case 'O': // Esc-prefixed SS3
 			return p.parseSs3(buf)
 		case 'P': // Esc-prefixed DCS
