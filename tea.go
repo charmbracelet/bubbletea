@@ -703,10 +703,10 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		if p.exp.has(experimentalCellbuf) {
-			p.renderer = newCellRenderer(p.profile)
-		} else {
+		if p.exp.has(experimentalUnferocious) {
 			p.renderer = newStandardRenderer(p.profile)
+		} else {
+			p.renderer = newCellRenderer(p.profile)
 		}
 	}
 

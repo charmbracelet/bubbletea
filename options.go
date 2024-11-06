@@ -286,10 +286,8 @@ func (e experimentalOptions) has(option string) bool {
 }
 
 const (
-	// experimentalCellbuf is an experimental feature that enables a cell buffer
-	// for the renderer. This can be useful for rendering performance and
-	// efficiency.
-	experimentalCellbuf = "cellbuf"
+	// Unferocious disables the "ferocious" renderer.
+	experimentalUnferocious = "unferocious"
 )
 
 // WithColorProfile sets the color profile that the program will use. This is
