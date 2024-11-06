@@ -65,8 +65,8 @@ func (s *screen) SetCell(x, y int, cell cellbuf.Cell) (v bool) {
 	return
 }
 
-// cellRenderer is a cell-based terminal renderer.
-type cellRenderer struct {
+// ferociousRenderer is a cell-based terminal renderer. It's ferocious!
+type ferociousRenderer struct {
 	mtx sync.Mutex
 	out io.Writer    // we only write to the output during flush and close
 	buf bytes.Buffer // the internal buffer for rendering
@@ -94,8 +94,8 @@ type cellRenderer struct {
 	profile colorprofile.Profile
 }
 
-func newCellRenderer(p colorprofile.Profile) *cellRenderer {
-	r := &cellRenderer{
+func newFerociousRenderer(p colorprofile.Profile) *ferociousRenderer {
+	r := &ferociousRenderer{
 		// TODO: Update this if Grapheme Clustering is supported.
 		method:   cellbuf.WcWidth,
 		finalCur: undefPoint,
@@ -105,10 +105,10 @@ func newCellRenderer(p colorprofile.Profile) *cellRenderer {
 	return r
 }
 
-var _ renderer = &cellRenderer{}
+var _ renderer = &ferociousRenderer{}
 
 // close implements renderer.
-func (c *cellRenderer) close() error {
+func (c *ferociousRenderer) close() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -144,7 +144,7 @@ func (c *cellRenderer) close() error {
 
 // clearScreen returns a string to clear the screen and moves the cursor to the
 // origin location i.e. top-left.
-func (c *cellRenderer) clearScreen() {
+func (c *ferociousRenderer) clearScreen() {
 	c.moveCursor(0, 0)
 	if c.altScreen {
 		c.buf.WriteString(ansi.EraseEntireScreen) //nolint:errcheck
@@ -155,7 +155,7 @@ func (c *cellRenderer) clearScreen() {
 }
 
 // flush implements renderer.
-func (c *cellRenderer) flush() error {
+func (c *ferociousRenderer) flush() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -219,7 +219,7 @@ func (c *cellRenderer) flush() error {
 }
 
 // render implements renderer.
-func (c *cellRenderer) render(s string) {
+func (c *ferociousRenderer) render(s string) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.frame = s
@@ -231,7 +231,7 @@ func (c *cellRenderer) render(s string) {
 }
 
 // reset implements renderer.
-func (c *cellRenderer) reset() {
+func (c *ferociousRenderer) reset() {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -253,13 +253,13 @@ func (c *cellRenderer) reset() {
 }
 
 // repaint forces a repaint of the screen.
-func (c *cellRenderer) repaint() {
+func (c *ferociousRenderer) repaint() {
 	*c.lastRender = ""
 }
 
 // updateCursorVisibility ensures the cursor state is in sync with the
 // renderer.
-func (c *cellRenderer) updateCursorVisibility() {
+func (c *ferociousRenderer) updateCursorVisibility() {
 	if !c.cursorHidden != c.scr.cur.visible {
 		c.scr.cur.visible = !c.cursorHidden
 		// cmd.exe and other terminals keep separate cursor states for the AltScreen
@@ -274,7 +274,7 @@ func (c *cellRenderer) updateCursorVisibility() {
 }
 
 // update implements renderer.
-func (c *cellRenderer) update(msg Msg) {
+func (c *ferociousRenderer) update(msg Msg) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	switch msg := msg.(type) {
@@ -366,7 +366,7 @@ var spaceCell = cellbuf.Cell{Content: " ", Width: 1}
 
 // changes commits the changes from the cell buffer using the dirty cells map
 // and writes them to the internal buffer.
-func (c *cellRenderer) changes() {
+func (c *ferociousRenderer) changes() {
 	width := c.scr.Width()
 	if width <= 0 {
 		return
@@ -484,7 +484,7 @@ func (c *cellRenderer) changes() {
 
 // flushSegment flushes the segment to the buffer. It returns true if the
 // segment the rest of the line was erased.
-func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser bool) (erased bool) {
+func (c *ferociousRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser bool) (erased bool) {
 	if c.scr.cur.Point != to {
 		c.renderReset(seg)
 		c.moveCursor(to.X, to.Y)
@@ -506,7 +506,7 @@ func (c *cellRenderer) flushSegment(seg *cellbuf.Segment, to image.Point, eraser
 	return
 }
 
-func (c *cellRenderer) renderReset(seg *cellbuf.Segment) {
+func (c *ferociousRenderer) renderReset(seg *cellbuf.Segment) {
 	if seg.Link != c.link && c.link.URL != "" {
 		c.buf.WriteString(ansi.ResetHyperlink()) //nolint:errcheck
 		c.link.Reset()
@@ -517,7 +517,7 @@ func (c *cellRenderer) renderReset(seg *cellbuf.Segment) {
 	}
 }
 
-func (c *cellRenderer) renderSegment(seg *cellbuf.Segment) {
+func (c *ferociousRenderer) renderSegment(seg *cellbuf.Segment) {
 	isSpaces := strings.Trim(seg.Content, " ") == "" && c.pen.Empty() && seg.Style.Empty()
 	if !isSpaces && !seg.Style.Equal(c.pen) {
 		// We don't apply the style if the content is spaces. It's more efficient
@@ -542,7 +542,7 @@ func (c *cellRenderer) renderSegment(seg *cellbuf.Segment) {
 }
 
 // moveCursor moves the cursor to the given position.
-func (c *cellRenderer) moveCursor(x, y int) {
+func (c *ferociousRenderer) moveCursor(x, y int) {
 	if c.scr.cur.X == x && c.scr.cur.Y == y {
 		return
 	}

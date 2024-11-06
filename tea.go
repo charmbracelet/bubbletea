@@ -706,7 +706,7 @@ func (p *Program) Run() (Model, error) {
 		if p.exp.has(experimentalUnferocious) {
 			p.renderer = newStandardRenderer(p.profile)
 		} else {
-			p.renderer = newCellRenderer(p.profile)
+			p.renderer = newFerociousRenderer(p.profile)
 		}
 	}
 
