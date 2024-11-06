@@ -149,7 +149,7 @@ func mouseEvent(p uint32, e xwindows.MouseEventRecord) (ev Msg) {
 		Mod: mod,
 	}
 
-	wheelDirection := int16(highWord(uint32(e.ButtonState))) //nolint:gosec
+	wheelDirection := int16(highWord(e.ButtonState)) //nolint:gosec
 	switch e.EventFlags {
 	case xwindows.CLICK, xwindows.DOUBLE_CLICK:
 		m.Button, isRelease = mouseEventButton(p, e.ButtonState)
@@ -203,7 +203,7 @@ func peekConsoleInput(console windows.Handle, inputRecords []xwindows.InputRecor
 
 	var read uint32
 
-	err := xwindows.PeekConsoleInput(console, &inputRecords[0], uint32(len(inputRecords)), &read)
+	err := xwindows.PeekConsoleInput(console, &inputRecords[0], uint32(len(inputRecords)), &read) //nolint:gosec
 
 	return read, err
 }
