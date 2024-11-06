@@ -301,3 +301,10 @@ func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 		p.profile = profile
 	}
 }
+
+// withStandardRenderer tells Bubble Tea to use the standrad renderer.
+func withStandardRenderer() ProgramOption { //nolint:unused
+	return func(p *Program) {
+		p.startupOptions |= avecStandardRenderer
+	}
+}
