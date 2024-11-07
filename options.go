@@ -271,6 +271,17 @@ func WithGraphemeClustering() ProgramOption {
 	}
 }
 
+// WithRequestBackground starts the program with a request to query the
+// background color of the terminal.
+//
+// This is useful if you want to know the background color of the terminal. The
+// background color will be sent to your program as a [BackgroundMsg].
+func WithRequestBackground() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withRequestBackgroundColor
+  }
+}
+  
 // WithColorProfile sets the color profile that the program will use. This is
 // useful when you want to force a specific color profile. By default, Bubble
 // Tea will try to detect the terminal's color profile from environment
