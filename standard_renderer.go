@@ -306,7 +306,7 @@ func (r *standardRenderer) clearScreen() {
 	defer r.mtx.Unlock()
 
 	r.execute(ansi.EraseEntireScreen)
-	r.execute(ansi.CursorOrigin)
+	r.execute(ansi.HomeCursorPosition)
 
 	r.repaint()
 }
@@ -336,7 +336,7 @@ func (r *standardRenderer) enterAltScreen() {
 	// Note: we can't use r.clearScreen() here because the mutex is already
 	// locked.
 	r.execute(ansi.EraseEntireScreen)
-	r.execute(ansi.CursorOrigin)
+	r.execute(ansi.HomeCursorPosition)
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
