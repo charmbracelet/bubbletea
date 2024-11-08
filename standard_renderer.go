@@ -190,8 +190,15 @@ func (r *standardRenderer) flush() {
 	if flushQueuedMessages {
 		// Dump the lines we've queued up for printing.
 		for _, line := range r.queuedMessageLines {
-			// Removing previousy rendered content at the end of line.
-			line = line + ansi.EraseLineRight
+			if ansi.StringWidth(line) < r.width {
+				// We only erase the rest of the line when the line is shorter than
+				// the width of the terminal. When the cursor reaches the end of
+				// the line, any escape sequences that follow will only affect the
+				// last cell of the line.
+
+				// Removing previously rendered content at the end of line.
+				line = line + ansi.EraseLineRight
+			}
 
 			_, _ = buf.WriteString(line)
 			_, _ = buf.WriteString("\r\n")
@@ -221,9 +228,6 @@ func (r *standardRenderer) flush() {
 
 		line := newLines[i]
 
-		// Removing previousy rendered content at the end of line.
-		line = line + ansi.EraseLineRight
-
 		// Truncate lines wider than the width of the window to avoid
 		// wrapping, which will mess up rendering. If we don't have the
 		// width of the window this will be ignored.
@@ -233,6 +237,16 @@ func (r *standardRenderer) flush() {
 		// correctly (signal SIGWINCH is not supported on Windows).
 		if r.width > 0 {
 			line = ansi.Truncate(line, r.width, "")
+		}
+
+		if ansi.StringWidth(line) < r.width {
+			// We only erase the rest of the line when the line is shorter than
+			// the width of the terminal. When the cursor reaches the end of
+			// the line, any escape sequences that follow will only affect the
+			// last cell of the line.
+
+			// Removing previously rendered content at the end of line.
+			line = line + ansi.EraseLineRight
 		}
 
 		_, _ = buf.WriteString(line)
