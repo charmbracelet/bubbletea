@@ -34,6 +34,7 @@ type standardRenderer struct {
 	ticker             *time.Ticker
 	done               chan struct{}
 	lastRender         string
+	lastRenderedLines  []string
 	linesRendered      int
 	useANSICompressor  bool
 	once               sync.Once
@@ -174,7 +175,6 @@ func (r *standardRenderer) flush() {
 	}
 
 	newLines := strings.Split(r.buf.String(), "\n")
-	oldLines := strings.Split(r.lastRender, "\n")
 
 	// If we know the output's height, we can use it to determine how many
 	// lines we can render. We drop lines from the top of the render buffer if
@@ -210,7 +210,7 @@ func (r *standardRenderer) flush() {
 	// Paint new lines.
 	for i := 0; i < len(newLines); i++ {
 		canSkip := !flushQueuedMessages && // Queuing messages triggers repaint -> we don't have access to previous frame content.
-			len(oldLines) > i && oldLines[i] == newLines[i] // Previously rendered line is the same.
+			len(r.lastRenderedLines) > i && r.lastRenderedLines[i] == newLines[i] // Previously rendered line is the same.
 
 		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.
@@ -276,6 +276,7 @@ func (r *standardRenderer) flush() {
 
 	_, _ = r.out.Write(buf.Bytes())
 	r.lastRender = r.buf.String()
+	r.lastRenderedLines = newLines
 	r.buf.Reset()
 }
 
