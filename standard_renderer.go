@@ -34,6 +34,7 @@ type standardRenderer struct {
 	ticker             *time.Ticker
 	done               chan struct{}
 	lastRender         string
+	lastRenderedLines  []string
 	linesRendered      int
 	useANSICompressor  bool
 	once               sync.Once
@@ -174,7 +175,6 @@ func (r *standardRenderer) flush() {
 	}
 
 	newLines := strings.Split(r.buf.String(), "\n")
-	oldLines := strings.Split(r.lastRender, "\n")
 
 	// If we know the output's height, we can use it to determine how many
 	// lines we can render. We drop lines from the top of the render buffer if
@@ -184,7 +184,6 @@ func (r *standardRenderer) flush() {
 		newLines = newLines[len(newLines)-r.height:]
 	}
 
-	numLinesThisFlush := len(newLines)
 	flushQueuedMessages := len(r.queuedMessageLines) > 0 && !r.altScreenActive
 
 	if flushQueuedMessages {
@@ -210,7 +209,7 @@ func (r *standardRenderer) flush() {
 	// Paint new lines.
 	for i := 0; i < len(newLines); i++ {
 		canSkip := !flushQueuedMessages && // Queuing messages triggers repaint -> we don't have access to previous frame content.
-			len(oldLines) > i && oldLines[i] == newLines[i] // Previously rendered line is the same.
+			len(r.lastRenderedLines) > i && r.lastRenderedLines[i] == newLines[i] // Previously rendered line is the same.
 
 		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.
@@ -257,11 +256,11 @@ func (r *standardRenderer) flush() {
 	}
 
 	// Clearing left over content from last render.
-	if r.linesRendered > numLinesThisFlush {
+	if r.linesRendered > len(newLines) {
 		buf.WriteString(ansi.EraseScreenBelow)
 	}
 
-	r.linesRendered = numLinesThisFlush
+	r.linesRendered = len(newLines)
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
@@ -276,6 +275,11 @@ func (r *standardRenderer) flush() {
 
 	_, _ = r.out.Write(buf.Bytes())
 	r.lastRender = r.buf.String()
+
+	// Save previously rendered lines for comparison in the next render. If we
+	// don't do this, we can't skip rendering lines that haven't changed.
+	// See https://github.com/charmbracelet/bubbletea/pull/1233
+	r.lastRenderedLines = newLines
 	r.buf.Reset()
 }
 
@@ -299,6 +303,7 @@ func (r *standardRenderer) write(s string) {
 
 func (r *standardRenderer) repaint() {
 	r.lastRender = ""
+	r.lastRenderedLines = nil
 }
 
 func (r *standardRenderer) clearScreen() {
