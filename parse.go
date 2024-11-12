@@ -108,7 +108,7 @@ func (p *inputParser) parseSequence(buf []byte) (n int, msg Msg) {
 			return 1, KeyPressMsg{Code: KeyEscape}
 		}
 
-		switch b := buf[1]; b {
+		switch bPrime := buf[1]; bPrime {
 		case 'O': // Esc-prefixed SS3
 			return p.parseSs3(buf)
 		case 'P': // Esc-prefixed DCS
@@ -252,7 +252,7 @@ func (p *inputParser) parseCsi(b []byte) (int, Msg) {
 		// This report may return a third parameter representing the page
 		// number, but we don't really need it.
 		if paramsLen >= 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
-			return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
+			return i, CursorPositionMsg{Y: csi.Param(0) - 1, X: csi.Param(1) - 1}
 		}
 	case 'm' | '<'<<parser.MarkerShift, 'M' | '<'<<parser.MarkerShift:
 		// Handle SGR mouse
@@ -271,7 +271,7 @@ func (p *inputParser) parseCsi(b []byte) (int, Msg) {
 	case 'R':
 		// Cursor position report OR modified F3
 		if paramsLen == 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
-			m := CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
+			m := CursorPositionMsg{Y: csi.Param(0) - 1, X: csi.Param(1) - 1}
 			if csi.Param(0) == 1 && csi.Param(1)-1 <= int(ModMeta|ModShift|ModAlt|ModCtrl) {
 				// XXX: We cannot differentiate between cursor position report and
 				// CSI 1 ; <mod> R (which is modified F3) when the cursor is at the

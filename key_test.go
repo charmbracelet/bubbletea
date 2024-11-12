@@ -64,7 +64,7 @@ func buildBaseSeqTests() []seqTest {
 		// position report having the same sequence. See [parseCsi] for more
 		// information.
 		if f3CurPosRegexp.MatchString(seq) {
-			st.msgs = []Msg{k, CursorPositionMsg{Row: 1, Column: int(key.Mod) + 1}}
+			st.msgs = []Msg{k, CursorPositionMsg{Y: 0, X: int(key.Mod)}}
 		}
 		td = append(td, st)
 	}

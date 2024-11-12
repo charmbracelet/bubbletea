@@ -106,7 +106,11 @@ func TestClearMsg(t *testing.T) {
 			m := &testModel{}
 			p := NewProgram(m, WithInput(&in), WithOutput(&buf),
 				// Use ANSI256 to increase test coverage.
-				WithColorProfile(colorprofile.ANSI256))
+				WithColorProfile(colorprofile.ANSI256),
+
+				// XXX: Use the standard renderer, for now. Ultiamtely we want
+				// to update the tests to use the Ferocious Renderer.
+				withStandardRenderer())
 
 			test.cmds = append(test.cmds, Quit)
 			go p.Send(test.cmds)

@@ -33,26 +33,6 @@ func (p *Program) initTerminal() error {
 	return p.initInput()
 }
 
-// setAltScreenBuffer restores the terminal screen buffer state.
-func (p *Program) setAltScreenBuffer(on bool) {
-	if on {
-		// Ensure that the terminal is cleared, even when it doesn't support
-		// alt screen (or alt screen support is disabled, like GNU screen by
-		// default).
-		p.execute(ansi.EraseEntireScreen)
-		p.execute(ansi.CursorOrigin)
-	}
-
-	// cmd.exe and other terminals keep separate cursor states for the AltScreen
-	// and the main buffer. We have to explicitly reset the cursor visibility
-	// whenever we exit AltScreen.
-	if !p.modes[ansi.CursorEnableMode.String()] {
-		p.execute(ansi.HideCursor)
-	} else {
-		p.execute(ansi.ShowCursor)
-	}
-}
-
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {

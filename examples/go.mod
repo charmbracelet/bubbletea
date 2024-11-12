@@ -23,9 +23,11 @@ require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
+	github.com/charmbracelet/x/cellbuf v0.0.3 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 // indirect
 	github.com/charmbracelet/x/input v0.2.0 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
+	github.com/charmbracelet/x/wcwidth v0.0.0-20241011142426-46044092ad91 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -45,6 +47,7 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 )
 
 replace github.com/charmbracelet/bubbletea/v2 => ../
