@@ -184,7 +184,6 @@ func (r *standardRenderer) flush() {
 		newLines = newLines[len(newLines)-r.height:]
 	}
 
-	numLinesThisFlush := len(newLines)
 	flushQueuedMessages := len(r.queuedMessageLines) > 0 && !r.altScreenActive
 
 	if flushQueuedMessages {
@@ -257,11 +256,11 @@ func (r *standardRenderer) flush() {
 	}
 
 	// Clearing left over content from last render.
-	if r.linesRendered > numLinesThisFlush {
+	if r.linesRendered > len(newLines) {
 		buf.WriteString(ansi.EraseScreenBelow)
 	}
 
-	r.linesRendered = numLinesThisFlush
+	r.linesRendered = len(newLines)
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
