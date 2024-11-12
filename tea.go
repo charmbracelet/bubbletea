@@ -455,13 +455,14 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case enableModeMsg:
-				if on, ok := p.modes[ansi.DECMode(msg)]; ok && on {
+				mode := ansi.DECMode(msg)
+				if on, ok := p.modes[mode]; ok && on {
 					break
 				}
 
-				p.execute(fmt.Sprintf("\x1b[%sh", string(msg)))
-				p.modes[ansi.DECMode(msg)] = true
-				switch ansi.DECMode(msg) {
+				p.execute(fmt.Sprintf("\x1b[%dh", mode.Mode()))
+				p.modes[mode] = true
+				switch mode {
 				case ansi.GraphemeClusteringMode:
 					// We store the state of grapheme clustering after we enable it
 					// and get a response in the eventLoop.
@@ -469,12 +470,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case disableModeMsg:
-				if on, ok := p.modes[ansi.DECMode(msg)]; ok && !on {
+				mode := ansi.DECMode(msg)
+				if on, ok := p.modes[mode]; ok && !on {
 					break
 				}
 
-				p.execute(fmt.Sprintf("\x1b[%sl", string(msg)))
-				p.modes[ansi.DECMode(msg)] = false
+				p.execute(fmt.Sprintf("\x1b[%dl", mode))
+				p.modes[mode] = false
 
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
