@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"image/color"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -425,8 +424,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			if msg == nil {
 				continue
 			}
-
-			log.Printf("msg: %T", msg)
 
 			// Handle special internal messages.
 			switch msg := msg.(type) {
