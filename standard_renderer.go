@@ -300,6 +300,7 @@ func (r *standardRenderer) write(s string) {
 
 func (r *standardRenderer) repaint() {
 	r.lastRender = ""
+	r.lastRenderedLines = nil
 }
 
 func (r *standardRenderer) clearScreen() {
