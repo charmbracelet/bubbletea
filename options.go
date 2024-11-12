@@ -286,8 +286,8 @@ func (e experimentalOptions) has(option string) bool {
 }
 
 const (
-	// Unferocious disables the "ferocious" renderer.
-	experimentalUnferocious = "unferocious"
+	// Ferocious enables the "ferocious" renderer.
+	experimentalFerocious = "ferocious"
 )
 
 // WithColorProfile sets the color profile that the program will use. This is
@@ -302,9 +302,14 @@ func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 	}
 }
 
-// withStandardRenderer tells Bubble Tea to use the standrad renderer.
-func withStandardRenderer() ProgramOption { //nolint:unused
+// WithFerociousRenderer tells Bubble Tea to use the new shiny "ferocious"
+// renderer. This renderer is experimental and may change or be removed in
+// future versions.
+//
+// The ferocious renderer is a new renderer that is faster and more efficient
+// than the default renderer. It is also more ferocious ;)
+func WithFerociousRenderer() ProgramOption { //nolint:unused
 	return func(p *Program) {
-		p.startupOptions |= avecStandardRenderer
+		p.startupOptions |= withFerociousRenderer
 	}
 }
