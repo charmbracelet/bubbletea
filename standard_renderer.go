@@ -226,7 +226,7 @@ func (r *standardRenderer) reset() {
 }
 
 func (r *standardRenderer) clearScreen() {
-	r.execute(ansi.EraseEntireScreen + ansi.CursorOrigin)
+	r.execute(ansi.EraseEntireScreen + ansi.CursorHomePosition)
 
 	r.repaint()
 }
@@ -238,7 +238,7 @@ func (r *standardRenderer) setAltScreenBuffer(on bool) {
 		// alt screen (or alt screen support is disabled, like GNU screen by
 		// default).
 		r.execute(ansi.EraseEntireScreen)
-		r.execute(ansi.CursorOrigin)
+		r.execute(ansi.CursorHomePosition)
 	}
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
@@ -258,8 +258,8 @@ func (r *standardRenderer) update(msg Msg) {
 		r.profile = msg.Profile
 
 	case enableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if r.altScreenActive {
 				return
 			}
@@ -267,7 +267,7 @@ func (r *standardRenderer) update(msg Msg) {
 			r.setAltScreenBuffer(true)
 			r.altScreenActive = true
 			r.repaint()
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if !r.cursorHidden {
 				return
 			}
@@ -276,8 +276,8 @@ func (r *standardRenderer) update(msg Msg) {
 		}
 
 	case disableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if !r.altScreenActive {
 				return
 			}
@@ -285,7 +285,7 @@ func (r *standardRenderer) update(msg Msg) {
 			r.setAltScreenBuffer(false)
 			r.altScreenActive = false
 			r.repaint()
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if r.cursorHidden {
 				return
 			}

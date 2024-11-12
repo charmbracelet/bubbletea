@@ -36,16 +36,16 @@ func (p *Program) initTerminal() error {
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.modes[ansi.BracketedPasteMode.String()] {
-		p.execute(ansi.DisableBracketedPaste)
+	if p.modes[ansi.BracketedPasteMode] {
+		p.execute(ansi.ResetBracketedPasteMode)
 	}
-	if !p.modes[ansi.CursorEnableMode.String()] {
+	if !p.modes[ansi.CursorEnableMode] {
 		p.execute(ansi.ShowCursor)
 	}
-	if p.modes[ansi.MouseCellMotionMode.String()] || p.modes[ansi.MouseAllMotionMode.String()] {
+	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
 		p.execute(ansi.DisableMouseCellMotion)
 		p.execute(ansi.DisableMouseAllMotion)
-		p.execute(ansi.DisableMouseSgrExt)
+		p.execute(ansi.ResetSgrExtMouseMode)
 	}
 	if p.keyboard.modifyOtherKeys != 0 {
 		p.execute(ansi.DisableModifyOtherKeys)
@@ -53,14 +53,14 @@ func (p *Program) restoreTerminalState() error {
 	if p.keyboard.kittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
 	}
-	if p.modes[ansi.ReportFocusMode.String()] {
-		p.execute(ansi.DisableReportFocus)
+	if p.modes[ansi.FocusEventMode] {
+		p.execute(ansi.ResetFocusEventMode)
 	}
-	if p.modes[ansi.GraphemeClusteringMode.String()] {
-		p.execute(ansi.DisableGraphemeClustering)
+	if p.modes[ansi.GraphemeClusteringMode] {
+		p.execute(ansi.ResetGraphemeClusteringMode)
 	}
-	if p.modes[ansi.AltScreenBufferMode.String()] {
-		p.execute(ansi.DisableAltScreenBuffer)
+	if p.modes[ansi.AltScreenBufferMode] {
+		p.execute(ansi.ResetAltScreenBufferMode)
 		// cmd.exe and other terminals keep separate cursor states for the AltScreen
 		// and the main buffer. We have to explicitly reset the cursor visibility
 		// whenever we exit AltScreen.

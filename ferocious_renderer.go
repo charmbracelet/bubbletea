@@ -308,8 +308,8 @@ func (c *ferociousRenderer) update(msg Msg) {
 		}
 
 	case enableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if c.altScreen {
 				return
 			}
@@ -326,7 +326,7 @@ func (c *ferociousRenderer) update(msg Msg) {
 			// whenever we enter or leave AltScreen.
 			c.updateCursorVisibility()
 
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if !c.cursorHidden {
 				return
 			}
@@ -335,8 +335,8 @@ func (c *ferociousRenderer) update(msg Msg) {
 		}
 
 	case disableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if !c.altScreen {
 				return
 			}
@@ -349,7 +349,7 @@ func (c *ferociousRenderer) update(msg Msg) {
 			// whenever we enter or leave AltScreen.
 			c.updateCursorVisibility()
 
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if c.cursorHidden {
 				return
 			}
