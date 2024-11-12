@@ -460,7 +460,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					break
 				}
 
-				p.execute(fmt.Sprintf("\x1b[%dh", mode.Mode()))
+				p.execute(fmt.Sprintf("\x1b[?%dh", mode.Mode()))
 				p.modes[mode] = true
 				switch mode {
 				case ansi.GraphemeClusteringMode:
@@ -475,7 +475,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					break
 				}
 
-				p.execute(fmt.Sprintf("\x1b[%dl", mode))
+				p.execute(fmt.Sprintf("\x1b[?%dl", mode))
 				p.modes[mode] = false
 
 			case readClipboardMsg:
