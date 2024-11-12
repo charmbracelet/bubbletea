@@ -19,27 +19,27 @@ func TestClearMsg(t *testing.T) {
 		{
 			name:     "clear_screen",
 			cmds:     []Cmd{ClearScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[2J\x1b[1;1H\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[2J\x1b[H\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
 		},
 		{
 			name:     "altscreen",
 			cmds:     []Cmd{EnterAltScreen, ExitAltScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[?25l\x1b[?1049l\x1b[?25l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[H\x1b[?25l\x1b[?1049l\x1b[?25l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
 		},
 		{
 			name:     "altscreen_autoexit",
 			cmds:     []Cmd{EnterAltScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[1;1H\x1b[?25l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[2;0H\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1049l\x1b[?25h",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[H\x1b[?25l\rsuccess\x1b[0K\r\n\x1b[0K\x1b[2;0H\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1049l\x1b[?25h",
 		},
 		{
 			name:     "mouse_cellmotion",
 			cmds:     []Cmd{EnableMouseCellMotion},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1002h\x1b[?1006h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1002h\x1b[?1006h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[80D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "mouse_allmotion",
 			cmds:     []Cmd{EnableMouseAllMotion},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\rsuccess\x1b[0K\r\n\x1b[0K\x1b[80D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
 		},
 		{
 			name:     "mouse_disable",
@@ -112,6 +112,7 @@ func TestClearMsg(t *testing.T) {
 				// to update the tests to use the Ferocious Renderer.
 				withStandardRenderer())
 
+			test.cmds = append([]Cmd{func() Msg { return WindowSizeMsg{80, 24} }}, test.cmds...)
 			test.cmds = append(test.cmds, Quit)
 			go p.Send(test.cmds)
 

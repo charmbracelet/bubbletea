@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -425,6 +426,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				continue
 			}
 
+			log.Printf("msg: %T", msg)
+
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case QuitMsg:
@@ -701,13 +704,11 @@ func (p *Program) Run() (Model, error) {
 	if !p.startupOptions.has(withColorProfile) {
 		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
 	}
-	go p.Send(ColorProfileMsg{p.profile})
 
-	// If no renderer is set use the ferocious one.
-	if p.startupOptions&avecStandardRenderer != 0 {
-		p.renderer = newStandardRenderer(p.profile)
-	} else if p.renderer == nil {
-		if p.exp.has(experimentalUnferocious) {
+	go p.Send(ColorProfileMsg{p.profile})
+	if p.renderer == nil {
+		// If no renderer is set use the ferocious one.
+		if p.startupOptions&avecStandardRenderer != 0 || p.exp.has(experimentalUnferocious) {
 			p.renderer = newStandardRenderer(p.profile)
 		} else {
 			p.renderer = newFerociousRenderer(p.profile)
