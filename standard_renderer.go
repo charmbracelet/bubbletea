@@ -276,6 +276,10 @@ func (r *standardRenderer) flush() {
 
 	_, _ = r.out.Write(buf.Bytes())
 	r.lastRender = r.buf.String()
+
+	// Save previously rendered lines for comparison in the next render. If we
+	// don't do this, we can't skip rendering lines that haven't changed.
+	// See https://github.com/charmbracelet/bubbletea/pull/1233
 	r.lastRenderedLines = newLines
 	r.buf.Reset()
 }
