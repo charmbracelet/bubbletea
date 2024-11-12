@@ -245,12 +245,7 @@ func (r *standardRenderer) reset() {
 }
 
 func (r *standardRenderer) clearScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EraseEntireScreen)
-	r.execute(ansi.HomeCursorPosition)
-
+	r.execute(ansi.EraseEntireScreen + ansi.HomeCursorPosition)
 	r.repaint()
 }
 
