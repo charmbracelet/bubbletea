@@ -111,7 +111,7 @@ const (
 	withKeyboardEnhancements
 	withGraphemeClustering
 
-	avecStandardRenderer
+	withFerociousRenderer
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -703,16 +703,14 @@ func (p *Program) Run() (Model, error) {
 	if !p.startupOptions.has(withColorProfile) {
 		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
 	}
-	go p.Send(ColorProfileMsg{p.profile})
 
-	// If no renderer is set use the ferocious one.
-	if p.startupOptions&avecStandardRenderer != 0 {
-		p.renderer = newStandardRenderer(p.profile)
-	} else if p.renderer == nil {
-		if p.exp.has(experimentalUnferocious) {
-			p.renderer = newStandardRenderer(p.profile)
-		} else {
+	go p.Send(ColorProfileMsg{p.profile})
+	if p.renderer == nil {
+		// If no renderer is set use the ferocious one.
+		if p.startupOptions&withFerociousRenderer != 0 || p.exp.has(experimentalFerocious) {
 			p.renderer = newFerociousRenderer(p.profile)
+		} else {
+			p.renderer = newStandardRenderer(p.profile)
 		}
 	}
 

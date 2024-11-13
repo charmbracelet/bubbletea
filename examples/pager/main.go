@@ -61,7 +61,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// quickly, though asynchronously, which is why we wait for them
 			// here.
 			m.viewport = viewport.New(viewport.WithWidth(msg.Width), viewport.WithHeight(msg.Height-verticalMarginHeight))
-			m.viewport.YPosition = headerHeight
 			m.viewport.SetContent(m.content)
 			m.ready = true
 		} else {
