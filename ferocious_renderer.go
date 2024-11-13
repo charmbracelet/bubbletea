@@ -55,7 +55,7 @@ func (s *screen) SetCell(x, y int, cell cellbuf.Cell) (v bool) {
 		return
 	}
 
-	v = s.Buffer.SetCell(x, y, cell)
+	v = s.Buffer.Draw(x, y, cell)
 	if v {
 		// Mark the cell as dirty. You nasty one ;)
 		idx := y*s.Width() + x
@@ -128,7 +128,11 @@ func (c *ferociousRenderer) close() error {
 		seq += "\r"
 		c.scr.cur.X = 0
 	}
-	if _, line := cellbuf.RenderLineWithProfile(c.scr, y, c.profile); line != "" {
+
+	if _, line := cellbuf.RenderLine(
+		c.scr, y,
+		cellbuf.WithRenderProfile(c.profile),
+	); line != "" {
 		// OPTIM: We only clear the line if there's content on it.
 		seq += ansi.EraseEntireLine
 	}
@@ -226,7 +230,7 @@ func (c *ferociousRenderer) render(s string) {
 	// Ensure the buffer is at least the height of the new frame.
 	height := cellbuf.Height(s)
 	c.scr.Resize(c.scr.Width(), height)
-	linew := cellbuf.SetContent(c.scr, c.method, s)
+	linew := cellbuf.Paint(c.scr, c.method, s, nil)
 	c.scr.linew = linew
 }
 
@@ -379,7 +383,7 @@ func (c *ferociousRenderer) changes() {
 		var x int
 		for y := 0; y < height; y++ {
 			var line string
-			x, line = cellbuf.RenderLineWithProfile(c.scr, y, c.profile)
+			x, line = cellbuf.RenderLine(c.scr, y, cellbuf.WithRenderProfile(c.profile))
 			c.buf.WriteString(line)
 			if y < height-1 {
 				x = 0
