@@ -6,7 +6,7 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 func main() {
@@ -16,23 +16,22 @@ func main() {
 	}
 }
 
-type model struct {
-	mouseEvent tea.MouseEvent
-}
+type model struct{}
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if s := msg.String(); s == "ctrl+c" || s == "q" || s == "esc" {
 			return m, tea.Quit
 		}
 
 	case tea.MouseMsg:
-		return m, tea.Printf("(X: %d, Y: %d) %s", msg.X, msg.Y, tea.MouseEvent(msg))
+		mouse := msg.Mouse()
+		return m, tea.Printf("(X: %d, Y: %d) %s", mouse.X, mouse.Y, mouse)
 	}
 
 	return m, nil

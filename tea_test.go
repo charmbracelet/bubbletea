@@ -16,8 +16,8 @@ type testModel struct {
 	counter  atomic.Value
 }
 
-func (m testModel) Init() Cmd {
-	return nil
+func (m *testModel) Init() (Model, Cmd) {
+	return m, nil
 }
 
 func (m *testModel) Update(msg Msg) (Model, Cmd) {
@@ -30,7 +30,7 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 			m.counter.Store(i.(int) + 1)
 		}
 
-	case KeyMsg:
+	case KeyPressMsg:
 		return m, Quit
 	}
 
@@ -114,7 +114,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 		}
 	}()
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 	if shutdowns != preventCount {

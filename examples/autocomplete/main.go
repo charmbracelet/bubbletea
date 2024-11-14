@@ -7,11 +7,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func main() {
@@ -21,8 +21,10 @@ func main() {
 	}
 }
 
-type gotReposSuccessMsg []repo
-type gotReposErrMsg error
+type (
+	gotReposSuccessMsg []repo
+	gotReposErrMsg     error
+)
 
 type repo struct {
 	Name string `json:"name"`
@@ -76,6 +78,7 @@ func (k keymap) ShortHelp() []key.Binding {
 		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
 	}
 }
+
 func (k keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{k.ShortHelp()}
 }
@@ -88,7 +91,7 @@ func initialModel() model {
 	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	ti.Focus()
 	ti.CharLimit = 50
-	ti.Width = 20
+	ti.SetWidth(20)
 	ti.ShowSuggestions = true
 
 	h := help.New()
@@ -98,15 +101,15 @@ func initialModel() model {
 	return model{textInput: ti, help: h, keymap: km}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(getRepos, textinput.Blink)
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, tea.Batch(getRepos, textinput.Blink)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "enter", "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 	case gotReposSuccessMsg:
