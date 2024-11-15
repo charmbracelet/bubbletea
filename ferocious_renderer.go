@@ -22,10 +22,11 @@ type cursor struct {
 
 // screen represents a terminal screen.
 type screen struct {
-	dirty          map[int]int // keeps track of dirty cells
-	linew          []int       // keeps track of the width of each line
-	cellbuf.Buffer             // the cell buffer
-	cur            cursor      // cursor state
+	dirty             map[int]int // keeps track of dirty cells
+	linew             []int       // keeps track of the width of each line
+	cur               cursor      // cursor state
+	cellbuf.Buffer                // the cell buffer
+	cellbuf.Resizable             // make it resizeable
 }
 
 // isDirty returns true if the cell at the given position is dirty.
@@ -37,19 +38,15 @@ func (s *screen) isDirty(x, y int) bool {
 
 // reset resets the screen to its initial state.
 func (s *screen) reset() {
-	s.Buffer = cellbuf.Buffer{}
+	s.Buffer = cellbuf.NewBuffer(0, 0)
 	s.dirty = make(map[int]int)
 	s.cur = cursor{}
 	s.linew = make([]int, 0)
 }
 
 // Set implements [cellbuf.Grid] and marks changed cells as dirty.
-func (s *screen) SetCell(x, y int, cell cellbuf.Cell) (v bool) {
-	c, ok := s.Cell(x, y)
-	if !ok {
-		return
-	}
-
+func (s *screen) SetCell(x, y int, cell *cellbuf.Cell) (v bool) {
+	c := s.Cell(x, y)
 	if c.Equal(cell) {
 		// Cells are the same, no need to update.
 		return
@@ -128,7 +125,11 @@ func (c *ferociousRenderer) close() error {
 		seq += "\r"
 		c.scr.cur.X = 0
 	}
-	if _, line := cellbuf.RenderLineWithProfile(c.scr, y, c.profile); line != "" {
+
+	if _, line := cellbuf.RenderLine(
+		c.scr, y,
+		cellbuf.WithRenderProfile(c.profile),
+	); line != "" {
 		// OPTIM: We only clear the line if there's content on it.
 		seq += ansi.EraseEntireLine
 	}
@@ -226,7 +227,7 @@ func (c *ferociousRenderer) render(s string) {
 	// Ensure the buffer is at least the height of the new frame.
 	height := cellbuf.Height(s)
 	c.scr.Resize(c.scr.Width(), height)
-	linew := cellbuf.SetContent(c.scr, c.method, s)
+	linew := cellbuf.Paint(c.scr, c.method, s, nil)
 	c.scr.linew = linew
 }
 
@@ -308,8 +309,8 @@ func (c *ferociousRenderer) update(msg Msg) {
 		}
 
 	case enableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if c.altScreen {
 				return
 			}
@@ -326,7 +327,7 @@ func (c *ferociousRenderer) update(msg Msg) {
 			// whenever we enter or leave AltScreen.
 			c.updateCursorVisibility()
 
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if !c.cursorHidden {
 				return
 			}
@@ -335,8 +336,8 @@ func (c *ferociousRenderer) update(msg Msg) {
 		}
 
 	case disableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if !c.altScreen {
 				return
 			}
@@ -349,7 +350,7 @@ func (c *ferociousRenderer) update(msg Msg) {
 			// whenever we enter or leave AltScreen.
 			c.updateCursorVisibility()
 
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if c.cursorHidden {
 				return
 			}
@@ -362,7 +363,7 @@ func (c *ferociousRenderer) update(msg Msg) {
 	}
 }
 
-var spaceCell = cellbuf.Cell{Content: " ", Width: 1}
+var spaceCell = &cellbuf.Cell{Content: " ", Width: 1}
 
 // changes commits the changes from the cell buffer using the dirty cells map
 // and writes them to the internal buffer.
@@ -379,7 +380,7 @@ func (c *ferociousRenderer) changes() {
 		var x int
 		for y := 0; y < height; y++ {
 			var line string
-			x, line = cellbuf.RenderLineWithProfile(c.scr, y, c.profile)
+			x, line = cellbuf.RenderLine(c.scr, y, cellbuf.WithRenderProfile(c.profile))
 			c.buf.WriteString(line)
 			if y < height-1 {
 				x = 0
@@ -399,14 +400,15 @@ func (c *ferociousRenderer) changes() {
 		var segX int    // The start position of the current segment.
 		var eraser bool // Whether we're erasing using spaces and no styles or links.
 		for x := 0; x < width; x++ {
-			cell, ok := c.scr.Cell(x, y)
-			if !ok || cell.Width == 0 {
+			cell := c.scr.Cell(x, y)
+			if cell.Width == 0 {
 				continue
 			}
 
 			// Convert the cell to respect the current color profile.
-			cell.Style = cell.Style.Convert(c.profile)
-			cell.Link = cell.Link.Convert(c.profile)
+			// TODO: ??
+			// cell.Style = cell.Style.Convert(c.profile)
+			// cell.Link = cell.Link.Convert(c.profile)
 
 			if !c.scr.isDirty(x, y) {
 				if seg != nil {
@@ -559,9 +561,8 @@ func (c *ferociousRenderer) moveCursor(x, y int) {
 				// OPTIM: We write the cell content under the cursor if it's the same
 				// style and link. This is more efficient than moving the cursor which
 				// costs at least 3 bytes [ansi.CursorRight].
-				cell, ok := c.scr.Cell(c.scr.cur.X, c.scr.cur.Y)
-				if ok &&
-					(cell.Style.Equal(c.pen) && cell.Link == c.link) {
+				cell := c.scr.Cell(c.scr.cur.X, c.scr.cur.Y)
+				if cell.Style.Equal(c.pen) && cell.Link == c.link {
 					c.buf.WriteString(cell.Content)
 					break
 				}

@@ -276,8 +276,8 @@ func (r *standardRenderer) update(msg Msg) {
 		r.profile = msg.Profile
 
 	case enableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if r.altScreenActive {
 				return
 			}
@@ -285,7 +285,7 @@ func (r *standardRenderer) update(msg Msg) {
 			r.setAltScreenBuffer(true)
 			r.altScreenActive = true
 			r.repaint()
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if !r.cursorHidden {
 				return
 			}
@@ -294,8 +294,8 @@ func (r *standardRenderer) update(msg Msg) {
 		}
 
 	case disableModeMsg:
-		switch string(msg) {
-		case ansi.AltScreenBufferMode.String():
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenBufferMode:
 			if !r.altScreenActive {
 				return
 			}
@@ -303,7 +303,7 @@ func (r *standardRenderer) update(msg Msg) {
 			r.setAltScreenBuffer(false)
 			r.altScreenActive = false
 			r.repaint()
-		case ansi.CursorEnableMode.String():
+		case ansi.CursorEnableMode:
 			if r.cursorHidden {
 				return
 			}
