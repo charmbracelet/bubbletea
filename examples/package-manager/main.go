@@ -132,6 +132,20 @@ func max(a, b int) int {
 	return b
 }
 
+func getPackages() []string {
+	adjectives := []string{"Amazing", "Brilliant", "Cool", "Dazzling", "Epic", "Fantastic", "Glorious", "Heroic"}
+	nouns := []string{"Unicorn", "Dragon", "Phoenix", "Pegasus", "Griffin", "Mermaid", "Centaur", "Sphinx"}
+
+	rand.Seed(time.Now().UnixNano())
+	var packages []string
+	for i := 0; i < 10; i++ { // Generate 10 package names
+		adj := adjectives[rand.Intn(len(adjectives))]
+		noun := nouns[rand.Intn(len(nouns))]
+		packages = append(packages, fmt.Sprintf("%s%s", adj, noun))
+	}
+	return packages
+}
+
 func main() {
 	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
