@@ -379,7 +379,7 @@ func (r *standardRenderer) exitAltScreen() {
 		// to align with the previous normal screen position and clear any remaining lines.
 		r.execute(ansi.CursorUp(r.linesRenderedBeforeAltScreen - r.linesRendered))
 		r.execute(ansi.EraseScreenBelow)
-	} else if r.linesRendered > r.linesRenderedBeforeAltScreen {
+	} else if r.linesRendered > r.linesRenderedBeforeAltScreen && r.linesRenderedBeforeAltScreen > 0 {
 		// If more lines were rendered in the alternate screen, move the cursor down
 		// to align with the new position.
 		r.execute(ansi.CursorDown(r.linesRendered - r.linesRenderedBeforeAltScreen))
