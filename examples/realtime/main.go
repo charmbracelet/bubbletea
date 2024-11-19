@@ -13,35 +13,53 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// A message used to indicate that activity has occurred. In the real world (for
-// example, chat) this would contain actual data.
-type responseMsg struct{}
+// A message used to indicate that activity has occurred. As an example, it
+// will contain sample chat messages.
+type responseMsg struct {
+	ChatMessage string
+}
 
 // Simulate a process that sends events at an irregular interval in real time.
 // In this case, we'll send events on the channel at a random interval between
 // 100 to 1000 milliseconds. As a command, Bubble Tea will run this
 // asynchronously.
-func listenForActivity(sub chan struct{}) tea.Cmd {
+func listenForActivity(sub chan responseMsg) tea.Cmd {
 	return func() tea.Msg {
+		// Create some sample chat messages that will be sent to demonstrate sending messages
+		// in real-time.
+		sampleChatMessages := []string{
+			"Hey! How's it going?",
+			"Did you catch the game last night?",
+			"I'm thinking of grabbing lunch. Want to join?",
+			"Have you seen the new movie that just came out?",
+			"What are your plans for the weekend?",
+			"I just finished reading a great book. You should check it out!",
+			"Can you send me the notes from yesterday's meeting?",
+			"I love this weather! Perfect for a walk.",
+			"Let's go for coffee sometime this week.",
+			"Did you hear about the latest update to the app?",
+		}
 		for {
 			time.Sleep(time.Millisecond * time.Duration(rand.Int63n(900)+100)) // nolint:gosec
-			sub <- struct{}{}
+			// Send a random chat message
+			sub <- responseMsg{ChatMessage: sampleChatMessages[rand.Intn(len(sampleChatMessages))]} // nolint:gosec
 		}
 	}
 }
 
 // A command that waits for the activity on a channel.
-func waitForActivity(sub chan struct{}) tea.Cmd {
+func waitForActivity(sub chan responseMsg) tea.Cmd {
 	return func() tea.Msg {
 		return responseMsg(<-sub)
 	}
 }
 
 type model struct {
-	sub       chan struct{} // where we'll receive activity notifications
-	responses int           // how many responses we've received
-	spinner   spinner.Model
-	quitting  bool
+	sub           chan responseMsg // where we'll receive activity notifications
+	responseCount int              // how many responses we've received
+	response      string           // the last response we received
+	spinner       spinner.Model
+	quitting      bool
 }
 
 func (m model) Init() tea.Cmd {
@@ -53,12 +71,13 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		m.quitting = true
 		return m, tea.Quit
 	case responseMsg:
-		m.responses++                    // record external activity
+		m.responseCount++
+		m.response = msg.ChatMessage
 		return m, waitForActivity(m.sub) // wait for next event
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -70,7 +89,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := fmt.Sprintf("\n %s Events received: %d\n\n Press any key to exit\n", m.spinner.View(), m.responses)
+	s := fmt.Sprintf("\n %s Events received: %d\nLast Message: %s\n Press any key to exit\n", m.spinner.View(), m.responseCount, m.response)
 	if m.quitting {
 		s += "\n"
 	}
@@ -79,7 +98,7 @@ func (m model) View() string {
 
 func main() {
 	p := tea.NewProgram(model{
-		sub:     make(chan struct{}),
+		sub:     make(chan responseMsg),
 		spinner: spinner.New(),
 	})
 
