@@ -57,6 +57,9 @@ type standardRenderer struct {
 
 	// lines explicitly set not to render
 	ignoreLines map[int]struct{}
+
+	// lines rendered before entering alt screen mode
+	linesRenderedBeforeAltScreen int
 }
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
@@ -334,6 +337,10 @@ func (r *standardRenderer) enterAltScreen() {
 	r.altScreenActive = true
 	r.execute(ansi.EnableAltScreenBuffer)
 
+	// Save the current line count before entering the alternate screen mode.
+	// This allows us to compare and adjust the cursor position when exiting the alternate screen.
+	r.linesRenderedBeforeAltScreen = r.linesRendered
+
 	// Ensure that the terminal is cleared, even when it doesn't support
 	// alt screen (or alt screen support is disabled, like GNU screen by
 	// default).
@@ -365,6 +372,18 @@ func (r *standardRenderer) exitAltScreen() {
 
 	r.altScreenActive = false
 	r.execute(ansi.DisableAltScreenBuffer)
+
+	// Adjust cursor and screen
+	if r.linesRendered < r.linesRenderedBeforeAltScreen {
+		// If fewer lines were rendered in the alternate screen, move the cursor up
+		// to align with the previous normal screen position and clear any remaining lines.
+		r.execute(ansi.CursorUp(r.linesRenderedBeforeAltScreen - r.linesRendered))
+		r.execute(ansi.EraseScreenBelow)
+	} else if r.linesRendered > r.linesRenderedBeforeAltScreen && r.linesRenderedBeforeAltScreen > 0 {
+		// If more lines were rendered in the alternate screen, move the cursor down
+		// to align with the new position.
+		r.execute(ansi.CursorDown(r.linesRendered - r.linesRenderedBeforeAltScreen))
+	}
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
