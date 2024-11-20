@@ -16,7 +16,7 @@ import (
 // A message used to indicate that activity has occurred. As an example, it
 // will contain sample chat messages.
 type responseMsg struct {
-	ChatMessage string
+	chatMessage string
 }
 
 // Simulate a process that sends events at an irregular interval in real time.
@@ -42,7 +42,7 @@ func listenForActivity(sub chan responseMsg) tea.Cmd {
 		for {
 			time.Sleep(time.Millisecond * time.Duration(rand.Int63n(900)+100)) // nolint:gosec
 			// Send a random chat message
-			sub <- responseMsg{ChatMessage: sampleChatMessages[rand.Intn(len(sampleChatMessages))]} // nolint:gosec
+			sub <- responseMsg{chatMessage: sampleChatMessages[rand.Intn(len(sampleChatMessages))]} // nolint:gosec
 		}
 	}
 }
@@ -77,7 +77,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case responseMsg:
 		m.responseCount++
-		m.response = msg.ChatMessage
+		m.response = msg.chatMessage
 		return m, waitForActivity(m.sub) // wait for next event
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -89,7 +89,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := fmt.Sprintf("\n %s Events received: %d\nLast Message: %s\n Press any key to exit\n", m.spinner.View(), m.responseCount, m.response)
+	s := fmt.Sprintf("\n %s Events received: %d\n Last Message: %s\n Press any key to exit\n", m.spinner.View(), m.responseCount, m.response)
 	if m.quitting {
 		s += "\n"
 	}
