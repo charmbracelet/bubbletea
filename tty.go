@@ -39,12 +39,12 @@ func (p *Program) restoreTerminalState() error {
 	if p.modes[ansi.BracketedPasteMode] {
 		p.execute(ansi.ResetBracketedPasteMode)
 	}
-	if !p.modes[ansi.CursorEnableMode] {
+	if !p.modes[ansi.TextCursorEnableMode] {
 		p.execute(ansi.ShowCursor)
 	}
-	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
-		p.execute(ansi.DisableMouseCellMotion)
-		p.execute(ansi.DisableMouseAllMotion)
+	if p.modes[ansi.ButtonEventMouseMode] || p.modes[ansi.AnyEventMouseMode] {
+		p.execute(ansi.ResetButtonEventMouseMode)
+		p.execute(ansi.ResetAnyEventMouseMode)
 		p.execute(ansi.ResetSgrExtMouseMode)
 	}
 	if p.keyboard.modifyOtherKeys != 0 {
@@ -59,8 +59,8 @@ func (p *Program) restoreTerminalState() error {
 	if p.modes[ansi.GraphemeClusteringMode] {
 		p.execute(ansi.ResetGraphemeClusteringMode)
 	}
-	if p.modes[ansi.AltScreenBufferMode] {
-		p.execute(ansi.ResetAltScreenBufferMode)
+	if p.modes[ansi.AltScreenSaveCursorMode] {
+		p.execute(ansi.ResetAltScreenSaveCursorMode)
 		// cmd.exe and other terminals keep separate cursor states for the AltScreen
 		// and the main buffer. We have to explicitly reset the cursor visibility
 		// whenever we exit AltScreen.

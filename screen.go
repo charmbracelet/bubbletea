@@ -32,7 +32,7 @@ type clearScreenMsg struct{}
 // model's Init function. To initialize your program with the altscreen enabled
 // use the WithAltScreen ProgramOption instead.
 func EnterAltScreen() Msg {
-	return enableMode(ansi.AltScreenBufferMode)
+	return enableMode(ansi.AltScreenSaveCursorMode)
 }
 
 // ExitAltScreen is a special command that tells the Bubble Tea program to exit
@@ -42,7 +42,7 @@ func EnterAltScreen() Msg {
 // Note that the alternate screen buffer will be automatically exited when the
 // program quits.
 func ExitAltScreen() Msg {
-	return disableMode(ansi.AltScreenBufferMode)
+	return disableMode(ansi.AltScreenSaveCursorMode)
 }
 
 // EnableMouseCellMotion is a special command that enables mouse click,
@@ -53,8 +53,8 @@ func ExitAltScreen() Msg {
 // model's Init function. Use the WithMouseCellMotion ProgramOption instead.
 func EnableMouseCellMotion() Msg {
 	return sequenceMsg{
-		func() Msg { return enableMode(ansi.MouseCellMotionMode) },
-		func() Msg { return enableMode(ansi.MouseSgrExtMode) },
+		func() Msg { return enableMode(ansi.ButtonEventMouseMode) },
+		func() Msg { return enableMode(ansi.SgrExtMouseMode) },
 	}
 }
 
@@ -69,17 +69,17 @@ func EnableMouseCellMotion() Msg {
 // model's Init function. Use the WithMouseAllMotion ProgramOption instead.
 func EnableMouseAllMotion() Msg {
 	return sequenceMsg{
-		func() Msg { return enableMode(ansi.MouseAllMotionMode) },
-		func() Msg { return enableMode(ansi.MouseSgrExtMode) },
+		func() Msg { return enableMode(ansi.AnyEventMouseMode) },
+		func() Msg { return enableMode(ansi.SgrExtMouseMode) },
 	}
 }
 
 // DisableMouse is a special command that stops listening for mouse events.
 func DisableMouse() Msg {
 	return sequenceMsg{
-		func() Msg { return disableMode(ansi.MouseCellMotionMode) },
-		func() Msg { return disableMode(ansi.MouseAllMotionMode) },
-		func() Msg { return disableMode(ansi.MouseSgrExtMode) },
+		func() Msg { return disableMode(ansi.ButtonEventMouseMode) },
+		func() Msg { return disableMode(ansi.AnyEventMouseMode) },
+		func() Msg { return disableMode(ansi.SgrExtMouseMode) },
 	}
 }
 
@@ -88,13 +88,13 @@ func DisableMouse() Msg {
 // to show the cursor, which is normally hidden for the duration of a Bubble
 // Tea program's lifetime. You will most likely not need to use this command.
 func HideCursor() Msg {
-	return disableMode(ansi.CursorEnableMode)
+	return disableMode(ansi.TextCursorEnableMode)
 }
 
 // ShowCursor is a special command for manually instructing Bubble Tea to show
 // the cursor.
 func ShowCursor() Msg {
-	return enableMode(ansi.CursorEnableMode)
+	return enableMode(ansi.TextCursorEnableMode)
 }
 
 // EnableBracketedPaste is a special command that tells the Bubble Tea program

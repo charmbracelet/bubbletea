@@ -739,18 +739,18 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Hide the cursor before starting the renderer.
-	p.modes[ansi.CursorEnableMode] = false
+	p.modes[ansi.TextCursorEnableMode] = false
 	p.execute(ansi.HideCursor)
-	p.renderer.update(disableMode(ansi.CursorEnableMode))
+	p.renderer.update(disableMode(ansi.TextCursorEnableMode))
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
 		p.execute(ansi.SetWindowTitle(p.startupTitle))
 	}
 	if p.startupOptions&withAltScreen != 0 {
-		p.execute(ansi.SetAltScreenBufferMode)
-		p.modes[ansi.AltScreenBufferMode] = true
-		p.renderer.update(enableMode(ansi.AltScreenBufferMode))
+		p.execute(ansi.SetAltScreenSaveCursorMode)
+		p.modes[ansi.AltScreenSaveCursorMode] = true
+		p.renderer.update(enableMode(ansi.AltScreenSaveCursorMode))
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.SetBracketedPasteMode)
@@ -763,15 +763,15 @@ func (p *Program) Run() (Model, error) {
 		// a response in the eventLoop.
 	}
 	if p.startupOptions&withMouseCellMotion != 0 {
-		p.execute(ansi.EnableMouseCellMotion)
+		p.execute(ansi.SetButtonEventMouseMode)
 		p.execute(ansi.SetSgrExtMouseMode)
-		p.modes[ansi.MouseCellMotionMode] = true
-		p.modes[ansi.MouseSgrExtMode] = true
+		p.modes[ansi.ButtonEventMouseMode] = true
+		p.modes[ansi.SgrExtMouseMode] = true
 	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.execute(ansi.EnableMouseAllMotion)
+		p.execute(ansi.SetAnyEventMouseMode)
 		p.execute(ansi.SetSgrExtMouseMode)
-		p.modes[ansi.MouseAllMotionMode] = true
-		p.modes[ansi.MouseSgrExtMode] = true
+		p.modes[ansi.AnyEventMouseMode] = true
+		p.modes[ansi.SgrExtMouseMode] = true
 	}
 
 	if p.startupOptions&withReportFocus != 0 {
@@ -949,15 +949,15 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initInputReader(); err != nil {
 		return err
 	}
-	if p.modes[ansi.AltScreenBufferMode] {
-		p.execute(ansi.SetAltScreenBufferMode)
+	if p.modes[ansi.AltScreenSaveCursorMode] {
+		p.execute(ansi.SetAltScreenSaveCursorMode)
 	} else {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
 	}
 
 	p.startRenderer()
-	if !p.modes[ansi.CursorEnableMode] {
+	if !p.modes[ansi.TextCursorEnableMode] {
 		p.execute(ansi.HideCursor)
 	} else {
 		p.execute(ansi.ShowCursor)
@@ -974,12 +974,12 @@ func (p *Program) RestoreTerminal() error {
 	if p.modes[ansi.FocusEventMode] {
 		p.execute(ansi.SetFocusEventMode)
 	}
-	if p.modes[ansi.MouseCellMotionMode] || p.modes[ansi.MouseAllMotionMode] {
+	if p.modes[ansi.ButtonEventMouseMode] || p.modes[ansi.AnyEventMouseMode] {
 		if p.startupOptions&withMouseCellMotion != 0 {
-			p.execute(ansi.EnableMouseCellMotion)
+			p.execute(ansi.SetButtonEventMouseMode)
 			p.execute(ansi.SetSgrExtMouseMode)
 		} else if p.startupOptions&withMouseAllMotion != 0 {
-			p.execute(ansi.EnableMouseAllMotion)
+			p.execute(ansi.SetAnyEventMouseMode)
 			p.execute(ansi.SetSgrExtMouseMode)
 		}
 	}
