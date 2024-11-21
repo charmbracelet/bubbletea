@@ -22,8 +22,8 @@ type styles struct {
 func newStyles(bgIsDark bool) (s styles) {
 	lightDark := lipgloss.LightDark(bgIsDark)
 
-	s.activeDot = lipgloss.NewStyle().Foreground(lightDark("235", "252")).SetString("•")
-	s.inactiveDot = s.activeDot.Foreground(lightDark("250", "238")).SetString("•")
+	s.activeDot = lipgloss.NewStyle().Foreground(lightDark(lipgloss.Color("235"), lipgloss.Color("252"))).SetString("•")
+	s.inactiveDot = s.activeDot.Foreground(lightDark(lipgloss.Color("250"), lipgloss.Color("238"))).SetString("•")
 	return s
 }
 

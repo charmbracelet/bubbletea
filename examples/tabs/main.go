@@ -22,7 +22,7 @@ func newStyles(bgIsDark bool) *styles {
 
 	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
 	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
-	highlightColor := lightDark("#874BFD", "#7D56F4")
+	highlightColor := lightDark(lipgloss.Color("#874BFD"), lipgloss.Color("#7D56F4"))
 
 	s := new(styles)
 	s.doc = lipgloss.NewStyle().

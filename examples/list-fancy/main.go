@@ -28,7 +28,7 @@ func newStyles(darkBG bool) styles {
 			Background(lipgloss.Color("#25A065")).
 			Padding(0, 1),
 		statusMessage: lipgloss.NewStyle().
-			Foreground(lightDark("#04B575", "#04B575")),
+			Foreground(lightDark(lipgloss.Color("#04B575"), lipgloss.Color("#04B575"))),
 	}
 }
 
