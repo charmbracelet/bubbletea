@@ -9,11 +9,10 @@ type PrimaryDeviceAttributesMsg []int
 func parsePrimaryDevAttrs(csi *ansi.CsiSequence) Msg {
 	// Primary Device Attributes
 	da1 := make(PrimaryDeviceAttributesMsg, len(csi.Params))
-	csi.Range(func(i int, p int, hasMore bool) bool {
-		if !hasMore {
-			da1[i] = p
+	for i, p := range csi.Params {
+		if !p.HasMore() {
+			da1[i] = p.Param(0)
 		}
-		return true
-	})
+	}
 	return da1
 }

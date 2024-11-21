@@ -194,10 +194,17 @@ func (e MouseMotionMsg) Mouse() Mouse {
 //
 // https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates
 func parseSGRMouseEvent(csi *ansi.CsiSequence) Msg {
-	x := csi.Param(1)
-	y := csi.Param(2)
+	x, ok := csi.Param(1, 1)
+	if !ok {
+		x = 1
+	}
+	y, ok := csi.Param(2, 1)
+	if !ok {
+		y = 1
+	}
 	release := csi.Command() == 'm'
-	mod, btn, _, isMotion := parseMouseButton(csi.Param(0))
+	b, _ := csi.Param(0, 0)
+	mod, btn, _, isMotion := parseMouseButton(b)
 
 	// (1,1) is the upper left. We subtract 1 to normalize it to (0,0).
 	x--

@@ -620,7 +620,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go p.checkResize()
 
 			case requestCursorPosMsg:
-				p.execute(ansi.CursorPositionReport)
+				p.execute(ansi.RequestCursorPosition)
 			}
 
 			// Process internal messages for the renderer.

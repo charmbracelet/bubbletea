@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/cellbuf"
+	"github.com/charmbracelet/x/vt"
 )
 
 var undefPoint = image.Pt(-1, -1)
@@ -22,11 +23,10 @@ type cursor struct {
 
 // screen represents a terminal screen.
 type screen struct {
-	dirty             map[int]int // keeps track of dirty cells
-	linew             []int       // keeps track of the width of each line
-	cur               cursor      // cursor state
-	cellbuf.Buffer                // the cell buffer
-	cellbuf.Resizable             // make it resizeable
+	dirty      map[int]int // keeps track of dirty cells
+	linew      []int       // keeps track of the width of each line
+	cur        cursor      // cursor state
+	*vt.Buffer             // the cell buffer
 }
 
 // isDirty returns true if the cell at the given position is dirty.
@@ -38,7 +38,7 @@ func (s *screen) isDirty(x, y int) bool {
 
 // reset resets the screen to its initial state.
 func (s *screen) reset() {
-	s.Buffer = cellbuf.NewBuffer(0, 0)
+	s.Buffer = vt.NewBuffer(0, 0)
 	s.dirty = make(map[int]int)
 	s.cur = cursor{}
 	s.linew = make([]int, 0)
