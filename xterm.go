@@ -6,8 +6,10 @@ import (
 
 func parseXTermModifyOtherKeys(csi *ansi.CsiSequence) Msg {
 	// XTerm modify other keys starts with ESC [ 27 ; <modifier> ; <code> ~
-	mod := KeyMod(csi.Param(1) - 1)
-	r := rune(csi.Param(2))
+	xmod, _ := csi.Param(1, 1)
+	xrune, _ := csi.Param(2, 1)
+	mod := KeyMod(xmod - 1)
+	r := rune(xrune)
 
 	switch r {
 	case ansi.BS:
