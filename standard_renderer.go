@@ -36,6 +36,7 @@ type standardRenderer struct {
 	lastRender         string
 	lastRenderedLines  []string
 	linesRendered      int
+	altLinesRendered   int
 	useANSICompressor  bool
 	once               sync.Once
 
@@ -170,7 +171,9 @@ func (r *standardRenderer) flush() {
 	buf := &bytes.Buffer{}
 
 	// Moving to the beginning of the section, that we rendered.
-	if r.linesRendered > 1 {
+	if r.altScreenActive {
+		buf.WriteString(ansi.HomeCursorPosition)
+	} else if r.linesRendered > 1 {
 		buf.WriteString(ansi.CursorUp(r.linesRendered - 1))
 	}
 
@@ -255,12 +258,21 @@ func (r *standardRenderer) flush() {
 		}
 	}
 
+	lastLinesRendered := r.linesRendered
+	if r.altScreenActive {
+		lastLinesRendered = r.altLinesRendered
+	}
+
 	// Clearing left over content from last render.
-	if r.linesRendered > len(newLines) {
+	if lastLinesRendered > len(newLines) {
 		buf.WriteString(ansi.EraseScreenBelow)
 	}
 
-	r.linesRendered = len(newLines)
+	if r.altScreenActive {
+		r.altLinesRendered = len(newLines)
+	} else {
+		r.linesRendered = len(newLines)
+	}
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
@@ -268,7 +280,7 @@ func (r *standardRenderer) flush() {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
+		buf.WriteString(ansi.SetCursorPosition(0, len(newLines)))
 	} else {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
@@ -351,6 +363,9 @@ func (r *standardRenderer) enterAltScreen() {
 	} else {
 		r.execute(ansi.ShowCursor)
 	}
+
+	// Entering the alt screen resets the lines rendered count.
+	r.altLinesRendered = 0
 
 	r.repaint()
 }
