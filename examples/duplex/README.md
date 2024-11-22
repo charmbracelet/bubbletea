@@ -1,5 +1,5 @@
 # Duplex (Model ⇋ Background Goroutine)
-<img width="1000" src="./duplex.gif" alt="Duplex illustration"/>
+<img width="380" src="./duplex.gif" alt="Duplex illustration"/>
 
 ## How It Works
 
