@@ -69,7 +69,6 @@ type model struct {
 	help       help.Model
 	inputStyle lipgloss.Style
 	lastKey    string
-	quitting   bool
 }
 
 func newModel() model {
@@ -104,8 +103,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.Quit):
-			m.quitting = true
-			return m, tea.Quit
+			return quitModel{}, tea.Quit
 		}
 	}
 
@@ -113,10 +111,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	if m.quitting {
-		return "Bye!\n"
-	}
-
 	var status string
 	if m.lastKey == "" {
 		status = "Waiting for input..."
@@ -129,6 +123,14 @@ func (m model) View() string {
 
 	return "\n" + status + strings.Repeat("\n", height) + helpView
 }
+
+type quitModel struct{}
+
+func (m quitModel) Init() tea.Cmd { return nil }
+
+func (m quitModel) View() string { return "Bye!\n" }
+
+func (m quitModel) Update(tea.Msg) (tea.Model, tea.Cmd) { return m, nil }
 
 func main() {
 	if os.Getenv("HELP_DEBUG") != "" {
