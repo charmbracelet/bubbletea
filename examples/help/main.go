@@ -126,10 +126,8 @@ func (m model) View() string {
 
 type quitModel struct{}
 
-func (m quitModel) Init() tea.Cmd { return nil }
-
-func (m quitModel) View() string { return "Bye!\n" }
-
+func (m quitModel) Init() tea.Cmd                       { return nil }
+func (m quitModel) View() string                        { return "Bye!\n" }
 func (m quitModel) Update(tea.Msg) (tea.Model, tea.Cmd) { return m, nil }
 
 func main() {
