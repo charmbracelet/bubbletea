@@ -307,6 +307,14 @@ func NewProgram[T any](model Model[T], opts ...ProgramOption[T]) *Program[T] {
 		opt(p)
 	}
 
+	return p
+}
+
+func (p *Program[T]) init() {
+	p.msgs = make(chan Msg)
+	p.rendererDone = make(chan struct{})
+	p.modes = ansi.Modes{}
+
 	// A context can be provided with a ProgramOption, but if none was provided
 	// we'll use the default background context.
 	if p.ctx == nil {
@@ -348,8 +356,6 @@ func NewProgram[T any](model Model[T], opts ...ProgramOption[T]) *Program[T] {
 			}
 		}
 	}
-
-	return p
 }
 
 func (p *Program[T]) handleSignals() chan struct{} {
@@ -732,6 +738,8 @@ func (p *Program[T]) Run() error {
 }
 
 func (p *Program[T]) Start() error {
+	p.init()
+
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
