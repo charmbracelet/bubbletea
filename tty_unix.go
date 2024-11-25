@@ -27,7 +27,7 @@ func (p *Program[T]) initInput() (err error) {
 		p.useHardTabs = p.previousTtyInputState.Oflag&unix.TABDLY == 0
 	}
 
-	if f, ok := p.Output.(*safeWriter).Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
+	if f, ok := p.Output.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
 	}
 

@@ -317,7 +317,7 @@ func NewProgram[T any](model Model[T], opts ...ProgramOption[T]) *Program[T] {
 
 	// if no output was set, set it to stdout
 	if p.Output == nil {
-		p.Output = newSafeWriter(os.Stdout)
+		p.Output = os.Stdout
 	}
 
 	// if no environment was set, set it to os.Environ()
@@ -341,7 +341,7 @@ func NewProgram[T any](model Model[T], opts ...ProgramOption[T]) *Program[T] {
 		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
 			// Enable different types of tracing.
 			if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
-				p.Output.(*safeWriter).trace = true
+				// p.Output.(*safeWriter).trace = true
 			}
 			if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
 				p.traceInput = true
@@ -795,7 +795,7 @@ func (p *Program[T]) Start() error {
 
 	// Get the color profile and send it to the program.
 	if !p.startupOptions.has(withColorProfile) {
-		p.profile = colorprofile.Detect(p.Output.(*safeWriter).Writer(), p.environ)
+		p.profile = colorprofile.Detect(p.Output, p.environ)
 	}
 
 	// Set the color profile on the renderer and send it to the program.

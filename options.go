@@ -29,7 +29,7 @@ func WithContext[T any](ctx context.Context) ProgramOption[T] {
 // won't need to use this.
 func WithOutput[T any](output io.Writer) ProgramOption[T] {
 	return func(p *Program[T]) {
-		p.Output = newSafeWriter(output)
+		p.Output = output
 	}
 }
 
