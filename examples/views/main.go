@@ -8,6 +8,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -43,7 +44,7 @@ var (
 func main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
@@ -75,12 +76,13 @@ type model struct {
 	Quitting bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, tick()
 }
 
 // Main update function.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
+	log.Printf("views msg: %v", msg)
 	// Make sure these keys always quit
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		k := msg.String()
@@ -115,7 +117,7 @@ func (m model) View() fmt.Stringer {
 // Sub-update functions
 
 // Update loop for the first view where you're choosing a task.
-func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func updateChoices(msg tea.Msg, m model) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -147,7 +149,7 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 }
 
 // Update loop for the second view after a choice has been made
-func updateChosen(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func updateChosen(msg tea.Msg, m model) (model, tea.Cmd) {
 	switch msg.(type) {
 	case frameMsg:
 		if !m.Loaded {

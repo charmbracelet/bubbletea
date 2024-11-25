@@ -142,11 +142,11 @@ type model struct {
 	xVelocity, yVelocity float64
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, animate()
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		return m, tea.Quit
@@ -193,8 +193,8 @@ func main() {
 		spring: harmonica.NewSpring(harmonica.FPS(fps), frequency, damping),
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(m, tea.WithAltScreen[model](), tea.WithMouseCellMotion[model]())
+	if err := p.Run(); err != nil {
 		fmt.Println("Uh oh:", err)
 		os.Exit(1)
 	}
