@@ -290,7 +290,7 @@ func (r *standardRenderer) flush() {
 	r.buf.Reset()
 }
 
-// lastLinesRendered returns the number of last rendered lines
+// lastLinesRendered returns the number of lines rendered lastly.
 func (r *standardRenderer) lastLinesRendered() int {
 	if r.altScreenActive {
 		return r.altLinesRendered
