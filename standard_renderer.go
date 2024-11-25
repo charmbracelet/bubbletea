@@ -258,13 +258,8 @@ func (r *standardRenderer) flush() {
 		}
 	}
 
-	lastLinesRendered := r.linesRendered
-	if r.altScreenActive {
-		lastLinesRendered = r.altLinesRendered
-	}
-
 	// Clearing left over content from last render.
-	if lastLinesRendered > len(newLines) {
+	if r.lastLinesRendered() > len(newLines) {
 		buf.WriteString(ansi.EraseScreenBelow)
 	}
 
@@ -293,6 +288,14 @@ func (r *standardRenderer) flush() {
 	// See https://github.com/charmbracelet/bubbletea/pull/1233
 	r.lastRenderedLines = newLines
 	r.buf.Reset()
+}
+
+// lastLinesRendered returns the number of last rendered lines
+func (r *standardRenderer) lastLinesRendered() int {
+	if r.altScreenActive {
+		return r.altLinesRendered
+	}
+	return r.linesRendered
 }
 
 // write writes to the internal buffer. The buffer will be outputted via the
@@ -507,7 +510,7 @@ func (r *standardRenderer) setWindowTitle(title string) {
 func (r *standardRenderer) setIgnoredLines(from int, to int) {
 	// Lock if we're going to be clearing some lines since we don't want
 	// anything jacking our cursor.
-	if r.linesRendered > 0 {
+	if r.lastLinesRendered() > 0 {
 		r.mtx.Lock()
 		defer r.mtx.Unlock()
 	}
@@ -520,16 +523,17 @@ func (r *standardRenderer) setIgnoredLines(from int, to int) {
 	}
 
 	// Erase ignored lines
-	if r.linesRendered > 0 {
+	lastLinesRendered := r.lastLinesRendered()
+	if lastLinesRendered > 0 {
 		buf := &bytes.Buffer{}
 
-		for i := r.linesRendered - 1; i >= 0; i-- {
+		for i := lastLinesRendered - 1; i >= 0; i-- {
 			if _, exists := r.ignoreLines[i]; exists {
 				buf.WriteString(ansi.EraseEntireLine)
 			}
 			buf.WriteString(ansi.CursorUp1)
 		}
-		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered)) // put cursor back
+		buf.WriteString(ansi.SetCursorPosition(0, lastLinesRendered)) // put cursor back
 		_, _ = r.out.Write(buf.Bytes())
 	}
 }
@@ -575,7 +579,7 @@ func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary
 	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
 
 	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
+	buf.WriteString(ansi.SetCursorPosition(0, r.lastLinesRendered()))
 
 	_, _ = r.out.Write(buf.Bytes())
 }
@@ -604,7 +608,7 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
 
 	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
+	buf.WriteString(ansi.SetCursorPosition(0, r.lastLinesRendered()))
 
 	_, _ = r.out.Write(buf.Bytes())
 }
