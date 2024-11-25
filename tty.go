@@ -13,7 +13,7 @@ import (
 	"github.com/muesli/cancelreader"
 )
 
-func (p *Program) suspend() {
+func (p *Program[T]) suspend() {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
 		return
@@ -25,7 +25,7 @@ func (p *Program) suspend() {
 	go p.Send(ResumeMsg{})
 }
 
-func (p *Program) initTerminal() error {
+func (p *Program[T]) initTerminal() error {
 	if _, ok := p.renderer.(*nilRenderer); ok {
 		// No need to initialize the terminal if we're not rendering
 		return nil
@@ -36,7 +36,7 @@ func (p *Program) initTerminal() error {
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
-func (p *Program) restoreTerminalState() error {
+func (p *Program[T]) restoreTerminalState() error {
 	// We don't need to reset [ansi.AltScreenSaveCursorMode] and
 	// [ansi.TextCursorEnableMode] because they are automatically reset when we
 	// close the renderer. See [screenRenderer.close] and
@@ -85,7 +85,7 @@ func (p *Program) restoreTerminalState() error {
 }
 
 // restoreInput restores the tty input to its original state.
-func (p *Program) restoreInput() error {
+func (p *Program[T]) restoreInput() error {
 	if p.ttyInput != nil && p.previousTtyInputState != nil {
 		if err := term.Restore(p.ttyInput.Fd(), p.previousTtyInputState); err != nil {
 			return fmt.Errorf("error restoring console: %w", err)
@@ -100,7 +100,7 @@ func (p *Program) restoreInput() error {
 }
 
 // initInputReader (re)commences reading inputs.
-func (p *Program) initInputReader() error {
+func (p *Program[T]) initInputReader() error {
 	term := p.getenv("TERM")
 
 	// Initialize the input reader.
@@ -109,7 +109,7 @@ func (p *Program) initInputReader() error {
 	// On Windows, this will change the console mode to enable mouse and window
 	// events.
 	var flags int // TODO: make configurable through environment variables?
-	drv, err := input.NewReader(p.input, term, flags)
+	drv, err := input.NewReader(p.Input, term, flags)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (p *Program) initInputReader() error {
 	return nil
 }
 
-func (p *Program) readInputs() error {
+func (p *Program[T]) readInputs() error {
 	for {
 		events, err := p.inputReader.ReadEvents()
 		if err != nil {
@@ -147,7 +147,7 @@ func (p *Program) readInputs() error {
 	}
 }
 
-func (p *Program) readLoop() {
+func (p *Program[T]) readLoop() {
 	defer close(p.readLoopDone)
 
 	err := p.readInputs()
@@ -160,7 +160,7 @@ func (p *Program) readLoop() {
 }
 
 // waitForReadLoop waits for the cancelReader to finish its read loop.
-func (p *Program) waitForReadLoop() {
+func (p *Program[T]) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
 	case <-time.After(500 * time.Millisecond): //nolint:gomnd
@@ -172,7 +172,7 @@ func (p *Program) waitForReadLoop() {
 
 // checkResize detects the current size of the output and informs the program
 // via a WindowSizeMsg.
-func (p *Program) checkResize() {
+func (p *Program[T]) checkResize() {
 	if p.ttyOutput == nil {
 		// can't query window size
 		return

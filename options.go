@@ -8,28 +8,28 @@ import (
 	"github.com/charmbracelet/colorprofile"
 )
 
-// ProgramOption is used to set options when initializing a Program. Program can
+// ProgramOption[T]is used to set options when initializing a Program. Program can
 // accept a variable number of options.
 //
 // Example usage:
 //
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
-type ProgramOption func(*Program)
+type ProgramOption[T any] func(*Program[T])
 
 // WithContext lets you specify a context in which to run the Program. This is
 // useful if you want to cancel the execution from outside. When a Program gets
 // cancelled it will exit with an error ErrProgramKilled.
-func WithContext(ctx context.Context) ProgramOption {
-	return func(p *Program) {
+func WithContext[T any](ctx context.Context) ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.ctx = ctx
 	}
 }
 
 // WithOutput sets the output which, by default, is stdout. In most cases you
 // won't need to use this.
-func WithOutput(output io.Writer) ProgramOption {
-	return func(p *Program) {
-		p.output = newSafeWriter(output)
+func WithOutput[T any](output io.Writer) ProgramOption[T] {
+	return func(p *Program[T]) {
+		p.Output = newSafeWriter(output)
 	}
 }
 
@@ -37,16 +37,16 @@ func WithOutput(output io.Writer) ProgramOption {
 // won't need to use this. To disable input entirely pass nil.
 //
 //	p := NewProgram(model, WithInput(nil))
-func WithInput(input io.Reader) ProgramOption {
-	return func(p *Program) {
-		p.input = input
+func WithInput[T any](input io.Reader) ProgramOption[T] {
+	return func(p *Program[T]) {
+		p.Input = input
 		p.inputType = customInput
 	}
 }
 
 // WithInputTTY opens a new TTY for input (or console input device on Windows).
-func WithInputTTY() ProgramOption {
-	return func(p *Program) {
+func WithInputTTY[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.inputType = ttyInput
 	}
 }
@@ -62,16 +62,16 @@ func WithInputTTY() ProgramOption {
 //	pty, _, _ := sess.Pty()
 //	environ := append(sess.Environ(), "TERM="+pty.Term)
 //	p := tea.NewProgram(model, tea.WithEnvironment(environ)
-func WithEnvironment(env []string) ProgramOption {
-	return func(p *Program) {
+func WithEnvironment[T any](env []string) ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.environ = env
 	}
 }
 
 // WithoutSignalHandler disables the signal handler that Bubble Tea sets up for
 // Programs. This is useful if you want to handle signals yourself.
-func WithoutSignalHandler() ProgramOption {
-	return func(p *Program) {
+func WithoutSignalHandler[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withoutSignalHandler
 	}
 }
@@ -80,16 +80,16 @@ func WithoutSignalHandler() ProgramOption {
 // default. If panic catching is disabled the terminal will be in a fairly
 // unusable state after a panic because Bubble Tea will not perform its usual
 // cleanup on exit.
-func WithoutCatchPanics() ProgramOption {
-	return func(p *Program) {
+func WithoutCatchPanics[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withoutCatchPanics
 	}
 }
 
 // WithoutSignals will ignore OS signals.
 // This is mainly useful for testing.
-func WithoutSignals() ProgramOption {
-	return func(p *Program) {
+func WithoutSignals[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		atomic.StoreUint32(&p.ignoreSignals, 1)
 	}
 }
@@ -108,15 +108,15 @@ func WithoutSignals() ProgramOption {
 //
 // To enter the altscreen once the program has already started running use the
 // EnterAltScreen command.
-func WithAltScreen() ProgramOption {
-	return func(p *Program) {
+func WithAltScreen[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withAltScreen
 	}
 }
 
 // WithoutBracketedPaste starts the program with bracketed paste disabled.
-func WithoutBracketedPaste() ProgramOption {
-	return func(p *Program) {
+func WithoutBracketedPaste[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withoutBracketedPaste
 	}
 }
@@ -136,8 +136,8 @@ func WithoutBracketedPaste() ProgramOption {
 // running use the DisableMouse command.
 //
 // The mouse will be automatically disabled when the program exits.
-func WithMouseCellMotion() ProgramOption {
-	return func(p *Program) {
+func WithMouseCellMotion[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withMouseCellMotion // set
 		p.startupOptions &^= withMouseAllMotion // clear
 	}
@@ -161,8 +161,8 @@ func WithMouseCellMotion() ProgramOption {
 // running use the DisableMouse command.
 //
 // The mouse will be automatically disabled when the program exits.
-func WithMouseAllMotion() ProgramOption {
-	return func(p *Program) {
+func WithMouseAllMotion[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withMouseAllMotion   // set
 		p.startupOptions &^= withMouseCellMotion // clear
 	}
@@ -176,8 +176,8 @@ func WithMouseAllMotion() ProgramOption {
 // application, or to provide an additional non-TUI mode to your Bubble Tea
 // programs. For example, your program could behave like a daemon if output is
 // not a TTY.
-func WithoutRenderer() ProgramOption {
-	return func(p *Program) {
+func WithoutRenderer[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.renderer = &nilRenderer{}
 	}
 }
@@ -211,17 +211,17 @@ func WithoutRenderer() ProgramOption {
 //		fmt.Println("Error running program:", err)
 //		os.Exit(1)
 //	}
-func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
-	return func(p *Program) {
-		p.filter = filter
+func WithFilter[T any](filter func(T, Msg) Msg) ProgramOption[T] {
+	return func(p *Program[T]) {
+		p.Filter = filter
 	}
 }
 
 // WithFPS sets a custom maximum FPS at which the renderer should run. If
 // less than 1, the default value of 60 will be used. If over 120, the FPS
 // will be capped at 120.
-func WithFPS(fps int) ProgramOption {
-	return func(p *Program) {
+func WithFPS[T any](fps int) ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.fps = fps
 	}
 }
@@ -233,8 +233,8 @@ func WithFPS(fps int) ProgramOption {
 // Note that while most terminals and multiplexers support focus reporting,
 // some do not. Also note that tmux needs to be configured to report focus
 // events.
-func WithReportFocus() ProgramOption {
-	return func(p *Program) {
+func WithReportFocus[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withReportFocus
 	}
 }
@@ -245,12 +245,12 @@ func WithReportFocus() ProgramOption {
 //
 // This is not supported on all terminals. On Windows, these features are
 // enabled by default.
-func WithKeyboardEnhancements(enhancements ...KeyboardEnhancementOption) ProgramOption {
+func WithKeyboardEnhancements[T any](enhancements ...KeyboardEnhancementOption) ProgramOption[T] {
 	var ke KeyboardEnhancements
 	for _, e := range append(enhancements, withKeyDisambiguation) {
 		e(&ke)
 	}
-	return func(p *Program) {
+	return func(p *Program[T]) {
 		p.startupOptions |= withKeyboardEnhancements
 		p.requestedEnhancements = ke
 	}
@@ -265,8 +265,8 @@ func WithKeyboardEnhancements(enhancements ...KeyboardEnhancementOption) Program
 // characters.
 //
 // See https://mitchellh.com/writing/grapheme-clusters-in-terminals
-func WithGraphemeClustering() ProgramOption {
-	return func(p *Program) {
+func WithGraphemeClustering[T any]() ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withGraphemeClustering
 	}
 }
@@ -276,8 +276,8 @@ func WithGraphemeClustering() ProgramOption {
 // Tea will try to detect the terminal's color profile from environment
 // variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
 // environment variables.
-func WithColorProfile(profile colorprofile.Profile) ProgramOption {
-	return func(p *Program) {
+func WithColorProfile[T any](profile colorprofile.Profile) ProgramOption[T] {
+	return func(p *Program[T]) {
 		p.startupOptions |= withColorProfile
 		p.profile = profile
 	}

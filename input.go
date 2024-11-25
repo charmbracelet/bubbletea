@@ -5,7 +5,7 @@ import (
 )
 
 // translateInputEvent translates an input event into a Bubble Tea Msg.
-func (p *Program) translateInputEvent(e input.Event) Msg {
+func (p *Program[T]) translateInputEvent(e input.Event) Msg {
 	switch e := e.(type) {
 	case input.ClipboardEvent:
 		switch e.Selection {

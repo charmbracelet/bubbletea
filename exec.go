@@ -99,7 +99,7 @@ func (c *osExecCommand) SetStderr(w io.Writer) {
 }
 
 // exec runs an ExecCommand and delivers the results to the program as a Msg.
-func (p *Program) exec(c ExecCommand, fn ExecCallback) {
+func (p *Program[T]) exec(c ExecCommand, fn ExecCallback) {
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
 		if fn != nil {
@@ -108,8 +108,8 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 		return
 	}
 
-	c.SetStdin(p.input)
-	c.SetStdout(p.output.Writer())
+	c.SetStdin(p.Input)
+	c.SetStdout(p.Output)
 	c.SetStderr(os.Stderr)
 
 	// Execute system command.

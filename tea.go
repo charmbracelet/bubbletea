@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -44,14 +45,14 @@ var ErrInterrupted = errors.New("program was interrupted")
 type Msg interface{}
 
 // Model contains the program's state as well as its core functions.
-type Model interface {
+type Model[T any] interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
-	Init() (Model, Cmd)
+	Init() (T, Cmd)
 
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
-	Update(Msg) (Model, Cmd)
+	Update(Msg) (T, Cmd)
 
 	// View renders the program's UI, which is just a [fmt.Stringer]. The view
 	// is rendered after every Update.
@@ -152,8 +153,17 @@ func (h *channelHandlers) shutdown() {
 }
 
 // Program is a terminal user interface.
-type Program struct {
-	initialModel Model
+type Program[T any] struct {
+	Input  io.Reader
+	Output io.Writer
+	Env    []string
+
+	Init   func() (T, Cmd)
+	Filter func(T, Msg) Msg
+	Update func(T, Msg) (T, Cmd)
+	View   func(T) fmt.Stringer
+
+	Model T
 
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
@@ -179,9 +189,6 @@ type Program struct {
 
 	profile colorprofile.Profile // the terminal color profile
 
-	// where to send output, this will usually be os.Stdout.
-	output *safeWriter
-
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
 	previousOutputState *term.State
@@ -190,8 +197,6 @@ type Program struct {
 	// the environment variables for the program, defaults to os.Environ().
 	environ environ
 
-	// where to read inputs from, this will usually be os.Stdin.
-	input io.Reader
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
@@ -202,8 +207,6 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
 	ignoreSignals uint32
-
-	filter func(Model, Msg) Msg
 
 	// fps is the frames per second we should set on the renderer, if
 	// applicable,
@@ -281,14 +284,23 @@ func Interrupt() Msg {
 }
 
 // NewProgram creates a new Program.
-func NewProgram(model Model, opts ...ProgramOption) *Program {
-	p := &Program{
-		initialModel: model,
+func NewProgram[T any](model Model[T], opts ...ProgramOption[T]) *Program[T] {
+	p := &Program[T]{
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
 		keyboardc:    make(chan struct{}),
 		modes:        ansi.Modes{},
 	}
+
+	p.Init = model.Init
+	p.Update = func(t T, msg Msg) (T, Cmd) {
+		return any(t).(Model[T]).Update(msg)
+	}
+	p.View = func(t T) fmt.Stringer {
+		return any(t).(Model[T]).View()
+	}
+	// Update: func(_ T, msg Msg) (T, Cmd) { return model.Update(msg) },
+	// View:   func(_ T) string { return model.View() },
 
 	// Apply all options to the program.
 	for _, opt := range opts {
@@ -304,8 +316,8 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p.ctx, p.cancel = context.WithCancel(p.ctx)
 
 	// if no output was set, set it to stdout
-	if p.output == nil {
-		p.output = newSafeWriter(os.Stdout)
+	if p.Output == nil {
+		p.Output = newSafeWriter(os.Stdout)
 	}
 
 	// if no environment was set, set it to os.Environ()
@@ -329,7 +341,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
 			// Enable different types of tracing.
 			if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
-				p.output.trace = true
+				p.Output.(*safeWriter).trace = true
 			}
 			if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
 				p.traceInput = true
@@ -340,7 +352,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	return p
 }
 
-func (p *Program) handleSignals() chan struct{} {
+func (p *Program[T]) handleSignals() chan struct{} {
 	ch := make(chan struct{})
 
 	// Listen for SIGINT and SIGTERM.
@@ -382,7 +394,7 @@ func (p *Program) handleSignals() chan struct{} {
 }
 
 // handleResize handles terminal resize events.
-func (p *Program) handleResize() chan struct{} {
+func (p *Program[T]) handleResize() chan struct{} {
 	ch := make(chan struct{})
 
 	if p.ttyOutput != nil {
@@ -397,7 +409,7 @@ func (p *Program) handleResize() chan struct{} {
 
 // handleCommands runs commands in a goroutine and sends the result to the
 // program's message channel.
-func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
+func (p *Program[T]) handleCommands(cmds chan Cmd) chan struct{} {
 	ch := make(chan struct{})
 
 	go func() {
@@ -436,19 +448,17 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
-func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
+func (p *Program[T]) eventLoop(cmds chan Cmd) {
 	for {
 		select {
 		case <-p.ctx.Done():
-			return model, nil
-
-		case err := <-p.errs:
-			return model, err
+			return
 
 		case msg := <-p.msgs:
+			log.Printf("msg: %T", msg)
 			// Filter messages.
-			if p.filter != nil {
-				msg = p.filter(model, msg)
+			if p.Filter != nil {
+				msg = p.Filter(p.Model, msg)
 			}
 			if msg == nil {
 				continue
@@ -457,10 +467,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case QuitMsg:
-				return model, nil
+				return
 
 			case InterruptMsg:
-				return model, ErrInterrupted
+				go func() { p.errs <- ErrInterrupted }()
+				return
 
 			case SuspendMsg:
 				if suspendSupported {
@@ -693,10 +704,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			var cmd Cmd
-			model, cmd = model.Update(msg) // run update
-			cmds <- cmd                    // process command (if any)
+			p.Model, cmd = p.Update(p.Model, msg) // run update
+			cmds <- cmd                           // process command (if any)
 
-			view := model.View()
+			view := p.View(p.Model)
 			switch view := view.(type) {
 			case Frame:
 				// Ensure we reset the cursor color on exit.
@@ -713,17 +724,22 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
-func (p *Program) Run() (Model, error) {
+func (p *Program[T]) Run() error {
+	if err := p.Start(); err != nil {
+		return err
+	}
+	return p.Wait()
+}
+
+func (p *Program[T]) Start() error {
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 	p.finished = make(chan struct{}, 1)
 
-	defer p.cancel()
-
 	switch p.inputType {
 	case defaultInput:
-		p.input = os.Stdin
+		p.Input = os.Stdin
 
 		// The user has not set a custom input, so we need to check whether or
 		// not standard input is a terminal. If it's not, we open a new TTY for
@@ -731,7 +747,7 @@ func (p *Program) Run() (Model, error) {
 		// piped in or redirected to the application.
 		//
 		// To disable input entirely pass nil to the [WithInput] program option.
-		f, isFile := p.input.(term.File)
+		f, isFile := p.Input.(term.File)
 		if !isFile {
 			break
 		}
@@ -741,19 +757,17 @@ func (p *Program) Run() (Model, error) {
 
 		f, err := openInputTTY()
 		if err != nil {
-			return p.initialModel, err
+			return err
 		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
+		p.Input = f
 
 	case ttyInput:
 		// Open a new TTY, by request
 		f, err := openInputTTY()
 		if err != nil {
-			return p.initialModel, err
+			return err
 		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
+		p.Input = f
 
 	case customInput:
 		// (There is nothing extra to do.)
@@ -772,16 +786,16 @@ func (p *Program) Run() (Model, error) {
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
-		return p.initialModel, err
+		return err
 	}
 	if p.renderer == nil {
 		// If no renderer is set use the ferocious one.
-		p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
+		p.renderer = newCursedRenderer(p.Output, p.getenv("TERM"), p.useHardTabs)
 	}
 
 	// Get the color profile and send it to the program.
 	if !p.startupOptions.has(withColorProfile) {
-		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
+		p.profile = colorprofile.Detect(p.Output.(*safeWriter).Writer(), p.environ)
 	}
 
 	// Set the color profile on the renderer and send it to the program.
@@ -794,7 +808,7 @@ func (p *Program) Run() (Model, error) {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
-			return p.initialModel, err
+			return err
 		}
 
 		resizeMsg.Width, resizeMsg.Height = w, h
@@ -808,10 +822,9 @@ func (p *Program) Run() (Model, error) {
 	go p.Send(EnvMsg(p.environ))
 
 	// Init the input reader and initial model.
-	model := p.initialModel
-	if p.input != nil {
+	if p.Input != nil {
 		if err := p.initInputReader(); err != nil {
-			return model, err
+			return err
 		}
 	}
 
@@ -867,7 +880,7 @@ func (p *Program) Run() (Model, error) {
 
 	// Initialize the program.
 	var initCmd Cmd
-	model, initCmd = model.Init()
+	p.Model, initCmd = p.Init()
 	if initCmd != nil {
 		ch := make(chan struct{})
 		p.handlers.add(ch)
@@ -883,7 +896,7 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Render the initial view.
-	p.renderer.render(model.View()) //nolint:errcheck
+	p.renderer.render(p.View(p.Model)) //nolint:errcheck
 
 	// Handle resize events.
 	p.handlers.add(p.handleResize())
@@ -891,21 +904,17 @@ func (p *Program) Run() (Model, error) {
 	// Process commands.
 	p.handlers.add(p.handleCommands(cmds))
 
-	// Run event loop, handle updates and draw.
-	model, err := p.eventLoop(model, cmds)
-	killed := p.ctx.Err() != nil || err != nil
-	if killed && err == nil {
-		err = fmt.Errorf("%w: %s", ErrProgramKilled, p.ctx.Err())
-	}
-	if err == nil {
+	go func() {
+		// Run event loop, handle updates and draw.
+		p.eventLoop(cmds)
+		killed := p.ctx.Err() != nil
 		// Ensure we rendered the final state of the model.
-		p.renderer.render(model.View()) //nolint:errcheck
-	}
+		p.renderer.render(p.View(p.Model)) //nolint:errcheck
+		// Restore terminal state.
+		p.shutdown(killed)
+	}()
 
-	// Restore terminal state.
-	p.shutdown(killed)
-
-	return model, err
+	return nil
 }
 
 // Send sends a message to the main update function, effectively allowing
@@ -915,7 +924,7 @@ func (p *Program) Run() (Model, error) {
 // If the program hasn't started yet this will be a blocking operation.
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
-func (p *Program) Send(msg Msg) {
+func (p *Program[T]) Send(msg Msg) {
 	select {
 	case <-p.ctx.Done():
 	case p.msgs <- msg:
@@ -929,30 +938,43 @@ func (p *Program) Send(msg Msg) {
 //
 // If the program is not running this will be a no-op, so it's safe to call
 // if the program is unstarted or has already exited.
-func (p *Program) Quit() {
+func (p *Program[T]) Quit() {
 	p.Send(Quit())
 }
 
 // Kill stops the program immediately and restores the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
-func (p *Program) Kill() {
+func (p *Program[T]) Kill() {
 	p.shutdown(true)
 }
 
 // Wait waits/blocks until the underlying Program finished shutting down.
-func (p *Program) Wait() {
-	<-p.finished
+func (p *Program[T]) Wait() error {
+	defer func() {
+		killed := p.ctx.Err() != nil
+		// Restore terminal state.
+		p.shutdown(killed)
+	}()
+
+	select {
+	case err := <-p.errs:
+		return err
+	case <-p.ctx.Done():
+		return nil
+	case <-p.finished:
+		return nil
+	}
 }
 
 // execute writes the given sequence to the program output.
-func (p *Program) execute(seq string) {
-	io.WriteString(p.output, seq) //nolint:errcheck
+func (p *Program[T]) execute(seq string) {
+	io.WriteString(p.Output, seq) //nolint:errcheck
 }
 
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
-func (p *Program) shutdown(kill bool) {
+func (p *Program[T]) shutdown(kill bool) {
 	p.shutdownOnce.Do(func() {
 		p.cancel()
 
@@ -983,7 +1005,7 @@ func (p *Program) shutdown(kill bool) {
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
 // the terminal to a usable state.
-func (p *Program) recoverFromPanic() {
+func (p *Program[T]) recoverFromPanic() {
 	if r := recover(); r != nil {
 		p.shutdown(true)
 		fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
@@ -993,7 +1015,7 @@ func (p *Program) recoverFromPanic() {
 
 // ReleaseTerminal restores the original terminal state and cancels the input
 // reader. You can return control to the Program with RestoreTerminal.
-func (p *Program) ReleaseTerminal() error {
+func (p *Program[T]) ReleaseTerminal() error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
 	if p.inputReader != nil {
 		p.inputReader.Cancel()
@@ -1011,7 +1033,7 @@ func (p *Program) ReleaseTerminal() error {
 // RestoreTerminal reinitializes the Program's input reader, restores the
 // terminal to the former state when the program was running, and repaints.
 // Use it to reinitialize a Program after running ReleaseTerminal.
-func (p *Program) RestoreTerminal() error {
+func (p *Program[T]) RestoreTerminal() error {
 	atomic.StoreUint32(&p.ignoreSignals, 0)
 
 	if err := p.initTerminal(); err != nil {
@@ -1075,7 +1097,7 @@ func (p *Program) RestoreTerminal() error {
 // and will persist across renders by the Program.
 //
 // If the altscreen is active no output will be printed.
-func (p *Program) Println(args ...interface{}) {
+func (p *Program[T]) Println(args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprint(args...),
 	}
@@ -1089,14 +1111,14 @@ func (p *Program) Println(args ...interface{}) {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func (p *Program) Printf(template string, args ...interface{}) {
+func (p *Program[T]) Printf(template string, args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
 	}
 }
 
 // startRenderer starts the renderer.
-func (p *Program) startRenderer() {
+func (p *Program[T]) startRenderer() {
 	framerate := time.Second / time.Duration(p.fps)
 	if p.ticker == nil {
 		p.ticker = time.NewTicker(framerate)
@@ -1131,7 +1153,7 @@ func (p *Program) startRenderer() {
 // stopRenderer stops the renderer.
 // If kill is true, the renderer will be stopped immediately without flushing
 // the last frame.
-func (p *Program) stopRenderer(kill bool) {
+func (p *Program[T]) stopRenderer(kill bool) {
 	// Stop the renderer before acquiring the mutex to avoid a deadlock.
 	p.once.Do(func() {
 		p.rendererDone <- struct{}{}
@@ -1148,7 +1170,7 @@ func (p *Program) stopRenderer(kill bool) {
 // sendKeyboardEnhancementsMsg sends a message with the active keyboard
 // enhancements to the program after a short timeout, or immediately if the
 // keyboard enhancements have been read from the terminal.
-func (p *Program) sendKeyboardEnhancementsMsg() {
+func (p *Program[T]) sendKeyboardEnhancementsMsg() {
 	if runtime.GOOS == "windows" {
 		// We use the Windows Console API which supports keyboard enhancements.
 		p.Send(KeyboardEnhancementsMsg{})
@@ -1167,7 +1189,7 @@ func (p *Program) sendKeyboardEnhancementsMsg() {
 
 // requestKeyboardEnhancements tries to enable keyboard enhancements and read
 // the active keyboard enhancements from the terminal.
-func (p *Program) requestKeyboardEnhancements() {
+func (p *Program[T]) requestKeyboardEnhancements() {
 	if p.requestedEnhancements.modifyOtherKeys > 0 {
 		p.execute(ansi.ModifyOtherKeys(p.requestedEnhancements.modifyOtherKeys))
 		p.execute(ansi.RequestModifyOtherKeys)

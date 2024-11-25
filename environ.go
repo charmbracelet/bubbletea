@@ -13,7 +13,7 @@ type environ []string
 // returned will be the empty string.
 // This function traverses the environment variables in reverse order, so that
 // the last value set for the key is the one returned.
-func (p *Program) getenv(key string) (v string) {
+func (p *Program[T]) getenv(key string) (v string) {
 	return p.environ.Getenv(key)
 }
 

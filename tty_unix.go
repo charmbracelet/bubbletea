@@ -13,9 +13,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func (p *Program) initInput() (err error) {
+func (p *Program[T]) initInput() (err error) {
 	// Check if input is a terminal
-	if f, ok := p.input.(term.File); ok && term.IsTerminal(f.Fd()) {
+	if f, ok := p.Input.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyInput = f
 		p.previousTtyInputState, err = term.MakeRaw(p.ttyInput.Fd())
 		if err != nil {
@@ -27,7 +27,7 @@ func (p *Program) initInput() (err error) {
 		p.useHardTabs = p.previousTtyInputState.Oflag&unix.TABDLY == 0
 	}
 
-	if f, ok := p.output.Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
+	if f, ok := p.Output.(*safeWriter).Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
 	}
 
