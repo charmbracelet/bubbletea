@@ -197,7 +197,7 @@ func (c *ferociousRenderer) flush() error {
 	// the frame to avoid flickering.
 	shouldHideCursor := !c.cursorHidden
 	if c.finalCur != image.Pt(-1, -1) {
-		shouldMove := c.finalCur != c.scr.cur.Point
+		shouldMove := len(queueAbove) == 0 && c.finalCur != c.scr.cur.Point
 		shouldHideCursor = shouldHideCursor && shouldMove
 		if shouldMove {
 			c.moveCursor(c.finalCur.X, c.finalCur.Y)
