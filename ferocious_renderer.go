@@ -165,13 +165,16 @@ func (c *ferociousRenderer) flush() error {
 		return nil
 	}
 
-	if !c.altScreen && len(c.queueAbove) > 0 {
+	queueAbove := c.queueAbove
+	if !c.altScreen && len(queueAbove) > 0 {
 		c.moveCursor(0, 0)
 		for _, line := range c.queueAbove {
-			c.buf.WriteString(line + ansi.EraseLineRight + "\r\n")
+			c.buf.WriteString(ansi.CursorUp1)
+			c.buf.WriteString(ansi.ScrollUp(1))   //nolint:errcheck
+			c.buf.WriteString(ansi.InsertLine(1)) //nolint:errcheck
+			c.buf.WriteString(line + "\r\n")
 		}
-		c.queueAbove = c.queueAbove[:0]
-		c.repaint()
+		c.queueAbove = queueAbove[:0]
 	}
 
 	if *c.lastRender == "" {
