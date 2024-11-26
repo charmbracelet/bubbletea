@@ -169,12 +169,10 @@ func (c *ferociousRenderer) flush() error {
 	if !c.altScreen && len(queueAbove) > 0 {
 		c.moveCursor(0, 0)
 		for _, line := range c.queueAbove {
-			c.buf.WriteString(ansi.CursorUp1)
-			c.buf.WriteString(ansi.ScrollUp(1))   //nolint:errcheck
-			c.buf.WriteString(ansi.InsertLine(1)) //nolint:errcheck
-			c.buf.WriteString(line + "\r\n")
+			c.buf.WriteString(line + ansi.EraseLineRight + "\r\n")
 		}
 		c.queueAbove = queueAbove[:0]
+		c.repaint()
 	}
 
 	if *c.lastRender == "" {
