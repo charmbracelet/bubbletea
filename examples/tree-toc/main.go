@@ -43,8 +43,8 @@ func (m *model) updateStyles() {
 }
 
 func (m model) View() string {
-	pageNumbers := make([]string, len(m.tree.FlatNodes()))
-	for i, node := range m.tree.FlatNodes() {
+	pageNumbers := make([]string, len(m.tree.AllNodes()))
+	for i, node := range m.tree.AllNodes() {
 		v := node.GivenValue()
 		if page, ok := v.(page); ok {
 			num := fmt.Sprintf("%d", page.page)

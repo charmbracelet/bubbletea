@@ -43,6 +43,7 @@ type styles struct {
 	selected,
 	cursor,
 	openCharacter,
+	indenter,
 	enumerator lipgloss.Style
 }
 
@@ -60,6 +61,8 @@ func defaultStyles() styles {
 	s.enumerator = s.base.
 		Foreground(lipgloss.Color("126")).
 		PaddingRight(1)
+	s.indenter = s.base.
+		Foreground(lipgloss.Color("126"))
 	return s
 }
 
@@ -101,6 +104,7 @@ func main() {
 		ParentNodeStyle:    s.node,
 		SelectedNodeStyle:  s.selected,
 		EnumeratorStyle:    s.enumerator,
+		IndenterStyle:      s.indenter,
 		OpenIndicatorStyle: s.openCharacter,
 	})
 

@@ -40,16 +40,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) updateStyles() {
+	dimmed := lipgloss.Color("239")
+	base := lipgloss.NewStyle().Background(lipgloss.Color("234"))
 	m.tree.SetStyles(tree.Styles{
-		TreeStyle:          lipgloss.NewStyle().Padding(3).PaddingLeft(0).Background(lipgloss.Color("234")),
-		RootNodeStyle:      lipgloss.NewStyle().Background(lipgloss.Color("234")),
-		NodeStyle:          lipgloss.NewStyle().Background(lipgloss.Color("234")),
-		ParentNodeStyle:    lipgloss.NewStyle().Background(lipgloss.Color("234")),
-		OpenIndicatorStyle: lipgloss.NewStyle().Background(lipgloss.Color("234")),
-		SelectedNodeStyle:  lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("8")),
-		CursorStyle:        lipgloss.NewStyle().Padding(3, 1, 3, 3).Bold(true).Background(lipgloss.Color("234")).Foreground(lipgloss.Color("1")),
-		HelpStyle:          lipgloss.NewStyle().MarginTop(1),
-		EnumeratorStyle:    lipgloss.NewStyle().Foreground(lipgloss.Color("239")).Background(lipgloss.Color("234")),
+		TreeStyle: base.
+			Padding(1).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("236")).
+			BorderBackground(base.GetBackground()),
+		RootNodeStyle:      base,
+		NodeStyle:          base,
+		ParentNodeStyle:    base,
+		OpenIndicatorStyle: base,
+		SelectedNodeStyle:  base.Bold(true).Background(lipgloss.Color("8")),
+		HelpStyle:          base.MarginTop(1),
+		EnumeratorStyle:    base.Foreground(dimmed),
+		IndenterStyle:      base.Foreground(dimmed),
 	})
 }
 
@@ -75,7 +81,7 @@ func (d dir) String() string {
 }
 
 const (
-	width           = 70
+	width           = 50
 	height          = 21
 	enumeratorWidth = 3
 )
@@ -109,6 +115,7 @@ func main() {
 		width,
 		height,
 	)
+	t.CursorCharacter = ""
 	t.OpenCharacter = "📂"
 	t.ClosedCharacter = "📁"
 	kb := []key.Binding{
