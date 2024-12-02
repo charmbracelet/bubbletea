@@ -73,12 +73,12 @@ func newExample() (*example, error) {
 		return nil, err
 	}
 
-	str, err := renderer.Render(content)
+	s, err := renderer.Render(content)
 	if err != nil {
 		return nil, err
 	}
 
-	vp.SetContent(str)
+	vp.SetContent(s)
 
 	return &example{
 		viewport: vp,
