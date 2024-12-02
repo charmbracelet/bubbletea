@@ -7,7 +7,7 @@ import (
 // setModifyOtherKeysMsg is a message to set XTerm modifyOtherKeys mode.
 type setModifyOtherKeysMsg int
 
-// EnableXtermModifyOtherKeys is a command to enable XTerm modifyOtherKeys mode.
+// enableModifyOtherKeys is a command to enable XTerm modifyOtherKeys mode.
 //
 // The mode can be on of the following:
 //
