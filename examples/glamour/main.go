@@ -65,9 +65,20 @@ func newExample() (*example, error) {
 		BorderForeground(lipgloss.Color("62")).
 		PaddingRight(2)
 
+	// We need to adjust the width of the glamour render from our main width
+	// to account for a few things:
+	//
+	//  * The viewport border width
+	//  * The viewport padding
+	//  * The viewport margins
+	//  * The gutter glamour applies to the left side of the content
+	//
+	const glamourGutter = 2
+	glamourRenderWidth := width - vp.Style.GetHorizontalFrameSize() - glamourGutter
+
 	renderer, err := glamour.NewTermRenderer(
 		glamour.WithAutoStyle(),
-		glamour.WithWordWrap(width),
+		glamour.WithWordWrap(glamourRenderWidth),
 	)
 	if err != nil {
 		return nil, err
