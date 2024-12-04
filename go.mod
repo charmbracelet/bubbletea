@@ -11,7 +11,7 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6
 	github.com/muesli/cancelreader v0.2.2
 	golang.org/x/sync v0.10.0
-	golang.org/x/sys v0.27.0
+	golang.org/x/sys v0.28.0
 )
 
 require (
