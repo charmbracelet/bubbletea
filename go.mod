@@ -3,9 +3,11 @@ module github.com/charmbracelet/bubbletea/v2
 go 1.18
 
 require (
-	github.com/charmbracelet/lipgloss v0.0.0-unpublished
-	github.com/charmbracelet/x/ansi v0.3.2
-	github.com/charmbracelet/x/term v0.2.0
+	github.com/charmbracelet/colorprofile v0.1.8
+	github.com/charmbracelet/x/ansi v0.5.1
+	github.com/charmbracelet/x/cellbuf v0.0.6
+	github.com/charmbracelet/x/term v0.2.1
+	github.com/charmbracelet/x/vt v0.0.0-20241121165045-a3720547cbb4
 	github.com/charmbracelet/x/windows v0.2.0
 	github.com/muesli/cancelreader v0.2.2
 	github.com/rivo/uniseg v0.4.7
@@ -15,9 +17,7 @@ require (
 )
 
 require (
-	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/bubbles v0.0.0-unpublished // indirect
+	github.com/charmbracelet/x/wcwidth v0.0.0-20241113152101-0af7d04e9f32 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 )
-
