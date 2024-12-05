@@ -56,11 +56,11 @@ func defaultStyles() styles {
 	s.cursor = s.base.Padding(1, 1, 0, 3).Foreground(lipgloss.Color("54"))
 	s.openCharacter = s.base.Foreground(lipgloss.Color("54"))
 	s.node = s.base.Foreground(lipgloss.Color("0"))
-	s.selected = s.base.Foreground(lipgloss.Color("54")).Bold(true).Underline(true)
+	s.selected = s.base.Foreground(lipgloss.Color("54")).Bold(true)
 
 	s.enumerator = s.base.
-		Foreground(lipgloss.Color("126")).
-		PaddingRight(1)
+		Foreground(lipgloss.Color("126"))
+
 	s.indenter = s.base.
 		Foreground(lipgloss.Color("126"))
 	return s

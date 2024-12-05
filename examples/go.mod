@@ -47,7 +47,3 @@ require (
 )
 
 replace github.com/charmbracelet/bubbletea => ../
-
-replace github.com/charmbracelet/bubbles v0.0.0-unpublished => /Users/dlvhdr/code/playground/bubbles
-
-replace github.com/charmbracelet/lipgloss v0.0.0-unpublished => ../../lipgloss
