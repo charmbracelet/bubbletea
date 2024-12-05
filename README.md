@@ -61,6 +61,10 @@ import will be the Bubble Tea library, which we'll call `tea` for short.
 ```go
 package main
 
+// XXX: These imports will be used later on the tutorial. If you save the file
+// now, Go might complain they are unused, but that is to be expected.
+// You may also need to run `go mod tidy` to download bubbletea and its
+// dependencies.
 import (
     "fmt"
     "os"
