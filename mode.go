@@ -1,9 +1,9 @@
 package tea
 
-// ReportModeMsg is a message that represents a mode report event (DECRPM).
+// modeReportMsg is a message that represents a mode report event (DECRPM).
 //
 // See: https://vt100.net/docs/vt510-rm/DECRPM.html
-type ReportModeMsg struct {
+type modeReportMsg struct {
 	// Mode is the mode number.
 	Mode int
 

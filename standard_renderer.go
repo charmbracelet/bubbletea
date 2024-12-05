@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -26,9 +27,13 @@ type standardRenderer struct {
 	mtx *sync.Mutex
 	out io.Writer
 
+	// the color profile to use
+	profile colorprofile.Profile
+
 	buf                bytes.Buffer
 	queuedMessageLines []string
 	lastRender         string
+	lastRenderedLines  []string
 	linesRendered      int
 
 	// cursor visibility state
@@ -45,52 +50,60 @@ type standardRenderer struct {
 	ignoreLines map[int]struct{}
 }
 
-// NewStandardRenderer creates a new renderer. Normally you'll want to initialize it
+// newStandardRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func NewStandardRenderer() Renderer {
+func newStandardRenderer(p colorprofile.Profile) renderer {
 	r := &standardRenderer{
 		mtx:                &sync.Mutex{},
 		queuedMessageLines: []string{},
+		profile:            p,
 	}
 	return r
 }
 
-// SetOutput sets the output for the renderer.
-func (r *standardRenderer) SetOutput(out io.Writer) {
+// setOutput sets the output for the renderer.
+func (r *standardRenderer) setOutput(out io.Writer) {
 	r.mtx.Lock()
-	r.out = out
+	r.out = &colorprofile.Writer{
+		Forward: out,
+		Profile: r.profile,
+	}
 	r.mtx.Unlock()
 }
 
-// Close closes the renderer and flushes any remaining data.
-func (r *standardRenderer) Close() (err error) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EraseEntireLine)
+// close closes the renderer and flushes any remaining data.
+func (r *standardRenderer) close() (err error) {
 	// Move the cursor back to the beginning of the line
-	r.execute("\r")
+	// NOTE: execute locks the mutex
+	r.execute(ansi.EraseEntireLine + "\r")
 
 	return
 }
 
 // execute writes the given sequence to the output.
 func (r *standardRenderer) execute(seq string) {
+	r.mtx.Lock()
 	_, _ = io.WriteString(r.out, seq)
+	r.mtx.Unlock()
 }
 
-// Flush renders the buffer.
-func (r *standardRenderer) Flush() (err error) {
+// flush renders the buffer.
+func (r *standardRenderer) flush() (err error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	if r.buf.Len() == 0 || r.buf.String() == r.lastRender {
-		// Nothing to do
-		return nil
+		// Nothing to do.
+		return
 	}
 
-	// Output buffer
+	// Output buffer.
 	buf := &bytes.Buffer{}
+
+	// Moving to the beginning of the section, that we rendered.
+	if r.linesRendered > 1 {
+		buf.WriteString(ansi.CursorUp(r.linesRendered - 1))
+	}
 
 	newLines := strings.Split(r.buf.String(), "\n")
 
@@ -102,97 +115,83 @@ func (r *standardRenderer) Flush() (err error) {
 		newLines = newLines[len(newLines)-r.height:]
 	}
 
-	numLinesThisFlush := len(newLines)
-	oldLines := strings.Split(r.lastRender, "\n")
-	skipLines := make(map[int]struct{})
 	flushQueuedMessages := len(r.queuedMessageLines) > 0 && !r.altScreenActive
 
-	// Clear any lines we painted in the last render.
-	if r.linesRendered > 0 {
-		for i := r.linesRendered - 1; i > 0; i-- {
-			// if we are clearing queued messages, we want to clear all lines, since
-			// printing messages allows for native terminal word-wrap, we
-			// don't have control over the queued lines
-			if flushQueuedMessages {
-				buf.WriteString(ansi.EraseEntireLine)
-			} else if (len(newLines) <= len(oldLines)) && (len(newLines) > i && len(oldLines) > i) && (newLines[i] == oldLines[i]) {
-				// If the number of lines we want to render hasn't increased and
-				// new line is the same as the old line we can skip rendering for
-				// this line as a performance optimization.
-				skipLines[i] = struct{}{}
-			} else if _, exists := r.ignoreLines[i]; !exists {
-				buf.WriteString(ansi.EraseEntireLine)
+	if flushQueuedMessages {
+		// Dump the lines we've queued up for printing.
+		for _, line := range r.queuedMessageLines {
+			if ansi.StringWidth(line) < r.width {
+				// We only erase the rest of the line when the line is shorter than
+				// the width of the terminal. When the cursor reaches the end of
+				// the line, any escape sequences that follow will only affect the
+				// last cell of the line.
+
+				// Removing previously rendered content at the end of line.
+				line = line + ansi.EraseLineRight
 			}
 
-			buf.WriteString(ansi.CursorUp1)
-		}
-
-		if _, exists := r.ignoreLines[0]; !exists {
-			// We need to return to the start of the line here to properly
-			// erase it. Going back the entire width of the terminal will
-			// usually be farther than we need to go, but terminal emulators
-			// will stop the cursor at the start of the line as a rule.
-			//
-			// We use this sequence in particular because it's part of the ANSI
-			// standard (whereas others are proprietary to, say, VT100/VT52).
-			// If cursor previous line (ESC[ + <n> + F) were better supported
-			// we could use that above to eliminate this step.
-			buf.WriteString(ansi.CursorLeft(r.width))
-			buf.WriteString(ansi.EraseEntireLine)
-		}
-	}
-
-	// Merge the set of lines we're skipping as a rendering optimization with
-	// the set of lines we've explicitly asked the renderer to ignore.
-	for k, v := range r.ignoreLines {
-		skipLines[k] = v
-	}
-
-	if flushQueuedMessages {
-		// Dump the lines we've queued up for printing
-		for _, line := range r.queuedMessageLines {
 			_, _ = buf.WriteString(line)
 			_, _ = buf.WriteString("\r\n")
 		}
-		// clear the queued message lines
+		// Clear the queued message lines.
 		r.queuedMessageLines = []string{}
 	}
 
-	// Paint new lines
+	// Paint new lines.
 	for i := 0; i < len(newLines); i++ {
-		if _, skip := skipLines[i]; skip {
+		canSkip := !flushQueuedMessages && // Queuing messages triggers repaint -> we don't have access to previous frame content.
+			len(r.lastRenderedLines) > i && r.lastRenderedLines[i] == newLines[i] // Previously rendered line is the same.
+
+		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
 				buf.WriteString(ansi.CursorDown1)
 			}
-		} else {
-			if i == 0 && r.lastRender == "" {
-				// On first render, reset the cursor to the start of the line
-				// before writing anything.
-				buf.WriteByte('\r')
-			}
+			continue
+		}
 
-			line := newLines[i]
+		if i == 0 && r.lastRender == "" {
+			// On first render, reset the cursor to the start of the line
+			// before writing anything.
+			buf.WriteByte('\r')
+		}
 
-			// Truncate lines wider than the width of the window to avoid
-			// wrapping, which will mess up rendering. If we don't have the
-			// width of the window this will be ignored.
-			//
-			// Note that on Windows we only get the width of the window on
-			// program initialization, so after a resize this won't perform
-			// correctly (signal SIGWINCH is not supported on Windows).
-			if r.width > 0 {
-				line = ansi.Truncate(line, r.width, "")
-			}
+		line := newLines[i]
 
-			_, _ = buf.WriteString(line)
+		// Truncate lines wider than the width of the window to avoid
+		// wrapping, which will mess up rendering. If we don't have the
+		// width of the window this will be ignored.
+		//
+		// Note that on Windows we only get the width of the window on
+		// program initialization, so after a resize this won't perform
+		// correctly (signal SIGWINCH is not supported on Windows).
+		if r.width > 0 {
+			line = ansi.Truncate(line, r.width, "")
+		}
 
-			if i < len(newLines)-1 {
-				_, _ = buf.WriteString("\r\n")
-			}
+		if ansi.StringWidth(line) < r.width {
+			// We only erase the rest of the line when the line is shorter than
+			// the width of the terminal. When the cursor reaches the end of
+			// the line, any escape sequences that follow will only affect the
+			// last cell of the line.
+
+			// Removing previously rendered content at the end of line.
+			line = line + ansi.EraseLineRight
+		}
+
+		_, _ = buf.WriteString(line)
+
+		if i < len(newLines)-1 {
+			_, _ = buf.WriteString("\r\n")
 		}
 	}
-	r.linesRendered = numLinesThisFlush
+
+	// Clearing left over content from last render.
+	if r.linesRendered > len(newLines) {
+		buf.WriteString(ansi.EraseScreenBelow)
+	}
+
+	r.linesRendered = len(newLines)
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
@@ -200,20 +199,25 @@ func (r *standardRenderer) Flush() (err error) {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
+		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
 	} else {
 		buf.WriteString(ansi.CursorLeft(r.width))
 	}
 
 	_, err = r.out.Write(buf.Bytes())
 	r.lastRender = r.buf.String()
+
+	// Save previously rendered lines for comparison in the next render. If we
+	// don't do this, we can't skip rendering lines that haven't changed.
+	// See https://github.com/charmbracelet/bubbletea/pull/1233
+	r.lastRenderedLines = newLines
 	r.buf.Reset()
 	return
 }
 
-// Render renders the frame to the internal buffer. The buffer will be
+// render renders the frame to the internal buffer. The buffer will be
 // outputted via the ticker which calls flush().
-func (r *standardRenderer) Render(s string) {
+func (r *standardRenderer) render(s string) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
@@ -229,343 +233,126 @@ func (r *standardRenderer) Render(s string) {
 	_, _ = r.buf.WriteString(s)
 }
 
-// Repaint forces a full repaint.
-func (r *standardRenderer) Repaint() {
+// repaint forces a full repaint.
+func (r *standardRenderer) repaint() {
 	r.lastRender = ""
+	r.lastRenderedLines = nil
 }
 
-func (r *standardRenderer) ClearScreen() {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	r.execute(ansi.EraseEntireDisplay)
-	r.execute(ansi.MoveCursorOrigin)
-
-	r.Repaint()
+// reset resets the standardRenderer to its initial state.
+func (r *standardRenderer) reset() {
+	r.repaint()
 }
 
-// SetMode sets a terminal mode on/off.
-func (r *standardRenderer) SetMode(mode int, on bool) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+func (r *standardRenderer) clearScreen() {
+	r.execute(ansi.EraseEntireScreen + ansi.HomeCursorPosition)
+	r.repaint()
+}
 
-	switch mode {
-	case altScreenMode:
-		if on == r.altScreenActive {
-			return
-		}
+// setAltScreenBuffer restores the terminal screen buffer state.
+func (r *standardRenderer) setAltScreenBuffer(on bool) {
+	if on {
+		// Ensure that the terminal is cleared, even when it doesn't support
+		// alt screen (or alt screen support is disabled, like GNU screen by
+		// default).
+		r.execute(ansi.EraseEntireScreen)
+		r.execute(ansi.HomeCursorPosition)
+	}
 
-		r.altScreenActive = on
-		if on {
-			r.execute(ansi.EnableAltScreenBuffer)
-
-			// Ensure that the terminal is cleared, even when it doesn't support
-			// alt screen (or alt screen support is disabled, like GNU screen by
-			// default).
-			//
-			// Note: we can't use r.clearScreen() here because the mutex is already
-			// locked.
-			r.execute(ansi.EraseEntireDisplay)
-			r.execute(ansi.MoveCursorOrigin)
-		} else {
-			r.execute(ansi.DisableAltScreenBuffer)
-		}
-
-		// cmd.exe and other terminals keep separate cursor states for the AltScreen
-		// and the main buffer. We have to explicitly reset the cursor visibility
-		// whenever we exit AltScreen.
-		if r.cursorHidden {
-			r.execute(ansi.HideCursor)
-		} else {
-			r.execute(ansi.ShowCursor)
-		}
-
-		r.Repaint()
-
-	case hideCursor:
-		if on == r.cursorHidden {
-			return
-		}
-
-		r.cursorHidden = on
-		if on {
-			r.execute(ansi.HideCursor)
-		} else {
-			r.execute(ansi.ShowCursor)
-		}
+	// cmd.exe and other terminals keep separate cursor states for the AltScreen
+	// and the main buffer. We have to explicitly reset the cursor visibility
+	// whenever we exit AltScreen.
+	if r.cursorHidden {
+		r.execute(ansi.HideCursor)
+	} else {
+		r.execute(ansi.ShowCursor)
 	}
 }
 
-// Mode returns whether the render has a mode enabled.
-func (r *standardRenderer) Mode(mode int) bool {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	switch mode {
-	case altScreenMode:
-		return r.altScreenActive
-	case hideCursor:
-		return r.cursorHidden
-	}
-
-	return false
-}
-
-// setIgnoredLines specifies lines not to be touched by the standard Bubble Tea
-// renderer.
-func (r *standardRenderer) setIgnoredLines(from int, to int) {
-	// Lock if we're going to be clearing some lines since we don't want
-	// anything jacking our cursor.
-	if r.linesRendered > 0 {
-		r.mtx.Lock()
-		defer r.mtx.Unlock()
-	}
-
-	if r.ignoreLines == nil {
-		r.ignoreLines = make(map[int]struct{})
-	}
-	for i := from; i < to; i++ {
-		r.ignoreLines[i] = struct{}{}
-	}
-
-	// Erase ignored lines
-	if r.linesRendered > 0 {
-		buf := &bytes.Buffer{}
-
-		for i := r.linesRendered - 1; i >= 0; i-- {
-			if _, exists := r.ignoreLines[i]; exists {
-				buf.WriteString(ansi.EraseEntireLine)
-			}
-			buf.WriteString(ansi.CursorUp1)
-		}
-		buf.WriteString(ansi.MoveCursor(r.linesRendered, 0)) // put cursor back
-		_, _ = r.out.Write(buf.Bytes())
-	}
-}
-
-// clearIgnoredLines returns control of any ignored lines to the standard
-// Bubble Tea renderer. That is, any lines previously set to be ignored can be
-// rendered to again.
-func (r *standardRenderer) clearIgnoredLines() {
-	r.ignoreLines = nil
-}
-
-// insertTop effectively scrolls up. It inserts lines at the top of a given
-// area designated to be a scrollable region, pushing everything else down.
-// This is roughly how ncurses does it.
-//
-// To call this function use command ScrollUp().
-//
-// For this to work renderer.ignoreLines must be set to ignore the scrollable
-// region since we are bypassing the normal Bubble Tea renderer here.
-//
-// Because this method relies on the terminal dimensions, it's only valid for
-// full-window applications (generally those that use the alternate screen
-// buffer).
-//
-// This method bypasses the normal rendering buffer and is philosophically
-// different than the normal way we approach rendering in Bubble Tea. It's for
-// use in high-performance rendering, such as a pager that could potentially
-// be rendering very complicated ansi. In cases where the content is simpler
-// standard Bubble Tea rendering should suffice.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary int) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	buf := &bytes.Buffer{}
-
-	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.MoveCursor(topBoundary, 0))
-	buf.WriteString(ansi.InsertLine(len(lines)))
-	_, _ = buf.WriteString(strings.Join(lines, "\r\n"))
-	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
-
-	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
-
-	_, _ = r.out.Write(buf.Bytes())
-}
-
-// insertBottom effectively scrolls down. It inserts lines at the bottom of
-// a given area designated to be a scrollable region, pushing everything else
-// up. This is roughly how ncurses does it.
-//
-// To call this function use the command ScrollDown().
-//
-// See note in insertTop() for caveats, how this function only makes sense for
-// full-window applications, and how it differs from the normal way we do
-// rendering in Bubble Tea.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBoundary int) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	buf := &bytes.Buffer{}
-
-	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.MoveCursor(bottomBoundary, 0))
-	_, _ = buf.WriteString("\r\n" + strings.Join(lines, "\r\n"))
-	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
-
-	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.MoveCursor(r.linesRendered, 0))
-
-	_, _ = r.out.Write(buf.Bytes())
-}
-
-// handleMessages handles internal messages for the renderer.
-func (r *standardRenderer) handleMessages(msg Msg) {
+// update handles internal messages for the renderer.
+func (r *standardRenderer) update(msg Msg) {
 	switch msg := msg.(type) {
+	case ColorProfileMsg:
+		r.profile = msg.Profile
+
+	case enableModeMsg:
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenSaveCursorMode:
+			if r.altScreenActive {
+				return
+			}
+
+			r.setAltScreenBuffer(true)
+			r.altScreenActive = true
+			r.repaint()
+		case ansi.TextCursorEnableMode:
+			if !r.cursorHidden {
+				return
+			}
+
+			r.cursorHidden = false
+		}
+
+	case disableModeMsg:
+		switch ansi.DECMode(msg) {
+		case ansi.AltScreenSaveCursorMode:
+			if !r.altScreenActive {
+				return
+			}
+
+			r.setAltScreenBuffer(false)
+			r.altScreenActive = false
+			r.repaint()
+		case ansi.TextCursorEnableMode:
+			if r.cursorHidden {
+				return
+			}
+
+			r.cursorHidden = true
+		}
+
+	case rendererWriter:
+		r.setOutput(msg.Writer)
+
+	case WindowSizeMsg:
+		r.resize(msg.Width, msg.Height)
+
+	case clearScreenMsg:
+		r.clearScreen()
+
+	case printLineMessage:
+		r.insertAbove(msg.messageBody)
+
 	case repaintMsg:
 		// Force a repaint by clearing the render cache as we slide into a
 		// render.
 		r.mtx.Lock()
-		r.Repaint()
+		r.repaint()
 		r.mtx.Unlock()
-
-	case clearScrollAreaMsg:
-		r.clearIgnoredLines()
-
-		// Force a repaint on the area where the scrollable stuff was in this
-		// update cycle
-		r.mtx.Lock()
-		r.Repaint()
-		r.mtx.Unlock()
-
-	case syncScrollAreaMsg:
-		// Re-render scrolling area
-		r.clearIgnoredLines()
-		r.setIgnoredLines(msg.topBoundary, msg.bottomBoundary)
-		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
-		// Force non-scrolling stuff to repaint in this update cycle
-		r.mtx.Lock()
-		r.Repaint()
-		r.mtx.Unlock()
-
-	case scrollUpMsg:
-		r.insertTop(msg.lines, msg.topBoundary, msg.bottomBoundary)
-
-	case scrollDownMsg:
-		r.insertBottom(msg.lines, msg.topBoundary, msg.bottomBoundary)
 	}
 }
 
-// Resize sets the size of the terminal.
-func (r *standardRenderer) Resize(w int, h int) {
+// resize sets the size of the terminal.
+func (r *standardRenderer) resize(w int, h int) {
 	r.mtx.Lock()
 	r.width = w
 	r.height = h
-	r.Repaint()
+	r.repaint()
 	r.mtx.Unlock()
 }
 
-// InsertAbove inserts lines above the current frame. This only works in
+// insertAbove inserts lines above the current frame. This only works in
 // inline mode.
-func (r *standardRenderer) InsertAbove(s string) error {
+func (r *standardRenderer) insertAbove(s string) {
 	if r.altScreenActive {
-		return nil
+		return
 	}
 
 	lines := strings.Split(s, "\n")
 	r.mtx.Lock()
 	r.queuedMessageLines = append(r.queuedMessageLines, lines...)
-	r.Repaint()
+	r.repaint()
 	r.mtx.Unlock()
-
-	return nil
-}
-
-// HIGH-PERFORMANCE RENDERING STUFF
-
-type syncScrollAreaMsg struct {
-	lines          []string
-	topBoundary    int
-	bottomBoundary int
-}
-
-// SyncScrollArea performs a paint of the entire region designated to be the
-// scrollable area. This is required to initialize the scrollable region and
-// should also be called on resize (WindowSizeMsg).
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func SyncScrollArea(lines []string, topBoundary int, bottomBoundary int) Cmd {
-	return func() Msg {
-		return syncScrollAreaMsg{
-			lines:          lines,
-			topBoundary:    topBoundary,
-			bottomBoundary: bottomBoundary,
-		}
-	}
-}
-
-type clearScrollAreaMsg struct{}
-
-// ClearScrollArea deallocates the scrollable region and returns the control of
-// those lines to the main rendering routine.
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func ClearScrollArea() Msg {
-	return clearScrollAreaMsg{}
-}
-
-type scrollUpMsg struct {
-	lines          []string
-	topBoundary    int
-	bottomBoundary int
-}
-
-// ScrollUp adds lines to the top of the scrollable region, pushing existing
-// lines below down. Lines that are pushed out the scrollable region disappear
-// from view.
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func ScrollUp(newLines []string, topBoundary, bottomBoundary int) Cmd {
-	return func() Msg {
-		return scrollUpMsg{
-			lines:          newLines,
-			topBoundary:    topBoundary,
-			bottomBoundary: bottomBoundary,
-		}
-	}
-}
-
-type scrollDownMsg struct {
-	lines          []string
-	topBoundary    int
-	bottomBoundary int
-}
-
-// ScrollDown adds lines to the bottom of the scrollable region, pushing
-// existing lines above up. Lines that are pushed out of the scrollable region
-// disappear from view.
-//
-// For high-performance, scroll-based rendering only.
-//
-// Deprecated: This option is deprecated and will be removed in a future
-// version of this package.
-func ScrollDown(newLines []string, topBoundary, bottomBoundary int) Cmd {
-	return func() Msg {
-		return scrollDownMsg{
-			lines:          newLines,
-			topBoundary:    topBoundary,
-			bottomBoundary: bottomBoundary,
-		}
-	}
 }
 
 type printLineMessage struct {

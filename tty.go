@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/x/ansi"
@@ -26,44 +25,60 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
+	if _, ok := p.renderer.(*nilRenderer); ok {
+		// No need to initialize the terminal if we're not rendering
+		return nil
+	}
+
 	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.bpActive {
-		p.execute(ansi.DisableBracketedPaste)
+	if p.modes[ansi.BracketedPasteMode] {
+		p.execute(ansi.ResetBracketedPasteMode)
 	}
-	if p.renderer != nil {
-		if p.renderer.Mode(hideCursor) {
-			p.renderer.SetMode(hideCursor, false)
-		}
+	if !p.modes[ansi.TextCursorEnableMode] {
+		p.execute(ansi.ShowCursor)
 	}
-
-	if p.mouseEnabled {
-		p.disableMouse()
+	if p.modes[ansi.ButtonEventMouseMode] || p.modes[ansi.AnyEventMouseMode] {
+		p.execute(ansi.ResetButtonEventMouseMode)
+		p.execute(ansi.ResetAnyEventMouseMode)
+		p.execute(ansi.ResetSgrExtMouseMode)
 	}
-	if p.modifyOtherKeys != 0 {
+	if p.keyboard.modifyOtherKeys != 0 {
 		p.execute(ansi.DisableModifyOtherKeys)
 	}
-	if p.kittyFlags != 0 {
+	if p.keyboard.kittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
 	}
-	if p.reportFocus {
-		p.execute(ansi.DisableReportFocus)
+	if p.modes[ansi.FocusEventMode] {
+		p.execute(ansi.ResetFocusEventMode)
 	}
-	if p.graphemeClustering {
-		p.execute(ansi.DisableGraphemeClustering)
+	if p.modes[ansi.GraphemeClusteringMode] {
+		p.execute(ansi.ResetGraphemeClusteringMode)
+	}
+	if p.modes[ansi.AltScreenSaveCursorMode] {
+		p.execute(ansi.ResetAltScreenSaveCursorMode)
+		// cmd.exe and other terminals keep separate cursor states for the AltScreen
+		// and the main buffer. We have to explicitly reset the cursor visibility
+		// whenever we exit AltScreen.
+		p.execute(ansi.ShowCursor)
+
+		// give the terminal a moment to catch up
+		time.Sleep(time.Millisecond * 10) //nolint:gomnd
 	}
 
-	if p.renderer != nil {
-		if p.renderer.Mode(altScreenMode) {
-			p.renderer.SetMode(altScreenMode, false)
-
-			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10) //nolint:gomnd
-		}
+	// Restore terminal colors.
+	if p.setBg != nil {
+		p.execute(ansi.ResetBackgroundColor)
+	}
+	if p.setFg != nil {
+		p.execute(ansi.ResetForegroundColor)
+	}
+	if p.setCc != nil {
+		p.execute(ansi.ResetCursorColor)
 	}
 
 	return p.restoreInput()
@@ -86,17 +101,7 @@ func (p *Program) restoreInput() error {
 
 // initInputReader (re)commences reading inputs.
 func (p *Program) initInputReader() error {
-	var term string
-	for i := len(p.environ) - 1; i >= 0; i-- {
-		// We iterate backwards to find the last TERM variable set in the
-		// environment. This is because the last one is the one that will be
-		// used by the terminal.
-		parts := strings.SplitN(p.environ[i], "=", 2)
-		if len(parts) == 2 && parts[0] == "TERM" {
-			term = parts[1]
-			break
-		}
-	}
+	term := p.getenv("TERM")
 
 	// Initialize the input reader.
 	// This need to be done after the terminal has been initialized and set to
@@ -109,6 +114,7 @@ func (p *Program) initInputReader() error {
 		return err
 	}
 
+	drv.trace = p.traceInput
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
 	go p.readLoop()
@@ -125,103 +131,6 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *driver) error {
 
 		for _, msg := range events {
 			incomingMsgs := []Msg{msg}
-
-			// We need to translate new e types to deprecated ones to keep
-			// compatibility.
-			switch e := msg.(type) {
-			case PasteMsg:
-				var k KeyMsg
-				k.Paste = true
-				k.Runes = []rune(e)
-				incomingMsgs = append(incomingMsgs, k)
-			case KeyPressMsg:
-				k := KeyMsg{
-					Alt:   e.Mod.Contains(ModAlt),
-					Runes: e.Runes,
-					Type:  e.Type,
-				}
-
-				// Backwards compatibility for ctrl- and shift- keys
-				switch {
-				case e.Mod.Contains(ModCtrl | ModShift):
-					switch e.Type {
-					case KeyUp, KeyDown, KeyRight, KeyLeft:
-						k.Runes = nil
-						k.Type = KeyCtrlShiftUp - e.Type + KeyUp
-					case KeyHome, KeyEnd:
-						k.Runes = nil
-						k.Type = KeyCtrlShiftHome - e.Type + KeyHome
-					}
-				case e.Mod.Contains(ModCtrl):
-					switch e.Type {
-					case KeyRunes: // KeyRunes
-						switch r := e.Rune(); r {
-						case ' ':
-							k.Runes = nil
-							k.Type = KeyCtrlAt
-						case '[', '\\', ']', '^', '_':
-							k.Runes = nil
-							k.Type = KeyCtrlOpenBracket - KeyType(r) + '['
-						case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-							'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-							'u', 'v', 'w', 'x', 'y', 'z':
-							k.Runes = nil
-							k.Type = KeyCtrlA - KeyType(r) + 'a'
-						case '?':
-							k.Runes = nil
-							k.Type = KeyCtrlQuestionMark
-						}
-					case KeyPgUp, KeyPgDown, KeyHome, KeyEnd:
-						k.Runes = nil
-						k.Type = KeyCtrlPgUp - e.Type + KeyPgUp
-					case KeyUp, KeyDown, KeyRight, KeyLeft:
-						k.Runes = nil
-						k.Type = KeyCtrlUp - e.Type + KeyUp
-					}
-				case e.Mod.Contains(ModShift):
-					switch e.Type {
-					case KeyTab:
-						k.Runes = nil
-						k.Type = KeyShiftTab
-					case KeyUp, KeyDown, KeyRight, KeyLeft:
-						k.Runes = nil
-						k.Type = KeyShiftUp - e.Type + KeyUp
-						k.Runes = nil
-					case KeyHome, KeyEnd:
-						k.Runes = nil
-						k.Type = KeyShiftHome - e.Type + KeyHome
-					}
-				}
-
-				switch k.Type {
-				case KeyRunes: // KeyRunes
-					if len(k.Runes) > 0 {
-						incomingMsgs = append(incomingMsgs, k)
-					}
-				default:
-					incomingMsgs = append(incomingMsgs, k)
-				}
-			case MouseClickMsg:
-				m := toMouseMsg(Mouse(e))
-				m.Action = MouseActionPress
-				m.Type = e.Button
-				incomingMsgs = append(incomingMsgs, m)
-			case MouseReleaseMsg:
-				m := toMouseMsg(Mouse(e))
-				m.Action = MouseActionRelease
-				m.Type = MouseRelease
-				incomingMsgs = append(incomingMsgs, m)
-			case MouseWheelMsg:
-				m := toMouseMsg(Mouse(e))
-				m.Action = MouseActionPress
-				m.Type = e.Button
-				incomingMsgs = append(incomingMsgs, m)
-			case MouseMotionMsg:
-				m := toMouseMsg(Mouse(e))
-				m.Action = MouseActionMotion
-				m.Type = MouseMotion
-				incomingMsgs = append(incomingMsgs, m)
-			}
 
 			for _, m := range incomingMsgs {
 				select {

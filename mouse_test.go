@@ -312,8 +312,12 @@ func TestParseSGRMouseEvent(t *testing.T) {
 			re = 'm'
 		}
 		return &ansi.CsiSequence{
-			Params: []int{b, x + 1, y + 1},
-			Cmd:    int(re) | ('<' << parser.MarkerShift),
+			Params: []ansi.Parameter{
+				ansi.Parameter(b),
+				ansi.Parameter(x + 1),
+				ansi.Parameter(y + 1),
+			},
+			Cmd: ansi.Command(re) | ('<' << parser.MarkerShift),
 		}
 	}
 

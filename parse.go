@@ -3,6 +3,7 @@ package tea
 import (
 	"encoding/base64"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/charmbracelet/x/ansi"
@@ -84,14 +85,10 @@ const (
 	_FlagFKeys
 )
 
-var flags int
-
-// setFlags sets the flags for the parser.
-// This will control the behavior of ParseSequence.
-//
-//nolint:unused
-func setFlags(f int) {
-	flags = f
+// inputParser is a parser for input escape sequences.
+// TODO: Use [ansi.DecodeSequence] instead of this parser.
+type inputParser struct {
+	flags int
 }
 
 // parseSequence finds the first recognized event sequence and returns it along
@@ -99,7 +96,7 @@ func setFlags(f int) {
 //
 // It will return zero and nil no sequence is recognized or when the buffer is
 // empty. If a sequence is not supported, an UnknownEvent is returned.
-func parseSequence(buf []byte) (n int, msg Msg) {
+func (p *inputParser) parseSequence(buf []byte) (n int, msg Msg) {
 	if len(buf) == 0 {
 		return 0, nil
 	}
@@ -108,62 +105,64 @@ func parseSequence(buf []byte) (n int, msg Msg) {
 	case ansi.ESC:
 		if len(buf) == 1 {
 			// Escape key
-			return 1, KeyPressMsg{Type: KeyEscape}
+			return 1, KeyPressMsg{Code: KeyEscape}
 		}
 
-		switch b := buf[1]; b {
+		switch bPrime := buf[1]; bPrime {
 		case 'O': // Esc-prefixed SS3
-			return parseSs3(buf)
+			return p.parseSs3(buf)
 		case 'P': // Esc-prefixed DCS
-			return parseDcs(buf)
+			return p.parseDcs(buf)
 		case '[': // Esc-prefixed CSI
-			return parseCsi(buf)
+			return p.parseCsi(buf)
 		case ']': // Esc-prefixed OSC
-			return parseOsc(buf)
+			return p.parseOsc(buf)
 		case '_': // Esc-prefixed APC
-			return parseApc(buf)
+			return p.parseApc(buf)
 		default:
-			n, e := parseSequence(buf[1:])
+			n, e := p.parseSequence(buf[1:])
 			if k, ok := e.(KeyPressMsg); ok {
+				k.Text = ""
 				k.Mod |= ModAlt
 				return n + 1, k
 			}
 
 			// Not a key sequence, nor an alt modified key sequence. In that
 			// case, just report a single escape key.
-			return 1, KeyPressMsg{Type: KeyEscape}
+			return 1, KeyPressMsg{Code: KeyEscape}
 		}
 	case ansi.SS3:
-		return parseSs3(buf)
+		return p.parseSs3(buf)
 	case ansi.DCS:
-		return parseDcs(buf)
+		return p.parseDcs(buf)
 	case ansi.CSI:
-		return parseCsi(buf)
+		return p.parseCsi(buf)
 	case ansi.OSC:
-		return parseOsc(buf)
+		return p.parseOsc(buf)
 	case ansi.APC:
-		return parseApc(buf)
+		return p.parseApc(buf)
 	default:
 		if b <= ansi.US || b == ansi.DEL || b == ansi.SP {
-			return 1, parseControl(b)
+			return 1, p.parseControl(b)
 		} else if b >= ansi.PAD && b <= ansi.APC {
 			// C1 control code
 			// UTF-8 never starts with a C1 control code
 			// Encode these as Ctrl+Alt+<code - 0x40>
-			return 1, KeyPressMsg{Runes: []rune{rune(b) - 0x40}, Mod: ModCtrl | ModAlt}
+			code := rune(b) - 0x40
+			return 1, KeyPressMsg{Code: code, Mod: ModCtrl | ModAlt}
 		}
-		return parseUtf8(buf)
+		return p.parseUtf8(buf)
 	}
 }
 
-func parseCsi(b []byte) (int, Msg) {
+func (p *inputParser) parseCsi(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+[ key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{Text: string(rune(b[1])), Mod: ModAlt}
 	}
 
 	var csi ansi.CsiSequence
-	var params [parser.MaxParamsSize]int
+	var params [parser.MaxParamsSize]ansi.Parameter
 	var paramsLen int
 
 	var i int
@@ -176,7 +175,7 @@ func parseCsi(b []byte) (int, Msg) {
 
 	// Initial CSI byte
 	if i < len(b) && b[i] >= '<' && b[i] <= '?' {
-		csi.Cmd |= int(b[i]) << parser.MarkerShift
+		csi.Cmd |= ansi.Command(b[i]) << parser.MarkerShift
 	}
 
 	// Scan parameter bytes in the range 0x30-0x3F
@@ -187,7 +186,7 @@ func parseCsi(b []byte) (int, Msg) {
 				params[paramsLen] = 0
 			}
 			params[paramsLen] *= 10
-			params[paramsLen] += int(b[i]) - '0'
+			params[paramsLen] += ansi.Parameter(b[i]) - '0'
 		}
 		if b[i] == ':' {
 			params[paramsLen] |= parser.HasMoreFlag
@@ -213,7 +212,7 @@ func parseCsi(b []byte) (int, Msg) {
 	}
 
 	// Set the intermediate byte
-	csi.Cmd |= int(intermed) << parser.IntermedShift
+	csi.Cmd |= ansi.Command(intermed) << parser.IntermedShift
 
 	// Scan final byte in the range 0x40-0x7E
 	if i >= len(b) || b[i] < 0x40 || b[i] > 0x7E {
@@ -221,7 +220,7 @@ func parseCsi(b []byte) (int, Msg) {
 		// CSI <number> $ is an invalid sequence, but URxvt uses it for
 		// shift modified keys.
 		if b[i-1] == '$' {
-			n, ev := parseCsi(append(b[:i-1], '~'))
+			n, ev := p.parseCsi(append(b[:i-1], '~'))
 			if k, ok := ev.(KeyPressMsg); ok {
 				k.Mod |= ModShift
 				return n, k
@@ -231,30 +230,44 @@ func parseCsi(b []byte) (int, Msg) {
 	}
 
 	// Add the final byte
-	csi.Cmd |= int(b[i])
+	csi.Cmd |= ansi.Command(b[i])
 	i++
 
 	csi.Params = params[:paramsLen]
 	switch cmd := csi.Cmd; cmd {
 	case 'y' | '?'<<parser.MarkerShift | '$'<<parser.IntermedShift:
 		// Report Mode (DECRPM)
-		if paramsLen == 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
-			return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
+		mode, ok := csi.Param(0, -1)
+		if !ok || mode == -1 {
+			break
 		}
+		value, ok := csi.Param(1, -1)
+		if !ok || value == -1 {
+			break
+		}
+		return i, modeReportMsg{Mode: mode, Value: value}
 	case 'c' | '?'<<parser.MarkerShift:
 		// Primary Device Attributes
 		return i, parsePrimaryDevAttrs(&csi)
 	case 'u' | '?'<<parser.MarkerShift:
 		// Kitty keyboard flags
-		if param := csi.Param(0); param != -1 {
-			return i, _KittyKeyboardMsg(param)
+		flags, ok := csi.Param(0, -1)
+		if !ok || flags == -1 {
+			break
 		}
+		return i, KeyboardEnhancementsMsg{kittyFlags: flags}
 	case 'R' | '?'<<parser.MarkerShift:
 		// This report may return a third parameter representing the page
 		// number, but we don't really need it.
-		if paramsLen >= 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
-			return i, CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
+		row, ok := csi.Param(0, 1)
+		if !ok {
+			break
 		}
+		col, ok := csi.Param(1, 1)
+		if !ok {
+			break
+		}
+		return i, CursorPositionMsg{Y: row - 1, X: col - 1}
 	case 'm' | '<'<<parser.MarkerShift, 'M' | '<'<<parser.MarkerShift:
 		// Handle SGR mouse
 		if paramsLen == 3 {
@@ -262,25 +275,33 @@ func parseCsi(b []byte) (int, Msg) {
 		}
 	case 'm' | '>'<<parser.MarkerShift:
 		// XTerm modifyOtherKeys
-		if paramsLen == 2 && csi.Param(0) == 4 && csi.Param(1) != -1 {
-			return i, modifyOtherKeysMsg(csi.Param(1))
+		mok, ok := csi.Param(0, 0)
+		if !ok || mok != 4 {
+			break
 		}
+		val, ok := csi.Param(1, -1)
+		if !ok || val == -1 {
+			break
+		}
+		return i, KeyboardEnhancementsMsg{modifyOtherKeys: val}
 	case 'I':
 		return i, FocusMsg{}
 	case 'O':
 		return i, BlurMsg{}
 	case 'R':
 		// Cursor position report OR modified F3
-		if paramsLen == 2 && csi.Param(0) != -1 && csi.Param(1) != -1 {
-			m := CursorPositionMsg{Row: csi.Param(0), Column: csi.Param(1)}
-			if csi.Param(0) == 1 && csi.Param(1)-1 <= int(ModMeta|ModShift|ModAlt|ModCtrl) {
+		row, rok := csi.Param(0, 1)
+		col, cok := csi.Param(1, 1)
+		if paramsLen == 2 && rok && cok {
+			m := CursorPositionMsg{Y: row - 1, X: col - 1}
+			if row == 1 && col-1 <= int(ModMeta|ModShift|ModAlt|ModCtrl) {
 				// XXX: We cannot differentiate between cursor position report and
 				// CSI 1 ; <mod> R (which is modified F3) when the cursor is at the
 				// row 1. In this case, we report both messages.
 				//
 				// For a non ambiguous cursor position report, use
 				// [ansi.RequestExtendedCursorPosition] (DECXCPR) instead.
-				return i, multiMsg{KeyPressMsg{Type: KeyF3, Mod: KeyMod(csi.Param(1) - 1)}, m}
+				return i, multiMsg{KeyPressMsg{Code: KeyF3, Mod: KeyMod(col - 1)}, m}
 			}
 
 			return i, m
@@ -296,25 +317,34 @@ func parseCsi(b []byte) (int, Msg) {
 		var k KeyPressMsg
 		switch cmd {
 		case 'a', 'b', 'c', 'd':
-			k = KeyPressMsg{Type: KeyUp + KeyType(cmd-'a'), Mod: ModShift}
+			k = KeyPressMsg{Code: KeyUp + rune(cmd-'a'), Mod: ModShift}
 		case 'A', 'B', 'C', 'D':
-			k = KeyPressMsg{Type: KeyUp + KeyType(cmd-'A')}
+			k = KeyPressMsg{Code: KeyUp + rune(cmd-'A')}
 		case 'E':
-			k = KeyPressMsg{Type: KeyBegin}
+			k = KeyPressMsg{Code: KeyBegin}
 		case 'F':
-			k = KeyPressMsg{Type: KeyEnd}
+			k = KeyPressMsg{Code: KeyEnd}
 		case 'H':
-			k = KeyPressMsg{Type: KeyHome}
+			k = KeyPressMsg{Code: KeyHome}
 		case 'P', 'Q', 'R', 'S':
-			k = KeyPressMsg{Type: KeyF1 + KeyType(cmd-'P')}
+			k = KeyPressMsg{Code: KeyF1 + rune(cmd-'P')}
 		case 'Z':
-			k = KeyPressMsg{Type: KeyTab, Mod: ModShift}
+			k = KeyPressMsg{Code: KeyTab, Mod: ModShift}
 		}
-		if paramsLen > 1 && csi.Param(0) == 1 && csi.Param(1) != -1 {
+		id, _ := csi.Param(0, 1)
+		if id == 0 {
+			id = 1
+		}
+		mod, _ := csi.Param(1, 1)
+		if mod == 0 {
+			mod = 1
+		}
+		if paramsLen > 1 && id == 1 && mod != -1 {
 			// CSI 1 ; <modifiers> A
-			k.Mod |= KeyMod(csi.Param(1) - 1)
+			k.Mod |= KeyMod(mod - 1)
 		}
-		return i, k
+		// Don't forget to handle Kitty keyboard protocol
+		return i, parseKittyKeyboardExt(&csi, k)
 	case 'M':
 		// Handle X10 mouse
 		if i+3 > len(b) {
@@ -323,10 +353,15 @@ func parseCsi(b []byte) (int, Msg) {
 		return i + 3, parseX10MouseEvent(append(b[:i], b[i:i+3]...))
 	case 'y':
 		// Report Mode (DECRPM)
-		if paramsLen != 2 && csi.Param(0) != -1 && csi.Param(0) != -1 {
-			return i, UnknownMsg(b[:i])
+		mode, ok := csi.Param(0, -1)
+		if !ok || mode == -1 {
+			break
 		}
-		return i, ReportModeMsg{Mode: csi.Param(0), Value: csi.Param(1)}
+		val, ok := csi.Param(1, -1)
+		if !ok || val == -1 {
+			break
+		}
+		return i, modeReportMsg{Mode: mode, Value: val}
 	case 'u':
 		// Kitty keyboard protocol & CSI u (fixterms)
 		if paramsLen == 0 {
@@ -339,18 +374,25 @@ func parseCsi(b []byte) (int, Msg) {
 			return i, UnknownMsg(b[:i])
 		}
 
-		rc := uint16(csi.Param(5))
+		vrc, _ := csi.Param(5, 0)
+		rc := uint16(vrc) //nolint:gosec
 		if rc == 0 {
 			rc = 1
 		}
 
-		event := parseWin32InputKeyEvent(
-			uint16(csi.Param(0)), // Vk wVirtualKeyCode
-			uint16(csi.Param(1)), // Sc wVirtualScanCode
-			rune(csi.Param(2)),   // Uc UnicodeChar
-			csi.Param(3) == 1,    // Kd bKeyDown
-			uint32(csi.Param(4)), // Cs dwControlKeyState
-			rc,                   // Rc wRepeatCount
+		vk, _ := csi.Param(0, 0)
+		sc, _ := csi.Param(1, 0)
+		uc, _ := csi.Param(2, 0)
+		kd, _ := csi.Param(3, 0)
+		cs, _ := csi.Param(4, 0)
+		event := p.parseWin32InputKeyEvent(
+			nil,
+			uint16(vk), //nolint:gosec // Vk wVirtualKeyCode
+			uint16(sc), //nolint:gosec // Sc wVirtualScanCode
+			rune(uc),   // Uc UnicodeChar
+			kd == 1,    // Kd bKeyDown
+			uint32(cs), //nolint:gosec // Cs dwControlKeyState
+			rc,         // Rc wRepeatCount
 		)
 
 		if event == nil {
@@ -363,7 +405,7 @@ func parseCsi(b []byte) (int, Msg) {
 			return i, UnknownMsg(b[:i])
 		}
 
-		param := csi.Param(0)
+		param, _ := csi.Param(0, 0)
 		switch cmd {
 		case '~':
 			switch param {
@@ -391,48 +433,52 @@ func parseCsi(b []byte) (int, Msg) {
 			var k KeyPressMsg
 			switch param {
 			case 1:
-				if flags&_FlagFind != 0 {
-					k = KeyPressMsg{Type: KeyFind}
+				if p.flags&_FlagFind != 0 {
+					k = KeyPressMsg{Code: KeyFind}
 				} else {
-					k = KeyPressMsg{Type: KeyHome}
+					k = KeyPressMsg{Code: KeyHome}
 				}
 			case 2:
-				k = KeyPressMsg{Type: KeyInsert}
+				k = KeyPressMsg{Code: KeyInsert}
 			case 3:
-				k = KeyPressMsg{Type: KeyDelete}
+				k = KeyPressMsg{Code: KeyDelete}
 			case 4:
-				if flags&_FlagSelect != 0 {
-					k = KeyPressMsg{Type: KeySelect}
+				if p.flags&_FlagSelect != 0 {
+					k = KeyPressMsg{Code: KeySelect}
 				} else {
-					k = KeyPressMsg{Type: KeyEnd}
+					k = KeyPressMsg{Code: KeyEnd}
 				}
 			case 5:
-				k = KeyPressMsg{Type: KeyPgUp}
+				k = KeyPressMsg{Code: KeyPgUp}
 			case 6:
-				k = KeyPressMsg{Type: KeyPgDown}
+				k = KeyPressMsg{Code: KeyPgDown}
 			case 7:
-				k = KeyPressMsg{Type: KeyHome}
+				k = KeyPressMsg{Code: KeyHome}
 			case 8:
-				k = KeyPressMsg{Type: KeyEnd}
+				k = KeyPressMsg{Code: KeyEnd}
 			case 11, 12, 13, 14, 15:
-				k = KeyPressMsg{Type: KeyF1 + KeyType(param-11)}
+				k = KeyPressMsg{Code: KeyF1 + rune(param-11)}
 			case 17, 18, 19, 20, 21:
-				k = KeyPressMsg{Type: KeyF6 + KeyType(param-17)}
+				k = KeyPressMsg{Code: KeyF6 + rune(param-17)}
 			case 23, 24, 25, 26:
-				k = KeyPressMsg{Type: KeyF11 + KeyType(param-23)}
+				k = KeyPressMsg{Code: KeyF11 + rune(param-23)}
 			case 28, 29:
-				k = KeyPressMsg{Type: KeyF15 + KeyType(param-28)}
+				k = KeyPressMsg{Code: KeyF15 + rune(param-28)}
 			case 31, 32, 33, 34:
-				k = KeyPressMsg{Type: KeyF17 + KeyType(param-31)}
+				k = KeyPressMsg{Code: KeyF17 + rune(param-31)}
 			}
 
 			// modifiers
-			if paramsLen > 1 && csi.Param(1) != -1 {
-				k.Mod |= KeyMod(csi.Param(1) - 1)
+			mod, _ := csi.Param(1, -1)
+			if paramsLen > 1 && mod != -1 {
+				k.Mod |= KeyMod(mod - 1)
 			}
 
 			// Handle URxvt weird keys
 			switch cmd {
+			case '~':
+				// Don't forget to handle Kitty keyboard protocol
+				return i, parseKittyKeyboardExt(&csi, k)
 			case '^':
 				k.Mod |= ModCtrl
 			case '@':
@@ -447,10 +493,10 @@ func parseCsi(b []byte) (int, Msg) {
 
 // parseSs3 parses a SS3 sequence.
 // See https://vt100.net/docs/vt220-rm/chapter4.html#S4.4.4.2
-func parseSs3(b []byte) (int, Msg) {
+func (p *inputParser) parseSs3(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+O key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
 	}
 
 	var i int
@@ -482,23 +528,23 @@ func parseSs3(b []byte) (int, Msg) {
 	var k KeyPressMsg
 	switch gl {
 	case 'a', 'b', 'c', 'd':
-		k = KeyPressMsg{Type: KeyUp + KeyType(gl-'a'), Mod: ModCtrl}
+		k = KeyPressMsg{Code: KeyUp + rune(gl-'a'), Mod: ModCtrl}
 	case 'A', 'B', 'C', 'D':
-		k = KeyPressMsg{Type: KeyUp + KeyType(gl-'A')}
+		k = KeyPressMsg{Code: KeyUp + rune(gl-'A')}
 	case 'E':
-		k = KeyPressMsg{Type: KeyBegin}
+		k = KeyPressMsg{Code: KeyBegin}
 	case 'F':
-		k = KeyPressMsg{Type: KeyEnd}
+		k = KeyPressMsg{Code: KeyEnd}
 	case 'H':
-		k = KeyPressMsg{Type: KeyHome}
+		k = KeyPressMsg{Code: KeyHome}
 	case 'P', 'Q', 'R', 'S':
-		k = KeyPressMsg{Type: KeyF1 + KeyType(gl-'P')}
+		k = KeyPressMsg{Code: KeyF1 + rune(gl-'P')}
 	case 'M':
-		k = KeyPressMsg{Type: KeyKpEnter}
+		k = KeyPressMsg{Code: KeyKpEnter}
 	case 'X':
-		k = KeyPressMsg{Type: KeyKpEqual}
+		k = KeyPressMsg{Code: KeyKpEqual}
 	case 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y':
-		k = KeyPressMsg{Type: KeyKpMultiply + KeyType(gl-'j')}
+		k = KeyPressMsg{Code: KeyKpMultiply + rune(gl-'j')}
 	default:
 		return i, UnknownMsg(b[:i])
 	}
@@ -511,10 +557,10 @@ func parseSs3(b []byte) (int, Msg) {
 	return i, k
 }
 
-func parseOsc(b []byte) (int, Msg) {
+func (p *inputParser) parseOsc(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+] key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
 	}
 
 	var i int
@@ -605,7 +651,7 @@ func parseOsc(b []byte) (int, Msg) {
 }
 
 // parseStTerminated parses a control sequence that gets terminated by a ST character.
-func parseStTerminated(intro8, intro7 byte) func([]byte) (int, Msg) {
+func (p *inputParser) parseStTerminated(intro8, intro7 byte) func([]byte) (int, Msg) {
 	return func(b []byte) (int, Msg) {
 		var i int
 		if b[i] == intro8 || b[i] == ansi.ESC {
@@ -636,13 +682,13 @@ func parseStTerminated(intro8, intro7 byte) func([]byte) (int, Msg) {
 	}
 }
 
-func parseDcs(b []byte) (int, Msg) {
+func (p *inputParser) parseDcs(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+P key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
 	}
 
-	var params [16]int
+	var params [16]ansi.Parameter
 	var paramsLen int
 	var dcs ansi.DcsSequence
 
@@ -657,7 +703,7 @@ func parseDcs(b []byte) (int, Msg) {
 
 	// initial DCS byte
 	if i < len(b) && b[i] >= '<' && b[i] <= '?' {
-		dcs.Cmd |= int(b[i]) << parser.MarkerShift
+		dcs.Cmd |= ansi.Command(b[i]) << parser.MarkerShift
 	}
 
 	// Scan parameter bytes in the range 0x30-0x3F
@@ -668,7 +714,7 @@ func parseDcs(b []byte) (int, Msg) {
 				params[paramsLen] = 0
 			}
 			params[paramsLen] *= 10
-			params[paramsLen] += int(b[i]) - '0'
+			params[paramsLen] += ansi.Parameter(b[i]) - '0'
 		}
 		if b[i] == ':' {
 			params[paramsLen] |= parser.HasMoreFlag
@@ -694,7 +740,7 @@ func parseDcs(b []byte) (int, Msg) {
 	}
 
 	// set intermediate byte
-	dcs.Cmd |= int(intermed) << parser.IntermedShift
+	dcs.Cmd |= ansi.Command(intermed) << parser.IntermedShift
 
 	// Scan final byte in the range 0x40-0x7E
 	if i >= len(b) || b[i] < 0x40 || b[i] > 0x7E {
@@ -702,7 +748,7 @@ func parseDcs(b []byte) (int, Msg) {
 	}
 
 	// Add the final byte
-	dcs.Cmd |= int(b[i])
+	dcs.Cmd |= ansi.Command(b[i])
 	i++
 
 	start := i // start of the sequence data
@@ -728,14 +774,16 @@ func parseDcs(b []byte) (int, Msg) {
 	switch cmd := dcs.Cmd; cmd {
 	case 'r' | '+'<<parser.IntermedShift:
 		// XTGETTCAP responses
-		switch param := dcs.Param(0); param {
-		case 0, 1:
+		param, _ := dcs.Param(0, 0)
+		switch param {
+		case 1: // 1 means valid response, 0 means invalid response
 			tc := parseTermcap(b[start:end])
 			// XXX: some terminals like KiTTY report invalid responses with
 			// their queries i.e. sending a query for "Tc" using "\x1bP+q5463\x1b\\"
 			// returns "\x1bP0+r5463\x1b\\".
 			// The specs says that invalid responses should be in the form of
 			// DCS 0 + r ST "\x1bP0+r\x1b\\"
+			// We ignore invalid responses and only send valid ones to the program.
 			//
 			// See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 			return i, tc
@@ -748,17 +796,17 @@ func parseDcs(b []byte) (int, Msg) {
 	return i, UnknownMsg(b[:i])
 }
 
-func parseApc(b []byte) (int, Msg) {
+func (p *inputParser) parseApc(b []byte) (int, Msg) {
 	if len(b) == 2 && b[0] == ansi.ESC {
 		// short cut if this is an alt+_ key
-		return 2, KeyPressMsg{Runes: []rune{rune(b[1])}, Mod: ModAlt}
+		return 2, KeyPressMsg{Code: rune(b[1]), Mod: ModAlt}
 	}
 
 	// APC sequences are introduced by APC (0x9f) or ESC _ (0x1b 0x5f)
-	return parseStTerminated(ansi.APC, '_')(b)
+	return p.parseStTerminated(ansi.APC, '_')(b)
 }
 
-func parseUtf8(b []byte) (int, Msg) {
+func (p *inputParser) parseUtf8(b []byte) (int, Msg) {
 	if len(b) == 0 {
 		return 0, nil
 	}
@@ -766,57 +814,78 @@ func parseUtf8(b []byte) (int, Msg) {
 	c := b[0]
 	if c <= ansi.US || c == ansi.DEL || c == ansi.SP {
 		// Control codes get handled by parseControl
-		return 1, parseControl(c)
+		return 1, p.parseControl(c)
 	} else if c > ansi.US && c < ansi.DEL {
 		// ASCII printable characters
-		return 1, KeyPressMsg{Runes: []rune{rune(c)}}
+		code := rune(c)
+		k := KeyPressMsg{Code: code, Text: string(code)}
+		if unicode.IsUpper(code) {
+			// Convert upper case letters to lower case + shift modifier
+			k.Code = unicode.ToLower(code)
+			k.ShiftedCode = code
+			k.Mod |= ModShift
+		}
+
+		return 1, k
 	}
 
-	if r, _ := utf8.DecodeRune(b); r == utf8.RuneError {
+	code, _ := utf8.DecodeRune(b)
+	if code == utf8.RuneError {
 		return 1, UnknownMsg(b[0])
 	}
 
 	cluster, _, _, _ := uniseg.FirstGraphemeCluster(b, -1)
-	return len(cluster), KeyPressMsg{Runes: []rune(string(cluster))}
+	text := string(cluster)
+	for i := range text {
+		if i > 0 {
+			// Use [KeyExtended] for multi-rune graphemes
+			code = KeyExtended
+			break
+		}
+	}
+
+	return len(cluster), KeyPressMsg{Code: code, Text: text}
 }
 
-func parseControl(b byte) Msg {
+func (p *inputParser) parseControl(b byte) Msg {
 	switch b {
 	case ansi.NUL:
-		if flags&_FlagCtrlAt != 0 {
-			return KeyPressMsg{Runes: []rune{'@'}, Mod: ModCtrl}
+		if p.flags&_FlagCtrlAt != 0 {
+			return KeyPressMsg{Code: '@', Mod: ModCtrl}
 		}
-		return KeyPressMsg{Runes: []rune{' '}, Type: KeySpace, Mod: ModCtrl}
+		return KeyPressMsg{Code: KeySpace, Mod: ModCtrl}
 	case ansi.BS:
-		return KeyPressMsg{Runes: []rune{'h'}, Mod: ModCtrl}
+		return KeyPressMsg{Code: 'h', Mod: ModCtrl}
 	case ansi.HT:
-		if flags&_FlagCtrlI != 0 {
-			return KeyPressMsg{Runes: []rune{'i'}, Mod: ModCtrl}
+		if p.flags&_FlagCtrlI != 0 {
+			return KeyPressMsg{Code: 'i', Mod: ModCtrl}
 		}
-		return KeyPressMsg{Type: KeyTab}
+		return KeyPressMsg{Code: KeyTab}
 	case ansi.CR:
-		if flags&_FlagCtrlM != 0 {
-			return KeyPressMsg{Runes: []rune{'m'}, Mod: ModCtrl}
+		if p.flags&_FlagCtrlM != 0 {
+			return KeyPressMsg{Code: 'm', Mod: ModCtrl}
 		}
-		return KeyPressMsg{Type: KeyEnter}
+		return KeyPressMsg{Code: KeyEnter}
 	case ansi.ESC:
-		if flags&_FlagCtrlOpenBracket != 0 {
-			return KeyPressMsg{Runes: []rune{'['}, Mod: ModCtrl}
+		if p.flags&_FlagCtrlOpenBracket != 0 {
+			return KeyPressMsg{Code: '[', Mod: ModCtrl}
 		}
-		return KeyPressMsg{Type: KeyEscape}
+		return KeyPressMsg{Code: KeyEscape}
 	case ansi.DEL:
-		if flags&_FlagBackspace != 0 {
-			return KeyPressMsg{Type: KeyDelete}
+		if p.flags&_FlagBackspace != 0 {
+			return KeyPressMsg{Code: KeyDelete}
 		}
-		return KeyPressMsg{Type: KeyBackspace}
+		return KeyPressMsg{Code: KeyBackspace}
 	case ansi.SP:
-		return KeyPressMsg{Type: KeySpace, Runes: []rune{' '}}
+		return KeyPressMsg{Code: KeySpace, Text: " "}
 	default:
 		if b >= ansi.SOH && b <= ansi.SUB {
 			// Use lower case letters for control codes
-			return KeyPressMsg{Runes: []rune{rune(b + 0x60)}, Mod: ModCtrl}
+			code := rune(b + 0x60)
+			return KeyPressMsg{Code: code, Mod: ModCtrl}
 		} else if b >= ansi.FS && b <= ansi.US {
-			return KeyPressMsg{Runes: []rune{rune(b + 0x40)}, Mod: ModCtrl}
+			code := rune(b + 0x40)
+			return KeyPressMsg{Code: code, Mod: ModCtrl}
 		}
 		return UnknownMsg(b)
 	}

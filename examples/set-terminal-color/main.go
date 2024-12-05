@@ -1,12 +1,12 @@
 package main
 
 import (
-	"image/color"
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -44,37 +44,18 @@ type model struct {
 	state       state
 	choiceIndex int
 	err         error
-	bg          color.Color
-	fg          color.Color
-	cursor      color.Color
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		textinput.Blink,
-		tea.BackgroundColor,
-		tea.ForegroundColor,
-		tea.CursorColor,
-	)
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			var cmds []tea.Cmd
-			if m.fg != nil {
-				cmds = append(cmds, tea.SetForegroundColor(m.fg))
-			}
-			if m.bg != nil {
-				cmds = append(cmds, tea.SetBackgroundColor(m.bg))
-			}
-			if m.cursor != nil {
-				cmds = append(cmds, tea.SetCursorColor(m.cursor))
-			}
-			cmds = append(cmds, tea.Quit)
-			return m, tea.Batch(cmds...)
+			return m, tea.Quit
 		}
 
 		switch m.state {
@@ -121,6 +102,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.choiceIndex = 0
 					m.state = chooseState
 
+					// Reset the text input
+					m.ti.Reset()
+
 					switch choice {
 					case foreground:
 						return m, tea.SetForegroundColor(col)
@@ -137,16 +121,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 		}
-
-	case tea.BackgroundColorMsg:
-		m.bg = msg.Color
-
-	case tea.ForegroundColorMsg:
-		m.fg = msg.Color
-
-	case tea.CursorColorMsg:
-		m.cursor = msg.Color
-
 	}
 
 	return m, nil
@@ -154,10 +128,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	var s strings.Builder
+	var instructions = lipgloss.NewStyle().Width(40).Render("Choose a terminal-wide color to set. All settings will be cleared on exit.")
 
 	switch m.state {
 	case chooseState:
-		s.WriteString("Choose a color to set:\n\n")
+		s.WriteString(instructions + "\n\n")
 		for i, c := range []colorType{foreground, background, cursor} {
 			if i == m.choiceIndex {
 				s.WriteString(" > ")
@@ -197,7 +172,7 @@ func main() {
 	ti.Placeholder = "#ff00ff"
 	ti.Focus()
 	ti.CharLimit = 156
-	ti.Width = 20
+	ti.SetWidth(20)
 	p := tea.NewProgram(model{
 		ti: ti,
 	})

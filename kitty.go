@@ -7,166 +7,141 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-// setKittyKeyboardFlagsMsg is a message to set Kitty keyboard progressive
-// enhancement protocol flags.
-type setKittyKeyboardFlagsMsg int
-
-// enableKittyKeyboard is a command to enable Kitty keyboard progressive
-// enhancements.
-//
-// The flags parameter is a bitmask of the following
-//
-//	1:  Disambiguate escape codes
-//	2:  Report event types
-//	4:  Report alternate keys
-//	8:  Report all keys as escape codes
-//	16: Report associated text
-//
-// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/ for more information.
-func enableKittyKeyboard(flags int) Cmd { //nolint:unused
-	return func() Msg {
-		return setKittyKeyboardFlagsMsg(flags)
-	}
-}
-
-// disableKittyKeyboard is a command to disable Kitty keyboard progressive
-// enhancements.
-func disableKittyKeyboard() Msg { //nolint:unused
-	return setKittyKeyboardFlagsMsg(0)
-}
-
-// kittyKeyboardMsg is a message that queries the current Kitty keyboard
-// progressive enhancement flags.
-type kittyKeyboardMsg struct{}
-
-// kittyKeyboard is a command that queries the current Kitty keyboard
-// progressive enhancement flags from the terminal.
-func kittyKeyboard() Msg { //nolint:unused
-	return kittyKeyboardMsg{}
-}
-
-// _KittyKeyboardMsg represents Kitty keyboard progressive enhancement flags message.
-type _KittyKeyboardMsg int
-
 // Kitty Clipboard Control Sequences
-var kittyKeyMap = map[int]KeyType{
-	ansi.BS:  KeyBackspace,
-	ansi.HT:  KeyTab,
-	ansi.CR:  KeyEnter,
-	ansi.ESC: KeyEscape,
-	ansi.DEL: KeyBackspace,
+var kittyKeyMap = map[int]Key{
+	ansi.BS:  {Code: KeyBackspace},
+	ansi.HT:  {Code: KeyTab},
+	ansi.CR:  {Code: KeyEnter},
+	ansi.ESC: {Code: KeyEscape},
+	ansi.DEL: {Code: KeyBackspace},
 
-	57344: KeyEscape,
-	57345: KeyEnter,
-	57346: KeyTab,
-	57347: KeyBackspace,
-	57348: KeyInsert,
-	57349: KeyDelete,
-	57350: KeyLeft,
-	57351: KeyRight,
-	57352: KeyUp,
-	57353: KeyDown,
-	57354: KeyPgUp,
-	57355: KeyPgDown,
-	57356: KeyHome,
-	57357: KeyEnd,
-	57358: KeyCapsLock,
-	57359: KeyScrollLock,
-	57360: KeyNumLock,
-	57361: KeyPrintScreen,
-	57362: KeyPause,
-	57363: KeyMenu,
-	57364: KeyF1,
-	57365: KeyF2,
-	57366: KeyF3,
-	57367: KeyF4,
-	57368: KeyF5,
-	57369: KeyF6,
-	57370: KeyF7,
-	57371: KeyF8,
-	57372: KeyF9,
-	57373: KeyF10,
-	57374: KeyF11,
-	57375: KeyF12,
-	57376: KeyF13,
-	57377: KeyF14,
-	57378: KeyF15,
-	57379: KeyF16,
-	57380: KeyF17,
-	57381: KeyF18,
-	57382: KeyF19,
-	57383: KeyF20,
-	57384: KeyF21,
-	57385: KeyF22,
-	57386: KeyF23,
-	57387: KeyF24,
-	57388: KeyF25,
-	57389: KeyF26,
-	57390: KeyF27,
-	57391: KeyF28,
-	57392: KeyF29,
-	57393: KeyF30,
-	57394: KeyF31,
-	57395: KeyF32,
-	57396: KeyF33,
-	57397: KeyF34,
-	57398: KeyF35,
-	57399: KeyKp0,
-	57400: KeyKp1,
-	57401: KeyKp2,
-	57402: KeyKp3,
-	57403: KeyKp4,
-	57404: KeyKp5,
-	57405: KeyKp6,
-	57406: KeyKp7,
-	57407: KeyKp8,
-	57408: KeyKp9,
-	57409: KeyKpDecimal,
-	57410: KeyKpDivide,
-	57411: KeyKpMultiply,
-	57412: KeyKpMinus,
-	57413: KeyKpPlus,
-	57414: KeyKpEnter,
-	57415: KeyKpEqual,
-	57416: KeyKpSep,
-	57417: KeyKpLeft,
-	57418: KeyKpRight,
-	57419: KeyKpUp,
-	57420: KeyKpDown,
-	57421: KeyKpPgUp,
-	57422: KeyKpPgDown,
-	57423: KeyKpHome,
-	57424: KeyKpEnd,
-	57425: KeyKpInsert,
-	57426: KeyKpDelete,
-	57427: KeyKpBegin,
-	57428: KeyMediaPlay,
-	57429: KeyMediaPause,
-	57430: KeyMediaPlayPause,
-	57431: KeyMediaReverse,
-	57432: KeyMediaStop,
-	57433: KeyMediaFastForward,
-	57434: KeyMediaRewind,
-	57435: KeyMediaNext,
-	57436: KeyMediaPrev,
-	57437: KeyMediaRecord,
-	57438: KeyLowerVol,
-	57439: KeyRaiseVol,
-	57440: KeyMute,
-	57441: KeyLeftShift,
-	57442: KeyLeftCtrl,
-	57443: KeyLeftAlt,
-	57444: KeyLeftSuper,
-	57445: KeyLeftHyper,
-	57446: KeyLeftMeta,
-	57447: KeyRightShift,
-	57448: KeyRightCtrl,
-	57449: KeyRightAlt,
-	57450: KeyRightSuper,
-	57451: KeyRightHyper,
-	57452: KeyRightMeta,
-	57453: KeyIsoLevel3Shift,
-	57454: KeyIsoLevel5Shift,
+	57344: {Code: KeyEscape},
+	57345: {Code: KeyEnter},
+	57346: {Code: KeyTab},
+	57347: {Code: KeyBackspace},
+	57348: {Code: KeyInsert},
+	57349: {Code: KeyDelete},
+	57350: {Code: KeyLeft},
+	57351: {Code: KeyRight},
+	57352: {Code: KeyUp},
+	57353: {Code: KeyDown},
+	57354: {Code: KeyPgUp},
+	57355: {Code: KeyPgDown},
+	57356: {Code: KeyHome},
+	57357: {Code: KeyEnd},
+	57358: {Code: KeyCapsLock},
+	57359: {Code: KeyScrollLock},
+	57360: {Code: KeyNumLock},
+	57361: {Code: KeyPrintScreen},
+	57362: {Code: KeyPause},
+	57363: {Code: KeyMenu},
+	57364: {Code: KeyF1},
+	57365: {Code: KeyF2},
+	57366: {Code: KeyF3},
+	57367: {Code: KeyF4},
+	57368: {Code: KeyF5},
+	57369: {Code: KeyF6},
+	57370: {Code: KeyF7},
+	57371: {Code: KeyF8},
+	57372: {Code: KeyF9},
+	57373: {Code: KeyF10},
+	57374: {Code: KeyF11},
+	57375: {Code: KeyF12},
+	57376: {Code: KeyF13},
+	57377: {Code: KeyF14},
+	57378: {Code: KeyF15},
+	57379: {Code: KeyF16},
+	57380: {Code: KeyF17},
+	57381: {Code: KeyF18},
+	57382: {Code: KeyF19},
+	57383: {Code: KeyF20},
+	57384: {Code: KeyF21},
+	57385: {Code: KeyF22},
+	57386: {Code: KeyF23},
+	57387: {Code: KeyF24},
+	57388: {Code: KeyF25},
+	57389: {Code: KeyF26},
+	57390: {Code: KeyF27},
+	57391: {Code: KeyF28},
+	57392: {Code: KeyF29},
+	57393: {Code: KeyF30},
+	57394: {Code: KeyF31},
+	57395: {Code: KeyF32},
+	57396: {Code: KeyF33},
+	57397: {Code: KeyF34},
+	57398: {Code: KeyF35},
+	57399: {Code: KeyKp0},
+	57400: {Code: KeyKp1},
+	57401: {Code: KeyKp2},
+	57402: {Code: KeyKp3},
+	57403: {Code: KeyKp4},
+	57404: {Code: KeyKp5},
+	57405: {Code: KeyKp6},
+	57406: {Code: KeyKp7},
+	57407: {Code: KeyKp8},
+	57408: {Code: KeyKp9},
+	57409: {Code: KeyKpDecimal},
+	57410: {Code: KeyKpDivide},
+	57411: {Code: KeyKpMultiply},
+	57412: {Code: KeyKpMinus},
+	57413: {Code: KeyKpPlus},
+	57414: {Code: KeyKpEnter},
+	57415: {Code: KeyKpEqual},
+	57416: {Code: KeyKpSep},
+	57417: {Code: KeyKpLeft},
+	57418: {Code: KeyKpRight},
+	57419: {Code: KeyKpUp},
+	57420: {Code: KeyKpDown},
+	57421: {Code: KeyKpPgUp},
+	57422: {Code: KeyKpPgDown},
+	57423: {Code: KeyKpHome},
+	57424: {Code: KeyKpEnd},
+	57425: {Code: KeyKpInsert},
+	57426: {Code: KeyKpDelete},
+	57427: {Code: KeyKpBegin},
+	57428: {Code: KeyMediaPlay},
+	57429: {Code: KeyMediaPause},
+	57430: {Code: KeyMediaPlayPause},
+	57431: {Code: KeyMediaReverse},
+	57432: {Code: KeyMediaStop},
+	57433: {Code: KeyMediaFastForward},
+	57434: {Code: KeyMediaRewind},
+	57435: {Code: KeyMediaNext},
+	57436: {Code: KeyMediaPrev},
+	57437: {Code: KeyMediaRecord},
+	57438: {Code: KeyLowerVol},
+	57439: {Code: KeyRaiseVol},
+	57440: {Code: KeyMute},
+	57441: {Code: KeyLeftShift},
+	57442: {Code: KeyLeftCtrl},
+	57443: {Code: KeyLeftAlt},
+	57444: {Code: KeyLeftSuper},
+	57445: {Code: KeyLeftHyper},
+	57446: {Code: KeyLeftMeta},
+	57447: {Code: KeyRightShift},
+	57448: {Code: KeyRightCtrl},
+	57449: {Code: KeyRightAlt},
+	57450: {Code: KeyRightSuper},
+	57451: {Code: KeyRightHyper},
+	57452: {Code: KeyRightMeta},
+	57453: {Code: KeyIsoLevel3Shift},
+	57454: {Code: KeyIsoLevel5Shift},
+}
+
+func init() {
+	// These are some faulty C0 mappings some terminals such as WezTerm have
+	// and doesn't follow the specs.
+	kittyKeyMap[ansi.NUL] = Key{Code: KeySpace, Mod: ModCtrl}
+	for i := ansi.SOH; i <= ansi.SUB; i++ {
+		if _, ok := kittyKeyMap[i]; !ok {
+			kittyKeyMap[i] = Key{Code: rune(i + 0x60), Mod: ModCtrl}
+		}
+	}
+	for i := ansi.FS; i <= ansi.US; i++ {
+		if _, ok := kittyKeyMap[i]; !ok {
+			kittyKeyMap[i] = Key{Code: rune(i + 0x40), Mod: ModCtrl}
+		}
+	}
 }
 
 const (
@@ -222,74 +197,129 @@ func fromKittyMod(mod int) KeyMod {
 //	CSI unicode-key-code:alternate-key-codes ; modifiers:event-type ; text-as-codepoints u
 //
 // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/
-func parseKittyKeyboard(csi *ansi.CsiSequence) Msg {
+func parseKittyKeyboard(csi *ansi.CsiSequence) (msg Msg) {
 	var isRelease bool
-	key := Key{}
+	var key Key
 
-	if params := csi.Subparams(0); len(params) > 0 {
-		code := params[0]
-		if sym, ok := kittyKeyMap[code]; ok {
-			key.Type = sym
-		} else {
-			r := rune(code)
-			if !utf8.ValidRune(r) {
-				r = utf8.RuneError
-			}
+	// The index of parameters separated by semicolons ';'. Sub parameters are
+	// separated by colons ':'.
+	var paramIdx int
+	var sudIdx int // The sub parameter index
+	for _, p := range csi.Params {
+		// Kitty Keyboard Protocol has 3 optional components.
+		switch paramIdx {
+		case 0:
+			switch sudIdx {
+			case 0:
+				var foundKey bool
+				code := p.Param(1) // CSI u has a default value of 1
+				key, foundKey = kittyKeyMap[code]
+				if !foundKey {
+					r := rune(code)
+					if !utf8.ValidRune(r) {
+						r = utf8.RuneError
+					}
 
-			key.Type = KeyRunes
-			key.Runes = []rune{r}
+					key.Code = r
+				}
 
-			// alternate key reporting
-			switch len(params) {
-			case 3:
+			case 2:
 				// shifted key + base key
-				if b := rune(params[2]); unicode.IsPrint(b) {
+				if b := rune(p.Param(1)); unicode.IsPrint(b) {
 					// XXX: When alternate key reporting is enabled, the protocol
 					// can return 3 things, the unicode codepoint of the key,
 					// the shifted codepoint of the key, and the standard
 					// PC-101 key layout codepoint.
 					// This is useful to create an unambiguous mapping of keys
 					// when using a different language layout.
-					key.baseRune = b
+					key.BaseCode = b
 				}
 				fallthrough
-			case 2:
+
+			case 1:
 				// shifted key
-				if s := rune(params[1]); unicode.IsPrint(s) {
+				if s := rune(p.Param(1)); unicode.IsPrint(s) {
 					// XXX: We swap keys here because we want the shifted key
 					// to be the Rune that is returned by the event.
 					// For example, shift+a should produce "A" not "a".
 					// In such a case, we set AltRune to the original key "a"
 					// and Rune to "A".
-					key.altRune = key.Rune()
-					key.Runes = []rune{s}
+					key.ShiftedCode = s
 				}
 			}
+		case 1:
+			switch sudIdx {
+			case 0:
+				mod := p.Param(1)
+				if mod > 1 {
+					key.Mod = fromKittyMod(mod - 1)
+					if key.Mod > ModShift {
+						// XXX: We need to clear the text if we have a modifier key
+						// other than a [ModShift] key.
+						key.Text = ""
+					}
+				}
+
+			case 1:
+				switch p.Param(1) {
+				case 2:
+					key.IsRepeat = true
+				case 3:
+					isRelease = true
+				}
+			case 2:
+			}
+		case 2:
+			if code := p.Param(0); code != 0 {
+				key.Text += string(rune(code))
+			}
+		}
+
+		sudIdx++
+		if !p.HasMore() {
+			paramIdx++
+			sudIdx = 0
 		}
 	}
-	if params := csi.Subparams(1); len(params) > 0 {
-		mod := params[0]
-		if mod > 1 {
-			key.Mod = fromKittyMod(mod - 1)
-		}
-		if len(params) > 1 {
-			switch params[1] {
-			case 2:
-				key.IsRepeat = true
-			case 3:
-				isRelease = true
+
+	if len(key.Text) == 0 && unicode.IsPrint(key.Code) &&
+		(key.Mod <= ModShift || key.Mod == ModCapsLock) {
+		if key.Mod == 0 {
+			key.Text = string(key.Code)
+		} else {
+			desiredCase := unicode.ToLower
+			if key.Mod == ModShift || key.Mod == ModCapsLock {
+				desiredCase = unicode.ToUpper
+			}
+			if key.ShiftedCode != 0 {
+				key.Text = string(key.ShiftedCode)
+			} else {
+				key.Text = string(desiredCase(key.Code))
 			}
 		}
 	}
-	if params := csi.Subparams(2); len(params) > 0 {
-		r := rune(params[0])
-		if unicode.IsPrint(r) {
-			key.altRune = key.Rune()
-			key.Runes = []rune{r}
-		}
-	}
+
 	if isRelease {
 		return KeyReleaseMsg(key)
 	}
+
 	return KeyPressMsg(key)
+}
+
+// parseKittyKeyboardExt parses a Kitty Keyboard Protocol sequence extensions
+// for non CSI u sequences. This includes things like CSI A, SS3 A and others,
+// and CSI ~.
+func parseKittyKeyboardExt(csi *ansi.CsiSequence, k KeyPressMsg) Msg {
+	// Handle Kitty keyboard protocol
+	if len(csi.Params) > 2 && // We have at least 3 parameters
+		csi.Params[0].Param(1) == 1 && // The first parameter is 1 (defaults to 1)
+		csi.Params[1].HasMore() { // The second parameter is a subparameter (separated by a ":")
+		switch csi.Params[2].Param(1) { // The third parameter is the event type (defaults to 1)
+		case 2:
+			k.IsRepeat = true
+		case 3:
+			return KeyReleaseMsg(k)
+		}
+	}
+	return k
 }

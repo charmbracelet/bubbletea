@@ -3,10 +3,28 @@ package tea
 import (
 	"bytes"
 	"io"
+	"log"
 	"unicode/utf8"
 
 	"github.com/muesli/cancelreader"
 )
+
+// win32InputState is a state machine for parsing key events from the Windows
+// Console API into escape sequences and utf8 runes, and keeps track of the last
+// control key state to determine modifier key changes. It also keeps track of
+// the last mouse button state and window size changes to determine which mouse
+// buttons were released and to prevent multiple size events from firing.
+//
+//nolint:unused
+type win32InputState struct {
+	ansiBuf                    [256]byte
+	ansiIdx                    int
+	utf16Buf                   [2]rune
+	utf16Half                  bool
+	lastCks                    uint32 // the last control key state for the previous event
+	lastMouseBtns              uint32 // the last mouse button state for the previous event
+	lastWinsizeX, lastWinsizeY int16  // the last window size for the previous event to prevent multiple size events from firing
+}
 
 // driver represents an ANSI terminal input driver.
 // It reads input events and parses ANSI sequences from the terminal input
@@ -23,15 +41,12 @@ type driver struct {
 
 	buf [256]byte // do we need a larger buffer?
 
-	// prevMouseState keeps track of the previous mouse state to determine mouse
-	// up button events.
-	prevMouseState uint32 // nolint: unused
+	// keyState keeps track of the current Windows Console API key events state.
+	// It is used to decode ANSI escape sequences and utf16 sequences.
+	keyState win32InputState //nolint:unused
 
-	// lastWinsizeEvent keeps track of the last window size event to prevent
-	// multiple size events from firing.
-	lastWinsizeEventX, lastWinsizeEventY int16 // nolint: unused
-
-	flags int // control the behavior of the driver.
+	parser inputParser
+	trace  bool // trace enables input tracing and logging.
 }
 
 // newDriver returns a new ANSI input driver.
@@ -48,7 +63,7 @@ func newDriver(r io.Reader, term string, flags int) (*driver, error) {
 	d.rd = cr
 	d.table = buildKeysTable(flags, term)
 	d.term = term
-	d.flags = flags
+	d.parser.flags = flags
 	return d, nil
 }
 
@@ -80,7 +95,10 @@ func (d *driver) readEvents() (msgs []Msg, err error) {
 
 	var i int
 	for i < len(buf) {
-		nb, ev := parseSequence(buf[i:])
+		nb, ev := d.parser.parseSequence(buf[i:])
+		if d.trace {
+			log.Printf("input: %q", buf[i:i+nb])
+		}
 
 		// Handle bracketed-paste
 		if d.paste != nil {

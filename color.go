@@ -11,24 +11,24 @@ import (
 // backgroundColorMsg is a message that requests the terminal background color.
 type backgroundColorMsg struct{}
 
-// BackgroundColor is a command that requests the terminal background color.
-func BackgroundColor() Msg {
+// RequestBackgroundColor is a command that requests the terminal background color.
+func RequestBackgroundColor() Msg {
 	return backgroundColorMsg{}
 }
 
 // foregroundColorMsg is a message that requests the terminal foreground color.
 type foregroundColorMsg struct{}
 
-// ForegroundColor is a command that requests the terminal foreground color.
-func ForegroundColor() Msg {
+// RequestForegroundColor is a command that requests the terminal foreground color.
+func RequestForegroundColor() Msg {
 	return foregroundColorMsg{}
 }
 
 // cursorColorMsg is a message that requests the terminal cursor color.
 type cursorColorMsg struct{}
 
-// CursorColor is a command that requests the terminal cursor color.
-func CursorColor() Msg {
+// RequestCursorColor is a command that requests the terminal cursor color.
+func RequestCursorColor() Msg {
 	return cursorColorMsg{}
 }
 
@@ -62,24 +62,40 @@ func SetCursorColor(c color.Color) Cmd {
 	}
 }
 
-// ForegroundColorMsg represents a foreground color message.
-// This message is emitted when the program requests the terminal foreground
-// color.
+// ForegroundColorMsg represents a foreground color message. This message is
+// emitted when the program requests the terminal foreground color with the
+// [RequestForegroundColor] Cmd.
 type ForegroundColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
 func (e ForegroundColorMsg) String() string {
-	return colorToHex(e)
+	return colorToHex(e.Color)
 }
 
 // IsDark returns whether the color is dark.
 func (e ForegroundColorMsg) IsDark() bool {
-	return isDarkColor(e)
+	return isDarkColor(e.Color)
 }
 
-// BackgroundColorMsg represents a background color message.
-// This message is emitted when the program requests the terminal background
-// color.
+// BackgroundColorMsg represents a background color message. This message is
+// emitted when the program requests the terminal background color with the
+// [RequestBackgroundColor] Cmd.
+//
+// This is commonly used in [Update.Init] to get the terminal background color
+// for style definitions. For that you'll want to call
+// [BackgroundColorMsg.IsDark] to determine if the color is dark or light. For
+// example:
+//
+//	func (m Model) Init() (Model, Cmd) {
+//	  return m, RequestBackgroundColor()
+//	}
+//
+//	func (m Model) Update(msg Msg) (Model, Cmd) {
+//	  switch msg := msg.(type) {
+//	  case BackgroundColorMsg:
+//	      m.styles = newStyles(msg.IsDark())
+//	  }
+//	}
 type BackgroundColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
@@ -89,11 +105,11 @@ func (e BackgroundColorMsg) String() string {
 
 // IsDark returns whether the color is dark.
 func (e BackgroundColorMsg) IsDark() bool {
-	return isDarkColor(e)
+	return isDarkColor(e.Color)
 }
 
-// CursorColorMsg represents a cursor color change message.
-// This message is emitted when the program requests the terminal cursor color.
+// CursorColorMsg represents a cursor color change message. This message is
+// emitted when the program requests the terminal cursor color.
 type CursorColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
@@ -118,6 +134,9 @@ func shift[T shiftable](x T) T {
 }
 
 func colorToHex(c color.Color) string {
+	if c == nil {
+		return ""
+	}
 	r, g, b, _ := c.RGBA()
 	return fmt.Sprintf("#%02x%02x%02x", shift(r), shift(g), shift(b))
 }
@@ -134,7 +153,7 @@ func xParseColor(s string) color.Color {
 		g, _ := strconv.ParseUint(parts[1], 16, 32)
 		b, _ := strconv.ParseUint(parts[2], 16, 32)
 
-		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), 255}
+		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), 255} //nolint:gosec
 	case strings.HasPrefix(s, "rgba:"):
 		parts := strings.Split(s[5:], "/")
 		if len(parts) != 4 {
@@ -146,9 +165,9 @@ func xParseColor(s string) color.Color {
 		b, _ := strconv.ParseUint(parts[2], 16, 32)
 		a, _ := strconv.ParseUint(parts[3], 16, 32)
 
-		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), uint8(shift(a))}
+		return color.RGBA{uint8(shift(r)), uint8(shift(g)), uint8(shift(b)), uint8(shift(a))} //nolint:gosec
 	}
-	return color.Black
+	return nil
 }
 
 func getMaxMin(a, b, c float64) (max, min float64) { //nolint:predeclared
@@ -213,6 +232,6 @@ func isDarkColor(c color.Color) bool {
 	}
 
 	r, g, b, _ := c.RGBA()
-	_, _, l := rgbToHSL(uint8(r>>8), uint8(g>>8), uint8(b>>8))
+	_, _, l := rgbToHSL(uint8(r>>8), uint8(g>>8), uint8(b>>8)) //nolint:gosec
 	return l < 0.5
 }

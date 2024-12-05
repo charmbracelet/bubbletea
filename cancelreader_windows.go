@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	xwindows "github.com/charmbracelet/x/windows"
 	"github.com/muesli/cancelreader"
 	"golang.org/x/sys/windows"
 )
@@ -44,6 +45,11 @@ func newCancelreader(r io.Reader) (cancelreader.CancelReader, error) {
 
 	conin, err := windows.GetStdHandle(windows.STD_INPUT_HANDLE)
 	if err != nil {
+		return fallback(r)
+	}
+
+	// Discard any pending input events.
+	if err := xwindows.FlushConsoleInputBuffer(conin); err != nil {
 		return fallback(r)
 	}
 
@@ -212,7 +218,7 @@ func (r overlappedReader) Read(data []byte) (int, error) {
 
 	err = windows.GetOverlappedResult(windows.Handle(r), &overlapped, &n, true)
 	if err != nil {
-		return int(n), nil
+		return int(n), err
 	}
 
 	return int(n), nil

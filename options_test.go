@@ -11,7 +11,7 @@ func TestOptions(t *testing.T) {
 	t.Run("output", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithOutput(&b))
-		if f, ok := p.output.(*os.File); ok {
+		if f, ok := p.output.Writer().(*os.File); ok {
 			t.Errorf("expected output to custom, got %v", f.Fd())
 		}
 	})
@@ -30,7 +30,7 @@ func TestOptions(t *testing.T) {
 	t.Run("renderer", func(t *testing.T) {
 		p := NewProgram(nil, WithoutRenderer())
 		switch p.renderer.(type) {
-		case *NilRenderer:
+		case *nilRenderer:
 			return
 		default:
 			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
@@ -83,10 +83,6 @@ func TestOptions(t *testing.T) {
 
 		t.Run("bracketed paste disabled", func(t *testing.T) {
 			exercise(t, WithoutBracketedPaste(), withoutBracketedPaste)
-		})
-
-		t.Run("ansi compression", func(t *testing.T) {
-			exercise(t, WithANSICompressor(), withANSICompressor)
 		})
 
 		t.Run("without catch panics", func(t *testing.T) {

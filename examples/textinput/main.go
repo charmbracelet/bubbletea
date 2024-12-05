@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func initialModel() model {
 	ti.Placeholder = "Pikachu"
 	ti.Focus()
 	ti.CharLimit = 156
-	ti.Width = 20
+	ti.SetWidth(20)
 
 	return model{
 		textInput: ti,
@@ -40,17 +40,17 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
+func (m model) Init() (tea.Model, tea.Cmd) {
+	return m, textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "enter", "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 
