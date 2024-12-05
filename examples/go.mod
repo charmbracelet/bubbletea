@@ -1,5 +1,4 @@
 module examples
-
 go 1.23.1
 
 require (
@@ -15,7 +14,6 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mattn/go-isatty v0.0.20
 )
-
 require (
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -48,5 +46,4 @@ require (
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 )
-
 replace github.com/charmbracelet/bubbletea/v2 => ../
