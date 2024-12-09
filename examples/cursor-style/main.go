@@ -14,7 +14,11 @@ type model struct {
 
 func (m model) Init() (tea.Model, tea.Cmd) {
 	m.blink = true
-	return m, tea.Batch(tea.ShowCursor, tea.SetCursorStyle(m.style, m.blink))
+	return m, tea.Batch(
+		tea.ShowCursor,
+		tea.SetCursorStyle(m.style, m.blink),
+		tea.SetCursorPosition(0, 2),
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -44,7 +48,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = tea.SetCursorStyle(m.style, m.blink)
 		}
 	}
-	return m, cmd
+	return m, tea.Batch(
+		cmd,
+		tea.SetCursorPosition(0, 2),
+	)
 }
 
 func (m model) View() string {
