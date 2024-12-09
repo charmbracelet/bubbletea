@@ -3,12 +3,11 @@ module github.com/charmbracelet/bubbletea/v2
 go 1.18
 
 require (
-	github.com/charmbracelet/colorprofile v0.1.8
+	github.com/charmbracelet/colorprofile v0.1.9
 	github.com/charmbracelet/x/ansi v0.6.0
-	github.com/charmbracelet/x/cellbuf v0.0.6
-	github.com/charmbracelet/x/input v0.2.1-0.20241210230033-45c33cb7b57a
+	github.com/charmbracelet/x/cellbuf v0.0.7-0.20241209212528-0eec74ecaa6f
+	github.com/charmbracelet/x/input v0.3.0
 	github.com/charmbracelet/x/term v0.2.1
-	github.com/charmbracelet/x/vt v0.0.0-20241121165045-a3720547cbb4
 	github.com/muesli/cancelreader v0.2.2
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.28.0

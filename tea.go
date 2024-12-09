@@ -736,7 +736,7 @@ func (p *Program) Run() (Model, error) {
 	if p.renderer == nil {
 		// If no renderer is set use the ferocious one.
 		if p.startupOptions&withFerociousRenderer != 0 || p.exp.has(experimentalFerocious) {
-			p.renderer = newFerociousRenderer(p.profile)
+			p.renderer = newScreenRenderer(p.profile, p.getenv("TERM"))
 		} else {
 			p.renderer = newStandardRenderer(p.profile)
 		}
@@ -751,11 +751,13 @@ func (p *Program) Run() (Model, error) {
 			return p.initialModel, err
 		}
 
-		// Send the initial size to the program.
 		var resizeMsg WindowSizeMsg
 		resizeMsg.Width = w
 		resizeMsg.Height = h
+
+		// Send the initial size to the program.
 		go p.Send(resizeMsg)
+		p.renderer.update(WindowSizeMsg{Width: w, Height: h})
 	}
 
 	// Init the input reader and initial model.
@@ -768,7 +770,6 @@ func (p *Program) Run() (Model, error) {
 
 	// Hide the cursor before starting the renderer.
 	p.modes[ansi.TextCursorEnableMode] = false
-	p.execute(ansi.HideCursor)
 	p.renderer.update(disableMode(ansi.TextCursorEnableMode))
 
 	// Honor program startup options.
@@ -776,7 +777,6 @@ func (p *Program) Run() (Model, error) {
 		p.execute(ansi.SetWindowTitle(p.startupTitle))
 	}
 	if p.startupOptions&withAltScreen != 0 {
-		p.execute(ansi.SetAltScreenSaveCursorMode)
 		p.modes[ansi.AltScreenSaveCursorMode] = true
 		p.renderer.update(enableMode(ansi.AltScreenSaveCursorMode))
 	}
@@ -978,19 +978,12 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initInputReader(); err != nil {
 		return err
 	}
-	if p.modes[ansi.AltScreenSaveCursorMode] {
-		p.execute(ansi.SetAltScreenSaveCursorMode)
-	} else {
+	if !p.modes[ansi.AltScreenSaveCursorMode] {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
 	}
 
 	p.startRenderer()
-	if !p.modes[ansi.TextCursorEnableMode] {
-		p.execute(ansi.HideCursor)
-	} else {
-		p.execute(ansi.ShowCursor)
-	}
 	if p.modes[ansi.BracketedPasteMode] {
 		p.execute(ansi.SetBracketedPasteMode)
 	}
