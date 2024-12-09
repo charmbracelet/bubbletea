@@ -8,12 +8,13 @@ import (
 )
 
 type model struct {
-	style  tea.CursorStyle
-	steady bool
+	style tea.CursorStyle
+	blink bool
 }
 
 func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(tea.ShowCursor, tea.SetCursorStyle(m.style, m.steady))
+	m.blink = true
+	return m, tea.Batch(tea.ShowCursor, tea.SetCursorStyle(m.style, m.blink))
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -24,23 +25,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+q", "q":
 			return m, tea.Quit
 		case "h", "left":
-			if m.style == tea.CursorBlock && !m.steady {
+			if m.style == tea.CursorBlock && m.blink {
 				break
 			}
-			if !m.steady {
+			if m.blink {
 				m.style--
 			}
-			m.steady = !m.steady
-			cmd = tea.SetCursorStyle(m.style, m.steady)
+			m.blink = !m.blink
+			cmd = tea.SetCursorStyle(m.style, m.blink)
 		case "l", "right":
-			if m.style == tea.CursorBar && m.steady {
+			if m.style == tea.CursorBar && !m.blink {
 				break
 			}
-			if m.steady {
+			if !m.blink {
 				m.style++
 			}
-			m.steady = !m.steady
-			cmd = tea.SetCursorStyle(m.style, m.steady)
+			m.blink = !m.blink
+			cmd = tea.SetCursorStyle(m.style, m.blink)
 		}
 	}
 	return m, cmd
@@ -53,14 +54,12 @@ func (m model) View() string {
 }
 
 func (m model) describeCursor() string {
-	var (
-		adj, noun string
-	)
+	var adj, noun string
 
-	if m.steady {
-		adj = "steady"
-	} else {
+	if m.blink {
 		adj = "blinking"
+	} else {
+		adj = "steady"
 	}
 
 	switch m.style {
