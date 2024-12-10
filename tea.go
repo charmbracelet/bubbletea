@@ -28,6 +28,7 @@ import (
 
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"golang.org/x/sync/errgroup"
 )
@@ -191,7 +192,7 @@ type Program struct {
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
-	inputReader           *driver
+	inputReader           *input.Reader
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 
