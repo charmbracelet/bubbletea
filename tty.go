@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
 )
@@ -109,12 +111,14 @@ func (p *Program) initInputReader() error {
 	// On Windows, this will change the console mode to enable mouse and window
 	// events.
 	var flags int // TODO: make configurable through environment variables?
-	drv, err := newDriver(p.input, term, flags)
+	drv, err := input.NewReader(p.input, term, flags)
 	if err != nil {
 		return err
 	}
 
-	drv.trace = p.traceInput
+	if p.traceInput {
+		drv.SetLogger(log.Default())
+	}
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
 	go p.readLoop()
@@ -122,7 +126,7 @@ func (p *Program) initInputReader() error {
 	return nil
 }
 
-func readInputs(ctx context.Context, msgs chan<- Msg, reader *driver) error {
+func readInputs(ctx context.Context, msgs chan<- Msg, reader *input.Reader) error {
 	for {
 		events, err := reader.ReadEvents()
 		if err != nil {
