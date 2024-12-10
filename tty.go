@@ -134,9 +134,7 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *input.Reader) erro
 		}
 
 		for _, msg := range events {
-			incomingMsgs := []Msg{msg}
-
-			for _, m := range incomingMsgs {
+			if m := translateInputEvent(msg); m != nil {
 				select {
 				case msgs <- m:
 				case <-ctx.Done():
@@ -192,8 +190,8 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	p.Send(WindowSizeMsg{
-		Width:  w,
-		Height: h,
-	})
+	var resizeMsg WindowSizeMsg
+	resizeMsg.Width = w
+	resizeMsg.Height = h
+	p.Send(resizeMsg)
 }

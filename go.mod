@@ -6,7 +6,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.1.8
 	github.com/charmbracelet/x/ansi v0.6.0
 	github.com/charmbracelet/x/cellbuf v0.0.6
-	github.com/charmbracelet/x/input v0.2.1-0.20241210175654-9f3a0d2f9c6b
+	github.com/charmbracelet/x/input v0.2.1-0.20241210230033-45c33cb7b57a
 	github.com/charmbracelet/x/term v0.2.1
 	github.com/charmbracelet/x/vt v0.0.0-20241121165045-a3720547cbb4
 	github.com/muesli/cancelreader v0.2.2

@@ -1,11 +1,5 @@
 package tea
 
-import (
-	"bytes"
-	"encoding/hex"
-	"strings"
-)
-
 // requestCapabilityMsg is an internal message that requests the terminal to
 // send its Termcap/Terminfo response.
 type requestCapabilityMsg string
@@ -45,43 +39,3 @@ func RequestCapability(s string) Cmd {
 //
 // See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
 type CapabilityMsg string
-
-func parseTermcap(data []byte) CapabilityMsg {
-	// XTGETTCAP
-	if len(data) == 0 {
-		return CapabilityMsg("")
-	}
-
-	var tc strings.Builder
-	split := bytes.Split(data, []byte{';'})
-	for _, s := range split {
-		parts := bytes.SplitN(s, []byte{'='}, 2)
-		if len(parts) == 0 {
-			return CapabilityMsg("")
-		}
-
-		name, err := hex.DecodeString(string(parts[0]))
-		if err != nil || len(name) == 0 {
-			continue
-		}
-
-		var value []byte
-		if len(parts) > 1 {
-			value, err = hex.DecodeString(string(parts[1]))
-			if err != nil {
-				continue
-			}
-		}
-
-		if tc.Len() > 0 {
-			tc.WriteByte(';')
-		}
-		tc.WriteString(string(name))
-		if len(value) > 0 {
-			tc.WriteByte('=')
-			tc.WriteString(string(value))
-		}
-	}
-
-	return CapabilityMsg(tc.String())
-}

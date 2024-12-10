@@ -25,7 +25,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.6 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 // indirect
-	github.com/charmbracelet/x/input v0.2.1-0.20241210175654-9f3a0d2f9c6b // indirect
+	github.com/charmbracelet/x/input v0.2.1-0.20241210230033-45c33cb7b57a // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/charmbracelet/x/vt v0.0.0-20241121165045-a3720547cbb4 // indirect
 	github.com/charmbracelet/x/wcwidth v0.0.0-20241113152101-0af7d04e9f32 // indirect
