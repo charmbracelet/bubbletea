@@ -172,7 +172,7 @@ func (r *standardRenderer) flush() {
 
 	// Moving to the beginning of the section, that we rendered.
 	if r.altScreenActive {
-		buf.WriteString(ansi.HomeCursorPosition)
+		buf.WriteString(ansi.CursorHomePosition)
 	} else if r.linesRendered > 1 {
 		buf.WriteString(ansi.CursorUp(r.linesRendered - 1))
 	}
@@ -217,7 +217,7 @@ func (r *standardRenderer) flush() {
 		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
-				buf.WriteString(ansi.CursorDown1)
+				buf.WriteString(ansi.CUD1)
 			}
 			continue
 		}
@@ -275,9 +275,9 @@ func (r *standardRenderer) flush() {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.SetCursorPosition(0, len(newLines)))
+		buf.WriteString(ansi.CursorPosition(0, len(newLines)))
 	} else {
-		buf.WriteString(ansi.CursorLeft(r.width))
+		buf.WriteString(ansi.CursorBackward(r.width))
 	}
 
 	_, _ = r.out.Write(buf.Bytes())
@@ -326,7 +326,7 @@ func (r *standardRenderer) clearScreen() {
 	defer r.mtx.Unlock()
 
 	r.execute(ansi.EraseEntireScreen)
-	r.execute(ansi.HomeCursorPosition)
+	r.execute(ansi.CursorHomePosition)
 
 	r.repaint()
 }
@@ -347,7 +347,7 @@ func (r *standardRenderer) enterAltScreen() {
 	}
 
 	r.altScreenActive = true
-	r.execute(ansi.EnableAltScreenBuffer)
+	r.execute(ansi.SetAltScreenSaveCursorMode)
 
 	// Ensure that the terminal is cleared, even when it doesn't support
 	// alt screen (or alt screen support is disabled, like GNU screen by
@@ -356,7 +356,7 @@ func (r *standardRenderer) enterAltScreen() {
 	// Note: we can't use r.clearScreen() here because the mutex is already
 	// locked.
 	r.execute(ansi.EraseEntireScreen)
-	r.execute(ansi.HomeCursorPosition)
+	r.execute(ansi.CursorHomePosition)
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
@@ -382,7 +382,7 @@ func (r *standardRenderer) exitAltScreen() {
 	}
 
 	r.altScreenActive = false
-	r.execute(ansi.DisableAltScreenBuffer)
+	r.execute(ansi.ResetAltScreenSaveCursorMode)
 
 	// cmd.exe and other terminals keep separate cursor states for the AltScreen
 	// and the main buffer. We have to explicitly reset the cursor visibility
@@ -416,49 +416,49 @@ func (r *standardRenderer) enableMouseCellMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.EnableMouseCellMotion)
+	r.execute(ansi.SetButtonEventMouseMode)
 }
 
 func (r *standardRenderer) disableMouseCellMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.DisableMouseCellMotion)
+	r.execute(ansi.ResetButtonEventMouseMode)
 }
 
 func (r *standardRenderer) enableMouseAllMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.EnableMouseAllMotion)
+	r.execute(ansi.SetAnyEventMouseMode)
 }
 
 func (r *standardRenderer) disableMouseAllMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.DisableMouseAllMotion)
+	r.execute(ansi.ResetAnyEventMouseMode)
 }
 
 func (r *standardRenderer) enableMouseSGRMode() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.EnableMouseSgrExt)
+	r.execute(ansi.SetSgrExtMouseMode)
 }
 
 func (r *standardRenderer) disableMouseSGRMode() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.DisableMouseSgrExt)
+	r.execute(ansi.ResetSgrExtMouseMode)
 }
 
 func (r *standardRenderer) enableBracketedPaste() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.EnableBracketedPaste)
+	r.execute(ansi.SetBracketedPasteMode)
 	r.bpActive = true
 }
 
@@ -466,7 +466,7 @@ func (r *standardRenderer) disableBracketedPaste() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.DisableBracketedPaste)
+	r.execute(ansi.ResetBracketedPasteMode)
 	r.bpActive = false
 }
 
@@ -481,7 +481,7 @@ func (r *standardRenderer) enableReportFocus() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.EnableReportFocus)
+	r.execute(ansi.SetFocusEventMode)
 	r.reportingFocus = true
 }
 
@@ -489,7 +489,7 @@ func (r *standardRenderer) disableReportFocus() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	r.execute(ansi.DisableReportFocus)
+	r.execute(ansi.ResetFocusEventMode)
 	r.reportingFocus = false
 }
 
@@ -531,9 +531,9 @@ func (r *standardRenderer) setIgnoredLines(from int, to int) {
 			if _, exists := r.ignoreLines[i]; exists {
 				buf.WriteString(ansi.EraseEntireLine)
 			}
-			buf.WriteString(ansi.CursorUp1)
+			buf.WriteString(ansi.CUU1)
 		}
-		buf.WriteString(ansi.SetCursorPosition(0, lastLinesRendered)) // put cursor back
+		buf.WriteString(ansi.CursorPosition(0, lastLinesRendered)) // put cursor back
 		_, _ = r.out.Write(buf.Bytes())
 	}
 }
@@ -572,14 +572,14 @@ func (r *standardRenderer) insertTop(lines []string, topBoundary, bottomBoundary
 
 	buf := &bytes.Buffer{}
 
-	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.SetCursorPosition(0, topBoundary))
+	buf.WriteString(ansi.SetTopBottomMargins(topBoundary, bottomBoundary))
+	buf.WriteString(ansi.CursorPosition(0, topBoundary))
 	buf.WriteString(ansi.InsertLine(len(lines)))
 	_, _ = buf.WriteString(strings.Join(lines, "\r\n"))
-	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
+	buf.WriteString(ansi.SetTopBottomMargins(0, r.height))
 
 	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.SetCursorPosition(0, r.lastLinesRendered()))
+	buf.WriteString(ansi.CursorPosition(0, r.lastLinesRendered()))
 
 	_, _ = r.out.Write(buf.Bytes())
 }
@@ -602,13 +602,13 @@ func (r *standardRenderer) insertBottom(lines []string, topBoundary, bottomBound
 
 	buf := &bytes.Buffer{}
 
-	buf.WriteString(ansi.SetScrollingRegion(topBoundary, bottomBoundary))
-	buf.WriteString(ansi.SetCursorPosition(0, bottomBoundary))
+	buf.WriteString(ansi.SetTopBottomMargins(topBoundary, bottomBoundary))
+	buf.WriteString(ansi.CursorPosition(0, bottomBoundary))
 	_, _ = buf.WriteString("\r\n" + strings.Join(lines, "\r\n"))
-	buf.WriteString(ansi.SetScrollingRegion(0, r.height))
+	buf.WriteString(ansi.SetTopBottomMargins(0, r.height))
 
 	// Move cursor back to where the main rendering routine expects it to be
-	buf.WriteString(ansi.SetCursorPosition(0, r.lastLinesRendered()))
+	buf.WriteString(ansi.CursorPosition(0, r.lastLinesRendered()))
 
 	_, _ = r.out.Write(buf.Bytes())
 }
