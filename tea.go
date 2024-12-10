@@ -450,7 +450,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case modeReportMsg:
 				switch msg.Mode {
-				case int(ansi.GraphemeClusteringMode):
+				case ansi.GraphemeClusteringMode:
 					// 1 means mode is set (see DECRPM).
 					p.modes[ansi.GraphemeClusteringMode] = msg.Value == 1 || msg.Value == 3
 				}
@@ -725,10 +725,10 @@ func (p *Program) Run() (Model, error) {
 		}
 
 		// Send the initial size to the program.
-		go p.Send(WindowSizeMsg{
-			Width:  w,
-			Height: h,
-		})
+		var resizeMsg WindowSizeMsg
+		resizeMsg.Width = w
+		resizeMsg.Height = h
+		go p.Send(resizeMsg)
 	}
 
 	// Init the input reader and initial model.
