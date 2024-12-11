@@ -186,7 +186,7 @@ func WithoutRenderer() ProgramOption {
 // This feature is provisional, and may be changed or removed in a future version
 // of this package.
 //
-// Deprecated: this incurs a noticable performance hit. A future release will
+// Deprecated: this incurs a noticeable performance hit. A future release will
 // optimize ANSI automatically without the performance penalty.
 func WithANSICompressor() ProgramOption {
 	return func(p *Program) {
