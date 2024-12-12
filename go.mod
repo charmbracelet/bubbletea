@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.1
 	github.com/charmbracelet/x/vt v0.0.0-20241121165045-a3720547cbb4
 	github.com/muesli/cancelreader v0.2.2
-	golang.org/x/sync v0.9.0
+	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.28.0
 )
 

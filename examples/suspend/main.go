@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -23,9 +24,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "q", "ctrl+c", "esc":
+		case "q", "esc":
 			m.quitting = true
 			return m, tea.Quit
+		case "ctrl+c":
+			m.quitting = true
+			return m, tea.Interrupt
 		case "ctrl+z":
 			m.suspending = true
 			return m, tea.Suspend
@@ -39,12 +43,15 @@ func (m model) View() string {
 		return ""
 	}
 
-	return "\nPress ctrl-z to suspend, or ctrl+c to exit\n"
+	return "\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n"
 }
 
 func main() {
 	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
+		if errors.Is(err, tea.ErrInterrupted) {
+			os.Exit(130)
+		}
 		os.Exit(1)
 	}
 }

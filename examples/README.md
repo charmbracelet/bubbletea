@@ -30,7 +30,7 @@ and timer) together in a single application and switch between them.
 ### Credit Card Form
 
 The `credit-card-form` example demonstrates how to build a multi-step form with
-`textinput`s bubbles and validation on the inputs.
+`textinputs` bubbles and validation on the inputs.
 
 <a href="./credit-card-form/main.go">
   <img width="750" src="./credit-card-form/credit-card-form.gif" />

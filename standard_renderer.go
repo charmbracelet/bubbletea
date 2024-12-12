@@ -35,6 +35,9 @@ type standardRenderer struct {
 	lastRender         string
 	lastRenderedLines  []string
 	linesRendered      int
+	altLinesRendered   int
+	useANSICompressor  bool
+	once               sync.Once
 
 	// cursor visibility state
 	cursorHidden bool
@@ -101,7 +104,9 @@ func (r *standardRenderer) flush() (err error) {
 	buf := &bytes.Buffer{}
 
 	// Moving to the beginning of the section, that we rendered.
-	if r.linesRendered > 1 {
+	if r.altScreenActive {
+		buf.WriteString(ansi.CursorHomePosition)
+	} else if r.linesRendered > 1 {
 		buf.WriteString(ansi.CursorUp(r.linesRendered - 1))
 	}
 
@@ -145,7 +150,7 @@ func (r *standardRenderer) flush() (err error) {
 		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
-				buf.WriteString(ansi.CursorDown1)
+				buf.WriteString(ansi.CUD1)
 			}
 			continue
 		}
@@ -187,11 +192,15 @@ func (r *standardRenderer) flush() (err error) {
 	}
 
 	// Clearing left over content from last render.
-	if r.linesRendered > len(newLines) {
+	if r.lastLinesRendered() > len(newLines) {
 		buf.WriteString(ansi.EraseScreenBelow)
 	}
 
-	r.linesRendered = len(newLines)
+	if r.altScreenActive {
+		r.altLinesRendered = len(newLines)
+	} else {
+		r.linesRendered = len(newLines)
+	}
 
 	// Make sure the cursor is at the start of the last line to keep rendering
 	// behavior consistent.
@@ -199,9 +208,9 @@ func (r *standardRenderer) flush() (err error) {
 		// This case fixes a bug in macOS terminal. In other terminals the
 		// other case seems to do the job regardless of whether or not we're
 		// using the full terminal window.
-		buf.WriteString(ansi.SetCursorPosition(0, r.linesRendered))
+		buf.WriteString(ansi.CursorPosition(0, len(newLines)))
 	} else {
-		buf.WriteString(ansi.CursorLeft(r.width))
+		buf.WriteString(ansi.CursorBackward(r.width))
 	}
 
 	_, err = r.out.Write(buf.Bytes())
@@ -213,6 +222,14 @@ func (r *standardRenderer) flush() (err error) {
 	r.lastRenderedLines = newLines
 	r.buf.Reset()
 	return
+}
+
+// lastLinesRendered returns the number of lines rendered lastly.
+func (r *standardRenderer) lastLinesRendered() int {
+	if r.altScreenActive {
+		return r.altLinesRendered
+	}
+	return r.linesRendered
 }
 
 // render renders the frame to the internal buffer. The buffer will be

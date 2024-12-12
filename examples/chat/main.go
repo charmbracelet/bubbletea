@@ -15,6 +15,8 @@ import (
 	"github.com/charmbracelet/lipgloss/v2"
 )
 
+const gap = "\n\n"
+
 func main() {
 	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
@@ -68,28 +70,23 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport.SetWidth(msg.Width)
+		m.viewport.Width = msg.Width
 		m.textarea.SetWidth(msg.Width)
-		return m, nil
+		m.viewport.Height = msg.Height - m.textarea.Height() - lipgloss.Height(gap)
+
+		if len(m.messages) > 0 {
+			// Wrap content before setting it.
+			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width).Render(strings.Join(m.messages, "\n")))
+		}
+		m.viewport.GotoBottom()
 	case tea.KeyPressMsg:
-		switch msg.String() {
-		case "esc", "ctrl+c":
-			// Quit.
+		switch msg.Type {
+		case tea.KeyCtrlC, tea.KeyEsc:
 			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
-		case "enter":
-			v := m.textarea.Value()
-
-			if v == "" {
-				// Don't send empty messages.
-				return m, nil
-			}
-
-			// Simulate sending a message. In your application you'll want to
-			// also return a custom command to send the message off to
-			// a server.
-			m.messages = append(m.messages, m.senderStyle.Render("You: ")+v)
-			m.viewport.SetContent(strings.Join(m.messages, "\n"))
+		case tea.KeyEnter:
+			m.messages = append(m.messages, m.senderStyle.Render("You: ")+m.textarea.Value())
+			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width).Render(strings.Join(m.messages, "\n")))
 			m.textarea.Reset()
 			m.viewport.GotoBottom()
 			return m, nil
@@ -113,8 +110,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return fmt.Sprintf(
-		"%s\n\n%s",
+		"%s%s%s",
 		m.viewport.View(),
+		gap,
 		m.textarea.View(),
-	) + "\n\n"
+	)
 }

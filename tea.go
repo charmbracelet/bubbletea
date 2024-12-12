@@ -33,8 +33,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// ErrProgramKilled is returned by [Program.Run] when the program got killed.
+// ErrProgramKilled is returned by [Program.Run] when the program gets killed.
 var ErrProgramKilled = errors.New("program was killed")
+
+// ErrInterrupted is returned by [Program.Run] when the program get a SIGINT
+// signal, or when it receives a [InterruptMsg].
+var ErrInterrupted = errors.New("program was interrupted")
 
 // Msg contain data from the result of a IO operation. Msgs trigger the update
 // function and, henceforth, the UI.
@@ -231,8 +235,8 @@ func Quit() Msg {
 	return QuitMsg{}
 }
 
-// QuitMsg signals that the program should quit. You can send a QuitMsg with
-// Quit.
+// QuitMsg signals that the program should quit. You can send a [QuitMsg] with
+// [Quit].
 type QuitMsg struct{}
 
 // Suspend is a special command that tells the Bubble Tea program to suspend.
@@ -244,12 +248,27 @@ func Suspend() Msg {
 // This usually happens when ctrl+z is pressed on common programs, but since
 // bubbletea puts the terminal in raw mode, we need to handle it in a
 // per-program basis.
-// You can send this message with Suspend.
+//
+// You can send this message with [Suspend()].
 type SuspendMsg struct{}
 
 // ResumeMsg can be listen to to do something once a program is resumed back
 // from a suspend state.
 type ResumeMsg struct{}
+
+// InterruptMsg signals the program should suspend.
+// This usually happens when ctrl+c is pressed on common programs, but since
+// bubbletea puts the terminal in raw mode, we need to handle it in a
+// per-program basis.
+//
+// You can send this message with [Interrupt()].
+type InterruptMsg struct{}
+
+// Interrupt is a special command that tells the Bubble Tea program to
+// interrupt.
+func Interrupt() Msg {
+	return InterruptMsg{}
+}
 
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
@@ -341,9 +360,14 @@ func (p *Program) handleSignals() chan struct{} {
 			case <-p.ctx.Done():
 				return
 
-			case <-sig:
+			case s := <-sig:
 				if atomic.LoadUint32(&p.ignoreSignals) == 0 {
-					p.msgs <- QuitMsg{}
+					switch s {
+					case syscall.SIGINT:
+						p.msgs <- InterruptMsg{}
+					default:
+						p.msgs <- QuitMsg{}
+					}
 					return
 				}
 			}
@@ -430,6 +454,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			switch msg := msg.(type) {
 			case QuitMsg:
 				return model, nil
+
+			case InterruptMsg:
+				return model, ErrInterrupted
 
 			case SuspendMsg:
 				if suspendSupported {
@@ -824,10 +851,11 @@ func (p *Program) Run() (Model, error) {
 
 	// Run event loop, handle updates and draw.
 	model, err := p.eventLoop(model, cmds)
-	killed := p.ctx.Err() != nil
-	if killed {
+	killed := p.ctx.Err() != nil || err != nil
+	if killed && err == nil {
 		err = fmt.Errorf("%w: %s", ErrProgramKilled, p.ctx.Err())
-	} else {
+	}
+	if err == nil {
 		// Ensure we rendered the final state of the model.
 		p.renderer.render(model.View()) //nolint:errcheck
 	}
