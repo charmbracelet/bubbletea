@@ -70,23 +70,23 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width
+		m.viewport.SetWidth(msg.Width)
 		m.textarea.SetWidth(msg.Width)
-		m.viewport.Height = msg.Height - m.textarea.Height() - lipgloss.Height(gap)
+		m.viewport.SetHeight(msg.Height - m.textarea.Height() - lipgloss.Height(gap))
 
 		if len(m.messages) > 0 {
 			// Wrap content before setting it.
-			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width).Render(strings.Join(m.messages, "\n")))
+			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(strings.Join(m.messages, "\n")))
 		}
 		m.viewport.GotoBottom()
 	case tea.KeyPressMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
+		switch msg.String() {
+		case "ctrl+c", "esc":
 			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
-		case tea.KeyEnter:
+		case "enter":
 			m.messages = append(m.messages, m.senderStyle.Render("You: ")+m.textarea.Value())
-			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width).Render(strings.Join(m.messages, "\n")))
+			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width()).Render(strings.Join(m.messages, "\n")))
 			m.textarea.Reset()
 			m.viewport.GotoBottom()
 			return m, nil
@@ -102,10 +102,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.textarea, cmd = m.textarea.Update(msg)
 		return m, cmd
-
-	default:
-		return m, nil
 	}
+
+	return m, nil
 }
 
 func (m model) View() string {
