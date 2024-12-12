@@ -28,8 +28,8 @@ github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20241121164047-8448a9be480
 github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20241121164047-8448a9be4804/go.mod h1:F/6E/LGdH3eHCJf2rG8/O3CjlW8cZFL5YJCknJs1GkI=
 github.com/charmbracelet/x/ansi v0.6.0 h1:qOznutrb93gx9oMiGf7caF7bqqubh6YIM0SWKyA08pA=
 github.com/charmbracelet/x/ansi v0.6.0/go.mod h1:KBUFw1la39nl0dLl10l5ORDAqGXaeurTQmwyyVKse/Q=
-github.com/charmbracelet/x/cellbuf v0.0.7-0.20241210230033-45c33cb7b57a h1:imuGlkCuGqYU0Usj2uMGSwLMTlxn5zyJ5RACVTysqiI=
-github.com/charmbracelet/x/cellbuf v0.0.7-0.20241210230033-45c33cb7b57a/go.mod h1:EfpoBnbE9VTpF6D2jVg4YFDzL6Vzk+1O+LGTU6OMV7E=
+github.com/charmbracelet/x/cellbuf v0.0.7-0.20250107110353-48b574af22a5 h1:Ip9o3gP+Af0y3PdijNgsIb9NrEw5YQFUyzfPyUaty40=
+github.com/charmbracelet/x/cellbuf v0.0.7-0.20250107110353-48b574af22a5/go.mod h1:VXZSjC/QYH0t+9CG1qtcEx3XZubTDJb5ilWS6qJg4/0=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 h1:payRxjMjKgx2PaCWLZ4p3ro9y97+TVLZNaRZgJwSVDQ=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
 github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233 h1:2bTR/MtnJuq9RrCZSPwCOO34YSDByKL6nzXQMnsKK6U=
