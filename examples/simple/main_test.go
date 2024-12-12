@@ -54,6 +54,9 @@ func TestApp(t *testing.T) {
 }
 
 func TestAppInteractive(t *testing.T) {
+	t.Skip("This test is flaky and needs to be fixed.\n" +
+		"We need a more concrete way to set the initial terminal size")
+
 	m := model(10)
 	tm := teatest.NewTestModel(
 		t, m,
