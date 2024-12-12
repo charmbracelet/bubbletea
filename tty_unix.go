@@ -22,7 +22,7 @@ func (p *Program) initInput() (err error) {
 		}
 	}
 
-	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
+	if f, ok := p.output.Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
 	}
 
