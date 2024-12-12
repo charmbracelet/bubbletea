@@ -46,9 +46,16 @@ func (p *Program) restoreTerminalState() error {
 	if p.modes.IsSet(ansi.BracketedPasteMode) {
 		p.execute(ansi.ResetBracketedPasteMode)
 	}
-	if p.modes.IsSet(ansi.ButtonEventMouseMode) || p.modes.IsSet(ansi.AnyEventMouseMode) {
-		p.execute(ansi.ResetButtonEventMouseMode)
-		p.execute(ansi.ResetAnyEventMouseMode)
+
+	btnEvents := p.modes.IsSet(ansi.ButtonEventMouseMode)
+	allEvents := p.modes.IsSet(ansi.AnyEventMouseMode)
+	if btnEvents || allEvents {
+		if btnEvents {
+			p.execute(ansi.ResetButtonEventMouseMode)
+		}
+		if allEvents {
+			p.execute(ansi.ResetAnyEventMouseMode)
+		}
 		p.execute(ansi.ResetSgrExtMouseMode)
 	}
 	if p.keyboard.modifyOtherKeys != 0 {
