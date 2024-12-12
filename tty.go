@@ -38,10 +38,15 @@ func (p *Program) initTerminal() error {
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.modes[ansi.BracketedPasteMode] {
+	// We don't need to reset [ansi.AltScreenSaveCursorMode] and
+	// [ansi.TextCursorEnableMode] because they are automatically reset when we
+	// close the renderer. See [screenRenderer.close] and
+	// [cellbuf.Screen.Close].
+
+	if p.modes.IsSet(ansi.BracketedPasteMode) {
 		p.execute(ansi.ResetBracketedPasteMode)
 	}
-	if p.modes[ansi.ButtonEventMouseMode] || p.modes[ansi.AnyEventMouseMode] {
+	if p.modes.IsSet(ansi.ButtonEventMouseMode) || p.modes.IsSet(ansi.AnyEventMouseMode) {
 		p.execute(ansi.ResetButtonEventMouseMode)
 		p.execute(ansi.ResetAnyEventMouseMode)
 		p.execute(ansi.ResetSgrExtMouseMode)
@@ -52,10 +57,10 @@ func (p *Program) restoreTerminalState() error {
 	if p.keyboard.kittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
 	}
-	if p.modes[ansi.FocusEventMode] {
+	if p.modes.IsSet(ansi.FocusEventMode) {
 		p.execute(ansi.ResetFocusEventMode)
 	}
-	if p.modes[ansi.GraphemeClusteringMode] {
+	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
 		p.execute(ansi.ResetGraphemeClusteringMode)
 	}
 
