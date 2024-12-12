@@ -33,6 +33,8 @@ func newScreenRenderer(w io.Writer, term string) (s *screenRenderer) {
 
 // close implements renderer.
 func (s *screenRenderer) close() (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	return s.scr.Close()
 }
 
