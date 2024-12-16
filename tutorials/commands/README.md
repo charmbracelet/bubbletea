@@ -1,7 +1,7 @@
 Commands in Bubble Tea
 ======================
 
-This is the second tutorial for Bubble Tea covering commands, which deal with
+This is the second tutorial for Bubble Tea, covering commands, which deal with
 I/O. The tutorial assumes you have a working knowledge of Go and a decent
 understanding of [the first tutorial][basics].
 
