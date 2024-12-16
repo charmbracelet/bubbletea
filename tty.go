@@ -1,11 +1,15 @@
 package tea
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
+	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
 )
@@ -28,32 +32,55 @@ func (p *Program) initTerminal() error {
 		return nil
 	}
 
-	if err := p.initInput(); err != nil {
-		return err
-	}
-
-	p.renderer.hideCursor()
-	return nil
+	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.renderer != nil {
-		p.renderer.disableBracketedPaste()
-		p.renderer.showCursor()
-		p.disableMouse()
+	if p.modes[ansi.BracketedPasteMode] {
+		p.execute(ansi.ResetBracketedPasteMode)
+	}
+	if !p.modes[ansi.TextCursorEnableMode] {
+		p.execute(ansi.ShowCursor)
+	}
+	if p.modes[ansi.ButtonEventMouseMode] || p.modes[ansi.AnyEventMouseMode] {
+		p.execute(ansi.ResetButtonEventMouseMode)
+		p.execute(ansi.ResetAnyEventMouseMode)
+		p.execute(ansi.ResetSgrExtMouseMode)
+	}
+	if p.keyboard.modifyOtherKeys != 0 {
+		p.execute(ansi.DisableModifyOtherKeys)
+	}
+	if p.keyboard.kittyFlags != 0 {
+		p.execute(ansi.DisableKittyKeyboard)
+	}
+	if p.modes[ansi.FocusEventMode] {
+		p.execute(ansi.ResetFocusEventMode)
+	}
+	if p.modes[ansi.GraphemeClusteringMode] {
+		p.execute(ansi.ResetGraphemeClusteringMode)
+	}
+	if p.modes[ansi.AltScreenSaveCursorMode] {
+		p.execute(ansi.ResetAltScreenSaveCursorMode)
+		// cmd.exe and other terminals keep separate cursor states for the AltScreen
+		// and the main buffer. We have to explicitly reset the cursor visibility
+		// whenever we exit AltScreen.
+		p.execute(ansi.ShowCursor)
 
-		if p.renderer.reportFocus() {
-			p.renderer.disableReportFocus()
-		}
+		// give the terminal a moment to catch up
+		time.Sleep(time.Millisecond * 10) //nolint:gomnd
+	}
 
-		if p.renderer.altScreen() {
-			p.renderer.exitAltScreen()
-
-			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10) //nolint:gomnd
-		}
+	// Restore terminal colors.
+	if p.setBg != nil {
+		p.execute(ansi.ResetBackgroundColor)
+	}
+	if p.setFg != nil {
+		p.execute(ansi.ResetForegroundColor)
+	}
+	if p.setCc != nil {
+		p.execute(ansi.ResetCursorColor)
 	}
 
 	return p.restoreInput()
@@ -74,24 +101,58 @@ func (p *Program) restoreInput() error {
 	return nil
 }
 
-// initCancelReader (re)commences reading inputs.
-func (p *Program) initCancelReader() error {
-	var err error
-	p.cancelReader, err = newInputReader(p.input)
+// initInputReader (re)commences reading inputs.
+func (p *Program) initInputReader() error {
+	term := p.getenv("TERM")
+
+	// Initialize the input reader.
+	// This need to be done after the terminal has been initialized and set to
+	// raw mode.
+	// On Windows, this will change the console mode to enable mouse and window
+	// events.
+	var flags int // TODO: make configurable through environment variables?
+	drv, err := input.NewReader(p.input, term, flags)
 	if err != nil {
-		return fmt.Errorf("error creating cancelreader: %w", err)
+		return err
 	}
 
+	if p.traceInput {
+		drv.SetLogger(log.Default())
+	}
+	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
 	go p.readLoop()
 
 	return nil
 }
 
+func readInputs(ctx context.Context, msgs chan<- Msg, reader *input.Reader) error {
+	for {
+		events, err := reader.ReadEvents()
+		if err != nil {
+			return err
+		}
+
+		for _, msg := range events {
+			if m := translateInputEvent(msg); m != nil {
+				select {
+				case msgs <- m:
+				case <-ctx.Done():
+					err := ctx.Err()
+					if err != nil {
+						err = fmt.Errorf("found context error while reading input: %w", err)
+					}
+					return err
+				}
+			}
+		}
+	}
+}
+
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := readInputs(p.ctx, p.msgs, p.cancelReader)
+	err := readInputs(p.ctx, p.msgs, p.inputReader)
 	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 		select {
 		case <-p.ctx.Done():
@@ -129,8 +190,8 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	p.Send(WindowSizeMsg{
-		Width:  w,
-		Height: h,
-	})
+	var resizeMsg WindowSizeMsg
+	resizeMsg.Width = w
+	resizeMsg.Height = h
+	p.Send(resizeMsg)
 }
