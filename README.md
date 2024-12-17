@@ -342,7 +342,7 @@ There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/
 
 - Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 - Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
-- Cockroach Labs - [CockroachDB](https://github.com/cockroachdb/cockroach): a cloud-native, high-availability distributed SQL database
+- Cockroach Labs – [CockroachDB](https://github.com/cockroachdb/cockroach): a cloud-native, high-availability distributed SQL database
 - Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
 - NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary) from NVIDIA: a container validator
 - AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) from AWS: a tool for visualizing dynamic node usage within an EKS cluster
