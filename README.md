@@ -327,7 +327,7 @@ your program in another window.
 
 ## Bubble Tea in the Wild
 
-There are over 8k applications built with Bubble Tea! Here are a handful of ’em.
+There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/network/dependents) built with Bubble Tea! Here are a handful of ’em.
 
 ### Staff favourites
 
@@ -335,15 +335,19 @@ There are over 8k applications built with Bubble Tea! Here are a handful of ’e
 - [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
 - [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
 - [Tetrigo](https://github.com/Broderick-Westrope/tetrigo): Tetris in the terminal
+- [Signls](https://github.com/emprcl/signls): a generative midi sequencer designed for composition and live performance
+- [Superfile](https://github.com/yorukot/superfile): a super file manager
 
 ### In Industry
 
 - Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 - Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
+- Cockroach Labs - [CockroachDB](https://github.com/cockroachdb/cockroach): a cloud-native, high-availability distributed SQL database
 - Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
 - NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary) from NVIDIA: a container validator
 - AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) from AWS: a tool for visualizing dynamic node usage within an EKS cluster
 - MinIO – [mc](https://github.com/minio/mc) from Min.io: the official [MinIO](https://min.io) client
+- Ubuntu – [Authd](https://github.com/ubuntu/authd): an authentication daemon for cloud-based identity providers
 
 ### Charm stuff
 
