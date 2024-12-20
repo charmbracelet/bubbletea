@@ -55,6 +55,7 @@ func newTextarea() textarea.Model {
 	t.Styles.Focused.Placeholder = focusedPlaceholderStyle
 	t.Styles.Blurred.Placeholder = placeholderStyle
 	t.Styles.Focused.CursorLine = cursorLineStyle
+	t.Styles.Focused.CursorLineNumber = cursorLineStyle
 	t.Styles.Focused.Base = focusedBorderStyle
 	t.Styles.Blurred.Base = blurredBorderStyle
 	t.Styles.Focused.EndOfBuffer = endOfBufferStyle
