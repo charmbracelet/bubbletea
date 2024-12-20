@@ -12,7 +12,7 @@ import (
 type screenRenderer struct {
 	w             io.Writer
 	scr           *cellbuf.Screen
-	lastFrame     string
+	lastFrame     *string
 	term          string // the terminal type $TERM
 	width, height int
 	mu            sync.Mutex
@@ -48,11 +48,11 @@ func (s *screenRenderer) flush() error {
 
 // render implements renderer.
 func (s *screenRenderer) render(frame string) {
-	if frame == s.lastFrame {
+	if s.lastFrame != nil && frame == *s.lastFrame {
 		return
 	}
 
-	s.lastFrame = frame
+	s.lastFrame = &frame
 	if !s.altScreen {
 		// Inline mode resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -117,7 +117,7 @@ func (s *screenRenderer) exitAltScreen() {
 	s.altScreen = false
 	s.scr.ExitAltScreen()
 	s.scr.SetRelativeCursor(!s.altScreen)
-	s.scr.Resize(s.width, strings.Count(s.lastFrame, "\n")+1)
+	s.scr.Resize(s.width, strings.Count(*s.lastFrame, "\n")+1)
 	s.repaint()
 }
 
@@ -144,5 +144,5 @@ func (s *screenRenderer) moveTo(x, y int) {
 }
 
 func (s *screenRenderer) repaint() {
-	s.lastFrame = ""
+	s.lastFrame = nil
 }
