@@ -747,8 +747,6 @@ func (p *Program) Run() (Model, error) {
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
-
-	go p.Send(ColorProfileMsg{p.profile})
 	if p.renderer == nil {
 		// If no renderer is set use the ferocious one.
 		p.renderer = newScreenRenderer(p.output, p.getenv("TERM"))
@@ -759,8 +757,9 @@ func (p *Program) Run() (Model, error) {
 		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
 	}
 
-	// Set the color profile on the renderer.
+	// Set the color profile on the renderer and send it to the program.
 	p.renderer.setColorProfile(p.profile)
+	go p.Send(ColorProfileMsg{p.profile})
 
 	// Get the initial window size.
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
