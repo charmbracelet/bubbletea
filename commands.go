@@ -13,6 +13,27 @@ import (
 //		       return tea.Batch(someCommand, someOtherCommand)
 //	    }
 func Batch(cmds ...Cmd) Cmd {
+	return compactCmds[BatchMsg](cmds)
+}
+
+// BatchMsg is a message used to perform a bunch of commands concurrently with
+// no ordering guarantees. You can send a BatchMsg with Batch.
+type BatchMsg []Cmd
+
+// Sequence runs the given commands one at a time, in order. Contrast this with
+// Batch, which runs commands concurrently.
+func Sequence(cmds ...Cmd) Cmd {
+	return compactCmds[sequenceMsg](cmds)
+}
+
+// sequenceMsg is used internally to run the given commands in order.
+type sequenceMsg []Cmd
+
+// compactCmds ignores any nil commands in cmds, and returns the most direct
+// command possible. That is, considering the non-nil commands, if there are
+// none it returns nil, if there is exactly one it returns that command
+// directly, else it returns the non-nil commands as type T.
+func compactCmds[T ~[]Cmd](cmds []Cmd) Cmd {
 	var validCmds []Cmd //nolint:prealloc
 	for _, c := range cmds {
 		if c == nil {
@@ -27,25 +48,10 @@ func Batch(cmds ...Cmd) Cmd {
 		return validCmds[0]
 	default:
 		return func() Msg {
-			return BatchMsg(validCmds)
+			return T(validCmds)
 		}
 	}
 }
-
-// BatchMsg is a message used to perform a bunch of commands concurrently with
-// no ordering guarantees. You can send a BatchMsg with Batch.
-type BatchMsg []Cmd
-
-// Sequence runs the given commands one at a time, in order. Contrast this with
-// Batch, which runs commands concurrently.
-func Sequence(cmds ...Cmd) Cmd {
-	return func() Msg {
-		return sequenceMsg(cmds)
-	}
-}
-
-// sequenceMsg is used internally to run the given commands in order.
-type sequenceMsg []Cmd
 
 // Every is a command that ticks in sync with the system clock. So, if you
 // wanted to tick with the system clock every second, minute or hour you
