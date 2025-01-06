@@ -227,6 +227,9 @@ type Program struct {
 
 	// Initial window size. Mainly used for testing.
 	width, height int
+
+	// whether to use hard tabs to optimize cursor movements
+	useHardTabs bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -749,7 +752,7 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.renderer == nil {
 		// If no renderer is set use the ferocious one.
-		p.renderer = newScreenRenderer(p.output, p.getenv("TERM"))
+		p.renderer = newScreenRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
 	}
 
 	// Get the color profile and send it to the program.

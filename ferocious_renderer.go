@@ -19,14 +19,16 @@ type screenRenderer struct {
 	profile       colorprofile.Profile
 	altScreen     bool
 	cursorHidden  bool
+	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 }
 
 var _ renderer = &screenRenderer{}
 
-func newScreenRenderer(w io.Writer, term string) (s *screenRenderer) {
+func newScreenRenderer(w io.Writer, term string, hardTabs bool) (s *screenRenderer) {
 	s = new(screenRenderer)
 	s.w = w
 	s.term = term
+	s.hardTabs = hardTabs
 	s.reset()
 	return
 }
@@ -64,7 +66,9 @@ func (s *screenRenderer) render(frame string) {
 		s.scr.Resize(s.width, frameHeight)
 	}
 
-	cellbuf.Paint(s.scr, frame)
+	if ctx := s.scr.DefaultWindow(); ctx != nil {
+		ctx.SetContent(frame)
+	}
 }
 
 // reset implements renderer.
@@ -77,6 +81,7 @@ func (s *screenRenderer) reset() {
 		ShowCursor:     !s.cursorHidden,
 		Width:          s.width,
 		Height:         s.height,
+		HardTabs:       s.hardTabs,
 	})
 }
 
