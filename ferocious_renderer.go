@@ -100,6 +100,8 @@ func (s *screenRenderer) resize(w, h int) {
 		// width. See [screenRenderer.render] for more details.
 		s.scr.Resize(s.width, s.height)
 	}
+
+	s.repaint()
 }
 
 // clearScreen implements renderer.
