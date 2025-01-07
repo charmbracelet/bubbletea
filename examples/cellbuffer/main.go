@@ -156,7 +156,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.cells.init(msg.Width, msg.Height)
 		return m, nil
-	case tea.MouseClickMsg:
+	case tea.MouseMsg:
+		switch msg.(type) {
+		case tea.MouseClickMsg, tea.MouseMotionMsg:
+		default:
+			break
+		}
 		if !m.cells.ready() {
 			return m, nil
 		}
