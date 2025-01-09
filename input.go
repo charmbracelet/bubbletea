@@ -50,6 +50,14 @@ func translateInputEvent(e input.Event) Msg {
 		return CapabilityMsg(e)
 	case input.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
+	case input.KittyEnhancementsEvent:
+		return KeyboardEnhancementsMsg{
+			KittyFlags: int(e),
+		}
+	case input.ModifyOtherKeysEvent:
+		return KeyboardEnhancementsMsg{
+			ModifyOtherKeys: int(e),
+		}
 	}
 	return nil
 }
