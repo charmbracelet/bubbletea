@@ -49,10 +49,10 @@ func (p *Program) restoreTerminalState() error {
 		p.execute(ansi.ResetAnyEventMouseMode)
 		p.execute(ansi.ResetSgrExtMouseMode)
 	}
-	if p.keyboard.modifyOtherKeys != 0 {
+	if p.activeEnhancements.ModifyOtherKeys != 0 {
 		p.execute(ansi.DisableModifyOtherKeys)
 	}
-	if p.keyboard.kittyFlags != 0 {
+	if p.activeEnhancements.KittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
 	}
 	if p.modes[ansi.FocusEventMode] {

@@ -87,13 +87,13 @@ func TestClearMsg(t *testing.T) {
 		// Windows supports enhanced keyboard features through the Windows API, not through ANSI sequences.
 		tests = append(tests, test{
 			name:     "kitty_start",
-			cmds:     []Cmd{DisableKeyboardEnhancements, EnableKeyboardEnhancements(WithKeyReleases)},
+			cmds:     []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
 			expected: "\x1b[?25l\x1b[?2004h\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
 		})
 	} else {
 		tests = append(tests, test{
 			name:     "kitty_start",
-			cmds:     []Cmd{DisableKeyboardEnhancements, EnableKeyboardEnhancements(WithKeyReleases)},
+			cmds:     []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
 			expected: "\x1b[?25l\x1b[?2004h\x1b[>4;1m\x1b[>3u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[>4;0m\x1b[>0u",
 		})
 	}

@@ -245,14 +245,14 @@ func WithReportFocus() ProgramOption {
 //
 // This is not supported on all terminals. On Windows, these features are
 // enabled by default.
-func WithKeyboardEnhancements(enhancements ...KeyboardEnhancement) ProgramOption {
-	var ke keyboardEnhancements
+func WithKeyboardEnhancements(enhancements ...KeyboardEnhancementOption) ProgramOption {
+	var ke KeyboardEnhancements
 	for _, e := range append(enhancements, withKeyDisambiguation) {
 		e(&ke)
 	}
 	return func(p *Program) {
 		p.startupOptions |= withKeyboardEnhancements
-		p.keyboard = ke
+		p.requestedEnhancements = ke
 	}
 }
 

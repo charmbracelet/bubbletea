@@ -219,7 +219,15 @@ type Program struct {
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
 
-	keyboard keyboardEnhancements
+	// stores the requested keyboard enhancements.
+	requestedEnhancements KeyboardEnhancements
+	// activeEnhancements stores the active keyboard enhancements read from the
+	// terminal.
+	activeEnhancements KeyboardEnhancements
+
+	// keyboardc is used to signal that the keyboard enhancements have been
+	// read from the terminal.
+	keyboardc chan struct{}
 
 	// When a program is suspended, the terminal state is saved and the program
 	// is paused. This saves the terminal colors state so they can be restored
@@ -278,6 +286,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		rendererDone: make(chan struct{}),
 		modes:        make(map[ansi.DECMode]bool),
 		exp:          experimentalOptions{},
+		keyboardc:    make(chan struct{}),
 	}
 
 	// Apply all options to the program.
@@ -546,12 +555,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(ansi.RequestCursorColor)
 
 			case KeyboardEnhancementsMsg:
-				if p.keyboard.kittyFlags != msg.kittyFlags {
-					p.keyboard.kittyFlags |= msg.kittyFlags
-				}
-				if p.keyboard.modifyOtherKeys == 0 || msg.modifyOtherKeys > p.keyboard.modifyOtherKeys {
-					p.keyboard.modifyOtherKeys = msg.modifyOtherKeys
-				}
+				p.activeEnhancements.KittyFlags = msg.KittyFlags
+				p.activeEnhancements.ModifyOtherKeys = msg.ModifyOtherKeys
+
+				go func() {
+					// Signal that we've read the keyboard enhancements.
+					p.keyboardc <- struct{}{}
+				}()
 
 			case enableKeyboardEnhancementsMsg:
 				if runtime.GOOS == "windows" {
@@ -560,22 +570,21 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					break
 				}
 
-				var ke keyboardEnhancements
+				var ke KeyboardEnhancements
 				for _, e := range msg {
 					e(&ke)
 				}
 
-				p.keyboard.kittyFlags |= ke.kittyFlags
-				if ke.modifyOtherKeys > p.keyboard.modifyOtherKeys {
-					p.keyboard.modifyOtherKeys = ke.modifyOtherKeys
+				p.requestedEnhancements.KittyFlags |= ke.KittyFlags
+				if ke.ModifyOtherKeys > p.requestedEnhancements.ModifyOtherKeys {
+					p.requestedEnhancements.ModifyOtherKeys = ke.ModifyOtherKeys
 				}
 
-				if p.keyboard.modifyOtherKeys > 0 {
-					p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
-				}
-				if p.keyboard.kittyFlags > 0 {
-					p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
-				}
+				p.requestKeyboardEnhancements()
+
+				// Ensure we send a message so that terminals that don't support the
+				// requested features can disable them.
+				go p.sendKeyboardEnhancementsMsg()
 
 			case disableKeyboardEnhancementsMsg:
 				if runtime.GOOS == "windows" {
@@ -584,13 +593,15 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					break
 				}
 
-				if p.keyboard.modifyOtherKeys > 0 {
+				if p.activeEnhancements.ModifyOtherKeys > 0 {
 					p.execute(ansi.DisableModifyOtherKeys)
-					p.keyboard.modifyOtherKeys = 0
+					p.activeEnhancements.ModifyOtherKeys = 0
+					p.requestedEnhancements.ModifyOtherKeys = 0
 				}
-				if p.keyboard.kittyFlags > 0 {
+				if p.activeEnhancements.KittyFlags > 0 {
 					p.execute(ansi.DisableKittyKeyboard)
-					p.keyboard.kittyFlags = 0
+					p.activeEnhancements.KittyFlags = 0
+					p.requestedEnhancements.KittyFlags = 0
 				}
 
 			case execMsg:
@@ -809,15 +820,11 @@ func (p *Program) Run() (Model, error) {
 	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
 		// We use the Windows Console API which supports keyboard
 		// enhancements.
+		p.requestKeyboardEnhancements()
 
-		if p.keyboard.modifyOtherKeys > 0 {
-			p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
-			p.execute(ansi.RequestModifyOtherKeys)
-		}
-		if p.keyboard.kittyFlags > 0 {
-			p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
-			p.execute(ansi.RequestKittyKeyboard)
-		}
+		// Ensure we send a message so that terminals that don't support the
+		// requested features can disable them.
+		go p.sendKeyboardEnhancementsMsg()
 	}
 
 	// Start the renderer.
@@ -994,11 +1001,11 @@ func (p *Program) RestoreTerminal() error {
 	if p.modes[ansi.BracketedPasteMode] {
 		p.execute(ansi.SetBracketedPasteMode)
 	}
-	if p.keyboard.modifyOtherKeys != 0 {
-		p.execute(ansi.ModifyOtherKeys(p.keyboard.modifyOtherKeys))
+	if p.activeEnhancements.ModifyOtherKeys != 0 {
+		p.execute(ansi.ModifyOtherKeys(p.activeEnhancements.ModifyOtherKeys))
 	}
-	if p.keyboard.kittyFlags != 0 {
-		p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
+	if p.activeEnhancements.KittyFlags != 0 {
+		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.KittyFlags))
 	}
 	if p.modes[ansi.FocusEventMode] {
 		p.execute(ansi.SetFocusEventMode)
@@ -1108,4 +1115,37 @@ func (p *Program) stopRenderer(kill bool) {
 	}
 
 	p.renderer.close() //nolint:errcheck
+}
+
+// sendKeyboardEnhancementsMsg sends a message with the active keyboard
+// enhancements to the program after a short timeout, or immediately if the
+// keyboard enhancements have been read from the terminal.
+func (p *Program) sendKeyboardEnhancementsMsg() {
+	if runtime.GOOS == "windows" {
+		// We use the Windows Console API which supports keyboard enhancements.
+		p.Send(KeyboardEnhancementsMsg{})
+		return
+	}
+
+	// Initial keyboard enhancements message. Ensure we send a message so that
+	// terminals that don't support the requested features can disable them.
+	const timeout = 100 * time.Millisecond
+	select {
+	case <-time.After(timeout):
+		p.Send(KeyboardEnhancementsMsg{})
+	case <-p.keyboardc:
+	}
+}
+
+// requestKeyboardEnhancements tries to enable keyboard enhancements and read
+// the active keyboard enhancements from the terminal.
+func (p *Program) requestKeyboardEnhancements() {
+	if p.requestedEnhancements.ModifyOtherKeys > 0 {
+		p.execute(ansi.ModifyOtherKeys(p.requestedEnhancements.ModifyOtherKeys))
+		p.execute(ansi.RequestModifyOtherKeys)
+	}
+	if p.requestedEnhancements.KittyFlags > 0 {
+		p.execute(ansi.PushKittyKeyboard(p.requestedEnhancements.KittyFlags))
+		p.execute(ansi.RequestKittyKeyboard)
+	}
 }
