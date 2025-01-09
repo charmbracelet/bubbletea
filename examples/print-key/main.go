@@ -15,7 +15,10 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyboardEnhancementsMsg:
-		return m, tea.Printf("Keyboard enhancements enabled! ReleaseKeys: %v\n", msg.SupportsKeyReleases())
+		return m, tea.Printf("Keyboard enhancements: Disambiguation: %v, ReleaseKeys: %v, Uniform keys: %v\n",
+			msg.SupportsKeyDisambiguation(),
+			msg.SupportsKeyReleases(),
+			msg.SupportsUniformKeyLayout())
 	case tea.KeyMsg:
 		key := msg.Key()
 		switch msg := msg.(type) {
