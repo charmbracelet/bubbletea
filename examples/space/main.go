@@ -12,6 +12,11 @@ import (
 	"github.com/charmbracelet/lipgloss/v2"
 )
 
+// An example to show the FPS count of a moving space-like background.
+//
+// This was ported from the talented Orhun Parmaksız (@orhun)'s space example
+// from his blog post "Why stdout is faster than stderr?".
+
 type fps struct {
 	frameCount  int
 	lastInstant time.Time
