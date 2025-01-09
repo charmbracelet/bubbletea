@@ -555,8 +555,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(ansi.RequestCursorColor)
 
 			case KeyboardEnhancementsMsg:
-				p.activeEnhancements.KittyFlags = msg.KittyFlags
-				p.activeEnhancements.ModifyOtherKeys = msg.ModifyOtherKeys
+				p.activeEnhancements.kittyFlags = msg.kittyFlags
+				p.activeEnhancements.modifyOtherKeys = msg.modifyOtherKeys
 
 				go func() {
 					// Signal that we've read the keyboard enhancements.
@@ -575,9 +575,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					e(&ke)
 				}
 
-				p.requestedEnhancements.KittyFlags |= ke.KittyFlags
-				if ke.ModifyOtherKeys > p.requestedEnhancements.ModifyOtherKeys {
-					p.requestedEnhancements.ModifyOtherKeys = ke.ModifyOtherKeys
+				p.requestedEnhancements.kittyFlags |= ke.kittyFlags
+				if ke.modifyOtherKeys > p.requestedEnhancements.modifyOtherKeys {
+					p.requestedEnhancements.modifyOtherKeys = ke.modifyOtherKeys
 				}
 
 				p.requestKeyboardEnhancements()
@@ -593,15 +593,15 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					break
 				}
 
-				if p.activeEnhancements.ModifyOtherKeys > 0 {
+				if p.activeEnhancements.modifyOtherKeys > 0 {
 					p.execute(ansi.DisableModifyOtherKeys)
-					p.activeEnhancements.ModifyOtherKeys = 0
-					p.requestedEnhancements.ModifyOtherKeys = 0
+					p.activeEnhancements.modifyOtherKeys = 0
+					p.requestedEnhancements.modifyOtherKeys = 0
 				}
-				if p.activeEnhancements.KittyFlags > 0 {
+				if p.activeEnhancements.kittyFlags > 0 {
 					p.execute(ansi.DisableKittyKeyboard)
-					p.activeEnhancements.KittyFlags = 0
-					p.requestedEnhancements.KittyFlags = 0
+					p.activeEnhancements.kittyFlags = 0
+					p.requestedEnhancements.kittyFlags = 0
 				}
 
 			case execMsg:
@@ -1001,11 +1001,11 @@ func (p *Program) RestoreTerminal() error {
 	if p.modes[ansi.BracketedPasteMode] {
 		p.execute(ansi.SetBracketedPasteMode)
 	}
-	if p.activeEnhancements.ModifyOtherKeys != 0 {
-		p.execute(ansi.ModifyOtherKeys(p.activeEnhancements.ModifyOtherKeys))
+	if p.activeEnhancements.modifyOtherKeys != 0 {
+		p.execute(ansi.ModifyOtherKeys(p.activeEnhancements.modifyOtherKeys))
 	}
-	if p.activeEnhancements.KittyFlags != 0 {
-		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.KittyFlags))
+	if p.activeEnhancements.kittyFlags != 0 {
+		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.kittyFlags))
 	}
 	if p.modes[ansi.FocusEventMode] {
 		p.execute(ansi.SetFocusEventMode)
@@ -1140,12 +1140,12 @@ func (p *Program) sendKeyboardEnhancementsMsg() {
 // requestKeyboardEnhancements tries to enable keyboard enhancements and read
 // the active keyboard enhancements from the terminal.
 func (p *Program) requestKeyboardEnhancements() {
-	if p.requestedEnhancements.ModifyOtherKeys > 0 {
-		p.execute(ansi.ModifyOtherKeys(p.requestedEnhancements.ModifyOtherKeys))
+	if p.requestedEnhancements.modifyOtherKeys > 0 {
+		p.execute(ansi.ModifyOtherKeys(p.requestedEnhancements.modifyOtherKeys))
 		p.execute(ansi.RequestModifyOtherKeys)
 	}
-	if p.requestedEnhancements.KittyFlags > 0 {
-		p.execute(ansi.PushKittyKeyboard(p.requestedEnhancements.KittyFlags))
+	if p.requestedEnhancements.kittyFlags > 0 {
+		p.execute(ansi.PushKittyKeyboard(p.requestedEnhancements.kittyFlags))
 		p.execute(ansi.RequestKittyKeyboard)
 	}
 }

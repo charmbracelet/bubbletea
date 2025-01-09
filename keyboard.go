@@ -13,29 +13,29 @@ type KeyboardEnhancements struct {
 	// enable different keyboard features.
 	//
 	//  - 0: disable all features
-	//  - 1: [ansi.DisambiguateEscapeCodes] Disambiguate escape codes such as
+	//  - 1: [ansi.KittyDisambiguateEscapeCodes] Disambiguate escape codes such as
 	//  ctrl+i and tab, ctrl+[ and escape, ctrl+space and ctrl+@, etc.
-	//  - 2: [ansi.ReportEventTypes] Report event types such as key presses,
+	//  - 2: [ansi.KittyReportEventTypes] Report event types such as key presses,
 	//  releases, and repeat events.
-	//  - 4: [ansi.ReportAlternateKeys] Report keypresses as though they were
+	//  - 4: [ansi.KittyReportAlternateKeys] Report keypresses as though they were
 	//  on a PC-101 ANSI US keyboard layout regardless of what they layout
 	//  actually is. Also include information about whether or not is enabled,
-	//  - 8: [ansi.ReportAllKeysAsEscapeCodes] Report all key events as escape
+	//  - 8: [ansi.KittyReportAllKeysAsEscapeCodes] Report all key events as escape
 	//  codes. This includes simple printable keys like "a" and other Unicode
 	//  characters.
-	//  - 16: [ansi.ReportAssociatedText] Report associated text with key
+	//  - 16: [ansi.KittyReportAssociatedKeys] Report associated text with key
 	//  events. This encodes multi-rune key events as escape codes instead of
 	//  individual runes.
 	//
-	KittyFlags int
+	kittyFlags int
 
-	// Xterm ModifyOtherKeys feature.
+	// Xterm modifyOtherKeys feature.
 	//
-	//  - Mode 0 disables ModifyOtherKeys.
+	//  - Mode 0 disables modifyOtherKeys.
 	//  - Mode 1 reports ambiguous keys as escape codes. This is similar to
 	//  [ansi.KittyDisambiguateEscapeCodes] but uses XTerm escape codes.
 	//  - Mode 2 reports all key as escape codes including printable keys like "a" and "shift+b".
-	ModifyOtherKeys int
+	modifyOtherKeys int
 }
 
 // KeyboardEnhancementOption is a type that represents a keyboard enhancement.
@@ -47,7 +47,7 @@ type KeyboardEnhancementOption func(k *KeyboardEnhancements)
 //
 // Note that not all terminals support this feature.
 func WithKeyReleases(k *KeyboardEnhancements) {
-	k.KittyFlags |= ansi.KittyReportEventTypes
+	k.kittyFlags |= ansi.KittyReportEventTypes
 }
 
 // WithUniformKeyLayout enables support for reporting key events as though they
@@ -58,7 +58,7 @@ func WithKeyReleases(k *KeyboardEnhancements) {
 //
 // Note that not all terminals support this feature.
 func WithUniformKeyLayout(k *KeyboardEnhancements) {
-	k.KittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
+	k.kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
 }
 
 // withKeyDisambiguation enables support for disambiguating keyboard escape
@@ -66,9 +66,9 @@ func WithUniformKeyLayout(k *KeyboardEnhancements) {
 // "Disambiguate escape codes" progressive enhancement feature or the XTerm
 // modifyOtherKeys mode 1 feature to report ambiguous keys as escape codes.
 func withKeyDisambiguation(k *KeyboardEnhancements) {
-	k.KittyFlags |= ansi.KittyDisambiguateEscapeCodes
-	if k.ModifyOtherKeys < 1 {
-		k.ModifyOtherKeys = 1
+	k.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
+	if k.modifyOtherKeys < 1 {
+		k.modifyOtherKeys = 1
 	}
 }
 
@@ -114,7 +114,7 @@ func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
 		// We use Windows Console API which supports reporting disambiguous keys.
 		return true
 	}
-	return k.KittyFlags&ansi.KittyDisambiguateEscapeCodes != 0 || k.ModifyOtherKeys >= 1
+	return k.kittyFlags&ansi.KittyDisambiguateEscapeCodes != 0 || k.modifyOtherKeys >= 1
 }
 
 // SupportsKeyReleases returns whether the terminal supports key release
@@ -124,7 +124,7 @@ func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
 		// We use Windows Console API which supports key release events.
 		return true
 	}
-	return k.KittyFlags&ansi.KittyReportEventTypes != 0
+	return k.kittyFlags&ansi.KittyReportEventTypes != 0
 }
 
 // SupportsUniformKeyLayout returns whether the terminal supports reporting key
@@ -136,6 +136,6 @@ func (k KeyboardEnhancementsMsg) SupportsUniformKeyLayout() bool {
 		return true
 	}
 	return k.SupportsKeyDisambiguation() &&
-		k.KittyFlags&ansi.KittyReportAlternateKeys != 0 &&
-		k.KittyFlags&ansi.KittyReportAllKeysAsEscapeCodes != 0
+		k.kittyFlags&ansi.KittyReportAlternateKeys != 0 &&
+		k.kittyFlags&ansi.KittyReportAllKeysAsEscapeCodes != 0
 }

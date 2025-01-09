@@ -52,11 +52,11 @@ func translateInputEvent(e input.Event) Msg {
 		return TerminalVersionMsg(e)
 	case input.KittyEnhancementsEvent:
 		return KeyboardEnhancementsMsg{
-			KittyFlags: int(e),
+			kittyFlags: int(e),
 		}
 	case input.ModifyOtherKeysEvent:
 		return KeyboardEnhancementsMsg{
-			ModifyOtherKeys: int(e),
+			modifyOtherKeys: int(e),
 		}
 	}
 	return nil
