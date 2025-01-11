@@ -1,6 +1,12 @@
 package tea
 
-import "strings"
+import (
+	"strings"
+)
+
+// environ is a slice of strings that represents the environment variables of
+// the program.
+type environ []string
 
 // getenv is a function that returns the value of the environment variable named
 // by the key. If the variable is not present in the environment, the value
@@ -8,11 +14,47 @@ import "strings"
 // This function traverses the environment variables in reverse order, so that
 // the last value set for the key is the one returned.
 func (p *Program) getenv(key string) (v string) {
-	for i := len(p.environ) - 1; i >= 0; i-- {
-		if strings.HasPrefix(p.environ[i], key+"=") {
-			v = strings.TrimPrefix(p.environ[i], key+"=")
+	return p.environ.Getenv(key)
+}
+
+// Getenv returns the value of the environment variable named by the key. If
+// the variable is not present in the environment, the value returned will be
+// the empty string.
+func (p environ) Getenv(key string) (v string) {
+	v, _ = p.LookupEnv(key)
+	return
+}
+
+// LookupEnv retrieves the value of the environment variable named by the key.
+// If the variable is present in the environment the value (which may be empty)
+// is returned and the boolean is true. Otherwise the returned value will be
+// empty and the boolean will be false.
+func (p environ) LookupEnv(key string) (s string, v bool) {
+	for i := len(p) - 1; i >= 0; i-- {
+		if strings.HasPrefix(p[i], key+"=") {
+			s = strings.TrimPrefix(p[i], key+"=")
+			v = true
 			break
 		}
 	}
 	return
+}
+
+// EnvMsg is a message that represents the environment variables of the
+// program. This message is sent to the program when it starts.
+type EnvMsg environ
+
+// Getenv returns the value of the environment variable named by the key. If
+// the variable is not present in the environment, the value returned will be
+// the empty string.
+func (msg EnvMsg) Getenv(key string) (v string) {
+	return environ(msg).Getenv(key)
+}
+
+// LookupEnv retrieves the value of the environment variable named by the key.
+// If the variable is present in the environment the value (which may be empty)
+// is returned and the boolean is true. Otherwise the returned value will be
+// empty and the boolean will be false.
+func (msg EnvMsg) LookupEnv(key string) (s string, v bool) {
+	return environ(msg).LookupEnv(key)
 }

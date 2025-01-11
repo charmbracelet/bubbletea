@@ -188,7 +188,7 @@ type Program struct {
 	renderer            renderer
 
 	// the environment variables for the program, defaults to os.Environ().
-	environ []string
+	environ environ
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
@@ -779,6 +779,9 @@ func (p *Program) Run() (Model, error) {
 	// Send the initial size to the program.
 	go p.Send(resizeMsg)
 	p.renderer.resize(resizeMsg.Width, resizeMsg.Height)
+
+	// Send the environment variables used by the program.
+	go p.Send(EnvMsg(p.environ))
 
 	// Init the input reader and initial model.
 	model := p.initialModel
