@@ -94,7 +94,7 @@ func TestClearMsg(t *testing.T) {
 		tests = append(tests, test{
 			name:     "kitty_start",
 			cmds:     []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[>4;1m\x1b[>3u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[>4;0m\x1b[>0u",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[>4;1m\x1b[?4m\x1b[>3u\x1b[?u\rsuccess\r\n\x1b[D\x1b[2K\r\x1b[?2004l\x1b[?25h",
 		})
 	}
 
