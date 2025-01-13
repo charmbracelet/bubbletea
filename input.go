@@ -51,5 +51,5 @@ func translateInputEvent(e input.Event) Msg {
 	case input.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
 	}
-	return nil
+	return e
 }
