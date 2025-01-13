@@ -29,7 +29,7 @@ func TestClearMsg(t *testing.T) {
 		{
 			name:     "altscreen_autoexit",
 			cmds:     []Cmd{EnterAltScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[H\x1b[?25l\rsuccess\r\n\x1b[2;H\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1049l\x1b[?25h",
+			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[H\x1b[?25l\x1b[H\rsuccess\r\n\x1b[2;H\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1049l\x1b[?25h",
 		},
 		{
 			name:     "mouse_cellmotion",
