@@ -1,7 +1,6 @@
 package tea
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -126,19 +125,19 @@ func (p *Program) initInputReader() error {
 	return nil
 }
 
-func readInputs(ctx context.Context, msgs chan<- Msg, reader *input.Reader) error {
+func (p *Program) readInputs() error {
 	for {
-		events, err := reader.ReadEvents()
+		events, err := p.inputReader.ReadEvents()
 		if err != nil {
 			return err
 		}
 
 		for _, msg := range events {
-			if m := translateInputEvent(msg); m != nil {
+			if m := p.translateInputEvent(msg); m != nil {
 				select {
-				case msgs <- m:
-				case <-ctx.Done():
-					err := ctx.Err()
+				case p.msgs <- m:
+				case <-p.ctx.Done():
+					err := p.ctx.Err()
 					if err != nil {
 						err = fmt.Errorf("found context error while reading input: %w", err)
 					}
@@ -152,7 +151,7 @@ func readInputs(ctx context.Context, msgs chan<- Msg, reader *input.Reader) erro
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := readInputs(p.ctx, p.msgs, p.inputReader)
+	err := p.readInputs()
 	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 		select {
 		case <-p.ctx.Done():
