@@ -20,7 +20,6 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -201,7 +200,7 @@ type Program struct {
 	readLoopDone          chan struct{}
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
-	modes         map[ansi.DECMode]bool
+	modes         ansi.Modes
 	ignoreSignals uint32
 
 	filter func(Model, Msg) Msg
@@ -226,8 +225,11 @@ type Program struct {
 	// when the program is resumed.
 	setBg, setFg, setCc color.Color
 
-	// exp stores program experimental features.
-	exp experimentalOptions
+	// Initial window size. Mainly used for testing.
+	width, height int
+
+	// whether to use hard tabs to optimize cursor movements
+	useHardTabs bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -276,8 +278,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
-		modes:        make(map[ansi.DECMode]bool),
-		exp:          experimentalOptions{},
+		modes:        ansi.Modes{},
 	}
 
 	// Apply all options to the program.
@@ -325,12 +326,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 				p.traceInput = true
 			}
 		}
-	}
-
-	// Experimental features. Right now, we only have one experimental feature
-	// to use the new cell buffer as a default renderer.
-	if exp := p.getenv("TEA_EXPERIMENTAL"); exp != "" {
-		p.exp = strings.Split(exp, ",")
 	}
 
 	return p
@@ -479,32 +474,46 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				switch msg.Mode {
 				case ansi.GraphemeClusteringMode:
 					// 1 means mode is set (see DECRPM).
-					p.modes[ansi.GraphemeClusteringMode] = msg.Value == 1 || msg.Value == 3
+					p.modes[ansi.GraphemeClusteringMode] = msg.Value
 				}
 
 			case enableModeMsg:
-				mode := ansi.DECMode(msg)
-				if on, ok := p.modes[mode]; ok && on {
+				mode := p.modes.Get(msg.Mode)
+				if mode.IsSet() {
 					break
 				}
 
-				p.execute(fmt.Sprintf("\x1b[?%dh", mode.Mode()))
-				p.modes[mode] = true
-				switch mode {
+				p.modes.Set(msg.Mode)
+
+				switch msg.Mode {
+				case ansi.AltScreenSaveCursorMode:
+					p.renderer.enterAltScreen()
+				case ansi.TextCursorEnableMode:
+					p.renderer.showCursor()
 				case ansi.GraphemeClusteringMode:
 					// We store the state of grapheme clustering after we enable it
 					// and get a response in the eventLoop.
-					p.execute(ansi.RequestGraphemeClusteringMode)
+					p.execute(ansi.SetGraphemeClusteringMode + ansi.RequestGraphemeClusteringMode)
+				default:
+					p.execute(ansi.SetMode(msg.Mode))
 				}
 
 			case disableModeMsg:
-				mode := ansi.DECMode(msg)
-				if on, ok := p.modes[mode]; ok && !on {
+				mode := p.modes.Get(msg.Mode)
+				if mode.IsReset() {
 					break
 				}
 
-				p.execute(fmt.Sprintf("\x1b[?%dl", mode))
-				p.modes[mode] = false
+				p.modes.Reset(msg.Mode)
+
+				switch msg.Mode {
+				case ansi.AltScreenSaveCursorMode:
+					p.renderer.exitAltScreen()
+				case ansi.TextCursorEnableMode:
+					p.renderer.hideCursor()
+				default:
+					p.execute(ansi.ResetMode(msg.Mode))
+				}
 
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
@@ -644,15 +653,30 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case setWindowTitleMsg:
 				p.execute(ansi.SetWindowTitle(string(msg)))
 
+			case WindowSizeMsg:
+				p.renderer.resize(msg.Width, msg.Height)
+
 			case windowSizeMsg:
 				go p.checkResize()
 
 			case requestCursorPosMsg:
 				p.execute(ansi.RequestCursorPosition)
-			}
 
-			// Process internal messages for the renderer.
-			p.renderer.update(msg)
+			case setCursorPosMsg:
+				p.renderer.moveTo(msg.X, msg.Y)
+
+			case printLineMessage:
+				p.renderer.insertAbove(msg.messageBody)
+
+			case repaintMsg:
+				p.renderer.repaint()
+
+			case clearScreenMsg:
+				p.renderer.clearScreen()
+
+			case ColorProfileMsg:
+				p.renderer.setColorProfile(msg.Profile)
+			}
 
 			var cmd Cmd
 			model, cmd = model.Update(msg)  // run update
@@ -726,24 +750,22 @@ func (p *Program) Run() (Model, error) {
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
+	if p.renderer == nil {
+		// If no renderer is set use the ferocious one.
+		p.renderer = newScreenRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
+	}
 
 	// Get the color profile and send it to the program.
 	if !p.startupOptions.has(withColorProfile) {
 		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
 	}
 
+	// Set the color profile on the renderer and send it to the program.
+	p.renderer.setColorProfile(p.profile)
 	go p.Send(ColorProfileMsg{p.profile})
-	if p.renderer == nil {
-		// If no renderer is set use the ferocious one.
-		if p.startupOptions&withFerociousRenderer != 0 || p.exp.has(experimentalFerocious) {
-			p.renderer = newFerociousRenderer(p.profile)
-		} else {
-			p.renderer = newStandardRenderer(p.profile)
-		}
-	}
 
-	// Set the renderer output.
-	p.renderer.update(rendererWriter{p.output})
+	// Get the initial window size.
+	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
@@ -751,12 +773,12 @@ func (p *Program) Run() (Model, error) {
 			return p.initialModel, err
 		}
 
-		// Send the initial size to the program.
-		var resizeMsg WindowSizeMsg
-		resizeMsg.Width = w
-		resizeMsg.Height = h
-		go p.Send(resizeMsg)
+		resizeMsg.Width, resizeMsg.Height = w, h
 	}
+
+	// Send the initial size to the program.
+	go p.Send(resizeMsg)
+	p.renderer.resize(resizeMsg.Width, resizeMsg.Height)
 
 	// Init the input reader and initial model.
 	model := p.initialModel
@@ -766,23 +788,24 @@ func (p *Program) Run() (Model, error) {
 		}
 	}
 
-	// Hide the cursor before starting the renderer.
-	p.modes[ansi.TextCursorEnableMode] = false
-	p.execute(ansi.HideCursor)
-	p.renderer.update(disableMode(ansi.TextCursorEnableMode))
+	// Hide the cursor before starting the renderer. This is handled by the
+	// renderer so we don't need to write the sequence here.
+	p.modes.Reset(ansi.TextCursorEnableMode)
+	p.renderer.hideCursor()
 
 	// Honor program startup options.
 	if p.startupTitle != "" {
 		p.execute(ansi.SetWindowTitle(p.startupTitle))
 	}
 	if p.startupOptions&withAltScreen != 0 {
-		p.execute(ansi.SetAltScreenSaveCursorMode)
-		p.modes[ansi.AltScreenSaveCursorMode] = true
-		p.renderer.update(enableMode(ansi.AltScreenSaveCursorMode))
+		// Enter alternate screen mode. This is handled by the renderer so we
+		// don't need to write the sequence here.
+		p.modes.Set(ansi.AltScreenSaveCursorMode)
+		p.renderer.enterAltScreen()
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.SetBracketedPasteMode)
-		p.modes[ansi.BracketedPasteMode] = true
+		p.modes.Set(ansi.BracketedPasteMode)
 	}
 	if p.startupOptions&withGraphemeClustering != 0 {
 		p.execute(ansi.SetGraphemeClusteringMode)
@@ -791,20 +814,16 @@ func (p *Program) Run() (Model, error) {
 		// a response in the eventLoop.
 	}
 	if p.startupOptions&withMouseCellMotion != 0 {
-		p.execute(ansi.SetButtonEventMouseMode)
-		p.execute(ansi.SetSgrExtMouseMode)
-		p.modes[ansi.ButtonEventMouseMode] = true
-		p.modes[ansi.SgrExtMouseMode] = true
+		p.execute(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
+		p.modes.Set(ansi.ButtonEventMouseMode, ansi.SgrExtMouseMode)
 	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.execute(ansi.SetAnyEventMouseMode)
-		p.execute(ansi.SetSgrExtMouseMode)
-		p.modes[ansi.AnyEventMouseMode] = true
-		p.modes[ansi.SgrExtMouseMode] = true
+		p.execute(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
+		p.modes.Set(ansi.AnyEventMouseMode, ansi.SgrExtMouseMode)
 	}
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.execute(ansi.SetFocusEventMode)
-		p.modes[ansi.FocusEventMode] = true
+		p.modes.Set(ansi.FocusEventMode)
 	}
 	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
 		// We use the Windows Console API which supports keyboard
@@ -978,20 +997,13 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initInputReader(); err != nil {
 		return err
 	}
-	if p.modes[ansi.AltScreenSaveCursorMode] {
-		p.execute(ansi.SetAltScreenSaveCursorMode)
-	} else {
+	if p.modes.IsReset(ansi.AltScreenSaveCursorMode) {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
 	}
 
 	p.startRenderer()
-	if !p.modes[ansi.TextCursorEnableMode] {
-		p.execute(ansi.HideCursor)
-	} else {
-		p.execute(ansi.ShowCursor)
-	}
-	if p.modes[ansi.BracketedPasteMode] {
+	if p.modes.IsSet(ansi.BracketedPasteMode) {
 		p.execute(ansi.SetBracketedPasteMode)
 	}
 	if p.keyboard.modifyOtherKeys != 0 {
@@ -1000,10 +1012,10 @@ func (p *Program) RestoreTerminal() error {
 	if p.keyboard.kittyFlags != 0 {
 		p.execute(ansi.PushKittyKeyboard(p.keyboard.kittyFlags))
 	}
-	if p.modes[ansi.FocusEventMode] {
+	if p.modes.IsSet(ansi.FocusEventMode) {
 		p.execute(ansi.SetFocusEventMode)
 	}
-	if p.modes[ansi.ButtonEventMouseMode] || p.modes[ansi.AnyEventMouseMode] {
+	if p.modes.IsSet(ansi.ButtonEventMouseMode) || p.modes.IsSet(ansi.AnyEventMouseMode) {
 		if p.startupOptions&withMouseCellMotion != 0 {
 			p.execute(ansi.SetButtonEventMouseMode)
 			p.execute(ansi.SetSgrExtMouseMode)
@@ -1012,7 +1024,7 @@ func (p *Program) RestoreTerminal() error {
 			p.execute(ansi.SetSgrExtMouseMode)
 		}
 	}
-	if p.modes[ansi.GraphemeClusteringMode] {
+	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
 		p.execute(ansi.SetGraphemeClusteringMode)
 	}
 
