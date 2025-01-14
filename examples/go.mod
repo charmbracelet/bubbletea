@@ -3,13 +3,13 @@ module examples
 go 1.23.1
 
 require (
-	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20241121172047-bd415b4ebae8
-	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20241121171714-fbd5423ea935
+	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250114183437-fbe642df174c
+	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20250114183054-9f703251e0d7
 	github.com/charmbracelet/colorprofile v0.1.8
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20241121164047-8448a9be4804
-	github.com/charmbracelet/x/ansi v0.6.0
+	github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20250114171829-b67eb015d607
+	github.com/charmbracelet/x/ansi v0.7.0
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
@@ -25,7 +25,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.6 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241011142426-46044092ad91 // indirect
-	github.com/charmbracelet/x/input v0.2.1-0.20241210230033-45c33cb7b57a // indirect
+	github.com/charmbracelet/x/input v0.3.0 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/charmbracelet/x/vt v0.0.0-20241121165045-a3720547cbb4 // indirect
 	github.com/charmbracelet/x/wcwidth v0.0.0-20241113152101-0af7d04e9f32 // indirect
