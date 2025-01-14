@@ -3,13 +3,13 @@ module examples
 go 1.23.1
 
 require (
-	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20241121172047-bd415b4ebae8
-	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20241126192050-a8ed96118b08
+	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250114183437-fbe642df174c
+	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20250114183054-9f703251e0d7
 	github.com/charmbracelet/colorprofile v0.1.9
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20241121164047-8448a9be4804
-	github.com/charmbracelet/x/ansi v0.6.0
+	github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20250114171829-b67eb015d607
+	github.com/charmbracelet/x/ansi v0.7.0
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
