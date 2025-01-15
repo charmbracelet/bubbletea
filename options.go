@@ -282,15 +282,3 @@ func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 		p.profile = profile
 	}
 }
-
-// WithFerociousRenderer tells Bubble Tea to use the new shiny "ferocious"
-// renderer. This renderer is experimental and may change or be removed in
-// future versions.
-//
-// The ferocious renderer is a new renderer that is faster and more efficient
-// than the default renderer. It is also more ferocious ;)
-func WithFerociousRenderer() ProgramOption { //nolint:unused
-	return func(p *Program) {
-		p.startupOptions |= withFerociousRenderer
-	}
-}

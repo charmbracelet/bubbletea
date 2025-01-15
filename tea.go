@@ -114,8 +114,6 @@ const (
 	withColorProfile
 	withKeyboardEnhancements
 	withGraphemeClustering
-
-	withFerociousRenderer
 )
 
 // channelHandlers manages the series of channels returned by various processes.
