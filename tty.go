@@ -37,15 +37,24 @@ func (p *Program) initTerminal() error {
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.modes[ansi.BracketedPasteMode] {
+	// We don't need to reset [ansi.AltScreenSaveCursorMode] and
+	// [ansi.TextCursorEnableMode] because they are automatically reset when we
+	// close the renderer. See [screenRenderer.close] and
+	// [cellbuf.Screen.Close].
+
+	if p.modes.IsSet(ansi.BracketedPasteMode) {
 		p.execute(ansi.ResetBracketedPasteMode)
 	}
-	if !p.modes[ansi.TextCursorEnableMode] {
-		p.execute(ansi.ShowCursor)
-	}
-	if p.modes[ansi.ButtonEventMouseMode] || p.modes[ansi.AnyEventMouseMode] {
-		p.execute(ansi.ResetButtonEventMouseMode)
-		p.execute(ansi.ResetAnyEventMouseMode)
+
+	btnEvents := p.modes.IsSet(ansi.ButtonEventMouseMode)
+	allEvents := p.modes.IsSet(ansi.AnyEventMouseMode)
+	if btnEvents || allEvents {
+		if btnEvents {
+			p.execute(ansi.ResetButtonEventMouseMode)
+		}
+		if allEvents {
+			p.execute(ansi.ResetAnyEventMouseMode)
+		}
 		p.execute(ansi.ResetSgrExtMouseMode)
 	}
 	if p.activeEnhancements.modifyOtherKeys != 0 {
@@ -54,21 +63,11 @@ func (p *Program) restoreTerminalState() error {
 	if p.activeEnhancements.kittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
 	}
-	if p.modes[ansi.FocusEventMode] {
+	if p.modes.IsSet(ansi.FocusEventMode) {
 		p.execute(ansi.ResetFocusEventMode)
 	}
-	if p.modes[ansi.GraphemeClusteringMode] {
+	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
 		p.execute(ansi.ResetGraphemeClusteringMode)
-	}
-	if p.modes[ansi.AltScreenSaveCursorMode] {
-		p.execute(ansi.ResetAltScreenSaveCursorMode)
-		// cmd.exe and other terminals keep separate cursor states for the AltScreen
-		// and the main buffer. We have to explicitly reset the cursor visibility
-		// whenever we exit AltScreen.
-		p.execute(ansi.ShowCursor)
-
-		// give the terminal a moment to catch up
-		time.Sleep(time.Millisecond * 10) //nolint:gomnd
 	}
 
 	// Restore terminal colors.

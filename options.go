@@ -271,25 +271,6 @@ func WithGraphemeClustering() ProgramOption {
 	}
 }
 
-// experimentalOptions are experimental features that are not yet stable. These
-// features may change or be removed in future versions.
-type experimentalOptions []string
-
-// has returns true if the experimental option is enabled.
-func (e experimentalOptions) has(option string) bool {
-	for _, o := range e {
-		if o == option {
-			return true
-		}
-	}
-	return false
-}
-
-const (
-	// Ferocious enables the "ferocious" renderer.
-	experimentalFerocious = "ferocious"
-)
-
 // WithColorProfile sets the color profile that the program will use. This is
 // useful when you want to force a specific color profile. By default, Bubble
 // Tea will try to detect the terminal's color profile from environment
