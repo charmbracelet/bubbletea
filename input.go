@@ -5,7 +5,7 @@ import (
 )
 
 // translateInputEvent translates an input event into a Bubble Tea Msg.
-func translateInputEvent(e input.Event) Msg {
+func (p *Program) translateInputEvent(e input.Event) Msg {
 	switch e := e.(type) {
 	case input.ClipboardEvent:
 		switch e.Selection {
@@ -50,6 +50,16 @@ func translateInputEvent(e input.Event) Msg {
 		return CapabilityMsg(e)
 	case input.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
+	case input.KittyEnhancementsEvent:
+		return KeyboardEnhancementsMsg{
+			kittyFlags:      int(e),
+			modifyOtherKeys: p.activeEnhancements.modifyOtherKeys,
+		}
+	case input.ModifyOtherKeysEvent:
+		return KeyboardEnhancementsMsg{
+			modifyOtherKeys: int(e),
+			kittyFlags:      p.activeEnhancements.kittyFlags,
+		}
 	}
 	return nil
 }

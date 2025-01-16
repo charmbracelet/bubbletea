@@ -74,12 +74,12 @@ func TestClearMsg(t *testing.T) {
 		// Windows supports enhanced keyboard features through the Windows API, not through ANSI sequences.
 		tests = append(tests, test{
 			name: "kitty_start_windows",
-			cmds: []Cmd{DisableKeyboardEnhancements, EnableKeyboardEnhancements(WithKeyReleases)},
+			cmds: []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
 		})
 	} else {
 		tests = append(tests, test{
 			name: "kitty_start_other",
-			cmds: []Cmd{DisableKeyboardEnhancements, EnableKeyboardEnhancements(WithKeyReleases)},
+			cmds: []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
 		})
 	}
 

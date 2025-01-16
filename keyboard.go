@@ -6,24 +6,24 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-// keyboardEnhancements is a type that represents a set of keyboard
+// KeyboardEnhancements is a type that represents a set of keyboard
 // enhancements.
-type keyboardEnhancements struct {
+type KeyboardEnhancements struct {
 	// Kitty progressive keyboard enhancements protocol. This can be used to
 	// enable different keyboard features.
 	//
 	//  - 0: disable all features
-	//  - 1: [ansi.DisambiguateEscapeCodes] Disambiguate escape codes such as
+	//  - 1: [ansi.KittyDisambiguateEscapeCodes] Disambiguate escape codes such as
 	//  ctrl+i and tab, ctrl+[ and escape, ctrl+space and ctrl+@, etc.
-	//  - 2: [ansi.ReportEventTypes] Report event types such as key presses,
+	//  - 2: [ansi.KittyReportEventTypes] Report event types such as key presses,
 	//  releases, and repeat events.
-	//  - 4: [ansi.ReportAlternateKeys] Report keypresses as though they were
+	//  - 4: [ansi.KittyReportAlternateKeys] Report keypresses as though they were
 	//  on a PC-101 ANSI US keyboard layout regardless of what they layout
 	//  actually is. Also include information about whether or not is enabled,
-	//  - 8: [ansi.ReportAllKeysAsEscapeCodes] Report all key events as escape
+	//  - 8: [ansi.KittyReportAllKeysAsEscapeCodes] Report all key events as escape
 	//  codes. This includes simple printable keys like "a" and other Unicode
 	//  characters.
-	//  - 16: [ansi.ReportAssociatedText] Report associated text with key
+	//  - 16: [ansi.KittyReportAssociatedKeys] Report associated text with key
 	//  events. This encodes multi-rune key events as escape codes instead of
 	//  individual runes.
 	//
@@ -38,15 +38,15 @@ type keyboardEnhancements struct {
 	modifyOtherKeys int
 }
 
-// KeyboardEnhancement is a type that represents a keyboard enhancement.
-type KeyboardEnhancement func(k *keyboardEnhancements)
+// KeyboardEnhancementOption is a type that represents a keyboard enhancement.
+type KeyboardEnhancementOption func(k *KeyboardEnhancements)
 
 // WithKeyReleases enables support for reporting release key events. This is
 // useful for terminals that support the Kitty keyboard protocol "Report event
 // types" progressive enhancement feature.
 //
 // Note that not all terminals support this feature.
-func WithKeyReleases(k *keyboardEnhancements) {
+func WithKeyReleases(k *KeyboardEnhancements) {
 	k.kittyFlags |= ansi.KittyReportEventTypes
 }
 
@@ -57,7 +57,7 @@ func WithKeyReleases(k *keyboardEnhancements) {
 // progressive enhancement features.
 //
 // Note that not all terminals support this feature.
-func WithUniformKeyLayout(k *keyboardEnhancements) {
+func WithUniformKeyLayout(k *KeyboardEnhancements) {
 	k.kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
 }
 
@@ -65,18 +65,31 @@ func WithUniformKeyLayout(k *keyboardEnhancements) {
 // codes. This is useful for terminals that support the Kitty keyboard protocol
 // "Disambiguate escape codes" progressive enhancement feature or the XTerm
 // modifyOtherKeys mode 1 feature to report ambiguous keys as escape codes.
-func withKeyDisambiguation(k *keyboardEnhancements) {
+func withKeyDisambiguation(k *KeyboardEnhancements) {
 	k.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
 	if k.modifyOtherKeys < 1 {
 		k.modifyOtherKeys = 1
 	}
 }
 
-type enableKeyboardEnhancementsMsg []KeyboardEnhancement
+type enableKeyboardEnhancementsMsg []KeyboardEnhancementOption
 
-// EnableKeyboardEnhancements is a command that enables keyboard enhancements
+// RequestKeyboardEnhancements is a command that enables keyboard enhancements
 // in the terminal.
-func EnableKeyboardEnhancements(enhancements ...KeyboardEnhancement) Cmd {
+//
+// This command can be used to request specific keyboard enhancements. Use this
+// command to request enabling support for key disambiguation. You can also
+// request other enhancements by passing additional options. For example:
+//
+//   - [WithKeyReleases] enables support for reporting release key events.
+//   - [WithUniformKeyLayout] enables support for reporting key events as though
+//     they were on a PC-101 layout.
+//
+// If the terminal supports the requested enhancements, it will send a
+// [KeyboardEnhancementsMsg] message with the supported enhancements.
+//
+// Note that not all terminals support all enhancements.
+func RequestKeyboardEnhancements(enhancements ...KeyboardEnhancementOption) Cmd {
 	return func() Msg {
 		return enableKeyboardEnhancementsMsg(append(enhancements, withKeyDisambiguation))
 	}
@@ -92,7 +105,7 @@ func DisableKeyboardEnhancements() Msg {
 
 // KeyboardEnhancementsMsg is a message that gets sent when the terminal
 // supports keyboard enhancements.
-type KeyboardEnhancementsMsg keyboardEnhancements
+type KeyboardEnhancementsMsg KeyboardEnhancements
 
 // SupportsKeyDisambiguation returns whether the terminal supports reporting
 // disambiguous keys as escape codes.
