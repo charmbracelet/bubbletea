@@ -61,5 +61,5 @@ func (p *Program) translateInputEvent(e input.Event) Msg {
 			kittyFlags:      p.activeEnhancements.kittyFlags,
 		}
 	}
-	return nil
+	return e
 }

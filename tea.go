@@ -671,6 +671,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case requestCursorPosMsg:
 				p.execute(ansi.RequestCursorPosition)
 
+			case RawMsg:
+				p.execute(fmt.Sprint(msg.Msg))
+
 			case setCursorPosMsg:
 				p.renderer.moveTo(msg.X, msg.Y)
 
