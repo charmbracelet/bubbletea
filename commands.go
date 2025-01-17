@@ -9,8 +9,8 @@ import (
 //
 // Example:
 //
-//	    func (m model) Init() Cmd {
-//		       return tea.Batch(someCommand, someOtherCommand)
+//	    func (m model) Init() (Model, Cmd) {
+//		       return m, tea.Batch(someCommand, someOtherCommand)
 //	    }
 func Batch(cmds ...Cmd) Cmd {
 	var validCmds []Cmd //nolint:prealloc
@@ -78,9 +78,9 @@ type sequenceMsg []Cmd
 //	    })
 //	}
 //
-//	func (m model) Init() Cmd {
+//	func (m model) Init() (Model, Cmd) {
 //	    // Start ticking.
-//	    return tickEvery()
+//	    return m, tickEvery()
 //	}
 //
 //	func (m model) Update(msg Msg) (Model, Cmd) {
@@ -132,9 +132,9 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 //	    })
 //	}
 //
-//	func (m model) Init() Cmd {
+//	func (m model) Init() (Model, Cmd) {
 //	    // Start ticking.
-//	    return doTick()
+//	    return m, doTick()
 //	}
 //
 //	func (m model) Update(msg Msg) (Model, Cmd) {
@@ -157,34 +157,6 @@ func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	}
 }
 
-// Sequentially produces a command that sequentially executes the given
-// commands.
-// The Msg returned is the first non-nil message returned by a Cmd.
-//
-//	func saveStateCmd() Msg {
-//	   if err := save(); err != nil {
-//	       return errMsg{err}
-//	   }
-//	   return nil
-//	}
-//
-//	cmd := Sequentially(saveStateCmd, Quit)
-//
-// Deprecated: use Sequence instead.
-func Sequentially(cmds ...Cmd) Cmd {
-	return func() Msg {
-		for _, cmd := range cmds {
-			if cmd == nil {
-				continue
-			}
-			if msg := cmd(); msg != nil {
-				return msg
-			}
-		}
-		return nil
-	}
-}
-
 // setWindowTitleMsg is an internal message used to set the window title.
 type setWindowTitleMsg string
 
@@ -192,9 +164,9 @@ type setWindowTitleMsg string
 //
 // For example:
 //
-//	func (m model) Init() Cmd {
+//	func (m model) Init() (Model, Cmd) {
 //	    // Set title.
-//	    return tea.SetWindowTitle("My App")
+//	    return m, tea.SetWindowTitle("My App")
 //	}
 func SetWindowTitle(title string) Cmd {
 	return func() Msg {
@@ -204,12 +176,12 @@ func SetWindowTitle(title string) Cmd {
 
 type windowSizeMsg struct{}
 
-// WindowSize is a command that queries the terminal for its current size. It
-// delivers the results to Update via a [WindowSizeMsg]. Keep in mind that
-// WindowSizeMsgs will automatically be delivered to Update when the [Program]
-// starts and when the window dimensions change so in many cases you will not
-// need to explicitly invoke this command.
-func WindowSize() Cmd {
+// RequestWindowSize is a command that queries the terminal for its current
+// size. It delivers the results to Update via a [WindowSizeMsg]. Keep in mind
+// that WindowSizeMsgs will automatically be delivered to Update when the
+// [Program] starts and when the window dimensions change so in many cases you
+// will not need to explicitly invoke this command.
+func RequestWindowSize() Cmd {
 	return func() Msg {
 		return windowSizeMsg{}
 	}

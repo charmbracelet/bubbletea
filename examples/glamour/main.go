@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/viewport"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 const content = `
@@ -57,9 +57,14 @@ type example struct {
 }
 
 func newExample() (*example, error) {
-	const width = 78
+	const (
+		width  = 78
+		height = 20
+	)
 
-	vp := viewport.New(width, 20)
+	vp := viewport.New()
+	vp.SetWidth(width)
+	vp.SetHeight(height)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
@@ -96,13 +101,13 @@ func newExample() (*example, error) {
 	}, nil
 }
 
-func (e example) Init() tea.Cmd {
-	return nil
+func (e example) Init() (tea.Model, tea.Cmd) {
+	return e, nil
 }
 
 func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			return e, tea.Quit
