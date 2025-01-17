@@ -114,6 +114,7 @@ const (
 	withColorProfile
 	withKeyboardEnhancements
 	withGraphemeClustering
+	withRequestBackgroundColor
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -848,6 +849,9 @@ func (p *Program) Run() (Model, error) {
 		// Ensure we send a message so that terminals that don't support the
 		// requested features can disable them.
 		go p.sendKeyboardEnhancementsMsg()
+	}
+	if p.startupOptions.has(withRequestBackgroundColor) {
+		p.execute(ansi.RequestBackgroundColor)
 	}
 
 	// Start the renderer.
