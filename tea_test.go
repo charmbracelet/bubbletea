@@ -16,6 +16,18 @@ type testModel struct {
 	counter  atomic.Value
 }
 
+type contextCancelModel struct {
+	cancel func()
+}
+
+func (*contextCancelModel) Init() Cmd    { return nil }
+func (*contextCancelModel) View() string { return "" }
+
+func (m *contextCancelModel) Update(Msg) (Model, Cmd) {
+	m.cancel()
+	return m, nil
+}
+
 func (m testModel) Init() Cmd {
 	return nil
 }
@@ -57,6 +69,16 @@ func TestTeaModel(t *testing.T) {
 
 	if buf.Len() == 0 {
 		t.Fatal("no output")
+	}
+}
+
+func TestTeaContextCancel(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	defer cancel()
+
+	p := NewProgram(&contextCancelModel{cancel}, WithContext(ctx))
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
 	}
 }
 
