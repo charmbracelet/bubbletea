@@ -474,9 +474,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					}
 				}
 
-			case setCursorStyle:
-				p.execute(ansi.SetCursorStyle(int(msg)))
-
 			case modeReportMsg:
 				switch msg.Mode {
 				case ansi.GraphemeClusteringMode:
@@ -673,9 +670,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case RawMsg:
 				p.execute(fmt.Sprint(msg.Msg))
-
-			case setCursorPosMsg:
-				p.renderer.moveTo(msg.X, msg.Y)
 
 			case printLineMessage:
 				p.renderer.insertAbove(msg.messageBody)
