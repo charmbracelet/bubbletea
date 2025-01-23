@@ -19,7 +19,7 @@ type renderer interface {
 	close() error
 
 	// render renders a frame to the output.
-	render(string)
+	render(Frame)
 
 	// flush flushes the renderer's buffer to the output.
 	flush() error
@@ -47,9 +47,6 @@ type renderer interface {
 
 	// setColorProfile sets the color profile.
 	setColorProfile(colorprofile.Profile)
-
-	// moveTo moves the cursor to the given position.
-	moveTo(int, int)
 
 	// clearScreen clears the screen.
 	clearScreen()
@@ -94,4 +91,25 @@ func Printf(template string, args ...interface{}) Cmd {
 			messageBody: fmt.Sprintf(template, args...),
 		}
 	}
+}
+
+// encodeCursorStyle returns the integer value for the given cursor style and
+// blink state.
+func encodeCursorStyle(style CursorStyle, blink bool) int {
+	// We're using the ANSI escape sequence values for cursor styles.
+	// We need to map both [style] and [steady] to the correct value.
+	style = (style * 2) + 1
+	if !blink {
+		style++
+	}
+	return int(style)
+}
+
+// decodeCursorStyle decodes the cursor style from the integer value into
+// CursorStyle and blink state.
+func decodeCursorStyle(style int) (CursorStyle, bool) {
+	style--
+	blink := style%2 == 0
+	style /= 2
+	return CursorStyle(style), blink
 }

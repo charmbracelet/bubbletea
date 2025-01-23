@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/cellbuf"
 )
 
@@ -17,6 +18,7 @@ type cursedRenderer struct {
 	width, height int
 	mu            sync.Mutex
 	profile       colorprofile.Profile
+	cursorStyle   int
 	altScreen     bool
 	cursorHidden  bool
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
@@ -49,15 +51,15 @@ func (s *cursedRenderer) flush() error {
 }
 
 // render implements renderer.
-func (s *cursedRenderer) render(frame string) {
+func (s *cursedRenderer) render(frame Frame) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.lastFrame != nil && frame == *s.lastFrame {
+	if s.lastFrame != nil && frame.Content == *s.lastFrame {
 		return
 	}
 
-	s.lastFrame = &frame
+	s.lastFrame = &frame.Content
 	if !s.altScreen {
 		// Inline mode resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -65,12 +67,39 @@ func (s *cursedRenderer) render(frame string) {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		frameHeight := strings.Count(frame, "\n") + 1
+		frameHeight := strings.Count(frame.Content, "\n") + 1
 		s.scr.Resize(s.width, frameHeight)
 	}
 
 	if ctx := s.scr.DefaultWindow(); ctx != nil {
-		ctx.SetContent(frame)
+		ctx.SetContent(frame.Content)
+	}
+	if frame.Cursor.Position != nil {
+		s.scr.MoveTo(frame.Cursor.Position.X, frame.Cursor.Position.Y)
+	}
+	if frame.Cursor.Visible != nil {
+		if *frame.Cursor.Visible {
+			s.scr.ShowCursor()
+			s.cursorHidden = false
+		} else {
+			s.scr.HideCursor()
+			s.cursorHidden = true
+		}
+	}
+	if frame.Cursor.Style != nil || frame.Cursor.Blink != nil {
+		style, blink := decodeCursorStyle(s.cursorStyle)
+		if frame.Cursor.Style != nil {
+			style = *frame.Cursor.Style
+		}
+		if frame.Cursor.Blink != nil {
+			blink = *frame.Cursor.Blink
+		}
+
+		cursorStyle := encodeCursorStyle(style, blink)
+		if cursorStyle != s.cursorStyle {
+			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
+			s.cursorStyle = cursorStyle
+		}
 	}
 }
 
@@ -163,13 +192,6 @@ func (s *cursedRenderer) hideCursor() {
 func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Lock()
 	s.scr.InsertAbove(lines)
-	s.mu.Unlock()
-}
-
-// moveTo implements renderer.
-func (s *cursedRenderer) moveTo(x, y int) {
-	s.mu.Lock()
-	s.scr.MoveTo(x, y)
 	s.mu.Unlock()
 }
 

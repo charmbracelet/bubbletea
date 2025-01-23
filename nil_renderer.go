@@ -26,9 +26,6 @@ func (n nilRenderer) hideCursor() {}
 // insertAbove implements renderer.
 func (n nilRenderer) insertAbove(string) {}
 
-// moveTo implements renderer.
-func (n nilRenderer) moveTo(int, int) {}
-
 // resize implements renderer.
 func (n nilRenderer) resize(int, int) {}
 
@@ -45,7 +42,7 @@ func (nilRenderer) flush() error { return nil }
 func (nilRenderer) close() error { return nil }
 
 // render implements the Renderer interface.
-func (nilRenderer) render(string) {}
+func (nilRenderer) render(Frame) {}
 
 // reset implements the Renderer interface.
 func (nilRenderer) reset() {}
