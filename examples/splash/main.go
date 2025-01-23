@@ -55,12 +55,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.width == 0 {
-		return "Initializing..."
+		return tea.NewFrame("Initializing...")
 	}
 
-	return m.gradient()
+	return tea.NewFrame(m.gradient())
 }
 
 func (m model) gradient() string {

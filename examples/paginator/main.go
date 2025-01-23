@@ -70,9 +70,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if !m.ready {
-		return ""
+		return tea.NewFrame("")
 	}
 
 	var b strings.Builder
@@ -83,7 +83,7 @@ func (m model) View() string {
 	}
 	b.WriteString("  " + m.paginator.View())
 	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
-	return b.String()
+	return &b
 }
 
 func main() {

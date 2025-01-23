@@ -107,11 +107,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
+func (m model) View() fmt.Stringer {
+	return tea.NewFrame(fmt.Sprintf(
 		"%s%s%s",
 		m.viewport.View(),
 		gap,
 		m.textarea.View(),
-	)
+	))
 }

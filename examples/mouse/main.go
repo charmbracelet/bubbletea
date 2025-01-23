@@ -4,6 +4,7 @@ package main
 // coordinates and events.
 
 import (
+	"fmt"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -37,8 +38,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	s := "Do mouse stuff. When you're done press q to quit.\n"
 
-	return s
+	return tea.NewFrame(s)
 }

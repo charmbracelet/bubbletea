@@ -46,8 +46,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return "\n" + m.table.String() + "\n"
+func (m model) View() fmt.Stringer {
+	return tea.NewFrame("\n" + m.table.String() + "\n")
 }
 
 func main() {

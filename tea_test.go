@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -37,9 +38,9 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testModel) View() string {
+func (m *testModel) View() fmt.Stringer {
 	m.executed.Store(true)
-	return "success\n"
+	return NewFrame("success\n")
 }
 
 func TestTeaModel(t *testing.T) {

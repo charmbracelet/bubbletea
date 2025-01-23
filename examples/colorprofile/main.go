@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 
@@ -36,11 +37,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View implements tea.Model.
-func (m model) View() string {
-	return "This will produce the wrong colors on Apple Terminal :)\n\n" +
+func (m model) View() fmt.Stringer {
+	return tea.NewFrame("This will produce the wrong colors on Apple Terminal :)\n\n" +
 		ansi.Style{}.ForegroundColor(myFancyColor).Styled("Howdy!") +
 		"\n\n" +
-		"Press any key to exit."
+		"Press any key to exit.")
 }
 
 func main() {

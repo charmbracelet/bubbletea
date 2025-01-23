@@ -38,12 +38,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.suspending || m.quitting {
-		return ""
+		return tea.NewFrame("")
 	}
 
-	return "\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n"
+	return tea.NewFrame("\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n")
 }
 
 func main() {

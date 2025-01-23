@@ -55,11 +55,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.err != nil {
-		return "Error: " + m.err.Error() + "\n"
+		return tea.NewFrame("Error: " + m.err.Error() + "\n")
 	}
-	return "Press 'e' to open your EDITOR.\nPress 'a' to toggle the altscreen\nPress 'q' to quit.\n"
+	return tea.NewFrame("Press 'e' to open your EDITOR.\nPress 'a' to toggle the altscreen\nPress 'q' to quit.\n")
 }
 
 func main() {

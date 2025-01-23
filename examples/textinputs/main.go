@@ -147,7 +147,7 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	var b strings.Builder
 
 	for i := range m.inputs {
@@ -167,7 +167,7 @@ func (m model) View() string {
 	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
 
-	return b.String()
+	return &b
 }
 
 func main() {

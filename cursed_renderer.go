@@ -1,22 +1,25 @@
 package tea
 
 import (
+	"fmt"
 	"io"
 	"strings"
 	"sync"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/cellbuf"
 )
 
 type cursedRenderer struct {
 	w             io.Writer
 	scr           *cellbuf.Screen
-	lastFrame     *string
+	lastFrame     *Frame
 	term          string // the terminal type $TERM
 	width, height int
 	mu            sync.Mutex
 	profile       colorprofile.Profile
+	cursor        Cursor
 	altScreen     bool
 	cursorHidden  bool
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
@@ -44,20 +47,48 @@ func (s *cursedRenderer) close() (err error) {
 func (s *cursedRenderer) flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.lastFrame != nil && s.lastFrame.Cursor != nil {
+		cur := s.lastFrame.Cursor
+		s.scr.MoveTo(cur.Position.X, cur.Position.Y)
+		s.cursor.Position = cur.Position
+
+		if cur.Shape != s.cursor.Shape || cur.Blink != s.cursor.Blink {
+			cursorStyle := encodeCursorStyle(cur.Shape, cur.Blink)
+			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
+			s.cursor.Shape = cur.Shape
+			s.cursor.Blink = cur.Blink
+		}
+		if cur.Color != s.cursor.Color {
+			seq := ansi.ResetCursorColor
+			if cur.Color != nil {
+				seq = ansi.SetCursorColor(cur.Color)
+			}
+			io.WriteString(s.w, seq) //nolint:errcheck
+			s.cursor.Color = cur.Color
+		}
+	}
 	s.scr.Render()
 	return nil
 }
 
 // render implements renderer.
-func (s *cursedRenderer) render(frame string) {
+func (s *cursedRenderer) render(frame fmt.Stringer) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.lastFrame != nil && frame == *s.lastFrame {
+	var f Frame
+	switch frame := frame.(type) {
+	case Frame:
+		f = frame
+	default:
+		f.Content = frame.String()
+	}
+
+	if s.lastFrame != nil && f == *s.lastFrame {
 		return
 	}
 
-	s.lastFrame = &frame
+	s.lastFrame = &f
 	if !s.altScreen {
 		// Inline mode resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -65,12 +96,18 @@ func (s *cursedRenderer) render(frame string) {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		frameHeight := strings.Count(frame, "\n") + 1
+		frameHeight := strings.Count(f.Content, "\n") + 1
 		s.scr.Resize(s.width, frameHeight)
 	}
 
 	if ctx := s.scr.DefaultWindow(); ctx != nil {
-		ctx.SetContent(frame)
+		ctx.SetContent(f.Content)
+	}
+
+	if f.Cursor == nil {
+		hideCursor(s)
+	} else {
+		showCursor(s)
 	}
 }
 
@@ -138,7 +175,7 @@ func (s *cursedRenderer) exitAltScreen() {
 	s.altScreen = false
 	s.scr.ExitAltScreen()
 	s.scr.SetRelativeCursor(!s.altScreen)
-	s.scr.Resize(s.width, strings.Count(*s.lastFrame, "\n")+1)
+	s.scr.Resize(s.width, strings.Count((*s.lastFrame).Content, "\n")+1)
 	repaint(s)
 	s.mu.Unlock()
 }
@@ -146,30 +183,31 @@ func (s *cursedRenderer) exitAltScreen() {
 // showCursor implements renderer.
 func (s *cursedRenderer) showCursor() {
 	s.mu.Lock()
+	showCursor(s)
+	s.mu.Unlock()
+}
+
+func showCursor(s *cursedRenderer) {
 	s.cursorHidden = false
 	s.scr.ShowCursor()
-	s.mu.Unlock()
 }
 
 // hideCursor implements renderer.
 func (s *cursedRenderer) hideCursor() {
 	s.mu.Lock()
+	hideCursor(s)
+	s.mu.Unlock()
+}
+
+func hideCursor(s *cursedRenderer) {
 	s.cursorHidden = true
 	s.scr.HideCursor()
-	s.mu.Unlock()
 }
 
 // insertAbove implements renderer.
 func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Lock()
 	s.scr.InsertAbove(lines)
-	s.mu.Unlock()
-}
-
-// moveTo implements renderer.
-func (s *cursedRenderer) moveTo(x, y int) {
-	s.mu.Lock()
-	s.scr.MoveTo(x, y)
 	s.mu.Unlock()
 }
 

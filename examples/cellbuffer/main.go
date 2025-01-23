@@ -184,8 +184,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
-	return m.cells.String()
+func (m model) View() fmt.Stringer {
+	return m.cells
 }
 
 func main() {

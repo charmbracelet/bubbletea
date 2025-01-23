@@ -65,9 +65,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.quitting {
-		return ""
+		return tea.NewFrame("")
 	}
 	var s strings.Builder
 	s.WriteString("\n  ")
@@ -79,7 +79,7 @@ func (m model) View() string {
 		s.WriteString("Selected file: " + m.filepicker.Styles.Selected.Render(m.selectedFile))
 	}
 	s.WriteString("\n\n" + m.filepicker.View() + "\n")
-	return s.String()
+	return &s
 }
 
 func main() {

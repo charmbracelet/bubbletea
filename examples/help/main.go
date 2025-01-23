@@ -112,9 +112,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.quitting {
-		return "Bye!\n"
+		return tea.NewFrame("Bye!\n")
 	}
 
 	var status string
@@ -127,7 +127,7 @@ func (m model) View() string {
 	helpView := m.help.View(m.keys)
 	height := 8 - strings.Count(status, "\n") - strings.Count(helpView, "\n")
 
-	return status + strings.Repeat("\n", height) + helpView
+	return tea.NewFrame(status + strings.Repeat("\n", height) + helpView)
 }
 
 func main() {

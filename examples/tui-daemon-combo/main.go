@@ -102,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	s := "\n" +
 		m.spinner.View() + " Doing some work...\n\n"
 
@@ -120,7 +120,7 @@ func (m model) View() string {
 		s += "\n"
 	}
 
-	return mainStyle.Render(s)
+	return tea.NewFrame(mainStyle.Render(s))
 }
 
 // processFinishedMsg is sent when a pretend process completes.

@@ -53,9 +53,11 @@ type Model interface {
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
 
-	// View renders the program's UI, which is just a string. The view is
-	// rendered after every Update.
-	View() string
+	// View renders the program's UI, which is just a [fmt.Stringer]. The view
+	// is rendered after every Update.
+	// The main model can return a [Frame] to set the cursor position and
+	// style.
+	View() fmt.Stringer
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
@@ -474,9 +476,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					}
 				}
 
-			case setCursorStyle:
-				p.execute(ansi.SetCursorStyle(int(msg)))
-
 			case modeReportMsg:
 				switch msg.Mode {
 				case ansi.GraphemeClusteringMode:
@@ -537,20 +536,26 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case setBackgroundColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetBackgroundColor(msg.Color))
-					p.setBg = msg.Color
+				} else {
+					p.execute(ansi.ResetBackgroundColor)
 				}
+				p.setBg = msg.Color
 
 			case setForegroundColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetForegroundColor(msg.Color))
-					p.setFg = msg.Color
+				} else {
+					p.execute(ansi.ResetForegroundColor)
 				}
+				p.setFg = msg.Color
 
 			case setCursorColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetCursorColor(msg.Color))
-					p.setCc = msg.Color
+				} else {
+					p.execute(ansi.ResetCursorColor)
 				}
+				p.setCc = msg.Color
 
 			case backgroundColorMsg:
 				p.execute(ansi.RequestBackgroundColor)
@@ -674,9 +679,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case RawMsg:
 				p.execute(fmt.Sprint(msg.Msg))
 
-			case setCursorPosMsg:
-				p.renderer.moveTo(msg.X, msg.Y)
-
 			case printLineMessage:
 				p.renderer.insertAbove(msg.messageBody)
 
@@ -691,9 +693,19 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			var cmd Cmd
-			model, cmd = model.Update(msg)  // run update
-			cmds <- cmd                     // process command (if any)
-			p.renderer.render(model.View()) //nolint:errcheck // send view to renderer
+			model, cmd = model.Update(msg) // run update
+			cmds <- cmd                    // process command (if any)
+
+			view := model.View()
+			switch view := view.(type) {
+			case Frame:
+				// Ensure we reset the cursor color on exit.
+				if view.Cursor != nil {
+					p.setCc = view.Cursor.Color
+				}
+			}
+
+			p.renderer.render(view) //nolint:errcheck // send view to renderer
 		}
 	}
 }

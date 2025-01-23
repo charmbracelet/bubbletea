@@ -234,13 +234,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	// Don't render until we have everything we queried for.
 	if !m.queries.Ready() {
-		return ""
+		return tea.NewFrame("")
 	}
 
-	return m.styles.app.Render(m.list.View())
+	return tea.NewFrame(m.styles.app.Render(m.list.View()))
 }
 
 func main() {

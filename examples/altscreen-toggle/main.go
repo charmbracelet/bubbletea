@@ -50,13 +50,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
+	f := tea.NewFrame("")
 	if m.suspending {
-		return ""
+		return f
 	}
 
 	if m.quitting {
-		return "Bye!\n"
+		f.Content = "Bye!\n"
+		return f
 	}
 
 	const (
@@ -71,8 +73,9 @@ func (m model) View() string {
 		mode = inlineMode
 	}
 
-	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
+	f.Content = fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
 		helpStyle.Render("  space: switch modes • ctrl-z: suspend • q: exit\n")
+	return f
 }
 
 func main() {
