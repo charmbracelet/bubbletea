@@ -687,9 +687,19 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			var cmd Cmd
-			model, cmd = model.Update(msg)  // run update
-			cmds <- cmd                     // process command (if any)
-			p.renderer.render(model.View()) //nolint:errcheck // send view to renderer
+			model, cmd = model.Update(msg) // run update
+			cmds <- cmd                    // process command (if any)
+
+			view := model.View()
+			switch view := view.(type) {
+			case Frame:
+				// Ensure we reset the cursor color on exit.
+				if view.Cursor != nil {
+					p.setCc = view.Cursor.Color
+				}
+			}
+
+			p.renderer.render(view) //nolint:errcheck // send view to renderer
 		}
 	}
 }
