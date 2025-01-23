@@ -74,7 +74,8 @@ func (m model) View() string {
 		}
 	}
 
-	s.WriteString(whiteFg.Render("Press q or ctrl+c to quit"))
+	elapsed := time.Since(m.startTime)
+	s.WriteString(whiteFg.Render("Press q or ctrl+c to quit. " + fmt.Sprintf("Elapsed: %s", elapsed.Round(time.Second))))
 	return s.String()
 }
 
