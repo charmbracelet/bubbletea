@@ -11,8 +11,8 @@ type Cursor struct {
 	// Color is a [color.Color] that determines the cursor's color.
 	Color color.Color
 
-	// Style is a [CursorStyle] that determines the cursor's style.
-	Style CursorStyle
+	// Shape is a [CursorShape] that determines the cursor's shape.
+	Shape CursorShape
 
 	// Blink is a boolean that determines whether the cursor should blink.
 	Blink bool
@@ -24,7 +24,7 @@ func NewCursor(x, y int) *Cursor {
 	return &Cursor{
 		Position: Position{X: x, Y: y},
 		Color:    nil,
-		Style:    CursorBlock,
+		Shape:    CursorBlock,
 		Blink:    true,
 	}
 }

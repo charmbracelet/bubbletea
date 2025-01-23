@@ -52,10 +52,10 @@ func (s *cursedRenderer) flush() error {
 		s.scr.MoveTo(cur.Position.X, cur.Position.Y)
 		s.cursor.Position = cur.Position
 
-		if cur.Style != s.cursor.Style || cur.Blink != s.cursor.Blink {
-			cursorStyle := encodeCursorStyle(cur.Style, cur.Blink)
+		if cur.Shape != s.cursor.Shape || cur.Blink != s.cursor.Blink {
+			cursorStyle := encodeCursorStyle(cur.Shape, cur.Blink)
 			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
-			s.cursor.Style = cur.Style
+			s.cursor.Shape = cur.Shape
 			s.cursor.Blink = cur.Blink
 		}
 		if cur.Color != s.cursor.Color {

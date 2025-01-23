@@ -8,12 +8,12 @@ type Position image.Point
 // CursorPositionMsg is a message that represents the terminal cursor position.
 type CursorPositionMsg Position
 
-// CursorStyle is a style that represents the terminal cursor.
-type CursorStyle int
+// CursorShape represents a terminal cursor shape.
+type CursorShape int
 
-// Cursor styles.
+// Cursor shapes.
 const (
-	CursorBlock CursorStyle = iota
+	CursorBlock CursorShape = iota
 	CursorUnderline
 	CursorBar
 )

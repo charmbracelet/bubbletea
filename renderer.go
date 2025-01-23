@@ -95,7 +95,7 @@ func Printf(template string, args ...interface{}) Cmd {
 
 // encodeCursorStyle returns the integer value for the given cursor style and
 // blink state.
-func encodeCursorStyle(style CursorStyle, blink bool) int {
+func encodeCursorStyle(style CursorShape, blink bool) int {
 	// We're using the ANSI escape sequence values for cursor styles.
 	// We need to map both [style] and [steady] to the correct value.
 	style = (style * 2) + 1
@@ -103,13 +103,4 @@ func encodeCursorStyle(style CursorStyle, blink bool) int {
 		style++
 	}
 	return int(style)
-}
-
-// decodeCursorStyle decodes the cursor style from the integer value into
-// CursorStyle and blink state.
-func decodeCursorStyle(style int) (CursorStyle, bool) {
-	style--
-	blink := style%2 == 0
-	style /= 2
-	return CursorStyle(style), blink
 }
