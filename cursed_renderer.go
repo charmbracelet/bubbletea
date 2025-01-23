@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/x/cellbuf"
 )
 
-type screenRenderer struct {
+type cursedRenderer struct {
 	w             io.Writer
 	scr           *cellbuf.Screen
 	lastFrame     *string
@@ -22,10 +22,10 @@ type screenRenderer struct {
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 }
 
-var _ renderer = &screenRenderer{}
+var _ renderer = &cursedRenderer{}
 
-func newScreenRenderer(w io.Writer, term string, hardTabs bool) (s *screenRenderer) {
-	s = new(screenRenderer)
+func newCursedRenderer(w io.Writer, term string, hardTabs bool) (s *cursedRenderer) {
+	s = new(cursedRenderer)
 	s.w = w
 	s.term = term
 	s.hardTabs = hardTabs
@@ -34,14 +34,14 @@ func newScreenRenderer(w io.Writer, term string, hardTabs bool) (s *screenRender
 }
 
 // close implements renderer.
-func (s *screenRenderer) close() (err error) {
+func (s *cursedRenderer) close() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.scr.Close()
 }
 
 // flush implements renderer.
-func (s *screenRenderer) flush() error {
+func (s *cursedRenderer) flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.scr.Render()
@@ -49,7 +49,7 @@ func (s *screenRenderer) flush() error {
 }
 
 // render implements renderer.
-func (s *screenRenderer) render(frame string) {
+func (s *cursedRenderer) render(frame string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -75,7 +75,7 @@ func (s *screenRenderer) render(frame string) {
 }
 
 // reset implements renderer.
-func (s *screenRenderer) reset() {
+func (s *cursedRenderer) reset() {
 	s.mu.Lock()
 	s.scr = cellbuf.NewScreen(s.w, &cellbuf.ScreenOptions{
 		Term:           s.term,
@@ -91,7 +91,7 @@ func (s *screenRenderer) reset() {
 }
 
 // setColorProfile implements renderer.
-func (s *screenRenderer) setColorProfile(p colorprofile.Profile) {
+func (s *cursedRenderer) setColorProfile(p colorprofile.Profile) {
 	s.mu.Lock()
 	s.profile = p
 	s.scr.SetColorProfile(p)
@@ -99,7 +99,7 @@ func (s *screenRenderer) setColorProfile(p colorprofile.Profile) {
 }
 
 // resize implements renderer.
-func (s *screenRenderer) resize(w, h int) {
+func (s *cursedRenderer) resize(w, h int) {
 	s.mu.Lock()
 	s.width, s.height = w, h
 	if s.altScreen {
@@ -114,7 +114,7 @@ func (s *screenRenderer) resize(w, h int) {
 }
 
 // clearScreen implements renderer.
-func (s *screenRenderer) clearScreen() {
+func (s *cursedRenderer) clearScreen() {
 	s.mu.Lock()
 	s.scr.Clear()
 	repaint(s)
@@ -122,7 +122,7 @@ func (s *screenRenderer) clearScreen() {
 }
 
 // enterAltScreen implements renderer.
-func (s *screenRenderer) enterAltScreen() {
+func (s *cursedRenderer) enterAltScreen() {
 	s.mu.Lock()
 	s.altScreen = true
 	s.scr.EnterAltScreen()
@@ -133,7 +133,7 @@ func (s *screenRenderer) enterAltScreen() {
 }
 
 // exitAltScreen implements renderer.
-func (s *screenRenderer) exitAltScreen() {
+func (s *cursedRenderer) exitAltScreen() {
 	s.mu.Lock()
 	s.altScreen = false
 	s.scr.ExitAltScreen()
@@ -144,7 +144,7 @@ func (s *screenRenderer) exitAltScreen() {
 }
 
 // showCursor implements renderer.
-func (s *screenRenderer) showCursor() {
+func (s *cursedRenderer) showCursor() {
 	s.mu.Lock()
 	s.cursorHidden = false
 	s.scr.ShowCursor()
@@ -152,7 +152,7 @@ func (s *screenRenderer) showCursor() {
 }
 
 // hideCursor implements renderer.
-func (s *screenRenderer) hideCursor() {
+func (s *cursedRenderer) hideCursor() {
 	s.mu.Lock()
 	s.cursorHidden = true
 	s.scr.HideCursor()
@@ -160,25 +160,25 @@ func (s *screenRenderer) hideCursor() {
 }
 
 // insertAbove implements renderer.
-func (s *screenRenderer) insertAbove(lines string) {
+func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Lock()
 	s.scr.InsertAbove(lines)
 	s.mu.Unlock()
 }
 
 // moveTo implements renderer.
-func (s *screenRenderer) moveTo(x, y int) {
+func (s *cursedRenderer) moveTo(x, y int) {
 	s.mu.Lock()
 	s.scr.MoveTo(x, y)
 	s.mu.Unlock()
 }
 
-func (s *screenRenderer) repaint() {
+func (s *cursedRenderer) repaint() {
 	s.mu.Lock()
 	repaint(s)
 	s.mu.Unlock()
 }
 
-func repaint(s *screenRenderer) {
+func repaint(s *cursedRenderer) {
 	s.lastFrame = nil
 }

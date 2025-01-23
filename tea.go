@@ -764,7 +764,7 @@ func (p *Program) Run() (Model, error) {
 	}
 	if p.renderer == nil {
 		// If no renderer is set use the ferocious one.
-		p.renderer = newScreenRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
+		p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
 	}
 
 	// Get the color profile and send it to the program.
