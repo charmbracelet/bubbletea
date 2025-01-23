@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/charmbracelet/bubbles/v2/cursor"
 	"github.com/charmbracelet/bubbles/v2/textarea"
 	tea "github.com/charmbracelet/bubbletea/v2"
 )
@@ -30,6 +31,7 @@ func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
 	ti.Focus()
+	ti.Cursor.SetMode(cursor.CursorHide)
 
 	return model{
 		textarea: ti,
@@ -38,7 +40,9 @@ func initialModel() model {
 }
 
 func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textarea.Blink
+	return m, tea.Batch(
+		textarea.Blink,
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -73,9 +77,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() fmt.Stringer {
-	return tea.NewFrame(fmt.Sprintf(
+	const (
+		xOffset = 6
+		yOffset = 2
+	)
+	f := tea.NewFrame(fmt.Sprintf(
 		"Tell me a story.\n\n%s\n\n%s",
 		m.textarea.View(),
 		"(ctrl+c to quit)",
 	) + "\n\n")
+
+	x, y := m.textarea.CursorPosition()
+	f.Cursor = tea.NewCursor(x+xOffset, y+yOffset)
+
+	return f
 }
