@@ -72,10 +72,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
+func (m model) View() fmt.Stringer {
+	return tea.NewFrame(fmt.Sprintf(
 		"Tell me a story.\n\n%s\n\n%s",
 		m.textarea.View(),
 		"(ctrl+c to quit)",
-	) + "\n\n"
+	) + "\n\n")
 }

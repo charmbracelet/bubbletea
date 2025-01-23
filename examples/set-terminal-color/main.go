@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -126,9 +127,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	var s strings.Builder
-	var instructions = lipgloss.NewStyle().Width(40).Render("Choose a terminal-wide color to set. All settings will be cleared on exit.")
+	instructions := lipgloss.NewStyle().Width(40).Render("Choose a terminal-wide color to set. All settings will be cleared on exit.")
 
 	switch m.state {
 	case chooseState:
@@ -164,7 +165,7 @@ func (m model) View() string {
 
 	s.WriteString("\n")
 
-	return s.String()
+	return &s
 }
 
 func main() {

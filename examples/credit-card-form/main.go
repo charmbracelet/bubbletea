@@ -163,18 +163,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
+func (m model) View() fmt.Stringer {
+	return tea.NewFrame(fmt.Sprintf(
 		` Total: $21.50:
 
- %s
- %s
+		%s
+		%s
 
- %s  %s
- %s  %s
+		%s  %s
+		%s  %s
 
- %s
-`,
+		%s
+		`,
 		inputStyle.Width(30).Render("Card Number"),
 		m.inputs[ccn].View(),
 		inputStyle.Width(6).Render("EXP"),
@@ -182,7 +182,7 @@ func (m model) View() string {
 		m.inputs[exp].View(),
 		m.inputs[cvv].View(),
 		continueStyle.Render("Continue ->"),
-	) + "\n"
+	) + "\n")
 }
 
 // nextInput focuses the next input field

@@ -96,7 +96,7 @@ func clamp(value, min, max float64) float64 {
 	return value
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	// Title
 	title := lipgloss.NewStyle().Bold(true).Render("Space")
 
@@ -113,7 +113,7 @@ func (m model) View() string {
 		s.WriteByte('\n')
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, title, s.String())
+	return tea.NewFrame(lipgloss.JoinVertical(lipgloss.Left, title, s.String()))
 }
 
 func main() {

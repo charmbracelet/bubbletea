@@ -131,19 +131,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if !m.ready {
 		// Don't render anything until the query for the background color has
 		// finished.
-		return ""
+		return tea.NewFrame("")
 	}
 	if m.choice != "" {
-		return m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
+		return tea.NewFrame(m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice)))
 	}
 	if m.quitting {
-		return m.styles.quitText.Render("Not hungry? That’s cool.")
+		return tea.NewFrame(m.styles.quitText.Render("Not hungry? That’s cool."))
 	}
-	return "\n" + m.list.View()
+	return tea.NewFrame("\n" + m.list.View())
 }
 
 func main() {

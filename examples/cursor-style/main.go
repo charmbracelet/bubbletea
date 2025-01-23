@@ -14,15 +14,10 @@ type model struct {
 
 func (m model) Init() (tea.Model, tea.Cmd) {
 	m.blink = true
-	return m, tea.Batch(
-		tea.ShowCursor,
-		tea.SetCursorStyle(m.style, m.blink),
-		tea.SetCursorPosition(0, 2),
-	)
+	return m, nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -36,7 +31,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.style--
 			}
 			m.blink = !m.blink
-			cmd = tea.SetCursorStyle(m.style, m.blink)
 		case "l", "right":
 			if m.style == tea.CursorBar && !m.blink {
 				break
@@ -45,19 +39,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.style++
 			}
 			m.blink = !m.blink
-			cmd = tea.SetCursorStyle(m.style, m.blink)
 		}
 	}
-	return m, tea.Batch(
-		cmd,
-		tea.SetCursorPosition(0, 2),
-	)
+	return m, nil
 }
 
-func (m model) View() string {
-	return "Press left/right to change the cursor style, q or ctrl+c to quit." +
+func (m model) View() fmt.Stringer {
+	f := tea.NewFrame("Press left/right to change the cursor style, q or ctrl+c to quit." +
 		"\n\n" +
-		"  <- This is the cursor (a " + m.describeCursor() + ")"
+		"  <- This is the cursor (a " + m.describeCursor() + ")")
+	f.Cursor = tea.NewCursor(0, 2)
+	f.Cursor.Style = m.style
+	f.Cursor.Blink = m.blink
+	return f
 }
 
 func (m model) describeCursor() string {

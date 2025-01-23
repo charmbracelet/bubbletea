@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -73,13 +74,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.err != nil {
-		return "Error downloading: " + m.err.Error() + "\n"
+		return tea.NewFrame("Error downloading: " + m.err.Error() + "\n")
 	}
 
 	pad := strings.Repeat(" ", padding)
-	return "\n" +
+	return tea.NewFrame("\n" +
 		pad + m.progress.View() + "\n\n" +
-		pad + helpStyle("Press any key to quit")
+		pad + helpStyle("Press any key to quit"))
 }

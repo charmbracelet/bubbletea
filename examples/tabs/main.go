@@ -82,10 +82,10 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	return border
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.styles == nil {
 		// Don't render until we've initialized our styles.
-		return ""
+		return tea.NewFrame("")
 	}
 
 	doc := strings.Builder{}
@@ -119,7 +119,7 @@ func (m model) View() string {
 	doc.WriteString(row)
 	doc.WriteString("\n")
 	doc.WriteString(s.window.Width((lipgloss.Width(row) - s.window.GetHorizontalFrameSize())).Render(m.TabContent[m.activeTab]))
-	return s.doc.Render(doc.String())
+	return tea.NewFrame(s.doc.Render(doc.String()))
 }
 
 func main() {

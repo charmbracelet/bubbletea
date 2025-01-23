@@ -99,17 +99,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // The main view, which just calls the appropriate sub-view
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	var s string
 	if m.Quitting {
-		return "\n  See you later!\n\n"
+		return tea.NewFrame("\n  See you later!\n\n")
 	}
 	if !m.Chosen {
 		s = choicesView(m)
 	} else {
 		s = chosenView(m)
 	}
-	return mainStyle.Render("\n" + s + "\n\n")
+	return tea.NewFrame(mainStyle.Render("\n" + s + "\n\n"))
 }
 
 // Sub-update functions

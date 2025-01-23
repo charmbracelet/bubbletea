@@ -48,9 +48,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.width == 0 {
-		return "Initializing..."
+		return tea.NewFrame("Initializing...")
 	}
 
 	var s strings.Builder
@@ -76,7 +76,7 @@ func (m model) View() string {
 
 	elapsed := time.Since(m.startTime)
 	s.WriteString(whiteFg.Render("Press q or ctrl+c to quit. " + fmt.Sprintf("Elapsed: %s", elapsed.Round(time.Second))))
-	return s.String()
+	return &s
 }
 
 func (m *model) spreadFire() {

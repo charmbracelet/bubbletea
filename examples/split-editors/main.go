@@ -180,7 +180,7 @@ func (m *model) updateKeybindings() {
 	m.keymap.remove.SetEnabled(len(m.inputs) > minInputs)
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
 		m.keymap.prev,
@@ -194,7 +194,7 @@ func (m model) View() string {
 		views = append(views, m.inputs[i].View())
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help
+	return tea.NewFrame(lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help)
 }
 
 func main() {

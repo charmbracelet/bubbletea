@@ -45,8 +45,8 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
+func (m model) View() fmt.Stringer {
+	return tea.NewFrame(fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m))
 }
 
 func tick() tea.Cmd {

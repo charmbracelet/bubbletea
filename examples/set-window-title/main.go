@@ -26,10 +26,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	wrap := lipgloss.NewStyle().Width(78).Render
-	return wrap("The window title has been set to '"+windowTitle+"'. It will be cleared on exit.") +
-		"\n\nPress any key to quit."
+	return tea.NewFrame(wrap("The window title has been set to '"+windowTitle+"'. It will be cleared on exit.") +
+		"\n\nPress any key to quit.")
 }
 
 func main() {

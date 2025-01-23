@@ -53,15 +53,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() fmt.Stringer {
 	if m.err != nil {
-		return m.err.Error()
+		return tea.NewFrame(m.err.Error())
 	}
 	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", m.spinner.View())
 	if m.quitting {
-		return str + "\n"
+		return tea.NewFrame(str + "\n")
 	}
-	return str
+	return tea.NewFrame(str)
 }
 
 func main() {
