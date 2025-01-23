@@ -17,40 +17,13 @@ import (
 // This was ported from the talented Orhun Parmaksız (@orhun)'s space example
 // from his blog post "Why stdout is faster than stderr?".
 
-type fps struct {
-	frameCount  int
-	lastInstant time.Time
-	fps         *float64
-}
-
-func (f *fps) tick() {
-	f.frameCount++
-	elapsed := time.Since(f.lastInstant)
-	// Update FPS every second if we have at least 2 frames
-	if elapsed > time.Second && f.frameCount > 2 {
-		fps := float64(f.frameCount) / elapsed.Seconds()
-		f.fps = &fps
-		f.frameCount = 0
-		f.lastInstant = time.Now()
-	}
-}
-
 type model struct {
 	colors     [][]color.Color
 	lastWidth  int
 	lastHeight int
-	fps        fps
 	frameCount int
 	width      int
 	height     int
-}
-
-func initialModel() model {
-	return model{
-		fps: fps{
-			lastInstant: time.Now(),
-		},
-	}
 }
 
 func (m model) Init() (tea.Model, tea.Cmd) {
@@ -87,7 +60,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tickMsg:
 		m.frameCount++
-		m.fps.tick()
 		return m, tickCmd()
 	}
 
@@ -125,13 +97,8 @@ func clamp(value, min, max float64) float64 {
 }
 
 func (m model) View() string {
-	// Title and FPS display
+	// Title
 	title := lipgloss.NewStyle().Bold(true).Render("Space")
-	fpsText := ""
-	if m.fps.fps != nil {
-		fpsText = fmt.Sprintf("%.1f fps", *m.fps.fps)
-	}
-	header := fmt.Sprintf("%s %s", title, fpsText)
 
 	// Color display
 	var s strings.Builder
@@ -146,11 +113,11 @@ func (m model) View() string {
 		s.WriteByte('\n')
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, header, s.String())
+	return lipgloss.JoinVertical(lipgloss.Left, title, s.String())
 }
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen(), tea.WithFPS(120))
+	p := tea.NewProgram(model{}, tea.WithAltScreen())
 
 	_, err := p.Run()
 	if err != nil {
