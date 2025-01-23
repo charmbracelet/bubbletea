@@ -59,9 +59,9 @@ func (s *cursedRenderer) flush() error {
 			s.cursor.Blink = cur.Blink
 		}
 		if cur.Color != s.cursor.Color {
-			seq := ansi.SetCursorColor(cur.Color)
-			if cur.Color == nil {
-				seq = ansi.ResetCursorColor
+			seq := ansi.ResetCursorColor
+			if cur.Color != nil {
+				seq = ansi.SetCursorColor(cur.Color)
 			}
 			io.WriteString(s.w, seq) //nolint:errcheck
 			s.cursor.Color = cur.Color

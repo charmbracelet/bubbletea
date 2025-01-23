@@ -536,20 +536,26 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case setBackgroundColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetBackgroundColor(msg.Color))
-					p.setBg = msg.Color
+				} else {
+					p.execute(ansi.ResetBackgroundColor)
 				}
+				p.setBg = msg.Color
 
 			case setForegroundColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetForegroundColor(msg.Color))
-					p.setFg = msg.Color
+				} else {
+					p.execute(ansi.ResetForegroundColor)
 				}
+				p.setFg = msg.Color
 
 			case setCursorColorMsg:
 				if msg.Color != nil {
 					p.execute(ansi.SetCursorColor(msg.Color))
-					p.setCc = msg.Color
+				} else {
+					p.execute(ansi.ResetCursorColor)
 				}
+				p.setCc = msg.Color
 
 			case backgroundColorMsg:
 				p.execute(ansi.RequestBackgroundColor)
