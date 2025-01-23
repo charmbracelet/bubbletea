@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"fmt"
 	"os/exec"
 	"runtime"
 	"testing"
@@ -33,7 +34,7 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() Frame {
+func (m *testExecModel) View() fmt.Stringer {
 	return NewFrame("\n")
 }
 

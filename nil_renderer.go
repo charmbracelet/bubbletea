@@ -1,6 +1,10 @@
 package tea
 
-import "github.com/charmbracelet/colorprofile"
+import (
+	"fmt"
+
+	"github.com/charmbracelet/colorprofile"
+)
 
 // nilRenderer is a no-op renderer. It implements the Renderer interface but
 // doesn't render anything to the terminal.
@@ -42,7 +46,7 @@ func (nilRenderer) flush() error { return nil }
 func (nilRenderer) close() error { return nil }
 
 // render implements the Renderer interface.
-func (nilRenderer) render(Frame) {}
+func (nilRenderer) render(fmt.Stringer) {}
 
 // reset implements the Renderer interface.
 func (nilRenderer) reset() {}

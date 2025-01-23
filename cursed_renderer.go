@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -13,12 +14,12 @@ import (
 type cursedRenderer struct {
 	w             io.Writer
 	scr           *cellbuf.Screen
-	lastFrame     *string
+	lastFrame     *Frame
 	term          string // the terminal type $TERM
 	width, height int
 	mu            sync.Mutex
 	profile       colorprofile.Profile
-	cursorStyle   int
+	cursor        Cursor
 	altScreen     bool
 	cursorHidden  bool
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
@@ -46,20 +47,44 @@ func (s *cursedRenderer) close() (err error) {
 func (s *cursedRenderer) flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.lastFrame != nil && s.lastFrame.Cursor != nil {
+		cur := s.lastFrame.Cursor
+		s.scr.MoveTo(cur.Position.X, cur.Position.Y)
+		s.cursor.Position = cur.Position
+
+		if cur.Style != s.cursor.Style || cur.Blink != s.cursor.Blink {
+			cursorStyle := encodeCursorStyle(cur.Style, cur.Blink)
+			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
+			s.cursor.Style = cur.Style
+			s.cursor.Blink = cur.Blink
+		}
+		if cur.Color != s.cursor.Color {
+			io.WriteString(s.w, ansi.SetCursorColor(cur.Color)) //nolint:errcheck
+			s.cursor.Color = cur.Color
+		}
+	}
 	s.scr.Render()
 	return nil
 }
 
 // render implements renderer.
-func (s *cursedRenderer) render(frame Frame) {
+func (s *cursedRenderer) render(frame fmt.Stringer) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.lastFrame != nil && frame.Content == *s.lastFrame {
+	var f Frame
+	switch frame := frame.(type) {
+	case Frame:
+		f = frame
+	default:
+		f.Content = frame.String()
+	}
+
+	if s.lastFrame != nil && f == *s.lastFrame {
 		return
 	}
 
-	s.lastFrame = &frame.Content
+	s.lastFrame = &f
 	if !s.altScreen {
 		// Inline mode resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -67,39 +92,18 @@ func (s *cursedRenderer) render(frame Frame) {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		frameHeight := strings.Count(frame.Content, "\n") + 1
+		frameHeight := strings.Count(f.Content, "\n") + 1
 		s.scr.Resize(s.width, frameHeight)
 	}
 
 	if ctx := s.scr.DefaultWindow(); ctx != nil {
-		ctx.SetContent(frame.Content)
+		ctx.SetContent(f.Content)
 	}
-	if frame.Cursor.Position != nil {
-		s.scr.MoveTo(frame.Cursor.Position.X, frame.Cursor.Position.Y)
-	}
-	if frame.Cursor.Visible != nil {
-		if *frame.Cursor.Visible {
-			s.scr.ShowCursor()
-			s.cursorHidden = false
-		} else {
-			s.scr.HideCursor()
-			s.cursorHidden = true
-		}
-	}
-	if frame.Cursor.Style != nil || frame.Cursor.Blink != nil {
-		style, blink := decodeCursorStyle(s.cursorStyle)
-		if frame.Cursor.Style != nil {
-			style = *frame.Cursor.Style
-		}
-		if frame.Cursor.Blink != nil {
-			blink = *frame.Cursor.Blink
-		}
 
-		cursorStyle := encodeCursorStyle(style, blink)
-		if cursorStyle != s.cursorStyle {
-			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
-			s.cursorStyle = cursorStyle
-		}
+	if f.Cursor == nil {
+		hideCursor(s)
+	} else {
+		showCursor(s)
 	}
 }
 
@@ -167,7 +171,7 @@ func (s *cursedRenderer) exitAltScreen() {
 	s.altScreen = false
 	s.scr.ExitAltScreen()
 	s.scr.SetRelativeCursor(!s.altScreen)
-	s.scr.Resize(s.width, strings.Count(*s.lastFrame, "\n")+1)
+	s.scr.Resize(s.width, strings.Count((*s.lastFrame).Content, "\n")+1)
 	repaint(s)
 	s.mu.Unlock()
 }
@@ -175,17 +179,25 @@ func (s *cursedRenderer) exitAltScreen() {
 // showCursor implements renderer.
 func (s *cursedRenderer) showCursor() {
 	s.mu.Lock()
+	showCursor(s)
+	s.mu.Unlock()
+}
+
+func showCursor(s *cursedRenderer) {
 	s.cursorHidden = false
 	s.scr.ShowCursor()
-	s.mu.Unlock()
 }
 
 // hideCursor implements renderer.
 func (s *cursedRenderer) hideCursor() {
 	s.mu.Lock()
+	hideCursor(s)
+	s.mu.Unlock()
+}
+
+func hideCursor(s *cursedRenderer) {
 	s.cursorHidden = true
 	s.scr.HideCursor()
-	s.mu.Unlock()
 }
 
 // insertAbove implements renderer.

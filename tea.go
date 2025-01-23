@@ -43,75 +43,6 @@ var ErrInterrupted = errors.New("program was interrupted")
 // function and, henceforth, the UI.
 type Msg interface{}
 
-// Frame represents a single frame of the program's output.
-type Frame struct {
-	// Content contains the frame's content. This is the only required field.
-	// It should be a string of text and ANSI escape codes.
-	Content string
-
-	// Cursor contains cursor settings for the frame. Nil fields will not be
-	// modified. Use helper functions to set these fields.
-	Cursor struct {
-		// Position is a pointer to a [Position] that determines the cursor's
-		// position on the screen relative to the top left corner of the frame.
-		Position *Position
-
-		// Style is a pointer to a [CursorStyle] that determines the cursor's
-		// style. If nil the cursor's style will not be modified.
-		Style *CursorStyle
-
-		// Blink is a pointer to a boolean that determines whether the cursor
-		// should blink. If nil the cursor's blink will not be modified.
-		Blink *bool
-
-		// Visible is a pointer to a boolean that determines whether the cursor
-		// should be visible. If nil the cursor's visibility will not be
-		// modified.
-		Visible *bool
-	}
-}
-
-// NewFrame creates a new frame with the given content.
-func NewFrame(content string) Frame {
-	return Frame{Content: content}
-}
-
-// ShowCursor makes the cursor visible.
-func (f *Frame) ShowCursor() {
-	if f.Cursor.Visible == nil {
-		b := true
-		f.Cursor.Visible = &b
-	} else {
-		*f.Cursor.Visible = true
-	}
-}
-
-// HideCursor hides the cursor.
-func (f *Frame) HideCursor() {
-	if f.Cursor.Visible == nil {
-		b := false
-		f.Cursor.Visible = &b
-	} else {
-		*f.Cursor.Visible = false
-	}
-}
-
-// SetCursorStyle sets the cursor style.
-func (f *Frame) SetCursorStyle(style CursorStyle, blink bool) {
-	f.Cursor.Style = &style
-	f.Cursor.Blink = &blink
-}
-
-// SetCursorPosition sets the cursor position.
-func (f *Frame) SetCursorPosition(x, y int) {
-	if f.Cursor.Position == nil {
-		f.Cursor.Position = &Position{X: x, Y: y}
-	} else {
-		f.Cursor.Position.X = x
-		f.Cursor.Position.Y = y
-	}
-}
-
 // Model contains the program's state as well as its core functions.
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
@@ -122,11 +53,11 @@ type Model interface {
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
 
-	// View renders the program's UI. The view is rendered after every Update.
-	// It reterns a Frame that contains the string content of the frame and
-	// other cursor settings. Use [NewFrame] and [Frame] helper functions to
-	// create a new frame and modify a frame.
-	View() Frame
+	// View renders the program's UI, which is just a [fmt.Stringer]. The view
+	// is rendered after every Update.
+	// The main model can return a [Frame] to set the cursor position and
+	// style.
+	View() fmt.Stringer
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
