@@ -58,7 +58,7 @@ func (p *Program[T]) restoreTerminalState() error {
 		p.execute(ansi.ResetSgrExtMouseMode)
 	}
 	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.DisableModifyOtherKeys)
+		p.execute(ansi.ResetModifyOtherKeys)
 	}
 	if p.activeEnhancements.kittyFlags != 0 {
 		p.execute(ansi.DisableKittyKeyboard)
