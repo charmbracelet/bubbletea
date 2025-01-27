@@ -89,19 +89,19 @@ func TestClearMsg(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testModel{}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf),
-				WithEnvironment([]string{
-					"TERM=xterm-256color", // always use xterm and 256 colors for tests
-				}),
-				// Use ANSI256 to increase test coverage.
-				WithColorProfile(colorprofile.ANSI256))
+			p := NewProgram[*testModel](m)
+			p.Input = &in
+			p.Output = &buf
+			p.Env = []string{"TERM=xterm-256color"} // always use xterm and 256 colors for tests
+			// Use ANSI256 to increase test coverage.
+			p.Profile = colorprofile.ANSI256
 
 			// Set the initial window size for the program.
 			p.width, p.height = 80, 24
 
 			go p.Send(append(test.cmds, Quit))
 
-			if _, err := p.Run(); err != nil {
+			if err := p.Run(); err != nil {
 				t.Fatal(err)
 			}
 			golden.RequireEqual(t, buf.Bytes())

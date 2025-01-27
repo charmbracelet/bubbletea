@@ -15,14 +15,14 @@ type testExecModel struct {
 	err error
 }
 
-func (m *testExecModel) Init() (Model, Cmd) {
+func (m *testExecModel) Init() (*testExecModel, Cmd) {
 	c := exec.Command(m.cmd) //nolint:gosec
 	return m, ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
 	})
 }
 
-func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
+func (m *testExecModel) Update(msg Msg) (*testExecModel, Cmd) {
 	switch msg := msg.(type) {
 	case execFinishedMsg:
 		if msg.err != nil {
@@ -75,8 +75,10 @@ func TestTeaExec(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testExecModel{cmd: test.cmd}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
-			if _, err := p.Run(); err != nil {
+			p := NewProgram[*testExecModel](m)
+			p.Input = &in
+			p.Output = &buf
+			if err := p.Run(); err != nil {
 				t.Error(err)
 			}
 
