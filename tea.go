@@ -107,7 +107,9 @@ func (h *channelHandlers) shutdown() {
 type Program[T any] struct {
 	Input  io.Reader
 	Output io.Writer
-	Env    []string
+
+	// the environment variables for the program, defaults to os.Environ().
+	Env []string
 
 	Init   func() (T, Cmd)
 	Filter func(T, Msg) Msg
@@ -149,9 +151,6 @@ type Program[T any] struct {
 	previousOutputState *term.State
 	renderer            renderer
 	traceOutput         bool // true if output should be traced
-
-	// the environment variables for the program, defaults to os.Environ().
-	environ environ
 
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
@@ -272,8 +271,8 @@ func (p *Program[T]) init() {
 	}
 
 	// if no environment was set, set it to os.Environ()
-	if p.environ == nil {
-		p.environ = os.Environ()
+	if p.Env == nil {
+		p.Env = os.Environ()
 	}
 
 	if p.FPS < 1 {
@@ -729,7 +728,7 @@ func (p *Program[T]) Start() error {
 
 	// Get the color profile and send it to the program.
 	if p.Profile == colorprofile.NoTTY {
-		p.Profile = colorprofile.Detect(p.Output, p.environ)
+		p.Profile = colorprofile.Detect(p.Output, p.Env)
 	}
 
 	// Set the color profile on the renderer and send it to the program.
@@ -753,7 +752,7 @@ func (p *Program[T]) Start() error {
 	p.renderer.resize(resizeMsg.Width, resizeMsg.Height)
 
 	// Send the environment variables used by the program.
-	go p.Send(EnvMsg(p.environ))
+	go p.Send(EnvMsg(p.Env))
 
 	// Init the input reader and initial model.
 	if p.Input != nil {
