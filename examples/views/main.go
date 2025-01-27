@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -41,10 +42,14 @@ var (
 )
 
 func main() {
-	initialModel := model{0, false, 10, 0, 0, false, false}
-	p := tea.NewProgram(initialModel)
+	p := tea.Program[model]{
+		Init:   Init,
+		Update: Update,
+		View:   View,
+	}
 	if err := p.Run(); err != nil {
-		fmt.Println("could not start program:", err)
+		fmt.Fprintln(os.Stderr, "could not start program:", err)
+		os.Exit(1)
 	}
 }
 
@@ -75,12 +80,12 @@ type model struct {
 	Quitting bool
 }
 
-func (m model) Init() (model, tea.Cmd) {
-	return m, tick()
+func Init() (model, tea.Cmd) {
+	return model{Ticks: 10}, tick()
 }
 
 // Main update function.
-func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
+func Update(m model, msg tea.Msg) (model, tea.Cmd) {
 	// Make sure these keys always quit
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		k := msg.String()
@@ -93,13 +98,13 @@ func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	// Hand off the message and model to the appropriate update function for the
 	// appropriate view based on the current state.
 	if !m.Chosen {
-		return updateChoices(msg, m)
+		return updateChoices(m, msg)
 	}
-	return updateChosen(msg, m)
+	return updateChosen(m, msg)
 }
 
 // The main view, which just calls the appropriate sub-view
-func (m model) View() fmt.Stringer {
+func View(m model) fmt.Stringer {
 	var s string
 	if m.Quitting {
 		return tea.NewFrame("\n  See you later!\n\n")
@@ -115,7 +120,7 @@ func (m model) View() fmt.Stringer {
 // Sub-update functions
 
 // Update loop for the first view where you're choosing a task.
-func updateChoices(msg tea.Msg, m model) (model, tea.Cmd) {
+func updateChoices(m model, msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -147,7 +152,7 @@ func updateChoices(msg tea.Msg, m model) (model, tea.Cmd) {
 }
 
 // Update loop for the second view after a choice has been made
-func updateChosen(msg tea.Msg, m model) (model, tea.Cmd) {
+func updateChosen(m model, msg tea.Msg) (model, tea.Cmd) {
 	switch msg.(type) {
 	case frameMsg:
 		if !m.Loaded {
