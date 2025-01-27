@@ -122,10 +122,6 @@ type Program[T any] struct {
 	// program can exit.
 	handlers channelHandlers
 
-	// Title is the title that will be set on the terminal when the
-	// program starts.
-	Title string
-
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -765,11 +761,6 @@ func (p *Program[T]) Start() error {
 	// renderer so we don't need to write the sequence here.
 	p.modes.Reset(ansi.TextCursorEnableMode)
 	p.renderer.hideCursor()
-
-	// Honor program startup options.
-	if p.Title != "" {
-		p.execute(ansi.SetWindowTitle(p.Title))
-	}
 
 	p.execute(ansi.SetBracketedPasteMode)
 	p.modes.Set(ansi.BracketedPasteMode)
