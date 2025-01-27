@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"image/color"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -406,7 +405,6 @@ func (p *Program[T]) eventLoop(cmds chan Cmd) {
 			return
 
 		case msg := <-p.msgs:
-			log.Printf("msg: %T", msg)
 			// Filter messages.
 			if p.Filter != nil {
 				msg = p.Filter(p.Model, msg)
