@@ -135,8 +135,8 @@ func (p *Program[T]) readInputs() error {
 			if m := p.translateInputEvent(msg); m != nil {
 				select {
 				case p.msgs <- m:
-				case <-p.ctx.Done():
-					err := p.ctx.Err()
+				case <-p.Context.Done():
+					err := p.Context.Err()
 					if err != nil {
 						err = fmt.Errorf("found context error while reading input: %w", err)
 					}
@@ -153,7 +153,7 @@ func (p *Program[T]) readLoop() {
 	err := p.readInputs()
 	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 		select {
-		case <-p.ctx.Done():
+		case <-p.Context.Done():
 		case p.errs <- err:
 		}
 	}
@@ -181,7 +181,7 @@ func (p *Program[T]) checkResize() {
 	w, h, err := term.GetSize(p.ttyOutput.Fd())
 	if err != nil {
 		select {
-		case <-p.ctx.Done():
+		case <-p.Context.Done():
 		case p.errs <- err:
 		}
 

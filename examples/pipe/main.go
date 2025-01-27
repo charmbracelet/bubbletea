@@ -45,7 +45,7 @@ func main() {
 
 	model := newModel(strings.TrimSpace(b.String()))
 
-	if _, err := tea.NewProgram(model).Run(); err != nil {
+	if err := tea.NewProgram(model).Run(); err != nil {
 		fmt.Println("Couldn't start program:", err)
 		os.Exit(1)
 	}
@@ -68,11 +68,11 @@ func newModel(initialValue string) (m model) {
 	return
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	if key, ok := msg.(tea.KeyMsg); ok {
 		switch key.String() {
 		case "ctrl+c", "esc", "enter":

@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -82,7 +81,6 @@ func (m model) Init() (model, tea.Cmd) {
 
 // Main update function.
 func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
-	log.Printf("views msg: %v", msg)
 	// Make sure these keys always quit
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		k := msg.String()

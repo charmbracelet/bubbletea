@@ -105,7 +105,7 @@ type model struct {
 	delegateKeys  *delegateKeyMap
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	m.once = new(sync.Once)
 	return m, tea.Batch(
 		tea.RequestBackgroundColor,
@@ -163,7 +163,7 @@ func (m *model) updateListProperties() {
 	m.list.SetSize(m.width-h, m.height-v)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -244,7 +244,7 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

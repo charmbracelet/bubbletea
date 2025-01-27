@@ -13,9 +13,19 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	// p := tea.NewProgram(initialModel())
+	m := initialModel()
+	p := &tea.Program[model]{
+		Init: m.Init,
+		Update: func(m model, msg tea.Msg) (model, tea.Cmd) {
+			return m.Update(msg)
+		},
+		View: func(m model) fmt.Stringer {
+			return m.View()
+		},
+	}
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -31,7 +41,7 @@ func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
 	ti.Focus()
-	ti.Cursor.SetMode(cursor.CursorHide)
+	ti.VirtualCursor.SetMode(cursor.CursorHide)
 
 	return model{
 		textarea: ti,
@@ -39,13 +49,13 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, tea.Batch(
 		textarea.Blink,
 	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
@@ -87,7 +97,8 @@ func (m model) View() fmt.Stringer {
 		"(ctrl+c to quit)",
 	) + "\n\n")
 
-	x, y := m.textarea.CursorPosition()
+	cur := m.textarea.Cursor()
+	x, y := cur.Position.X, cur.Position.Y
 	f.Cursor = tea.NewCursor(x+xOffset, y+yOffset)
 
 	return f
