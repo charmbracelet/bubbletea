@@ -100,10 +100,7 @@ func (s *cursedRenderer) render(frame fmt.Stringer) {
 		s.scr.Resize(s.width, frameHeight)
 	}
 
-	if ctx := s.scr.DefaultWindow(); ctx != nil {
-		ctx.SetContent(f.Content)
-	}
-
+	s.scr.SetContent(f.Content)
 	if f.Cursor == nil {
 		hideCursor(s)
 	} else {
