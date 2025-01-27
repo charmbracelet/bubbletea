@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -147,6 +148,7 @@ type Program[T any] struct {
 	ttyOutput           term.File
 	previousOutputState *term.State
 	renderer            renderer
+	traceOutput         bool // true if output should be traced
 
 	// the environment variables for the program, defaults to os.Environ().
 	environ environ
@@ -290,7 +292,7 @@ func (p *Program[T]) init() {
 		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
 			// Enable different types of tracing.
 			if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
-				// p.Output.(*safeWriter).trace = true
+				p.traceOutput = true
 			}
 			if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
 				p.traceInput = true
@@ -718,7 +720,11 @@ func (p *Program[T]) Start() error {
 	}
 	if p.renderer == nil {
 		// If no renderer is set use the ferocious one.
-		p.renderer = newCursedRenderer(p.Output, p.getenv("TERM"), p.useHardTabs)
+		output := p.Output
+		if p.traceOutput {
+			output = &traceWriter{Writer: output, trace: true}
+		}
+		p.renderer = newCursedRenderer(output, p.getenv("TERM"), p.useHardTabs)
 	}
 
 	// Get the color profile and send it to the program.
@@ -863,6 +869,9 @@ func (p *Program[T]) Wait() (lastErr error) {
 
 // execute writes the given sequence to the program output.
 func (p *Program[T]) execute(seq string) {
+	if p.traceOutput {
+		log.Printf("output: %q", seq)
+	}
 	io.WriteString(p.Output, seq) //nolint:errcheck
 }
 
