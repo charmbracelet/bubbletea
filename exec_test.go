@@ -78,6 +78,7 @@ func TestTeaExec(t *testing.T) {
 			p := NewProgram[*testExecModel](m)
 			p.Input = &in
 			p.Output = &buf
+			p.ForceInputTTY = true
 			if err := p.Run(); err != nil {
 				t.Error(err)
 			}

@@ -54,7 +54,11 @@ func TestTeaModel(t *testing.T) {
 	p := NewProgram[*testModel](&testModel{})
 	p.Input = &in
 	p.Output = &buf
-	p.ctx = ctx
+	p.ForceInputTTY = true
+	go func() {
+		<-ctx.Done()
+		p.Quit()
+	}()
 	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
@@ -72,6 +76,7 @@ func TestTeaQuit(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -102,6 +107,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 	p.Filter = func(_ *testModel, msg Msg) Msg {
 		if _, ok := msg.(QuitMsg); !ok {
 			return msg
@@ -136,6 +142,7 @@ func TestTeaKill(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -160,6 +167,7 @@ func TestTeaContext(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 	go func() {
 		<-ctx.Done()
 		p.Kill()
@@ -191,6 +199,7 @@ func TestTeaBatchMsg(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 	go func() {
 		p.Send(BatchMsg{inc, inc})
 
@@ -225,6 +234,7 @@ func TestTeaSequenceMsg(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 	go p.Send(sequenceMsg{inc, inc, Quit})
 
 	if err := p.Run(); err != nil {
@@ -251,6 +261,7 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 	go p.Send(sequenceMsg{batch, inc, Quit})
 
 	if err := p.Run(); err != nil {
@@ -270,6 +281,7 @@ func TestTeaSend(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 
 	// sending before the program is started is a blocking operation
 	go p.Send(Quit())
@@ -290,4 +302,5 @@ func TestTeaNoRun(t *testing.T) {
 	p := NewProgram[*testModel](m)
 	p.Input = &in
 	p.Output = &buf
+	p.ForceInputTTY = true
 }

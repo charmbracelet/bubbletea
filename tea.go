@@ -160,9 +160,9 @@ type Program[T any] struct {
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 
-	// IsInputTTY is true if the input is a TTY. Use this to tell the program
+	// ForceInputTTY is true if the input is a TTY. Use this to tell the program
 	// that the input is a TTY and that it should be treated as such.
-	IsInputTTY bool
+	ForceInputTTY bool
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
@@ -694,13 +694,13 @@ func (p *Program[T]) Start() error {
 	// not standard input is a terminal. If it's not, we open a new TTY for
 	// input. This will allow things to "just work" in cases where data was
 	// piped in or redirected to the application.
-	if f, ok := p.Input.(term.File); !p.IsInputTTY && (!ok || !term.IsTerminal(f.Fd())) {
+	if f, ok := p.Input.(term.File); !p.ForceInputTTY && (!ok || !term.IsTerminal(f.Fd())) {
 		f, err := openInputTTY()
 		if err != nil {
 			return err
 		}
 		p.Input = f
-		p.IsInputTTY = true
+		p.ForceInputTTY = true
 	}
 
 	// Handle signals.

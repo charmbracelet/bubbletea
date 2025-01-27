@@ -95,6 +95,7 @@ func TestClearMsg(t *testing.T) {
 			p.Env = []string{"TERM=xterm-256color"} // always use xterm and 256 colors for tests
 			// Use ANSI256 to increase test coverage.
 			p.Profile = colorprofile.ANSI256
+			p.ForceInputTTY = true
 
 			// Set the initial window size for the program.
 			p.width, p.height = 80, 24
