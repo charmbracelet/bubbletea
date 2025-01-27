@@ -49,3 +49,11 @@ func NewFrame(content string) Frame {
 func (f Frame) String() string {
 	return f.Content
 }
+
+// View represents a simple [fmt.Stringer] interface for a view.
+type View string
+
+// String implements the fmt.Stringer interface for [View].
+func (v View) String() string {
+	return string(v)
+}
