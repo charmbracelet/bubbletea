@@ -23,7 +23,7 @@ func (p *Program[T]) listenForResize(done chan struct{}) {
 
 	for {
 		select {
-		case <-p.Context.Done():
+		case <-p.ctx.Done():
 			return
 		case <-sig:
 		}

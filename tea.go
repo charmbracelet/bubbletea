@@ -69,12 +69,6 @@ type Model[T any] interface {
 // update function.
 type Cmd func() Msg
 
-// Profile returns a pointer to a color profile. Use it to set the color
-// profile of the terminal.
-func Profile(p colorprofile.Profile) *colorprofile.Profile {
-	return &p
-}
-
 // channelHandlers manages the series of channels returned by various processes.
 // It allows us to wait for those processes to terminate before exiting the
 // program.
@@ -129,13 +123,14 @@ type Program[T any] struct {
 	// program starts.
 	Title string
 
-	Context context.Context
-	cancel  context.CancelFunc
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	msgs         chan Msg
 	errs         chan error
-	finished     chan struct{}
 	shutdownOnce sync.Once
+	killed       int32
+	initialized  int32
 
 	// DontCatchPanics is a flag that determines whether or not the program should
 	// catch panics.
@@ -146,7 +141,7 @@ type Program[T any] struct {
 	IgnoreSignals bool
 
 	// Profile is the color profile of the terminal. Use [Profile] to set it.
-	Profile *colorprofile.Profile // the terminal color profile
+	Profile colorprofile.Profile // the terminal color profile
 
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
@@ -249,6 +244,7 @@ func Interrupt() Msg {
 // NewProgram creates a new Program.
 func NewProgram[T any](model Model[T]) *Program[T] {
 	p := new(Program[T])
+	p.init()
 	p.Init = model.Init
 	p.Update = func(t T, msg Msg) (T, Cmd) { return any(t).(Model[T]).Update(msg) }
 	p.View = func(t T) fmt.Stringer { return any(t).(Model[T]).View() }
@@ -256,18 +252,17 @@ func NewProgram[T any](model Model[T]) *Program[T] {
 }
 
 func (p *Program[T]) init() {
+	if atomic.LoadInt32(&p.initialized) == 1 {
+		return
+	}
+
 	p.msgs = make(chan Msg)
 	p.rendererDone = make(chan struct{})
 	p.keyboardc = make(chan struct{})
 	p.modes = ansi.Modes{}
 
-	// A context can be provided with a ProgramOption, but if none was provided
-	// we'll use the default background context.
-	if p.Context == nil {
-		p.Context = context.Background()
-	}
 	// Initialize context and teardown channel.
-	p.Context, p.cancel = context.WithCancel(p.Context)
+	p.ctx, p.cancel = context.WithCancel(context.Background())
 
 	// if no output was set, set it to stdout
 	if p.Output == nil {
@@ -302,6 +297,8 @@ func (p *Program[T]) init() {
 			}
 		}
 	}
+
+	atomic.StoreInt32(&p.initialized, 1)
 }
 
 func (p *Program[T]) handleSignals() chan struct{} {
@@ -325,7 +322,7 @@ func (p *Program[T]) handleSignals() chan struct{} {
 
 		for {
 			select {
-			case <-p.Context.Done():
+			case <-p.ctx.Done():
 				return
 
 			case s := <-sig:
@@ -367,7 +364,7 @@ func (p *Program[T]) handleCommands(cmds chan Cmd) chan struct{} {
 
 		for {
 			select {
-			case <-p.Context.Done():
+			case <-p.ctx.Done():
 				return
 
 			case cmd := <-cmds:
@@ -401,7 +398,7 @@ func (p *Program[T]) handleCommands(cmds chan Cmd) chan struct{} {
 func (p *Program[T]) eventLoop(cmds chan Cmd) {
 	for {
 		select {
-		case <-p.Context.Done():
+		case <-p.ctx.Done():
 			return
 
 		case msg := <-p.msgs:
@@ -430,9 +427,9 @@ func (p *Program[T]) eventLoop(cmds chan Cmd) {
 			case CapabilityMsg:
 				switch msg {
 				case "RGB", "Tc":
-					if p.Profile != nil && *p.Profile != colorprofile.TrueColor {
-						*p.Profile = colorprofile.TrueColor
-						go p.Send(ColorProfileMsg{*p.Profile})
+					if p.Profile != colorprofile.TrueColor {
+						p.Profile = colorprofile.TrueColor
+						go p.Send(ColorProfileMsg{p.Profile})
 					}
 				}
 
@@ -602,7 +599,7 @@ func (p *Program[T]) eventLoop(cmds chan Cmd) {
 
 						switch msg := cmd().(type) {
 						case BatchMsg:
-							g, _ := errgroup.WithContext(p.Context)
+							g, _ := errgroup.WithContext(p.ctx)
 							for _, cmd := range msg {
 								cmd := cmd
 								g.Go(func() error {
@@ -685,8 +682,7 @@ func (p *Program[T]) Start() error {
 
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
-	p.errs = make(chan error)
-	p.finished = make(chan struct{}, 1)
+	p.errs = make(chan error, 1)
 
 	if p.Input == nil {
 		p.Input = os.Stdin
@@ -726,13 +722,13 @@ func (p *Program[T]) Start() error {
 	}
 
 	// Get the color profile and send it to the program.
-	if p.Profile == nil {
-		p.Profile = Profile(colorprofile.Detect(p.Output, p.environ))
+	if p.Profile == colorprofile.NoTTY {
+		p.Profile = colorprofile.Detect(p.Output, p.environ)
 	}
 
 	// Set the color profile on the renderer and send it to the program.
-	p.renderer.setColorProfile(*p.Profile)
-	go p.Send(ColorProfileMsg{*p.Profile})
+	p.renderer.setColorProfile(p.Profile)
+	go p.Send(ColorProfileMsg{p.Profile})
 
 	// Get the initial window size.
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
@@ -788,7 +784,7 @@ func (p *Program[T]) Start() error {
 
 			select {
 			case cmds <- initCmd:
-			case <-p.Context.Done():
+			case <-p.ctx.Done():
 			}
 		}()
 	}
@@ -805,11 +801,10 @@ func (p *Program[T]) Start() error {
 	go func() {
 		// Run event loop, handle updates and draw.
 		p.eventLoop(cmds)
-		killed := p.Context.Err() != nil
 		// Ensure we rendered the final state of the model.
 		p.renderer.render(p.View(p.Model)) //nolint:errcheck
 		// Restore terminal state.
-		p.shutdown(killed)
+		p.shutdown(atomic.LoadInt32(&p.killed) == 1)
 	}()
 
 	return nil
@@ -824,7 +819,7 @@ func (p *Program[T]) Start() error {
 // to send messages after the program has exited.
 func (p *Program[T]) Send(msg Msg) {
 	select {
-	case <-p.Context.Done():
+	case <-p.ctx.Done():
 	case p.msgs <- msg:
 	}
 }
@@ -844,23 +839,24 @@ func (p *Program[T]) Quit() {
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
 func (p *Program[T]) Kill() {
+	atomic.StoreInt32(&p.killed, 1)
 	p.shutdown(true)
 }
 
 // Wait waits/blocks until the underlying Program finished shutting down.
-func (p *Program[T]) Wait() error {
+func (p *Program[T]) Wait() (lastErr error) {
 	defer func() {
-		killed := p.Context.Err() != nil
 		// Restore terminal state.
-		p.shutdown(killed)
+		p.shutdown(atomic.LoadInt32(&p.killed) == 1)
 	}()
 
 	select {
 	case err := <-p.errs:
 		return err
-	case <-p.Context.Done():
-		return nil
-	case <-p.finished:
+	case <-p.ctx.Done():
+		if atomic.LoadInt32(&p.killed) == 1 {
+			return ErrProgramKilled
+		}
 		return nil
 	}
 }
@@ -895,9 +891,6 @@ func (p *Program[T]) shutdown(kill bool) {
 		}
 
 		_ = p.restoreTerminalState()
-		if !kill {
-			p.finished <- struct{}{}
-		}
 	})
 }
 
