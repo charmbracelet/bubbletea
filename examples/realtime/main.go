@@ -44,7 +44,7 @@ type model struct {
 	quitting  bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, tea.Batch(
 		m.spinner.Tick,
 		listenForActivity(m.sub), // generate activity
@@ -52,7 +52,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyPressMsg:
 		m.quitting = true
@@ -83,7 +83,7 @@ func main() {
 		spinner: spinner.New(),
 	})
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)
 		os.Exit(1)
 	}

@@ -143,7 +143,11 @@ type model struct {
 }
 
 func (m model) Init() (model, tea.Cmd) {
-	return m, animate()
+	return m, tea.Batch(
+		animate(),
+		tea.EnableMouseCellMotion,
+		tea.EnterAltScreen,
+	)
 }
 
 func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
@@ -193,7 +197,7 @@ func main() {
 		spring: harmonica.NewSpring(harmonica.FPS(fps), frequency, damping),
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen[model](), tea.WithMouseCellMotion[model]())
+	p := tea.NewProgram(m)
 	if err := p.Run(); err != nil {
 		fmt.Println("Uh oh:", err)
 		os.Exit(1)

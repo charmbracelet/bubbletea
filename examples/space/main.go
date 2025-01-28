@@ -26,7 +26,7 @@ type model struct {
 	height     int
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, tea.Batch(
 		tea.EnterAltScreen,
 		tickCmd(),
@@ -41,7 +41,7 @@ func tickCmd() tea.Cmd {
 
 type tickMsg struct{}
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -117,9 +117,8 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen())
-
-	_, err := p.Run()
+	p := tea.NewProgram(model{})
+	err := p.Run()
 	if err != nil {
 		fmt.Printf("Error running program: %v", err)
 		os.Exit(1)

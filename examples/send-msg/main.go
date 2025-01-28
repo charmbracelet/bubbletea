@@ -52,11 +52,11 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		m.quitting = true
@@ -115,7 +115,7 @@ func main() {
 		}
 	}()
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

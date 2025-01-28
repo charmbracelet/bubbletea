@@ -20,19 +20,19 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithFilter(filter))
+	p := tea.NewProgram(initialModel())
+	p.Filter = filter
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func filter(teaModel tea.Model, msg tea.Msg) tea.Msg {
+func filter(m model, msg tea.Msg) tea.Msg {
 	if _, ok := msg.(tea.QuitMsg); !ok {
 		return msg
 	}
 
-	m := teaModel.(model)
 	if m.hasChanges {
 		return nil
 	}
@@ -75,11 +75,11 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, textarea.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	if m.quitting {
 		return m.updatePromptView(msg)
 	}
@@ -87,7 +87,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m.updateTextView(msg)
 }
 
-func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) updateTextView(msg tea.Msg) (model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
@@ -117,7 +117,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) updatePromptView(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		// For simplicity's sake, we'll treat any key besides "y" as "no"

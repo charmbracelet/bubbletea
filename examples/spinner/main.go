@@ -27,11 +27,11 @@ func initialModel() model {
 	return model{spinner: s}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -66,7 +66,7 @@ func (m model) View() fmt.Stringer {
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

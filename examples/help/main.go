@@ -80,11 +80,11 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		// If we set a width on the help menu it can gracefully truncate
@@ -140,7 +140,7 @@ func main() {
 		defer f.Close() // nolint:errcheck
 	}
 
-	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
+	if err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Printf("Could not start program :(\n%v\n", err)
 		os.Exit(1)
 	}

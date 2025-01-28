@@ -13,7 +13,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
-var p *tea.Program
+var p *tea.Program[model]
 
 type progressWriter struct {
 	total      int
@@ -100,7 +100,7 @@ func main() {
 	// Start the download
 	go pw.Start()
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		fmt.Println("error running program:", err)
 		os.Exit(1)
 	}

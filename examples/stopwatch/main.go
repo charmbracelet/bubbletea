@@ -25,7 +25,7 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	sw, cmd := m.stopwatch.Init()
 	m.stopwatch = sw
 	return m, cmd
@@ -52,7 +52,7 @@ func (m model) helpView() string {
 	})
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch {
@@ -98,7 +98,7 @@ func main() {
 
 	m.keymap.start.SetEnabled(false)
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Oh no, it didn't work:", err)
 		os.Exit(1)
 	}

@@ -32,7 +32,7 @@ func main() {
 	m := model{}
 	m.resetSpinner()
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}
@@ -43,11 +43,11 @@ type model struct {
 	spinner spinner.Model
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {

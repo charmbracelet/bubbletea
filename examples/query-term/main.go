@@ -28,11 +28,11 @@ type model struct {
 	err   error
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -91,7 +91,7 @@ func (m model) View() fmt.Stringer {
 
 func main() {
 	p := tea.NewProgram(newModel())
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

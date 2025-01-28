@@ -9,11 +9,14 @@ import (
 
 type model struct{}
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() (model, tea.Cmd) {
+	return m, tea.RequestKeyboardEnhancements(
+		tea.WithKeyReleases,
+		tea.WithUniformKeyLayout,
+	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyboardEnhancementsMsg:
 		return m, tea.Printf("Keyboard enhancements: Disambiguation: %v, ReleaseKeys: %v, Uniform keys: %v\n",
@@ -45,8 +48,8 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithKeyboardEnhancements(tea.WithKeyReleases, tea.WithUniformKeyLayout))
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(model{})
+	if err := p.Run(); err != nil {
 		log.Printf("Error running program: %v", err)
 	}
 }

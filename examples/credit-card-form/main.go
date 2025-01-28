@@ -14,7 +14,7 @@ import (
 func main() {
 	p := tea.NewProgram(initialModel())
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -124,11 +124,11 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmds []tea.Cmd = make([]tea.Cmd, len(m.inputs))
 
 	switch msg := msg.(type) {

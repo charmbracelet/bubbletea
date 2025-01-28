@@ -13,11 +13,11 @@ type model struct {
 	suspending bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.ResumeMsg:
 		m.suspending = false
@@ -47,7 +47,7 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		if errors.Is(err, tea.ErrInterrupted) {
 			os.Exit(130)

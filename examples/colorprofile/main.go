@@ -15,10 +15,8 @@ var myFancyColor color.Color
 
 type model struct{}
 
-var _ tea.Model = model{}
-
 // Init implements tea.Model.
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, tea.Batch(
 		tea.RequestCapability("RGB"),
 		tea.RequestCapability("Tc"),
@@ -26,7 +24,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 }
 
 // Update implements tea.Model.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		return m, tea.Quit
@@ -47,8 +45,9 @@ func (m model) View() fmt.Stringer {
 func main() {
 	myFancyColor, _ = colorful.Hex("#6b50ff")
 
-	p := tea.NewProgram(model{}, tea.WithColorProfile(colorprofile.TrueColor))
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(model{})
+	p.Profile = colorprofile.TrueColor
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

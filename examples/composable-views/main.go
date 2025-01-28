@@ -73,14 +73,14 @@ func newModel(timeout time.Duration) mainModel {
 	return m
 }
 
-func (m mainModel) Init() (tea.Model, tea.Cmd) {
+func (m mainModel) Init() (mainModel, tea.Cmd) {
 	// start the timer and spinner on program start
 	timer, cmd := m.timer.Init()
 	m.timer = timer
 	return m, tea.Batch(cmd, m.spinner.Tick)
 }
 
-func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m mainModel) Update(msg tea.Msg) (mainModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
@@ -160,7 +160,7 @@ func (m *mainModel) resetSpinner() {
 func main() {
 	p := tea.NewProgram(newModel(defaultTime))
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
