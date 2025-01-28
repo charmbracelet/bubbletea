@@ -128,13 +128,13 @@ func DisableGraphemeClustering() Msg {
 	return disableModeMsg{ansi.GraphemeClusteringMode}
 }
 
-// EnabledReportFocus is a special command that tells the Bubble Tea program
-// to enable focus reporting.
-func EnabledReportFocus() Msg { return enableModeMsg{ansi.FocusEventMode} }
+// EnableReportFocus is a special command that tells the Bubble Tea program to
+// enable focus reporting.
+func EnableReportFocus() Msg { return enableModeMsg{ansi.FocusEventMode} }
 
-// DisabledReportFocus is a special command that tells the Bubble Tea program
-// to disable focus reporting.
-func DisabledReportFocus() Msg { return disableModeMsg{ansi.FocusEventMode} }
+// DisableReportFocus is a special command that tells the Bubble Tea program to
+// disable focus reporting.
+func DisableReportFocus() Msg { return disableModeMsg{ansi.FocusEventMode} }
 
 // enableModeMsg is an internal message that signals to set a terminal mode.
 type enableModeMsg struct{ ansi.Mode }
