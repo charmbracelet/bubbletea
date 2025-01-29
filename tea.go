@@ -103,20 +103,88 @@ func (h *channelHandlers) shutdown() {
 	wg.Wait()
 }
 
-// Program is a terminal user interface.
+// Program is a terminal user interface. It's the main entry point for building
+// your Bubble Tea program.
+//
+// A minimal program contain an [Program.Init] and [Program.Update] function. The
+// [Program.Init] function initializes the model and returns an optional initial
+// command. The [Program.Update] function updates the model based on messages
+// received and returns the updated model and an optional command.
+//
+// The [Program.View] function is optional and defines how your program's UI
+// should look like. It returns a [Frame] that will be rendered to the
+// terminal. The view function is called after every update and is responsible
+// for rendering the program's UI.
+// If you don't set a view function, Bubble Tea will run the program without
+// rendering anything to the terminal.
 type Program[T any] struct {
-	Input  io.Reader
+	// Input is the used program's input reader used to listen for input events
+	// like key presses. If no input is set, it defaults to os.Stdin.
+	Input io.Reader
+
+	// Output defines where the program will write its output. If no output is
+	// set, it defaults to os.Stdout.
 	Output io.Writer
 
-	// the environment variables for the program, defaults to os.Environ().
+	// Env is a list of environment variables that will be used to determine
+	// terminal capabilities and color support. If no environment is set, it
+	// defaults to [os.Environ].
+	// When the program starts, it will send an [EnvMsg] with the environment
+	// variables used in the program.
 	Env []string
 
-	Init   func() (T, Cmd)
-	Filter func(T, Msg) Msg
-	Update func(T, Msg) (T, Cmd)
-	View   func(T) fmt.Stringer
+	// Init is a program's function that initializes the model and returns an
+	// optional initial command. Initial commands can be used to perform
+	// various terminal operations before the program starts. For example, to
+	// run your program in alt-screen mode, or full-screen mode, you can use
+	// [EnterAltScreen] here.
+	Init func() (T, Cmd)
 
+	// Filter is an optional function that can be used to filter messages before
+	// they reach the update function. This can be useful for logging, debugging,
+	// or to prevent certain messages from reaching the update function.
+	Filter func(T, Msg) Msg
+
+	// Update is a program's function that updates the model based on messages
+	// received. It returns the updated model and an optional command. The
+	// update function is the heart of the program and is where you'll handle
+	// messages and update the model. It's basically the main event loop of
+	// your program.
+	Update func(T, Msg) (T, Cmd)
+
+	// View is a program's function that defines how your program's UI should
+	// look like. It returns a [Frame] that will be rendered to the terminal.
+	// To have more control over the cursor position and style, you can use
+	// [Frame.Cursor] and [NewCursor] to position the cursor and define its
+	// style.
+	View func(T) Frame
+
+	// Model contains the last state of the program. If the program hasn't
+	// started yet, it will be nil. After the program finish executing, it will
+	// contain the final state of the program.
 	Model T
+
+	// DontCatchPanics is a flag that determines whether or not the program should
+	// catch panics.
+	DontCatchPanics bool
+
+	// IgnoreSignals is a flag that determines whether or not the program should
+	// ignore signals.
+	IgnoreSignals bool
+
+	// Profile is the color profile of the terminal. To force a color profile
+	// set this to a specific value. If this is not set, or set to
+	// [colorprofile.NoTTY], Bubble Tea will try to detect the color profile of
+	// the terminal based on the program's output and environment variables.
+	Profile colorprofile.Profile
+
+	// ForceInputTTY is true if the input is a TTY. Use this to tell the program
+	// that the input is a TTY and that it should be treated as such.
+	ForceInputTTY bool
+
+	// FPS is the frames per second we should set on the renderer, if
+	// applicable,
+	FPS int
 
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
@@ -131,17 +199,6 @@ type Program[T any] struct {
 	killed       int32
 	initialized  int32
 
-	// DontCatchPanics is a flag that determines whether or not the program should
-	// catch panics.
-	DontCatchPanics bool
-
-	// IgnoreSignals is a flag that determines whether or not the program should
-	// ignore signals.
-	IgnoreSignals bool
-
-	// Profile is the color profile of the terminal. Use [Profile] to set it.
-	Profile colorprofile.Profile // the terminal color profile
-
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
 	previousOutputState *term.State
@@ -155,17 +212,9 @@ type Program[T any] struct {
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 
-	// ForceInputTTY is true if the input is a TTY. Use this to tell the program
-	// that the input is a TTY and that it should be treated as such.
-	ForceInputTTY bool
-
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
 	ignoreSignals uint32
-
-	// FPS is the frames per second we should set on the renderer, if
-	// applicable,
-	FPS int
 
 	// ticker is the ticker that will be used to write to the renderer.
 	ticker *time.Ticker
