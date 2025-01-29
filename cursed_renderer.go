@@ -81,7 +81,9 @@ func (s *cursedRenderer) render(frame fmt.Stringer) {
 	case Frame:
 		f = frame
 	default:
-		f.Content = frame.String()
+		if frame != nil {
+			f.Content = frame.String()
+		}
 	}
 
 	if s.lastFrame != nil && f == *s.lastFrame {
