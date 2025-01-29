@@ -2,7 +2,6 @@ package tea
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 	"runtime"
 	"testing"
@@ -15,7 +14,8 @@ type testExecModel struct {
 	err error
 }
 
-func (m *testExecModel) Init() (*testExecModel, Cmd) {
+func newTestExecModel(cmd string) (*testExecModel, Cmd) {
+	m := &testExecModel{cmd: cmd}
 	c := exec.Command(m.cmd) //nolint:gosec
 	return m, ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
@@ -34,7 +34,7 @@ func (m *testExecModel) Update(msg Msg) (*testExecModel, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() fmt.Stringer {
+func (m *testExecModel) View() Frame {
 	return NewFrame("\n")
 }
 
@@ -74,8 +74,11 @@ func TestTeaExec(t *testing.T) {
 			var buf bytes.Buffer
 			var in bytes.Buffer
 
-			m := &testExecModel{cmd: test.cmd}
-			p := NewProgram[*testExecModel](m)
+			p := Program[*testExecModel]{
+				Init:   func() (*testExecModel, Cmd) { return newTestExecModel(test.cmd) },
+				Update: (*testExecModel).Update,
+				View:   (*testExecModel).View,
+			}
 			p.Input = &in
 			p.Output = &buf
 			p.ForceInputTTY = true
@@ -83,10 +86,10 @@ func TestTeaExec(t *testing.T) {
 				t.Error(err)
 			}
 
-			if m.err != nil && !test.expectErr {
-				t.Errorf("expected no error, got %v", m.err)
+			if p.Model.err != nil && !test.expectErr {
+				t.Errorf("expected no error, got %v", p.Model.err)
 			}
-			if m.err == nil && test.expectErr {
+			if p.Model.err == nil && test.expectErr {
 				t.Error("expected error, got nil")
 			}
 		})
