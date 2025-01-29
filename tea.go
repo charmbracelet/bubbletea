@@ -328,18 +328,28 @@ func (p *Program[T]) init() {
 
 	// Detect if tracing is enabled.
 	if tracePath := os.Getenv("TEA_TRACE"); tracePath != "" {
-		switch tracePath {
-		case "0", "false", "off":
-			break
-		}
-
-		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
+		setTracing := func() {
 			// Enable different types of tracing.
 			if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
 				p.traceOutput = true
 			}
 			if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
 				p.traceInput = true
+			}
+		}
+
+		switch strings.TrimSpace(tracePath) {
+		case "1", "true", "on":
+			setTracing()
+		case "0", "false", "off":
+			break
+		default:
+			abs, err := filepath.Abs(tracePath)
+			if err != nil {
+				break
+			}
+			if _, err := LogToFile(abs, "bubbletea"); err == nil {
+				setTracing()
 			}
 		}
 	}
