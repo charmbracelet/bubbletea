@@ -18,9 +18,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -282,6 +284,8 @@ func (p *Program[T]) init() {
 	p.rendererDone = make(chan struct{})
 	p.keyboardc = make(chan struct{})
 	p.modes = ansi.Modes{}
+	p.handlers = channelHandlers{}
+	p.errs = make(chan error, 1)
 
 	// Initialize context and teardown channel.
 	p.ctx, p.cancel = context.WithCancel(context.Background())
@@ -289,6 +293,10 @@ func (p *Program[T]) init() {
 	// if no output was set, set it to stdout
 	if p.Output == nil {
 		p.Output = os.Stdout
+	}
+
+	if p.Input == nil {
+		p.Input = os.Stdin
 	}
 
 	// if no environment was set, set it to os.Environ()
@@ -686,16 +694,7 @@ func (p *Program[T]) eventLoop(cmds chan Cmd) {
 			var cmd Cmd
 			p.Model, cmd = p.Update(p.Model, msg) // run update
 			cmds <- cmd                           // process command (if any)
-
 			view := p.View(p.Model)
-			switch view := view.(type) {
-			case Frame:
-				// Ensure we reset the cursor color on exit.
-				if view.Cursor != nil {
-					p.setCc = view.Cursor.Color
-				}
-			}
-
 			p.renderer.render(view) //nolint:errcheck // send view to renderer
 		}
 	}
@@ -718,13 +717,17 @@ func (p *Program[T]) Run() error {
 func (p *Program[T]) Start() error {
 	p.init()
 
-	p.handlers = channelHandlers{}
-	cmds := make(chan Cmd)
-	p.errs = make(chan error, 1)
-
-	if p.Input == nil {
-		p.Input = os.Stdin
+	if p.Init == nil {
+		return errors.New("no Init function set")
 	}
+	if p.Update == nil {
+		return errors.New("no Update function set")
+	}
+	if p.View == nil {
+		return errors.New("no View function set")
+	}
+
+	cmds := make(chan Cmd)
 
 	// The user has not set a custom input, so we need to check whether or
 	// not standard input is a terminal. If it's not, we open a new TTY for
@@ -803,6 +806,7 @@ func (p *Program[T]) Start() error {
 	p.modes.Reset(ansi.TextCursorEnableMode)
 	p.renderer.hideCursor()
 
+	// Always enable bracketed paste mode.
 	p.execute(ansi.SetBracketedPasteMode)
 	p.modes.Set(ansi.BracketedPasteMode)
 
