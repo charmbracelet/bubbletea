@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
 	"github.com/charmbracelet/x/ansi"
@@ -115,7 +114,7 @@ func (p *Program[T]) initInputReader() error {
 	}
 
 	if p.traceInput {
-		drv.SetLogger(log.Default())
+		drv.SetLogger(p.logger)
 	}
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})

@@ -212,6 +212,9 @@ type Program[T any] struct {
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 
+	// logger is the logger used by the program when tracing is enabled.
+	logger *log.Logger
+
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
 	ignoreSignals uint32
@@ -328,6 +331,8 @@ func (p *Program[T]) init() {
 
 	// Detect if tracing is enabled.
 	if tracePath := os.Getenv("TEA_TRACE"); tracePath != "" {
+		p.logger = log.New(os.Stderr, "bubbletea", log.LstdFlags|log.Lshortfile)
+
 		setTracing := func() {
 			// Enable different types of tracing.
 			if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
@@ -348,7 +353,7 @@ func (p *Program[T]) init() {
 			if err != nil {
 				break
 			}
-			if _, err := LogToFile(abs, "bubbletea"); err == nil {
+			if _, err := LogToFileWith(abs, "bubbletea", p.logger); err == nil {
 				setTracing()
 			}
 		}
@@ -780,7 +785,7 @@ func (p *Program[T]) Start() error {
 		// If no renderer is set use the ferocious one.
 		output := p.Output
 		if p.traceOutput {
-			output = &traceWriter{Writer: output, trace: true}
+			output = &traceWriter{Writer: output, logger: p.logger}
 		}
 		p.renderer = newCursedRenderer(output, p.getenv("TERM"), p.useHardTabs)
 	}
@@ -922,8 +927,8 @@ func (p *Program[T]) Wait() (lastErr error) {
 
 // execute writes the given sequence to the program output.
 func (p *Program[T]) execute(seq string) {
-	if p.traceOutput {
-		log.Printf("output: %q", seq)
+	if p.traceOutput && p.logger != nil {
+		p.logger.Printf("output: %q", seq)
 	}
 	io.WriteString(p.Output, seq) //nolint:errcheck
 }
