@@ -46,6 +46,23 @@ var ErrInterrupted = errors.New("program was interrupted")
 // function and, henceforth, the UI.
 type Msg interface{}
 
+// Model contains the program's state as well as its core functions.
+type Model[T any] interface {
+	// Init is the first function that will be called. It returns an optional
+	// initial command. To not perform an initial command return nil.
+	Init() (T, Cmd)
+
+	// Update is called when a message is received. Use it to inspect messages
+	// and, in response, update the model and/or send a command.
+	Update(Msg) (T, Cmd)
+
+	// View renders the program's UI, which is just a [fmt.Stringer]. The view
+	// is rendered after every Update.
+	// The main model can return a [Frame] to set the cursor position and
+	// style.
+	View() fmt.Stringer
+}
+
 // Cmd is an IO operation that returns a message when it's complete. If it's
 // nil it's considered a no-op. Use it for things like HTTP requests, timers,
 // saving and loading from disk, and so on.
@@ -142,7 +159,7 @@ type Program[T any] struct {
 	// To have more control over the cursor position and style, you can use
 	// [Frame.Cursor] and [NewCursor] to position the cursor and define its
 	// style.
-	View func(T) Frame
+	View func(T) fmt.Stringer
 
 	// Model contains the last state of the program. If the program hasn't
 	// started yet, it will be nil. After the program finish executing, it will
@@ -273,6 +290,15 @@ type InterruptMsg struct{}
 // interrupt.
 func Interrupt() Msg {
 	return InterruptMsg{}
+}
+
+// NewProgram creates a new Program.
+func NewProgram[T any](model Model[T]) *Program[T] {
+	p := new(Program[T])
+	p.Init = model.Init
+	p.Update = func(t T, msg Msg) (T, Cmd) { return any(t).(Model[T]).Update(msg) }
+	p.View = func(t T) fmt.Stringer { return any(t).(Model[T]).View() }
+	return p
 }
 
 func (p *Program[T]) init() {
@@ -695,6 +721,14 @@ func (p *Program[T]) eventLoop(cmds chan Cmd) {
 			p.Model, cmd = p.Update(p.Model, msg) // run update
 			cmds <- cmd                           // process command (if any)
 			view := p.View(p.Model)
+			switch view := view.(type) {
+			case Frame:
+				// Ensure we reset the cursor color on exit.
+				if view.Cursor != nil {
+					p.setCc = view.Cursor.Color
+				}
+			}
+
 			p.renderer.render(view) //nolint:errcheck // send view to renderer
 		}
 	}
