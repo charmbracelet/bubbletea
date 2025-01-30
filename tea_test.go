@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"sync/atomic"
 	"testing"
@@ -50,7 +51,7 @@ func (m *testModel) Update(msg Msg) (*testModel, Cmd) {
 	return m, nil
 }
 
-func (m *testModel) View() Frame {
+func (m *testModel) View() fmt.Stringer {
 	m.executed.Store(true)
 	return NewFrame("success\n")
 }
@@ -85,7 +86,7 @@ func TestTeaQuit(t *testing.T) {
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
-			if p.Model.executed.Load() != nil {
+			if p.Model != nil && p.Model.executed.Load() != nil {
 				p.Quit()
 				return
 			}
@@ -143,7 +144,7 @@ func TestTeaKill(t *testing.T) {
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
-			if p.Model.executed.Load() != nil {
+			if p.Model != nil && p.Model.executed.Load() != nil {
 				p.Kill()
 				return
 			}
@@ -168,7 +169,7 @@ func TestTeaContext(t *testing.T) {
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
-			if p.Model.executed.Load() != nil {
+			if p.Model != nil && p.Model.executed.Load() != nil {
 				cancel()
 				return
 			}
