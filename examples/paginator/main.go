@@ -33,7 +33,7 @@ type model struct {
 	ready     bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	var items []string
 	for i := 1; i < 101; i++ {
 		text := fmt.Sprintf("Item %d", i)
@@ -51,7 +51,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 	return m, tea.RequestBackgroundColor
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.BackgroundColorMsg:
@@ -88,7 +88,7 @@ func (m model) View() fmt.Stringer {
 
 func main() {
 	p := tea.NewProgram(model{})
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

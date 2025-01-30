@@ -26,13 +26,16 @@ func clearErrorAfter(t time.Duration) tea.Cmd {
 	})
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	fp, cmd := m.filepicker.Init()
 	m.filepicker = fp
-	return m, cmd
+	return m, tea.Batch(
+		tea.EnterAltScreen,
+		cmd,
+	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -90,7 +93,10 @@ func main() {
 	m := model{
 		filepicker: fp,
 	}
-	tm, _ := tea.NewProgram(&m, tea.WithAltScreen()).Run()
-	mm := tm.(model)
-	fmt.Println("\n  You selected: " + m.filepicker.Styles.Selected.Render(mm.selectedFile) + "\n")
+	tm := tea.NewProgram(&m)
+	if err := tm.Run(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
+	fmt.Println("\n  You selected: " + m.filepicker.Styles.Selected.Render(tm.Model.selectedFile) + "\n")
 }

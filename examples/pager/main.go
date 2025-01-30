@@ -33,11 +33,14 @@ type model struct {
 	viewport viewport.Model
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() (model, tea.Cmd) {
+	return m, tea.Batch(
+		tea.EnterAltScreen,
+		tea.EnableMouseCellMotion,
+	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -112,11 +115,9 @@ func main() {
 
 	p := tea.NewProgram(
 		model{content: string(content)},
-		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
-		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 	)
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}

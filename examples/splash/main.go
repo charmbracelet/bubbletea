@@ -37,12 +37,15 @@ type model struct {
 	rate   int64
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	m.rate = 90
-	return m, tick
+	return m, tea.Batch(
+		tea.EnterAltScreen,
+		tick,
+	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		return m, tea.Quit
@@ -170,12 +173,8 @@ func abs(i int) int {
 }
 
 func main() {
-	p := tea.NewProgram(
-		model{},
-		tea.WithAltScreen(),
-	)
-
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(model{})
+	if err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}
 }

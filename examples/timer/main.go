@@ -27,13 +27,13 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	timer, cmd := m.timer.Init()
 	m.timer = timer
 	return m, cmd
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case timer.TickMsg:
 		var cmd tea.Cmd
@@ -117,7 +117,7 @@ func main() {
 	}
 	m.keymap.start.SetEnabled(false)
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Uh oh, we encountered an error:", err)
 		os.Exit(1)
 	}

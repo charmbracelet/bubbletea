@@ -51,7 +51,7 @@ func newTextarea() textarea.Model {
 	t.Prompt = ""
 	t.Placeholder = "Type something"
 	t.ShowLineNumbers = true
-	t.Cursor.Style = cursorStyle
+	t.VirtualCursor.Style = cursorStyle
 	t.Styles.Focused.Placeholder = focusedPlaceholderStyle
 	t.Styles.Blurred.Placeholder = placeholderStyle
 	t.Styles.Focused.CursorLine = cursorLineStyle
@@ -111,11 +111,14 @@ func newModel() model {
 	return m
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textarea.Blink
+func (m model) Init() (model, tea.Cmd) {
+	return m, tea.Batch(
+		tea.EnterAltScreen,
+		textarea.Blink,
+	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -198,7 +201,7 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+	if err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}

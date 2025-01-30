@@ -17,9 +17,9 @@ type model struct {
 	table table.Model
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) { return m, nil }
+func (m model) Init() (model, tea.Cmd) { return m, nil }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -177,7 +177,7 @@ func main() {
 	t.SetStyles(s)
 
 	m := model{t}
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

@@ -16,17 +16,20 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	p := tea.NewProgram(model(5), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(model(5))
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tick()
+func (m model) Init() (model, tea.Cmd) {
+	return m, tea.Batch(
+		tea.EnterAltScreen,
+		tick(),
+	)
 }
 
-func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(message tea.Msg) (model, tea.Cmd) {
 	switch msg := message.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {

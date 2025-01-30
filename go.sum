@@ -1,11 +1,11 @@
 github.com/aymanbagabas/go-udiff v0.2.0 h1:TK0fH4MteXUDspT88n8CKzvK0X9O2xu9yQjWpi6yML8=
 github.com/aymanbagabas/go-udiff v0.2.0/go.mod h1:RE4Ex0qsGkTAJoQdQQCA0uG+nAzJO/pI/QwceO5fgrA=
-github.com/charmbracelet/colorprofile v0.1.10 h1:k6jIGJg4bPWvHZqcoLjFxH1bm9uT28Ysxg8guonDJ1Y=
-github.com/charmbracelet/colorprofile v0.1.10/go.mod h1:6wPrSSR4QtwYtOY3h0bLRw5YOUAIKWlZIJ02CTAsZsk=
+github.com/charmbracelet/colorprofile v0.2.0 h1:iiIQlp3LSvoJPtR11KoDfIf9wqWm2mn/iU420rHOZ/A=
+github.com/charmbracelet/colorprofile v0.2.0/go.mod h1:6wPrSSR4QtwYtOY3h0bLRw5YOUAIKWlZIJ02CTAsZsk=
 github.com/charmbracelet/x/ansi v0.8.0 h1:9GTq3xq9caJW8ZrBTe0LIe2fvfLR/bYXKTx2llXn7xE=
 github.com/charmbracelet/x/ansi v0.8.0/go.mod h1:wdYl/ONOLHLIVmQaxbIYEC/cRKOQyjTkowiI4blgS9Q=
-github.com/charmbracelet/x/cellbuf v0.0.7 h1:u+ArcmMqOuY+f0rFGHzTJxALno2kJAPxK8u2PVo5YIQ=
-github.com/charmbracelet/x/cellbuf v0.0.7/go.mod h1:WU1sKZkKCLaBjrRneV4AGFYygeFiGk5rFAKxqRyJuPE=
+github.com/charmbracelet/x/cellbuf v0.0.8 h1:seFe/rierwnDBVmGWWnQj3vHqzQkGYzuJYfKEY48TqM=
+github.com/charmbracelet/x/cellbuf v0.0.8/go.mod h1:dKfNBxLovpvzzxAP6/GZfs5eb7vNxHlUDnwGhRmvIdY=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f h1:UytXHv0UxnsDFmL/7Z9Q5SBYPwSuRLXHbwx+6LycZ2w=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
 github.com/charmbracelet/x/input v0.3.1 h1:TE4s3fTRj+OUpJ86dKphrN99+NgBnto//EkWncMJQIg=

@@ -11,19 +11,19 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithMouseAllMotion())
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(model{})
+	if err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 type model struct{}
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() (model, tea.Cmd) {
+	return m, tea.EnableMouseAllMotion
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if s := msg.String(); s == "ctrl+c" || s == "q" || s == "esc" {

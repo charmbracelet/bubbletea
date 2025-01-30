@@ -30,7 +30,7 @@ func main() {
 		progress: progress.New(progress.WithDefaultGradient()),
 	}
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Oh no!", err)
 		os.Exit(1)
 	}
@@ -42,11 +42,11 @@ type model struct {
 	progress progress.Model
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, tickCmd()
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		return m, tea.Quit

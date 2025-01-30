@@ -14,17 +14,15 @@ type model struct {
 	width int
 }
 
-var _ tea.Model = model{}
-
 // Init implements tea.Model.
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	m.input = textinput.New()
 	m.input.Placeholder = "Enter capability name to request"
 	return m, m.input.Focus()
 }
 
 // Update implements tea.Model.
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -59,7 +57,7 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if err := tea.NewProgram(model{}).Run(); err != nil {
 		log.Fatal(err)
 	}
 }

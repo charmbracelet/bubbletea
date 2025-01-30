@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -17,11 +18,23 @@ type testModel struct {
 	counter  atomic.Value
 }
 
-func (m *testModel) Init() (Model, Cmd) {
-	return m, nil
+func newTestModel() (*testModel, Cmd) {
+	return &testModel{}, nil
 }
 
-func (m *testModel) Update(msg Msg) (Model, Cmd) {
+func newTestProgram(in io.Reader, out io.Writer) *Program[*testModel] {
+	p := Program[*testModel]{
+		Init:   newTestModel,
+		Update: (*testModel).Update,
+		View:   (*testModel).View,
+	}
+	p.Input = in
+	p.Output = out
+	p.ForceInputTTY = true
+	return &p
+}
+
+func (m *testModel) Update(msg Msg) (*testModel, Cmd) {
 	switch msg.(type) {
 	case incrementMsg:
 		i := m.counter.Load()
@@ -51,8 +64,12 @@ func TestTeaModel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	defer cancel()
 
-	p := NewProgram(&testModel{}, WithInput(&in), WithOutput(&buf), WithContext(ctx))
-	if _, err := p.Run(); err != nil {
+	p := newTestProgram(&in, &buf)
+	go func() {
+		<-ctx.Done()
+		p.Quit()
+	}()
+	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -65,19 +82,18 @@ func TestTeaQuit(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
-	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := newTestProgram(&in, &buf)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
-			if m.executed.Load() != nil {
+			if p.Model != nil && p.Model.executed.Load() != nil {
 				p.Quit()
 				return
 			}
 		}
 	}()
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -92,21 +108,18 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
-	m := &testModel{}
 	shutdowns := uint32(0)
-	p := NewProgram(m,
-		WithInput(&in),
-		WithOutput(&buf),
-		WithFilter(func(_ Model, msg Msg) Msg {
-			if _, ok := msg.(QuitMsg); !ok {
-				return msg
-			}
-			if shutdowns < preventCount {
-				atomic.AddUint32(&shutdowns, 1)
-				return nil
-			}
+	p := newTestProgram(&in, &buf)
+	p.Filter = func(_ *testModel, msg Msg) Msg {
+		if _, ok := msg.(QuitMsg); !ok {
 			return msg
-		}))
+		}
+		if shutdowns < preventCount {
+			atomic.AddUint32(&shutdowns, 1)
+			return nil
+		}
+		return msg
+	}
 
 	go func() {
 		for atomic.LoadUint32(&shutdowns) <= preventCount {
@@ -115,7 +128,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 		}
 	}()
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 	if shutdowns != preventCount {
@@ -127,19 +140,18 @@ func TestTeaKill(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
-	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := newTestProgram(&in, &buf)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
-			if m.executed.Load() != nil {
+			if p.Model != nil && p.Model.executed.Load() != nil {
 				p.Kill()
 				return
 			}
 		}
 	}()
 
-	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
+	if err := p.Run(); !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
@@ -149,19 +161,22 @@ func TestTeaContext(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
-	m := &testModel{}
-	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	p := newTestProgram(&in, &buf)
+	go func() {
+		<-ctx.Done()
+		p.Kill()
+	}()
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
-			if m.executed.Load() != nil {
+			if p.Model != nil && p.Model.executed.Load() != nil {
 				cancel()
 				return
 			}
 		}
 	}()
 
-	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
+	if err := p.Run(); !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
@@ -174,14 +189,13 @@ func TestTeaBatchMsg(t *testing.T) {
 		return incrementMsg{}
 	}
 
-	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := newTestProgram(&in, &buf)
 	go func() {
 		p.Send(BatchMsg{inc, inc})
 
 		for {
 			time.Sleep(time.Millisecond)
-			i := m.counter.Load()
+			i := p.Model.counter.Load()
 			if i != nil && i.(int) >= 2 {
 				p.Quit()
 				return
@@ -189,12 +203,12 @@ func TestTeaBatchMsg(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
-	if m.counter.Load() != 2 {
-		t.Fatalf("counter should be 2, got %d", m.counter.Load())
+	if p.Model.counter.Load() != 2 {
+		t.Fatalf("counter should be 2, got %d", p.Model.counter.Load())
 	}
 }
 
@@ -206,16 +220,15 @@ func TestTeaSequenceMsg(t *testing.T) {
 		return incrementMsg{}
 	}
 
-	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := newTestProgram(&in, &buf)
 	go p.Send(sequenceMsg{inc, inc, Quit})
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
-	if m.counter.Load() != 2 {
-		t.Fatalf("counter should be 2, got %d", m.counter.Load())
+	if p.Model.counter.Load() != 2 {
+		t.Fatalf("counter should be 2, got %d", p.Model.counter.Load())
 	}
 }
 
@@ -230,16 +243,15 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 		return BatchMsg{inc, inc}
 	}
 
-	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := newTestProgram(&in, &buf)
 	go p.Send(sequenceMsg{batch, inc, Quit})
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
-	if m.counter.Load() != 3 {
-		t.Fatalf("counter should be 3, got %d", m.counter.Load())
+	if p.Model.counter.Load() != 3 {
+		t.Fatalf("counter should be 3, got %d", p.Model.counter.Load())
 	}
 }
 
@@ -247,13 +259,12 @@ func TestTeaSend(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
-	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := newTestProgram(&in, &buf)
 
 	// sending before the program is started is a blocking operation
 	go p.Send(Quit())
 
-	if _, err := p.Run(); err != nil {
+	if err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -265,6 +276,5 @@ func TestTeaNoRun(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
-	m := &testModel{}
-	NewProgram(m, WithInput(&in), WithOutput(&buf))
+	_ = newTestProgram(&in, &buf)
 }

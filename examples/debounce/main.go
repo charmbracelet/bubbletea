@@ -26,11 +26,11 @@ type model struct {
 	tag int
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		// Increment the tag on the model...
@@ -59,7 +59,7 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("uh oh:", err)
 		os.Exit(1)
 	}

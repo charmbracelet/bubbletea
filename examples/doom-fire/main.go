@@ -23,11 +23,14 @@ type model struct {
 	startTime   time.Time
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tick
+func (m model) Init() (model, tea.Cmd) {
+	return m, tea.Batch(
+		tick,
+		tea.EnterAltScreen,
+	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if msg.String() == "q" || msg.String() == "ctrl+c" {
@@ -128,8 +131,8 @@ func initialModel() model {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(initialModel())
+	if err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}
 }

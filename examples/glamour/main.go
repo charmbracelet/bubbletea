@@ -101,11 +101,11 @@ func newExample() (*example, error) {
 	}, nil
 }
 
-func (e example) Init() (tea.Model, tea.Cmd) {
+func (e example) Init() (example, tea.Cmd) {
 	return e, nil
 }
 
-func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (e example) Update(msg tea.Msg) (example, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -136,7 +136,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, err := tea.NewProgram(model).Run(); err != nil {
+	if err := tea.NewProgram(model).Run(); err != nil {
 		fmt.Println("Bummer, there's been an error:", err)
 		os.Exit(1)
 	}

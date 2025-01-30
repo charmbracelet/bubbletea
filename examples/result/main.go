@@ -18,11 +18,11 @@ type model struct {
 	choice string
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -73,14 +73,14 @@ func main() {
 	p := tea.NewProgram(model{})
 
 	// Run returns the model as a tea.Model.
-	m, err := p.Run()
+	err := p.Run()
 	if err != nil {
 		fmt.Println("Oh no:", err)
 		os.Exit(1)
 	}
 
 	// Assert the final tea.Model to our local model and print the choice.
-	if m, ok := m.(model); ok && m.choice != "" {
+	if m := p.Model; m.choice != "" {
 		fmt.Printf("\n---\nYou chose %s!\n", m.choice)
 	}
 }

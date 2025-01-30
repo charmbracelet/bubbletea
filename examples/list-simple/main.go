@@ -70,7 +70,7 @@ type model struct {
 	quitting bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	items := []list.Item{
 		item("Ramen"),
 		item("Tomato Soup"),
@@ -95,7 +95,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 	return m, tea.RequestBackgroundColor
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.BackgroundColorMsg:
 		// Wait until we know the background color to initialize our styles.
@@ -147,7 +147,7 @@ func (m model) View() fmt.Stringer {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

@@ -47,11 +47,11 @@ type model struct {
 	err         error
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() (model, tea.Cmd) {
 	return m, textinput.Blink
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -178,7 +178,7 @@ func main() {
 		ti: ti,
 	})
 
-	_, err := p.Run()
+	err := p.Run()
 	if err != nil {
 		log.Fatalf("Error running program: %v", err)
 	}
