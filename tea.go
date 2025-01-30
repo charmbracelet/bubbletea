@@ -893,6 +893,9 @@ func (p *Program[T]) Start() error {
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
 func (p *Program[T]) Send(msg Msg) {
+	for atomic.LoadInt32(&p.initialized) == 0 {
+		time.Sleep(10 * time.Millisecond)
+	}
 	select {
 	case <-p.ctx.Done():
 	case p.msgs <- msg:
