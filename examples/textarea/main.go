@@ -6,10 +6,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/cursor"
 	"github.com/charmbracelet/bubbles/v2/textarea"
 	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func main() {
@@ -30,8 +31,8 @@ type model struct {
 func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
+	ti.VirtualCursor = false
 	ti.Focus()
-	ti.Cursor.SetMode(cursor.CursorHide)
 
 	return model{
 		textarea: ti,
@@ -40,9 +41,7 @@ func initialModel() model {
 }
 
 func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(
-		textarea.Blink,
-	)
+	return m, tea.Batch(textarea.Blink, tea.RequestBackgroundColor)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,6 +49,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		m.textarea.Styles = textarea.DefaultStyles(msg.IsDark())
+
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
@@ -78,17 +80,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() fmt.Stringer {
 	const (
-		xOffset = 6
-		yOffset = 2
+		header = "Tell me a story.\n"
+		footer = "\n(ctrl+c to quit)\n"
 	)
-	f := tea.NewFrame(fmt.Sprintf(
-		"Tell me a story.\n\n%s\n\n%s",
-		m.textarea.View(),
-		"(ctrl+c to quit)",
-	) + "\n\n")
 
-	x, y := m.textarea.CursorPosition()
-	f.Cursor = tea.NewCursor(x+xOffset, y+yOffset)
+	f := tea.NewFrame(strings.Join([]string{
+		header,
+		m.textarea.View(),
+		footer,
+	}, "\n"))
+
+	if !m.textarea.VirtualCursor {
+		f.Cursor = m.textarea.Cursor()
+
+		// Set the y offset of the cursor based on the position of the textarea
+		// in the application.
+		f.Cursor.Position.Y += lipgloss.Height(header)
+	}
 
 	return f
 }
