@@ -8,8 +8,8 @@ import (
 )
 
 type model struct {
-	style tea.CursorStyle
-	blink bool
+	cursor tea.Cursor
+	blink  bool
 }
 
 func (m model) Init() (tea.Model, tea.Cmd) {
@@ -21,26 +21,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "ctrl+q", "q":
+		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "h", "left":
-			if m.style == tea.CursorBlock && m.blink {
-				break
+			m.cursor.Shape--
+			if m.cursor.Shape < tea.CursorBlock {
+				m.cursor.Shape = tea.CursorBar
 			}
-			if m.blink {
-				m.style--
-			}
-			m.blink = !m.blink
 		case "l", "right":
-			if m.style == tea.CursorBar && !m.blink {
-				break
+			m.cursor.Shape++
+			if m.cursor.Shape > tea.CursorBar {
+				m.cursor.Shape = tea.CursorBlock
 			}
-			if !m.blink {
-				m.style++
-			}
-			m.blink = !m.blink
 		}
 	}
+	m.blink = !m.blink
 	return m, nil
 }
 
@@ -49,7 +44,7 @@ func (m model) View() fmt.Stringer {
 		"\n\n" +
 		"  <- This is the cursor (a " + m.describeCursor() + ")")
 	f.Cursor = tea.NewCursor(0, 2)
-	f.Cursor.Style = m.style
+	f.Cursor.Shape = m.cursor.Shape
 	f.Cursor.Blink = m.blink
 	return f
 }
@@ -63,7 +58,7 @@ func (m model) describeCursor() string {
 		adj = "steady"
 	}
 
-	switch m.style {
+	switch m.cursor.Shape {
 	case tea.CursorBlock:
 		noun = "block"
 	case tea.CursorUnderline:
