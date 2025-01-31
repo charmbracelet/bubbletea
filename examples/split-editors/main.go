@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	cursorColor = lipgloss.Color("212")
 
 	cursorLineStyle = lipgloss.NewStyle().
 			Background(lipgloss.Color("57")).
@@ -27,9 +27,6 @@ var (
 
 	placeholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("238"))
-
-	endOfBufferStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("235"))
 
 	focusedPlaceholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("99"))
@@ -40,6 +37,9 @@ var (
 
 	blurredBorderStyle = lipgloss.NewStyle().
 				Border(lipgloss.HiddenBorder())
+
+	endOfBufferStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("235"))
 )
 
 type keymap = struct {
@@ -51,7 +51,8 @@ func newTextarea() textarea.Model {
 	t.Prompt = ""
 	t.Placeholder = "Type something"
 	t.ShowLineNumbers = true
-	t.Cursor.Style = cursorStyle
+	t.VirtualCursor = false
+	t.Styles.Cursor.Color = cursorColor
 	t.Styles.Focused.Placeholder = focusedPlaceholderStyle
 	t.Styles.Blurred.Placeholder = placeholderStyle
 	t.Styles.Focused.CursorLine = cursorLineStyle
@@ -194,7 +195,22 @@ func (m model) View() fmt.Stringer {
 		views = append(views, m.inputs[i].View())
 	}
 
-	return tea.NewFrame(lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help)
+	f := tea.NewFrame(lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help)
+
+	focusedInput := m.inputs[m.focus]
+	if !focusedInput.VirtualCursor {
+		f.Cursor = focusedInput.Cursor()
+
+		// Find textrea offset to position real cursor.
+		//
+		// To do this we calculate the width of all textareas to the left of
+		// the focused one.
+		for i := 0; i < m.focus; i++ {
+			f.Cursor.Position.X += lipgloss.Width(views[i])
+		}
+	}
+
+	return f
 }
 
 func main() {
