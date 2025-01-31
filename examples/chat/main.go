@@ -15,8 +15,6 @@ import (
 	"github.com/charmbracelet/lipgloss/v2"
 )
 
-const gap = "\n\n"
-
 func main() {
 	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
@@ -35,6 +33,7 @@ type model struct {
 func initialModel() model {
 	ta := textarea.New()
 	ta.Placeholder = "Send a message..."
+	ta.VirtualCursor = false
 	ta.Focus()
 
 	ta.Prompt = "┃ "
@@ -72,7 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.viewport.SetWidth(msg.Width)
 		m.textarea.SetWidth(msg.Width)
-		m.viewport.SetHeight(msg.Height - m.textarea.Height() - lipgloss.Height(gap))
+		m.viewport.SetHeight(msg.Height - m.textarea.Height())
 
 		if len(m.messages) > 0 {
 			// Wrap content before setting it.
@@ -108,10 +107,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() fmt.Stringer {
-	return tea.NewFrame(fmt.Sprintf(
-		"%s%s%s",
-		m.viewport.View(),
-		gap,
-		m.textarea.View(),
-	))
+	viewportView := m.viewport.View()
+	f := tea.NewFrame(viewportView + "\n" + m.textarea.View())
+
+	if !m.textarea.VirtualCursor {
+		f.Cursor = m.textarea.Cursor()
+
+		// Calculate the cursor offset.
+		f.Cursor.Position.Y += lipgloss.Height(viewportView)
+	}
+
+	return f
 }
