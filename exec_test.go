@@ -2,7 +2,6 @@ package tea
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 	"runtime"
 	"testing"
@@ -15,9 +14,9 @@ type testExecModel struct {
 	err error
 }
 
-func (m *testExecModel) Init() (Model, Cmd) {
+func (m *testExecModel) Init() Cmd {
 	c := exec.Command(m.cmd) //nolint:gosec
-	return m, ExecProcess(c, func(err error) Msg {
+	return ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
 	})
 }
@@ -34,8 +33,8 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() fmt.Stringer {
-	return NewFrame("\n")
+func (m *testExecModel) View() string {
+	return "\n"
 }
 
 func TestTeaExec(t *testing.T) {

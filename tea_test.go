@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -17,8 +16,8 @@ type testModel struct {
 	counter  atomic.Value
 }
 
-func (m *testModel) Init() (Model, Cmd) {
-	return m, nil
+func (m *testModel) Init() Cmd {
+	return nil
 }
 
 func (m *testModel) Update(msg Msg) (Model, Cmd) {
@@ -38,9 +37,9 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testModel) View() fmt.Stringer {
+func (m *testModel) View() string {
 	m.executed.Store(true)
-	return NewFrame("success\n")
+	return "success\n"
 }
 
 func TestTeaModel(t *testing.T) {

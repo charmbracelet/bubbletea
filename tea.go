@@ -47,17 +47,54 @@ type Msg interface{}
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
-	Init() (Model, Cmd)
+	Init() Cmd
 
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
 
-	// View renders the program's UI, which is just a [fmt.Stringer]. The view
-	// is rendered after every Update.
-	// The main model can return a [Frame] to set the cursor position and
-	// style.
-	View() fmt.Stringer
+	// View renders the program's UI, which is just a string. The view is
+	// rendered after every Update.
+	View() string
+}
+
+// Cursor represents a cursor on the terminal screen.
+type Cursor struct {
+	// Position is a [Position] that determines the cursor's position on the
+	// screen relative to the top left corner of the frame.
+	Position Position
+
+	// Color is a [color.Color] that determines the cursor's color.
+	Color color.Color
+
+	// Shape is a [CursorShape] that determines the cursor's shape.
+	Shape CursorShape
+
+	// Blink is a boolean that determines whether the cursor should blink.
+	Blink bool
+}
+
+// NewCursor returns a new cursor with the default settings and the given
+// position.
+func NewCursor(x, y int) *Cursor {
+	return &Cursor{
+		Position: Position{X: x, Y: y},
+		Color:    nil,
+		Shape:    CursorBlock,
+		Blink:    true,
+	}
+}
+
+// CursorModel is an optional interface that can be implemented by the main
+// model to provide a cursor position and style.
+type CursorModel interface {
+	// Cursor returns the cursor position and style. A nil cursor will hide the
+	// cursor. Otherwise, the cursor will be shown at the position and with the
+	// style specified.
+	// Use [NewCursor] to quickly create a cursor for a given position with
+	// default styles.
+	// This method is called in-sync with the [Model.View] method.
+	Cursor() *Cursor
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
@@ -696,18 +733,23 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			model, cmd = model.Update(msg) // run update
 			cmds <- cmd                    // process command (if any)
 
-			view := model.View()
-			switch view := view.(type) {
-			case Frame:
-				// Ensure we reset the cursor color on exit.
-				if view.Cursor != nil {
-					p.setCc = view.Cursor.Color
-				}
-			}
-
-			p.renderer.render(view) //nolint:errcheck // send view to renderer
+			p.render(model) // render view
 		}
 	}
+}
+
+// render renders the given view to the renderer.
+func (p *Program) render(model Model) {
+	var cur *Cursor
+	if model, ok := model.(CursorModel); ok {
+		cur = model.Cursor()
+		// Ensure we reset the cursor color on exit.
+		if cur != nil {
+			p.setCc = cur.Color
+		}
+	}
+
+	p.renderer.render(model.View(), cur) //nolint:errcheck // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
@@ -866,8 +908,7 @@ func (p *Program) Run() (Model, error) {
 	p.startRenderer()
 
 	// Initialize the program.
-	var initCmd Cmd
-	model, initCmd = model.Init()
+	initCmd := model.Init()
 	if initCmd != nil {
 		ch := make(chan struct{})
 		p.handlers.add(ch)
@@ -883,7 +924,7 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Render the initial view.
-	p.renderer.render(model.View()) //nolint:errcheck
+	p.render(model)
 
 	// Handle resize events.
 	p.handlers.add(p.handleResize())
@@ -899,7 +940,7 @@ func (p *Program) Run() (Model, error) {
 	}
 	if err == nil {
 		// Ensure we rendered the final state of the model.
-		p.renderer.render(model.View()) //nolint:errcheck
+		p.render(model)
 	}
 
 	// Restore terminal state.
