@@ -91,7 +91,7 @@ func (m model) headerView() string {
 }
 
 func (m model) footerView() string {
-	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100))
+	info := infoStyle.Render(fmt.Sprintf("%3.f%%:%3.f%%", m.viewport.ScrollPercent()*100, m.viewport.HorizontalScrollPercent()*100))
 	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(info)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }

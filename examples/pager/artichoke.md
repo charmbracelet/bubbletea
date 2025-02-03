@@ -1,15 +1,10 @@
-Glow
-====
+# Glow
 
 A casual introduction. 你好世界!
 
 ## Let’s talk about artichokes
 
-The _artichoke_ is mentioned as a garden plant in the 8th century BC by Homer
-**and** Hesiod. The naturally occurring variant of the artichoke, the cardoon,
-which is native to the Mediterranean area, also has records of use as a food
-among the ancient Greeks and Romans. Pliny the Elder mentioned growing of
-_carduus_ in Carthage and Cordoba.
+The _artichoke_ is mentioned as a garden plant in the 8th century BC by Homer **and** Hesiod. The naturally occurring variant of the artichoke, the cardoon, which is native to the Mediterranean area, also has records of use as a food among the ancient Greeks and Romans. Pliny the Elder mentioned growing of _carduus_ in Carthage and Cordoba.
 
 > He holds him with a skinny hand,
 > ‘There was a ship,’ quoth he.
@@ -25,20 +20,20 @@ _carduus_ in Carthage and Cordoba.
 1. Carrots
 1. Celery
 1. Tacos
-    * Soft
-    * Hard
+   - Soft
+   - Hard
 1. Cucumber
 
 ## Things to eat today
 
-* [x] Carrots
-* [x] Ramen
-* [ ] Currywurst
+- [x] Carrots
+- [x] Ramen
+- [ ] Currywurst
 
 ### Power levels of the aforementioned foods
 
 | Name       | Power | Comment          |
-| ---        | ---   | ---              |
+| ---------- | ----- | ---------------- |
 | Carrots    | 9001  | It’s over 9000?! |
 | Ramen      | 9002  | Also over 9000?! |
 | Currywurst | 10000 | What?!           |
@@ -63,6 +58,6 @@ main =
     map hello [ "artichoke", "alcachofa" ] & intercalculate "\n" & putStrLn
 ```
 
-***
+---
 
 _Alcachofa_, if you were wondering, is artichoke in Spanish.
