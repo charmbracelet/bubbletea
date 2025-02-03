@@ -606,7 +606,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 				if p.activeEnhancements.modifyOtherKeys > 0 {
-					p.execute(ansi.DisableModifyOtherKeys)
+					p.execute(ansi.ResetModifyOtherKeys)
 					p.activeEnhancements.modifyOtherKeys = 0
 					p.requestedEnhancements.modifyOtherKeys = 0
 				}
@@ -621,7 +621,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.exec(msg.cmd, msg.fn)
 
 			case terminalVersion:
-				p.execute(ansi.RequestXTVersion)
+				p.execute(ansi.RequestNameVersion)
 
 			case requestCapabilityMsg:
 				p.execute(ansi.RequestTermcap(string(msg)))
@@ -674,7 +674,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go p.checkResize()
 
 			case requestCursorPosMsg:
-				p.execute(ansi.RequestCursorPosition)
+				p.execute(ansi.RequestCursorPositionReport)
 
 			case RawMsg:
 				p.execute(fmt.Sprint(msg.Msg))
@@ -1030,7 +1030,7 @@ func (p *Program) RestoreTerminal() error {
 		p.execute(ansi.SetBracketedPasteMode)
 	}
 	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.ModifyOtherKeys(p.activeEnhancements.modifyOtherKeys))
+		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys))
 	}
 	if p.activeEnhancements.kittyFlags != 0 {
 		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.kittyFlags))
@@ -1169,8 +1169,8 @@ func (p *Program) sendKeyboardEnhancementsMsg() {
 // the active keyboard enhancements from the terminal.
 func (p *Program) requestKeyboardEnhancements() {
 	if p.requestedEnhancements.modifyOtherKeys > 0 {
-		p.execute(ansi.ModifyOtherKeys(p.requestedEnhancements.modifyOtherKeys))
-		p.execute(ansi.RequestModifyOtherKeys)
+		p.execute(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys))
+		p.execute(ansi.QueryModifyOtherKeys)
 	}
 	if p.requestedEnhancements.kittyFlags > 0 {
 		p.execute(ansi.PushKittyKeyboard(p.requestedEnhancements.kittyFlags))
