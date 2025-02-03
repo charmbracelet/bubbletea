@@ -152,7 +152,9 @@ func (s *cursedRenderer) resize(w, h int) {
 // clearScreen implements renderer.
 func (s *cursedRenderer) clearScreen() {
 	s.mu.Lock()
+	// Clear the screen and move the cursor to the top left corner.
 	s.scr.Clear()
+	io.WriteString(s.w, ansi.CursorHomePosition) //nolint:errcheck
 	repaint(s)
 	s.mu.Unlock()
 }
