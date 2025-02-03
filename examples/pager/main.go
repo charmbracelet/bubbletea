@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -62,7 +63,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// here.
 			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.viewport.YPosition = headerHeight
+			m.viewport.LeftGutterFunc = viewport.LineNumberGutter(lipgloss.NewStyle())
 			m.viewport.SetContent(m.content)
+			m.viewport.SetHighlights(regexp.MustCompile("arti").FindAllStringIndex(m.content, -1))
+			m.viewport.HighlightStyle = lipgloss.NewStyle().Underline(true)
+			m.viewport.SelectedHighlightStyle = lipgloss.NewStyle().Underline(true)
+			m.viewport.HighlightNext()
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
