@@ -16,8 +16,8 @@ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuP
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250131212117-b2e3cc537170 h1:IU4rSFIQ22i6QxMUvoEoPSg76ifSUFw6Jbw8eiESAwQ=
 github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250131212117-b2e3cc537170/go.mod h1:DBfWo/ohdtbvjyDk/Q4UffdRd/rRKfYTwTqHdPFVHT8=
-github.com/charmbracelet/colorprofile v0.1.10 h1:k6jIGJg4bPWvHZqcoLjFxH1bm9uT28Ysxg8guonDJ1Y=
-github.com/charmbracelet/colorprofile v0.1.10/go.mod h1:6wPrSSR4QtwYtOY3h0bLRw5YOUAIKWlZIJ02CTAsZsk=
+github.com/charmbracelet/colorprofile v0.2.0 h1:iiIQlp3LSvoJPtR11KoDfIf9wqWm2mn/iU420rHOZ/A=
+github.com/charmbracelet/colorprofile v0.2.0/go.mod h1:6wPrSSR4QtwYtOY3h0bLRw5YOUAIKWlZIJ02CTAsZsk=
 github.com/charmbracelet/glamour v0.8.0 h1:tPrjL3aRcQbn++7t18wOpgLyl8wrOHUEDS7IZ68QtZs=
 github.com/charmbracelet/glamour v0.8.0/go.mod h1:ViRgmKkf3u5S7uakt2czJ272WSg2ZenlYEZXT2x7Bjw=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
@@ -28,8 +28,8 @@ github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20250127174346-dc93e7a83a4
 github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20250127174346-dc93e7a83a4b/go.mod h1:wNdvvvSFeykFQxJ9rXcTA+IbZE9wgMEqhM4c8gV/faE=
 github.com/charmbracelet/x/ansi v0.8.0 h1:9GTq3xq9caJW8ZrBTe0LIe2fvfLR/bYXKTx2llXn7xE=
 github.com/charmbracelet/x/ansi v0.8.0/go.mod h1:wdYl/ONOLHLIVmQaxbIYEC/cRKOQyjTkowiI4blgS9Q=
-github.com/charmbracelet/x/cellbuf v0.0.7 h1:u+ArcmMqOuY+f0rFGHzTJxALno2kJAPxK8u2PVo5YIQ=
-github.com/charmbracelet/x/cellbuf v0.0.7/go.mod h1:WU1sKZkKCLaBjrRneV4AGFYygeFiGk5rFAKxqRyJuPE=
+github.com/charmbracelet/x/cellbuf v0.0.9-0.20250203214141-7979dda07a20 h1:nl3aKPpusfZ2WhK50MPqlUFYt9t0X8G0V7iJZqXgZcA=
+github.com/charmbracelet/x/cellbuf v0.0.9-0.20250203214141-7979dda07a20/go.mod h1:dKfNBxLovpvzzxAP6/GZfs5eb7vNxHlUDnwGhRmvIdY=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f h1:UytXHv0UxnsDFmL/7Z9Q5SBYPwSuRLXHbwx+6LycZ2w=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
 github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233 h1:2bTR/MtnJuq9RrCZSPwCOO34YSDByKL6nzXQMnsKK6U=
