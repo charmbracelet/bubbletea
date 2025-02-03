@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/charmbracelet/colorprofile v0.2.0
 	github.com/charmbracelet/x/ansi v0.8.0
-	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250203214141-7979dda07a20
+	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250203221449-dae086958a3e
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/input v0.3.1
 	github.com/charmbracelet/x/term v0.2.1
