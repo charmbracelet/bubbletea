@@ -23,8 +23,8 @@ type model struct {
 	startTime   time.Time
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tick
+func (m model) Init() tea.Cmd {
+	return tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -48,9 +48,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.width == 0 {
-		return tea.NewFrame("Initializing...")
+		return "Initializing..."
 	}
 
 	var s strings.Builder
@@ -76,7 +76,7 @@ func (m model) View() fmt.Stringer {
 
 	elapsed := time.Since(m.startTime)
 	s.WriteString(whiteFg.Render("Press q or ctrl+c to quit. " + fmt.Sprintf("Elapsed: %s", elapsed.Round(time.Second))))
-	return &s
+	return s.String()
 }
 
 func (m *model) spreadFire() {

@@ -12,9 +12,8 @@ type model struct {
 	blink  bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	m.blink = true
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -39,14 +38,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
-	f := tea.NewFrame("Press left/right to change the cursor style, q or ctrl+c to quit." +
+func (m model) View() string {
+	return "Press left/right to change the cursor style, q or ctrl+c to quit." +
 		"\n\n" +
-		"  <- This is the cursor (a " + m.describeCursor() + ")")
-	f.Cursor = tea.NewCursor(0, 2)
-	f.Cursor.Shape = m.cursor.Shape
-	f.Cursor.Blink = m.blink
-	return f
+		"  <- This is the cursor (a " + m.describeCursor() + ")"
+}
+
+func (m model) Cursor() *tea.Cursor {
+	c := tea.NewCursor(0, 2)
+	c.Shape = m.cursor.Shape
+	c.Blink = m.blink
+	return c
 }
 
 func (m model) describeCursor() string {
@@ -71,7 +73,7 @@ func (m model) describeCursor() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{})
+	p := tea.NewProgram(model{blink: true})
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v", err)
 		os.Exit(1)

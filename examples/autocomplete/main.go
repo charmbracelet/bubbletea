@@ -94,15 +94,11 @@ func initialModel() model {
 	ti.SetWidth(20)
 	ti.ShowSuggestions = true
 
-	h := help.New()
-
-	km := keymap{}
-
-	return model{textInput: ti, help: h, keymap: km}
+	return model{textInput: ti, help: help.New()}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(getRepos, textinput.Blink)
+func (m model) Init() tea.Cmd {
+	return tea.Batch(getRepos, textinput.Blink)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -125,10 +121,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() fmt.Stringer {
-	return tea.NewFrame(fmt.Sprintf(
+func (m model) View() string {
+	return fmt.Sprintf(
 		"Pick a Charm™ repo:\n\n  %s\n\n%s\n\n",
 		m.textInput.View(),
 		m.help.View(m.keymap),
-	))
+	)
 }
