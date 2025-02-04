@@ -75,8 +75,8 @@ type model struct {
 	Quitting bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tick()
+func (m model) Init() tea.Cmd {
+	return tick()
 }
 
 // Main update function.
@@ -99,17 +99,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // The main view, which just calls the appropriate sub-view
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	var s string
 	if m.Quitting {
-		return tea.NewFrame("\n  See you later!\n\n")
+		return "\n  See you later!\n\n"
 	}
 	if !m.Chosen {
 		s = choicesView(m)
 	} else {
 		s = chosenView(m)
 	}
-	return tea.NewFrame(mainStyle.Render("\n" + s + "\n\n"))
+	return mainStyle.Render("\n" + s)
 }
 
 // Sub-update functions
