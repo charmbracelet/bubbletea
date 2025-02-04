@@ -65,9 +65,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.YPosition = headerHeight
 			m.viewport.LeftGutterFunc = viewport.LineNumberGutter(lipgloss.NewStyle())
 			m.viewport.SetContent(m.content)
-			m.viewport.SetHighlights(regexp.MustCompile("arti").FindAllStringIndex(m.content, -1))
-			m.viewport.HighlightStyle = lipgloss.NewStyle().Underline(true)
-			m.viewport.SelectedHighlightStyle = lipgloss.NewStyle().Underline(true)
+			m.viewport.SetHighlights(regexp.MustCompile("artichoke").FindAllStringIndex(m.content, -1))
+			m.viewport.HighlightStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238")).Background(lipgloss.Color("34"))
+			m.viewport.SelectedHighlightStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238")).Background(lipgloss.Color("47"))
 			m.viewport.HighlightNext()
 			m.ready = true
 		} else {
