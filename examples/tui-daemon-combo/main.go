@@ -74,9 +74,9 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() tea.Cmd {
 	log.Println("Starting work...")
-	return m, tea.Batch(
+	return tea.Batch(
 		m.spinner.Tick,
 		runPretendProcess,
 	)
@@ -102,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	s := "\n" +
 		m.spinner.View() + " Doing some work...\n\n"
 
@@ -120,7 +120,7 @@ func (m model) View() fmt.Stringer {
 		s += "\n"
 	}
 
-	return tea.NewFrame(mainStyle.Render(s))
+	return mainStyle.Render(s)
 }
 
 // processFinishedMsg is sent when a pretend process completes.

@@ -44,8 +44,8 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
+func (m model) Init() tea.Cmd {
+	return tea.Batch(downloadAndInstall(m.packages[m.index]), m.spinner.Tick)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -82,21 +82,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 	case progress.FrameMsg:
-		newModel, cmd := m.progress.Update(msg)
-		if newModel, ok := newModel.(progress.Model); ok {
-			m.progress = newModel
-		}
+		var cmd tea.Cmd
+		m.progress, cmd = m.progress.Update(msg)
 		return m, cmd
 	}
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	n := len(m.packages)
 	w := lipgloss.Width(fmt.Sprintf("%d", n))
 
 	if m.done {
-		return tea.NewFrame(doneStyle.Render(fmt.Sprintf("Done! Installed %d packages.\n", n)))
+		return doneStyle.Render(fmt.Sprintf("Done! Installed %d packages.\n", n))
 	}
 
 	pkgCount := fmt.Sprintf(" %*d/%*d", w, m.index, w, n)
@@ -111,7 +109,7 @@ func (m model) View() fmt.Stringer {
 	cellsRemaining := max(0, m.width-lipgloss.Width(spin+info+prog+pkgCount))
 	gap := strings.Repeat(" ", cellsRemaining)
 
-	return tea.NewFrame(spin + info + gap + prog + pkgCount)
+	return spin + info + gap + prog + pkgCount
 }
 
 type installedPkgMsg string

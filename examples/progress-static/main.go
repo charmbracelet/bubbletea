@@ -50,8 +50,8 @@ type model struct {
 	progress progress.Model
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tickCmd()
+func (m model) Init() tea.Cmd {
+	return tickCmd()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -79,11 +79,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	pad := strings.Repeat(" ", padding)
-	return tea.NewFrame("\n" +
+	return "\n" +
 		pad + m.progress.ViewAs(m.percent) + "\n\n" +
-		pad + helpStyle("Press any key to quit"))
+		pad + helpStyle("Press any key to quit")
 }
 
 func tickCmd() tea.Cmd {

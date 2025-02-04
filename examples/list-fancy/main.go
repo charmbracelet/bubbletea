@@ -105,9 +105,8 @@ type model struct {
 	delegateKeys  *delegateKeyMap
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	m.once = new(sync.Once)
-	return m, tea.Batch(
+func (m model) Init() tea.Cmd {
+	return tea.Batch(
 		tea.RequestBackgroundColor,
 		tea.EnterAltScreen,
 	)
@@ -122,6 +121,9 @@ func (m *model) updateListProperties() {
 	}
 
 	// Initialize the list, but only once.
+	if m.once == nil {
+		m.once = new(sync.Once)
+	}
 	m.once.Do(func() {
 		m.styles = newStyles(m.darkBG)
 
@@ -234,13 +236,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	// Don't render until we have everything we queried for.
 	if !m.queries.Ready() {
-		return tea.NewFrame("")
+		return ""
 	}
 
-	return tea.NewFrame(m.styles.app.Render(m.list.View()))
+	return m.styles.app.Render(m.list.View())
 }
 
 func main() {

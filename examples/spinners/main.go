@@ -43,8 +43,8 @@ type model struct {
 	spinner spinner.Model
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, m.spinner.Tick
+func (m model) Init() tea.Cmd {
+	return m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -85,7 +85,7 @@ func (m *model) resetSpinner() {
 	m.spinner.Spinner = spinners[m.index]
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	var gap string
 	switch m.index {
 	case 1:
@@ -97,5 +97,5 @@ func (m model) View() fmt.Stringer {
 	var s string
 	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
 	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
-	return tea.NewFrame(s)
+	return s
 }

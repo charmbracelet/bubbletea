@@ -49,8 +49,8 @@ type model struct {
 	activeTab  int
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.RequestBackgroundColor
+func (m model) Init() tea.Cmd {
+	return tea.RequestBackgroundColor
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -82,10 +82,10 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	return border
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.styles == nil {
 		// Don't render until we've initialized our styles.
-		return tea.NewFrame("")
+		return ""
 	}
 
 	doc := strings.Builder{}
@@ -119,7 +119,7 @@ func (m model) View() fmt.Stringer {
 	doc.WriteString(row)
 	doc.WriteString("\n")
 	doc.WriteString(s.window.Width((lipgloss.Width(row) - s.window.GetHorizontalFrameSize())).Render(m.TabContent[m.activeTab]))
-	return tea.NewFrame(s.doc.Render(doc.String()))
+	return s.doc.Render(doc.String())
 }
 
 func main() {

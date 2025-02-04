@@ -18,8 +18,8 @@ type model struct {
 	choice string
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -51,7 +51,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	s := strings.Builder{}
 	s.WriteString("What kind of Bubble Tea would you like to order?\n\n")
 
@@ -66,7 +66,7 @@ func (m model) View() fmt.Stringer {
 	}
 	s.WriteString("\n(press q to quit)\n")
 
-	return &s
+	return s.String()
 }
 
 func main() {

@@ -62,8 +62,8 @@ Type a message and press Enter to send.`)
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textarea.Blink
+func (m model) Init() tea.Cmd {
+	return textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -106,16 +106,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	viewportView := m.viewport.View()
-	f := tea.NewFrame(viewportView + "\n" + m.textarea.View())
+	return viewportView + "\n" + m.textarea.View()
+}
 
-	if !m.textarea.VirtualCursor {
-		f.Cursor = m.textarea.Cursor()
-
-		// Calculate the cursor offset.
-		f.Cursor.Position.Y += lipgloss.Height(viewportView)
+// To render a real cursor implement the Cursor() method on your model. To hide
+// the cursor, return nil.
+func (m model) Cursor() *tea.Cursor {
+	if m.textarea.VirtualCursor {
+		return nil
 	}
 
-	return f
+	// Textarea provides a cursor implementation that can be used directly.
+	// This is the cursor position relative to the textarea, so you'll need to
+	// calculate the absolute position to the textarea.
+	c := m.textarea.Cursor()
+	c.Y += lipgloss.Height(m.viewport.View())
+	return c
 }

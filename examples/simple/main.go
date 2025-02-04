@@ -35,8 +35,8 @@ type model int
 
 // Init optionally returns an initial command we should run. In this case we
 // want to start the timer.
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tick
+func (m model) Init() tea.Cmd {
+	return tick
 }
 
 // Update is called when messages are received. The idea is that you inspect the
@@ -64,8 +64,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
-func (m model) View() fmt.Stringer {
-	return tea.NewFrame(fmt.Sprintf("Hi. This program will exit in %d seconds.\n\nTo quit sooner press ctrl-c, or press ctrl-z to suspend...\n", m))
+func (m model) View() string {
+	return fmt.Sprintf("Hi. This program will exit in %d seconds.\n\nTo quit sooner press ctrl-c, or press ctrl-z to suspend...\n", m)
 }
 
 // Messages are events that we respond to in our Update function. This

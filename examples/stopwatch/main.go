@@ -25,13 +25,13 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() tea.Cmd {
 	sw, cmd := m.stopwatch.Init()
 	m.stopwatch = sw
-	return m, cmd
+	return cmd
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	// Note: you could further customize the time output by getting the
 	// duration from m.stopwatch.Elapsed(), which returns a time.Duration, and
 	// skip m.stopwatch.View() altogether.
@@ -40,7 +40,7 @@ func (m model) View() fmt.Stringer {
 		s = "Elapsed: " + s
 		s += m.helpView()
 	}
-	return tea.NewFrame(s)
+	return s
 }
 
 func (m model) helpView() string {

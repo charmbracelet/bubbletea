@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -33,8 +32,8 @@ type model struct {
 	err      error
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -65,8 +64,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// FrameMsg is sent when the progress bar wants to animate itself
 	case progress.FrameMsg:
-		progressModel, cmd := m.progress.Update(msg)
-		m.progress = progressModel.(progress.Model)
+		var cmd tea.Cmd
+		m.progress, cmd = m.progress.Update(msg)
 		return m, cmd
 
 	default:
@@ -74,13 +73,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.err != nil {
-		return tea.NewFrame("Error downloading: " + m.err.Error() + "\n")
+		return "Error downloading: " + m.err.Error() + "\n"
 	}
 
 	pad := strings.Repeat(" ", padding)
-	return tea.NewFrame("\n" +
+	return "\n" +
 		pad + m.progress.View() + "\n\n" +
-		pad + helpStyle("Press any key to quit"))
+		pad + helpStyle("Press any key to quit")
 }

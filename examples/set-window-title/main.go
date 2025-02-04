@@ -14,8 +14,8 @@ const windowTitle = "Hello, Bubble Tea"
 
 type model struct{}
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.SetWindowTitle(windowTitle)
+func (m model) Init() tea.Cmd {
+	return tea.SetWindowTitle(windowTitle)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -26,10 +26,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	wrap := lipgloss.NewStyle().Width(78).Render
-	return tea.NewFrame(wrap("The window title has been set to '"+windowTitle+"'. It will be cleared on exit.") +
-		"\n\nPress any key to quit.")
+	return wrap("The window title has been set to '"+windowTitle+"'. It will be cleared on exit.") +
+		"\n\nPress any key to quit."
 }
 
 func main() {

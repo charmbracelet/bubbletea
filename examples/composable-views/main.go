@@ -14,8 +14,8 @@ import (
 
 /*
 This example assumes an existing understanding of commands and messages. If you
-haven't already read our tutorials on the basics of Bubble Tea and working
-with commands, we recommend reading those first.
+haven't already read our tutorials on the basics of Bubble Tea and working with
+commands, we recommend reading those first.
 
 Find them at:
 https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
@@ -73,11 +73,10 @@ func newModel(timeout time.Duration) mainModel {
 	return m
 }
 
-func (m mainModel) Init() (tea.Model, tea.Cmd) {
+func (m mainModel) Init() tea.Cmd {
 	// start the timer and spinner on program start
-	timer, cmd := m.timer.Init()
-	m.timer = timer
-	return m, tea.Batch(cmd, m.spinner.Tick)
+	_, cmd := m.timer.Init()
+	return tea.Batch(cmd, m.spinner.Tick)
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -124,7 +123,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m mainModel) View() fmt.Stringer {
+func (m mainModel) View() string {
 	var s strings.Builder
 	model := m.currentFocusedModel()
 	if m.state == timerView {
@@ -133,7 +132,7 @@ func (m mainModel) View() fmt.Stringer {
 		s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, modelStyle.Render(fmt.Sprintf("%4s", m.timer.View())), focusedModelStyle.Render(m.spinner.View())))
 	}
 	s.WriteString(helpStyle.Render(fmt.Sprintf("\ntab: focus next • n: new %s • q: exit\n", model)))
-	return &s
+	return s.String()
 }
 
 func (m mainModel) currentFocusedModel() string {

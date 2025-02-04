@@ -44,8 +44,8 @@ type model struct {
 	quitting  bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(
+func (m model) Init() tea.Cmd {
+	return tea.Batch(
 		m.spinner.Tick,
 		listenForActivity(m.sub), // generate activity
 		waitForActivity(m.sub),   // wait for activity
@@ -69,12 +69,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	s := fmt.Sprintf("\n %s Events received: %d\n\n Press any key to exit\n", m.spinner.View(), m.responses)
 	if m.quitting {
 		s += "\n"
 	}
-	return tea.NewFrame(s)
+	return s
 }
 
 func main() {

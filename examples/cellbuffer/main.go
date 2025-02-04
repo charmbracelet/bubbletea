@@ -142,8 +142,8 @@ type model struct {
 	xVelocity, yVelocity float64
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, animate()
+func (m model) Init() tea.Cmd {
+	return animate()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -184,8 +184,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
-	return m.cells
+func (m model) View() string {
+	return m.cells.String()
 }
 
 func main() {
@@ -195,7 +195,7 @@ func main() {
 
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
-		fmt.Println("Uh oh:", err)
+		fmt.Fprintln(os.Stderr, "Uh oh:", err)
 		os.Exit(1)
 	}
 }

@@ -70,7 +70,7 @@ type model struct {
 	quitting bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func initialModel() model {
 	items := []list.Item{
 		item("Ramen"),
 		item("Tomato Soup"),
@@ -90,9 +90,11 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 	l.Title = "What do you want for dinner?"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
-	m.list = l
+	return model{list: l}
+}
 
-	return m, tea.RequestBackgroundColor
+func (m model) Init() tea.Cmd {
+	return tea.RequestBackgroundColor
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -131,23 +133,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if !m.ready {
 		// Don't render anything until the query for the background color has
 		// finished.
-		return tea.NewFrame("")
+		return ""
 	}
 	if m.choice != "" {
-		return tea.NewFrame(m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice)))
+		return m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
 	}
 	if m.quitting {
-		return tea.NewFrame(m.styles.quitText.Render("Not hungry? That’s cool."))
+		return m.styles.quitText.Render("Not hungry? That’s cool.")
 	}
-	return tea.NewFrame("\n" + m.list.View())
+	return "\n" + m.list.View()
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

@@ -28,8 +28,8 @@ type model struct {
 	err   error
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textinput.Blink
+func (m model) Init() tea.Cmd {
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -79,14 +79,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	var s strings.Builder
 	s.WriteString(m.input.View())
 	if m.err != nil {
 		s.WriteString("\n\nError: " + m.err.Error())
 	}
 	s.WriteString("\n\nPress ctrl+c to quit, enter to write the sequence to terminal")
-	return &s
+	return s.String()
 }
 
 func main() {

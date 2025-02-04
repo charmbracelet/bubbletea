@@ -27,8 +27,8 @@ func initialModel() model {
 	return model{spinner: s}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, m.spinner.Tick
+func (m model) Init() tea.Cmd {
+	return m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -53,15 +53,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.err != nil {
-		return tea.NewFrame(m.err.Error())
+		return m.err.Error()
 	}
 	str := fmt.Sprintf("\n\n   %s Loading forever...press q to quit\n\n", m.spinner.View())
 	if m.quitting {
-		return tea.NewFrame(str + "\n")
+		return str + "\n"
 	}
-	return tea.NewFrame(str)
+	return str
 }
 
 func main() {

@@ -16,14 +16,17 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	p := tea.NewProgram(model(5), tea.WithAltScreen())
+	p := tea.NewProgram(model(5))
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tick()
+func (m model) Init() tea.Cmd {
+	return tea.Batch(
+		tick(),
+		tea.EnterAltScreen,
+	)
 }
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
@@ -45,8 +48,8 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
-	return tea.NewFrame(fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m))
+func (m model) View() string {
+	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
 }
 
 func tick() tea.Cmd {

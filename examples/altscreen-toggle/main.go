@@ -19,8 +19,8 @@ type model struct {
 	suspending bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,15 +50,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
-	f := tea.NewFrame("")
+func (m model) View() string {
 	if m.suspending {
-		return f
+		return ""
 	}
 
 	if m.quitting {
-		f.Content = "Bye!\n"
-		return f
+		return "Bye!\n"
 	}
 
 	const (
@@ -73,9 +71,8 @@ func (m model) View() fmt.Stringer {
 		mode = inlineMode
 	}
 
-	f.Content = fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
+	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
 		helpStyle.Render("  space: switch modes • ctrl-z: suspend • q: exit\n")
-	return f
 }
 
 func main() {

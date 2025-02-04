@@ -64,8 +64,8 @@ func initialModel() model {
 	return m
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textinput.Blink
+func (m model) Init() tea.Cmd {
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -147,7 +147,7 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	var b strings.Builder
 
 	for i := range m.inputs {
@@ -167,7 +167,7 @@ func (m model) View() fmt.Stringer {
 	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
 
-	return &b
+	return b.String()
 }
 
 func main() {
