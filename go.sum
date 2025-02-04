@@ -4,12 +4,12 @@ github.com/charmbracelet/colorprofile v0.2.0 h1:iiIQlp3LSvoJPtR11KoDfIf9wqWm2mn/
 github.com/charmbracelet/colorprofile v0.2.0/go.mod h1:6wPrSSR4QtwYtOY3h0bLRw5YOUAIKWlZIJ02CTAsZsk=
 github.com/charmbracelet/x/ansi v0.8.0 h1:9GTq3xq9caJW8ZrBTe0LIe2fvfLR/bYXKTx2llXn7xE=
 github.com/charmbracelet/x/ansi v0.8.0/go.mod h1:wdYl/ONOLHLIVmQaxbIYEC/cRKOQyjTkowiI4blgS9Q=
-github.com/charmbracelet/x/cellbuf v0.0.9-0.20250203222631-bea22a7f0a07 h1:RFHEvURPMgGGd8epjjhi2UpXSKyFs39iRF4JTYCEdLg=
-github.com/charmbracelet/x/cellbuf v0.0.9-0.20250203222631-bea22a7f0a07/go.mod h1:dKfNBxLovpvzzxAP6/GZfs5eb7vNxHlUDnwGhRmvIdY=
+github.com/charmbracelet/x/cellbuf v0.0.9-0.20250204204850-49d665c19c85 h1:woC/amYvPKn5/qx8EKUVdKvfw+BBH2TOurofxDlcFTE=
+github.com/charmbracelet/x/cellbuf v0.0.9-0.20250204204850-49d665c19c85/go.mod h1:dKfNBxLovpvzzxAP6/GZfs5eb7vNxHlUDnwGhRmvIdY=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f h1:UytXHv0UxnsDFmL/7Z9Q5SBYPwSuRLXHbwx+6LycZ2w=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
-github.com/charmbracelet/x/input v0.3.1 h1:TE4s3fTRj+OUpJ86dKphrN99+NgBnto//EkWncMJQIg=
-github.com/charmbracelet/x/input v0.3.1/go.mod h1:4w9jS/NW62WrHSdmjbpzydvnbqkd+mtyK8WOWbHCdvs=
+github.com/charmbracelet/x/input v0.3.2 h1:6h/d/40Og6UP3a4VDjIbdoUhilEH4K+mxEuaSPIJwNQ=
+github.com/charmbracelet/x/input v0.3.2/go.mod h1:JI8RcvdZWQIhn09VzeK3hdp4lTz7+yhiEdpEQtZN+2c=
 github.com/charmbracelet/x/term v0.2.1 h1:AQeHeLZ1OqSXhrAWpYUtZyX1T3zVxfpZuEQMIQaGIAQ=
 github.com/charmbracelet/x/term v0.2.1/go.mod h1:oQ4enTYFV7QN4m0i9mzHrViD7TQKvNEEkHUMCmsxdUg=
 github.com/charmbracelet/x/windows v0.2.0 h1:ilXA1GJjTNkgOm94CLPeSz7rar54jtFatdmoiONPuEw=
@@ -28,5 +28,5 @@ github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e/go.mod h1:RbqR21r5mrJu
 golang.org/x/exp v0.0.0-20231006140011-7918f672742d h1:jtJma62tbqLibJ5sFQz8bKtEM8rJBtfilJ2qTU199MI=
 golang.org/x/sync v0.10.0 h1:3NQrjDixjgGwUOCaF8w2+VYHv0Ve/vGYSbdkTa98gmQ=
 golang.org/x/sync v0.10.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
-golang.org/x/sys v0.29.0 h1:TPYlXGxvx1MGTn2GiZDhnjPA9wZzZeGKHHmKhHYvgaU=
-golang.org/x/sys v0.29.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+golang.org/x/sys v0.30.0 h1:QjkSwP/36a20jFYWkSue1YwXzLmsV5Gfq7Eiy72C1uc=
+golang.org/x/sys v0.30.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=

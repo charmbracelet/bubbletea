@@ -2,8 +2,6 @@ module examples
 
 go 1.23.1
 
-replace github.com/charmbracelet/x/cellbuf => ../../x/cellbuf
-
 require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250131212117-b2e3cc537170
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20250123211610-443afa6fa0c1
@@ -25,9 +23,9 @@ require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
-	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250203222631-bea22a7f0a07 // indirect
+	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250204204850-49d665c19c85 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f // indirect
-	github.com/charmbracelet/x/input v0.3.1 // indirect
+	github.com/charmbracelet/x/input v0.3.2 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
@@ -45,7 +43,7 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.3 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 )
 
