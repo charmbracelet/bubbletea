@@ -817,8 +817,13 @@ func (p *Program) Run() (Model, error) {
 		return p.initialModel, err
 	}
 	if p.renderer == nil {
-		// If no renderer is set use the ferocious one.
-		p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
+		stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
+		if has, _ := strconv.ParseBool(stdr); ok && has {
+			p.renderer = newRenderer(p.output)
+		} else {
+			// If no renderer is set use the ferocious one.
+			p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
+		}
 	}
 
 	// Get the color profile and send it to the program.
