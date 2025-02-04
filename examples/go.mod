@@ -23,7 +23,7 @@ require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
-	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250204204850-49d665c19c85 // indirect
+	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250204215114-fc820b726db0 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f // indirect
 	github.com/charmbracelet/x/input v0.3.2 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect

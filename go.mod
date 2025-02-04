@@ -2,10 +2,12 @@ module github.com/charmbracelet/bubbletea/v2
 
 go 1.18
 
+replace github.com/charmbracelet/x/cellbuf => ../x/cellbuf
+
 require (
 	github.com/charmbracelet/colorprofile v0.2.0
 	github.com/charmbracelet/x/ansi v0.8.0
-	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250204204850-49d665c19c85
+	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250204215114-fc820b726db0
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/input v0.3.2
 	github.com/charmbracelet/x/term v0.2.1
