@@ -57,7 +57,7 @@ func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
 func (r *conInputReader) Cancel() bool {
 	r.setCanceled()
 
-	return windows.CancelIo(r.conin) == nil
+	return windows.CancelIoEx(r.conin, nil) == nil || windows.CancelIo(r.conin) == nil
 }
 
 // Close implements cancelreader.CancelReader.
