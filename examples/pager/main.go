@@ -34,7 +34,10 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.Batch(
+		tea.EnterAltScreen,        // use the full size of the terminal in its "alternate screen buffer"
+		tea.EnableMouseCellMotion, // turn on mouse support so we can track the mouse wheel
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -110,12 +113,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	p := tea.NewProgram(
-		model{content: string(content)},
-		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
-		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
-	)
-
+	p := tea.NewProgram(model{content: string(content)})
 	if _, err := p.Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)

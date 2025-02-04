@@ -38,8 +38,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	m.rate = 90
-	return tick
+	return tea.Batch(tick, tea.EnterAltScreen)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -170,11 +169,7 @@ func abs(i int) int {
 }
 
 func main() {
-	p := tea.NewProgram(
-		model{},
-		tea.WithAltScreen(),
-	)
-
+	p := tea.NewProgram(model{rate: 90})
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}

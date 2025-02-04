@@ -88,6 +88,7 @@ func (c *cellbuffer) init(w, h int) {
 func (c cellbuffer) set(x, y int) {
 	i := y*c.stride + x
 	if i > len(c.cells)-1 || x < 0 || y < 0 || x >= c.width() || y >= c.height() {
+		// Out of bounds
 		return
 	}
 	c.cells[i] = asterisk
@@ -143,7 +144,11 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return animate()
+	return tea.Batch(
+		tea.EnterAltScreen,
+		tea.EnableMouseCellMotion,
+		animate(),
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -193,8 +198,7 @@ func main() {
 		spring: harmonica.NewSpring(harmonica.FPS(fps), frequency, damping),
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
-	if _, err := p.Run(); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Uh oh:", err)
 		os.Exit(1)
 	}

@@ -94,91 +94,6 @@ func WithoutSignals() ProgramOption {
 	}
 }
 
-// WithAltScreen starts the program with the alternate screen buffer enabled
-// (i.e. the program starts in full window mode). Note that the altscreen will
-// be automatically exited when the program quits.
-//
-// Example:
-//
-//	p := tea.NewProgram(Model{}, tea.WithAltScreen())
-//	if _, err := p.Run(); err != nil {
-//	    fmt.Println("Error running program:", err)
-//	    os.Exit(1)
-//	}
-//
-// To enter the altscreen once the program has already started running use the
-// EnterAltScreen command.
-//
-// Deprecated: use the [EnterAltScreen] [Cmd] in your [Model.Init] instead.
-func WithAltScreen() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withAltScreen
-	}
-}
-
-// WithoutBracketedPaste starts the program with bracketed paste disabled.
-//
-// Deprecated: use the [EnableBracketedPaste] [Cmd] in your [Model.Init]
-// instead.
-func WithoutBracketedPaste() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutBracketedPaste
-	}
-}
-
-// WithMouseCellMotion starts the program with the mouse enabled in "cell
-// motion" mode.
-//
-// Cell motion mode enables mouse click, release, and wheel events. Mouse
-// movement events are also captured if a mouse button is pressed (i.e., drag
-// events). Cell motion mode is better supported than all motion mode.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// To enable mouse cell motion once the program has already started running use
-// the EnableMouseCellMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-//
-// Deprecated: use the [EnableMouseCellMotion] [Cmd] in your [Model.Init]
-// instead.
-func WithMouseCellMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseCellMotion // set
-		p.startupOptions &^= withMouseAllMotion // clear
-	}
-}
-
-// WithMouseAllMotion starts the program with the mouse enabled in "all motion"
-// mode.
-//
-// EnableMouseAllMotion is a special command that enables mouse click, release,
-// wheel, and motion events, which are delivered regardless of whether a mouse
-// button is pressed, effectively enabling support for hover interactions.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// Many modern terminals support this, but not all. If in doubt, use
-// EnableMouseCellMotion instead.
-//
-// To enable the mouse once the program has already started running use the
-// EnableMouseAllMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-//
-// Deprecated: use the [EnableMouseAllMotion] [Cmd] in your [Model.Init]
-// instead.
-func WithMouseAllMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseAllMotion   // set
-		p.startupOptions &^= withMouseCellMotion // clear
-	}
-}
-
 // WithoutRenderer disables the renderer. When this is set output and log
 // statements will be plainly sent to stdout (or another output if one is set)
 // without any rendering and redrawing logic. In other words, printing and
@@ -234,21 +149,6 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 func WithFPS(fps int) ProgramOption {
 	return func(p *Program) {
 		p.fps = fps
-	}
-}
-
-// WithReportFocus enables reporting when the terminal gains and loses
-// focus. When this is enabled [FocusMsg] and [BlurMsg] messages will be sent
-// to your Update method.
-//
-// Note that while most terminals and multiplexers support focus reporting,
-// some do not. Also note that tmux needs to be configured to report focus
-// events.
-//
-// Deprecated: use the [EnableReportFocus] [Cmd] in your [Model.Init] instead.
-func WithReportFocus() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withReportFocus
 	}
 }
 

@@ -24,7 +24,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return tick
+	return tea.Batch(tick, tea.EnterAltScreen)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -128,8 +128,7 @@ func initialModel() model {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}
 }

@@ -31,7 +31,7 @@ func main() {
 	}
 }
 
-func (m model) Init() tea.Model, tea.Cmd {
+func (m model) Init() tea.Cmd {
 	return checkServer
 }
 

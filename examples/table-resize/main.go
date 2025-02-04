@@ -28,7 +28,9 @@ type model struct {
 	table *table.Table
 }
 
-func (m model) Init() tea.Cmd { return nil }
+func (m model) Init() tea.Cmd {
+	return tea.EnterAltScreen
+}
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -154,7 +156,7 @@ func main() {
 		}).
 		Border(lipgloss.ThickBorder())
 
-	if _, err := tea.NewProgram(model{t}, tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{t}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

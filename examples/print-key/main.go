@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -9,8 +8,8 @@ import (
 
 type model struct{}
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -40,8 +39,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
-	return tea.NewFrame("Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit.")
+func (m model) View() string {
+	return "Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit."
 }
 
 func main() {

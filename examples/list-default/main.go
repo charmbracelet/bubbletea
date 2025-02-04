@@ -24,7 +24,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.EnterAltScreen
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -77,8 +77,7 @@ func main() {
 	m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 	m.list.Title = "My Fave Things"
 
-	p := tea.NewProgram(m, tea.WithAltScreen())
-
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
