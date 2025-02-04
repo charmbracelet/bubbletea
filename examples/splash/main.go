@@ -37,9 +37,9 @@ type model struct {
 	rate   int64
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() tea.Cmd {
 	m.rate = 90
-	return m, tick
+	return tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -55,12 +55,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.width == 0 {
-		return tea.NewFrame("Initializing...")
+		return "Initializing..."
 	}
 
-	return tea.NewFrame(m.gradient())
+	return m.gradient()
 }
 
 func (m model) gradient() string {

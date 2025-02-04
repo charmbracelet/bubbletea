@@ -52,8 +52,8 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, m.spinner.Tick
+func (m model) Init() tea.Cmd {
+	return m.spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -73,30 +73,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
-	var s string
+func (m model) View() string {
+	var b strings.Builder
 
 	if m.quitting {
-		s += "That’s all for today!"
+		b.WriteString("That's all for today!")
 	} else {
-		s += m.spinner.View() + " Eating food..."
+		b.WriteString(m.spinner.View())
+		b.WriteString(" Eating food...")
 	}
 
-	s += "\n\n"
+	b.WriteString("\n\n")
 
 	for _, res := range m.results {
-		s += res.String() + "\n"
+		b.WriteString(res.String())
+		b.WriteString("\n")
 	}
 
 	if !m.quitting {
-		s += helpStyle.Render("Press any key to exit")
+		b.WriteString(helpStyle.Render("Press any key to exit"))
 	}
 
 	if m.quitting {
-		s += "\n"
+		b.WriteString("\n")
 	}
 
-	return tea.NewFrame(appStyle.Render(s))
+	return appStyle.Render(b.String())
 }
 
 func main() {

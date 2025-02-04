@@ -13,8 +13,8 @@ type model struct {
 	suspending bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -38,12 +38,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.suspending || m.quitting {
-		return tea.NewFrame("")
+		return ""
 	}
 
-	return tea.NewFrame("\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n")
+	return "\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n"
 }
 
 func main() {

@@ -11,11 +11,11 @@ import (
 
 type model struct{}
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() tea.Cmd {
 	// A tea.Sequence is a command that runs a series of commands in
 	// order. Contrast this with tea.Batch, which runs a series of commands
 	// concurrently, with no order guarantees.
-	return m, tea.Sequence(
+	return tea.Sequence(
 		tea.Batch(
 			// These will always resolve first, in any order.
 			tea.Println("A"),
@@ -36,8 +36,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
-	return tea.NewFrame("")
+func (m model) View() string {
+	return ""
 }
 
 func main() {

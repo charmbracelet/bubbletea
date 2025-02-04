@@ -33,7 +33,7 @@ type model struct {
 	ready     bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func newModel() model {
 	var items []string
 	for i := 1; i < 101; i++ {
 		text := fmt.Sprintf("Item %d", i)
@@ -45,10 +45,14 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 	p.PerPage = 10
 	p.SetTotalPages(len(items))
 
-	m.paginator = p
-	m.items = items
+	return model{
+		paginator: p,
+		items:     items,
+	}
+}
 
-	return m, tea.RequestBackgroundColor
+func (m model) Init() tea.Cmd {
+	return tea.RequestBackgroundColor
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -70,9 +74,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if !m.ready {
-		return tea.NewFrame("")
+		return ""
 	}
 
 	var b strings.Builder
@@ -83,11 +87,11 @@ func (m model) View() fmt.Stringer {
 	}
 	b.WriteString("  " + m.paginator.View())
 	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
-	return &b
+	return b.String()
 }
 
 func main() {
-	p := tea.NewProgram(model{})
+	p := tea.NewProgram(newModel())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}

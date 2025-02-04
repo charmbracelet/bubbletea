@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -47,8 +46,8 @@ type model struct {
 	err         error
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textinput.Blink
+func (m model) Init() tea.Cmd {
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -127,7 +126,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	var s strings.Builder
 	instructions := lipgloss.NewStyle().Width(40).Render("Choose a terminal-wide color to set. All settings will be cleared on exit.")
 
@@ -165,7 +164,7 @@ func (m model) View() fmt.Stringer {
 
 	s.WriteString("\n")
 
-	return &s
+	return s.String()
 }
 
 func main() {

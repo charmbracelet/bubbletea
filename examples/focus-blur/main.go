@@ -3,7 +3,6 @@ package main
 // A simple program that handled losing and acquiring focus.
 
 import (
-	"fmt"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -11,10 +10,9 @@ import (
 
 func main() {
 	p := tea.NewProgram(model{
-		// assume we start focused...
 		focused:   true,
 		reporting: true,
-	}, tea.WithReportFocus())
+	})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -25,8 +23,8 @@ type model struct {
 	reporting bool
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return tea.EnableReportFocus
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -47,7 +45,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	s := "Hi. Focus report is currently "
 	if m.reporting {
 		s += "enabled"
@@ -63,5 +61,5 @@ func (m model) View() fmt.Stringer {
 			s += "This program is currently blurred!"
 		}
 	}
-	return tea.NewFrame(s + "\n\nTo quit sooner press ctrl-c, or t to toggle focus reporting...\n")
+	return s + "\n\nTo quit sooner press ctrl-c, or t to toggle focus reporting...\n"
 }

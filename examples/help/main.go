@@ -80,8 +80,8 @@ func newModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, nil
+func (m model) Init() tea.Cmd {
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -112,9 +112,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.quitting {
-		return tea.NewFrame("Bye!\n")
+		return "Bye!\n"
 	}
 
 	var status string
@@ -127,7 +127,7 @@ func (m model) View() fmt.Stringer {
 	helpView := m.help.View(m.keys)
 	height := 8 - strings.Count(status, "\n") - strings.Count(helpView, "\n")
 
-	return tea.NewFrame(status + strings.Repeat("\n", height) + helpView)
+	return status + strings.Repeat("\n", height) + helpView
 }
 
 func main() {

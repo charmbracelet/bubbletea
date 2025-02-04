@@ -31,8 +31,8 @@ func main() {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, checkServer
+func (m model) Init() tea.Model, tea.Cmd {
+	return checkServer
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -58,14 +58,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	s := fmt.Sprintf("Checking %s...", url)
 	if m.err != nil {
 		s += fmt.Sprintf("something went wrong: %s", m.err)
 	} else if m.status != 0 {
 		s += fmt.Sprintf("%d %s", m.status, http.StatusText(m.status))
 	}
-	return tea.NewFrame(s + "\n")
+	return s + "\n"
 }
 
 func checkServer() tea.Msg {

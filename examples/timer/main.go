@@ -27,10 +27,10 @@ type keymap struct {
 	quit  key.Binding
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() tea.Cmd {
 	timer, cmd := m.timer.Init()
 	m.timer = timer
-	return m, cmd
+	return cmd
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -75,7 +75,7 @@ func (m model) helpView() string {
 	})
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	// For a more detailed timer view you could read m.timer.Timeout to get
 	// the remaining time as a time.Duration and skip calling m.timer.View()
 	// entirely.
@@ -89,7 +89,7 @@ func (m model) View() fmt.Stringer {
 		s = "Exiting in " + s
 		s += m.helpView()
 	}
-	return tea.NewFrame(s)
+	return s
 }
 
 func main() {

@@ -75,8 +75,8 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textarea.Blink
+func (m model) Init() tea.Cmd {
+	return textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -131,13 +131,13 @@ func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	if m.quitting {
 		if m.hasChanges {
 			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yN]"))
-			return tea.NewFrame(quitViewStyle.Render(text))
+			return quitViewStyle.Render(text)
 		}
-		return tea.NewFrame("Very important. Thank you.\n")
+		return "Very important. Thank you.\n"
 	}
 
 	helpView := m.help.ShortHelpView([]key.Binding{
@@ -145,10 +145,10 @@ func (m model) View() fmt.Stringer {
 		m.keymap.quit,
 	})
 
-	return tea.NewFrame(fmt.Sprintf(
+	return fmt.Sprintf(
 		"Type some important things.\n%s\n %s\n %s",
 		m.textarea.View(),
 		saveTextStyle.Render(m.saveText),
 		helpView,
-	) + "\n\n")
+	) + "\n\n"
 }

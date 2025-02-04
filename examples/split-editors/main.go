@@ -112,8 +112,8 @@ func newModel() model {
 	return m
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, textarea.Blink
+func (m model) Init() tea.Cmd {
+	return textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -181,7 +181,15 @@ func (m *model) updateKeybindings() {
 	m.keymap.remove.SetEnabled(len(m.inputs) > minInputs)
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) inputViews() []string {
+	var views []string
+	for i := range m.inputs {
+		views = append(views, m.inputs[i].View())
+	}
+	return views
+}
+
+func (m model) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
 		m.keymap.prev,
@@ -190,27 +198,27 @@ func (m model) View() fmt.Stringer {
 		m.keymap.quit,
 	})
 
-	var views []string
-	for i := range m.inputs {
-		views = append(views, m.inputs[i].View())
-	}
+	return lipgloss.JoinHorizontal(lipgloss.Top, m.inputViews()...) + "\n\n" + help
+}
 
-	f := tea.NewFrame(lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help)
-
+func (m model) Cursor() *tea.Cursor {
 	focusedInput := m.inputs[m.focus]
-	if !focusedInput.VirtualCursor {
-		f.Cursor = focusedInput.Cursor()
-
-		// Find textrea offset to position real cursor.
-		//
-		// To do this we calculate the width of all textareas to the left of
-		// the focused one.
-		for i := 0; i < m.focus; i++ {
-			f.Cursor.Position.X += lipgloss.Width(views[i])
-		}
+	if focusedInput.VirtualCursor {
+		return nil
 	}
 
-	return f
+	views := m.inputViews()
+	c := focusedInput.Cursor()
+
+	// Find textrea offset to position real cursor.
+	//
+	// To do this we calculate the width of all textareas to the left of
+	// the focused one.
+	for i := 0; i < m.focus; i++ {
+		c.X += lipgloss.Width(views[i])
+	}
+
+	return c
 }
 
 func main() {

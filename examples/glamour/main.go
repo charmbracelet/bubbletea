@@ -101,8 +101,8 @@ func newExample() (*example, error) {
 	}, nil
 }
 
-func (e example) Init() (tea.Model, tea.Cmd) {
-	return e, nil
+func (e example) Init() tea.Cmd {
+	return nil
 }
 
 func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -121,8 +121,8 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (e example) View() fmt.Stringer {
-	return tea.NewFrame(e.viewport.View() + e.helpView())
+func (e example) View() string {
+	return e.viewport.View() + e.helpView()
 }
 
 func (e example) helpView() string {

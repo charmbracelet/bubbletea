@@ -26,8 +26,8 @@ type model struct {
 	height     int
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(
+func (m model) Init() tea.Cmd {
+	return tea.Batch(
 		tea.EnterAltScreen,
 		tickCmd(),
 	)
@@ -96,7 +96,7 @@ func clamp(value, min, max float64) float64 {
 	return value
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) View() string {
 	// Title
 	title := lipgloss.NewStyle().Bold(true).Render("Space")
 
@@ -113,7 +113,7 @@ func (m model) View() fmt.Stringer {
 		s.WriteByte('\n')
 	}
 
-	return tea.NewFrame(lipgloss.JoinVertical(lipgloss.Left, title, s.String()))
+	return lipgloss.JoinVertical(lipgloss.Left, title, s.String())
 }
 
 func main() {

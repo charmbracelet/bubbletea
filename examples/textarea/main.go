@@ -4,7 +4,6 @@ package main
 // component library.
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -40,8 +39,8 @@ func initialModel() model {
 	}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
-	return m, tea.Batch(textarea.Blink, tea.RequestBackgroundColor)
+func (m model) Init() tea.Cmd {
+	return tea.Batch(textarea.Blink, tea.RequestBackgroundColor)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -78,25 +77,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() fmt.Stringer {
+func (m model) headerView() string {
+	return "Tell me a story.\n"
+}
+
+func (m model) View() string {
 	const (
-		header = "Tell me a story.\n"
 		footer = "\n(ctrl+c to quit)\n"
 	)
 
-	f := tea.NewFrame(strings.Join([]string{
-		header,
+	f := strings.Join([]string{
+		m.headerView(),
 		m.textarea.View(),
 		footer,
-	}, "\n"))
-
-	if !m.textarea.VirtualCursor {
-		f.Cursor = m.textarea.Cursor()
-
-		// Set the y offset of the cursor based on the position of the textarea
-		// in the application.
-		f.Cursor.Position.Y += lipgloss.Height(header)
-	}
+	}, "\n")
 
 	return f
+}
+
+func (m model) Cursor() *tea.Cursor {
+	if m.textarea.VirtualCursor {
+		return nil
+	}
+
+	c := m.textarea.Cursor()
+
+	// Set the y offset of the cursor based on the position of the textarea
+	// in the application.
+	c.Y += lipgloss.Height(m.headerView())
+
+	return c
 }
