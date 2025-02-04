@@ -26,7 +26,9 @@ func ClearScreen() Msg {
 type clearScreenMsg struct{}
 
 // EnterAltScreen is a special command that tells the Bubble Tea program to
-// enter the alternate screen buffer.
+// enter the alternate screen buffer (i.e. the full terminal window). The
+// altscreen will be automatically exited when the program quits. To manually
+// exit the altscreen while the program is running, use [ExitAltScreen].
 //
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. To initialize your program with the altscreen enabled
@@ -50,7 +52,8 @@ func ExitAltScreen() Msg {
 // a mouse button is pressed (i.e., drag events).
 //
 // Because commands run asynchronously, this command should not be used in your
-// model's Init function. Use the WithMouseCellMotion ProgramOption instead.
+// model's Init function. Use the [WithMouseCellMotion] [ProgramOption]
+// instead.
 func EnableMouseCellMotion() Msg {
 	return sequenceMsg{
 		func() Msg { return enableModeMsg{ansi.ButtonEventMouseMode} },
@@ -63,7 +66,7 @@ func EnableMouseCellMotion() Msg {
 // button is pressed, effectively enabling support for hover interactions.
 //
 // Many modern terminals support this, but not all. If in doubt, use
-// EnableMouseCellMotion instead.
+// [EnableMouseCellMotion] instead.
 //
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. Use the WithMouseAllMotion ProgramOption instead.
@@ -93,23 +96,28 @@ func HideCursor() Msg {
 
 // ShowCursor is a special command for manually instructing Bubble Tea to show
 // the cursor.
+//
+// Deprecated: this will be removed in a future release. In v2, the cursor will
+// can be manged via a dedicated API.
 func ShowCursor() Msg {
 	return enableModeMsg{ansi.TextCursorEnableMode}
 }
 
 // EnableBracketedPaste is a special command that tells the Bubble Tea program
-// to accept bracketed paste input.
+// to accept bracketed paste input. To disable bracketed paste, use
+// [DisableBracketedPaste].
 //
-// Note that bracketed paste will be automatically disabled when the
+// Also note that bracketed paste will be automatically disabled when the
 // program quits.
 func EnableBracketedPaste() Msg {
 	return enableModeMsg{ansi.BracketedPasteMode}
 }
 
 // DisableBracketedPaste is a special command that tells the Bubble Tea program
-// to accept bracketed paste input.
+// to accept bracketed paste input. To enable bracketed paste, use
+// [EnableBracketedPaste].
 //
-// Note that bracketed paste will be automatically disabled when the
+// Also note that bracketed paste will be automatically disabled when the
 // program quits.
 func DisableBracketedPaste() Msg {
 	return disableModeMsg{ansi.BracketedPasteMode}

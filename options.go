@@ -108,6 +108,8 @@ func WithoutSignals() ProgramOption {
 //
 // To enter the altscreen once the program has already started running use the
 // EnterAltScreen command.
+//
+// Deprecated: use the [EnterAltScreen] [Cmd] in your [Model.Init] instead.
 func WithAltScreen() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withAltScreen
@@ -115,6 +117,9 @@ func WithAltScreen() ProgramOption {
 }
 
 // WithoutBracketedPaste starts the program with bracketed paste disabled.
+//
+// Deprecated: use the [EnableBracketedPaste] [Cmd] in your [Model.Init]
+// instead.
 func WithoutBracketedPaste() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withoutBracketedPaste
@@ -136,6 +141,9 @@ func WithoutBracketedPaste() ProgramOption {
 // running use the DisableMouse command.
 //
 // The mouse will be automatically disabled when the program exits.
+//
+// Deprecated: use the [EnableMouseCellMotion] [Cmd] in your [Model.Init]
+// instead.
 func WithMouseCellMotion() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withMouseCellMotion // set
@@ -161,6 +169,9 @@ func WithMouseCellMotion() ProgramOption {
 // running use the DisableMouse command.
 //
 // The mouse will be automatically disabled when the program exits.
+//
+// Deprecated: use the [EnableMouseAllMotion] [Cmd] in your [Model.Init]
+// instead.
 func WithMouseAllMotion() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withMouseAllMotion   // set
@@ -233,6 +244,8 @@ func WithFPS(fps int) ProgramOption {
 // Note that while most terminals and multiplexers support focus reporting,
 // some do not. Also note that tmux needs to be configured to report focus
 // events.
+//
+// Deprecated: use the [EnableReportFocus] [Cmd] in your [Model.Init] instead.
 func WithReportFocus() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withReportFocus
