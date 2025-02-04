@@ -62,7 +62,7 @@ type Model interface {
 type Cursor struct {
 	// Position is a [Position] that determines the cursor's position on the
 	// screen relative to the top left corner of the frame.
-	Position Position
+	Position
 
 	// Color is a [color.Color] that determines the cursor's color.
 	Color color.Color
