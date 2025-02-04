@@ -1,8 +1,6 @@
 package tea
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/colorprofile"
 )
 
@@ -46,7 +44,7 @@ func (nilRenderer) flush() error { return nil }
 func (nilRenderer) close() error { return nil }
 
 // render implements the Renderer interface.
-func (nilRenderer) render(fmt.Stringer) {}
+func (nilRenderer) render(string, *Cursor) {}
 
 // reset implements the Renderer interface.
 func (nilRenderer) reset() {}

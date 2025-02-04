@@ -1,7 +1,6 @@
 package tea
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -14,7 +13,8 @@ import (
 type cursedRenderer struct {
 	w             io.Writer
 	scr           *cellbuf.Screen
-	lastFrame     *Frame
+	lastFrame     *string
+	lastCur       *Cursor
 	term          string // the terminal type $TERM
 	width, height int
 	mu            sync.Mutex
@@ -47,24 +47,23 @@ func (s *cursedRenderer) close() (err error) {
 func (s *cursedRenderer) flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.lastFrame != nil && s.lastFrame.Cursor != nil {
-		cur := s.lastFrame.Cursor
-		s.scr.MoveTo(cur.Position.X, cur.Position.Y)
-		s.cursor.Position = cur.Position
+	if s.lastCur != nil {
+		s.scr.MoveTo(s.lastCur.Position.X, s.lastCur.Position.Y)
+		s.cursor.Position = s.lastCur.Position
 
-		if cur.Shape != s.cursor.Shape || cur.Blink != s.cursor.Blink {
-			cursorStyle := encodeCursorStyle(cur.Shape, cur.Blink)
+		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
+			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
 			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
-			s.cursor.Shape = cur.Shape
-			s.cursor.Blink = cur.Blink
+			s.cursor.Shape = s.lastCur.Shape
+			s.cursor.Blink = s.lastCur.Blink
 		}
-		if cur.Color != s.cursor.Color {
+		if s.lastCur.Color != s.cursor.Color {
 			seq := ansi.ResetCursorColor
-			if cur.Color != nil {
-				seq = ansi.SetCursorColor(cur.Color)
+			if s.lastCur.Color != nil {
+				seq = ansi.SetCursorColor(s.lastCur.Color)
 			}
 			io.WriteString(s.w, seq) //nolint:errcheck
-			s.cursor.Color = cur.Color
+			s.cursor.Color = s.lastCur.Color
 		}
 	}
 	s.scr.Render()
@@ -72,25 +71,17 @@ func (s *cursedRenderer) flush() error {
 }
 
 // render implements renderer.
-func (s *cursedRenderer) render(frame fmt.Stringer) {
+func (s *cursedRenderer) render(frame string, cur *Cursor) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var f Frame
-	switch frame := frame.(type) {
-	case Frame:
-		f = frame
-	default:
-		if frame != nil {
-			f.Content = frame.String()
-		}
-	}
-
-	if s.lastFrame != nil && f == *s.lastFrame {
+	if s.lastFrame != nil && frame == *s.lastFrame &&
+		(s.lastCur == nil && cur == nil || s.lastCur != nil && cur != nil && *s.lastCur == *cur) {
 		return
 	}
 
-	s.lastFrame = &f
+	s.lastFrame = &frame
+	s.lastCur = cur
 	if !s.altScreen {
 		// Inline mode resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -98,12 +89,12 @@ func (s *cursedRenderer) render(frame fmt.Stringer) {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		frameHeight := strings.Count(f.Content, "\n") + 1
+		frameHeight := strings.Count(frame, "\n") + 1
 		s.scr.Resize(s.width, frameHeight)
 	}
 
-	s.scr.SetContent(f.Content)
-	if f.Cursor == nil {
+	s.scr.SetContent(frame)
+	if cur == nil {
 		hideCursor(s)
 	} else {
 		showCursor(s)
@@ -176,7 +167,7 @@ func (s *cursedRenderer) exitAltScreen() {
 	s.altScreen = false
 	s.scr.ExitAltScreen()
 	s.scr.SetRelativeCursor(!s.altScreen)
-	s.scr.Resize(s.width, strings.Count((*s.lastFrame).Content, "\n")+1)
+	s.scr.Resize(s.width, strings.Count((*s.lastFrame), "\n")+1)
 	repaint(s)
 	s.mu.Unlock()
 }
