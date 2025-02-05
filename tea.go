@@ -821,7 +821,7 @@ func (p *Program) Run() (Model, error) {
 		if has, _ := strconv.ParseBool(stdr); ok && has {
 			p.renderer = newRenderer(p.output)
 		} else {
-			// If no renderer is set use the ferocious one.
+			// If no renderer is set use the cursed one.
 			p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
 		}
 	}
