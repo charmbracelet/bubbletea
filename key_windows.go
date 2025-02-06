@@ -274,7 +274,11 @@ func keyType(e coninput.KeyEventRecord) KeyType {
 	case coninput.VK_DELETE:
 		return KeyDelete
 	default:
-		if e.ControlKeyState&(coninput.LEFT_CTRL_PRESSED|coninput.RIGHT_CTRL_PRESSED) == 0 {
+		switch {
+		case e.ControlKeyState.Contains(coninput.LEFT_CTRL_PRESSED) && e.ControlKeyState.Contains(coninput.RIGHT_ALT_PRESSED):
+			// AltGr is pressed, then it's a rune.
+			fallthrough
+		case !e.ControlKeyState.Contains(coninput.LEFT_CTRL_PRESSED) && !e.ControlKeyState.Contains(coninput.RIGHT_CTRL_PRESSED):
 			return KeyRunes
 		}
 
@@ -334,7 +338,7 @@ func keyType(e coninput.KeyEventRecord) KeyType {
 		case '\x1a':
 			return KeyCtrlZ
 		case '\x1b':
-			return KeyCtrlCloseBracket
+			return KeyCtrlOpenBracket // KeyEscape
 		case '\x1c':
 			return KeyCtrlBackslash
 		case '\x1f':
@@ -344,6 +348,8 @@ func keyType(e coninput.KeyEventRecord) KeyType {
 		switch code {
 		case coninput.VK_OEM_4:
 			return KeyCtrlOpenBracket
+		case coninput.VK_OEM_6:
+			return KeyCtrlCloseBracket
 		}
 
 		return KeyRunes
