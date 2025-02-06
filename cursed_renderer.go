@@ -47,10 +47,10 @@ func (s *cursedRenderer) close() (err error) {
 func (s *cursedRenderer) flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.lastCur != nil {
-		s.scr.MoveTo(s.lastCur.Position.X, s.lastCur.Position.Y)
-		s.cursor.Position = s.lastCur.Position
 
+	// Render and queue changes to the screen buffer.
+	s.scr.Render()
+	if s.lastCur != nil {
 		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
 			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
 			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
@@ -65,9 +65,14 @@ func (s *cursedRenderer) flush() error {
 			io.WriteString(s.w, seq) //nolint:errcheck
 			s.cursor.Color = s.lastCur.Color
 		}
+
+		// MoveTo must come after [cellbuf.Screen.Render] because the cursor
+		// position might get updated during rendering.
+		s.scr.MoveTo(s.lastCur.X, s.lastCur.Y)
+		s.cursor.Position = s.lastCur.Position
 	}
-	s.scr.Render()
-	return nil
+
+	return s.scr.Flush()
 }
 
 // render implements renderer.
@@ -143,9 +148,10 @@ func (s *cursedRenderer) resize(w, h int) {
 // clearScreen implements renderer.
 func (s *cursedRenderer) clearScreen() {
 	s.mu.Lock()
-	// Clear the screen and move the cursor to the top left corner.
-	s.scr.Clear()
+	// Move the cursor to the top left corner of the screen and trigger a full
+	// screen redraw.
 	io.WriteString(s.w, ansi.CursorHomePosition) //nolint:errcheck
+	s.scr.Redraw()                               // force redraw
 	repaint(s)
 	s.mu.Unlock()
 }
