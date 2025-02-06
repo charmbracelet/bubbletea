@@ -295,3 +295,14 @@ func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 		p.profile = profile
 	}
 }
+
+// WithWindowSize sets the initial size of the terminal window. This is useful
+// when you need to set the initial size of the terminal window, for example
+// during testing or when you want to run your program in a non-interactive
+// environment.
+func WithWindowSize(width, height int) ProgramOption {
+	return func(p *Program) {
+		p.width = width
+		p.height = height
+	}
+}
