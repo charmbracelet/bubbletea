@@ -27,10 +27,6 @@ type clearScreenMsg struct{}
 // enter the alternate screen buffer (i.e. the full terminal window). The
 // altscreen will be automatically exited when the program quits. To manually
 // exit the altscreen while the program is running, use [ExitAltScreen].
-//
-// Because commands run asynchronously, this command should not be used in your
-// model's Init function. To initialize your program with the altscreen enabled
-// use the WithAltScreen ProgramOption instead.
 func EnterAltScreen() Msg {
 	return enterAltScreenMsg{}
 }
@@ -58,10 +54,6 @@ type exitAltScreenMsg struct{}
 // EnableMouseCellMotion is a special command that enables mouse click,
 // release, and wheel events. Mouse movement events are also captured if
 // a mouse button is pressed (i.e., drag events).
-//
-// Because commands run asynchronously, this command should not be used in your
-// model's Init function. Use the [WithMouseCellMotion] [ProgramOption]
-// instead.
 func EnableMouseCellMotion() Msg {
 	return enableMouseCellMotionMsg{}
 }
@@ -77,9 +69,6 @@ type enableMouseCellMotionMsg struct{}
 //
 // Many modern terminals support this, but not all. If in doubt, use
 // [EnableMouseCellMotion] instead.
-//
-// Because commands run asynchronously, this command should not be used in your
-// model's Init function. Use the WithMouseAllMotion ProgramOption instead.
 func EnableMouseAllMotion() Msg {
 	return enableMouseAllMotionMsg{}
 }
