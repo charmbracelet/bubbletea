@@ -275,6 +275,8 @@ type Program struct {
 
 	// whether to use hard tabs to optimize cursor movements
 	useHardTabs bool
+	// whether to use backspace to optimize cursor movements
+	useBackspace bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -822,7 +824,7 @@ func (p *Program) Run() (Model, error) {
 			p.renderer = newRenderer(p.output)
 		} else {
 			// If no renderer is set use the cursed one.
-			p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs)
+			p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs, p.useBackspace)
 		}
 	}
 

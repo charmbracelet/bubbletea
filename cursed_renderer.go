@@ -23,15 +23,17 @@ type cursedRenderer struct {
 	altScreen     bool
 	cursorHidden  bool
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
+	backspace     bool // whether to use backspace to optimize cursor movements
 }
 
 var _ renderer = &cursedRenderer{}
 
-func newCursedRenderer(w io.Writer, term string, hardTabs bool) (s *cursedRenderer) {
+func newCursedRenderer(w io.Writer, term string, hardTabs, backspace bool) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
 	s.term = term
 	s.hardTabs = hardTabs
+	s.backspace = backspace
 	s.reset()
 	return
 }
@@ -118,6 +120,7 @@ func (s *cursedRenderer) reset() {
 		Width:          s.width,
 		Height:         s.height,
 		HardTabs:       s.hardTabs,
+		Backspace:      s.backspace,
 	})
 	s.mu.Unlock()
 }

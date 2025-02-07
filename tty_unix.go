@@ -24,7 +24,8 @@ func (p *Program) initInput() (err error) {
 
 		// OPTIM: We can use hard tabs to optimize cursor movements if the
 		// terminal doesn't have tab expansion enabled.
-		p.useHardTabs = p.previousTtyInputState.Oflag&unix.TABDLY == 0
+		p.useHardTabs = p.previousTtyInputState.Oflag&unix.TABDLY == unix.TAB0
+		p.useBackspace = p.previousTtyInputState.Lflag&unix.BSDLY == unix.BS0
 	}
 
 	if f, ok := p.output.Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
