@@ -10,23 +10,26 @@ import (
 
 	"github.com/erikgeiser/coninput"
 	localereader "github.com/mattn/go-localereader"
-	"golang.org/x/sys/windows"
+	"github.com/muesli/cancelreader"
 )
 
 func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 	if coninReader, ok := input.(*conInputReader); ok {
-		return readConInputs(ctx, msgs, coninReader.conin)
+		return readConInputs(ctx, msgs, coninReader)
 	}
 
 	return readAnsiInputs(ctx, msgs, localereader.NewReader(input))
 }
 
-func readConInputs(ctx context.Context, msgsch chan<- Msg, con windows.Handle) error {
+func readConInputs(ctx context.Context, msgsch chan<- Msg, con *conInputReader) error {
 	var ps coninput.ButtonState                 // keep track of previous mouse state
 	var ws coninput.WindowBufferSizeEventRecord // keep track of the last window size event
 	for {
-		events, err := coninput.ReadNConsoleInputs(con, 16)
+		events, err := coninput.ReadNConsoleInputs(con.conin, 16)
 		if err != nil {
+			if con.isCanceled() {
+				return cancelreader.ErrCanceled
+			}
 			return fmt.Errorf("read coninput events: %w", err)
 		}
 
