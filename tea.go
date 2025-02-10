@@ -1050,6 +1050,10 @@ func (p *Program) recoverFromPanic() {
 // ReleaseTerminal restores the original terminal state and cancels the input
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
+	return p.releaseTerminal(false)
+}
+
+func (p *Program) releaseTerminal(reset bool) error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
 	if p.inputReader != nil {
 		p.inputReader.Cancel()
@@ -1059,6 +1063,9 @@ func (p *Program) ReleaseTerminal() error {
 
 	if p.renderer != nil {
 		p.stopRenderer(false)
+		if reset {
+			p.renderer.reset()
+		}
 	}
 
 	return p.restoreTerminalState()
@@ -1167,9 +1174,6 @@ func (p *Program) startRenderer() {
 	p.once = sync.Once{}
 
 	// Start the renderer.
-	if p.renderer != nil {
-		p.renderer.reset()
-	}
 	go func() {
 		for {
 			select {
