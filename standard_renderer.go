@@ -217,7 +217,7 @@ func (r *standardRenderer) flush() {
 		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.
 			if i < len(newLines)-1 {
-				buf.WriteString(ansi.CUD1)
+				buf.WriteByte('\n')
 			}
 			continue
 		}
