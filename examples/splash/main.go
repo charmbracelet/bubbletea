@@ -38,7 +38,6 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	m.rate = 90
 	return tick
 }
 
@@ -171,7 +170,7 @@ func abs(i int) int {
 
 func main() {
 	p := tea.NewProgram(
-		model{},
+		model{rate: 90},
 		tea.WithAltScreen(),
 	)
 
