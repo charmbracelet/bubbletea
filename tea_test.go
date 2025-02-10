@@ -39,7 +39,7 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 
 func (m *testModel) View() string {
 	m.executed.Store(true)
-	return "success\n"
+	return "success"
 }
 
 func TestTeaModel(t *testing.T) {
