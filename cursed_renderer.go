@@ -112,14 +112,12 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 // reset implements renderer.
 func (s *cursedRenderer) reset() {
 	s.mu.Lock()
-	s.scr = cellbuf.NewScreen(s.w, &cellbuf.ScreenOptions{
+	s.scr = cellbuf.NewScreen(s.w, s.width, s.height, &cellbuf.ScreenOptions{
 		Term:           s.term,
 		Profile:        s.profile,
 		AltScreen:      s.altScreen,
 		RelativeCursor: !s.altScreen,
 		ShowCursor:     !s.cursorHidden,
-		Width:          s.width,
-		Height:         s.height,
 		HardTabs:       s.hardTabs,
 		Backspace:      s.backspace,
 	})
