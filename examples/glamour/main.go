@@ -77,7 +77,7 @@ func newExample() (*example, error) {
 	//  * The viewport margins
 	//  * The gutter glamour applies to the left side of the content
 	//
-	const glamourGutter = 2
+	const glamourGutter = 3
 	glamourRenderWidth := width - vp.Style.GetHorizontalFrameSize() - glamourGutter
 
 	renderer, err := glamour.NewTermRenderer(

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -87,7 +86,7 @@ func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "repository"
 	ti.Prompt = "charmbracelet/"
-	ti.Styles.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+	ti.Styles.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
 	ti.Styles.Cursor.Color = lipgloss.Color("63")
 	ti.Focus()
 	ti.CharLimit = 50
@@ -99,6 +98,12 @@ func initialModel() model {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(getRepos, textinput.Blink)
+}
+
+func (m model) Cursor() *tea.Cursor {
+	c := m.textInput.Cursor()
+	c.Y += lipgloss.Height(m.headerView())
+	return c
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -122,9 +127,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf(
-		"Pick a Charm™ repo:\n\n  %s\n\n%s\n\n",
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		m.headerView(),
 		m.textInput.View(),
-		m.help.View(m.keymap),
+		m.footerView(),
 	)
 }
+
+func (m model) headerView() string { return "Pick a Charm™ repo:\n" }
+func (m model) footerView() string { return "\n" + m.help.View(m.keymap) }

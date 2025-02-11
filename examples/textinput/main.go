@@ -4,11 +4,11 @@ package main
 // component library.
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/charmbracelet/bubbles/v2/textinput"
 	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func main() {
@@ -40,6 +40,12 @@ func initialModel() model {
 	}
 }
 
+func (m model) Cursor() *tea.Cursor {
+	c := m.textInput.Cursor()
+	c.Y += lipgloss.Height(m.headerView())
+	return c
+}
+
 func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -65,9 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf(
-		"What’s your favorite Pokémon?\n\n%s\n\n%s",
-		m.textInput.View(),
-		"(esc to quit)",
-	) + "\n"
+	return lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView())
 }
+func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }
+func (m model) footerView() string { return "\n(esc to quit)" }
