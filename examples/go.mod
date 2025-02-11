@@ -23,9 +23,9 @@ require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
-	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250207223800-1f1a6c27426e // indirect
+	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250210215829-6aa2bddf6f72 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20250207160936-21c02780d27a // indirect
-	github.com/charmbracelet/x/input v0.3.2 // indirect
+	github.com/charmbracelet/x/input v0.3.3 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect

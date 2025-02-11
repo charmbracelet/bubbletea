@@ -818,24 +818,6 @@ func (p *Program) Run() (Model, error) {
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
-	if p.renderer == nil {
-		stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
-		if has, _ := strconv.ParseBool(stdr); ok && has {
-			p.renderer = newRenderer(p.output)
-		} else {
-			// If no renderer is set use the cursed one.
-			p.renderer = newCursedRenderer(p.output, p.getenv("TERM"), p.useHardTabs, p.useBackspace)
-		}
-	}
-
-	// Get the color profile and send it to the program.
-	if !p.startupOptions.has(withColorProfile) {
-		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
-	}
-
-	// Set the color profile on the renderer and send it to the program.
-	p.renderer.setColorProfile(p.profile)
-	go p.Send(ColorProfileMsg{p.profile})
 
 	// Get the initial window size.
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
@@ -848,6 +830,32 @@ func (p *Program) Run() (Model, error) {
 
 		resizeMsg.Width, resizeMsg.Height = w, h
 	}
+
+	if p.renderer == nil {
+		stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
+		if has, _ := strconv.ParseBool(stdr); ok && has {
+			p.renderer = newRenderer(p.output)
+		} else {
+			// If no renderer is set use the cursed one.
+			p.renderer = newCursedRenderer(
+				p.output,
+				p.getenv("TERM"),
+				resizeMsg.Width,
+				resizeMsg.Height,
+				p.useHardTabs,
+				p.useBackspace,
+			)
+		}
+	}
+
+	// Get the color profile and send it to the program.
+	if !p.startupOptions.has(withColorProfile) {
+		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
+	}
+
+	// Set the color profile on the renderer and send it to the program.
+	p.renderer.setColorProfile(p.profile)
+	go p.Send(ColorProfileMsg{p.profile})
 
 	// Send the initial size to the program.
 	go p.Send(resizeMsg)

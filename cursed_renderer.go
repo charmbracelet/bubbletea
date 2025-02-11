@@ -28,12 +28,13 @@ type cursedRenderer struct {
 
 var _ renderer = &cursedRenderer{}
 
-func newCursedRenderer(w io.Writer, term string, hardTabs, backspace bool) (s *cursedRenderer) {
+func newCursedRenderer(w io.Writer, term string, width, height int, hardTabs, backspace bool) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
 	s.term = term
 	s.hardTabs = hardTabs
 	s.backspace = backspace
+	s.width, s.height = width, height
 	s.reset()
 	return
 }
