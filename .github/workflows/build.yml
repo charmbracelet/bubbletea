@@ -4,9 +4,6 @@ on: [push, pull_request]
 jobs:
   build:
     uses: charmbracelet/meta/.github/workflows/build.yml@main
-
-  build-go-mod:
-    uses: charmbracelet/meta/.github/workflows/build.yml@main
     with:
       go-version: ""
       go-version-file: ./go.mod
