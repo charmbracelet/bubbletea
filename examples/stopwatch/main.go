@@ -26,9 +26,7 @@ type keymap struct {
 }
 
 func (m model) Init() tea.Cmd {
-	sw, cmd := m.stopwatch.Init()
-	m.stopwatch = sw
-	return cmd
+	return m.stopwatch.Init()
 }
 
 func (m model) View() string {

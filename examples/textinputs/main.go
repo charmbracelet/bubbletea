@@ -40,15 +40,17 @@ func initialModel() model {
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
-		t.Cursor.Style = cursorStyle
+		t.Styles.Cursor.Color = lipgloss.Color("205")
 		t.CharLimit = 32
+		t.Styles.Focused.Prompt = focusedStyle
+		t.Styles.Focused.Text = focusedStyle
+		t.Styles.Blurred.Prompt = blurredStyle
+		t.Styles.Focused.Text = focusedStyle
 
 		switch i {
 		case 0:
 			t.Placeholder = "Nickname"
 			t.Focus()
-			t.PromptStyle = focusedStyle
-			t.TextStyle = focusedStyle
 		case 1:
 			t.Placeholder = "Email"
 			t.CharLimit = 64
@@ -62,6 +64,20 @@ func initialModel() model {
 	}
 
 	return m
+}
+
+func (m model) Cursor() *tea.Cursor {
+	if m.cursorMode == cursor.CursorHide {
+		return nil
+	}
+	for i, in := range m.inputs {
+		if in.Focused() {
+			c := in.Cursor()
+			c.Y = i
+			return c
+		}
+	}
+	return nil
 }
 
 func (m model) Init() tea.Cmd {
@@ -83,7 +99,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := range m.inputs {
-				cmds[i] = m.inputs[i].Cursor.SetMode(m.cursorMode)
+				m.inputs[i].Styles.Cursor.Blink = m.cursorMode == cursor.CursorBlink
 			}
 			return m, tea.Batch(cmds...)
 
@@ -115,14 +131,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if i == m.focusIndex {
 					// Set focused state
 					cmds[i] = m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = focusedStyle
-					m.inputs[i].TextStyle = focusedStyle
 					continue
 				}
 				// Remove focused state
 				m.inputs[i].Blur()
-				m.inputs[i].PromptStyle = noStyle
-				m.inputs[i].TextStyle = noStyle
 			}
 
 			return m, tea.Batch(cmds...)
