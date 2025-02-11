@@ -12,7 +12,7 @@ import (
 
 type cursedRenderer struct {
 	w             io.Writer
-	scr           *cellbuf.Screen
+	scr           *cellbuf.ScreenWriter
 	lastFrame     *string
 	lastCur       *Cursor
 	term          string // the terminal type $TERM
@@ -112,7 +112,7 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 // reset implements renderer.
 func (s *cursedRenderer) reset() {
 	s.mu.Lock()
-	s.scr = cellbuf.NewScreen(s.w, s.width, s.height, &cellbuf.ScreenOptions{
+	scr := cellbuf.NewScreen(s.w, s.width, s.height, &cellbuf.ScreenOptions{
 		Term:           s.term,
 		Profile:        s.profile,
 		AltScreen:      s.altScreen,
@@ -121,6 +121,7 @@ func (s *cursedRenderer) reset() {
 		HardTabs:       s.hardTabs,
 		Backspace:      s.backspace,
 	})
+	s.scr = cellbuf.NewScreenWriter(scr)
 	s.mu.Unlock()
 }
 
