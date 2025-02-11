@@ -38,8 +38,7 @@ const content = `
 | Banana Split | $5    | A classic             |
 | Cream Puff   | $3    | Pretty creamy!        |
 
-All our dishes are made in-house by Karen, our chef. Most of our ingredients
-are from our garden or the fish market down the street.
+All our dishes are made in-house by Karen, our chef. Most of our ingredients are from our garden or the fish market down the street.
 
 Some famous people that have eaten here lately:
 
@@ -78,7 +77,7 @@ func newExample() (*example, error) {
 	//  * The viewport margins
 	//  * The gutter glamour applies to the left side of the content
 	//
-	const glamourGutter = 2
+	const glamourGutter = 3
 	glamourRenderWidth := width - vp.Style.GetHorizontalFrameSize() - glamourGutter
 
 	renderer, err := glamour.NewTermRenderer(

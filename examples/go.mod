@@ -3,12 +3,12 @@ module examples
 go 1.23.1
 
 require (
-	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250131212117-b2e3cc537170
-	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20250123211610-443afa6fa0c1
+	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250210190055-c20ae83e2f58
+	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20250204175057-2a96bc438da6
 	github.com/charmbracelet/colorprofile v0.2.0
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20250127174346-dc93e7a83a4b
+	github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20250204145343-96725424379d
 	github.com/charmbracelet/x/ansi v0.8.0
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20241016014612-3b4d04043233
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
@@ -24,7 +24,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.9-0.20250210215829-6aa2bddf6f72 // indirect
-	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f // indirect
+	github.com/charmbracelet/x/exp/golden v0.0.0-20250207160936-21c02780d27a // indirect
 	github.com/charmbracelet/x/input v0.3.3 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect

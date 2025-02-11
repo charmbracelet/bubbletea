@@ -28,9 +28,7 @@ type keymap struct {
 }
 
 func (m model) Init() tea.Cmd {
-	timer, cmd := m.timer.Init()
-	m.timer = timer
-	return cmd
+	return m.timer.Init()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

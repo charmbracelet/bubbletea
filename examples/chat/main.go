@@ -50,6 +50,8 @@ func initialModel() model {
 	vp := viewport.New(viewport.WithWidth(30), viewport.WithHeight(5))
 	vp.SetContent(`Welcome to the chat room!
 Type a message and press Enter to send.`)
+	vp.KeyMap.Left.SetEnabled(false)
+	vp.KeyMap.Right.SetEnabled(false)
 
 	ta.KeyMap.InsertNewline.SetEnabled(false)
 
