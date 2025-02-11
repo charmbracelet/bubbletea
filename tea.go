@@ -1034,6 +1034,9 @@ func (p *Program) shutdown(kill bool) {
 		if !kill {
 			p.finished <- struct{}{}
 		}
+
+		// Print a final newline to ensure the terminal prompt is on a new line.
+		p.execute("\r\n")
 	})
 }
 
