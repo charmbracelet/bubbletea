@@ -24,9 +24,7 @@ func ClearScreen() Msg {
 type clearScreenMsg struct{}
 
 // EnterAltScreen is a special command that tells the Bubble Tea program to
-// enter the alternate screen buffer (i.e. the full terminal window). The
-// altscreen will be automatically exited when the program quits. To manually
-// exit the altscreen while the program is running, use [ExitAltScreen].
+// enter the alternate screen buffer.
 //
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. To initialize your program with the altscreen enabled
@@ -51,8 +49,7 @@ func ExitAltScreen() Msg {
 }
 
 // exitAltScreenMsg in an internal message signals that the program should exit
-// alternate screen buffer. You can send a exitAltScreenMsg with
-// [ExitAltScreen].
+// alternate screen buffer. You can send a exitAltScreenMsg with ExitAltScreen.
 type exitAltScreenMsg struct{}
 
 // EnableMouseCellMotion is a special command that enables mouse click,
@@ -60,8 +57,7 @@ type exitAltScreenMsg struct{}
 // a mouse button is pressed (i.e., drag events).
 //
 // Because commands run asynchronously, this command should not be used in your
-// model's Init function. Use the [WithMouseCellMotion] [ProgramOption]
-// instead.
+// model's Init function. Use the WithMouseCellMotion ProgramOption instead.
 func EnableMouseCellMotion() Msg {
 	return enableMouseCellMotionMsg{}
 }
@@ -76,7 +72,7 @@ type enableMouseCellMotionMsg struct{}
 // button is pressed, effectively enabling support for hover interactions.
 //
 // Many modern terminals support this, but not all. If in doubt, use
-// [EnableMouseCellMotion] instead.
+// EnableMouseCellMotion instead.
 //
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. Use the WithMouseAllMotion ProgramOption instead.
@@ -112,9 +108,6 @@ type hideCursorMsg struct{}
 
 // ShowCursor is a special command for manually instructing Bubble Tea to show
 // the cursor.
-//
-// Deprecated: this will be removed in a future release. In v2, the cursor will
-// can be manged via a dedicated API.
 func ShowCursor() Msg {
 	return showCursorMsg{}
 }
@@ -124,10 +117,9 @@ func ShowCursor() Msg {
 type showCursorMsg struct{}
 
 // EnableBracketedPaste is a special command that tells the Bubble Tea program
-// to accept bracketed paste input. To disable bracketed paste, use
-// [DisableBracketedPaste].
+// to accept bracketed paste input.
 //
-// Also note that bracketed paste will be automatically disabled when the
+// Note that bracketed paste will be automatically disabled when the
 // program quits.
 func EnableBracketedPaste() Msg {
 	return enableBracketedPasteMsg{}
@@ -139,18 +131,17 @@ func EnableBracketedPaste() Msg {
 type enableBracketedPasteMsg struct{}
 
 // DisableBracketedPaste is a special command that tells the Bubble Tea program
-// to accept bracketed paste input. To enable bracketed paste, use
-// [EnableBracketedPaste].
+// to accept bracketed paste input.
 //
-// Also note that bracketed paste will be automatically disabled when the
+// Note that bracketed paste will be automatically disabled when the
 // program quits.
 func DisableBracketedPaste() Msg {
 	return disableBracketedPasteMsg{}
 }
 
-// disableBracketedPasteMsg in an internal message signals that bracketed paste
-// should be disabled. You can send an disableBracketedPasteMsg with
-// DisableBracketedPaste.
+// disableBracketedPasteMsg in an internal message signals that
+// bracketed paste should be disabled. You can send an
+// disableBracketedPasteMsg with DisableBracketedPaste.
 type disableBracketedPasteMsg struct{}
 
 // enableReportFocusMsg is an internal message that signals to enable focus
@@ -176,7 +167,7 @@ func DisableReportFocus() Msg {
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
-// Deprecated: Use the [EnterAltScreen] [Cmd] instead.
+// Deprecated: Use the WithAltScreen ProgramOption instead.
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
 		p.renderer.enterAltScreen()
@@ -199,7 +190,7 @@ func (p *Program) ExitAltScreen() {
 // EnableMouseCellMotion enables mouse click, release, wheel and motion events
 // if a mouse button is pressed (i.e., drag events).
 //
-// Deprecated: Use the [EnableMouseCellMotion] [Cmd] instead.
+// Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
 	if p.renderer != nil {
 		p.renderer.enableMouseCellMotion()
@@ -224,7 +215,7 @@ func (p *Program) DisableMouseCellMotion() {
 // regardless of whether a mouse button is pressed. Many modern terminals
 // support this, but not all.
 //
-// Deprecated: Use the [EnableMouseAllMotion] [Cmd] instead.
+// Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
 	if p.renderer != nil {
 		p.renderer.enableMouseAllMotion()
