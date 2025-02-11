@@ -14,7 +14,7 @@ import (
 )
 
 func (p *Program) suspend() {
-	if err := p.ReleaseTerminal(); err != nil {
+	if err := p.releaseTerminal(true); err != nil {
 		// If we can't release input, abort.
 		return
 	}
