@@ -622,7 +622,7 @@ func (p *Program) Run() (Model, error) {
 	model, err := p.eventLoop(model, cmds)
 	killed := p.ctx.Err() != nil || err != nil
 	if killed && err == nil {
-		err = fmt.Errorf("%w: %s", ErrProgramKilled, p.ctx.Err())
+		err = fmt.Errorf("%w: %w", ErrProgramKilled, p.ctx.Err())
 	}
 	if err == nil {
 		// Ensure we rendered the final state of the model.
