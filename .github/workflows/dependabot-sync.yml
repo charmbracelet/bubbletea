@@ -1,0 +1,15 @@
+name: dependabot-sync
+on:
+  schedule:
+    - cron: "0 0 * * 0" # every Sunday at midnight
+  workflow_dispatch: # allows manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot-sync:
+    uses: charmbracelet/meta/.github/workflows/dependabot-sync.yml@main
+    with:
+      repo_name: ${{ github.event.repository.name }}
