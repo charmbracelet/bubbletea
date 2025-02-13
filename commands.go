@@ -181,8 +181,6 @@ type windowSizeMsg struct{}
 // that WindowSizeMsgs will automatically be delivered to Update when the
 // [Program] starts and when the window dimensions change so in many cases you
 // will not need to explicitly invoke this command.
-func RequestWindowSize() Cmd {
-	return func() Msg {
-		return windowSizeMsg{}
-	}
+func RequestWindowSize() Msg {
+	return windowSizeMsg{}
 }
