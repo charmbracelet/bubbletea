@@ -27,8 +27,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if s := msg.String(); s == "ctrl+c" || s == "q" || s == "esc" {
 			return m, tea.Quit
 		}
-
-		return m, tea.RequestWindowSize()
+		return m, tea.RequestWindowSize
 
 	case tea.WindowSizeMsg:
 		return m, tea.Printf("The window size is: %dx%d", msg.Width, msg.Height)
