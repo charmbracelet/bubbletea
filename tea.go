@@ -52,7 +52,12 @@ type Model interface {
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
+}
 
+// ViewModel is an optional interface that can be implemented by the main model
+// to provide a view. If the main model does not implement a view interface,
+// the program won't render anything.
+type ViewModel interface {
 	// View renders the program's UI, which is just a string. The view is
 	// rendered after every Update.
 	View() string
@@ -86,15 +91,15 @@ func NewCursor(x, y int) *Cursor {
 }
 
 // CursorModel is an optional interface that can be implemented by the main
-// model to provide a cursor position and style.
+// model to provide a view that manages the cursor. If the main model does not
+// implement a view interface, the program won't render anything.
 type CursorModel interface {
-	// Cursor returns the cursor position and style. A nil cursor will hide the
-	// cursor. Otherwise, the cursor will be shown at the position and with the
-	// style specified.
+	// View renders the program's UI, which is just a string. The view is
+	// rendered after every Update. The cursor is optional, if it's nil the
+	// cursor will be hidden.
 	// Use [NewCursor] to quickly create a cursor for a given position with
 	// default styles.
-	// This method is called in-sync with the [Model.View] method.
-	Cursor() *Cursor
+	View() (string, *Cursor)
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
@@ -745,18 +750,32 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 	}
 }
 
+// hasView returns true if the model has a view.
+func hasView(model Model) (ok bool) {
+	switch model.(type) {
+	case ViewModel, CursorModel:
+		ok = true
+	}
+	return
+}
+
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
+	var view string
 	var cur *Cursor
-	if model, ok := model.(CursorModel); ok {
-		cur = model.Cursor()
-		// Ensure we reset the cursor color on exit.
-		if cur != nil {
-			p.setCc = cur.Color
-		}
+	switch model := model.(type) {
+	case ViewModel:
+		view = model.View()
+	case CursorModel:
+		view, cur = model.View()
 	}
 
-	p.renderer.render(model.View(), cur) //nolint:errcheck // send view to renderer
+	// Ensure we reset the cursor color on exit.
+	if cur != nil {
+		p.setCc = cur.Color
+	}
+
+	p.renderer.render(view, cur) //nolint:errcheck // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
@@ -837,19 +856,24 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	if p.renderer == nil {
-		stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
-		if has, _ := strconv.ParseBool(stdr); ok && has {
-			p.renderer = newRenderer(p.output)
+		if hasView(p.initialModel) {
+			stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
+			if has, _ := strconv.ParseBool(stdr); ok && has {
+				p.renderer = newRenderer(p.output)
+			} else {
+				// If no renderer is set use the cursed one.
+				p.renderer = newCursedRenderer(
+					p.output,
+					p.getenv("TERM"),
+					resizeMsg.Width,
+					resizeMsg.Height,
+					p.useHardTabs,
+					p.useBackspace,
+				)
+			}
 		} else {
-			// If no renderer is set use the cursed one.
-			p.renderer = newCursedRenderer(
-				p.output,
-				p.getenv("TERM"),
-				resizeMsg.Width,
-				resizeMsg.Height,
-				p.useHardTabs,
-				p.useBackspace,
-			)
+			// If the model has no view we don't need a renderer.
+			p.renderer = &nilRenderer{}
 		}
 	}
 

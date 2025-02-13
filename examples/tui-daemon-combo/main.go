@@ -24,7 +24,6 @@ func main() {
 	var (
 		daemonMode bool
 		showHelp   bool
-		opts       []tea.ProgramOption
 	)
 
 	flag.BoolVar(&daemonMode, "d", false, "run as a daemon")
@@ -36,15 +35,18 @@ func main() {
 		os.Exit(0)
 	}
 
+	var model tea.Model
+	m := newModel()
 	if daemonMode || !isatty.IsTerminal(os.Stdout.Fd()) {
+		model = m
 		// If we're in daemon mode don't render the TUI
-		opts = []tea.ProgramOption{tea.WithoutRenderer()}
 	} else {
+		model = modelView{m}
 		// If we're in TUI mode, discard log output
 		log.SetOutput(io.Discard)
 	}
 
-	p := tea.NewProgram(newModel(), opts...)
+	p := tea.NewProgram(model)
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
@@ -102,7 +104,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+type modelView struct {
+	model
+}
+
+func (m modelView) View() string {
 	s := "\n" +
 		m.spinner.View() + " Doing some work...\n\n"
 

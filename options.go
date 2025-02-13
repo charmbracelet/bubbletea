@@ -168,20 +168,6 @@ func WithMouseAllMotion() ProgramOption {
 	}
 }
 
-// WithoutRenderer disables the renderer. When this is set output and log
-// statements will be plainly sent to stdout (or another output if one is set)
-// without any rendering and redrawing logic. In other words, printing and
-// logging will behave the same way it would in a non-TUI commandline tool.
-// This can be useful if you want to use the Bubble Tea framework for a non-TUI
-// application, or to provide an additional non-TUI mode to your Bubble Tea
-// programs. For example, your program could behave like a daemon if output is
-// not a TTY.
-func WithoutRenderer() ProgramOption {
-	return func(p *Program) {
-		p.renderer = &nilRenderer{}
-	}
-}
-
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter
