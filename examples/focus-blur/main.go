@@ -5,15 +5,14 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 func main() {
 	p := tea.NewProgram(model{
-		// assume we start focused...
 		focused:   true,
 		reporting: true,
-	}, tea.WithReportFocus())
+	})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -25,7 +24,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.EnableReportFocus
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -34,7 +33,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.focused = true
 	case tea.BlurMsg:
 		m.focused = false
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "t":
 			m.reporting = !m.reporting

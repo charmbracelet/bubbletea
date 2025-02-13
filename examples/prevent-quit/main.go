@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/textarea"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 var (
 	choiceStyle   = lipgloss.NewStyle().PaddingLeft(1).Foreground(lipgloss.Color("241"))
 	saveTextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("170"))
-	quitViewStyle = lipgloss.NewStyle().Padding(1).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("170"))
+	quitViewStyle = lipgloss.NewStyle().Padding(1, 3).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("170"))
 )
 
 func main() {
@@ -92,7 +92,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.saveText = ""
 		switch {
 		case key.Matches(msg, m.keymap.save):
@@ -101,7 +101,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.quit):
 			m.quitting = true
 			return m, tea.Quit
-		case msg.Type == tea.KeyRunes:
+		case len(msg.Text) > 0:
 			m.saveText = ""
 			m.hasChanges = true
 			fallthrough
@@ -119,7 +119,7 @@ func (m model) updateTextView(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// For simplicity's sake, we'll treat any key besides "y" as "no"
 		if key.Matches(msg, m.keymap.quit) || msg.String() == "y" {
 			m.hasChanges = false
@@ -134,10 +134,10 @@ func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	if m.quitting {
 		if m.hasChanges {
-			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yn]"))
+			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yN]"))
 			return quitViewStyle.Render(text)
 		}
-		return "Very important, thank you\n"
+		return "Very important. Thank you.\n"
 	}
 
 	helpView := m.help.ShortHelpView([]key.Binding{
@@ -146,7 +146,7 @@ func (m model) View() string {
 	})
 
 	return fmt.Sprintf(
-		"\nType some important things.\n\n%s\n\n %s\n %s",
+		"Type some important things.\n%s\n %s\n %s",
 		m.textarea.View(),
 		saveTextStyle.Render(m.saveText),
 		helpView,

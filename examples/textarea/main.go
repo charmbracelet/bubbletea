@@ -4,11 +4,12 @@ package main
 // component library.
 
 import (
-	"fmt"
 	"log"
+	"strings"
 
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/textarea"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func main() {
@@ -29,6 +30,7 @@ type model struct {
 func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
+	ti.VirtualCursor = false
 	ti.Focus()
 
 	return model{
@@ -38,7 +40,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return textarea.Blink
+	return tea.Batch(textarea.Blink, tea.RequestBackgroundColor)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,13 +48,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEsc:
+	case tea.BackgroundColorMsg:
+		m.textarea.Styles = textarea.DefaultStyles(msg.IsDark())
+
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "esc":
 			if m.textarea.Focused() {
 				m.textarea.Blur()
 			}
-		case tea.KeyCtrlC:
+		case "ctrl+c":
 			return m, tea.Quit
 		default:
 			if !m.textarea.Focused() {
@@ -72,10 +77,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+func (m model) headerView() string {
+	return "Tell me a story.\n"
+}
+
 func (m model) View() string {
-	return fmt.Sprintf(
-		"Tell me a story.\n\n%s\n\n%s",
+	const (
+		footer = "\n(ctrl+c to quit)\n"
+	)
+
+	f := strings.Join([]string{
+		m.headerView(),
 		m.textarea.View(),
-		"(ctrl+c to quit)",
-	) + "\n\n"
+		footer,
+	}, "\n")
+
+	return f
+}
+
+func (m model) Cursor() *tea.Cursor {
+	if m.textarea.VirtualCursor {
+		return nil
+	}
+
+	c := m.textarea.Cursor()
+
+	// Set the y offset of the cursor based on the position of the textarea
+	// in the application.
+	c.Y += lipgloss.Height(m.headerView())
+
+	return c
 }

@@ -2,16 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func main() {
@@ -21,8 +20,10 @@ func main() {
 	}
 }
 
-type gotReposSuccessMsg []repo
-type gotReposErrMsg error
+type (
+	gotReposSuccessMsg []repo
+	gotReposErrMsg     error
+)
 
 type repo struct {
 	Name string `json:"name"`
@@ -76,6 +77,7 @@ func (k keymap) ShortHelp() []key.Binding {
 		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
 	}
 }
+
 func (k keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{k.ShortHelp()}
 }
@@ -84,29 +86,31 @@ func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "repository"
 	ti.Prompt = "charmbracelet/"
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+	ti.Styles.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
+	ti.Styles.Cursor.Color = lipgloss.Color("63")
 	ti.Focus()
 	ti.CharLimit = 50
-	ti.Width = 20
+	ti.SetWidth(20)
 	ti.ShowSuggestions = true
 
-	h := help.New()
-
-	km := keymap{}
-
-	return model{textInput: ti, help: h, keymap: km}
+	return model{textInput: ti, help: help.New()}
 }
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(getRepos, textinput.Blink)
 }
 
+func (m model) Cursor() *tea.Cursor {
+	c := m.textInput.Cursor()
+	c.Y += lipgloss.Height(m.headerView())
+	return c
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "enter", "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 	case gotReposSuccessMsg:
@@ -123,9 +127,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return fmt.Sprintf(
-		"Pick a Charm™ repo:\n\n  %s\n\n%s\n\n",
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		m.headerView(),
 		m.textInput.View(),
-		m.help.View(m.keymap),
+		m.footerView(),
 	)
 }
+
+func (m model) headerView() string { return "Pick a Charm™ repo:\n" }
+func (m model) footerView() string { return "\n" + m.help.View(m.keymap) }
