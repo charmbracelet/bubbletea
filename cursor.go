@@ -1,9 +1,7 @@
 package tea
 
-import "image"
-
 // Position represents a position in the terminal.
-type Position image.Point
+type Position struct{ X, Y int }
 
 // CursorPositionMsg is a message that represents the terminal cursor position.
 type CursorPositionMsg Position
