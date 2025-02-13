@@ -13,3 +13,5 @@ jobs:
     uses: charmbracelet/meta/.github/workflows/dependabot-sync.yml@main
     with:
       repo_name: ${{ github.event.repository.name }}
+    secrets:
+      gh_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
