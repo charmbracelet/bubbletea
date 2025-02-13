@@ -51,6 +51,9 @@ func (p *Program) initInput() (err error) {
 				windows.DISABLE_NEWLINE_AUTO_RETURN); err != nil {
 			return fmt.Errorf("error setting console mode: %w", err)
 		}
+
+		// TODO: check if we can optimize cursor movements on Windows.
+		p.checkOptimizedMovements(p.previousOutputState)
 	}
 
 	return
