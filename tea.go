@@ -359,21 +359,26 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	}
 
 	// Detect if tracing is enabled.
-	if tracePath := os.Getenv("TEA_TRACE"); tracePath != "" {
-		switch tracePath {
-		case "0", "false", "off":
-			break
+	enableTracing := func() {
+		// Enable different types of tracing.
+		if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
+			p.output.trace = true
 		}
-
+		if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
+			p.traceInput = true
+		}
+	}
+	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
+	traceEnabled, err := strconv.ParseBool(os.Getenv("TEA_TRACE"))
+	switch {
+	case err != nil && traceOk && len(tracePath) > 0:
+		// We have a trace filepath.
 		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
-			// Enable different types of tracing.
-			if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
-				p.output.trace = true
-			}
-			if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
-				p.traceInput = true
-			}
+			enableTracing()
 		}
+	case err == nil && traceEnabled:
+		// Use the default [log] output.
+		enableTracing()
 	}
 
 	return p
