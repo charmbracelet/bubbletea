@@ -244,14 +244,43 @@ func TestReadLongInput(t *testing.T) {
 	}
 }
 
+type chunkedBytesReader struct {
+	data     []byte
+	segments []int
+	current  int
+}
+
+func (cr *chunkedBytesReader) Read(p []byte) (int, error) {
+	if cr.current >= len(cr.segments)-1 {
+		return 0, io.EOF
+	}
+	data := cr.data[cr.segments[cr.current]:cr.segments[cr.current+1]]
+	n, err := bytes.NewReader(data).Read(p)
+	cr.current++
+	return n, err
+}
+
 func TestReadInput(t *testing.T) {
 	type test struct {
-		keyname string
-		in      []byte
-		out     []Msg
+		keyname  string
+		in       []byte
+		out      []Msg
+		segments []int
 	}
+	type testOptionFunc func(*test)
+	newTest := func(keyname string, in []byte, out []Msg, opts ...testOptionFunc) test {
+		t := &test{keyname: keyname, in: in, out: out}
+		for _, opt := range opts {
+			opt(t)
+		}
+		return *t
+	}
+	withSegment := func(segments ...int) testOptionFunc {
+		return func(t *test) { t.segments = segments }
+	}
+
 	testData := []test{
-		{
+		newTest(
 			"a",
 			[]byte{'a'},
 			[]Msg{
@@ -260,8 +289,8 @@ func TestReadInput(t *testing.T) {
 					Runes: []rune{'a'},
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			" ",
 			[]byte{' '},
 			[]Msg{
@@ -270,16 +299,16 @@ func TestReadInput(t *testing.T) {
 					Runes: []rune{' '},
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"a alt+a",
 			[]byte{'a', '\x1b', 'a'},
 			[]Msg{
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}, Alt: true},
 			},
-		},
-		{
+		),
+		newTest(
 			"a alt+a a",
 			[]byte{'a', '\x1b', 'a', 'a'},
 			[]Msg{
@@ -287,8 +316,8 @@ func TestReadInput(t *testing.T) {
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}, Alt: true},
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
 			},
-		},
-		{
+		),
+		newTest(
 			"ctrl+a",
 			[]byte{byte(keySOH)},
 			[]Msg{
@@ -296,16 +325,16 @@ func TestReadInput(t *testing.T) {
 					Type: KeyCtrlA,
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"ctrl+a ctrl+b",
 			[]byte{byte(keySOH), byte(keySTX)},
 			[]Msg{
 				KeyMsg{Type: KeyCtrlA},
 				KeyMsg{Type: KeyCtrlB},
 			},
-		},
-		{
+		),
+		newTest(
 			"alt+a",
 			[]byte{byte(0x1b), 'a'},
 			[]Msg{
@@ -315,8 +344,8 @@ func TestReadInput(t *testing.T) {
 					Runes: []rune{'a'},
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"abcd",
 			[]byte{'a', 'b', 'c', 'd'},
 			[]Msg{
@@ -325,8 +354,8 @@ func TestReadInput(t *testing.T) {
 					Runes: []rune{'a', 'b', 'c', 'd'},
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"up",
 			[]byte("\x1b[A"),
 			[]Msg{
@@ -334,8 +363,8 @@ func TestReadInput(t *testing.T) {
 					Type: KeyUp,
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"wheel up",
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
 			[]Msg{
@@ -347,8 +376,8 @@ func TestReadInput(t *testing.T) {
 					Action: MouseActionPress,
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"left motion release",
 			[]byte{
 				'\x1b', '[', 'M', byte(32) + 0b0010_0000, byte(32 + 33), byte(16 + 33),
@@ -370,8 +399,8 @@ func TestReadInput(t *testing.T) {
 					Action: MouseActionRelease,
 				}),
 			},
-		},
-		{
+		),
+		newTest(
 			"shift+tab",
 			[]byte{'\x1b', '[', 'Z'},
 			[]Msg{
@@ -379,13 +408,13 @@ func TestReadInput(t *testing.T) {
 					Type: KeyShiftTab,
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"enter",
 			[]byte{'\r'},
 			[]Msg{KeyMsg{Type: KeyEnter}},
-		},
-		{
+		),
+		newTest(
 			"alt+enter",
 			[]byte{'\x1b', '\r'},
 			[]Msg{
@@ -394,8 +423,8 @@ func TestReadInput(t *testing.T) {
 					Alt:  true,
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"insert",
 			[]byte{'\x1b', '[', '2', '~'},
 			[]Msg{
@@ -403,8 +432,8 @@ func TestReadInput(t *testing.T) {
 					Type: KeyInsert,
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"alt+ctrl+a",
 			[]byte{'\x1b', byte(keySOH)},
 			[]Msg{
@@ -413,64 +442,64 @@ func TestReadInput(t *testing.T) {
 					Alt:  true,
 				},
 			},
-		},
-		{
+		),
+		newTest(
 			"?CSI[45 45 45 45 88]?",
 			[]byte{'\x1b', '[', '-', '-', '-', '-', 'X'},
 			[]Msg{unknownCSISequenceMsg([]byte{'\x1b', '[', '-', '-', '-', '-', 'X'})},
-		},
+		),
 		// Powershell sequences.
-		{
+		newTest(
 			"up",
 			[]byte{'\x1b', 'O', 'A'},
 			[]Msg{KeyMsg{Type: KeyUp}},
-		},
-		{
+		),
+		newTest(
 			"down",
 			[]byte{'\x1b', 'O', 'B'},
 			[]Msg{KeyMsg{Type: KeyDown}},
-		},
-		{
+		),
+		newTest(
 			"right",
 			[]byte{'\x1b', 'O', 'C'},
 			[]Msg{KeyMsg{Type: KeyRight}},
-		},
-		{
+		),
+		newTest(
 			"left",
 			[]byte{'\x1b', 'O', 'D'},
 			[]Msg{KeyMsg{Type: KeyLeft}},
-		},
-		{
+		),
+		newTest(
 			"alt+enter",
 			[]byte{'\x1b', '\x0d'},
 			[]Msg{KeyMsg{Type: KeyEnter, Alt: true}},
-		},
-		{
+		),
+		newTest(
 			"alt+backspace",
 			[]byte{'\x1b', '\x7f'},
 			[]Msg{KeyMsg{Type: KeyBackspace, Alt: true}},
-		},
-		{
+		),
+		newTest(
 			"ctrl+@",
 			[]byte{'\x00'},
 			[]Msg{KeyMsg{Type: KeyCtrlAt}},
-		},
-		{
+		),
+		newTest(
 			"alt+ctrl+@",
 			[]byte{'\x1b', '\x00'},
 			[]Msg{KeyMsg{Type: KeyCtrlAt, Alt: true}},
-		},
-		{
+		),
+		newTest(
 			"esc",
 			[]byte{'\x1b'},
 			[]Msg{KeyMsg{Type: KeyEsc}},
-		},
-		{
+		),
+		newTest(
 			"alt+esc",
 			[]byte{'\x1b', '\x1b'},
 			[]Msg{KeyMsg{Type: KeyEsc, Alt: true}},
-		},
-		{
+		),
+		newTest(
 			"[a b] o",
 			[]byte{
 				'\x1b', '[', '2', '0', '0', '~',
@@ -482,8 +511,8 @@ func TestReadInput(t *testing.T) {
 				KeyMsg{Type: KeyRunes, Runes: []rune("a b"), Paste: true},
 				KeyMsg{Type: KeyRunes, Runes: []rune("o")},
 			},
-		},
-		{
+		),
+		newTest(
 			"[a\x03\nb]",
 			[]byte{
 				'\x1b', '[', '2', '0', '0', '~',
@@ -493,18 +522,18 @@ func TestReadInput(t *testing.T) {
 			[]Msg{
 				KeyMsg{Type: KeyRunes, Runes: []rune("a\x03\nb"), Paste: true},
 			},
-		},
+		),
 	}
 	if runtime.GOOS != "windows" {
 		// Sadly, utf8.DecodeRune([]byte(0xfe)) returns a valid rune on windows.
 		// This is incorrect, but it makes our test fail if we try it out.
 		testData = append(testData,
-			test{
+			newTest(
 				"?0xfe?",
 				[]byte{'\xfe'},
 				[]Msg{unknownInputByteMsg(0xfe)},
-			},
-			test{
+			),
+			newTest(
 				"a ?0xfe?   b",
 				[]byte{'a', '\xfe', ' ', 'b'},
 				[]Msg{
@@ -513,13 +542,71 @@ func TestReadInput(t *testing.T) {
 					KeyMsg{Type: KeySpace, Runes: []rune{' '}},
 					KeyMsg{Type: KeyRunes, Runes: []rune{'b'}},
 				},
-			},
+			),
 		)
 	}
 
+	// Incomplete UTF-8 sequences
+	testData = append(testData,
+		// 2-bytes
+		newTest(
+			"α βγ",
+			[]byte{
+				'\xce', '\xb1', // α
+				'\xce', '\xb2', // β (splitted)
+				'\xce', '\xb3', // γ
+			},
+			[]Msg{
+				KeyMsg{Type: KeyRunes, Runes: []rune{'α'}},
+				KeyMsg{Type: KeyRunes, Runes: []rune{'β', 'γ'}},
+			},
+			withSegment(3),
+		),
+		// 3-bytes
+		newTest(
+			"一 二三",
+			[]byte{
+				'\xe4', '\xb8', '\x80', // 一
+				'\xe4', '\xba', '\x8c', // 二 (splitted)
+				'\xe4', '\xb8', '\x89', // 三
+			},
+			[]Msg{
+				KeyMsg{Type: KeyRunes, Runes: []rune{'一'}},
+				KeyMsg{Type: KeyRunes, Runes: []rune{'二', '三'}},
+			},
+			withSegment(4, 5),
+		),
+		// 4-bytes
+		newTest(
+			"🧋 🫧📼",
+			[]byte{
+				'\xf0', '\x9f', '\xa7', '\x8b', // 🧋
+				'\xf0', '\x9f', '\xab', '\xa7', // 🫧 (splitted)
+				'\xf0', '\x9f', '\x93', '\xbc', // 📼
+			},
+			[]Msg{
+				KeyMsg{Type: KeyRunes, Runes: []rune{'🧋'}},
+				KeyMsg{Type: KeyRunes, Runes: []rune{'🫧', '📼'}},
+			},
+			withSegment(5, 6, 7),
+		),
+	)
+
+	newBytesReader := func(bs []byte, segments []int) io.Reader {
+		if segments == nil {
+			return bytes.NewReader(bs)
+		}
+		segments = append([]int{0}, segments...)
+		segments = append(segments, len(bs))
+		return &chunkedBytesReader{
+			data:     bs,
+			segments: segments,
+			current:  0,
+		}
+	}
 	for i, td := range testData {
 		t.Run(fmt.Sprintf("%d: %s", i, td.keyname), func(t *testing.T) {
-			msgs := testReadInputs(t, bytes.NewReader(td.in))
+			msgs := testReadInputs(t, newBytesReader(td.in, td.segments))
 			var buf strings.Builder
 			for i, msg := range msgs {
 				if i > 0 {
