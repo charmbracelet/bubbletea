@@ -26,3 +26,4 @@ func (n nilRenderer) setWindowTitle(_ string)    {}
 func (n nilRenderer) reportFocus() bool          { return false }
 func (n nilRenderer) enableReportFocus()         {}
 func (n nilRenderer) disableReportFocus()        {}
+func (n nilRenderer) resetLinesRendered()        {}
