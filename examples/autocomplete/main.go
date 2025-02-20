@@ -67,14 +67,16 @@ type model struct {
 	keymap    keymap
 }
 
-type keymap struct{}
+type keymap struct {
+	complete, next, prev, quit key.Binding
+}
 
 func (k keymap) ShortHelp() []key.Binding {
 	return []key.Binding{
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete")),
-		key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next")),
-		key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev")),
-		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
+		k.complete,
+		k.next,
+		k.prev,
+		k.quit,
 	}
 }
 
@@ -84,7 +86,6 @@ func (k keymap) FullHelp() [][]key.Binding {
 
 func initialModel() model {
 	ti := textinput.New()
-	ti.Placeholder = "repository"
 	ti.Prompt = "charmbracelet/"
 	ti.Styles.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
 	ti.Styles.Cursor.Color = lipgloss.Color("63")
@@ -93,7 +94,20 @@ func initialModel() model {
 	ti.SetWidth(20)
 	ti.ShowSuggestions = true
 
-	return model{textInput: ti, help: help.New()}
+	km := keymap{
+		// XXX: we should be using the keybindings on the textinput model.
+		complete: key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete"), key.WithDisabled()),
+		next:     key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next"), key.WithDisabled()),
+		prev:     key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev"), key.WithDisabled()),
+
+		quit: key.NewBinding(key.WithKeys("enter", "ctrl+c", "esc"), key.WithHelp("esc", "quit")),
+	}
+
+	return model{
+		textInput: ti,
+		keymap:    km,
+		help:      help.New(),
+	}
 }
 
 func (m model) Init() tea.Cmd {
@@ -108,32 +122,47 @@ func (m model) Cursor() *tea.Cursor {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
-		switch msg.String() {
-		case "enter", "ctrl+c", "esc":
-			return m, tea.Quit
-		}
+
 	case gotReposSuccessMsg:
 		var suggestions []string
 		for _, r := range msg {
 			suggestions = append(suggestions, r.Name)
 		}
 		m.textInput.SetSuggestions(suggestions)
+
+	case tea.KeyPressMsg:
+		switch {
+		case key.Matches(msg, m.keymap.quit):
+			return m, tea.Quit
+		}
 	}
 
 	var cmd tea.Cmd
 	m.textInput, cmd = m.textInput.Update(msg)
+
+	// Determine whether to show completion keybindings.
+	//
+	// XXX: we should be using the keybindings on the textinput model.
+	hasChoices := len(m.textInput.MatchedSuggestions()) > 1
+	m.keymap.complete.SetEnabled(hasChoices)
+	m.keymap.next.SetEnabled(hasChoices)
+	m.keymap.prev.SetEnabled(hasChoices)
+
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View() (string, *tea.Cursor) {
+	if len(m.textInput.AvailableSuggestions()) < 1 {
+		return "One sec, we're fetching completions...", nil
+	}
+
 	return lipgloss.JoinVertical(
-		lipgloss.Top,
+		lipgloss.Left,
 		m.headerView(),
 		m.textInput.View(),
 		m.footerView(),
-	)
+	), m.Cursor()
 }
 
-func (m model) headerView() string { return "Pick a Charm™ repo:\n" }
+func (m model) headerView() string { return "Enter a Charm™ repo:\n" }
 func (m model) footerView() string { return "\n" + m.help.View(m.keymap) }
