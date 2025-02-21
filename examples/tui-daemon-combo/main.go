@@ -9,9 +9,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/mattn/go-isatty"
 )
 
@@ -24,7 +24,6 @@ func main() {
 	var (
 		daemonMode bool
 		showHelp   bool
-		opts       []tea.ProgramOption
 	)
 
 	flag.BoolVar(&daemonMode, "d", false, "run as a daemon")
@@ -36,15 +35,18 @@ func main() {
 		os.Exit(0)
 	}
 
+	var model tea.Model
+	m := newModel()
 	if daemonMode || !isatty.IsTerminal(os.Stdout.Fd()) {
+		model = m
 		// If we're in daemon mode don't render the TUI
-		opts = []tea.ProgramOption{tea.WithoutRenderer()}
 	} else {
+		model = modelView{m}
 		// If we're in TUI mode, discard log output
 		log.SetOutput(io.Discard)
 	}
 
-	p := tea.NewProgram(newModel(), opts...)
+	p := tea.NewProgram(model)
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
@@ -84,7 +86,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.quitting = true
 		return m, tea.Quit
 	case spinner.TickMsg:
@@ -102,7 +104,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+type modelView struct {
+	model
+}
+
+func (m modelView) View() string {
 	s := "\n" +
 		m.spinner.View() + " Doing some work...\n\n"
 

@@ -1,20 +1,18 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"os/exec"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type editorFinishedMsg struct{ err error }
 
 func openEditor() tea.Cmd {
-	editor := os.Getenv("EDITOR")
-	if editor == "" {
-		editor = "vim"
-	}
+	editor := cmp.Or(os.Getenv("EDITOR"), "vim")
 	c := exec.Command(editor) //nolint:gosec
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		return editorFinishedMsg{err}
@@ -32,7 +30,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "a":
 			m.altscreenActive = !m.altscreenActive
