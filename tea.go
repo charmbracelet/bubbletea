@@ -16,6 +16,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
@@ -183,6 +184,9 @@ type Program struct {
 	// fps is the frames per second we should set on the renderer, if
 	// applicable,
 	fps int
+
+	// mouseMode is true if the program should enable mouse mode on Windows.
+	mouseMode bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -413,8 +417,24 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				// mouse mode (1006) is a no-op if the terminal doesn't support it.
 				p.renderer.enableMouseSGRMode()
 
+				// XXX: This is used to enable mouse mode on Windows. We need
+				// to reinitialize the cancel reader to get the mouse events to
+				// work.
+				if runtime.GOOS == "windows" && !p.mouseMode {
+					p.mouseMode = true
+					p.initCancelReader(true) //nolint:errcheck
+				}
+
 			case disableMouseMsg:
 				p.disableMouse()
+
+				// XXX: On Windows, mouse mode is enabled on the input reader
+				// level. We need to instruct the input reader to stop reading
+				// mouse events.
+				if runtime.GOOS == "windows" && p.mouseMode {
+					p.mouseMode = false
+					p.initCancelReader(true) //nolint:errcheck
+				}
 
 			case showCursorMsg:
 				p.renderer.showCursor()
@@ -579,6 +599,11 @@ func (p *Program) Run() (Model, error) {
 		p.renderer.enableMouseAllMotion()
 		p.renderer.enableMouseSGRMode()
 	}
+
+	// XXX: Should we enable mouse mode on Windows?
+	// This needs to happen before initializing the cancel and input reader.
+	p.mouseMode = p.startupOptions&withMouseCellMotion != 0 || p.startupOptions&withMouseAllMotion != 0
+
 	if p.startupOptions&withReportFocus != 0 {
 		p.renderer.enableReportFocus()
 	}
@@ -607,7 +632,7 @@ func (p *Program) Run() (Model, error) {
 
 	// Subscribe to user input.
 	if p.input != nil {
-		if err := p.initCancelReader(); err != nil {
+		if err := p.initCancelReader(false); err != nil {
 			return model, err
 		}
 	}
@@ -763,7 +788,7 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-	if err := p.initCancelReader(); err != nil {
+	if err := p.initCancelReader(false); err != nil {
 		return err
 	}
 	if p.altScreenWasActive {

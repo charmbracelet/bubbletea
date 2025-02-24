@@ -9,6 +9,6 @@ import (
 	"github.com/muesli/cancelreader"
 )
 
-func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
+func newInputReader(r io.Reader, _ bool) (cancelreader.CancelReader, error) {
 	return cancelreader.NewReader(r)
 }
