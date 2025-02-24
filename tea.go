@@ -239,6 +239,7 @@ type Program struct {
 	inputReader           *input.Reader
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
+	mouseMode             bool // indicates whether we should enable mouse on Windows
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
@@ -549,6 +550,20 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					// and get a response in the eventLoop.
 					p.execute(ansi.SetGraphemeClusteringMode + ansi.RequestGraphemeClusteringMode)
 				default:
+					if runtime.GOOS == "windows" {
+						if msg.Mode == ansi.ButtonEventMouseMode || msg.Mode == ansi.AnyEventMouseMode {
+							// XXX: This is used to enable mouse mode on Windows. We need
+							// to reinitialize the cancel reader to get the mouse events to
+							// work.
+							if !p.mouseMode {
+								p.mouseMode = true
+								p.initInputReader(true) //nolint:errcheck
+							}
+
+							// We don't need to send reset mouse mode sequence on Windows.
+							break
+						}
+					}
 					p.execute(ansi.SetMode(msg.Mode))
 				}
 
@@ -566,6 +581,20 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				case ansi.TextCursorEnableMode:
 					p.renderer.hideCursor()
 				default:
+					if runtime.GOOS == "windows" {
+						if msg.Mode == ansi.ButtonEventMouseMode || msg.Mode == ansi.AnyEventMouseMode {
+							// XXX: On Windows, mouse mode is enabled on the input reader
+							// level. We need to instruct the input reader to stop reading
+							// mouse events.
+							if p.mouseMode {
+								p.mouseMode = false
+								p.initInputReader(true) //nolint:errcheck
+							}
+
+							// We don't need to send reset mouse mode sequence on Windows.
+							break
+						}
+					}
 					p.execute(ansi.ResetMode(msg.Mode))
 				}
 
@@ -895,7 +924,7 @@ func (p *Program) Run() (Model, error) {
 	// Init the input reader and initial model.
 	model := p.initialModel
 	if p.input != nil {
-		if err := p.initInputReader(); err != nil {
+		if err := p.initInputReader(false); err != nil {
 			return model, err
 		}
 	}
@@ -932,6 +961,10 @@ func (p *Program) Run() (Model, error) {
 		p.execute(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
 		p.modes.Set(ansi.AnyEventMouseMode, ansi.SgrExtMouseMode)
 	}
+
+	// XXX: Should we enable mouse mode on Windows?
+	// This needs to happen before initializing the cancel and input reader.
+	p.mouseMode = p.startupOptions&withMouseCellMotion != 0 || p.startupOptions&withMouseAllMotion != 0
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.execute(ansi.SetFocusEventMode)
@@ -1111,7 +1144,7 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-	if err := p.initInputReader(); err != nil {
+	if err := p.initInputReader(false); err != nil {
 		return err
 	}
 	if p.modes.IsReset(ansi.AltScreenSaveCursorMode) {
