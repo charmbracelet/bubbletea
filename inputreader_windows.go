@@ -25,7 +25,7 @@ type conInputReader struct {
 
 var _ cancelreader.CancelReader = &conInputReader{}
 
-func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
+func newInputReader(r io.Reader, enableMouse bool) (cancelreader.CancelReader, error) {
 	fallback := func(io.Reader) (cancelreader.CancelReader, error) {
 		return cancelreader.NewReader(r)
 	}
@@ -38,11 +38,21 @@ func newInputReader(r io.Reader) (cancelreader.CancelReader, error) {
 		return fallback(r)
 	}
 
-	originalMode, err := prepareConsole(conin,
-		windows.ENABLE_MOUSE_INPUT,
+	modes := []uint32{
 		windows.ENABLE_WINDOW_INPUT,
 		windows.ENABLE_EXTENDED_FLAGS,
-	)
+	}
+
+	// Since we have options to enable mouse events, [WithMouseCellMotion],
+	// [WithMouseAllMotion], and [EnableMouseCellMotion],
+	// [EnableMouseAllMotion], and [DisableMouse], we need to check if the user
+	// has enabled mouse events and add the appropriate mode accordingly.
+	// Otherwise, mouse events will be enabled all the time.
+	if enableMouse {
+		modes = append(modes, windows.ENABLE_MOUSE_INPUT)
+	}
+
+	originalMode, err := prepareConsole(conin, modes...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare console input: %w", err)
 	}

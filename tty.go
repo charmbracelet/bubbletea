@@ -75,9 +75,14 @@ func (p *Program) restoreInput() error {
 }
 
 // initCancelReader (re)commences reading inputs.
-func (p *Program) initCancelReader() error {
+func (p *Program) initCancelReader(cancel bool) error {
+	if cancel && p.cancelReader != nil {
+		p.cancelReader.Cancel()
+		p.waitForReadLoop()
+	}
+
 	var err error
-	p.cancelReader, err = newInputReader(p.input)
+	p.cancelReader, err = newInputReader(p.input, p.mouseMode)
 	if err != nil {
 		return fmt.Errorf("error creating cancelreader: %w", err)
 	}
