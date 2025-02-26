@@ -3,7 +3,7 @@ module github.com/charmbracelet/bubbletea/v2
 go 1.18
 
 require (
-	github.com/charmbracelet/colorprofile v0.2.0
+	github.com/charmbracelet/colorprofile v0.2.2
 	github.com/charmbracelet/x/ansi v0.8.0
 	github.com/charmbracelet/x/cellbuf v0.0.12-0.20250212155406-f75055277088
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
