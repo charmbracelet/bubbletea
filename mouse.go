@@ -172,7 +172,7 @@ const (
 func parseSGRMouseEvent(buf []byte) MouseEvent {
 	str := string(buf[3:])
 	matches := mouseSGRRegex.FindStringSubmatch(str)
-	if len(matches) != 5 { //nolint:gomnd
+	if len(matches) != 5 { //nolint:mnd
 		// Unreachable, we already checked the regex in `detectOneMsg`.
 		panic("invalid mouse event")
 	}
