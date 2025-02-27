@@ -32,5 +32,5 @@ func (w *safeWriter) Write(p []byte) (n int, err error) {
 	if w.trace {
 		log.Printf("output %q", p)
 	}
-	return w.w.Write(p)
+	return w.w.Write(p) //nolint:wrapcheck
 }

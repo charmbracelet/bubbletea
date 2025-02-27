@@ -1,0 +1,25 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  lint:all:
+    desc: Run all linters
+    cmds:
+      - task: lint
+      - task: lint:soft
+
+  lint:
+    desc: Run base linters
+    cmds:
+      - golangci-lint run
+
+  lint:soft:
+    desc: Run soft linters
+    cmds:
+      - golangci-lint run --config=.golangci-soft.yml
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./... {{.CLI_ARGS}}

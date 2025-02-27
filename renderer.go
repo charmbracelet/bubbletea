@@ -98,7 +98,7 @@ func Printf(template string, args ...interface{}) Cmd {
 func encodeCursorStyle(style CursorShape, blink bool) int {
 	// We're using the ANSI escape sequence values for cursor styles.
 	// We need to map both [style] and [steady] to the correct value.
-	style = (style * 2) + 1
+	style = (style * 2) + 1 //nolint:mnd
 	if !blink {
 		style++
 	}

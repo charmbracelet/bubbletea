@@ -849,13 +849,13 @@ func (p *Program) Run() (Model, error) {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
-			return p.initialModel, err
+			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
 		resizeMsg.Width, resizeMsg.Height = w, h
 	}
 
-	if p.renderer == nil {
+	if p.renderer == nil { //nolint:nestif
 		if hasView(p.initialModel) {
 			stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
 			if has, _ := strconv.ParseBool(stdr); ok && has {
@@ -1125,7 +1125,7 @@ func (p *Program) RestoreTerminal() error {
 		p.execute(ansi.SetBracketedPasteMode)
 	}
 	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys))
+		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys)) //nolint:mnd
 	}
 	if p.activeEnhancements.kittyFlags != 0 {
 		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.kittyFlags))
@@ -1261,7 +1261,7 @@ func (p *Program) sendKeyboardEnhancementsMsg() {
 // the active keyboard enhancements from the terminal.
 func (p *Program) requestKeyboardEnhancements() {
 	if p.requestedEnhancements.modifyOtherKeys > 0 {
-		p.execute(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys))
+		p.execute(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys)) //nolint:mnd
 		p.execute(ansi.QueryModifyOtherKeys)
 	}
 	if p.requestedEnhancements.kittyFlags > 0 {
