@@ -81,6 +81,31 @@ func TestSequentially(t *testing.T) {
 	}
 }
 
+func TestSequence(t *testing.T) {
+	t.Run("nil cmd", func(t *testing.T) {
+		if b := Sequence(nil); b != nil {
+			t.Fatalf("expected nil, got %+v", b)
+		}
+	})
+	t.Run("empty cmd", func(t *testing.T) {
+		if b := Sequence(); b != nil {
+			t.Fatalf("expected nil, got %+v", b)
+		}
+	})
+	t.Run("single cmd", func(t *testing.T) {
+		b := Sequence(Quit)()
+		if _, ok := b.(QuitMsg); !ok {
+			t.Fatalf("expected a QuitMsg, got %T", b)
+		}
+	})
+	t.Run("mixed nil cmds", func(t *testing.T) {
+		b := Sequence(nil, Quit, nil, Quit, nil, nil)()
+		if l := len(b.(sequenceMsg)); l != 2 {
+			t.Fatalf("expected a []Cmd with len 2, got %d", l)
+		}
+	})
+}
+
 func TestBatch(t *testing.T) {
 	t.Run("nil cmd", func(t *testing.T) {
 		if b := Batch(nil); b != nil {
