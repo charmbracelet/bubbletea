@@ -5,7 +5,7 @@ go 1.23.1
 require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250211170751-4491afa808c7
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-alpha.2.0.20250204175057-2a96bc438da6
-	github.com/charmbracelet/colorprofile v0.2.0
+	github.com/charmbracelet/colorprofile v0.2.2
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-alpha.2.0.20250218201041-aa91bd691cf5
@@ -25,7 +25,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.12-0.20250212155406-f75055277088 // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20250207160936-21c02780d27a // indirect
-	github.com/charmbracelet/x/input v0.3.3 // indirect
+	github.com/charmbracelet/x/input v0.3.4 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.0 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect

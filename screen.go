@@ -45,6 +45,10 @@ func ExitAltScreen() Msg {
 	return disableModeMsg{ansi.AltScreenSaveCursorMode}
 }
 
+// enableMouseCellMotionMsg is an internal message that signals to enable mouse cell
+// motion events.
+type enableMouseCellMotionMsg struct{}
+
 // EnableMouseCellMotion is a special command that enables mouse click,
 // release, and wheel events. Mouse movement events are also captured if
 // a mouse button is pressed (i.e., drag events).
@@ -52,11 +56,12 @@ func ExitAltScreen() Msg {
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. Use the WithMouseCellMotion ProgramOption instead.
 func EnableMouseCellMotion() Msg {
-	return sequenceMsg{
-		func() Msg { return enableModeMsg{ansi.ButtonEventMouseMode} },
-		func() Msg { return enableModeMsg{ansi.SgrExtMouseMode} },
-	}
+	return enableMouseCellMotionMsg{}
 }
+
+// enableMouseAllMotionMsg is an internal message that signals to enable mouse
+// all motion events.
+type enableMouseAllMotionMsg struct{}
 
 // EnableMouseAllMotion is a special command that enables mouse click, release,
 // wheel, and motion events, which are delivered regardless of whether a mouse
@@ -68,19 +73,16 @@ func EnableMouseCellMotion() Msg {
 // Because commands run asynchronously, this command should not be used in your
 // model's Init function. Use the WithMouseAllMotion ProgramOption instead.
 func EnableMouseAllMotion() Msg {
-	return sequenceMsg{
-		func() Msg { return enableModeMsg{ansi.AnyEventMouseMode} },
-		func() Msg { return enableModeMsg{ansi.SgrExtMouseMode} },
-	}
+	return enableMouseAllMotionMsg{}
 }
+
+// disableMouse motionMsg is an internal message that signals to disable mouse
+// motion events.
+type disableMouseMotionMsg struct{}
 
 // DisableMouse is a special command that stops listening for mouse events.
 func DisableMouse() Msg {
-	return sequenceMsg{
-		func() Msg { return disableModeMsg{ansi.ButtonEventMouseMode} },
-		func() Msg { return disableModeMsg{ansi.AnyEventMouseMode} },
-		func() Msg { return disableModeMsg{ansi.SgrExtMouseMode} },
-	}
+	return disableMouseMotionMsg{}
 }
 
 // HideCursor is a special command for manually instructing Bubble Tea to hide
