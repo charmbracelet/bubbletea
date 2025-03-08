@@ -33,7 +33,7 @@ type LogOptionsSetter interface {
 
 // LogToFileWith does allows to call LogToFile with a custom LogOptionsSetter.
 func LogToFileWith(path string, prefix string, log LogOptionsSetter) (*os.File, error) {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600) //nolint:gomnd
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600) //nolint:mnd
 	if err != nil {
 		return nil, fmt.Errorf("error opening file for logging: %w", err)
 	}

@@ -5,7 +5,7 @@ package tea
 type PasteMsg string
 
 // PasteStartMsg is an message that is emitted when the terminal starts the
-// bracketed-paste text
+// bracketed-paste text.
 type PasteStartMsg struct{}
 
 // PasteEndMsg is an message that is emitted when the terminal ends the

@@ -88,12 +88,12 @@ func (p *Program) restoreTerminalState() error {
 func (p *Program) restoreInput() error {
 	if p.ttyInput != nil && p.previousTtyInputState != nil {
 		if err := term.Restore(p.ttyInput.Fd(), p.previousTtyInputState); err != nil {
-			return fmt.Errorf("error restoring console: %w", err)
+			return fmt.Errorf("bubbletea: error restoring console: %w", err)
 		}
 	}
 	if p.ttyOutput != nil && p.previousOutputState != nil {
 		if err := term.Restore(p.ttyOutput.Fd(), p.previousOutputState); err != nil {
-			return fmt.Errorf("error restoring console: %w", err)
+			return fmt.Errorf("bubbletea: error restoring console: %w", err)
 		}
 	}
 	return nil
@@ -120,7 +120,7 @@ func (p *Program) initInputReader(cancel bool) error {
 
 	drv, err := input.NewReader(p.input, term, flags)
 	if err != nil {
-		return err
+		return fmt.Errorf("bubbletea: error initializing input reader: %w", err)
 	}
 
 	if p.traceInput {
@@ -137,7 +137,7 @@ func (p *Program) readInputs() error {
 	for {
 		events, err := p.inputReader.ReadEvents()
 		if err != nil {
-			return err
+			return fmt.Errorf("bubbletea: error reading input: %w", err)
 		}
 
 		for _, msg := range events {
@@ -147,7 +147,7 @@ func (p *Program) readInputs() error {
 				case <-p.ctx.Done():
 					err := p.ctx.Err()
 					if err != nil {
-						err = fmt.Errorf("found context error while reading input: %w", err)
+						err = fmt.Errorf("bubbletea: found context error while reading input: %w", err)
 					}
 					return err
 				}
@@ -172,7 +172,7 @@ func (p *Program) readLoop() {
 func (p *Program) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
-	case <-time.After(500 * time.Millisecond): //nolint:gomnd
+	case <-time.After(500 * time.Millisecond): //nolint:mnd
 		// The read loop hangs, which means the input
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.

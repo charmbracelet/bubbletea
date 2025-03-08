@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -43,7 +44,11 @@ func newCursedRenderer(w io.Writer, term string, width, height int, hardTabs, ba
 func (s *cursedRenderer) close() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.scr.Close()
+
+	if err := s.scr.Close(); err != nil {
+		return fmt.Errorf("bubbletea: error closing screen writer: %w", err)
+	}
+	return nil
 }
 
 // flush implements renderer.
@@ -75,7 +80,10 @@ func (s *cursedRenderer) flush() error {
 		s.cursor.Position = s.lastCur.Position
 	}
 
-	return s.scr.Flush()
+	if err := s.scr.Flush(); err != nil {
+		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
+	}
+	return nil
 }
 
 // render implements renderer.

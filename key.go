@@ -15,7 +15,7 @@ const (
 // Special key symbols.
 const (
 
-	// Special keys
+	// Special keys.
 
 	KeyUp     = input.KeyUp
 	KeyDown   = input.KeyDown
@@ -31,7 +31,7 @@ const (
 	KeyHome   = input.KeyHome
 	KeyEnd    = input.KeyEnd
 
-	// Keypad keys
+	// Keypad keys.
 
 	KeyKpEnter    = input.KeyKpEnter
 	KeyKpEqual    = input.KeyKpEqual
@@ -53,7 +53,7 @@ const (
 	KeyKp9        = input.KeyKp9
 
 	// The following are keys defined in the Kitty keyboard protocol.
-	// TODO: Investigate the names of these keys
+	// XXX: Investigate the names of these keys.
 	KeyKpSep    = input.KeyKpSep
 	KeyKpUp     = input.KeyKpUp
 	KeyKpDown   = input.KeyKpDown
@@ -67,7 +67,7 @@ const (
 	KeyKpDelete = input.KeyKpDelete
 	KeyKpBegin  = input.KeyKpBegin
 
-	// Function keys
+	// Function keys.
 
 	KeyF1  = input.KeyF1
 	KeyF2  = input.KeyF2
@@ -134,7 +134,7 @@ const (
 	KeyF63 = input.KeyF63
 
 	// The following are keys defined in the Kitty keyboard protocol.
-	// TODO: Investigate the names of these keys
+	// XXX: Investigate the names of these keys.
 
 	KeyCapsLock    = input.KeyCapsLock
 	KeyScrollLock  = input.KeyScrollLock
@@ -173,7 +173,7 @@ const (
 	KeyIsoLevel3Shift = input.KeyIsoLevel3Shift
 	KeyIsoLevel5Shift = input.KeyIsoLevel5Shift
 
-	// Special names in C0
+	// Special names in C0.
 
 	KeyBackspace = input.KeyBackspace
 	KeyTab       = input.KeyTab
@@ -182,7 +182,7 @@ const (
 	KeyEscape    = input.KeyEscape
 	KeyEsc       = input.KeyEsc
 
-	// Special names in G0
+	// Special names in G0.
 
 	KeySpace = input.KeySpace
 )
