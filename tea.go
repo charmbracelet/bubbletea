@@ -154,7 +154,6 @@ const (
 	withKittyKeyboard
 	withModifyOtherKeys
 	withWindowsInputMode
-	withoutGraphemeClustering
 	withColorProfile
 	withKeyboardEnhancements
 	withGraphemeClustering
