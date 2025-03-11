@@ -52,7 +52,8 @@ func (p *Program) initInput() (err error) {
 			return fmt.Errorf("error setting console mode: %w", err)
 		}
 
-		//nolint:godox // TODO: check if we can optimize cursor movements on Windows.
+		//nolint:godox
+		// TODO: check if we can optimize cursor movements on Windows.
 		p.checkOptimizedMovements(p.previousOutputState)
 	}
 
