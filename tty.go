@@ -100,7 +100,12 @@ func (p *Program) restoreInput() error {
 }
 
 // initInputReader (re)commences reading inputs.
-func (p *Program) initInputReader() error {
+func (p *Program) initInputReader(cancel bool) error {
+	if cancel && p.inputReader != nil {
+		p.inputReader.Cancel()
+		p.waitForReadLoop()
+	}
+
 	term := p.getenv("TERM")
 
 	// Initialize the input reader.
@@ -108,7 +113,11 @@ func (p *Program) initInputReader() error {
 	// raw mode.
 	// On Windows, this will change the console mode to enable mouse and window
 	// events.
-	var flags int // XXX: make configurable through environment variables?
+	var flags int
+	if p.mouseMode {
+		flags |= input.FlagMouseMode
+	}
+
 	drv, err := input.NewReader(p.input, term, flags)
 	if err != nil {
 		return fmt.Errorf("bubbletea: error initializing input reader: %w", err)
