@@ -774,7 +774,7 @@ func (p *Program) render(model Model) {
 		p.setCc = cur.Color
 	}
 
-	p.renderer.render(view, cur) //nolint:errcheck // send view to renderer
+	p.renderer.render(view, cur) // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
