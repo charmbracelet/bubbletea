@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
+
+	"github.com/charmbracelet/colorprofile"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -27,7 +29,7 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		p.output = output
+		p.output = newSafeWriter(output)
 	}
 }
 
@@ -166,34 +168,6 @@ func WithMouseAllMotion() ProgramOption {
 	}
 }
 
-// WithoutRenderer disables the renderer. When this is set output and log
-// statements will be plainly sent to stdout (or another output if one is set)
-// without any rendering and redrawing logic. In other words, printing and
-// logging will behave the same way it would in a non-TUI commandline tool.
-// This can be useful if you want to use the Bubble Tea framework for a non-TUI
-// application, or to provide an additional non-TUI mode to your Bubble Tea
-// programs. For example, your program could behave like a daemon if output is
-// not a TTY.
-func WithoutRenderer() ProgramOption {
-	return func(p *Program) {
-		p.renderer = &nilRenderer{}
-	}
-}
-
-// WithANSICompressor removes redundant ANSI sequences to produce potentially
-// smaller output, at the cost of some processing overhead.
-//
-// This feature is provisional, and may be changed or removed in a future version
-// of this package.
-//
-// Deprecated: this incurs a noticeable performance hit. A future release will
-// optimize ANSI automatically without the performance penalty.
-func WithANSICompressor() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withANSICompressor
-	}
-}
-
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter
@@ -248,5 +222,60 @@ func WithFPS(fps int) ProgramOption {
 func WithReportFocus() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withReportFocus
+	}
+}
+
+// WithKeyboardEnhancements enables support for enhanced keyboard features. You
+// can enable different keyboard features by passing one or more
+// KeyboardEnhancement functions.
+//
+// This is not supported on all terminals. On Windows, these features are
+// enabled by default.
+func WithKeyboardEnhancements(enhancements ...KeyboardEnhancementOption) ProgramOption {
+	var ke KeyboardEnhancements
+	for _, e := range append(enhancements, withKeyDisambiguation) {
+		e(&ke)
+	}
+	return func(p *Program) {
+		p.startupOptions |= withKeyboardEnhancements
+		p.requestedEnhancements = ke
+	}
+}
+
+// WithGraphemeClustering disables grapheme clustering. This is useful if you
+// want to disable grapheme clustering for your program.
+//
+// Grapheme clustering is a character width calculation method that accurately
+// calculates the width of wide characters in a terminal. This is useful for
+// properly rendering double width characters such as emojis and CJK
+// characters.
+//
+// See https://mitchellh.com/writing/grapheme-clusters-in-terminals
+func WithGraphemeClustering() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withGraphemeClustering
+	}
+}
+
+// WithColorProfile sets the color profile that the program will use. This is
+// useful when you want to force a specific color profile. By default, Bubble
+// Tea will try to detect the terminal's color profile from environment
+// variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
+// environment variables.
+func WithColorProfile(profile colorprofile.Profile) ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withColorProfile
+		p.profile = profile
+	}
+}
+
+// WithWindowSize sets the initial size of the terminal window. This is useful
+// when you need to set the initial size of the terminal window, for example
+// during testing or when you want to run your program in a non-interactive
+// environment.
+func WithWindowSize(width, height int) ProgramOption {
+	return func(p *Program) {
+		p.width = width
+		p.height = height
 	}
 }

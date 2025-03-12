@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/viewport"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 const content = `
@@ -38,8 +38,7 @@ const content = `
 | Banana Split | $5    | A classic             |
 | Cream Puff   | $3    | Pretty creamy!        |
 
-All our dishes are made in-house by Karen, our chef. Most of our ingredients
-are from our garden or the fish market down the street.
+All our dishes are made in-house by Karen, our chef. Most of our ingredients are from our garden or the fish market down the street.
 
 Some famous people that have eaten here lately:
 
@@ -57,9 +56,14 @@ type example struct {
 }
 
 func newExample() (*example, error) {
-	const width = 78
+	const (
+		width  = 78
+		height = 20
+	)
 
-	vp := viewport.New(width, 20)
+	vp := viewport.New()
+	vp.SetWidth(width)
+	vp.SetHeight(height)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
@@ -73,7 +77,7 @@ func newExample() (*example, error) {
 	//  * The viewport margins
 	//  * The gutter glamour applies to the left side of the content
 	//
-	const glamourGutter = 2
+	const glamourGutter = 3
 	glamourRenderWidth := width - vp.Style.GetHorizontalFrameSize() - glamourGutter
 
 	renderer, err := glamour.NewTermRenderer(
@@ -102,7 +106,7 @@ func (e example) Init() tea.Cmd {
 
 func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			return e, tea.Quit
