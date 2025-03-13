@@ -1,3 +1,4 @@
+// roughly converted to Go from https://github.com/dmtrKovalenko/esp32-smooth-eye-blinking/blob/main/src/main.cpp
 package main
 
 import (
