@@ -63,7 +63,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// here.
 			m.viewport = viewport.New(viewport.WithWidth(msg.Width), viewport.WithHeight(msg.Height-verticalMarginHeight))
 			m.viewport.YPosition = headerHeight
-			m.viewport.LeftGutterFunc = viewport.LineNumberGutter(lipgloss.NewStyle())
+			m.viewport.LeftGutterFunc = func(info viewport.GutterContext) string {
+				if info.Soft {
+					return "     │ "
+				}
+				if info.Index >= info.TotalLines {
+					return "   ~ │ "
+				}
+				return fmt.Sprintf("%4d │ ", info.Index+1)
+			}
 			m.viewport.HighlightStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238")).Background(lipgloss.Color("34"))
 			m.viewport.SelectedHighlightStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238")).Background(lipgloss.Color("47"))
 			m.viewport.SetContent(m.content)

@@ -14,8 +14,8 @@ github.com/aymanbagabas/go-udiff v0.2.0 h1:TK0fH4MteXUDspT88n8CKzvK0X9O2xu9yQjWp
 github.com/aymanbagabas/go-udiff v0.2.0/go.mod h1:RE4Ex0qsGkTAJoQdQQCA0uG+nAzJO/pI/QwceO5fgrA=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250310191855-59511a71e0f5 h1:EDVXSfXzSLS3eEPPndtl0uzfV2N/igpgx4riudN4jBk=
-github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250310191855-59511a71e0f5/go.mod h1:OQsv1nZAu5v8GtZqNTqS4yY5mfR0VgImkpe2F0QYEfs=
+github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250318132216-bd20b89a3e80 h1:RlfUmUVZpshOB7YP4sdnIymgXb6tXhHeQ2854afgKoU=
+github.com/charmbracelet/bubbles/v2 v2.0.0-alpha.2.0.20250318132216-bd20b89a3e80/go.mod h1:OQsv1nZAu5v8GtZqNTqS4yY5mfR0VgImkpe2F0QYEfs=
 github.com/charmbracelet/colorprofile v0.2.2 h1:Cqkg0GqDd9vCdhRIBsCbeS8kvePcm8PyZLhRP9AwmaU=
 github.com/charmbracelet/colorprofile v0.2.2/go.mod h1:X4/0JoqgTIPSFcRA/P6INZzIuyqdFY5rm8tb41s9okk=
 github.com/charmbracelet/glamour v0.8.0 h1:tPrjL3aRcQbn++7t18wOpgLyl8wrOHUEDS7IZ68QtZs=
