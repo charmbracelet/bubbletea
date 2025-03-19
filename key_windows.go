@@ -87,7 +87,7 @@ func readConInputs(ctx context.Context, msgsch chan<- Msg, con *conInputReader) 
 					if err != nil {
 						return fmt.Errorf("coninput context error: %w", err)
 					}
-					return err
+					return nil
 				}
 			}
 		}
@@ -114,7 +114,7 @@ func mouseEventButton(p, s coninput.ButtonState) (button MouseButton, action Mou
 		case s&coninput.FROM_LEFT_4TH_BUTTON_PRESSED > 0:
 			button = MouseButtonForward
 		}
-		return
+		return button, action
 	}
 
 	switch {
@@ -147,7 +147,7 @@ func mouseEvent(p coninput.ButtonState, e coninput.MouseEventRecord) MouseMsg {
 		if ev.Action == MouseActionRelease {
 			ev.Type = MouseRelease
 		}
-		switch ev.Button {
+		switch ev.Button { //nolint:exhaustive
 		case MouseButtonLeft:
 			ev.Type = MouseLeft
 		case MouseButtonMiddle:
@@ -190,7 +190,7 @@ func keyType(e coninput.KeyEventRecord) KeyType {
 	shiftPressed := e.ControlKeyState.Contains(coninput.SHIFT_PRESSED)
 	ctrlPressed := e.ControlKeyState.Contains(coninput.LEFT_CTRL_PRESSED | coninput.RIGHT_CTRL_PRESSED)
 
-	switch code {
+	switch code { //nolint:exhaustive
 	case coninput.VK_RETURN:
 		return KeyEnter
 	case coninput.VK_BACK:
@@ -348,7 +348,7 @@ func keyType(e coninput.KeyEventRecord) KeyType {
 			return KeyCtrlUnderscore
 		}
 
-		switch code {
+		switch code { //nolint:exhaustive
 		case coninput.VK_OEM_4:
 			return KeyCtrlOpenBracket
 		case coninput.VK_OEM_6:
