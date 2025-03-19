@@ -1,7 +1,12 @@
 # Bubble Tea
 
 <p>
-    <a href="https://stuff.charm.sh/bubbletea/bubbletea-4k.png"><img src="https://github.com/charmbracelet/bubbletea/assets/25087/108d4fdb-d554-4910-abed-2a5f5586a60e" width="313" alt="Bubble Tea Title Treatment"></a><br>
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a600b1be-9b1a-48e8-a2a4-3f3917240db1" width="308">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/37d21a94-b6ef-41a8-90e8-d55e90dce1d1" width="310">
+      <a href="https://github.com/user-attachments/assets/69927c4b-4696-4b73-94e5-435be3590ba8"><img src="https://github.com/user-attachments/assets/a600b1be-9b1a-48e8-a2a4-3f3917240db1" width="308" /></a>
+    </picture>
+    <br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
     <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/charmbracelet/bubbletea?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
