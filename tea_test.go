@@ -141,6 +141,10 @@ func TestTeaKill(t *testing.T) {
 	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
+
+	if _, err := p.Run(); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Expected %v, got %v", context.Canceled, err)
+	}
 }
 
 func TestTeaContext(t *testing.T) {
