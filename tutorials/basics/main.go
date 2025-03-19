@@ -10,17 +10,16 @@ import (
 type model struct {
 	cursor   int
 	choices  []string
-	selected map[int]struct{}
+	selected []bool
 }
 
 func initialModel() model {
+	choices := []string{"Buy carrots", "Buy celery", "Buy kohlrabi"}
 	return model{
-		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+		choices: choices,
 
-		// A map which indicates which choices are selected. We're using
-		// the map like a mathematical set. The keys refer to the indexes
-		// of the `choices` slice, above.
-		selected: make(map[int]struct{}),
+		// A bool slice which indicates which choices are selected.
+		selected: make([]bool, len(choices)),
 	}
 }
 
@@ -43,12 +42,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 		case "enter", " ":
-			_, ok := m.selected[m.cursor]
-			if ok {
-				delete(m.selected, m.cursor)
-			} else {
-				m.selected[m.cursor] = struct{}{}
-			}
+			m.selected[m.cursor] = !m.selected[m.cursor]
 		}
 	}
 
@@ -65,7 +59,7 @@ func (m model) View() string {
 		}
 
 		checked := " "
-		if _, ok := m.selected[i]; ok {
+		if m.selected[i] {
 			checked = "x"
 		}
 
