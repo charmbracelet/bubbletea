@@ -586,25 +586,25 @@ func (p *Program) Run() (Model, error) {
 	if p.startupTitle != "" {
 		p.renderer.setWindowTitle(p.startupTitle)
 	}
-	if p.startupOptions&withAltScreen != 0 {
+	if p.startupOptions.has(withAltScreen) {
 		p.renderer.enterAltScreen()
 	}
-	if p.startupOptions&withoutBracketedPaste == 0 {
+	if !p.startupOptions.has(withoutBracketedPaste) {
 		p.renderer.enableBracketedPaste()
 	}
-	if p.startupOptions&withMouseCellMotion != 0 {
+	if p.startupOptions.has(withMouseCellMotion) {
 		p.renderer.enableMouseCellMotion()
 		p.renderer.enableMouseSGRMode()
-	} else if p.startupOptions&withMouseAllMotion != 0 {
+	} else if p.startupOptions.has(withMouseAllMotion) {
 		p.renderer.enableMouseAllMotion()
 		p.renderer.enableMouseSGRMode()
 	}
 
 	// XXX: Should we enable mouse mode on Windows?
 	// This needs to happen before initializing the cancel and input reader.
-	p.mouseMode = p.startupOptions&withMouseCellMotion != 0 || p.startupOptions&withMouseAllMotion != 0
+	p.mouseMode = p.startupOptions.has(withMouseCellMotion) || p.startupOptions.has(withMouseAllMotion)
 
-	if p.startupOptions&withReportFocus != 0 {
+	if p.startupOptions.has(withReportFocus) {
 		p.renderer.enableReportFocus()
 	}
 
