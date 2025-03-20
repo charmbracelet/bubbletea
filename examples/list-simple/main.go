@@ -37,7 +37,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
-	str := fmt.Sprintf("%d. %s", index+1, i)
+	s := fmt.Sprintf("%d. %s", index+1, i)
 
 	fn := itemStyle.Render
 	if index == m.Index() {
@@ -46,7 +46,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		}
 	}
 
-	fmt.Fprint(w, fn(str))
+	fmt.Fprint(w, fn(s))
 }
 
 type model struct {
