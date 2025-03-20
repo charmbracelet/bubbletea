@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"time"
 
 	"github.com/erikgeiser/coninput"
@@ -99,7 +100,12 @@ func peekAndReadConsInput(con *conInputReader) ([]coninput.InputRecord, error) {
 	if err != nil {
 		return events, err
 	}
-	events, err = coninput.ReadNConsoleInputs(con.conin, uint32(len(events)))
+	numEvents := len(events)
+	// Check to satisfy lint G115.
+	if numEvents < 0 || numEvents > math.MaxUint32 {
+		panic("cannot convert numEvents " + fmt.Sprint(numEvents) + " to uint32")
+	}
+	events, err = coninput.ReadNConsoleInputs(con.conin, uint32(numEvents))
 	if con.isCanceled() {
 		return events, cancelreader.ErrCanceled
 	}
