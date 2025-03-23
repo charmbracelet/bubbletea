@@ -100,12 +100,7 @@ func peekAndReadConsInput(con *conInputReader) ([]coninput.InputRecord, error) {
 	if err != nil {
 		return events, err
 	}
-	numEvents := len(events)
-	// Check to satisfy lint G115.
-	if numEvents < 0 || numEvents > math.MaxUint32 {
-		panic("cannot convert numEvents " + fmt.Sprint(numEvents) + " to uint32")
-	}
-	events, err = coninput.ReadNConsoleInputs(con.conin, uint32(numEvents))
+	events, err = coninput.ReadNConsoleInputs(con.conin, intToUint32OrDie(len(events)))
 	if con.isCanceled() {
 		return events, cancelreader.ErrCanceled
 	}
@@ -113,6 +108,14 @@ func peekAndReadConsInput(con *conInputReader) ([]coninput.InputRecord, error) {
 		return events, fmt.Errorf("read coninput events: %w", err)
 	}
 	return events, nil
+}
+
+// Convert i to unit32 or panic if it cannot be converted. Check satisifes lint G115.
+func intToUint32OrDie(i int) uint32 {
+	if i < 0 || i > math.MaxUint32 {
+		panic("cannot convert numEvents " + fmt.Sprint(i) + " to uint32")
+	}
+	return uint32(i)
 }
 
 // Keeps peeking until there is data or the input is cancelled.
