@@ -170,9 +170,9 @@ const (
 //
 // https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates
 func parseSGRMouseEvent(buf []byte) MouseEvent {
-	str := string(buf[3:])
-	matches := mouseSGRRegex.FindStringSubmatch(str)
-	if len(matches) != 5 { //nolint:mnd
+	s := string(buf[3:])
+	matches := mouseSGRRegex.FindStringSubmatch(s)
+	if len(matches) != 5 { //nolint:gomnd
 		// Unreachable, we already checked the regex in `detectOneMsg`.
 		panic("invalid mouse event")
 	}
