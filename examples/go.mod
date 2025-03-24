@@ -6,7 +6,7 @@ toolchain go1.24.1
 require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.2.0
-	github.com/charmbracelet/glamour v0.9.0
+	github.com/charmbracelet/glamour v0.9.1
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20240521184646-23081fb03b28
