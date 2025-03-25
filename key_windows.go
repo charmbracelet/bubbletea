@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"time"
 
 	"github.com/erikgeiser/coninput"
@@ -112,7 +111,7 @@ func peekAndReadConsInput(con *conInputReader) ([]coninput.InputRecord, error) {
 
 // Convert i to unit32 or panic if it cannot be converted. Check satisifes lint G115.
 func intToUint32OrDie(i int) uint32 {
-	if i < 0 || i > math.MaxUint32 {
+	if i < 0 {
 		panic("cannot convert numEvents " + fmt.Sprint(i) + " to uint32")
 	}
 	return uint32(i)
