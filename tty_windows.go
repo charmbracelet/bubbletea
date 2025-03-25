@@ -57,7 +57,7 @@ func (p *Program) initInput() (err error) {
 		p.checkOptimizedMovements(p.previousOutputState)
 	}
 
-	return nil
+	return //nolint:nakedret
 }
 
 // Open the Windows equivalent of a TTY.
