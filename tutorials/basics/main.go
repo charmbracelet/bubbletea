@@ -13,7 +13,7 @@ type model struct {
 	selected map[int]struct{}
 }
 
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() tea.Cmd {
 	m = model{
 		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
@@ -22,7 +22,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
-	return m, tea.SetWindowTitle("Grocery List")
+	return tea.SetWindowTitle("Grocery List")
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
