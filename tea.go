@@ -460,7 +460,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case BatchMsg:
 				for _, cmd := range msg {
-					cmds <- cmd
+					select {
+					case <-p.ctx.Done():
+						return model, nil
+					case cmds <- cmd:
+					}
 				}
 				continue
 
@@ -506,7 +510,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
-			cmds <- cmd                    // process command (if any)
+
+			select {
+			case <-p.ctx.Done():
+				return model, nil
+			case cmds <- cmd: // process command (if any)
+			}
+
 			p.renderer.write(model.View()) // send view to renderer
 		}
 	}

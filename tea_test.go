@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+type ctxImplodeMsg struct {
+	cancel context.CancelFunc
+}
+
 type incrementMsg struct{}
 
 type testModel struct {
@@ -21,7 +25,11 @@ func (m testModel) Init() Cmd {
 }
 
 func (m *testModel) Update(msg Msg) (Model, Cmd) {
-	switch msg.(type) {
+	switch msg := msg.(type) {
+	case ctxImplodeMsg:
+		msg.cancel()
+		time.Sleep(100 * time.Millisecond)
+
 	case incrementMsg:
 		i := m.counter.Load()
 		if i == nil {
@@ -155,6 +163,59 @@ func TestTeaContext(t *testing.T) {
 			time.Sleep(time.Millisecond)
 			if m.executed.Load() != nil {
 				cancel()
+				return
+			}
+		}
+	}()
+
+	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
+func TestTeaContextImplodeDeadlock(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				p.Send(ctxImplodeMsg{cancel: cancel})
+				return
+			}
+		}
+	}()
+
+	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
+func TestTeaContextBatchDeadlock(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	inc := func() Msg {
+		cancel()
+		return incrementMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				batch := make(BatchMsg, 100)
+				for i := range batch {
+					batch[i] = inc
+				}
+				p.Send(batch)
 				return
 			}
 		}
