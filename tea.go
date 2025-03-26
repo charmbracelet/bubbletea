@@ -529,7 +529,11 @@ func (p *Program) Run() (Model, error) {
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
-	p.finished = make(chan struct{}, 1)
+
+	p.finished = make(chan struct{})
+	defer func() {
+		close(p.finished)
+	}()
 
 	defer p.cancel()
 
@@ -754,9 +758,6 @@ func (p *Program) shutdown(kill bool) {
 	}
 
 	_ = p.restoreTerminalState()
-	if !kill {
-		p.finished <- struct{}{}
-	}
 }
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
