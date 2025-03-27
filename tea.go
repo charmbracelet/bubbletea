@@ -708,11 +708,11 @@ func (p *Program) Quit() {
 	p.Send(Quit())
 }
 
-// Kill stops the program immediately and restores the former terminal state.
+// Kill signals the program to stop immediately and restore the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
 func (p *Program) Kill() {
-	p.shutdown(true)
+	p.cancel()
 }
 
 // Wait waits/blocks until the underlying Program finished shutting down.
@@ -721,7 +721,11 @@ func (p *Program) Wait() {
 }
 
 // shutdown performs operations to free up resources and restore the terminal
-// to its original state.
+// to its original state. It is called once at the end of the program's lifetime.
+//
+// This method should not be called to signal the program to be killed/shutdown.
+// Doing so can lead to race conditions with the eventual call at the program's end.
+// As alternatives, the [Quit] or [Kill] convenience methods should be used instead.
 func (p *Program) shutdown(kill bool) {
 	p.cancel()
 
