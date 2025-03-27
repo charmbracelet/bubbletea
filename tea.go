@@ -154,7 +154,6 @@ const (
 	withKittyKeyboard
 	withModifyOtherKeys
 	withWindowsInputMode
-	withoutGraphemeClustering
 	withColorProfile
 	withKeyboardEnhancements
 	withGraphemeClustering
@@ -240,6 +239,7 @@ type Program struct {
 	inputReader           *input.Reader
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
+	mouseMode             bool // indicates whether we should enable mouse on Windows
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
@@ -570,6 +570,15 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.execute(ansi.ResetMode(msg.Mode))
 				}
 
+			case enableMouseCellMotionMsg:
+				p.enableMouse(false)
+
+			case enableMouseAllMotionMsg:
+				p.enableMouse(true)
+
+			case disableMouseMotionMsg:
+				p.disableMouse()
+
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
 
@@ -775,7 +784,7 @@ func (p *Program) render(model Model) {
 		p.setCc = cur.Color
 	}
 
-	p.renderer.render(view, cur) //nolint:errcheck // send view to renderer
+	p.renderer.render(view, cur) // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
@@ -849,13 +858,13 @@ func (p *Program) Run() (Model, error) {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
-			return p.initialModel, err
+			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
 		resizeMsg.Width, resizeMsg.Height = w, h
 	}
 
-	if p.renderer == nil {
+	if p.renderer == nil { //nolint:nestif
 		if hasView(p.initialModel) {
 			stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
 			if has, _ := strconv.ParseBool(stdr); ok && has {
@@ -896,7 +905,7 @@ func (p *Program) Run() (Model, error) {
 	// Init the input reader and initial model.
 	model := p.initialModel
 	if p.input != nil {
-		if err := p.initInputReader(); err != nil {
+		if err := p.initInputReader(false); err != nil {
 			return model, err
 		}
 	}
@@ -926,12 +935,12 @@ func (p *Program) Run() (Model, error) {
 		// We store the state of grapheme clustering after we query it and get
 		// a response in the eventLoop.
 	}
-	if p.startupOptions&withMouseCellMotion != 0 {
-		p.execute(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
-		p.modes.Set(ansi.ButtonEventMouseMode, ansi.SgrExtMouseMode)
-	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.execute(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
-		p.modes.Set(ansi.AnyEventMouseMode, ansi.SgrExtMouseMode)
+
+	// Enable mouse mode.
+	cellMotion := p.startupOptions&withMouseCellMotion != 0
+	allMotion := p.startupOptions&withMouseAllMotion != 0
+	if cellMotion || allMotion {
+		p.enableMouse(allMotion)
 	}
 
 	if p.startupOptions&withReportFocus != 0 {
@@ -1112,7 +1121,7 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-	if err := p.initInputReader(); err != nil {
+	if err := p.initInputReader(false); err != nil {
 		return err
 	}
 	if p.modes.IsReset(ansi.AltScreenSaveCursorMode) {
@@ -1125,7 +1134,7 @@ func (p *Program) RestoreTerminal() error {
 		p.execute(ansi.SetBracketedPasteMode)
 	}
 	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys))
+		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys)) //nolint:mnd
 	}
 	if p.activeEnhancements.kittyFlags != 0 {
 		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.kittyFlags))
@@ -1261,11 +1270,73 @@ func (p *Program) sendKeyboardEnhancementsMsg() {
 // the active keyboard enhancements from the terminal.
 func (p *Program) requestKeyboardEnhancements() {
 	if p.requestedEnhancements.modifyOtherKeys > 0 {
-		p.execute(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys))
+		p.execute(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys)) //nolint:mnd
 		p.execute(ansi.QueryModifyOtherKeys)
 	}
 	if p.requestedEnhancements.kittyFlags > 0 {
 		p.execute(ansi.PushKittyKeyboard(p.requestedEnhancements.kittyFlags))
 		p.execute(ansi.RequestKittyKeyboard)
+	}
+}
+
+// enableMouse enables mouse events on the terminal. When all is true, it will
+// enable [ansi.AnyEventMouseMode], otherwise, it will use
+// [ansi.ButtonEventMouseMode].
+// Note this has no effect on Windows since we use the Windows Console API.
+func (p *Program) enableMouse(all bool) {
+	if runtime.GOOS == "windows" {
+		// XXX: This is used to enable mouse mode on Windows. We need
+		// to reinitialize the cancel reader to get the mouse events to
+		// work.
+		if !p.mouseMode {
+			p.mouseMode = true
+			if p.inputReader != nil {
+				// Only reinitialize if the input reader has been initialized.
+				p.initInputReader(true) //nolint:errcheck
+			}
+		}
+	}
+
+	if all {
+		p.execute(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
+		p.modes.Set(ansi.AnyEventMouseMode, ansi.SgrExtMouseMode)
+	} else {
+		p.execute(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
+		p.modes.Set(ansi.ButtonEventMouseMode, ansi.SgrExtMouseMode)
+	}
+}
+
+// disableMouse disables mouse events on the terminal.
+// Note this has no effect on Windows since we use the Windows Console API.
+func (p *Program) disableMouse() {
+	if runtime.GOOS == "windows" {
+		// XXX: On Windows, mouse mode is enabled on the input reader
+		// level. We need to instruct the input reader to stop reading
+		// mouse events.
+		if p.mouseMode {
+			p.mouseMode = false
+			if p.inputReader != nil {
+				// Only reinitialize if the input reader has been initialized.
+				p.initInputReader(true) //nolint:errcheck
+			}
+		}
+	}
+
+	var modes []ansi.Mode
+	if p.modes.IsSet(ansi.AnyEventMouseMode) {
+		modes = append(modes, ansi.AnyEventMouseMode)
+	}
+	if p.modes.IsSet(ansi.ButtonEventMouseMode) {
+		modes = append(modes, ansi.ButtonEventMouseMode)
+	}
+	if len(modes) > 0 {
+		modes = append(modes, ansi.SgrExtMouseMode)
+		for _, m := range modes {
+			// We could combine all of these modes into one single sequence,
+			// but we're being cautious here for terminals that might not support
+			// that format i.e. `CSI ? 10003 ; 1006 l`.
+			p.execute(ansi.ResetMode(m))
+			p.modes.Reset(m)
+		}
 	}
 }

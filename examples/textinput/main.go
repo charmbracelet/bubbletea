@@ -40,12 +40,6 @@ func initialModel() model {
 	}
 }
 
-func (m model) Cursor() *tea.Cursor {
-	c := m.textInput.Cursor()
-	c.Y += lipgloss.Height(m.headerView())
-	return c
-}
-
 func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -70,8 +64,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView())
+func (m model) View() (string, *tea.Cursor) {
+	c := m.textInput.Cursor()
+	c.Y += lipgloss.Height(m.headerView())
+	return lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView()), c
 }
 func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }
 func (m model) footerView() string { return "\n(esc to quit)" }

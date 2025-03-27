@@ -38,17 +38,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return "Press left/right to change the cursor style, q or ctrl+c to quit." +
-		"\n\n" +
-		"  <- This is the cursor (a " + m.describeCursor() + ")"
-}
-
-func (m model) Cursor() *tea.Cursor {
+func (m model) View() (string, *tea.Cursor) {
 	c := tea.NewCursor(0, 2)
 	c.Shape = m.cursor.Shape
 	c.Blink = m.blink
-	return c
+	return "Press left/right to change the cursor style, q or ctrl+c to quit." +
+		"\n\n" +
+		"  <- This is the cursor (a " + m.describeCursor() + ")", c
 }
 
 func (m model) describeCursor() string {

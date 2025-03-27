@@ -81,10 +81,21 @@ func (m model) headerView() string {
 	return "Tell me a story.\n"
 }
 
-func (m model) View() string {
+func (m model) View() (string, *tea.Cursor) {
 	const (
 		footer = "\n(ctrl+c to quit)\n"
 	)
+
+	var c *tea.Cursor
+	if !m.textarea.VirtualCursor {
+		c = m.textarea.Cursor()
+
+		// Set the y offset of the cursor based on the position of the textarea
+		// in the application.
+		offset := lipgloss.Height(m.headerView())
+		log.Printf("offset: %d", offset)
+		c.Y += offset
+	}
 
 	f := strings.Join([]string{
 		m.headerView(),
@@ -92,19 +103,5 @@ func (m model) View() string {
 		footer,
 	}, "\n")
 
-	return f
-}
-
-func (m model) Cursor() *tea.Cursor {
-	if m.textarea.VirtualCursor {
-		return nil
-	}
-
-	c := m.textarea.Cursor()
-
-	// Set the y offset of the cursor based on the position of the textarea
-	// in the application.
-	c.Y += lipgloss.Height(m.headerView())
-
-	return c
+	return f, c
 }

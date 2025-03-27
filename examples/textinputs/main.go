@@ -66,20 +66,6 @@ func initialModel() model {
 	return m
 }
 
-func (m model) Cursor() *tea.Cursor {
-	if m.cursorMode == cursor.CursorHide {
-		return nil
-	}
-	for i, in := range m.inputs {
-		if in.Focused() {
-			c := in.Cursor()
-			c.Y = i
-			return c
-		}
-	}
-	return nil
-}
-
 func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -159,13 +145,18 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View() (string, *tea.Cursor) {
 	var b strings.Builder
+	var c *tea.Cursor
 
-	for i := range m.inputs {
+	for i, in := range m.inputs {
 		b.WriteString(m.inputs[i].View())
 		if i < len(m.inputs)-1 {
 			b.WriteRune('\n')
+		}
+		if m.cursorMode != cursor.CursorHide && in.Focused() {
+			c = in.Cursor()
+			c.Y += i
 		}
 	}
 
@@ -179,7 +170,7 @@ func (m model) View() string {
 	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
 
-	return b.String()
+	return b.String(), c
 }
 
 func main() {
