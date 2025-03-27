@@ -42,11 +42,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			// Write the sequence to the terminal
+			// Write the sequence to the terminal.
 			val := m.input.Value()
 			val = "\"" + val + "\""
 
-			// unescape the sequence
+			// Unescape the sequence.
 			seq, err := strconv.Unquote(val)
 			if err != nil {
 				m.err = err
@@ -58,7 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			// write the sequence to the terminal
+			// Write the sequence to the terminal.
 			return m, func() tea.Msg {
 				io.WriteString(os.Stdout, seq)
 				return nil
@@ -67,8 +67,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 		typ := strings.TrimPrefix(fmt.Sprintf("%T", msg), "tea.")
 		if len(typ) > 0 && unicode.IsUpper(rune(typ[0])) {
-			// Only log messages that are exported types
-			cmds = append(cmds, tea.Printf("Received message: %T\n", msg))
+			// Only log messages that are exported types.
+			cmds = append(cmds, tea.Printf("Received message: %T", msg))
 		}
 	}
 
