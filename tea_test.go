@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -121,8 +122,17 @@ func TestTeaWaitQuit(t *testing.T) {
 	}()
 
 	<-progStarted
+
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			p.Wait()
+			wg.Done()
+		}()
+	}
 	close(waitStarted)
-	p.Wait()
+	wg.Wait()
 
 	err := <-errChan
 	if err != nil {
@@ -162,8 +172,17 @@ func TestTeaWaitKill(t *testing.T) {
 	}()
 
 	<-progStarted
+
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			p.Wait()
+			wg.Done()
+		}()
+	}
 	close(waitStarted)
-	p.Wait()
+	wg.Wait()
 
 	err := <-errChan
 	if !errors.Is(err, ErrProgramKilled) {
