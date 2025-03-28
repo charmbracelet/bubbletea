@@ -67,6 +67,8 @@ func newInputReader(r io.Reader, enableMouse bool) (cancelreader.CancelReader, e
 func (r *conInputReader) Cancel() bool {
 	r.setCanceled()
 
+	// Warning: These cancel methods do not reliably work on console input
+	// 			and should not be counted on.
 	return windows.CancelIoEx(r.conin, nil) == nil || windows.CancelIo(r.conin) == nil
 }
 
