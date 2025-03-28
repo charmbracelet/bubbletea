@@ -27,6 +27,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// ErrProgramPanic is returned by [Program.Run] when the program recovers from a panic.
+var ErrProgramPanic = errors.New("program experienced a panic")
+
 // ErrProgramKilled is returned by [Program.Run] when the program gets killed.
 var ErrProgramKilled = errors.New("program was killed")
 
@@ -346,7 +349,11 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				go func() {
 					// Recover from panics.
 					if !p.startupOptions.has(withoutCatchPanics) {
-						defer p.recoverFromPanic()
+						defer func() {
+							if r := recover(); r != nil {
+								p.recoverFromGoPanic(r)
+							}
+						}()
 					}
 
 					msg := cmd() // this can be long.
@@ -515,10 +522,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
-func (p *Program) Run() (Model, error) {
+func (p *Program) Run() (returnModel Model, returnErr error) {
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
-	p.errs = make(chan error)
+	p.errs = make(chan error, 1)
 	p.finished = make(chan struct{}, 1)
 
 	defer p.cancel()
@@ -568,7 +575,12 @@ func (p *Program) Run() (Model, error) {
 
 	// Recover from panics.
 	if !p.startupOptions.has(withoutCatchPanics) {
-		defer p.recoverFromPanic()
+		defer func() {
+			if r := recover(); r != nil {
+				returnErr = fmt.Errorf("%w: %w", ErrProgramKilled, ErrProgramPanic)
+				p.recoverFromPanic(r)
+			}
+		}()
 	}
 
 	// If no renderer is set use the standard one.
@@ -645,10 +657,20 @@ func (p *Program) Run() (Model, error) {
 
 	// Run event loop, handle updates and draw.
 	model, err := p.eventLoop(model, cmds)
-	killed := p.ctx.Err() != nil || err != nil
-	if killed && err == nil {
-		err = fmt.Errorf("%w: %s", ErrProgramKilled, p.ctx.Err())
+
+	if err == nil && len(p.errs) > 0 {
+		err = <-p.errs // Drain a leftover error in case eventLoop crashed
 	}
+
+	killed := p.ctx.Err() != nil || err != nil
+	if killed {
+		if err == nil {
+			err = fmt.Errorf("%w: %s", ErrProgramKilled, p.ctx.Err())
+		} else {
+			err = fmt.Errorf("%w: %w", ErrProgramKilled, err)
+		}
+	}
+
 	if err == nil {
 		// Ensure we rendered the final state of the model.
 		p.renderer.write(model.View())
@@ -751,12 +773,26 @@ func (p *Program) shutdown(kill bool) {
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
 // the terminal to a usable state.
-func (p *Program) recoverFromPanic() {
-	if r := recover(); r != nil {
-		p.shutdown(true)
-		fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-		debug.PrintStack()
+func (p *Program) recoverFromPanic(r interface{}) {
+	select {
+	case p.errs <- ErrProgramPanic:
+	default:
 	}
+	p.shutdown(true)
+	fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+	debug.PrintStack()
+}
+
+// recoverFromGoPanic recovers from a goroutine panic, prints a stack trace and
+// signals for the program to be killed and terminal restored to a usable state.
+func (p *Program) recoverFromGoPanic(r interface{}) {
+	select {
+	case p.errs <- ErrProgramPanic:
+	default:
+	}
+	p.cancel()
+	fmt.Printf("Caught goroutine panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+	debug.PrintStack()
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input

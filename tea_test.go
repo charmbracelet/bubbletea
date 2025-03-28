@@ -11,6 +11,8 @@ import (
 
 type incrementMsg struct{}
 
+type panicMsg struct{}
+
 type testModel struct {
 	executed atomic.Value
 	counter  atomic.Value
@@ -32,6 +34,9 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 
 	case KeyMsg:
 		return m, Quit
+
+	case panicMsg:
+		panic("testing panic behavior")
 	}
 
 	return m, nil
@@ -266,4 +271,66 @@ func TestTeaNoRun(t *testing.T) {
 
 	m := &testModel{}
 	NewProgram(m, WithInput(&in), WithOutput(&buf))
+}
+
+func TestTeaPanic(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				p.Send(panicMsg{})
+				return
+			}
+		}
+	}()
+
+	_, err := p.Run()
+
+	if !errors.Is(err, ErrProgramPanic) {
+		t.Fatalf("Expected %v, got %v", ErrProgramPanic, err)
+	}
+
+	if !errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
+func TestTeaGoroutinePanic(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	panicCmd := func() Msg {
+		panic("testing goroutine panic behavior")
+	}
+
+	m := &testModel{}
+	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				batch := make(BatchMsg, 10)
+				for i := range batch {
+					batch[i] = panicCmd
+				}
+				p.Send(batch)
+				return
+			}
+		}
+	}()
+
+	_, err := p.Run()
+
+	if !errors.Is(err, ErrProgramPanic) {
+		t.Fatalf("Expected %v, got %v", ErrProgramPanic, err)
+	}
+
+	if !errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
 }
