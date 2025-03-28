@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -78,6 +79,106 @@ func TestTeaQuit(t *testing.T) {
 
 	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestTeaWaitQuit(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	progStarted := make(chan struct{})
+	waitStarted := make(chan struct{})
+	errChan := make(chan error, 1)
+
+	m := &testModel{}
+	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+
+	go func() {
+		_, err := p.Run()
+		errChan <- err
+	}()
+
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				close(progStarted)
+
+				<-waitStarted
+				time.Sleep(50 * time.Millisecond)
+				p.Quit()
+
+				return
+			}
+		}
+	}()
+
+	<-progStarted
+
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			p.Wait()
+			wg.Done()
+		}()
+	}
+	close(waitStarted)
+	wg.Wait()
+
+	err := <-errChan
+	if err != nil {
+		t.Fatalf("Expected nil, got %v", err)
+	}
+}
+
+func TestTeaWaitKill(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	progStarted := make(chan struct{})
+	waitStarted := make(chan struct{})
+	errChan := make(chan error, 1)
+
+	m := &testModel{}
+	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+
+	go func() {
+		_, err := p.Run()
+		errChan <- err
+	}()
+
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				close(progStarted)
+
+				<-waitStarted
+				time.Sleep(50 * time.Millisecond)
+				p.Kill()
+
+				return
+			}
+		}
+	}()
+
+	<-progStarted
+
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			p.Wait()
+			wg.Done()
+		}()
+	}
+	close(waitStarted)
+	wg.Wait()
+
+	err := <-errChan
+	if !errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
 
