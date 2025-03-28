@@ -790,7 +790,7 @@ func (p *Program) recoverFromPanic(r interface{}) {
 	case p.errs <- ErrProgramPanic:
 	default:
 	}
-	p.shutdown(true)
+	p.shutdown(true) // Ok to call here, p.Run() cannot do it anymore.
 	fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
 	debug.PrintStack()
 }
