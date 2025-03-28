@@ -27,6 +27,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// ErrProgramPanic is returned by [Program.Run] when the program recovers from a panic.
+var ErrProgramPanic = errors.New("program experienced a panic")
+
 // ErrProgramKilled is returned by [Program.Run] when the program gets killed.
 var ErrProgramKilled = errors.New("program was killed")
 
@@ -147,6 +150,12 @@ type Program struct {
 
 	inputType inputType
 
+	// externalCtx is a context that was passed in via WithContext, otherwise defaulting
+	// to ctx.Background() (in case it was not), the internal context is derived from it.
+	externalCtx context.Context
+
+	// ctx is the programs's internal context for signalling internal teardown.
+	// It is built and derived from the externalCtx in NewProgram().
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -243,11 +252,11 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	// A context can be provided with a ProgramOption, but if none was provided
 	// we'll use the default background context.
-	if p.ctx == nil {
-		p.ctx = context.Background()
+	if p.externalCtx == nil {
+		p.externalCtx = context.Background()
 	}
 	// Initialize context and teardown channel.
-	p.ctx, p.cancel = context.WithCancel(p.ctx)
+	p.ctx, p.cancel = context.WithCancel(p.externalCtx)
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
@@ -346,7 +355,11 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				go func() {
 					// Recover from panics.
 					if !p.startupOptions.has(withoutCatchPanics) {
-						defer p.recoverFromPanic()
+						defer func() {
+							if r := recover(); r != nil {
+								p.recoverFromGoPanic(r)
+							}
+						}()
 					}
 
 					msg := cmd() // this can be long.
@@ -515,10 +528,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
-func (p *Program) Run() (Model, error) {
+func (p *Program) Run() (returnModel Model, returnErr error) {
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
-	p.errs = make(chan error)
+	p.errs = make(chan error, 1)
 	p.finished = make(chan struct{}, 1)
 
 	defer p.cancel()
@@ -568,7 +581,12 @@ func (p *Program) Run() (Model, error) {
 
 	// Recover from panics.
 	if !p.startupOptions.has(withoutCatchPanics) {
-		defer p.recoverFromPanic()
+		defer func() {
+			if r := recover(); r != nil {
+				returnErr = fmt.Errorf("%w: %w", ErrProgramKilled, ErrProgramPanic)
+				p.recoverFromPanic(r)
+			}
+		}()
 	}
 
 	// If no renderer is set use the standard one.
@@ -645,11 +663,27 @@ func (p *Program) Run() (Model, error) {
 
 	// Run event loop, handle updates and draw.
 	model, err := p.eventLoop(model, cmds)
-	killed := p.ctx.Err() != nil || err != nil
-	if killed && err == nil {
-		err = fmt.Errorf("%w: %s", ErrProgramKilled, p.ctx.Err())
+
+	if err == nil && len(p.errs) > 0 {
+		err = <-p.errs // Drain a leftover error in case eventLoop crashed
 	}
-	if err == nil {
+
+	killed := p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil
+	if killed {
+		if err == nil && p.externalCtx.Err() != nil {
+			// Return also as context error the cancellation of an external context.
+			// This is the context the user knows about and should be able to act on.
+			err = fmt.Errorf("%w: %w", ErrProgramKilled, p.externalCtx.Err())
+		} else if err == nil && p.ctx.Err() != nil {
+			// Return only that the program was killed (not the internal mechanism).
+			// The user does not know or need to care about the internal program context.
+			err = ErrProgramKilled
+		} else {
+			// Return that the program was killed and also the error that caused it.
+			err = fmt.Errorf("%w: %w", ErrProgramKilled, err)
+		}
+	} else {
+		// Graceful shutdown of the program (not killed):
 		// Ensure we rendered the final state of the model.
 		p.renderer.write(model.View())
 	}
@@ -751,12 +785,26 @@ func (p *Program) shutdown(kill bool) {
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
 // the terminal to a usable state.
-func (p *Program) recoverFromPanic() {
-	if r := recover(); r != nil {
-		p.shutdown(true)
-		fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-		debug.PrintStack()
+func (p *Program) recoverFromPanic(r interface{}) {
+	select {
+	case p.errs <- ErrProgramPanic:
+	default:
 	}
+	p.shutdown(true) // Ok to call here, p.Run() cannot do it anymore.
+	fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+	debug.PrintStack()
+}
+
+// recoverFromGoPanic recovers from a goroutine panic, prints a stack trace and
+// signals for the program to be killed and terminal restored to a usable state.
+func (p *Program) recoverFromGoPanic(r interface{}) {
+	select {
+	case p.errs <- ErrProgramPanic:
+	default:
+	}
+	p.cancel()
+	fmt.Printf("Caught goroutine panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+	debug.PrintStack()
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
