@@ -143,8 +143,16 @@ func TestTeaKill(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
+	_, err := p.Run()
+
+	if !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+
+	if errors.Is(err, context.Canceled) {
+		// The end user should not know about the program's internal context state.
+		// The program should only report external context cancellation as a context error.
+		t.Fatalf("Internal context cancellation was reported as context error!")
 	}
 }
 
@@ -165,8 +173,15 @@ func TestTeaContext(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
+	_, err := p.Run()
+
+	if !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+
+	if !errors.Is(err, context.Canceled) {
+		// The end user should know that their passed in context caused the kill.
+		t.Fatalf("Expected %v, got %v", context.Canceled, err)
 	}
 }
 
