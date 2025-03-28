@@ -6,7 +6,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/v2/viewport"
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/v2"
+	"github.com/charmbracelet/glamour/v2/styles"
 	"github.com/charmbracelet/lipgloss/v2"
 )
 
@@ -55,7 +56,7 @@ type example struct {
 	viewport viewport.Model
 }
 
-func newExample() (*example, error) {
+func newExample(isDark bool) (*example, error) {
 	const (
 		width  = 78
 		height = 20
@@ -80,8 +81,12 @@ func newExample() (*example, error) {
 	const glamourGutter = 3
 	glamourRenderWidth := width - vp.Style.GetHorizontalFrameSize() - glamourGutter
 
+	style := styles.DarkStyleConfig
+	if !isDark {
+		style = styles.LightStyleConfig
+	}
 	renderer, err := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
+		glamour.WithStyles(style),
 		glamour.WithWordWrap(glamourRenderWidth),
 	)
 	if err != nil {
@@ -129,7 +134,8 @@ func (e example) helpView() string {
 }
 
 func main() {
-	model, err := newExample()
+	hasDarkBg := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
+	model, err := newExample(hasDarkBg)
 	if err != nil {
 		fmt.Println("Could not initialize Bubble Tea model:", err)
 		os.Exit(1)
