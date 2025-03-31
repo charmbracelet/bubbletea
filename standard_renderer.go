@@ -70,7 +70,7 @@ func (r *standardRenderer) reset() {
 // close closes the renderer and flushes any remaining data.
 func (r *standardRenderer) close() error {
 	// flush locks the mutex
-	r.flush() //nolint:errcheck
+	_ = r.flush()
 
 	r.mtx.Lock()
 	defer r.mtx.Unlock()

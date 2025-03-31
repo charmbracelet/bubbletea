@@ -61,7 +61,7 @@ func (s *cursedRenderer) flush() error {
 	if s.lastCur != nil {
 		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
 			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
-			io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle)) //nolint:errcheck
+			_, _ = io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle))
 			s.cursor.Shape = s.lastCur.Shape
 			s.cursor.Blink = s.lastCur.Blink
 		}
@@ -70,7 +70,7 @@ func (s *cursedRenderer) flush() error {
 			if s.lastCur.Color != nil {
 				seq = ansi.SetCursorColor(s.lastCur.Color)
 			}
-			io.WriteString(s.w, seq) //nolint:errcheck
+			_, _ = io.WriteString(s.w, seq)
 			s.cursor.Color = s.lastCur.Color
 		}
 
@@ -161,8 +161,8 @@ func (s *cursedRenderer) clearScreen() {
 	s.mu.Lock()
 	// Move the cursor to the top left corner of the screen and trigger a full
 	// screen redraw.
-	io.WriteString(s.w, ansi.CursorHomePosition) //nolint:errcheck
-	s.scr.Redraw()                               // force redraw
+	_, _ = io.WriteString(s.w, ansi.CursorHomePosition)
+	s.scr.Redraw() // force redraw
 	repaint(s)
 	s.mu.Unlock()
 }

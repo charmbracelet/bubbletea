@@ -709,8 +709,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 								})
 							}
 
-							//nolint:errcheck
-							g.Wait() // wait for all commands from batch msg to finish
+							_ = g.Wait() // wait for all commands from batch msg to finish
 							continue
 						case sequenceMsg:
 							for _, cmd := range msg {
@@ -1041,7 +1040,7 @@ func (p *Program) Wait() {
 
 // execute writes the given sequence to the program output.
 func (p *Program) execute(seq string) {
-	io.WriteString(p.output, seq) //nolint:errcheck
+	_, _ = io.WriteString(p.output, seq)
 }
 
 // shutdown performs operations to free up resources and restore the terminal
@@ -1223,7 +1222,7 @@ func (p *Program) startRenderer() {
 				return
 
 			case <-p.ticker.C:
-				p.renderer.flush() //nolint:errcheck
+				_ = p.renderer.flush()
 			}
 		}
 	}()
@@ -1240,10 +1239,10 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		p.renderer.flush() //nolint:errcheck
+		_ = p.renderer.flush()
 	}
 
-	p.renderer.close() //nolint:errcheck
+	_ = p.renderer.close()
 }
 
 // sendKeyboardEnhancementsMsg sends a message with the active keyboard
@@ -1292,7 +1291,7 @@ func (p *Program) enableMouse(all bool) {
 			p.mouseMode = true
 			if p.inputReader != nil {
 				// Only reinitialize if the input reader has been initialized.
-				p.initInputReader(true) //nolint:errcheck
+				_ = p.initInputReader(true)
 			}
 		}
 	}
@@ -1317,7 +1316,7 @@ func (p *Program) disableMouse() {
 			p.mouseMode = false
 			if p.inputReader != nil {
 				// Only reinitialize if the input reader has been initialized.
-				p.initInputReader(true) //nolint:errcheck
+				_ = p.initInputReader(true)
 			}
 		}
 	}
