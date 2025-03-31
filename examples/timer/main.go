@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/timer"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/timer"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 const timeout = time.Second * 5
@@ -49,7 +49,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.quitting = true
 		return m, tea.Quit
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, m.keymap.quit):
 			m.quitting = true
@@ -92,7 +92,7 @@ func (m model) View() string {
 
 func main() {
 	m := model{
-		timer: timer.NewWithInterval(timeout, time.Millisecond),
+		timer: timer.New(timeout, timer.WithInterval(time.Millisecond)),
 		keymap: keymap{
 			start: key.NewBinding(
 				key.WithKeys("s"),

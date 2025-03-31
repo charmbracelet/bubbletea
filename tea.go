@@ -13,17 +13,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image/color"
 	"io"
 	"os"
 	"os/signal"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 
+	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -47,10 +52,54 @@ type Model interface {
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
+}
 
+// ViewModel is an optional interface that can be implemented by the main model
+// to provide a view. If the main model does not implement a view interface,
+// the program won't render anything.
+type ViewModel interface {
 	// View renders the program's UI, which is just a string. The view is
 	// rendered after every Update.
 	View() string
+}
+
+// Cursor represents a cursor on the terminal screen.
+type Cursor struct {
+	// Position is a [Position] that determines the cursor's position on the
+	// screen relative to the top left corner of the frame.
+	Position
+
+	// Color is a [color.Color] that determines the cursor's color.
+	Color color.Color
+
+	// Shape is a [CursorShape] that determines the cursor's shape.
+	Shape CursorShape
+
+	// Blink is a boolean that determines whether the cursor should blink.
+	Blink bool
+}
+
+// NewCursor returns a new cursor with the default settings and the given
+// position.
+func NewCursor(x, y int) *Cursor {
+	return &Cursor{
+		Position: Position{X: x, Y: y},
+		Color:    nil,
+		Shape:    CursorBlock,
+		Blink:    true,
+	}
+}
+
+// CursorModel is an optional interface that can be implemented by the main
+// model to provide a view that manages the cursor. If the main model does not
+// implement a view interface, the program won't render anything.
+type CursorModel interface {
+	// View renders the program's UI, which is just a string. The view is
+	// rendered after every Update. The cursor is optional, if it's nil the
+	// cursor will be hidden.
+	// Use [NewCursor] to quickly create a cursor for a given position with
+	// default styles.
+	View() (string, *Cursor)
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
@@ -94,7 +143,6 @@ const (
 	withAltScreen startupOptions = 1 << iota
 	withMouseCellMotion
 	withMouseAllMotion
-	withANSICompressor
 	withoutSignalHandler
 	// Catching panics is incredibly useful for restoring the terminal to a
 	// usable state after a panic occurs. When this is set, Bubble Tea will
@@ -103,23 +151,38 @@ const (
 	withoutCatchPanics
 	withoutBracketedPaste
 	withReportFocus
+	withKittyKeyboard
+	withModifyOtherKeys
+	withWindowsInputMode
+	withColorProfile
+	withKeyboardEnhancements
+	withGraphemeClustering
 )
 
 // channelHandlers manages the series of channels returned by various processes.
 // It allows us to wait for those processes to terminate before exiting the
 // program.
-type channelHandlers []chan struct{}
+type channelHandlers struct {
+	handlers []chan struct{}
+	mu       sync.RWMutex
+}
 
 // Adds a channel to the list of handlers. We wait for all handlers to terminate
 // gracefully on shutdown.
 func (h *channelHandlers) add(ch chan struct{}) {
-	*h = append(*h, ch)
+	h.mu.Lock()
+	h.handlers = append(h.handlers, ch)
+	h.mu.Unlock()
 }
 
 // shutdown waits for all handlers to terminate.
-func (h channelHandlers) shutdown() {
+func (h *channelHandlers) shutdown() {
 	var wg sync.WaitGroup
-	for _, ch := range h {
+
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	for _, ch := range h.handlers {
 		wg.Add(1)
 		go func(ch chan struct{}) {
 			<-ch
@@ -150,34 +213,37 @@ type Program struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	msgs     chan Msg
-	errs     chan error
-	finished chan struct{}
+	msgs         chan Msg
+	errs         chan error
+	finished     chan struct{}
+	shutdownOnce sync.Once
+
+	profile colorprofile.Profile // the terminal color profile
 
 	// where to send output, this will usually be os.Stdout.
-	output io.Writer
+	output *safeWriter
+
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
 	previousOutputState *term.State
 	renderer            renderer
 
 	// the environment variables for the program, defaults to os.Environ().
-	environ []string
+	environ environ
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
-	cancelReader          cancelreader.CancelReader
+	inputReader           *input.Reader
+	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
+	mouseMode             bool // indicates whether we should enable mouse on Windows
 
-	// was the altscreen active before releasing the terminal?
-	altScreenWasActive bool
-	ignoreSignals      uint32
-
-	bpWasActive bool // was the bracketed paste mode active before releasing the terminal?
-	reportFocus bool // was focus reporting active before releasing the terminal?
+	// modes keeps track of terminal modes that have been enabled or disabled.
+	modes         ansi.Modes
+	ignoreSignals uint32
 
 	filter func(Model, Msg) Msg
 
@@ -185,8 +251,37 @@ type Program struct {
 	// applicable,
 	fps int
 
-	// mouseMode is true if the program should enable mouse mode on Windows.
-	mouseMode bool
+	// ticker is the ticker that will be used to write to the renderer.
+	ticker *time.Ticker
+
+	// once is used to stop the renderer.
+	once sync.Once
+
+	// rendererDone is used to stop the renderer.
+	rendererDone chan struct{}
+
+	// stores the requested keyboard enhancements.
+	requestedEnhancements KeyboardEnhancements
+	// activeEnhancements stores the active keyboard enhancements read from the
+	// terminal.
+	activeEnhancements KeyboardEnhancements
+
+	// keyboardc is used to signal that the keyboard enhancements have been
+	// read from the terminal.
+	keyboardc chan struct{}
+
+	// When a program is suspended, the terminal state is saved and the program
+	// is paused. This saves the terminal colors state so they can be restored
+	// when the program is resumed.
+	setBg, setFg, setCc color.Color
+
+	// Initial window size. Mainly used for testing.
+	width, height int
+
+	// whether to use hard tabs to optimize cursor movements
+	useHardTabs bool
+	// whether to use backspace to optimize cursor movements
+	useBackspace bool
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -234,6 +329,9 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
 		initialModel: model,
 		msgs:         make(chan Msg),
+		rendererDone: make(chan struct{}),
+		keyboardc:    make(chan struct{}),
+		modes:        ansi.Modes{},
 	}
 
 	// Apply all options to the program.
@@ -251,12 +349,41 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
-		p.output = os.Stdout
+		p.output = newSafeWriter(os.Stdout)
 	}
 
 	// if no environment was set, set it to os.Environ()
 	if p.environ == nil {
 		p.environ = os.Environ()
+	}
+
+	if p.fps < 1 {
+		p.fps = defaultFPS
+	} else if p.fps > maxFPS {
+		p.fps = maxFPS
+	}
+
+	// Detect if tracing is enabled.
+	enableTracing := func() {
+		// Enable different types of tracing.
+		if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
+			p.output.trace = true
+		}
+		if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
+			p.traceInput = true
+		}
+	}
+	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
+	traceEnabled, err := strconv.ParseBool(os.Getenv("TEA_TRACE"))
+	switch {
+	case err != nil && traceOk && len(tracePath) > 0:
+		// We have a trace filepath.
+		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
+			enableTracing()
+		}
+	case err == nil && traceEnabled:
+		// Use the default [log] output.
+		enableTracing()
 	}
 
 	return p
@@ -308,9 +435,6 @@ func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
 
 	if p.ttyOutput != nil {
-		// Get the initial terminal size and send it to the program.
-		go p.checkResize()
-
 		// Listen for window resizes.
 		go p.listenForResize(ch)
 	} else {
@@ -359,12 +483,6 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	return ch
 }
 
-func (p *Program) disableMouse() {
-	p.renderer.disableMouseCellMotion()
-	p.renderer.disableMouseAllMotion()
-	p.renderer.disableMouseSGRMode()
-}
-
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
@@ -398,65 +516,173 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.suspend()
 				}
 
-			case clearScreenMsg:
-				p.renderer.clearScreen()
-
-			case enterAltScreenMsg:
-				p.renderer.enterAltScreen()
-
-			case exitAltScreenMsg:
-				p.renderer.exitAltScreen()
-
-			case enableMouseCellMotionMsg, enableMouseAllMotionMsg:
-				switch msg.(type) {
-				case enableMouseCellMotionMsg:
-					p.renderer.enableMouseCellMotion()
-				case enableMouseAllMotionMsg:
-					p.renderer.enableMouseAllMotion()
-				}
-				// mouse mode (1006) is a no-op if the terminal doesn't support it.
-				p.renderer.enableMouseSGRMode()
-
-				// XXX: This is used to enable mouse mode on Windows. We need
-				// to reinitialize the cancel reader to get the mouse events to
-				// work.
-				if runtime.GOOS == "windows" && !p.mouseMode {
-					p.mouseMode = true
-					p.initCancelReader(true) //nolint:errcheck
+			case CapabilityMsg:
+				switch msg {
+				case "RGB", "Tc":
+					if p.profile != colorprofile.TrueColor {
+						p.profile = colorprofile.TrueColor
+						go p.Send(ColorProfileMsg{p.profile})
+					}
 				}
 
-			case disableMouseMsg:
+			case modeReportMsg:
+				switch msg.Mode {
+				case ansi.GraphemeClusteringMode:
+					// 1 means mode is set (see DECRPM).
+					p.modes[ansi.GraphemeClusteringMode] = msg.Value
+				}
+
+			case enableModeMsg:
+				mode := p.modes.Get(msg.Mode)
+				if mode.IsSet() {
+					break
+				}
+
+				p.modes.Set(msg.Mode)
+
+				switch msg.Mode {
+				case ansi.AltScreenSaveCursorMode:
+					p.renderer.enterAltScreen()
+				case ansi.TextCursorEnableMode:
+					p.renderer.showCursor()
+				case ansi.GraphemeClusteringMode:
+					// We store the state of grapheme clustering after we enable it
+					// and get a response in the eventLoop.
+					p.execute(ansi.SetGraphemeClusteringMode + ansi.RequestGraphemeClusteringMode)
+				default:
+					p.execute(ansi.SetMode(msg.Mode))
+				}
+
+			case disableModeMsg:
+				mode := p.modes.Get(msg.Mode)
+				if mode.IsReset() {
+					break
+				}
+
+				p.modes.Reset(msg.Mode)
+
+				switch msg.Mode {
+				case ansi.AltScreenSaveCursorMode:
+					p.renderer.exitAltScreen()
+				case ansi.TextCursorEnableMode:
+					p.renderer.hideCursor()
+				default:
+					p.execute(ansi.ResetMode(msg.Mode))
+				}
+
+			case enableMouseCellMotionMsg:
+				p.enableMouse(false)
+
+			case enableMouseAllMotionMsg:
+				p.enableMouse(true)
+
+			case disableMouseMotionMsg:
 				p.disableMouse()
 
-				// XXX: On Windows, mouse mode is enabled on the input reader
-				// level. We need to instruct the input reader to stop reading
-				// mouse events.
-				if runtime.GOOS == "windows" && p.mouseMode {
-					p.mouseMode = false
-					p.initCancelReader(true) //nolint:errcheck
+			case readClipboardMsg:
+				p.execute(ansi.RequestSystemClipboard)
+
+			case setClipboardMsg:
+				p.execute(ansi.SetSystemClipboard(string(msg)))
+
+			case readPrimaryClipboardMsg:
+				p.execute(ansi.RequestPrimaryClipboard)
+
+			case setPrimaryClipboardMsg:
+				p.execute(ansi.SetPrimaryClipboard(string(msg)))
+
+			case setBackgroundColorMsg:
+				if msg.Color != nil {
+					p.execute(ansi.SetBackgroundColor(msg.Color))
+				} else {
+					p.execute(ansi.ResetBackgroundColor)
+				}
+				p.setBg = msg.Color
+
+			case setForegroundColorMsg:
+				if msg.Color != nil {
+					p.execute(ansi.SetForegroundColor(msg.Color))
+				} else {
+					p.execute(ansi.ResetForegroundColor)
+				}
+				p.setFg = msg.Color
+
+			case setCursorColorMsg:
+				if msg.Color != nil {
+					p.execute(ansi.SetCursorColor(msg.Color))
+				} else {
+					p.execute(ansi.ResetCursorColor)
+				}
+				p.setCc = msg.Color
+
+			case backgroundColorMsg:
+				p.execute(ansi.RequestBackgroundColor)
+
+			case foregroundColorMsg:
+				p.execute(ansi.RequestForegroundColor)
+
+			case cursorColorMsg:
+				p.execute(ansi.RequestCursorColor)
+
+			case KeyboardEnhancementsMsg:
+				p.activeEnhancements.kittyFlags = msg.kittyFlags
+				p.activeEnhancements.modifyOtherKeys = msg.modifyOtherKeys
+
+				go func() {
+					// Signal that we've read the keyboard enhancements.
+					p.keyboardc <- struct{}{}
+				}()
+
+			case enableKeyboardEnhancementsMsg:
+				if runtime.GOOS == "windows" {
+					// We use the Windows Console API which supports keyboard
+					// enhancements.
+					break
 				}
 
-			case showCursorMsg:
-				p.renderer.showCursor()
+				var ke KeyboardEnhancements
+				for _, e := range msg {
+					e(&ke)
+				}
 
-			case hideCursorMsg:
-				p.renderer.hideCursor()
+				p.requestedEnhancements.kittyFlags |= ke.kittyFlags
+				if ke.modifyOtherKeys > p.requestedEnhancements.modifyOtherKeys {
+					p.requestedEnhancements.modifyOtherKeys = ke.modifyOtherKeys
+				}
 
-			case enableBracketedPasteMsg:
-				p.renderer.enableBracketedPaste()
+				p.requestKeyboardEnhancements()
 
-			case disableBracketedPasteMsg:
-				p.renderer.disableBracketedPaste()
+				// Ensure we send a message so that terminals that don't support the
+				// requested features can disable them.
+				go p.sendKeyboardEnhancementsMsg()
 
-			case enableReportFocusMsg:
-				p.renderer.enableReportFocus()
+			case disableKeyboardEnhancementsMsg:
+				if runtime.GOOS == "windows" {
+					// We use the Windows Console API which supports keyboard
+					// enhancements.
+					break
+				}
 
-			case disableReportFocusMsg:
-				p.renderer.disableReportFocus()
+				if p.activeEnhancements.modifyOtherKeys > 0 {
+					p.execute(ansi.ResetModifyOtherKeys)
+					p.activeEnhancements.modifyOtherKeys = 0
+					p.requestedEnhancements.modifyOtherKeys = 0
+				}
+				if p.activeEnhancements.kittyFlags > 0 {
+					p.execute(ansi.DisableKittyKeyboard)
+					p.activeEnhancements.kittyFlags = 0
+					p.requestedEnhancements.kittyFlags = 0
+				}
 
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
+
+			case terminalVersion:
+				p.execute(ansi.RequestNameVersion)
+
+			case requestCapabilityMsg:
+				p.execute(ansi.RequestTermcap(string(msg)))
 
 			case BatchMsg:
 				for _, cmd := range msg {
@@ -472,10 +698,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 							continue
 						}
 
-						msg := cmd()
-						if batchMsg, ok := msg.(BatchMsg); ok {
+						switch msg := cmd().(type) {
+						case BatchMsg:
 							g, _ := errgroup.WithContext(p.ctx)
-							for _, cmd := range batchMsg {
+							for _, cmd := range msg {
 								cmd := cmd
 								g.Go(func() error {
 									p.Send(cmd())
@@ -483,33 +709,81 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 								})
 							}
 
-							//nolint:errcheck
-							g.Wait() // wait for all commands from batch msg to finish
+							_ = g.Wait() // wait for all commands from batch msg to finish
 							continue
+						case sequenceMsg:
+							for _, cmd := range msg {
+								p.Send(cmd())
+							}
+						default:
+							p.Send(msg)
 						}
-
-						p.Send(msg)
 					}
 				}()
 
 			case setWindowTitleMsg:
-				p.SetWindowTitle(string(msg))
+				p.execute(ansi.SetWindowTitle(string(msg)))
+
+			case WindowSizeMsg:
+				p.renderer.resize(msg.Width, msg.Height)
 
 			case windowSizeMsg:
 				go p.checkResize()
-			}
 
-			// Process internal messages for the renderer.
-			if r, ok := p.renderer.(*standardRenderer); ok {
-				r.handleMessages(msg)
+			case requestCursorPosMsg:
+				p.execute(ansi.RequestCursorPositionReport)
+
+			case RawMsg:
+				p.execute(fmt.Sprint(msg.Msg))
+
+			case printLineMessage:
+				p.renderer.insertAbove(msg.messageBody)
+
+			case repaintMsg:
+				p.renderer.repaint()
+
+			case clearScreenMsg:
+				p.renderer.clearScreen()
+
+			case ColorProfileMsg:
+				p.renderer.setColorProfile(msg.Profile)
 			}
 
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
 			cmds <- cmd                    // process command (if any)
-			p.renderer.write(model.View()) // send view to renderer
+
+			p.render(model) // render view
 		}
 	}
+}
+
+// hasView returns true if the model has a view.
+func hasView(model Model) (ok bool) {
+	switch model.(type) {
+	case ViewModel, CursorModel:
+		ok = true
+	}
+	return
+}
+
+// render renders the given view to the renderer.
+func (p *Program) render(model Model) {
+	var view string
+	var cur *Cursor
+	switch model := model.(type) {
+	case ViewModel:
+		view = model.View()
+	case CursorModel:
+		view, cur = model.View()
+	}
+
+	// Ensure we reset the cursor color on exit.
+	if cur != nil {
+		p.setCc = cur.Color
+	}
+
+	p.renderer.render(view, cur) // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
@@ -571,49 +845,123 @@ func (p *Program) Run() (Model, error) {
 		defer p.recoverFromPanic()
 	}
 
-	// If no renderer is set use the standard one.
-	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
-	}
-
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
 		return p.initialModel, err
 	}
 
+	// Get the initial window size.
+	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
+	if p.ttyOutput != nil {
+		// Set the initial size of the terminal.
+		w, h, err := term.GetSize(p.ttyOutput.Fd())
+		if err != nil {
+			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
+		}
+
+		resizeMsg.Width, resizeMsg.Height = w, h
+	}
+
+	if p.renderer == nil { //nolint:nestif
+		if hasView(p.initialModel) {
+			stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
+			if has, _ := strconv.ParseBool(stdr); ok && has {
+				p.renderer = newRenderer(p.output)
+			} else {
+				// If no renderer is set use the cursed one.
+				p.renderer = newCursedRenderer(
+					p.output,
+					p.getenv("TERM"),
+					resizeMsg.Width,
+					resizeMsg.Height,
+					p.useHardTabs,
+					p.useBackspace,
+				)
+			}
+		} else {
+			// If the model has no view we don't need a renderer.
+			p.renderer = &nilRenderer{}
+		}
+	}
+
+	// Get the color profile and send it to the program.
+	if !p.startupOptions.has(withColorProfile) {
+		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
+	}
+
+	// Set the color profile on the renderer and send it to the program.
+	p.renderer.setColorProfile(p.profile)
+	go p.Send(ColorProfileMsg{p.profile})
+
+	// Send the initial size to the program.
+	go p.Send(resizeMsg)
+	p.renderer.resize(resizeMsg.Width, resizeMsg.Height)
+
+	// Send the environment variables used by the program.
+	go p.Send(EnvMsg(p.environ))
+
+	// Init the input reader and initial model.
+	model := p.initialModel
+	if p.input != nil {
+		if err := p.initInputReader(false); err != nil {
+			return model, err
+		}
+	}
+
+	// Hide the cursor before starting the renderer. This is handled by the
+	// renderer so we don't need to write the sequence here.
+	p.modes.Reset(ansi.TextCursorEnableMode)
+	p.renderer.hideCursor()
+
 	// Honor program startup options.
 	if p.startupTitle != "" {
-		p.renderer.setWindowTitle(p.startupTitle)
+		p.execute(ansi.SetWindowTitle(p.startupTitle))
 	}
 	if p.startupOptions&withAltScreen != 0 {
+		// Enter alternate screen mode. This is handled by the renderer so we
+		// don't need to write the sequence here.
+		p.modes.Set(ansi.AltScreenSaveCursorMode)
 		p.renderer.enterAltScreen()
 	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
-		p.renderer.enableBracketedPaste()
+		p.execute(ansi.SetBracketedPasteMode)
+		p.modes.Set(ansi.BracketedPasteMode)
 	}
-	if p.startupOptions&withMouseCellMotion != 0 {
-		p.renderer.enableMouseCellMotion()
-		p.renderer.enableMouseSGRMode()
-	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.renderer.enableMouseAllMotion()
-		p.renderer.enableMouseSGRMode()
+	if p.startupOptions&withGraphemeClustering != 0 {
+		p.execute(ansi.SetGraphemeClusteringMode)
+		p.execute(ansi.RequestGraphemeClusteringMode)
+		// We store the state of grapheme clustering after we query it and get
+		// a response in the eventLoop.
 	}
 
-	// XXX: Should we enable mouse mode on Windows?
-	// This needs to happen before initializing the cancel and input reader.
-	p.mouseMode = p.startupOptions&withMouseCellMotion != 0 || p.startupOptions&withMouseAllMotion != 0
+	// Enable mouse mode.
+	cellMotion := p.startupOptions&withMouseCellMotion != 0
+	allMotion := p.startupOptions&withMouseAllMotion != 0
+	if cellMotion || allMotion {
+		p.enableMouse(allMotion)
+	}
 
 	if p.startupOptions&withReportFocus != 0 {
-		p.renderer.enableReportFocus()
+		p.execute(ansi.SetFocusEventMode)
+		p.modes.Set(ansi.FocusEventMode)
+	}
+	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
+		// We use the Windows Console API which supports keyboard
+		// enhancements.
+		p.requestKeyboardEnhancements()
+
+		// Ensure we send a message so that terminals that don't support the
+		// requested features can disable them.
+		go p.sendKeyboardEnhancementsMsg()
 	}
 
 	// Start the renderer.
-	p.renderer.start()
+	p.startRenderer()
 
 	// Initialize the program.
-	model := p.initialModel
-	if initCmd := model.Init(); initCmd != nil {
+	initCmd := model.Init()
+	if initCmd != nil {
 		ch := make(chan struct{})
 		p.handlers.add(ch)
 
@@ -628,14 +976,7 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Render the initial view.
-	p.renderer.write(model.View())
-
-	// Subscribe to user input.
-	if p.input != nil {
-		if err := p.initCancelReader(false); err != nil {
-			return model, err
-		}
-	}
+	p.render(model)
 
 	// Handle resize events.
 	p.handlers.add(p.handleResize())
@@ -651,32 +992,13 @@ func (p *Program) Run() (Model, error) {
 	}
 	if err == nil {
 		// Ensure we rendered the final state of the model.
-		p.renderer.write(model.View())
+		p.render(model)
 	}
 
 	// Restore terminal state.
 	p.shutdown(killed)
 
 	return model, err
-}
-
-// StartReturningModel initializes the program and runs its event loops,
-// blocking until it gets terminated by either [Program.Quit], [Program.Kill],
-// or its signal handler. Returns the final model.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) StartReturningModel() (Model, error) {
-	return p.Run()
-}
-
-// Start initializes the program and runs its event loops, blocking until it
-// gets terminated by either [Program.Quit], [Program.Kill], or its signal
-// handler.
-//
-// Deprecated: please use [Program.Run] instead.
-func (p *Program) Start() error {
-	_, err := p.Run()
-	return err
 }
 
 // Send sends a message to the main update function, effectively allowing
@@ -716,37 +1038,43 @@ func (p *Program) Wait() {
 	<-p.finished
 }
 
+// execute writes the given sequence to the program output.
+func (p *Program) execute(seq string) {
+	_, _ = io.WriteString(p.output, seq)
+}
+
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
-	p.cancel()
+	p.shutdownOnce.Do(func() {
+		p.cancel()
 
-	// Wait for all handlers to finish.
-	p.handlers.shutdown()
+		// Wait for all handlers to finish.
+		p.handlers.shutdown()
 
-	// Check if the cancel reader has been setup before waiting and closing.
-	if p.cancelReader != nil {
-		// Wait for input loop to finish.
-		if p.cancelReader.Cancel() {
-			if !kill {
-				p.waitForReadLoop()
+		// Check if the cancel reader has been setup before waiting and closing.
+		if p.inputReader != nil {
+			// Wait for input loop to finish.
+			if p.inputReader.Cancel() {
+				if !kill {
+					p.waitForReadLoop()
+				}
 			}
+			_ = p.inputReader.Close()
 		}
-		_ = p.cancelReader.Close()
-	}
 
-	if p.renderer != nil {
-		if kill {
-			p.renderer.kill()
-		} else {
-			p.renderer.stop()
+		if p.renderer != nil {
+			p.stopRenderer(kill)
 		}
-	}
 
-	_ = p.restoreTerminalState()
-	if !kill {
-		p.finished <- struct{}{}
-	}
+		_ = p.restoreTerminalState()
+		if !kill {
+			p.finished <- struct{}{}
+		}
+
+		// Print a final newline to ensure the terminal prompt is on a new line.
+		p.execute("\r\n")
+	})
 }
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
@@ -762,18 +1090,22 @@ func (p *Program) recoverFromPanic() {
 // ReleaseTerminal restores the original terminal state and cancels the input
 // reader. You can return control to the Program with RestoreTerminal.
 func (p *Program) ReleaseTerminal() error {
+	return p.releaseTerminal(false)
+}
+
+func (p *Program) releaseTerminal(reset bool) error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
-	if p.cancelReader != nil {
-		p.cancelReader.Cancel()
+	if p.inputReader != nil {
+		p.inputReader.Cancel()
 	}
 
 	p.waitForReadLoop()
 
 	if p.renderer != nil {
-		p.renderer.stop()
-		p.altScreenWasActive = p.renderer.altScreen()
-		p.bpWasActive = p.renderer.bracketedPasteActive()
-		p.reportFocus = p.renderer.reportFocus()
+		p.stopRenderer(false)
+		if reset {
+			p.renderer.reset()
+		}
 	}
 
 	return p.restoreTerminalState()
@@ -788,23 +1120,49 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-	if err := p.initCancelReader(false); err != nil {
+	if err := p.initInputReader(false); err != nil {
 		return err
 	}
-	if p.altScreenWasActive {
-		p.renderer.enterAltScreen()
-	} else {
+	if p.modes.IsReset(ansi.AltScreenSaveCursorMode) {
 		// entering alt screen already causes a repaint.
 		go p.Send(repaintMsg{})
 	}
-	if p.renderer != nil {
-		p.renderer.start()
+
+	p.startRenderer()
+	if p.modes.IsSet(ansi.BracketedPasteMode) {
+		p.execute(ansi.SetBracketedPasteMode)
 	}
-	if p.bpWasActive {
-		p.renderer.enableBracketedPaste()
+	if p.activeEnhancements.modifyOtherKeys != 0 {
+		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys)) //nolint:mnd
 	}
-	if p.reportFocus {
-		p.renderer.enableReportFocus()
+	if p.activeEnhancements.kittyFlags != 0 {
+		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.kittyFlags))
+	}
+	if p.modes.IsSet(ansi.FocusEventMode) {
+		p.execute(ansi.SetFocusEventMode)
+	}
+	if p.modes.IsSet(ansi.ButtonEventMouseMode) || p.modes.IsSet(ansi.AnyEventMouseMode) {
+		if p.startupOptions&withMouseCellMotion != 0 {
+			p.execute(ansi.SetButtonEventMouseMode)
+			p.execute(ansi.SetSgrExtMouseMode)
+		} else if p.startupOptions&withMouseAllMotion != 0 {
+			p.execute(ansi.SetAnyEventMouseMode)
+			p.execute(ansi.SetSgrExtMouseMode)
+		}
+	}
+	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
+		p.execute(ansi.SetGraphemeClusteringMode)
+	}
+
+	// Restore terminal colors.
+	if p.setBg != nil {
+		p.execute(ansi.SetBackgroundColor(p.setBg))
+	}
+	if p.setFg != nil {
+		p.execute(ansi.SetForegroundColor(p.setFg))
+	}
+	if p.setCc != nil {
+		p.execute(ansi.SetCursorColor(p.setCc))
 	}
 
 	// If the output is a terminal, it may have been resized while another
@@ -837,5 +1195,147 @@ func (p *Program) Println(args ...interface{}) {
 func (p *Program) Printf(template string, args ...interface{}) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
+	}
+}
+
+// startRenderer starts the renderer.
+func (p *Program) startRenderer() {
+	framerate := time.Second / time.Duration(p.fps)
+	if p.ticker == nil {
+		p.ticker = time.NewTicker(framerate)
+	} else {
+		// If the ticker already exists, it has been stopped and we need to
+		// reset it.
+		p.ticker.Reset(framerate)
+	}
+
+	// Since the renderer can be restarted after a stop, we need to reset
+	// the done channel and its corresponding sync.Once.
+	p.once = sync.Once{}
+
+	// Start the renderer.
+	go func() {
+		for {
+			select {
+			case <-p.rendererDone:
+				p.ticker.Stop()
+				return
+
+			case <-p.ticker.C:
+				_ = p.renderer.flush()
+			}
+		}
+	}()
+}
+
+// stopRenderer stops the renderer.
+// If kill is true, the renderer will be stopped immediately without flushing
+// the last frame.
+func (p *Program) stopRenderer(kill bool) {
+	// Stop the renderer before acquiring the mutex to avoid a deadlock.
+	p.once.Do(func() {
+		p.rendererDone <- struct{}{}
+	})
+
+	if !kill {
+		// flush locks the mutex
+		_ = p.renderer.flush()
+	}
+
+	_ = p.renderer.close()
+}
+
+// sendKeyboardEnhancementsMsg sends a message with the active keyboard
+// enhancements to the program after a short timeout, or immediately if the
+// keyboard enhancements have been read from the terminal.
+func (p *Program) sendKeyboardEnhancementsMsg() {
+	if runtime.GOOS == "windows" {
+		// We use the Windows Console API which supports keyboard enhancements.
+		p.Send(KeyboardEnhancementsMsg{})
+		return
+	}
+
+	// Initial keyboard enhancements message. Ensure we send a message so that
+	// terminals that don't support the requested features can disable them.
+	const timeout = 100 * time.Millisecond
+	select {
+	case <-time.After(timeout):
+		p.Send(KeyboardEnhancementsMsg{})
+	case <-p.keyboardc:
+	}
+}
+
+// requestKeyboardEnhancements tries to enable keyboard enhancements and read
+// the active keyboard enhancements from the terminal.
+func (p *Program) requestKeyboardEnhancements() {
+	if p.requestedEnhancements.modifyOtherKeys > 0 {
+		p.execute(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys)) //nolint:mnd
+		p.execute(ansi.QueryModifyOtherKeys)
+	}
+	if p.requestedEnhancements.kittyFlags > 0 {
+		p.execute(ansi.PushKittyKeyboard(p.requestedEnhancements.kittyFlags))
+		p.execute(ansi.RequestKittyKeyboard)
+	}
+}
+
+// enableMouse enables mouse events on the terminal. When all is true, it will
+// enable [ansi.AnyEventMouseMode], otherwise, it will use
+// [ansi.ButtonEventMouseMode].
+// Note this has no effect on Windows since we use the Windows Console API.
+func (p *Program) enableMouse(all bool) {
+	if runtime.GOOS == "windows" {
+		// XXX: This is used to enable mouse mode on Windows. We need
+		// to reinitialize the cancel reader to get the mouse events to
+		// work.
+		if !p.mouseMode {
+			p.mouseMode = true
+			if p.inputReader != nil {
+				// Only reinitialize if the input reader has been initialized.
+				_ = p.initInputReader(true)
+			}
+		}
+	}
+
+	if all {
+		p.execute(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
+		p.modes.Set(ansi.AnyEventMouseMode, ansi.SgrExtMouseMode)
+	} else {
+		p.execute(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
+		p.modes.Set(ansi.ButtonEventMouseMode, ansi.SgrExtMouseMode)
+	}
+}
+
+// disableMouse disables mouse events on the terminal.
+// Note this has no effect on Windows since we use the Windows Console API.
+func (p *Program) disableMouse() {
+	if runtime.GOOS == "windows" {
+		// XXX: On Windows, mouse mode is enabled on the input reader
+		// level. We need to instruct the input reader to stop reading
+		// mouse events.
+		if p.mouseMode {
+			p.mouseMode = false
+			if p.inputReader != nil {
+				// Only reinitialize if the input reader has been initialized.
+				_ = p.initInputReader(true)
+			}
+		}
+	}
+
+	var modes []ansi.Mode
+	if p.modes.IsSet(ansi.AnyEventMouseMode) {
+		modes = append(modes, ansi.AnyEventMouseMode)
+	}
+	if p.modes.IsSet(ansi.ButtonEventMouseMode) {
+		modes = append(modes, ansi.ButtonEventMouseMode)
+	}
+	if len(modes) > 0 {
+		modes = append(modes, ansi.SgrExtMouseMode)
+		for _, m := range modes {
+			// We could combine all of these modes into one single sequence,
+			// but we're being cautious here for terminals that might not support
+			// that format i.e. `CSI ? 10003 ; 1006 l`.
+			p.execute(ansi.ResetMode(m))
+			p.modes.Reset(m)
+		}
 	}
 }

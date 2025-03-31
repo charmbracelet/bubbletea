@@ -8,10 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/cursor"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/cursor"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 var (
@@ -40,15 +40,17 @@ func initialModel() model {
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
-		t.Cursor.Style = cursorStyle
+		t.Styles.Cursor.Color = lipgloss.Color("205")
 		t.CharLimit = 32
+		t.Styles.Focused.Prompt = focusedStyle
+		t.Styles.Focused.Text = focusedStyle
+		t.Styles.Blurred.Prompt = blurredStyle
+		t.Styles.Focused.Text = focusedStyle
 
 		switch i {
 		case 0:
 			t.Placeholder = "Nickname"
 			t.Focus()
-			t.PromptStyle = focusedStyle
-			t.TextStyle = focusedStyle
 		case 1:
 			t.Placeholder = "Email"
 			t.CharLimit = 64
@@ -70,7 +72,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
@@ -83,7 +85,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := range m.inputs {
-				cmds[i] = m.inputs[i].Cursor.SetMode(m.cursorMode)
+				m.inputs[i].Styles.Cursor.Blink = m.cursorMode == cursor.CursorBlink
 			}
 			return m, tea.Batch(cmds...)
 
@@ -115,14 +117,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if i == m.focusIndex {
 					// Set focused state
 					cmds[i] = m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = focusedStyle
-					m.inputs[i].TextStyle = focusedStyle
 					continue
 				}
 				// Remove focused state
 				m.inputs[i].Blur()
-				m.inputs[i].PromptStyle = noStyle
-				m.inputs[i].TextStyle = noStyle
 			}
 
 			return m, tea.Batch(cmds...)
@@ -147,13 +145,18 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View() (string, *tea.Cursor) {
 	var b strings.Builder
+	var c *tea.Cursor
 
-	for i := range m.inputs {
+	for i, in := range m.inputs {
 		b.WriteString(m.inputs[i].View())
 		if i < len(m.inputs)-1 {
 			b.WriteRune('\n')
+		}
+		if m.cursorMode != cursor.CursorHide && in.Focused() {
+			c = in.Cursor()
+			c.Y += i
 		}
 	}
 
@@ -167,7 +170,7 @@ func (m model) View() string {
 	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
 
-	return b.String()
+	return b.String(), c
 }
 
 func main() {

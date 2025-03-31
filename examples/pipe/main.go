@@ -12,9 +12,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 func main() {
@@ -58,8 +58,8 @@ type model struct {
 func newModel(initialValue string) (m model) {
 	i := textinput.New()
 	i.Prompt = ""
-	i.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	i.Width = 48
+	i.Styles.Cursor.Color = lipgloss.Color("63")
+	i.SetWidth(48)
 	i.SetValue(initialValue)
 	i.CursorEnd()
 	i.Focus()
@@ -74,8 +74,8 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if key, ok := msg.(tea.KeyMsg); ok {
-		switch key.Type {
-		case tea.KeyCtrlC, tea.KeyEscape, tea.KeyEnter:
+		switch key.String() {
+		case "ctrl+c", "esc", "enter":
 			return m, tea.Quit
 		}
 	}
