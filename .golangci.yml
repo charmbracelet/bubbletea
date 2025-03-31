@@ -1,17 +1,6 @@
+version: "2"
 run:
   tests: false
-
-issues:
-  include:
-    - EXC0001
-    - EXC0005
-    - EXC0011
-    - EXC0012
-    - EXC0013
-
-  max-issues-per-linter: 0
-  max-same-issues: 0
-
 linters:
   enable:
     - bodyclose
@@ -19,8 +8,6 @@ linters:
     - goconst
     - godot
     - godox
-    - gofumpt
-    - goimports
     - gomoddirectives
     - goprintffuncname
     - gosec
@@ -39,3 +26,24 @@ linters:
     - unparam
     - whitespace
     - wrapcheck
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
