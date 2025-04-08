@@ -422,7 +422,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				// work.
 				if runtime.GOOS == "windows" && !p.mouseMode {
 					p.mouseMode = true
-					p.initCancelReader(true) //nolint:errcheck
+					p.initCancelReader(true) //nolint:errcheck,gosec
 				}
 
 			case disableMouseMsg:
@@ -433,7 +433,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				// mouse events.
 				if runtime.GOOS == "windows" && p.mouseMode {
 					p.mouseMode = false
-					p.initCancelReader(true) //nolint:errcheck
+					p.initCancelReader(true) //nolint:errcheck,gosec
 				}
 
 			case showCursorMsg:
@@ -483,7 +483,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 								})
 							}
 
-							//nolint:errcheck
+							//nolint:errcheck,gosec
 							g.Wait() // wait for all commands from batch msg to finish
 							continue
 						}
