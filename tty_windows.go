@@ -62,7 +62,7 @@ func (p *Program) initInput() (err error) {
 
 // Open the Windows equivalent of a TTY.
 func openInputTTY() (*os.File, error) {
-	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0o644) //nolint:mnd
+	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0o644) //nolint:mnd,gosec
 	if err != nil {
 		return nil, fmt.Errorf("error opening CONIN$: %w", err)
 	}
