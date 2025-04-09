@@ -208,6 +208,7 @@ const (
 	KeyRight
 	KeyLeft
 	KeyShiftTab
+	KeyShiftEnter
 	KeyHome
 	KeyEnd
 	KeyPgUp
@@ -302,6 +303,7 @@ var keyNames = map[KeyType]string{
 	KeySpace:          " ", // for backwards compatibility
 	KeyLeft:           "left",
 	KeyShiftTab:       "shift+tab",
+	KeyShiftEnter:     "shift+enter",
 	KeyHome:           "home",
 	KeyEnd:            "end",
 	KeyCtrlHome:       "ctrl+home",
