@@ -79,6 +79,8 @@ type renderer interface {
 
 	// disableReportFocus stops reporting focus events to the program.
 	disableReportFocus()
+
+	resetLinesRendered()
 }
 
 // repaintMsg forces a full repaint.
