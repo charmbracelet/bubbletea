@@ -28,6 +28,6 @@ func (p *Program) listenForResize(done chan struct{}) {
 		case <-sig:
 		}
 
-		p.checkResize()
+		p.checkResize(false)
 	}
 }
