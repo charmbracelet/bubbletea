@@ -708,8 +708,33 @@ func detectOneMsg(b []byte, canHaveMoreData bool) (w int, msg Msg) {
 		return 1, KeyMsg(Key{Type: KeyEscape})
 	}
 
+	// If an incomplete UTF-8 sequence is detected, request additional data.
+	// The outer loop will handle this situation by reading more input as needed.
+	if isUTF8Incomplete(b) {
+		return 0, nil
+	}
+
 	// The character at the current position is neither an escape
 	// sequence, a valid rune start or a sole escape character. Report
 	// it as an invalid byte.
 	return 1, unknownInputByteMsg(b[0])
+}
+
+// isUTF8Incomplete checks if the given byte slice `b` has sufficient bytes
+// to fully represent a UTF-8 character based on the first byte's pattern.
+func isUTF8Incomplete(b []byte) bool {
+	// Check if it's a 2-byte UTF-8 sequence (110x xxxx).
+	if (b[0] & 0b11100000) == 0b11000000 {
+		return len(b) < 2
+	}
+	// Check if it's a 3-byte UTF-8 sequence (1110 xxxx).
+	if (b[0] & 0b11110000) == 0b11100000 {
+		return len(b) < 3
+	}
+	// Check if it's a 4-byte UTF-8 sequence (1111 0xxx).
+	if (b[0] & 0b11111000) == 0b11110000 {
+		return len(b) < 4
+	}
+	// For single byte (ASCII) or unknown byte patterns, assume complete.
+	return false
 }
