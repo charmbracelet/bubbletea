@@ -204,7 +204,7 @@ func (m model) View() string {
 
 ## All Together Now
 
-The last step is to simply run our program. We pass and empty model
+The last step is to simply run our program. We pass an empty model
 `tea.NewProgram` and let it rip:
 
 ```go
