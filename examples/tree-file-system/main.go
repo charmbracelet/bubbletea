@@ -121,12 +121,12 @@ func main() {
 	kb := []key.Binding{
 		key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "select")),
 	}
-	t.AdditionalShortHelpKeys = func() []key.Binding {
+	t.SetAdditionalShortHelpKeys(func() []key.Binding {
 		return kb
-	}
-	t.AdditionalFullHelpKeys = func() []key.Binding {
+	})
+	t.SetAdditionalFullHelpKeys(func() []key.Binding {
 		return kb
-	}
+	})
 
 	p := tea.NewProgram(model{tree: t})
 	m, err := p.Run()
