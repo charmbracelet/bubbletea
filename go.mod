@@ -12,8 +12,8 @@ require (
 	github.com/charmbracelet/x/input v0.3.4
 	github.com/charmbracelet/x/term v0.2.1
 	github.com/muesli/cancelreader v0.2.2
-	golang.org/x/sync v0.12.0
-	golang.org/x/sys v0.30.0
+	golang.org/x/sync v0.13.0
+	golang.org/x/sys v0.32.0
 )
 
 require (
