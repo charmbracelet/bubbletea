@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"sync/atomic"
 	"testing"
@@ -38,6 +39,16 @@ func TestOptions(t *testing.T) {
 		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
 		if p.filter == nil {
 			t.Errorf("expected filter to be set")
+		}
+	})
+
+	t.Run("external context", func(t *testing.T) {
+		extCtx, extCancel := context.WithCancel(context.Background())
+		defer extCancel()
+
+		p := NewProgram(nil, WithContext(extCtx))
+		if p.externalCtx != extCtx || p.externalCtx == context.Background() {
+			t.Errorf("expected passed in external context, got default")
 		}
 	})
 
