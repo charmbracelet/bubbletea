@@ -1,8 +1,6 @@
 package tea
 
 import (
-	"runtime"
-
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -115,7 +113,7 @@ type KeyboardEnhancementsMsg KeyboardEnhancements
 // SupportsKeyDisambiguation returns whether the terminal supports reporting
 // disambiguous keys as escape codes.
 func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
-	if isWindows() { //nolint:goconst
+	if isWindows() {
 		// We use Windows Console API which supports reporting disambiguous keys.
 		return true
 	}
@@ -125,7 +123,7 @@ func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
 // SupportsKeyReleases returns whether the terminal supports key release
 // events.
 func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		// We use Windows Console API which supports key release events.
 		return k.keyReleases
 	}
@@ -135,7 +133,7 @@ func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
 // SupportsUniformKeyLayout returns whether the terminal supports reporting key
 // events as though they were on a PC-101 layout.
 func (k KeyboardEnhancementsMsg) SupportsUniformKeyLayout() bool {
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		// We use Windows Console API which supports reporting key events as
 		// though they were on a PC-101 layout.
 		return true
