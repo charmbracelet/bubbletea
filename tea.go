@@ -976,12 +976,12 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.modes.Set(ansi.FocusEventMode)
 	}
 
-	// Enable unambiguous keys using whichever protocol the terminal prefer.
-	p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
-	if p.requestedEnhancements.modifyOtherKeys == 0 {
-		p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
-	}
 	if !isWindows() {
+		// Enable unambiguous keys using whichever protocol the terminal prefer.
+		p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
+		if p.requestedEnhancements.modifyOtherKeys == 0 {
+			p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
+		}
 		// We use the Windows Console API which supports keyboard
 		// enhancements.
 		p.requestKeyboardEnhancements()
