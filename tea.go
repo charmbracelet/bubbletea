@@ -158,7 +158,6 @@ const (
 	withModifyOtherKeys
 	withWindowsInputMode
 	withColorProfile
-	withKeyboardEnhancements
 	withGraphemeClustering
 )
 
@@ -977,7 +976,13 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.execute(ansi.SetFocusEventMode)
 		p.modes.Set(ansi.FocusEventMode)
 	}
-	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
+
+	// Enable unambiguous keys using whichever protocol the terminal prefer.
+	p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
+	if p.requestedEnhancements.modifyOtherKeys == 0 {
+		p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
+	}
+	if runtime.GOOS != "windows" {
 		// We use the Windows Console API which supports keyboard
 		// enhancements.
 		p.requestKeyboardEnhancements()

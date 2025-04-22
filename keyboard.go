@@ -36,6 +36,10 @@ type KeyboardEnhancements struct {
 	//  [ansi.KittyDisambiguateEscapeCodes] but uses XTerm escape codes.
 	//  - Mode 2 reports all key as escape codes including printable keys like "a" and "shift+b".
 	modifyOtherKeys int
+
+	// keyReleases indicates whether we have key release events enabled. This is mainly
+	// used in Windows to ignore key releases when they are not requested.
+	keyReleases bool
 }
 
 // KeyboardEnhancementOption is a type that represents a keyboard enhancement.
@@ -48,6 +52,7 @@ type KeyboardEnhancementOption func(k *KeyboardEnhancements)
 // Note that not all terminals support this feature.
 func WithKeyReleases(k *KeyboardEnhancements) {
 	k.kittyFlags |= ansi.KittyReportEventTypes
+	k.keyReleases = true
 }
 
 // WithUniformKeyLayout enables support for reporting key events as though they
@@ -122,7 +127,7 @@ func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
 func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
 	if runtime.GOOS == "windows" {
 		// We use Windows Console API which supports key release events.
-		return true
+		return k.keyReleases
 	}
 	return k.kittyFlags&ansi.KittyReportEventTypes != 0
 }
