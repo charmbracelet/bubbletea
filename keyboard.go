@@ -115,7 +115,7 @@ type KeyboardEnhancementsMsg KeyboardEnhancements
 // SupportsKeyDisambiguation returns whether the terminal supports reporting
 // disambiguous keys as escape codes.
 func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
-	if runtime.GOOS == "windows" { //nolint:goconst
+	if isWindows() { //nolint:goconst
 		// We use Windows Console API which supports reporting disambiguous keys.
 		return true
 	}
