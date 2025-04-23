@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.8.0
 	github.com/charmbracelet/x/cellbuf v0.0.13
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
-	github.com/charmbracelet/x/input v0.3.4
+	github.com/charmbracelet/x/input v0.3.5-0.20250424101541-abb4d9a9b197
 	github.com/charmbracelet/x/term v0.2.1
 	github.com/muesli/cancelreader v0.2.2
 	golang.org/x/sync v0.13.0
@@ -18,7 +18,7 @@ require (
 
 require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
-	github.com/charmbracelet/x/windows v0.2.0 // indirect
+	github.com/charmbracelet/x/windows v0.2.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
