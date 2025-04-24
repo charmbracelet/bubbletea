@@ -7,7 +7,7 @@ replace github.com/charmbracelet/bubbletea/v2 => ../
 require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-beta.1.0.20250420102230-7ecd51915026
-	github.com/charmbracelet/colorprofile v0.3.0
+	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250423201235-510d0f0fc9a8
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250423194624-2790cd0292d3
