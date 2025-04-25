@@ -337,6 +337,7 @@ There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/
 - [Tetrigo](https://github.com/Broderick-Westrope/tetrigo): Tetris in the terminal
 - [Signls](https://github.com/emprcl/signls): a generative midi sequencer designed for composition and live performance
 - [Superfile](https://github.com/yorukot/superfile): a super file manager
+- [fireworks-cli](https://github.com/Andrew-Wichmann/fireworks-cli): a celebration with fireworks in the terminal
 
 ### In Industry
 
