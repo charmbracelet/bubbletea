@@ -37,7 +37,7 @@ updates:
     labels:
       - "dependencies"
     commit-message:
-      prefix: "feat"
+      prefix: "chore"
       include: "scope"
 
   - package-ecosystem: "gomod"
