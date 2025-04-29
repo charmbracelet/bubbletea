@@ -276,6 +276,46 @@ func keyType(e coninput.KeyEventRecord) KeyType {
 		return KeyPgDown
 	case coninput.VK_DELETE:
 		return KeyDelete
+	case coninput.VK_F1:
+		return KeyF1
+	case coninput.VK_F2:
+		return KeyF2
+	case coninput.VK_F3:
+		return KeyF3
+	case coninput.VK_F4:
+		return KeyF4
+	case coninput.VK_F5:
+		return KeyF5
+	case coninput.VK_F6:
+		return KeyF6
+	case coninput.VK_F7:
+		return KeyF7
+	case coninput.VK_F8:
+		return KeyF8
+	case coninput.VK_F9:
+		return KeyF9
+	case coninput.VK_F10:
+		return KeyF10
+	case coninput.VK_F11:
+		return KeyF11
+	case coninput.VK_F12:
+		return KeyF12
+	case coninput.VK_F13:
+		return KeyF13
+	case coninput.VK_F14:
+		return KeyF14
+	case coninput.VK_F15:
+		return KeyF15
+	case coninput.VK_F16:
+		return KeyF16
+	case coninput.VK_F17:
+		return KeyF17
+	case coninput.VK_F18:
+		return KeyF18
+	case coninput.VK_F19:
+		return KeyF19
+	case coninput.VK_F20:
+		return KeyF20
 	default:
 		switch {
 		case e.ControlKeyState.Contains(coninput.LEFT_CTRL_PRESSED) && e.ControlKeyState.Contains(coninput.RIGHT_ALT_PRESSED):
