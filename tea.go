@@ -1115,9 +1115,6 @@ func (p *Program) shutdown(kill bool) {
 		}
 
 		_ = p.restoreTerminalState()
-
-		// Print a final newline to ensure the terminal prompt is on a new line.
-		p.execute("\r\n")
 	})
 }
 
