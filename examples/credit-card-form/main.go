@@ -102,6 +102,7 @@ func initialModel() model {
 	inputs[ccn].SetWidth(30)
 	inputs[ccn].Prompt = ""
 	inputs[ccn].Validate = ccnValidator
+	inputs[ccn].VirtualCursor = true
 
 	inputs[exp] = textinput.New()
 	inputs[exp].Placeholder = "MM/YY "
@@ -109,6 +110,7 @@ func initialModel() model {
 	inputs[exp].SetWidth(5)
 	inputs[exp].Prompt = ""
 	inputs[exp].Validate = expValidator
+	inputs[exp].VirtualCursor = true
 
 	inputs[cvv] = textinput.New()
 	inputs[cvv].Placeholder = "XXX"
@@ -116,6 +118,7 @@ func initialModel() model {
 	inputs[cvv].SetWidth(5)
 	inputs[cvv].Prompt = ""
 	inputs[cvv].Validate = cvvValidator
+	inputs[cvv].VirtualCursor = true
 
 	return model{
 		inputs:  inputs,
