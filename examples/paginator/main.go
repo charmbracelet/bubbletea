@@ -30,7 +30,6 @@ func newStyles(bgIsDark bool) (s styles) {
 type model struct {
 	items     []string
 	paginator paginator.Model
-	ready     bool
 }
 
 func newModel() model {
@@ -45,10 +44,19 @@ func newModel() model {
 	p.PerPage = 10
 	p.SetTotalPages(len(items))
 
-	return model{
+	m := model{
 		paginator: p,
 		items:     items,
 	}
+
+	m.updateStyles(true) // default to dark styles
+	return m
+}
+
+func (m *model) updateStyles(isDark bool) {
+	styles := newStyles(isDark)
+	m.paginator.ActiveDot = styles.activeDot.String()
+	m.paginator.InactiveDot = styles.inactiveDot.String()
 }
 
 func (m model) Init() tea.Cmd {
@@ -59,10 +67,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.BackgroundColorMsg:
-		styles := newStyles(msg.IsDark())
-		m.paginator.ActiveDot = styles.activeDot.String()
-		m.paginator.InactiveDot = styles.inactiveDot.String()
-		m.ready = true
+		m.updateStyles(msg.IsDark())
 		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -75,10 +80,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	if !m.ready {
-		return ""
-	}
-
 	var b strings.Builder
 	b.WriteString("\n  Paginator Example\n\n")
 	start, end := m.paginator.GetSliceBounds(len(m.items))
