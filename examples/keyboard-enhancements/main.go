@@ -57,14 +57,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.BackgroundColorMsg:
 		// Initialize styles.
-		lightDark := lipgloss.LightDark(msg.IsDark())
-		grey := lightDark(lipgloss.Color("239"), lipgloss.Color("245"))
-		darkGray := lightDark(lipgloss.Color("245"), lipgloss.Color("239"))
-
-		m.styles.ui = lipgloss.NewStyle().
-			Foreground(grey).
-			Border(lipgloss.NormalBorder(), true, false, false, false).
-			BorderForeground(darkGray)
+		m.updateStyles(msg.IsDark())
 	}
 	return m, nil
 }
@@ -77,8 +70,26 @@ func (m model) View() string {
 	return m.styles.ui.Render(b.String())
 }
 
+func (m *model) updateStyles(isDark bool) {
+	// Initialize styles.
+	lightDark := lipgloss.LightDark(isDark)
+	grey := lightDark(lipgloss.Color("239"), lipgloss.Color("245"))
+	darkGray := lightDark(lipgloss.Color("245"), lipgloss.Color("239"))
+
+	m.styles.ui = lipgloss.NewStyle().
+		Foreground(grey).
+		Border(lipgloss.NormalBorder(), true, false, false, false).
+		BorderForeground(darkGray)
+}
+
+func initialModel() model {
+	m := model{}
+	m.updateStyles(true) // default to dark styles.
+	return m
+}
+
 func main() {
-	p := tea.NewProgram(model{})
+	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Urgh: %v\n", err)
 		os.Exit(1)

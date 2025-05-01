@@ -31,6 +31,7 @@ func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
 	ti.VirtualCursor = false
+	ti.Styles = textarea.DefaultStyles(true) // default to dark styles.
 	ti.Focus()
 
 	return model{

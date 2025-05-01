@@ -118,14 +118,14 @@ func (m model) View() string {
 	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 	doc.WriteString(row)
 	doc.WriteString("\n")
-	doc.WriteString(s.window.Width((lipgloss.Width(row) - s.window.GetHorizontalFrameSize())).Render(m.TabContent[m.activeTab]))
+	doc.WriteString(s.window.Width((lipgloss.Width(row))).Render(m.TabContent[m.activeTab]))
 	return s.doc.Render(doc.String())
 }
 
 func main() {
 	tabs := []string{"Lip Gloss", "Blush", "Eye Shadow", "Mascara", "Foundation"}
 	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab", "Mascara Tab", "Foundation Tab"}
-	m := model{Tabs: tabs, TabContent: tabContent}
+	m := model{Tabs: tabs, TabContent: tabContent, styles: newStyles(true)} // default to dark styles.
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
