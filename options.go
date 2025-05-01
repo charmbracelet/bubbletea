@@ -237,7 +237,6 @@ func WithKeyboardEnhancements(enhancements ...KeyboardEnhancementOption) Program
 		e(&ke)
 	}
 	return func(p *Program) {
-		p.startupOptions |= withKeyboardEnhancements
 		p.requestedEnhancements = ke
 	}
 }

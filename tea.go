@@ -17,7 +17,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"runtime"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -158,7 +157,6 @@ const (
 	withModifyOtherKeys
 	withWindowsInputMode
 	withColorProfile
-	withKeyboardEnhancements
 	withGraphemeClustering
 )
 
@@ -647,7 +645,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}()
 
 			case enableKeyboardEnhancementsMsg:
-				if runtime.GOOS == "windows" {
+				if isWindows() {
 					// We use the Windows Console API which supports keyboard
 					// enhancements.
 					break
@@ -670,7 +668,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go p.sendKeyboardEnhancementsMsg()
 
 			case disableKeyboardEnhancementsMsg:
-				if runtime.GOOS == "windows" {
+				if isWindows() {
 					// We use the Windows Console API which supports keyboard
 					// enhancements.
 					break
@@ -977,7 +975,13 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.execute(ansi.SetFocusEventMode)
 		p.modes.Set(ansi.FocusEventMode)
 	}
-	if p.startupOptions&withKeyboardEnhancements != 0 && runtime.GOOS != "windows" {
+
+	if !isWindows() {
+		// Enable unambiguous keys using whichever protocol the terminal prefer.
+		p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
+		if p.requestedEnhancements.modifyOtherKeys == 0 {
+			p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
+		}
 		// We use the Windows Console API which supports keyboard
 		// enhancements.
 		p.requestKeyboardEnhancements()
@@ -1293,7 +1297,7 @@ func (p *Program) stopRenderer(kill bool) {
 // enhancements to the program after a short timeout, or immediately if the
 // keyboard enhancements have been read from the terminal.
 func (p *Program) sendKeyboardEnhancementsMsg() {
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		// We use the Windows Console API which supports keyboard enhancements.
 		p.Send(KeyboardEnhancementsMsg{})
 		return
@@ -1327,7 +1331,7 @@ func (p *Program) requestKeyboardEnhancements() {
 // [ansi.ButtonEventMouseMode].
 // Note this has no effect on Windows since we use the Windows Console API.
 func (p *Program) enableMouse(all bool) {
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		// XXX: This is used to enable mouse mode on Windows. We need
 		// to reinitialize the cancel reader to get the mouse events to
 		// work.
@@ -1352,7 +1356,7 @@ func (p *Program) enableMouse(all bool) {
 // disableMouse disables mouse events on the terminal.
 // Note this has no effect on Windows since we use the Windows Console API.
 func (p *Program) disableMouse() {
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		// XXX: On Windows, mouse mode is enabled on the input reader
 		// level. We need to instruct the input reader to stop reading
 		// mouse events.

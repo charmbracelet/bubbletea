@@ -2,8 +2,8 @@ package tea
 
 import (
 	"bytes"
+	"fmt"
 	"image/color"
-	"runtime"
 	"testing"
 
 	"github.com/charmbracelet/colorprofile"
@@ -68,23 +68,18 @@ func TestClearMsg(t *testing.T) {
 			name: "grapheme_clustering",
 			cmds: []Cmd{EnableGraphemeClustering},
 		},
-	}
-
-	if runtime.GOOS == "windows" {
-		// Windows supports enhanced keyboard features through the Windows API, not through ANSI sequences.
-		tests = append(tests, test{
-			name: "kitty_start_windows",
+		{
+			name: "kitty_start",
 			cmds: []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
-		})
-	} else {
-		tests = append(tests, test{
-			name: "kitty_start_other",
-			cmds: []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
-		})
+		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		platform := "other"
+		if isWindows() {
+			platform = "windows"
+		}
+		t.Run(fmt.Sprintf("%s_%s", test.name, platform), func(t *testing.T) {
 			var buf bytes.Buffer
 			var in bytes.Buffer
 

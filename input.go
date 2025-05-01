@@ -29,7 +29,9 @@ func (p *Program) translateInputEvent(e input.Event) Msg {
 	case input.KeyPressEvent:
 		return KeyPressMsg(e)
 	case input.KeyReleaseEvent:
-		return KeyReleaseMsg(e)
+		if !isWindows() || p.requestedEnhancements.keyReleases {
+			return KeyReleaseMsg(e)
+		}
 	case input.MouseClickEvent:
 		return MouseClickMsg(e)
 	case input.MouseMotionEvent:
