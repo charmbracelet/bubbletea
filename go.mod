@@ -7,7 +7,7 @@ toolchain go1.23.7
 require (
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/x/ansi v0.8.0
-	github.com/charmbracelet/x/cellbuf v0.0.14-0.20250326144200-0875329e71da
+	github.com/charmbracelet/x/cellbuf v0.0.14-0.20250501183327-ad3bc78c6a81
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/input v0.3.5-0.20250424101541-abb4d9a9b197
 	github.com/charmbracelet/x/term v0.2.1
