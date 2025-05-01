@@ -8,15 +8,6 @@ import (
 // the program.
 type environ []string
 
-// getenv is a function that returns the value of the environment variable named
-// by the key. If the variable is not present in the environment, the value
-// returned will be the empty string.
-// This function traverses the environment variables in reverse order, so that
-// the last value set for the key is the one returned.
-func (p *Program) getenv(key string) (v string) {
-	return p.environ.Getenv(key)
-}
-
 // Getenv returns the value of the environment variable named by the key. If
 // the variable is not present in the environment, the value returned will be
 // the empty string.
@@ -69,4 +60,27 @@ func (msg EnvMsg) Getenv(key string) (v string) {
 // empty and the boolean will be false.
 func (msg EnvMsg) LookupEnv(key string) (s string, v bool) {
 	return environ(msg).LookupEnv(key)
+}
+
+// termType represents a terminal type. This is the value found in the TERM
+// environment variable. It is used to determine the capabilities and type of
+// the terminal.
+type termType string
+
+// Name returns the name of the terminal type. This is the first part of the
+// TERM environment variable split by the first dash (-).
+func (t termType) Name() string {
+	parts := strings.Split(string(t), "-")
+	return parts[0]
+}
+
+// String returns the string representation of the terminal type. This is the
+// full value of the TERM environment variable.
+func (t termType) String() string {
+	return string(t)
+}
+
+// Is returns whether the terminal type name is equal to the given name.
+func (t termType) Is(name string) bool {
+	return strings.Contains(t.Name(), name)
 }

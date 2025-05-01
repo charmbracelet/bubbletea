@@ -106,8 +106,6 @@ func (p *Program) initInputReader(cancel bool) error {
 		p.waitForReadLoop()
 	}
 
-	term := p.getenv("TERM")
-
 	// Initialize the input reader.
 	// This need to be done after the terminal has been initialized and set to
 	// raw mode.
@@ -118,7 +116,7 @@ func (p *Program) initInputReader(cancel bool) error {
 		flags |= input.FlagMouseMode
 	}
 
-	drv, err := input.NewReader(p.input, term, flags)
+	drv, err := input.NewReader(p.input, p.termtype.String(), flags)
 	if err != nil {
 		return fmt.Errorf("bubbletea: error initializing input reader: %w", err)
 	}

@@ -236,7 +236,8 @@ type Program struct {
 	renderer            renderer
 
 	// the environment variables for the program, defaults to os.Environ().
-	environ environ
+	environ  environ
+	termtype termType // cached terminal type ($TERM)
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
@@ -362,6 +363,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// if no environment was set, set it to os.Environ()
 	if p.environ == nil {
 		p.environ = os.Environ()
+		p.termtype = termType(p.environ.Getenv("TERM"))
 	}
 
 	if p.fps < 1 {
@@ -604,36 +606,36 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case setBackgroundColorMsg:
 				if msg.Color != nil {
-					p.execute(ansi.SetBackgroundColor(msg.Color))
+					p.executeSeq(ansi.SetBackgroundColor(msg.Color), p.termtype.Is("screen"))
 				} else {
-					p.execute(ansi.ResetBackgroundColor)
+					p.executeSeq(ansi.ResetBackgroundColor, p.termtype.Is("screen"))
 				}
 				p.setBg = msg.Color
 
 			case setForegroundColorMsg:
 				if msg.Color != nil {
-					p.execute(ansi.SetForegroundColor(msg.Color))
+					p.executeSeq(ansi.SetForegroundColor(msg.Color), p.termtype.Is("screen"))
 				} else {
-					p.execute(ansi.ResetForegroundColor)
+					p.executeSeq(ansi.ResetForegroundColor, p.termtype.Is("screen"))
 				}
 				p.setFg = msg.Color
 
 			case setCursorColorMsg:
 				if msg.Color != nil {
-					p.execute(ansi.SetCursorColor(msg.Color))
+					p.executeSeq(ansi.SetCursorColor(msg.Color), p.termtype.Is("screen"))
 				} else {
-					p.execute(ansi.ResetCursorColor)
+					p.executeSeq(ansi.ResetCursorColor, p.termtype.Is("screen"))
 				}
 				p.setCc = msg.Color
 
 			case backgroundColorMsg:
-				p.execute(ansi.RequestBackgroundColor)
+				p.executeSeq(ansi.RequestBackgroundColor, p.termtype.Is("screen"))
 
 			case foregroundColorMsg:
-				p.execute(ansi.RequestForegroundColor)
+				p.executeSeq(ansi.RequestForegroundColor, p.termtype.Is("screen"))
 
 			case cursorColorMsg:
-				p.execute(ansi.RequestCursorColor)
+				p.executeSeq(ansi.RequestCursorColor, p.termtype.Is("screen"))
 
 			case KeyboardEnhancementsMsg:
 				p.activeEnhancements.kittyFlags = msg.kittyFlags
@@ -737,7 +739,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}()
 
 			case setWindowTitleMsg:
-				p.execute(ansi.SetWindowTitle(string(msg)))
+				seq := ansi.SetWindowTitle(string(msg))
+				if p.termtype.Is("screen") {
+					// GNU Screen doesn't support OSC 2 but it does support OSC
+					// 0 for settings the window title.
+					seq = ansi.SetIconNameWindowTitle(string(msg))
+				}
+				p.execute(seq)
 
 			case WindowSizeMsg:
 				p.renderer.resize(msg.Width, msg.Height)
@@ -901,7 +909,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 				// If no renderer is set use the cursed one.
 				p.renderer = newCursedRenderer(
 					p.output,
-					p.getenv("TERM"),
+					p.termtype.String(),
 					resizeMsg.Width,
 					resizeMsg.Height,
 					p.useHardTabs,
@@ -1091,6 +1099,21 @@ func (p *Program) Wait() {
 
 // execute writes the given sequence to the program output.
 func (p *Program) execute(seq string) {
+	p.executeSeq(seq, false)
+}
+
+// executeSeq writes the given sequence to the program output. If escape is
+// true, it would escape the sequence based on the terminal type. This is used
+// for escaping sequences for GNU Screen and Tmux.
+func (p *Program) executeSeq(seq string, escape bool) {
+	if escape {
+		switch {
+		case p.termtype.Is("screen"):
+			seq = ansi.ScreenPassthrough(seq, 0)
+		case p.termtype.Is("tmux"):
+			seq = ansi.TmuxPassthrough(seq)
+		}
+	}
 	_, _ = io.WriteString(p.output, seq)
 }
 
