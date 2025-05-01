@@ -648,6 +648,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				if isWindows() {
 					// We use the Windows Console API which supports keyboard
 					// enhancements.
+					// Send an empty message to tell the user we support
+					// keyboard enhancements on Windows.
+					go p.Send(KeyboardEnhancementsMsg{})
 					break
 				}
 
@@ -662,10 +665,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 				p.requestKeyboardEnhancements()
-
-				// Ensure we send a message so that terminals that don't support the
-				// requested features can disable them.
-				go p.sendKeyboardEnhancementsMsg()
 
 			case disableKeyboardEnhancementsMsg:
 				if isWindows() {
@@ -985,10 +984,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		// We use the Windows Console API which supports keyboard
 		// enhancements.
 		p.requestKeyboardEnhancements()
-
-		// Ensure we send a message so that terminals that don't support the
-		// requested features can disable them.
-		go p.sendKeyboardEnhancementsMsg()
+	} else {
+		// Send an empty message to tell the user we support
+		// keyboard enhancements on Windows.
+		go p.Send(KeyboardEnhancementsMsg{})
 	}
 
 	// Start the renderer.
@@ -1291,26 +1290,6 @@ func (p *Program) stopRenderer(kill bool) {
 	}
 
 	_ = p.renderer.close()
-}
-
-// sendKeyboardEnhancementsMsg sends a message with the active keyboard
-// enhancements to the program after a short timeout, or immediately if the
-// keyboard enhancements have been read from the terminal.
-func (p *Program) sendKeyboardEnhancementsMsg() {
-	if isWindows() {
-		// We use the Windows Console API which supports keyboard enhancements.
-		p.Send(KeyboardEnhancementsMsg{})
-		return
-	}
-
-	// Initial keyboard enhancements message. Ensure we send a message so that
-	// terminals that don't support the requested features can disable them.
-	const timeout = 100 * time.Millisecond
-	select {
-	case <-time.After(timeout):
-		p.Send(KeyboardEnhancementsMsg{})
-	case <-p.keyboardc:
-	}
 }
 
 // requestKeyboardEnhancements tries to enable keyboard enhancements and read
