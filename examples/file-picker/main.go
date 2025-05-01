@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/filepicker"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/filepicker"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type model struct {
@@ -27,12 +27,12 @@ func clearErrorAfter(t time.Duration) tea.Cmd {
 }
 
 func (m model) Init() tea.Cmd {
-	return m.filepicker.Init()
+	return tea.Batch(m.filepicker.Init(), tea.EnterAltScreen)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			m.quitting = true
@@ -85,10 +85,8 @@ func main() {
 	fp.AllowedTypes = []string{".mod", ".sum", ".go", ".txt", ".md"}
 	fp.CurrentDirectory, _ = os.UserHomeDir()
 
-	m := model{
-		filepicker: fp,
-	}
-	tm, _ := tea.NewProgram(&m).Run()
+	m := model{filepicker: fp}
+	tm, _ := tea.NewProgram(m).Run()
 	mm := tm.(model)
 	fmt.Println("\n  You selected: " + m.filepicker.Styles.Selected.Render(mm.selectedFile) + "\n")
 }

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/help"
+	"github.com/charmbracelet/bubbles/v2/key"
+	"github.com/charmbracelet/bubbles/v2/textarea"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	cursorColor = lipgloss.Color("212")
 
 	cursorLineStyle = lipgloss.NewStyle().
 			Background(lipgloss.Color("57")).
@@ -27,9 +27,6 @@ var (
 
 	placeholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("238"))
-
-	endOfBufferStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("235"))
 
 	focusedPlaceholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("99"))
@@ -40,6 +37,9 @@ var (
 
 	blurredBorderStyle = lipgloss.NewStyle().
 				Border(lipgloss.HiddenBorder())
+
+	endOfBufferStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("235"))
 )
 
 type keymap = struct {
@@ -51,14 +51,16 @@ func newTextarea() textarea.Model {
 	t.Prompt = ""
 	t.Placeholder = "Type something"
 	t.ShowLineNumbers = true
-	t.Cursor.Style = cursorStyle
-	t.FocusedStyle.Placeholder = focusedPlaceholderStyle
-	t.BlurredStyle.Placeholder = placeholderStyle
-	t.FocusedStyle.CursorLine = cursorLineStyle
-	t.FocusedStyle.Base = focusedBorderStyle
-	t.BlurredStyle.Base = blurredBorderStyle
-	t.FocusedStyle.EndOfBuffer = endOfBufferStyle
-	t.BlurredStyle.EndOfBuffer = endOfBufferStyle
+	t.VirtualCursor = false
+	t.Styles.Cursor.Color = cursorColor
+	t.Styles.Focused.Placeholder = focusedPlaceholderStyle
+	t.Styles.Blurred.Placeholder = placeholderStyle
+	t.Styles.Focused.CursorLine = cursorLineStyle
+	t.Styles.Focused.CursorLineNumber = cursorLineStyle
+	t.Styles.Focused.Base = focusedBorderStyle
+	t.Styles.Blurred.Base = blurredBorderStyle
+	t.Styles.Focused.EndOfBuffer = endOfBufferStyle
+	t.Styles.Blurred.EndOfBuffer = endOfBufferStyle
 	t.KeyMap.DeleteWordBackward.SetEnabled(false)
 	t.KeyMap.LineNext = key.NewBinding(key.WithKeys("down"))
 	t.KeyMap.LinePrevious = key.NewBinding(key.WithKeys("up"))
@@ -118,7 +120,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, m.keymap.quit):
 			for i := range m.inputs {
@@ -179,6 +181,14 @@ func (m *model) updateKeybindings() {
 	m.keymap.remove.SetEnabled(len(m.inputs) > minInputs)
 }
 
+func (m model) inputViews() []string {
+	var views []string
+	for i := range m.inputs {
+		views = append(views, m.inputs[i].View())
+	}
+	return views
+}
+
 func (m model) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
@@ -188,12 +198,27 @@ func (m model) View() string {
 		m.keymap.quit,
 	})
 
-	var views []string
-	for i := range m.inputs {
-		views = append(views, m.inputs[i].View())
+	return lipgloss.JoinHorizontal(lipgloss.Top, m.inputViews()...) + "\n\n" + help
+}
+
+func (m model) Cursor() *tea.Cursor {
+	focusedInput := m.inputs[m.focus]
+	if focusedInput.VirtualCursor {
+		return nil
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help
+	views := m.inputViews()
+	c := focusedInput.Cursor()
+
+	// Find textrea offset to position real cursor.
+	//
+	// To do this we calculate the width of all textareas to the left of
+	// the focused one.
+	for i := 0; i < m.focus; i++ {
+		c.X += lipgloss.Width(views[i])
+	}
+
+	return c
 }
 
 func main() {

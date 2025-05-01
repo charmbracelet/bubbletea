@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/fogleman/ease"
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -109,7 +109,7 @@ func (m model) View() string {
 	} else {
 		s = chosenView(m)
 	}
-	return mainStyle.Render("\n" + s + "\n\n")
+	return mainStyle.Render("\n" + s)
 }
 
 // Sub-update functions
@@ -117,7 +117,7 @@ func (m model) View() string {
 // Update loop for the first view where you're choosing a task.
 func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "j", "down":
 			m.Choice++

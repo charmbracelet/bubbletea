@@ -3,7 +3,6 @@ package tea
 import (
 	"bytes"
 	"os/exec"
-	"runtime"
 	"testing"
 )
 
@@ -14,7 +13,7 @@ type testExecModel struct {
 	err error
 }
 
-func (m testExecModel) Init() Cmd {
+func (m *testExecModel) Init() Cmd {
 	c := exec.Command(m.cmd) //nolint:gosec
 	return ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
@@ -43,6 +42,8 @@ func TestTeaExec(t *testing.T) {
 		cmd       string
 		expectErr bool
 	}
+
+	// TODO: add more tests for windows
 	tests := []test{
 		{
 			name:      "invalid command",
@@ -51,7 +52,7 @@ func TestTeaExec(t *testing.T) {
 		},
 	}
 
-	if runtime.GOOS != "windows" {
+	if !isWindows() {
 		tests = append(tests, []test{
 			{
 				name:      "true",
