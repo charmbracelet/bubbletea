@@ -25,16 +25,18 @@ type cursedRenderer struct {
 	cursorHidden  bool
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 	backspace     bool // whether to use backspace to optimize cursor movements
+	mapnl         bool
 }
 
 var _ renderer = &cursedRenderer{}
 
-func newCursedRenderer(w io.Writer, term string, width, height int, hardTabs, backspace bool) (s *cursedRenderer) {
+func newCursedRenderer(w io.Writer, term string, width, height int, hardTabs, backspace, mapnl bool) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
 	s.term = term
 	s.hardTabs = hardTabs
 	s.backspace = backspace
+	s.mapnl = mapnl
 	s.width, s.height = width, height
 	s.reset()
 	return
@@ -128,6 +130,7 @@ func (s *cursedRenderer) reset() {
 		ShowCursor:     !s.cursorHidden,
 		HardTabs:       s.hardTabs,
 		Backspace:      s.backspace,
+		MapNL:          s.mapnl,
 	})
 	s.scr = cellbuf.NewScreenWriter(scr)
 	s.mu.Unlock()

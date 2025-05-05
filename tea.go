@@ -905,6 +905,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 					resizeMsg.Height,
 					p.useHardTabs,
 					p.useBackspace,
+					p.ttyInput == nil,
 				)
 			}
 		} else {
