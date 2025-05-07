@@ -27,13 +27,13 @@ and timer) together in a single application and switch between them.
   <img width="750" src="./composable-views/composable-views.gif" />
 </a>
 
-### Credit Card Form
+### ISBN Book Form
 
-The `credit-card-form` example demonstrates how to build a multi-step form with
-`textinputs` bubbles and validation on the inputs.
+The `isbn-form` example demonstrates how to build a multi-step form with
+`textinput` bubbles and validation on the inputs.
 
-<a href="./credit-card-form/main.go">
-  <img width="750" src="./credit-card-form/credit-card-form.gif" />
+<a href="./isbn-form/main.go">
+  <img width="750" src="./isbn-form/isbn-form.gif" />
 </a>
 
 ### Debounce
