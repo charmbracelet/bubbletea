@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/exp/charmtone"
 )
 
 func main() {
@@ -23,14 +24,11 @@ type (
 	errMsg error
 )
 
-const (
-	orange = lipgloss.Color("#e79b07")
-	white  = lipgloss.Color("#ffffff")
-)
-
 var (
-	inputStyle    = lipgloss.NewStyle().Foreground(orange)
-	continueStyle = lipgloss.NewStyle().Foreground(white)
+	inputStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color(charmtone.Tang.Hex()))
+	continueStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(charmtone.Anchovy.Hex()))
+	validStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color(charmtone.Guac.Hex()))
+	errStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color(charmtone.Cherry.Hex()))
 )
 
 type model struct {
@@ -143,9 +141,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	continueText := ""
+	var continueText string
 	if m.canFindBook() {
 		continueText = continueStyle.Render("Find ->")
+	}
+
+	var errorText string
+	if m.input.Value() != "" {
+		if m.input.Err != nil {
+			errorText = errStyle.Render(m.input.Err.Error())
+		} else {
+			errorText = validStyle.Render("Valid ISBN")
+		}
 	}
 
 	return fmt.Sprintf(
@@ -153,9 +160,11 @@ func (m model) View() string {
  %s
  %s
  %s
+ %s
 `,
 		inputStyle.Width(30).Render("ISBN"),
 		m.input.View(),
+		errorText,
 		continueText,
 	) + "\n"
 }
