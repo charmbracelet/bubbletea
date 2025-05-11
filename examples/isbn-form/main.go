@@ -32,14 +32,18 @@ var (
 )
 
 type model struct {
-	input   textinput.Model
-	focused int
-	err     error
+	isbnInput    textinput.Model
+	titleInput   textinput.Model
+	focusedInput int
+	err          error
 }
 
 // canFindBook returns whether the find button is to be pressed
 func (m model) canFindBook() bool {
-	return m.input.Err == nil && len(m.input.Value()) != 0
+	correctIsbnGiven := m.isbnInput.Err == nil && len(m.isbnInput.Value()) != 0
+	correctTitleGiven := m.titleInput.Err == nil && len(m.titleInput.Value()) != 0
+
+	return correctIsbnGiven && correctTitleGiven
 }
 
 // Validator function to ensure valid input
@@ -94,20 +98,57 @@ func isbn13Validator(s string) error {
 	return nil
 }
 
+var bannedTitleWords = []string{
+	"very",
+	"bad",
+	"words",
+	"that",
+	"should",
+	"not",
+	"appear",
+	"in",
+	"book",
+	"titles",
+}
+
+func bookTitleValidator(s string) error {
+	s = strings.TrimSpace(s)
+
+	if len(s) == 0 {
+		return fmt.Errorf("Book title is empty")
+	}
+
+	for _, bannedWord := range bannedTitleWords {
+		if strings.Contains(s, bannedWord) {
+			return fmt.Errorf("Book title contains banned word %q", bannedWord)
+		}
+	}
+
+	return nil
+}
+
 func initialModel() model {
-	input := textinput.New()
-	input = textinput.New()
-	input.Placeholder = "978-X-XXX-XXXXX-X"
-	input.Focus()
-	input.CharLimit = 17
-	input.Width = 30
-	input.Prompt = ""
-	input.Validate = isbn13Validator
+	isbnInput := textinput.New()
+	isbnInput.Focus()
+	isbnInput.Placeholder = "978-X-XXX-XXXXX-X"
+	isbnInput.CharLimit = 17
+	isbnInput.Width = 30
+	isbnInput.Prompt = ""
+	isbnInput.Validate = isbn13Validator
+
+	titleInput := textinput.New()
+	titleInput.Blur()
+	titleInput.Placeholder = "Title"
+	titleInput.CharLimit = 100
+	titleInput.Width = 100
+	titleInput.Prompt = ""
+	titleInput.Validate = bookTitleValidator
 
 	return model{
-		input:   input,
-		focused: 0,
-		err:     nil,
+		isbnInput:    isbnInput,
+		titleInput:   titleInput,
+		focusedInput: 0,
+		err:          nil,
 	}
 }
 
@@ -119,8 +160,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
+		case tea.KeyDown, tea.KeyUp:
+			// Switch between text inputs
+			switch m.focusedInput {
+			case 0:
+				m.focusedInput = 1
+				m.titleInput.Focus()
+				m.isbnInput.Blur()
+			case 1:
+				m.focusedInput = 0
+				m.isbnInput.Focus()
+				m.titleInput.Blur()
+			}
 		case tea.KeyEnter:
-			// Enter is blocked when ISBN is invalid or empty
+			// Enter is blocked until all inputs are ok
 			if m.canFindBook() {
 				return m, tea.Quit
 			}
@@ -134,10 +187,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	var cmd tea.Cmd
-	m.input, cmd = m.input.Update(msg)
+	var isbnCommand tea.Cmd
+	m.isbnInput, isbnCommand = m.isbnInput.Update(msg)
 
-	return m, cmd
+	var titleCommand tea.Cmd
+	m.titleInput, titleCommand = m.titleInput.Update(msg)
+
+	return m, tea.Batch(isbnCommand, titleCommand)
 }
 
 func (m model) View() string {
@@ -146,12 +202,21 @@ func (m model) View() string {
 		continueText = continueStyle.Render("Find ->")
 	}
 
-	var errorText string
-	if m.input.Value() != "" {
-		if m.input.Err != nil {
-			errorText = errStyle.Render(m.input.Err.Error())
+	var isbnErrorText string
+	if m.isbnInput.Value() != "" {
+		if m.isbnInput.Err != nil {
+			isbnErrorText = errStyle.Render(m.isbnInput.Err.Error())
 		} else {
-			errorText = validStyle.Render("Valid ISBN")
+			isbnErrorText = validStyle.Render("Valid ISBN")
+		}
+	}
+
+	var titleErrorText string
+	if m.titleInput.Value() != "" {
+		if m.titleInput.Err != nil {
+			titleErrorText = errStyle.Render(m.titleInput.Err.Error())
+		} else {
+			titleErrorText = validStyle.Render("Valid title")
 		}
 	}
 
@@ -160,11 +225,21 @@ func (m model) View() string {
  %s
  %s
  %s
+
+ %s
+ %s
+ %s
+
  %s
 `,
 		inputStyle.Width(30).Render("ISBN"),
-		m.input.View(),
-		errorText,
+		m.isbnInput.View(),
+		isbnErrorText,
+
+		inputStyle.Width(30).Render("Title"),
+		m.titleInput.View(),
+		titleErrorText,
+
 		continueText,
 	) + "\n"
 }
