@@ -6,9 +6,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/bubbles/v2/textinput"
+	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/x/exp/charmtone"
 )
 
@@ -132,7 +132,7 @@ func initialModel() model {
 	isbnInput.Focus()
 	isbnInput.Placeholder = "978-X-XXX-XXXXX-X"
 	isbnInput.CharLimit = 17
-	isbnInput.Width = 30
+	isbnInput.SetWidth(30)
 	isbnInput.Prompt = ""
 	isbnInput.Validate = isbn13Validator
 
@@ -140,7 +140,7 @@ func initialModel() model {
 	titleInput.Blur()
 	titleInput.Placeholder = "Title"
 	titleInput.CharLimit = 100
-	titleInput.Width = 100
+	titleInput.SetWidth(100)
 	titleInput.Prompt = ""
 	titleInput.Validate = bookTitleValidator
 
@@ -158,9 +158,9 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyDown, tea.KeyUp:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "up", "down":
 			// Switch between text inputs
 			switch m.focusedInput {
 			case 0:
@@ -172,12 +172,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.isbnInput.Focus()
 				m.titleInput.Blur()
 			}
-		case tea.KeyEnter:
+		case "enter":
 			// Enter is blocked until all inputs are ok
 			if m.canFindBook() {
 				return m, tea.Quit
 			}
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 
