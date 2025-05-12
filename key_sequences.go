@@ -119,13 +119,12 @@ func detectBracketedPaste(input []byte) (hasBp bool, width int, msg Msg) {
 }
 
 // detectReportFocus detects a focus report sequence.
-// nolint: gomnd
 func detectReportFocus(input []byte) (hasRF bool, width int, msg Msg) {
 	switch {
 	case bytes.Equal(input, []byte("\x1b[I")):
-		return true, 3, FocusMsg{}
+		return true, 3, FocusMsg{} //nolint:mnd
 	case bytes.Equal(input, []byte("\x1b[O")):
-		return true, 3, BlurMsg{}
+		return true, 3, BlurMsg{} //nolint:mnd
 	}
 	return false, 0, nil
 }

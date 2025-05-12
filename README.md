@@ -1,7 +1,12 @@
 # Bubble Tea
 
 <p>
-    <a href="https://stuff.charm.sh/bubbletea/bubbletea-4k.png"><img src="https://github.com/charmbracelet/bubbletea/assets/25087/108d4fdb-d554-4910-abed-2a5f5586a60e" width="313" alt="Bubble Tea Title Treatment"></a><br>
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-light.png" width="308">
+      <source media="(prefers-color-scheme: dark)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-dark.png" width="312">
+      <img src="https://stuff.charm.sh/bubbletea/bubble-tea-v2-light.png" width="308" />
+    </picture>
+    <br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
     <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/charmbracelet/bubbletea?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
@@ -17,9 +22,8 @@ complex terminal applications, either inline, full-window, or a mix of both.
 </p>
 
 Bubble Tea is in use in production and includes a number of features and
-performance optimizations we’ve added along the way. Among those is a standard
-framerate-based renderer, a renderer for high-performance scrollable
-regions which works alongside the main renderer, and mouse support.
+performance optimizations we’ve added along the way. Among those is
+a framerate-based renderer, mouse support, focus reporting and more.
 
 To get started, see the tutorial below, the [examples][examples], the
 [docs][docs], the [video tutorials][youtube] and some common [resources](#libraries-we-use-with-bubble-tea).
@@ -49,7 +53,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[tut-source]: https://github.com/charmbracelet/bubbletea/tree/main/tutorials/basics
 
 ### Enough! Let's get to it.
 
@@ -61,6 +65,10 @@ import will be the Bubble Tea library, which we'll call `tea` for short.
 ```go
 package main
 
+// These imports will be used later on the tutorial. If you save the file
+// now, Go might complain they are unused, but that's fine.
+// You may also need to run `go mod tidy` to download bubbletea and its
+// dependencies.
 import (
     "fmt"
     "os"
@@ -254,8 +262,8 @@ look at the [Command Tutorial][cmd]. It's pretty simple.
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
-[examples]: https://github.com/charmbracelet/bubbletea/tree/master/examples
+[cmd]: https://github.com/charmbracelet/bubbletea/tree/main/tutorials/commands/
+[examples]: https://github.com/charmbracelet/bubbletea/tree/main/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
 ## Debugging
@@ -310,20 +318,16 @@ your program in another window.
 - [Harmonica][harmonica]: A spring animation library for smooth, natural motion
 - [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
 - [ntcharts][ntcharts]: A terminal charting library built for Bubble Tea and [Lip Gloss][lipgloss]
-- [Termenv][termenv]: Advanced ANSI styling for terminal applications
-- [Reflow][reflow]: Advanced ANSI-aware methods for working with text
 
 [bubbles]: https://github.com/charmbracelet/bubbles
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [harmonica]: https://github.com/charmbracelet/harmonica
 [bubblezone]: https://github.com/lrstanley/bubblezone
 [ntcharts]: https://github.com/NimbleMarkets/ntcharts
-[termenv]: https://github.com/muesli/termenv
-[reflow]: https://github.com/muesli/reflow
 
 ## Bubble Tea in the Wild
 
-There are over 8k applications built with Bubble Tea! Here are a handful of ’em.
+There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/network/dependents) built with Bubble Tea! Here are a handful of ’em.
 
 ### Staff favourites
 
@@ -331,15 +335,19 @@ There are over 8k applications built with Bubble Tea! Here are a handful of ’e
 - [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
 - [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
 - [Tetrigo](https://github.com/Broderick-Westrope/tetrigo): Tetris in the terminal
+- [Signls](https://github.com/emprcl/signls): a generative midi sequencer designed for composition and live performance
+- [Superfile](https://github.com/yorukot/superfile): a super file manager
 
 ### In Industry
 
 - Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
 - Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
+- Cockroach Labs – [CockroachDB](https://github.com/cockroachdb/cockroach): a cloud-native, high-availability distributed SQL database
 - Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
-- NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary) from NVIDIA: a container validator
-- AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer) from AWS: a tool for visualizing dynamic node usage within an EKS cluster
-- MinIO – [mc](https://github.com/minio/mc) from Min.io: the official [MinIO](https://min.io) client
+- NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary): a container validator
+- AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
+- MinIO – [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+- Ubuntu – [Authd](https://github.com/ubuntu/authd): an authentication daemon for cloud-based identity providers
 
 ### Charm stuff
 
@@ -382,7 +390,7 @@ of days past.
 
 ## License
 
-[MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
+[MIT](https://github.com/charmbracelet/bubbletea/raw/main/LICENSE)
 
 ---
 
