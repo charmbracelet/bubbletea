@@ -108,11 +108,9 @@ func (p *Program) initInputReader(cancel bool) error {
 
 	term := p.getenv("TERM")
 
-	// Initialize the input reader.
-	// This need to be done after the terminal has been initialized and set to
-	// raw mode.
-	// On Windows, this will change the console mode to enable mouse and window
-	// events.
+	// Initialize the input reader. This needs to be done after the terminal
+	// has been initialized and set to raw mode. On Windows, this will change
+	// the console mode to enable mouse and window events.
 	var flags int
 	if p.mouseMode {
 		flags |= input.FlagMouseMode
