@@ -79,6 +79,9 @@ type renderer interface {
 
 	// disableReportFocus stops reporting focus events to the program.
 	disableReportFocus()
+
+	// resetLinesRendered ensures exec output remains on screen on exit
+	resetLinesRendered()
 }
 
 // repaintMsg forces a full repaint.

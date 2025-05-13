@@ -545,6 +545,10 @@ func (r *standardRenderer) clearIgnoredLines() {
 	r.ignoreLines = nil
 }
 
+func (r *standardRenderer) resetLinesRendered() {
+	r.linesRendered = 0
+}
+
 // insertTop effectively scrolls up. It inserts lines at the top of a given
 // area designated to be a scrollable region, pushing everything else down.
 // This is roughly how ncurses does it.
