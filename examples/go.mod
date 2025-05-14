@@ -8,11 +8,9 @@ require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20250414140720-bb6a2a461dd8
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-beta.1.0.20250420102230-7ecd51915026
 	github.com/charmbracelet/colorprofile v0.3.1
-	github.com/charmbracelet/glamour/v2 v2.0.0-20250423201235-510d0f0fc9a8
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta1
+	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1
 	github.com/charmbracelet/x/ansi v0.9.2
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250512102446-03000fe596cb
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
