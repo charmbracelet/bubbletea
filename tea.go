@@ -273,10 +273,6 @@ type Program struct {
 	// terminal.
 	activeEnhancements KeyboardEnhancements
 
-	// keyboardc is used to signal that the keyboard enhancements have been
-	// read from the terminal.
-	keyboardc chan struct{}
-
 	// When a program is suspended, the terminal state is saved and the program
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
@@ -337,7 +333,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
-		keyboardc:    make(chan struct{}),
 		modes:        ansi.Modes{},
 	}
 
@@ -638,11 +633,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case KeyboardEnhancementsMsg:
 				p.activeEnhancements.kittyFlags = msg.kittyFlags
 				p.activeEnhancements.modifyOtherKeys = msg.modifyOtherKeys
-
-				go func() {
-					// Signal that we've read the keyboard enhancements.
-					p.keyboardc <- struct{}{}
-				}()
 
 			case enableKeyboardEnhancementsMsg:
 				if isWindows() {
