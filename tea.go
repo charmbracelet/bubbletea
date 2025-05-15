@@ -1002,7 +1002,8 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	p.handlers.add(p.handleCommands(cmds))
 
 	// Run event loop, handle updates and draw.
-	model, err := p.eventLoop(model, cmds)
+	var err error
+	model, err = p.eventLoop(model, cmds)
 
 	if err == nil && len(p.errs) > 0 {
 		err = <-p.errs // Drain a leftover error in case eventLoop crashed.

@@ -168,7 +168,10 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 	s.buf.Clear()
 	for y := 0; y < ss.Buffer.Height(); y++ {
 		for x := 0; x < ss.Buffer.Width(); x++ {
-			s.buf.SetCell(x, y, ss.Buffer.CellAt(x, y))
+			c := ss.Buffer.CellAt(x, y)
+			if c != nil && c.Width > 0 {
+				s.buf.SetCell(x, y, ss.Buffer.CellAt(x, y))
+			}
 		}
 	}
 
