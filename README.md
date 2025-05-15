@@ -99,7 +99,25 @@ type model struct {
 
 ## Initialization
 
-Next, we’ll define our application’s initial state in the `Init` method. `Init`
+Next, we’ll define our application’s initial state. In this case, we’re defining
+a function to return our initial model, however, we could just as easily define
+the initial model as a variable elsewhere, too.
+
+```go
+func initialModel() model {
+	return model{
+		// Our to-do list is a grocery list
+		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+
+		// A map which indicates which choices are selected. We're using
+		// the  map like a mathematical set. The keys refer to the indexes
+		// of the `choices` slice, above.
+		selected: make(map[int]struct{}),
+	}
+}
+```
+
+After that, we’ll define our application’s initial state in the `Init` method. `Init`
 can return a `Cmd` that could perform some initial I/O. For now, we don't need
 to do any I/O, so for the command, we'll just return `nil`, which translates to
 "no command."
