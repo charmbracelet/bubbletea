@@ -15,18 +15,20 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/tv"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"golang.org/x/sync/errgroup"
 )
@@ -236,14 +238,14 @@ type Program struct {
 	renderer            renderer
 
 	// the environment variables for the program, defaults to os.Environ().
-	environ environ
+	environ tv.Environ
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
-	inputReader           *input.Reader
+	inputReader           *tv.TerminalReader
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 	mouseMode             bool // indicates whether we should enable mouse on Windows
@@ -374,6 +376,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
 			p.traceInput = true
 		}
+		log.SetFlags(log.LstdFlags | log.Lshortfile)
 	}
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
 	traceEnabled, err := strconv.ParseBool(os.Getenv("TEA_TRACE"))
@@ -1120,9 +1123,13 @@ func (p *Program) recoverFromPanic(r interface{}) {
 	default:
 	}
 	p.cancel() // Just in case a previous shutdown has failed.
+	s := strings.ReplaceAll(
+		fmt.Sprintf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r),
+		"\n", "\r\n")
+	fmt.Fprintln(os.Stderr, s)
+	stack := strings.ReplaceAll(fmt.Sprintf("%s", debug.Stack()), "\n", "\r\n")
+	fmt.Fprintln(os.Stderr, stack)
 	p.shutdown(true)
-	fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-	debug.PrintStack()
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input

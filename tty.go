@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/charmbracelet/tv"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
 )
@@ -106,28 +106,22 @@ func (p *Program) initInputReader(cancel bool) error {
 		p.waitForReadLoop()
 	}
 
-	term := p.getenv("TERM")
+	term := p.environ.Getenv("TERM")
 
 	// Initialize the input reader.
 	// This need to be done after the terminal has been initialized and set to
 	// raw mode.
-	// On Windows, this will change the console mode to enable mouse and window
-	// events.
-	var flags int
-	if p.mouseMode {
-		flags |= input.FlagMouseMode
-	}
 
-	drv, err := input.NewReader(p.input, term, flags)
-	if err != nil {
-		return fmt.Errorf("bubbletea: error initializing input reader: %w", err)
-	}
-
+	drv := tv.NewTerminalReader(p.input, term)
 	if p.traceInput {
 		drv.SetLogger(log.Default())
 	}
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
+	if err := p.inputReader.Start(); err != nil {
+		return fmt.Errorf("bubbletea: error starting input reader: %w", err)
+	}
+
 	go p.readLoop()
 
 	return nil

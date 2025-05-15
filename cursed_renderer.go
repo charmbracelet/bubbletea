@@ -45,7 +45,7 @@ func newCursedRenderer(w io.Writer, env []string, width, height int, hardTabs, b
 	// TODO: Use [ansi.WcWidth] by default and upgrade to [ansi.GraphemeWidth]
 	// if the terminal supports it.
 	s.method = ansi.GraphemeWidth
-	s.reset()
+	reset(s)
 	return
 }
 
@@ -154,9 +154,9 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 	}
 
 	if cur == nil {
-		s.enableTextCursor(false)
+		enableTextCursor(s, false)
 	} else {
-		s.enableTextCursor(true)
+		enableTextCursor(s, true)
 	}
 }
 
@@ -219,14 +219,14 @@ func (s *cursedRenderer) clearScreen() {
 	s.mu.Lock()
 	// Move the cursor to the top left corner of the screen and trigger a full
 	// screen redraw.
-	_, _ = io.WriteString(s.w, ansi.CursorHomePosition)
+	_, _ = s.scr.WriteString(ansi.CursorHomePosition)
 	s.scr.Redraw(s.buf) // force redraw
 	repaint(s)
 	s.mu.Unlock()
 }
 
 // enableAltScreen sets the alt screen mode.
-func (s *cursedRenderer) enableAltScreen(enable bool) {
+func enableAltScreen(s *cursedRenderer, enable bool) {
 	s.altScreen = enable
 	if enable {
 		s.scr.EnterAltScreen()
@@ -240,19 +240,19 @@ func (s *cursedRenderer) enableAltScreen(enable bool) {
 // enterAltScreen implements renderer.
 func (s *cursedRenderer) enterAltScreen() {
 	s.mu.Lock()
-	s.enableAltScreen(true)
+	enableAltScreen(s, true)
 	s.mu.Unlock()
 }
 
 // exitAltScreen implements renderer.
 func (s *cursedRenderer) exitAltScreen() {
 	s.mu.Lock()
-	s.enableAltScreen(false)
+	enableAltScreen(s, false)
 	s.mu.Unlock()
 }
 
 // enableTextCursor sets the text cursor mode.
-func (s *cursedRenderer) enableTextCursor(enable bool) {
+func enableTextCursor(s *cursedRenderer, enable bool) {
 	s.cursorHidden = !enable
 	if enable {
 		s.scr.ShowCursor()
@@ -264,14 +264,14 @@ func (s *cursedRenderer) enableTextCursor(enable bool) {
 // showCursor implements renderer.
 func (s *cursedRenderer) showCursor() {
 	s.mu.Lock()
-	s.enableTextCursor(true)
+	enableTextCursor(s, true)
 	s.mu.Unlock()
 }
 
 // hideCursor implements renderer.
 func (s *cursedRenderer) hideCursor() {
 	s.mu.Lock()
-	s.enableTextCursor(false)
+	enableTextCursor(s, false)
 	s.mu.Unlock()
 }
 

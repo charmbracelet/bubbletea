@@ -3,11 +3,11 @@ package tea
 import (
 	"fmt"
 
-	"github.com/charmbracelet/x/input"
+	"github.com/charmbracelet/tv"
 )
 
 // MouseButton represents the button that was pressed during a mouse message.
-type MouseButton = input.MouseButton
+type MouseButton = tv.MouseButton
 
 // Mouse event buttons
 //
@@ -27,17 +27,17 @@ type MouseButton = input.MouseButton
 //
 // Other buttons are not supported.
 const (
-	MouseNone       = input.MouseNone
-	MouseLeft       = input.MouseLeft
-	MouseMiddle     = input.MouseMiddle
-	MouseRight      = input.MouseRight
-	MouseWheelUp    = input.MouseWheelUp
-	MouseWheelDown  = input.MouseWheelDown
-	MouseWheelLeft  = input.MouseWheelLeft
-	MouseWheelRight = input.MouseWheelRight
-	MouseBackward   = input.MouseBackward
-	MouseForward    = input.MouseForward
-	MouseButton10   = input.MouseButton10
+	MouseNone       = tv.MouseNone
+	MouseLeft       = tv.MouseLeft
+	MouseMiddle     = tv.MouseMiddle
+	MouseRight      = tv.MouseRight
+	MouseWheelUp    = tv.MouseWheelUp
+	MouseWheelDown  = tv.MouseWheelDown
+	MouseWheelLeft  = tv.MouseWheelLeft
+	MouseWheelRight = tv.MouseWheelRight
+	MouseBackward   = tv.MouseBackward
+	MouseForward    = tv.MouseForward
+	MouseButton10   = tv.MouseButton10
 	MouseButton11
 )
 
@@ -76,7 +76,7 @@ type Mouse struct {
 
 // String returns a string representation of the mouse message.
 func (m Mouse) String() (s string) {
-	return input.Mouse(m).String()
+	return tv.Mouse(m).String()
 }
 
 // MouseClickMsg represents a mouse button click message.

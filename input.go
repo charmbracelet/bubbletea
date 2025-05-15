@@ -1,63 +1,63 @@
 package tea
 
 import (
-	"github.com/charmbracelet/x/input"
+	"github.com/charmbracelet/tv"
 )
 
 // translateInputEvent translates an input event into a Bubble Tea Msg.
-func (p *Program) translateInputEvent(e input.Event) Msg {
+func (p *Program) translateInputEvent(e tv.Event) Msg {
 	switch e := e.(type) {
-	case input.ClipboardEvent:
+	case tv.ClipboardEvent:
 		switch e.Selection {
-		case input.SystemClipboard:
+		case tv.SystemClipboard:
 			return ClipboardMsg(e.Content)
-		case input.PrimaryClipboard:
+		case tv.PrimaryClipboard:
 			return PrimaryClipboardMsg(e.Content)
 		}
-	case input.ForegroundColorEvent:
+	case tv.ForegroundColorEvent:
 		return ForegroundColorMsg(e)
-	case input.BackgroundColorEvent:
+	case tv.BackgroundColorEvent:
 		return BackgroundColorMsg(e)
-	case input.CursorColorEvent:
+	case tv.CursorColorEvent:
 		return CursorColorMsg(e)
-	case input.CursorPositionEvent:
+	case tv.CursorPositionEvent:
 		return CursorPositionMsg(e)
-	case input.FocusEvent:
+	case tv.FocusEvent:
 		return FocusMsg(e)
-	case input.BlurEvent:
+	case tv.BlurEvent:
 		return BlurMsg(e)
-	case input.KeyPressEvent:
+	case tv.KeyPressEvent:
 		return KeyPressMsg(e)
-	case input.KeyReleaseEvent:
+	case tv.KeyReleaseEvent:
 		if !isWindows() || p.requestedEnhancements.keyReleases {
 			return KeyReleaseMsg(e)
 		}
-	case input.MouseClickEvent:
+	case tv.MouseClickEvent:
 		return MouseClickMsg(e)
-	case input.MouseMotionEvent:
+	case tv.MouseMotionEvent:
 		return MouseMotionMsg(e)
-	case input.MouseReleaseEvent:
+	case tv.MouseReleaseEvent:
 		return MouseReleaseMsg(e)
-	case input.MouseWheelEvent:
+	case tv.MouseWheelEvent:
 		return MouseWheelMsg(e)
-	case input.PasteEvent:
+	case tv.PasteEvent:
 		return PasteMsg(e)
-	case input.PasteStartEvent:
+	case tv.PasteStartEvent:
 		return PasteStartMsg(e)
-	case input.PasteEndEvent:
+	case tv.PasteEndEvent:
 		return PasteEndMsg(e)
-	case input.WindowSizeEvent:
+	case tv.WindowSizeEvent:
 		return WindowSizeMsg(e)
-	case input.CapabilityEvent:
+	case tv.CapabilityEvent:
 		return CapabilityMsg(e)
-	case input.TerminalVersionEvent:
+	case tv.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
-	case input.KittyEnhancementsEvent:
+	case tv.KittyEnhancementsEvent:
 		return KeyboardEnhancementsMsg{
 			kittyFlags:      int(e),
 			modifyOtherKeys: p.activeEnhancements.modifyOtherKeys,
 		}
-	case input.ModifyOtherKeysEvent:
+	case tv.ModifyOtherKeysEvent:
 		return KeyboardEnhancementsMsg{
 			modifyOtherKeys: int(e),
 			kittyFlags:      p.activeEnhancements.kittyFlags,

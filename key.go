@@ -3,13 +3,13 @@ package tea
 import (
 	"fmt"
 
-	"github.com/charmbracelet/x/input"
+	"github.com/charmbracelet/tv"
 )
 
 const (
 	// KeyExtended is a special key code used to signify that a key event
 	// contains multiple runes.
-	KeyExtended = input.KeyExtended
+	KeyExtended = tv.KeyExtended
 )
 
 // Special key symbols.
@@ -17,174 +17,174 @@ const (
 
 	// Special keys.
 
-	KeyUp     = input.KeyUp
-	KeyDown   = input.KeyDown
-	KeyRight  = input.KeyRight
-	KeyLeft   = input.KeyLeft
-	KeyBegin  = input.KeyBegin
-	KeyFind   = input.KeyFind
-	KeyInsert = input.KeyInsert
-	KeyDelete = input.KeyDelete
-	KeySelect = input.KeySelect
-	KeyPgUp   = input.KeyPgUp
-	KeyPgDown = input.KeyPgDown
-	KeyHome   = input.KeyHome
-	KeyEnd    = input.KeyEnd
+	KeyUp     = tv.KeyUp
+	KeyDown   = tv.KeyDown
+	KeyRight  = tv.KeyRight
+	KeyLeft   = tv.KeyLeft
+	KeyBegin  = tv.KeyBegin
+	KeyFind   = tv.KeyFind
+	KeyInsert = tv.KeyInsert
+	KeyDelete = tv.KeyDelete
+	KeySelect = tv.KeySelect
+	KeyPgUp   = tv.KeyPgUp
+	KeyPgDown = tv.KeyPgDown
+	KeyHome   = tv.KeyHome
+	KeyEnd    = tv.KeyEnd
 
 	// Keypad keys.
 
-	KeyKpEnter    = input.KeyKpEnter
-	KeyKpEqual    = input.KeyKpEqual
-	KeyKpMultiply = input.KeyKpMultiply
-	KeyKpPlus     = input.KeyKpPlus
-	KeyKpComma    = input.KeyKpComma
-	KeyKpMinus    = input.KeyKpMinus
-	KeyKpDecimal  = input.KeyKpDecimal
-	KeyKpDivide   = input.KeyKpDivide
-	KeyKp0        = input.KeyKp0
-	KeyKp1        = input.KeyKp1
-	KeyKp2        = input.KeyKp2
-	KeyKp3        = input.KeyKp3
-	KeyKp4        = input.KeyKp4
-	KeyKp5        = input.KeyKp5
-	KeyKp6        = input.KeyKp6
-	KeyKp7        = input.KeyKp7
-	KeyKp8        = input.KeyKp8
-	KeyKp9        = input.KeyKp9
+	KeyKpEnter    = tv.KeyKpEnter
+	KeyKpEqual    = tv.KeyKpEqual
+	KeyKpMultiply = tv.KeyKpMultiply
+	KeyKpPlus     = tv.KeyKpPlus
+	KeyKpComma    = tv.KeyKpComma
+	KeyKpMinus    = tv.KeyKpMinus
+	KeyKpDecimal  = tv.KeyKpDecimal
+	KeyKpDivide   = tv.KeyKpDivide
+	KeyKp0        = tv.KeyKp0
+	KeyKp1        = tv.KeyKp1
+	KeyKp2        = tv.KeyKp2
+	KeyKp3        = tv.KeyKp3
+	KeyKp4        = tv.KeyKp4
+	KeyKp5        = tv.KeyKp5
+	KeyKp6        = tv.KeyKp6
+	KeyKp7        = tv.KeyKp7
+	KeyKp8        = tv.KeyKp8
+	KeyKp9        = tv.KeyKp9
 
 	// The following are keys defined in the Kitty keyboard protocol.
 	// XXX: Investigate the names of these keys.
-	KeyKpSep    = input.KeyKpSep
-	KeyKpUp     = input.KeyKpUp
-	KeyKpDown   = input.KeyKpDown
-	KeyKpLeft   = input.KeyKpLeft
-	KeyKpRight  = input.KeyKpRight
-	KeyKpPgUp   = input.KeyKpPgUp
-	KeyKpPgDown = input.KeyKpPgDown
-	KeyKpHome   = input.KeyKpHome
-	KeyKpEnd    = input.KeyKpEnd
-	KeyKpInsert = input.KeyKpInsert
-	KeyKpDelete = input.KeyKpDelete
-	KeyKpBegin  = input.KeyKpBegin
+	KeyKpSep    = tv.KeyKpSep
+	KeyKpUp     = tv.KeyKpUp
+	KeyKpDown   = tv.KeyKpDown
+	KeyKpLeft   = tv.KeyKpLeft
+	KeyKpRight  = tv.KeyKpRight
+	KeyKpPgUp   = tv.KeyKpPgUp
+	KeyKpPgDown = tv.KeyKpPgDown
+	KeyKpHome   = tv.KeyKpHome
+	KeyKpEnd    = tv.KeyKpEnd
+	KeyKpInsert = tv.KeyKpInsert
+	KeyKpDelete = tv.KeyKpDelete
+	KeyKpBegin  = tv.KeyKpBegin
 
 	// Function keys.
 
-	KeyF1  = input.KeyF1
-	KeyF2  = input.KeyF2
-	KeyF3  = input.KeyF3
-	KeyF4  = input.KeyF4
-	KeyF5  = input.KeyF5
-	KeyF6  = input.KeyF6
-	KeyF7  = input.KeyF7
-	KeyF8  = input.KeyF8
-	KeyF9  = input.KeyF9
-	KeyF10 = input.KeyF10
-	KeyF11 = input.KeyF11
-	KeyF12 = input.KeyF12
-	KeyF13 = input.KeyF13
-	KeyF14 = input.KeyF14
-	KeyF15 = input.KeyF15
-	KeyF16 = input.KeyF16
-	KeyF17 = input.KeyF17
-	KeyF18 = input.KeyF18
-	KeyF19 = input.KeyF19
-	KeyF20 = input.KeyF20
-	KeyF21 = input.KeyF21
-	KeyF22 = input.KeyF22
-	KeyF23 = input.KeyF23
-	KeyF24 = input.KeyF24
-	KeyF25 = input.KeyF25
-	KeyF26 = input.KeyF26
-	KeyF27 = input.KeyF27
-	KeyF28 = input.KeyF28
-	KeyF29 = input.KeyF29
-	KeyF30 = input.KeyF30
-	KeyF31 = input.KeyF31
-	KeyF32 = input.KeyF32
-	KeyF33 = input.KeyF33
-	KeyF34 = input.KeyF34
-	KeyF35 = input.KeyF35
-	KeyF36 = input.KeyF36
-	KeyF37 = input.KeyF37
-	KeyF38 = input.KeyF38
-	KeyF39 = input.KeyF39
-	KeyF40 = input.KeyF40
-	KeyF41 = input.KeyF41
-	KeyF42 = input.KeyF42
-	KeyF43 = input.KeyF43
-	KeyF44 = input.KeyF44
-	KeyF45 = input.KeyF45
-	KeyF46 = input.KeyF46
-	KeyF47 = input.KeyF47
-	KeyF48 = input.KeyF48
-	KeyF49 = input.KeyF49
-	KeyF50 = input.KeyF50
-	KeyF51 = input.KeyF51
-	KeyF52 = input.KeyF52
-	KeyF53 = input.KeyF53
-	KeyF54 = input.KeyF54
-	KeyF55 = input.KeyF55
-	KeyF56 = input.KeyF56
-	KeyF57 = input.KeyF57
-	KeyF58 = input.KeyF58
-	KeyF59 = input.KeyF59
-	KeyF60 = input.KeyF60
-	KeyF61 = input.KeyF61
-	KeyF62 = input.KeyF62
-	KeyF63 = input.KeyF63
+	KeyF1  = tv.KeyF1
+	KeyF2  = tv.KeyF2
+	KeyF3  = tv.KeyF3
+	KeyF4  = tv.KeyF4
+	KeyF5  = tv.KeyF5
+	KeyF6  = tv.KeyF6
+	KeyF7  = tv.KeyF7
+	KeyF8  = tv.KeyF8
+	KeyF9  = tv.KeyF9
+	KeyF10 = tv.KeyF10
+	KeyF11 = tv.KeyF11
+	KeyF12 = tv.KeyF12
+	KeyF13 = tv.KeyF13
+	KeyF14 = tv.KeyF14
+	KeyF15 = tv.KeyF15
+	KeyF16 = tv.KeyF16
+	KeyF17 = tv.KeyF17
+	KeyF18 = tv.KeyF18
+	KeyF19 = tv.KeyF19
+	KeyF20 = tv.KeyF20
+	KeyF21 = tv.KeyF21
+	KeyF22 = tv.KeyF22
+	KeyF23 = tv.KeyF23
+	KeyF24 = tv.KeyF24
+	KeyF25 = tv.KeyF25
+	KeyF26 = tv.KeyF26
+	KeyF27 = tv.KeyF27
+	KeyF28 = tv.KeyF28
+	KeyF29 = tv.KeyF29
+	KeyF30 = tv.KeyF30
+	KeyF31 = tv.KeyF31
+	KeyF32 = tv.KeyF32
+	KeyF33 = tv.KeyF33
+	KeyF34 = tv.KeyF34
+	KeyF35 = tv.KeyF35
+	KeyF36 = tv.KeyF36
+	KeyF37 = tv.KeyF37
+	KeyF38 = tv.KeyF38
+	KeyF39 = tv.KeyF39
+	KeyF40 = tv.KeyF40
+	KeyF41 = tv.KeyF41
+	KeyF42 = tv.KeyF42
+	KeyF43 = tv.KeyF43
+	KeyF44 = tv.KeyF44
+	KeyF45 = tv.KeyF45
+	KeyF46 = tv.KeyF46
+	KeyF47 = tv.KeyF47
+	KeyF48 = tv.KeyF48
+	KeyF49 = tv.KeyF49
+	KeyF50 = tv.KeyF50
+	KeyF51 = tv.KeyF51
+	KeyF52 = tv.KeyF52
+	KeyF53 = tv.KeyF53
+	KeyF54 = tv.KeyF54
+	KeyF55 = tv.KeyF55
+	KeyF56 = tv.KeyF56
+	KeyF57 = tv.KeyF57
+	KeyF58 = tv.KeyF58
+	KeyF59 = tv.KeyF59
+	KeyF60 = tv.KeyF60
+	KeyF61 = tv.KeyF61
+	KeyF62 = tv.KeyF62
+	KeyF63 = tv.KeyF63
 
 	// The following are keys defined in the Kitty keyboard protocol.
 	// XXX: Investigate the names of these keys.
 
-	KeyCapsLock    = input.KeyCapsLock
-	KeyScrollLock  = input.KeyScrollLock
-	KeyNumLock     = input.KeyNumLock
-	KeyPrintScreen = input.KeyPrintScreen
-	KeyPause       = input.KeyPause
-	KeyMenu        = input.KeyMenu
+	KeyCapsLock    = tv.KeyCapsLock
+	KeyScrollLock  = tv.KeyScrollLock
+	KeyNumLock     = tv.KeyNumLock
+	KeyPrintScreen = tv.KeyPrintScreen
+	KeyPause       = tv.KeyPause
+	KeyMenu        = tv.KeyMenu
 
-	KeyMediaPlay        = input.KeyMediaPlay
-	KeyMediaPause       = input.KeyMediaPause
-	KeyMediaPlayPause   = input.KeyMediaPlayPause
-	KeyMediaReverse     = input.KeyMediaReverse
-	KeyMediaStop        = input.KeyMediaStop
-	KeyMediaFastForward = input.KeyMediaFastForward
-	KeyMediaRewind      = input.KeyMediaRewind
-	KeyMediaNext        = input.KeyMediaNext
-	KeyMediaPrev        = input.KeyMediaPrev
+	KeyMediaPlay        = tv.KeyMediaPlay
+	KeyMediaPause       = tv.KeyMediaPause
+	KeyMediaPlayPause   = tv.KeyMediaPlayPause
+	KeyMediaReverse     = tv.KeyMediaReverse
+	KeyMediaStop        = tv.KeyMediaStop
+	KeyMediaFastForward = tv.KeyMediaFastForward
+	KeyMediaRewind      = tv.KeyMediaRewind
+	KeyMediaNext        = tv.KeyMediaNext
+	KeyMediaPrev        = tv.KeyMediaPrev
 	KeyMediaRecord
 
-	KeyLowerVol = input.KeyLowerVol
-	KeyRaiseVol = input.KeyRaiseVol
-	KeyMute     = input.KeyMute
+	KeyLowerVol = tv.KeyLowerVol
+	KeyRaiseVol = tv.KeyRaiseVol
+	KeyMute     = tv.KeyMute
 
-	KeyLeftShift      = input.KeyLeftShift
-	KeyLeftAlt        = input.KeyLeftAlt
-	KeyLeftCtrl       = input.KeyLeftCtrl
-	KeyLeftSuper      = input.KeyLeftSuper
-	KeyLeftHyper      = input.KeyLeftHyper
-	KeyLeftMeta       = input.KeyLeftMeta
-	KeyRightShift     = input.KeyRightShift
-	KeyRightAlt       = input.KeyRightAlt
-	KeyRightCtrl      = input.KeyRightCtrl
-	KeyRightSuper     = input.KeyRightSuper
-	KeyRightHyper     = input.KeyRightHyper
-	KeyRightMeta      = input.KeyRightMeta
-	KeyIsoLevel3Shift = input.KeyIsoLevel3Shift
-	KeyIsoLevel5Shift = input.KeyIsoLevel5Shift
+	KeyLeftShift      = tv.KeyLeftShift
+	KeyLeftAlt        = tv.KeyLeftAlt
+	KeyLeftCtrl       = tv.KeyLeftCtrl
+	KeyLeftSuper      = tv.KeyLeftSuper
+	KeyLeftHyper      = tv.KeyLeftHyper
+	KeyLeftMeta       = tv.KeyLeftMeta
+	KeyRightShift     = tv.KeyRightShift
+	KeyRightAlt       = tv.KeyRightAlt
+	KeyRightCtrl      = tv.KeyRightCtrl
+	KeyRightSuper     = tv.KeyRightSuper
+	KeyRightHyper     = tv.KeyRightHyper
+	KeyRightMeta      = tv.KeyRightMeta
+	KeyIsoLevel3Shift = tv.KeyIsoLevel3Shift
+	KeyIsoLevel5Shift = tv.KeyIsoLevel5Shift
 
 	// Special names in C0.
 
-	KeyBackspace = input.KeyBackspace
-	KeyTab       = input.KeyTab
-	KeyEnter     = input.KeyEnter
-	KeyReturn    = input.KeyReturn
-	KeyEscape    = input.KeyEscape
-	KeyEsc       = input.KeyEsc
+	KeyBackspace = tv.KeyBackspace
+	KeyTab       = tv.KeyTab
+	KeyEnter     = tv.KeyEnter
+	KeyReturn    = tv.KeyReturn
+	KeyEscape    = tv.KeyEscape
+	KeyEsc       = tv.KeyEsc
 
 	// Special names in G0.
 
-	KeySpace = input.KeySpace
+	KeySpace = tv.KeySpace
 )
 
 // KeyPressMsg represents a key press message.
@@ -211,7 +211,7 @@ func (k KeyPressMsg) String() string {
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
 func (k KeyPressMsg) Keystroke() string {
-	return input.Key(k).Keystroke()
+	return tv.Key(k).Keystroke()
 }
 
 // Key returns the underlying key event. This is a syntactic sugar for casting
@@ -244,7 +244,7 @@ func (k KeyReleaseMsg) String() string {
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
 func (k KeyReleaseMsg) Keystroke() string {
-	return input.Key(k).Keystroke()
+	return tv.Key(k).Keystroke()
 }
 
 // Key returns the underlying key event. This is a convenience method and
@@ -349,7 +349,7 @@ type Key struct {
 // For example, you'll always get "?" and instead of "shift+/" on a US ANSI
 // keyboard.
 func (k Key) String() string {
-	return input.Key(k).String()
+	return tv.Key(k).String()
 }
 
 // Keystroke returns the keystroke representation of the [Key]. While less type
@@ -367,5 +367,5 @@ func (k Key) String() string {
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
 func (k Key) Keystroke() string {
-	return input.Key(k).Keystroke()
+	return tv.Key(k).Keystroke()
 }
