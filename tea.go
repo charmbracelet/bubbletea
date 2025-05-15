@@ -242,7 +242,7 @@ type Program struct {
 	// the environment variables for the program, defaults to os.Environ().
 	environ tv.Environ
 	// the program's logger for debugging.
-	logger *log.Logger
+	logger tv.Logger
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
