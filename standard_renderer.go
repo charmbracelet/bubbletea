@@ -87,6 +87,14 @@ func (r *standardRenderer) execute(seq string) {
 	_, _ = io.WriteString(r.out, seq)
 }
 
+// writeString writes a string to the internal buffer.
+func (r *standardRenderer) writeString(s string) (int, error) {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	return r.buf.WriteString(s)
+}
+
 // flush renders the buffer.
 func (r *standardRenderer) flush() error {
 	r.mtx.Lock()

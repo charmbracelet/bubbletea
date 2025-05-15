@@ -10,6 +10,7 @@
 package tea
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -230,7 +231,8 @@ type Program struct {
 	profile colorprofile.Profile // the terminal color profile
 
 	// where to send output, this will usually be os.Stdout.
-	output *safeWriter
+	output    io.Writer
+	outputBuf bytes.Buffer // buffer used to queue commands to be sent to the output
 
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
@@ -239,6 +241,8 @@ type Program struct {
 
 	// the environment variables for the program, defaults to os.Environ().
 	environ tv.Environ
+	// the program's logger for debugging.
+	logger *log.Logger
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
@@ -353,7 +357,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
-		p.output = newSafeWriter(os.Stdout)
+		p.output = os.Stdout
 	}
 
 	// if no environment was set, set it to os.Environ()
@@ -367,28 +371,12 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		p.fps = maxFPS
 	}
 
-	// Detect if tracing is enabled.
-	enableTracing := func() {
-		// Enable different types of tracing.
-		if output, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_OUTPUT")); output {
-			p.output.trace = true
-		}
-		if input, _ := strconv.ParseBool(os.Getenv("TEA_TRACE_INPUT")); input {
-			p.traceInput = true
-		}
-		log.SetFlags(log.LstdFlags | log.Lshortfile)
-	}
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
-	traceEnabled, err := strconv.ParseBool(os.Getenv("TEA_TRACE"))
-	switch {
-	case err != nil && traceOk && len(tracePath) > 0:
+	if traceOk && len(tracePath) > 0 {
 		// We have a trace filepath.
-		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
-			enableTracing()
+		if f, err := os.OpenFile(tracePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err == nil {
+			p.logger = log.New(f, "bubbletea: ", log.LstdFlags|log.Lshortfile)
 		}
-	case err == nil && traceEnabled:
-		// Use the default [log] output.
-		enableTracing()
 	}
 
 	return p
@@ -899,6 +887,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 					p.useHardTabs,
 					p.useBackspace,
 					p.ttyInput == nil,
+					p.logger,
 				)
 			}
 		} else {
@@ -909,7 +898,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 
 	// Get the color profile and send it to the program.
 	if !p.startupOptions.has(withColorProfile) {
-		p.profile = colorprofile.Detect(p.output.Writer(), p.environ)
+		p.profile = colorprofile.Detect(p.output, p.environ)
 	}
 
 	// Set the color profile on the renderer and send it to the program.
@@ -1084,7 +1073,20 @@ func (p *Program) Wait() {
 
 // execute writes the given sequence to the program output.
 func (p *Program) execute(seq string) {
-	_, _ = io.WriteString(p.output, seq)
+	_, _ = p.outputBuf.WriteString(seq)
+}
+
+// flush flushes the output buffer to the program output.
+func (p *Program) flush() error {
+	if p.outputBuf.Len() == 0 {
+		return nil
+	}
+	if p.logger != nil {
+		p.logger.Printf("output: %q", p.outputBuf.String())
+	}
+	_, err := p.output.Write(p.outputBuf.Bytes())
+	p.outputBuf.Reset()
+	return fmt.Errorf("error writing to output: %w", err)
 }
 
 // shutdown performs operations to free up resources and restore the terminal
@@ -1216,7 +1218,8 @@ func (p *Program) RestoreTerminal() error {
 	// needed.
 	go p.checkResize()
 
-	return nil
+	// Flush queued commands.
+	return p.flush()
 }
 
 // Println prints above the Program. This output is unmanaged by the program
@@ -1267,6 +1270,7 @@ func (p *Program) startRenderer() {
 				return
 
 			case <-p.ticker.C:
+				_ = p.flush()
 				_ = p.renderer.flush()
 			}
 		}

@@ -23,6 +23,7 @@ type cursedRenderer struct {
 	profile       colorprofile.Profile
 	cursor        Cursor
 	method        ansi.Method
+	logger        tv.Logger
 	altScreen     bool
 	cursorHidden  bool
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
@@ -32,11 +33,12 @@ type cursedRenderer struct {
 
 var _ renderer = &cursedRenderer{}
 
-func newCursedRenderer(w io.Writer, env []string, width, height int, hardTabs, backspace, mapnl bool) (s *cursedRenderer) {
+func newCursedRenderer(w io.Writer, env []string, width, height int, hardTabs, backspace, mapnl bool, logger tv.Logger) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
 	s.env = env
 	s.term = tv.Environ(env).Getenv("TERM")
+	s.logger = logger
 	s.hardTabs = hardTabs
 	s.backspace = backspace
 	s.mapnl = mapnl
@@ -82,6 +84,14 @@ func (s *cursedRenderer) close() (err error) {
 	s.scr.SetPosition(x, y)
 
 	return nil
+}
+
+// writeString implements renderer.
+func (s *cursedRenderer) writeString(str string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.scr.WriteString(str)
 }
 
 // flush implements renderer.
@@ -174,6 +184,7 @@ func reset(s *cursedRenderer) {
 	scr.SetTabStops(s.width)
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
+	scr.SetLogger(s.logger)
 	if s.altScreen {
 		scr.EnterAltScreen()
 	} else {

@@ -34,7 +34,7 @@ func (p *Program) initInput() (err error) {
 	}
 
 	// Save output screen buffer state and enable VT processing.
-	if f, ok := p.output.Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
+	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
 		p.previousOutputState, err = term.GetState(f.Fd())
 		if err != nil {

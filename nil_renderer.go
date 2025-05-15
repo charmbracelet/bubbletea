@@ -48,3 +48,6 @@ func (nilRenderer) render(string, *Cursor) {}
 
 // reset implements the Renderer interface.
 func (nilRenderer) reset() {}
+
+// writeString implements the Renderer interface.
+func (nilRenderer) writeString(string) (int, error) { return 0, nil }

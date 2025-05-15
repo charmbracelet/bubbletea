@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
 	"github.com/charmbracelet/tv"
@@ -81,6 +80,9 @@ func (p *Program) restoreTerminalState() error {
 		p.execute(ansi.ResetCursorColor)
 	}
 
+	// Flush queued commands.
+	_ = p.flush()
+
 	return p.restoreInput()
 }
 
@@ -113,9 +115,7 @@ func (p *Program) initInputReader(cancel bool) error {
 	// raw mode.
 
 	drv := tv.NewTerminalReader(p.input, term)
-	if p.traceInput {
-		drv.SetLogger(log.Default())
-	}
+	drv.SetLogger(p.logger)
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
 	if err := p.inputReader.Start(); err != nil {

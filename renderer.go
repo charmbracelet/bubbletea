@@ -53,6 +53,8 @@ type renderer interface {
 
 	// repaint forces a full repaint.
 	repaint()
+
+	writeString(string) (int, error)
 }
 
 // repaintMsg forces a full repaint.
