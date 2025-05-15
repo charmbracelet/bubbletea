@@ -1,8 +1,8 @@
 module github.com/charmbracelet/bubbletea/v2
 
-go 1.23.0
+go 1.24.2
 
-toolchain go1.23.7
+replace github.com/charmbracelet/tv => ../tv
 
 require (
 	github.com/charmbracelet/colorprofile v0.3.1
@@ -18,6 +18,8 @@ require (
 
 require (
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
+	github.com/charmbracelet/tv v0.0.0-00010101000000-000000000000 // indirect
+	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect

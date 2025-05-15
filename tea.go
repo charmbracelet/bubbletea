@@ -890,7 +890,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 				// If no renderer is set use the cursed one.
 				p.renderer = newCursedRenderer(
 					p.output,
-					p.getenv("TERM"),
+					p.environ,
 					resizeMsg.Width,
 					resizeMsg.Height,
 					p.useHardTabs,

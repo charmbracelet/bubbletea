@@ -12,6 +12,8 @@ github.com/charmbracelet/x/input v0.3.5-0.20250509021451-13796e822d86 h1:BxAEmOB
 github.com/charmbracelet/x/input v0.3.5-0.20250509021451-13796e822d86/go.mod h1:62Rp/6EtTxoeJDSdtpA3tJp3y3ZRpsiekBSje+K8htA=
 github.com/charmbracelet/x/term v0.2.1 h1:AQeHeLZ1OqSXhrAWpYUtZyX1T3zVxfpZuEQMIQaGIAQ=
 github.com/charmbracelet/x/term v0.2.1/go.mod h1:oQ4enTYFV7QN4m0i9mzHrViD7TQKvNEEkHUMCmsxdUg=
+github.com/charmbracelet/x/termios v0.1.1 h1:o3Q2bT8eqzGnGPOYheoYS8eEleT5ZVNYNy8JawjaNZY=
+github.com/charmbracelet/x/termios v0.1.1/go.mod h1:rB7fnv1TgOPOyyKRJ9o+AsTU/vK5WHJ2ivHeut/Pcwo=
 github.com/charmbracelet/x/windows v0.2.1 h1:3x7vnbpQrjpuq/4L+I4gNsG5htYoCiA5oe9hLjAij5I=
 github.com/charmbracelet/x/windows v0.2.1/go.mod h1:ptZp16h40gDYqs5TSawSVW+yiLB13j4kSMA0lSCHL0M=
 github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
