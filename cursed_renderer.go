@@ -68,6 +68,7 @@ func (s *cursedRenderer) close() (err error) {
 	}
 	if s.cursorHidden {
 		s.scr.ShowCursor()
+		s.cursorHidden = false
 	}
 
 	if err := s.scr.Flush(); err != nil {
@@ -133,6 +134,14 @@ func (s *cursedRenderer) flush() error {
 func (s *cursedRenderer) render(frame string, cur *Cursor) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// If an empty string was passed we should clear existing output and
+	// rendering nothing. Rather than introduce additional state to manage
+	// this, we render a single space as a simple (albeit less correct)
+	// solution.
+	if frame == "" {
+		frame = " "
+	}
 
 	if s.lastFrame != nil && frame == *s.lastFrame &&
 		(s.lastCur == nil && cur == nil || s.lastCur != nil && cur != nil && *s.lastCur == *cur) {
