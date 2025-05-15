@@ -108,6 +108,16 @@ type modelView struct {
 	model
 }
 
+func (m modelView) Init() tea.Cmd {
+	return m.model.Init()
+}
+
+func (m modelView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	mm, cmd := m.model.Update(msg)
+	m.model = mm.(model)
+	return m, cmd
+}
+
 func (m modelView) View() string {
 	s := "\n" +
 		m.spinner.View() + " Doing some work...\n\n"
