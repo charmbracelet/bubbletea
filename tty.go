@@ -116,6 +116,10 @@ func (p *Program) initInputReader(cancel bool) error {
 
 	drv := tv.NewTerminalReader(p.input, term)
 	drv.SetLogger(p.logger)
+	if p.mouseMode {
+		mouseMode := tv.ReleasesMouseMode | tv.AllMotionMouseMode
+		drv.MouseMode = &mouseMode
+	}
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
 	if err := p.inputReader.Start(); err != nil {
