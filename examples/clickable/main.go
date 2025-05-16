@@ -202,6 +202,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// XXX: We're saving view data to the model in order to get clickable
+	// state. This is both inefficient and against the nature of the Elm
+	// architecture. To properly handle this we should integrate support for
+	// compositing (via Lip Gloss) into Bubble Tea itself.
 	m.canvas = m.Composite()
 
 	return m, nil
