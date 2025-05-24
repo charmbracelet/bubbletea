@@ -30,6 +30,7 @@ type model struct {
 func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "Pikachu"
+	ti.VirtualCursor = false
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.SetWidth(20)
@@ -65,8 +66,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() (string, *tea.Cursor) {
-	c := m.textInput.Cursor()
-	c.Y += lipgloss.Height(m.headerView())
+	var c *tea.Cursor
+	if !m.textInput.VirtualCursor {
+		c = m.textInput.Cursor()
+		c.Y += lipgloss.Height(m.headerView())
+	}
 	return lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView()), c
 }
 func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }
