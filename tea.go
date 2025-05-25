@@ -106,10 +106,9 @@ type CursorModel interface {
 
 // View represents a view in a program.
 type View struct {
-	body       string
-	cursor     *Cursor
-	bgColor    *color.Color
-	bgColorSet bool
+	body    string
+	cursor  *Cursor
+	bgColor color.Color
 }
 
 // NewView is a helper function to create a new view. It takes a string,
@@ -139,20 +138,13 @@ func (v View) Cursor() *Cursor {
 // SetBackgroundColor sets the background color of the terminal window. If nil,
 // the background color will be removed.
 func (v *View) SetBackgroundColor(c color.Color) {
-	// We record whether the background color was set or not rather than
-	// accepting a pointer value for better Lip Gloss compatibility, since Lip
-	// Gloss does not use pointers for colors in lipgloss.Color().
-	v.bgColorSet = true
-	v.bgColor = &c
+	v.bgColor = c
 }
 
 // BackgroundColor returns the background color of the view. If the view does
 // not have a background color, it returns nil.
-func (v View) BackgroundColor() *color.Color {
-	if v.bgColorSet {
-		return v.bgColor
-	}
-	return nil
+func (v View) BackgroundColor() color.Color {
+	return v.bgColor
 }
 
 // Viewable is an optional interface that can be implemented by the main model
@@ -847,11 +839,13 @@ func (p *Program) render(model Model) {
 
 		// Set or clear the background color.
 		c := model.View().bgColor
-		if c != nil {
-			p.execute(ansi.SetBackgroundColor(*c))
-			p.setBg = *c
-		} else {
-			p.execute(ansi.ResetBackgroundColor)
+		if c != p.setBg {
+			if c != nil {
+				p.execute(ansi.SetBackgroundColor(c))
+			} else {
+				p.execute(ansi.ResetBackgroundColor)
+			}
+			p.setBg = c
 		}
 	case ViewModel:
 		view = model.View()
