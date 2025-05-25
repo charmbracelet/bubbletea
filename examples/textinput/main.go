@@ -70,7 +70,9 @@ func (m model) View() tea.View {
 		str += "\n"
 	}
 
-	return tea.NewView(str).Cursor(c)
+	v := tea.NewView(str)
+	v.SetCursor(c)
+	return v
 }
 
 func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }

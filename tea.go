@@ -118,22 +118,35 @@ func NewView(body string) View {
 	return View{body: body}
 }
 
-// Cursor renders a cursor. If nil, the cursor will be hidden. Use [NewCursor]
-// to create a cursor for a given position with default styles.
-func (v View) Cursor(c *Cursor) View {
-	v.cursor = c
-	return v
+// String returns the main body of the view, without additional metadata like
+// the cursor.
+func (v View) String() string {
+	return v.body
 }
 
-// BackgroundColor sets the background color of the terminal window. If nil,
+// SetCursor renders a cursor. If nil, the cursor will be hidden. Use [NewCursor]
+// to create a cursor for a given position with default styles.
+func (v *View) SetCursor(c *Cursor) {
+	v.cursor = c
+}
+
+// Cursor returns the cursor of the view. If the view does not have a
+// cursor, it returns nil.
+func (v View) Cursor() *Cursor {
+	return v.cursor
+}
+
+// SetBackgroundColor sets the background color of the terminal window. If nil,
 // the background color will be removed.
-func (v View) BackgroundColor(c color.Color) View {
+func (v *View) SetBackgroundColor(c color.Color) {
+	// We record whether the background color was set or not rather than
+	// accepting a pointer value for better Lip Gloss compatibility, since Lip
+	// Gloss does not use pointers for colors in lipgloss.Color().
 	v.bgColorSet = true
 	v.bgColor = &c
-	return v
 }
 
-func (v View) getBackgroundColor() *color.Color {
+func (v View) BackgroundColor() *color.Color {
 	if v.bgColorSet {
 		return v.bgColor
 	}
