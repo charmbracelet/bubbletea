@@ -104,6 +104,51 @@ type CursorModel interface {
 	View() (string, *Cursor)
 }
 
+// View represents a view in a program.
+type View struct {
+	body       string
+	cursor     *Cursor
+	bgColor    *color.Color
+	bgColorSet bool
+}
+
+// NewView is a helper function to create a new view. It takes a string,
+// representing the general portion of the user interface.
+func NewView(body string) View {
+	return View{body: body}
+}
+
+// Cursor renders a cursor. If nil, the cursor will be hidden. Use [NewCursor]
+// to create a cursor for a given position with default styles.
+func (v View) Cursor(c *Cursor) View {
+	v.cursor = c
+	return v
+}
+
+// BackgroundColor sets the background color of the terminal window. If nil,
+// the background color will be removed.
+func (v View) BackgroundColor(c color.Color) View {
+	v.bgColorSet = true
+	v.bgColor = &c
+	return v
+}
+
+func (v View) getBackgroundColor() *color.Color {
+	if v.bgColorSet {
+		return v.bgColor
+	}
+	return nil
+}
+
+// Viewable is an optional interface that can be implemented by the main model
+// to provide a [View]. If the main model does not implement a view interface,
+// the program won't render anything.
+//
+// Use [NewView] to create a new view.
+type Viewable interface {
+	View() View
+}
+
 // Cmd is an IO operation that returns a message when it's complete. If it's
 // nil it's considered a no-op. Use it for things like HTTP requests, timers,
 // saving and loading from disk, and so on.
@@ -770,7 +815,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // hasView returns true if the model has a view.
 func hasView(model Model) (ok bool) {
 	switch model.(type) {
-	case ViewModel, CursorModel:
+	case Viewable, ViewModel, CursorModel:
 		ok = true
 	}
 	return
@@ -781,6 +826,18 @@ func (p *Program) render(model Model) {
 	var view string
 	var cur *Cursor
 	switch model := model.(type) {
+	case Viewable:
+		view = model.View().body
+		cur = model.View().cursor
+
+		// Set or clear the background color.
+		c := model.View().bgColor
+		if c != nil {
+			p.execute(ansi.SetBackgroundColor(*c))
+			p.setBg = *c
+		} else {
+			p.execute(ansi.ResetBackgroundColor)
+		}
 	case ViewModel:
 		view = model.View()
 	case CursorModel:
