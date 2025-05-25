@@ -146,6 +146,8 @@ func (v *View) SetBackgroundColor(c color.Color) {
 	v.bgColor = &c
 }
 
+// BackgroundColor returns the background color of the view. If the view does
+// not have a background color, it returns nil.
 func (v View) BackgroundColor() *color.Color {
 	if v.bgColorSet {
 		return v.bgColor
