@@ -43,7 +43,7 @@ var ErrInterrupted = errors.New("program was interrupted")
 
 // Msg contain data from the result of a IO operation. Msgs trigger the update
 // function and, henceforth, the UI.
-type Msg interface{}
+type Msg any
 
 // Model contains the program's state as well as its core functions.
 type Model interface {
@@ -380,7 +380,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	switch {
 	case err != nil && traceOk && len(tracePath) > 0:
 		// We have a trace filepath.
-		if _, err := LogToFile(tracePath, "bubbletea"); err == nil {
+		if _, logErr := LogToFile(tracePath, "bubbletea"); logErr == nil {
 			enableTracing()
 		}
 	case err == nil && traceEnabled:
@@ -1114,7 +1114,7 @@ func (p *Program) shutdown(kill bool) {
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
 // the terminal to a usable state.
-func (p *Program) recoverFromPanic(r interface{}) {
+func (p *Program) recoverFromPanic(r any) {
 	select {
 	case p.errs <- ErrProgramPanic:
 	default:
@@ -1216,7 +1216,7 @@ func (p *Program) RestoreTerminal() error {
 // and will persist across renders by the Program.
 //
 // If the altscreen is active no output will be printed.
-func (p *Program) Println(args ...interface{}) {
+func (p *Program) Println(args ...any) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprint(args...),
 	}
@@ -1230,7 +1230,7 @@ func (p *Program) Println(args ...interface{}) {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func (p *Program) Printf(template string, args ...interface{}) {
+func (p *Program) Printf(template string, args ...any) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
 	}
