@@ -30,6 +30,7 @@ type model struct {
 	focusIndex int
 	inputs     []textinput.Model
 	cursorMode cursor.Mode
+	quitting   bool
 }
 
 func initialModel() model {
@@ -40,12 +41,15 @@ func initialModel() model {
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
-		t.Styles.Cursor.Color = lipgloss.Color("205")
 		t.CharLimit = 32
-		t.Styles.Focused.Prompt = focusedStyle
-		t.Styles.Focused.Text = focusedStyle
-		t.Styles.Blurred.Prompt = blurredStyle
-		t.Styles.Focused.Text = focusedStyle
+
+		s := t.Styles()
+		s.Cursor.Color = lipgloss.Color("205")
+		s.Focused.Prompt = focusedStyle
+		s.Focused.Text = focusedStyle
+		s.Blurred.Prompt = blurredStyle
+		s.Focused.Text = focusedStyle
+		t.SetStyles(s)
 
 		switch i {
 		case 0:
@@ -75,6 +79,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
+			m.quitting = true
 			return m, tea.Quit
 
 		// Change cursor mode
@@ -85,7 +90,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := range m.inputs {
-				m.inputs[i].Styles.Cursor.Blink = m.cursorMode == cursor.CursorBlink
+				s := m.inputs[i].Styles()
+				s.Cursor.Blink = m.cursorMode == cursor.CursorBlink
+				m.inputs[i].SetStyles(s)
 			}
 			return m, tea.Batch(cmds...)
 
@@ -156,7 +163,9 @@ func (m model) View() (string, *tea.Cursor) {
 		}
 		if m.cursorMode != cursor.CursorHide && in.Focused() {
 			c = in.Cursor()
-			c.Y += i
+			if c != nil {
+				c.Y += i
+			}
 		}
 	}
 
@@ -169,6 +178,10 @@ func (m model) View() (string, *tea.Cursor) {
 	b.WriteString(helpStyle.Render("cursor mode is "))
 	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
+
+	if m.quitting {
+		b.WriteRune('\n')
+	}
 
 	return b.String(), c
 }

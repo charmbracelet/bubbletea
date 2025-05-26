@@ -25,12 +25,13 @@ type (
 type model struct {
 	textInput textinput.Model
 	err       error
+	quitting  bool
 }
 
 func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "Pikachu"
-	ti.VirtualCursor = false
+	ti.SetVirtualCursor(false)
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.SetWidth(20)
@@ -52,6 +53,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "enter", "ctrl+c", "esc":
+			m.quitting = true
 			return m, tea.Quit
 		}
 
@@ -67,11 +69,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() (string, *tea.Cursor) {
 	var c *tea.Cursor
-	if !m.textInput.VirtualCursor {
+	if !m.textInput.VirtualCursor() {
 		c = m.textInput.Cursor()
 		c.Y += lipgloss.Height(m.headerView())
 	}
-	return lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView()), c
+
+	str := lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView())
+	if m.quitting {
+		str += "\n"
+	}
+
+	return str, c
 }
+
 func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }
 func (m model) footerView() string { return "\n(esc to quit)" }
