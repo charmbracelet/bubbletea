@@ -30,8 +30,8 @@ type model struct {
 func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
-	ti.VirtualCursor = false
-	ti.Styles = textarea.DefaultStyles(true) // default to dark styles.
+	ti.SetVirtualCursor(false)
+	ti.SetStyles(textarea.DefaultStyles(true)) // default to dark styles.
 	ti.Focus()
 
 	return model{
@@ -50,7 +50,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.BackgroundColorMsg:
-		m.textarea.Styles = textarea.DefaultStyles(msg.IsDark())
+		// Update styling now that we know the background color.
+		m.textarea.SetStyles(textarea.DefaultStyles(msg.IsDark()))
 
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -88,7 +89,7 @@ func (m model) View() (string, *tea.Cursor) {
 	)
 
 	var c *tea.Cursor
-	if !m.textarea.VirtualCursor {
+	if !m.textarea.VirtualCursor() {
 		c = m.textarea.Cursor()
 
 		// Set the y offset of the cursor based on the position of the textarea

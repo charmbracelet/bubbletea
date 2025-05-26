@@ -51,16 +51,20 @@ func newTextarea() textarea.Model {
 	t.Prompt = ""
 	t.Placeholder = "Type something"
 	t.ShowLineNumbers = true
-	t.VirtualCursor = false
-	t.Styles.Cursor.Color = cursorColor
-	t.Styles.Focused.Placeholder = focusedPlaceholderStyle
-	t.Styles.Blurred.Placeholder = placeholderStyle
-	t.Styles.Focused.CursorLine = cursorLineStyle
-	t.Styles.Focused.CursorLineNumber = cursorLineStyle
-	t.Styles.Focused.Base = focusedBorderStyle
-	t.Styles.Blurred.Base = blurredBorderStyle
-	t.Styles.Focused.EndOfBuffer = endOfBufferStyle
-	t.Styles.Blurred.EndOfBuffer = endOfBufferStyle
+	t.SetVirtualCursor(true)
+
+	s := t.Styles()
+	s.Cursor.Color = cursorColor
+	s.Focused.Placeholder = focusedPlaceholderStyle
+	s.Blurred.Placeholder = placeholderStyle
+	s.Focused.CursorLine = cursorLineStyle
+	s.Focused.CursorLineNumber = cursorLineStyle
+	s.Focused.Base = focusedBorderStyle
+	s.Blurred.Base = blurredBorderStyle
+	s.Focused.EndOfBuffer = endOfBufferStyle
+	s.Blurred.EndOfBuffer = endOfBufferStyle
+	t.SetStyles(s)
+
 	t.KeyMap.DeleteWordBackward.SetEnabled(false)
 	t.KeyMap.LineNext = key.NewBinding(key.WithKeys("down"))
 	t.KeyMap.LinePrevious = key.NewBinding(key.WithKeys("up"))
@@ -104,7 +108,7 @@ func newModel() model {
 			),
 		},
 	}
-	for i := 0; i < initialInputs; i++ {
+	for i := range initialInputs {
 		m.inputs[i] = newTextarea()
 	}
 	m.inputs[m.focus].Focus()
@@ -203,7 +207,7 @@ func (m model) View() string {
 
 func (m model) Cursor() *tea.Cursor {
 	focusedInput := m.inputs[m.focus]
-	if focusedInput.VirtualCursor {
+	if focusedInput.VirtualCursor() {
 		return nil
 	}
 
@@ -214,7 +218,7 @@ func (m model) Cursor() *tea.Cursor {
 	//
 	// To do this we calculate the width of all textareas to the left of
 	// the focused one.
-	for i := 0; i < m.focus; i++ {
+	for i := range m.focus {
 		c.X += lipgloss.Width(views[i])
 	}
 
