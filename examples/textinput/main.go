@@ -36,10 +36,7 @@ func initialModel() model {
 	ti.CharLimit = 156
 	ti.SetWidth(20)
 
-	return model{
-		textInput: ti,
-		err:       nil,
-	}
+	return model{textInput: ti}
 }
 
 func (m model) Init() tea.Cmd {
@@ -56,11 +53,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		}
-
-	// We handle errors just like any other message
-	case errMsg:
-		m.err = msg
-		return m, nil
 	}
 
 	m.textInput, cmd = m.textInput.Update(msg)
