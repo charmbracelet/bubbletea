@@ -229,6 +229,33 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 	}
 }
 
+// WithAddedFilter supplies an event filter that will be invoked before Bubble
+// Tea processes a tea.Msg. Multiple filters may be chained using this option.
+// Filters are invoked in order. Any filter that returns nil stops the remaining
+// filters form being invoked, and the event will be ignored.
+//
+// See WithFilter for more information about filtering.
+func WithAddedFilter(filter func(Model, Msg) Msg) ProgramOption {
+	return func(p *Program) {
+		prev := p.filter
+		if prev == nil {
+			WithFilter(filter)(p)
+			return
+		}
+
+		WithFilter(func(m Model, msg Msg) Msg {
+			// Invoke the previous filter in the chain.
+			msg = prev(m, msg)
+			if msg == nil {
+				// Previous filter ignored the event.
+				return msg
+			}
+
+			return filter(m, msg)
+		})(p)
+	}
+}
+
 // WithFPS sets a custom maximum FPS at which the renderer should run. If
 // less than 1, the default value of 60 will be used. If over 120, the FPS
 // will be capped at 120.

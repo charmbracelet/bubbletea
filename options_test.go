@@ -140,4 +140,76 @@ func TestOptions(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("multiple filters", func(t *testing.T) {
+		type multiIncrement struct {
+			num int
+		}
+		type eventuallyIncrementMsg incrementMsg
+
+		// This filter converts multiIncrement to a sequence of eventuallyIncrementMsg.
+		a := func(m Model, msg Msg) Msg {
+			if mul, ok := msg.(multiIncrement); ok {
+				var cmds []Cmd
+				for range mul.num {
+					cmds = append(cmds, func() Msg {
+						return eventuallyIncrementMsg{}
+					})
+				}
+				return sequenceMsg(cmds)
+			}
+			return msg
+		}
+
+		// This filter converts eventuallyIncrementMsg into incrementMsg.
+		// If loaded out of order, the c filter breaks.
+		b := func(_ Model, msg Msg) Msg {
+			if msg, ok := msg.(eventuallyIncrementMsg); ok {
+				return incrementMsg(msg)
+			}
+			return msg
+		}
+
+		// This filter quits after 10 incrementMsg.
+		// Requires the b filter to work.
+		c := func(m Model, msg Msg) Msg {
+			p := m.(*testModel)
+			// Stop after 10 increments.
+			if _, ok := msg.(incrementMsg); ok {
+				if v := p.counter.Load(); v != nil && v.(int) >= 10 {
+					return QuitMsg{}
+				}
+			}
+
+			return msg
+		}
+
+		var (
+			buf bytes.Buffer
+			in  bytes.Buffer
+			m   = &testModel{}
+		)
+		p := NewProgram(m,
+			// The combination of filters a, b, and c in this test causes the test
+			// to correctly quit at 10 increments.
+
+			// Convert into multiple eventuallyIncrementMsg.
+			WithAddedFilter(a),
+			// Convert into incrementMsg.
+			WithAddedFilter(b),
+			// Quit when the number of messages reaches 10.
+			WithAddedFilter(c),
+
+			WithInput(&in),
+			WithOutput(&buf))
+		go p.Send(multiIncrement{num: 20})
+
+		if _, err := p.Run(); err != nil {
+			t.Fatal(err)
+		}
+
+		if m.counter.Load().(int) != 10 {
+			t.Fatalf("counter should be 10, got %d", m.counter.Load())
+		}
+	})
 }
