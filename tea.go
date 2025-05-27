@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
@@ -107,19 +108,35 @@ type CursorModel interface {
 // View represents a view in a program.
 type View struct {
 	body    string
+	canvas  *lipgloss.Canvas
 	cursor  *Cursor
 	bgColor color.Color
 }
 
+// ViewConstructor is a type constraint for the [NewView] function.
+type ViewConstructor interface {
+	string | *lipgloss.Canvas
+}
+
 // NewView is a helper function to create a new view. It takes a string,
 // representing the general portion of the user interface.
-func NewView(body string) View {
-	return View{body: body}
+func NewView[T ViewConstructor](frame T) View {
+	var v View
+	switch t := any(frame).(type) {
+	case string:
+		v.body = t
+	case *lipgloss.Canvas:
+		v.canvas = t
+	}
+	return v
 }
 
 // String returns the main body of the view, without additional metadata like
 // the cursor.
 func (v View) String() string {
+	if v.canvas != nil {
+		return v.canvas.Render()
+	}
 	return v.body
 }
 
@@ -329,6 +346,9 @@ type Program struct {
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
 	setBg, setFg, setCc color.Color
+
+	// Lip Gloss canvas instance, used for hit detection.
+	canvas *lipgloss.Canvas
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -830,12 +850,15 @@ func hasView(model Model) (ok bool) {
 
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
-	var view string
+	var frame string
 	var cur *Cursor
 	switch model := model.(type) {
 	case Viewable:
-		view = model.View().body
+		frame = model.View().String()
 		cur = model.View().cursor
+
+		// Store or clear the lipgloss.Canvas.
+		p.canvas = model.View().canvas
 
 		// Set or clear the background color.
 		c := model.View().bgColor
@@ -848,9 +871,9 @@ func (p *Program) render(model Model) {
 			p.setBg = c
 		}
 	case ViewModel:
-		view = model.View()
+		frame = model.View()
 	case CursorModel:
-		view, cur = model.View()
+		frame, cur = model.View()
 	}
 
 	// Ensure we reset the cursor color on exit.
@@ -858,7 +881,7 @@ func (p *Program) render(model Model) {
 		p.setCc = cur.Color
 	}
 
-	p.renderer.render(view, cur) // send view to renderer
+	p.renderer.render(frame, cur) // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
