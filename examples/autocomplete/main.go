@@ -87,8 +87,13 @@ func (k keymap) FullHelp() [][]key.Binding {
 func initialModel() model {
 	ti := textinput.New()
 	ti.Prompt = "charmbracelet/"
-	ti.Styles.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
-	ti.Styles.Cursor.Color = lipgloss.Color("63")
+
+	s := ti.Styles()
+	s.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
+	s.Cursor.Color = lipgloss.Color("63")
+	ti.SetStyles(s)
+
+	ti.SetVirtualCursor(false)
 	ti.Focus()
 	ti.CharLimit = 50
 	ti.SetWidth(20)
@@ -116,7 +121,9 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Cursor() *tea.Cursor {
 	c := m.textInput.Cursor()
-	c.Y += lipgloss.Height(m.headerView())
+	if c != nil {
+		c.Y += lipgloss.Height(m.headerView())
+	}
 	return c
 }
 

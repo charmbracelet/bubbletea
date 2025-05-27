@@ -151,6 +151,9 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 	s.lastFrame = &frame
 	s.lastCur = cur
 	ss := tv.NewStyledString(s.method, frame)
+	ssArea := ss.Bounds()
+	ssArea.Min.X = 0
+	ssArea.Max.X = s.width
 	bufHeight := s.height
 	if !s.altScreen {
 		// Inline mode resizes the screen based on the frame height and
@@ -159,21 +162,14 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		bufHeight = ss.Buffer.Height()
+		bufHeight = ssArea.Dy()
 	}
 
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.buf.Resize(s.width, bufHeight)
 	s.buf.Clear()
-	for y := 0; y < ss.Buffer.Height(); y++ {
-		for x := 0; x < ss.Buffer.Width(); x++ {
-			c := ss.Buffer.CellAt(x, y)
-			if c != nil && c.Width > 0 {
-				s.buf.SetCell(x, y, c)
-			}
-		}
-	}
+	ss.Display(s.buf, ssArea) //nolint:errcheck
 
 	if cur == nil {
 		enableTextCursor(s, false)
@@ -301,7 +297,7 @@ func (s *cursedRenderer) hideCursor() {
 // insertAbove implements renderer.
 func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Lock()
-	s.scr.PrependStyledString(s.buf, s.method, lines)
+	s.scr.PrependString(s.buf, lines)
 	s.mu.Unlock()
 }
 

@@ -33,7 +33,7 @@ type model struct {
 func initialModel() model {
 	ta := textarea.New()
 	ta.Placeholder = "Send a message..."
-	ta.VirtualCursor = false
+	ta.SetVirtualCursor(false)
 	ta.Focus()
 
 	ta.Prompt = "┃ "
@@ -43,7 +43,9 @@ func initialModel() model {
 	ta.SetHeight(3)
 
 	// Remove cursor line styling
-	ta.Styles.Focused.CursorLine = lipgloss.NewStyle()
+	s := ta.Styles()
+	s.Focused.CursorLine = lipgloss.NewStyle()
+	ta.SetStyles(s)
 
 	ta.ShowLineNumbers = false
 
@@ -116,14 +118,15 @@ func (m model) View() string {
 // To render a real cursor implement the Cursor() method on your model. To hide
 // the cursor, return nil.
 func (m model) Cursor() *tea.Cursor {
-	if m.textarea.VirtualCursor {
-		return nil
-	}
-
 	// Textarea provides a cursor implementation that can be used directly.
 	// This is the cursor position relative to the textarea, so you'll need to
 	// calculate the absolute position to the textarea.
+	//
+	// Note that when the virtual cursor is enabled, textarea.Cursor() will be
+	// nil.
 	c := m.textarea.Cursor()
-	c.Y += lipgloss.Height(m.viewport.View())
+	if c != nil {
+		c.Y += lipgloss.Height(m.viewport.View())
+	}
 	return c
 }

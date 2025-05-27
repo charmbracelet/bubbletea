@@ -11,7 +11,7 @@ replace github.com/charmbracelet/tv => ../../tv
 replace github.com/charmbracelet/x/ansi => ../../x/ansi
 
 require (
-	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20250414140720-bb6a2a461dd8
+	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20250526131538-b3f0c9e42318
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-beta.1.0.20250420102230-7ecd51915026
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
