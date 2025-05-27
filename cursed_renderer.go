@@ -170,7 +170,7 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 		for x := 0; x < ss.Buffer.Width(); x++ {
 			c := ss.Buffer.CellAt(x, y)
 			if c != nil && c.Width > 0 {
-				s.buf.SetCell(x, y, ss.Buffer.CellAt(x, y))
+				s.buf.SetCell(x, y, c)
 			}
 		}
 	}

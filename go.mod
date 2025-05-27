@@ -4,6 +4,8 @@ go 1.24.2
 
 replace github.com/charmbracelet/tv => ../tv
 
+replace github.com/charmbracelet/x/ansi => ../x/ansi
+
 require (
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/tv v0.0.0-00010101000000-000000000000
