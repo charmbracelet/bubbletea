@@ -169,7 +169,7 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 	// we erase any old content.
 	s.buf.Resize(s.width, bufHeight)
 	s.buf.Clear()
-	ss.Display(s.buf, ssArea) //nolint:errcheck
+	ss.Display(s.buf, ssArea) //nolint:errcheck,gosec
 
 	if cur == nil {
 		enableTextCursor(s, false)
