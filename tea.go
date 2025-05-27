@@ -854,14 +854,13 @@ func (p *Program) render(model Model) {
 	var cur *Cursor
 	switch model := model.(type) {
 	case Viewable:
-		frame = model.View().String()
-		cur = model.View().cursor
-
-		// Store or clear the lipgloss.Canvas.
-		p.canvas = model.View().canvas
+		v := model.View()
+		frame = v.String()
+		cur = v.cursor
+		p.canvas = v.canvas // store or clear the lipgloss.Canvas
 
 		// Set or clear the background color.
-		c := model.View().bgColor
+		c := v.bgColor
 		if c != p.setBg {
 			if c != nil {
 				p.execute(ansi.SetBackgroundColor(c))
