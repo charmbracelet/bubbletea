@@ -68,6 +68,27 @@ type ViewModel interface {
 	View() string
 }
 
+// ViewableModel is an optional interface that can be implemented by the main
+// model to provide a view that can be composed of multiple layers. If the
+// main model does not implement a view interface, the program won't render
+// anything.
+type ViewableModel interface {
+	// View returns a [View] that contains the layers to be rendered. The
+	// layers are rendered based on their z-index, with the lowest z-index
+	// rendered first and the highest z-index rendered last. If some layers
+	// have the same z-index, they are rendered in the order they were added to
+	// the view.
+	// The cursor is optional, if it's nil the cursor will be hidden.
+	View() View
+}
+
+// View represents a terminal view that can be composed of multiple layers.
+// It can also contain a cursor that will be rendered on top of the layers.
+type View struct {
+	Layers Layers
+	Cursor *Cursor
+}
+
 // Cursor represents a cursor on the terminal screen.
 type Cursor struct {
 	// Position is a [Position] that determines the cursor's position on the
@@ -761,7 +782,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // hasView returns true if the model has a view.
 func hasView(model Model) (ok bool) {
 	switch model.(type) {
-	case ViewModel, CursorModel:
+	case ViewModel, CursorModel, ViewableModel:
 		ok = true
 	}
 	return
@@ -769,21 +790,9 @@ func hasView(model Model) (ok bool) {
 
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
-	var view string
-	var cur *Cursor
-	switch model := model.(type) {
-	case ViewModel:
-		view = model.View()
-	case CursorModel:
-		view, cur = model.View()
+	if p.renderer != nil {
+		p.renderer.render(model, p) // send view to renderer
 	}
-
-	// Ensure we reset the cursor color on exit.
-	if cur != nil {
-		p.setCc = cur.Color
-	}
-
-	p.renderer.render(view, cur) // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets

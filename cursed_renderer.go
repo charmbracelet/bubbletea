@@ -131,9 +131,23 @@ func (s *cursedRenderer) flush() error {
 }
 
 // render implements renderer.
-func (s *cursedRenderer) render(frame string, cur *Cursor) {
+func (s *cursedRenderer) render(model Model, p *Program) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	var view *View
+	var frame string
+	var cur *Cursor
+	switch model := model.(type) {
+	case ViewModel:
+		frame = model.View()
+	case CursorModel:
+		frame, cur = model.View()
+	case ViewableModel:
+		viewable := model.View()
+		view = &viewable
+		cur = view.Cursor
+	}
 
 	// If an empty string was passed we should clear existing output and
 	// rendering nothing. Rather than introduce additional state to manage
@@ -148,12 +162,25 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 		return
 	}
 
-	s.lastFrame = &frame
+	// Ensure we reset the cursor color on exit.
+	if cur != nil {
+		p.setCc = cur.Color
+	}
+
 	s.lastCur = cur
-	ss := tv.NewStyledString(s.method, frame)
-	ssArea := ss.Bounds()
-	ssArea.Min.X = 0
-	ssArea.Max.X = s.width
+
+	var ss *tv.StyledString
+	var frameArea tv.Rectangle
+	if view == nil {
+		ss = tv.NewStyledString(s.method, frame)
+		frameArea = ss.Bounds()
+		s.lastFrame = &frame
+	} else {
+		frameArea = view.Layers.Bounds()
+	}
+
+	frameArea.Min.X = 0
+	frameArea.Max.X = s.width
 	bufHeight := s.height
 	if !s.altScreen {
 		// Inline mode resizes the screen based on the frame height and
@@ -162,14 +189,32 @@ func (s *cursedRenderer) render(frame string, cur *Cursor) {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		bufHeight = ssArea.Dy()
+		bufHeight = frameArea.Dy()
 	}
 
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.buf.Resize(s.width, bufHeight)
 	s.buf.Clear()
-	ss.Display(s.buf, ssArea) //nolint:errcheck,gosec
+
+	if view == nil {
+		ss.Display(s.buf, frameArea) //nolint:errcheck,gosec
+	} else {
+		// Render the view layers into the buffer.
+		for _, l := range view.Layers {
+			if l == nil {
+				continue
+			}
+			area := l.Bounds()
+			s.buf.ClearArea(area)
+			ss := tv.NewStyledString(s.method, l.Content())
+			ss.Display(s.buf, area) //nolint:errcheck,gosec
+		}
+		// Cache the last rendered frame so we can avoid re-rendering it if
+		// the frame hasn't changed.
+		lastFrame := s.buf.Render()
+		s.lastFrame = &lastFrame
+	}
 
 	if cur == nil {
 		enableTextCursor(s, false)

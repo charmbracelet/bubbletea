@@ -44,7 +44,7 @@ func (nilRenderer) flush() error { return nil }
 func (nilRenderer) close() error { return nil }
 
 // render implements the Renderer interface.
-func (nilRenderer) render(string, *Cursor) {}
+func (nilRenderer) render(Model, *Program) {}
 
 // reset implements the Renderer interface.
 func (nilRenderer) reset() {}

@@ -19,7 +19,7 @@ type renderer interface {
 	close() error
 
 	// render renders a frame to the output.
-	render(string, *Cursor)
+	render(Model, *Program)
 
 	// flush flushes the renderer's buffer to the output.
 	flush() error
