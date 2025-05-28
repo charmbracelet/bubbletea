@@ -133,9 +133,6 @@ func (s *cursedRenderer) flush() error {
 
 // render implements renderer.
 func (s *cursedRenderer) render(model Model, p *Program) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	var view *View
 	var frame string
 	var cur *Cursor
@@ -148,6 +145,8 @@ func (s *cursedRenderer) render(model Model, p *Program) {
 		viewable := model.View()
 		view = &viewable
 		cur = view.Cursor
+		renderLayers(view.Layers, s.buf, s.method)
+		frame = s.buf.Render()
 	}
 
 	// If an empty string was passed we should clear existing output and
@@ -157,6 +156,9 @@ func (s *cursedRenderer) render(model Model, p *Program) {
 	if frame == "" {
 		frame = " "
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	if s.lastFrame != nil && frame == *s.lastFrame &&
 		(s.lastCur == nil && cur == nil || s.lastCur != nil && cur != nil && *s.lastCur == *cur) {
@@ -213,7 +215,7 @@ func (s *cursedRenderer) render(model Model, p *Program) {
 		}
 		// Cache the last rendered frame so we can avoid re-rendering it if
 		// the frame hasn't changed.
-		lastFrame := s.buf.Render()
+		lastFrame := frame
 		s.lastFrame = &lastFrame
 	}
 
