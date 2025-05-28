@@ -3,6 +3,7 @@ package tea
 import (
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/charmbracelet/colorprofile"
@@ -198,7 +199,7 @@ func (s *cursedRenderer) render(model Model, p *Program) {
 	s.buf.Clear()
 
 	if view == nil {
-		ss.Display(s.buf, frameArea) //nolint:errcheck,gosec
+		ss.RenderComponent(s.buf, frameArea) //nolint:errcheck,gosec
 	} else {
 		// Render the view layers into the buffer.
 		for _, l := range view.Layers {
@@ -208,7 +209,7 @@ func (s *cursedRenderer) render(model Model, p *Program) {
 			area := l.Bounds()
 			s.buf.ClearArea(area)
 			ss := tv.NewStyledString(s.method, l.Content())
-			ss.Display(s.buf, area) //nolint:errcheck,gosec
+			ss.RenderComponent(s.buf, area) //nolint:errcheck,gosec
 		}
 		// Cache the last rendered frame so we can avoid re-rendering it if
 		// the frame hasn't changed.

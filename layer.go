@@ -257,6 +257,6 @@ func renderLayers(l []*Layer, buf *tv.Buffer, method ansi.Method) {
 		area := layer.Bounds()
 		buf.ClearArea(area)
 		ss := tv.NewStyledString(method, layer.Content())
-		ss.Display(buf, area) //nolint:errcheck,gosec
+		ss.RenderComponent(buf, area) //nolint:errcheck,gosec
 	}
 }
