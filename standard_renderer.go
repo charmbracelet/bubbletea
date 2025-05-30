@@ -140,7 +140,7 @@ func (r *standardRenderer) flush() error {
 	}
 
 	// Paint new lines.
-	for i := 0; i < len(newLines); i++ {
+	for i := range newLines {
 		canSkip := !flushQueuedMessages && // Queuing messages triggers repaint -> we don't have access to previous frame content.
 			len(r.lastRenderedLines) > i && r.lastRenderedLines[i] == newLines[i] // Previously rendered line is the same.
 

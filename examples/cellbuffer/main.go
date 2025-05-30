@@ -117,7 +117,7 @@ func (c cellbuffer) ready() bool {
 
 func (c cellbuffer) String() string {
 	var b strings.Builder
-	for i := 0; i < len(c.cells); i++ {
+	for i := range c.cells {
 		if i > 0 && i%c.stride == 0 && i < len(c.cells)-1 {
 			b.WriteRune('\n')
 		}

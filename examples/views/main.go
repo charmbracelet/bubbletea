@@ -235,7 +235,7 @@ func progressbar(percent float64) string {
 
 	fullSize := int(math.Round(w * percent))
 	var fullCells string
-	for i := 0; i < fullSize; i++ {
+	for i := range fullSize {
 		fullCells += ramp[i].Render(progressFullChar)
 	}
 

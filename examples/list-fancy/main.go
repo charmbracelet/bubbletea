@@ -186,7 +186,7 @@ func initialModel() model {
 	var itemGenerator randomItemGenerator
 	const numItems = 24
 	items := make([]list.Item, numItems)
-	for i := 0; i < numItems; i++ {
+	for i := range numItems {
 		items[i] = itemGenerator.next()
 	}
 
