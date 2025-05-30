@@ -3,13 +3,13 @@ package tea
 import (
 	"fmt"
 
-	"github.com/charmbracelet/tv"
+	"github.com/charmbracelet/uv"
 )
 
 const (
 	// KeyExtended is a special key code used to signify that a key event
 	// contains multiple runes.
-	KeyExtended = tv.KeyExtended
+	KeyExtended = uv.KeyExtended
 )
 
 // Special key symbols.
@@ -17,174 +17,174 @@ const (
 
 	// Special keys.
 
-	KeyUp     = tv.KeyUp
-	KeyDown   = tv.KeyDown
-	KeyRight  = tv.KeyRight
-	KeyLeft   = tv.KeyLeft
-	KeyBegin  = tv.KeyBegin
-	KeyFind   = tv.KeyFind
-	KeyInsert = tv.KeyInsert
-	KeyDelete = tv.KeyDelete
-	KeySelect = tv.KeySelect
-	KeyPgUp   = tv.KeyPgUp
-	KeyPgDown = tv.KeyPgDown
-	KeyHome   = tv.KeyHome
-	KeyEnd    = tv.KeyEnd
+	KeyUp     = uv.KeyUp
+	KeyDown   = uv.KeyDown
+	KeyRight  = uv.KeyRight
+	KeyLeft   = uv.KeyLeft
+	KeyBegin  = uv.KeyBegin
+	KeyFind   = uv.KeyFind
+	KeyInsert = uv.KeyInsert
+	KeyDelete = uv.KeyDelete
+	KeySelect = uv.KeySelect
+	KeyPgUp   = uv.KeyPgUp
+	KeyPgDown = uv.KeyPgDown
+	KeyHome   = uv.KeyHome
+	KeyEnd    = uv.KeyEnd
 
 	// Keypad keys.
 
-	KeyKpEnter    = tv.KeyKpEnter
-	KeyKpEqual    = tv.KeyKpEqual
-	KeyKpMultiply = tv.KeyKpMultiply
-	KeyKpPlus     = tv.KeyKpPlus
-	KeyKpComma    = tv.KeyKpComma
-	KeyKpMinus    = tv.KeyKpMinus
-	KeyKpDecimal  = tv.KeyKpDecimal
-	KeyKpDivide   = tv.KeyKpDivide
-	KeyKp0        = tv.KeyKp0
-	KeyKp1        = tv.KeyKp1
-	KeyKp2        = tv.KeyKp2
-	KeyKp3        = tv.KeyKp3
-	KeyKp4        = tv.KeyKp4
-	KeyKp5        = tv.KeyKp5
-	KeyKp6        = tv.KeyKp6
-	KeyKp7        = tv.KeyKp7
-	KeyKp8        = tv.KeyKp8
-	KeyKp9        = tv.KeyKp9
+	KeyKpEnter    = uv.KeyKpEnter
+	KeyKpEqual    = uv.KeyKpEqual
+	KeyKpMultiply = uv.KeyKpMultiply
+	KeyKpPlus     = uv.KeyKpPlus
+	KeyKpComma    = uv.KeyKpComma
+	KeyKpMinus    = uv.KeyKpMinus
+	KeyKpDecimal  = uv.KeyKpDecimal
+	KeyKpDivide   = uv.KeyKpDivide
+	KeyKp0        = uv.KeyKp0
+	KeyKp1        = uv.KeyKp1
+	KeyKp2        = uv.KeyKp2
+	KeyKp3        = uv.KeyKp3
+	KeyKp4        = uv.KeyKp4
+	KeyKp5        = uv.KeyKp5
+	KeyKp6        = uv.KeyKp6
+	KeyKp7        = uv.KeyKp7
+	KeyKp8        = uv.KeyKp8
+	KeyKp9        = uv.KeyKp9
 
 	// The following are keys defined in the Kitty keyboard protocol.
 	// XXX: Investigate the names of these keys.
-	KeyKpSep    = tv.KeyKpSep
-	KeyKpUp     = tv.KeyKpUp
-	KeyKpDown   = tv.KeyKpDown
-	KeyKpLeft   = tv.KeyKpLeft
-	KeyKpRight  = tv.KeyKpRight
-	KeyKpPgUp   = tv.KeyKpPgUp
-	KeyKpPgDown = tv.KeyKpPgDown
-	KeyKpHome   = tv.KeyKpHome
-	KeyKpEnd    = tv.KeyKpEnd
-	KeyKpInsert = tv.KeyKpInsert
-	KeyKpDelete = tv.KeyKpDelete
-	KeyKpBegin  = tv.KeyKpBegin
+	KeyKpSep    = uv.KeyKpSep
+	KeyKpUp     = uv.KeyKpUp
+	KeyKpDown   = uv.KeyKpDown
+	KeyKpLeft   = uv.KeyKpLeft
+	KeyKpRight  = uv.KeyKpRight
+	KeyKpPgUp   = uv.KeyKpPgUp
+	KeyKpPgDown = uv.KeyKpPgDown
+	KeyKpHome   = uv.KeyKpHome
+	KeyKpEnd    = uv.KeyKpEnd
+	KeyKpInsert = uv.KeyKpInsert
+	KeyKpDelete = uv.KeyKpDelete
+	KeyKpBegin  = uv.KeyKpBegin
 
 	// Function keys.
 
-	KeyF1  = tv.KeyF1
-	KeyF2  = tv.KeyF2
-	KeyF3  = tv.KeyF3
-	KeyF4  = tv.KeyF4
-	KeyF5  = tv.KeyF5
-	KeyF6  = tv.KeyF6
-	KeyF7  = tv.KeyF7
-	KeyF8  = tv.KeyF8
-	KeyF9  = tv.KeyF9
-	KeyF10 = tv.KeyF10
-	KeyF11 = tv.KeyF11
-	KeyF12 = tv.KeyF12
-	KeyF13 = tv.KeyF13
-	KeyF14 = tv.KeyF14
-	KeyF15 = tv.KeyF15
-	KeyF16 = tv.KeyF16
-	KeyF17 = tv.KeyF17
-	KeyF18 = tv.KeyF18
-	KeyF19 = tv.KeyF19
-	KeyF20 = tv.KeyF20
-	KeyF21 = tv.KeyF21
-	KeyF22 = tv.KeyF22
-	KeyF23 = tv.KeyF23
-	KeyF24 = tv.KeyF24
-	KeyF25 = tv.KeyF25
-	KeyF26 = tv.KeyF26
-	KeyF27 = tv.KeyF27
-	KeyF28 = tv.KeyF28
-	KeyF29 = tv.KeyF29
-	KeyF30 = tv.KeyF30
-	KeyF31 = tv.KeyF31
-	KeyF32 = tv.KeyF32
-	KeyF33 = tv.KeyF33
-	KeyF34 = tv.KeyF34
-	KeyF35 = tv.KeyF35
-	KeyF36 = tv.KeyF36
-	KeyF37 = tv.KeyF37
-	KeyF38 = tv.KeyF38
-	KeyF39 = tv.KeyF39
-	KeyF40 = tv.KeyF40
-	KeyF41 = tv.KeyF41
-	KeyF42 = tv.KeyF42
-	KeyF43 = tv.KeyF43
-	KeyF44 = tv.KeyF44
-	KeyF45 = tv.KeyF45
-	KeyF46 = tv.KeyF46
-	KeyF47 = tv.KeyF47
-	KeyF48 = tv.KeyF48
-	KeyF49 = tv.KeyF49
-	KeyF50 = tv.KeyF50
-	KeyF51 = tv.KeyF51
-	KeyF52 = tv.KeyF52
-	KeyF53 = tv.KeyF53
-	KeyF54 = tv.KeyF54
-	KeyF55 = tv.KeyF55
-	KeyF56 = tv.KeyF56
-	KeyF57 = tv.KeyF57
-	KeyF58 = tv.KeyF58
-	KeyF59 = tv.KeyF59
-	KeyF60 = tv.KeyF60
-	KeyF61 = tv.KeyF61
-	KeyF62 = tv.KeyF62
-	KeyF63 = tv.KeyF63
+	KeyF1  = uv.KeyF1
+	KeyF2  = uv.KeyF2
+	KeyF3  = uv.KeyF3
+	KeyF4  = uv.KeyF4
+	KeyF5  = uv.KeyF5
+	KeyF6  = uv.KeyF6
+	KeyF7  = uv.KeyF7
+	KeyF8  = uv.KeyF8
+	KeyF9  = uv.KeyF9
+	KeyF10 = uv.KeyF10
+	KeyF11 = uv.KeyF11
+	KeyF12 = uv.KeyF12
+	KeyF13 = uv.KeyF13
+	KeyF14 = uv.KeyF14
+	KeyF15 = uv.KeyF15
+	KeyF16 = uv.KeyF16
+	KeyF17 = uv.KeyF17
+	KeyF18 = uv.KeyF18
+	KeyF19 = uv.KeyF19
+	KeyF20 = uv.KeyF20
+	KeyF21 = uv.KeyF21
+	KeyF22 = uv.KeyF22
+	KeyF23 = uv.KeyF23
+	KeyF24 = uv.KeyF24
+	KeyF25 = uv.KeyF25
+	KeyF26 = uv.KeyF26
+	KeyF27 = uv.KeyF27
+	KeyF28 = uv.KeyF28
+	KeyF29 = uv.KeyF29
+	KeyF30 = uv.KeyF30
+	KeyF31 = uv.KeyF31
+	KeyF32 = uv.KeyF32
+	KeyF33 = uv.KeyF33
+	KeyF34 = uv.KeyF34
+	KeyF35 = uv.KeyF35
+	KeyF36 = uv.KeyF36
+	KeyF37 = uv.KeyF37
+	KeyF38 = uv.KeyF38
+	KeyF39 = uv.KeyF39
+	KeyF40 = uv.KeyF40
+	KeyF41 = uv.KeyF41
+	KeyF42 = uv.KeyF42
+	KeyF43 = uv.KeyF43
+	KeyF44 = uv.KeyF44
+	KeyF45 = uv.KeyF45
+	KeyF46 = uv.KeyF46
+	KeyF47 = uv.KeyF47
+	KeyF48 = uv.KeyF48
+	KeyF49 = uv.KeyF49
+	KeyF50 = uv.KeyF50
+	KeyF51 = uv.KeyF51
+	KeyF52 = uv.KeyF52
+	KeyF53 = uv.KeyF53
+	KeyF54 = uv.KeyF54
+	KeyF55 = uv.KeyF55
+	KeyF56 = uv.KeyF56
+	KeyF57 = uv.KeyF57
+	KeyF58 = uv.KeyF58
+	KeyF59 = uv.KeyF59
+	KeyF60 = uv.KeyF60
+	KeyF61 = uv.KeyF61
+	KeyF62 = uv.KeyF62
+	KeyF63 = uv.KeyF63
 
 	// The following are keys defined in the Kitty keyboard protocol.
 	// XXX: Investigate the names of these keys.
 
-	KeyCapsLock    = tv.KeyCapsLock
-	KeyScrollLock  = tv.KeyScrollLock
-	KeyNumLock     = tv.KeyNumLock
-	KeyPrintScreen = tv.KeyPrintScreen
-	KeyPause       = tv.KeyPause
-	KeyMenu        = tv.KeyMenu
+	KeyCapsLock    = uv.KeyCapsLock
+	KeyScrollLock  = uv.KeyScrollLock
+	KeyNumLock     = uv.KeyNumLock
+	KeyPrintScreen = uv.KeyPrintScreen
+	KeyPause       = uv.KeyPause
+	KeyMenu        = uv.KeyMenu
 
-	KeyMediaPlay        = tv.KeyMediaPlay
-	KeyMediaPause       = tv.KeyMediaPause
-	KeyMediaPlayPause   = tv.KeyMediaPlayPause
-	KeyMediaReverse     = tv.KeyMediaReverse
-	KeyMediaStop        = tv.KeyMediaStop
-	KeyMediaFastForward = tv.KeyMediaFastForward
-	KeyMediaRewind      = tv.KeyMediaRewind
-	KeyMediaNext        = tv.KeyMediaNext
-	KeyMediaPrev        = tv.KeyMediaPrev
+	KeyMediaPlay        = uv.KeyMediaPlay
+	KeyMediaPause       = uv.KeyMediaPause
+	KeyMediaPlayPause   = uv.KeyMediaPlayPause
+	KeyMediaReverse     = uv.KeyMediaReverse
+	KeyMediaStop        = uv.KeyMediaStop
+	KeyMediaFastForward = uv.KeyMediaFastForward
+	KeyMediaRewind      = uv.KeyMediaRewind
+	KeyMediaNext        = uv.KeyMediaNext
+	KeyMediaPrev        = uv.KeyMediaPrev
 	KeyMediaRecord
 
-	KeyLowerVol = tv.KeyLowerVol
-	KeyRaiseVol = tv.KeyRaiseVol
-	KeyMute     = tv.KeyMute
+	KeyLowerVol = uv.KeyLowerVol
+	KeyRaiseVol = uv.KeyRaiseVol
+	KeyMute     = uv.KeyMute
 
-	KeyLeftShift      = tv.KeyLeftShift
-	KeyLeftAlt        = tv.KeyLeftAlt
-	KeyLeftCtrl       = tv.KeyLeftCtrl
-	KeyLeftSuper      = tv.KeyLeftSuper
-	KeyLeftHyper      = tv.KeyLeftHyper
-	KeyLeftMeta       = tv.KeyLeftMeta
-	KeyRightShift     = tv.KeyRightShift
-	KeyRightAlt       = tv.KeyRightAlt
-	KeyRightCtrl      = tv.KeyRightCtrl
-	KeyRightSuper     = tv.KeyRightSuper
-	KeyRightHyper     = tv.KeyRightHyper
-	KeyRightMeta      = tv.KeyRightMeta
-	KeyIsoLevel3Shift = tv.KeyIsoLevel3Shift
-	KeyIsoLevel5Shift = tv.KeyIsoLevel5Shift
+	KeyLeftShift      = uv.KeyLeftShift
+	KeyLeftAlt        = uv.KeyLeftAlt
+	KeyLeftCtrl       = uv.KeyLeftCtrl
+	KeyLeftSuper      = uv.KeyLeftSuper
+	KeyLeftHyper      = uv.KeyLeftHyper
+	KeyLeftMeta       = uv.KeyLeftMeta
+	KeyRightShift     = uv.KeyRightShift
+	KeyRightAlt       = uv.KeyRightAlt
+	KeyRightCtrl      = uv.KeyRightCtrl
+	KeyRightSuper     = uv.KeyRightSuper
+	KeyRightHyper     = uv.KeyRightHyper
+	KeyRightMeta      = uv.KeyRightMeta
+	KeyIsoLevel3Shift = uv.KeyIsoLevel3Shift
+	KeyIsoLevel5Shift = uv.KeyIsoLevel5Shift
 
 	// Special names in C0.
 
-	KeyBackspace = tv.KeyBackspace
-	KeyTab       = tv.KeyTab
-	KeyEnter     = tv.KeyEnter
-	KeyReturn    = tv.KeyReturn
-	KeyEscape    = tv.KeyEscape
-	KeyEsc       = tv.KeyEsc
+	KeyBackspace = uv.KeyBackspace
+	KeyTab       = uv.KeyTab
+	KeyEnter     = uv.KeyEnter
+	KeyReturn    = uv.KeyReturn
+	KeyEscape    = uv.KeyEscape
+	KeyEsc       = uv.KeyEsc
 
 	// Special names in G0.
 
-	KeySpace = tv.KeySpace
+	KeySpace = uv.KeySpace
 )
 
 // KeyPressMsg represents a key press message.
@@ -211,7 +211,7 @@ func (k KeyPressMsg) String() string {
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
 func (k KeyPressMsg) Keystroke() string {
-	return tv.Key(k).Keystroke()
+	return uv.Key(k).Keystroke()
 }
 
 // Key returns the underlying key event. This is a syntactic sugar for casting
@@ -244,7 +244,7 @@ func (k KeyReleaseMsg) String() string {
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
 func (k KeyReleaseMsg) Keystroke() string {
-	return tv.Key(k).Keystroke()
+	return uv.Key(k).Keystroke()
 }
 
 // Key returns the underlying key event. This is a convenience method and
@@ -349,7 +349,7 @@ type Key struct {
 // For example, you'll always get "?" and instead of "shift+/" on a US ANSI
 // keyboard.
 func (k Key) String() string {
-	return tv.Key(k).String()
+	return uv.Key(k).String()
 }
 
 // Keystroke returns the keystroke representation of the [Key]. While less type
@@ -367,5 +367,5 @@ func (k Key) String() string {
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
 func (k Key) Keystroke() string {
-	return tv.Key(k).Keystroke()
+	return uv.Key(k).Keystroke()
 }

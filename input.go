@@ -1,63 +1,63 @@
 package tea
 
 import (
-	"github.com/charmbracelet/tv"
+	"github.com/charmbracelet/uv"
 )
 
 // translateInputEvent translates an input event into a Bubble Tea Msg.
-func (p *Program) translateInputEvent(e tv.Event) Msg {
+func (p *Program) translateInputEvent(e uv.Event) Msg {
 	switch e := e.(type) {
-	case tv.ClipboardEvent:
+	case uv.ClipboardEvent:
 		switch e.Selection {
-		case tv.SystemClipboard:
+		case uv.SystemClipboard:
 			return ClipboardMsg(e.Content)
-		case tv.PrimaryClipboard:
+		case uv.PrimaryClipboard:
 			return PrimaryClipboardMsg(e.Content)
 		}
-	case tv.ForegroundColorEvent:
+	case uv.ForegroundColorEvent:
 		return ForegroundColorMsg(e)
-	case tv.BackgroundColorEvent:
+	case uv.BackgroundColorEvent:
 		return BackgroundColorMsg(e)
-	case tv.CursorColorEvent:
+	case uv.CursorColorEvent:
 		return CursorColorMsg(e)
-	case tv.CursorPositionEvent:
+	case uv.CursorPositionEvent:
 		return CursorPositionMsg(e)
-	case tv.FocusEvent:
+	case uv.FocusEvent:
 		return FocusMsg(e)
-	case tv.BlurEvent:
+	case uv.BlurEvent:
 		return BlurMsg(e)
-	case tv.KeyPressEvent:
+	case uv.KeyPressEvent:
 		return KeyPressMsg(e)
-	case tv.KeyReleaseEvent:
+	case uv.KeyReleaseEvent:
 		if !isWindows() || p.requestedEnhancements.keyReleases {
 			return KeyReleaseMsg(e)
 		}
-	case tv.MouseClickEvent:
+	case uv.MouseClickEvent:
 		return MouseClickMsg(e)
-	case tv.MouseMotionEvent:
+	case uv.MouseMotionEvent:
 		return MouseMotionMsg(e)
-	case tv.MouseReleaseEvent:
+	case uv.MouseReleaseEvent:
 		return MouseReleaseMsg(e)
-	case tv.MouseWheelEvent:
+	case uv.MouseWheelEvent:
 		return MouseWheelMsg(e)
-	case tv.PasteEvent:
+	case uv.PasteEvent:
 		return PasteMsg(e)
-	case tv.PasteStartEvent:
+	case uv.PasteStartEvent:
 		return PasteStartMsg(e)
-	case tv.PasteEndEvent:
+	case uv.PasteEndEvent:
 		return PasteEndMsg(e)
-	case tv.WindowSizeEvent:
+	case uv.WindowSizeEvent:
 		return WindowSizeMsg(e)
-	case tv.CapabilityEvent:
+	case uv.CapabilityEvent:
 		return CapabilityMsg(e)
-	case tv.TerminalVersionEvent:
+	case uv.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
-	case tv.KittyEnhancementsEvent:
+	case uv.KittyEnhancementsEvent:
 		return KeyboardEnhancementsMsg{
 			kittyFlags:      int(e),
 			modifyOtherKeys: p.activeEnhancements.modifyOtherKeys,
 		}
-	case tv.ModifyOtherKeysEvent:
+	case uv.ModifyOtherKeysEvent:
 		return KeyboardEnhancementsMsg{
 			modifyOtherKeys: int(e),
 			kittyFlags:      p.activeEnhancements.kittyFlags,

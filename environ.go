@@ -1,6 +1,6 @@
 package tea
 
-import "github.com/charmbracelet/tv"
+import "github.com/charmbracelet/uv"
 
 // EnvMsg is a message that represents the environment variables of the
 // program. This is useful for getting the environment variables of programs
@@ -16,13 +16,13 @@ import "github.com/charmbracelet/tv"
 //	  // What terminal type is being used?
 //	  term := msg.Getenv("TERM")
 //	}
-type EnvMsg tv.Environ
+type EnvMsg uv.Environ
 
 // Getenv returns the value of the environment variable named by the key. If
 // the variable is not present in the environment, the value returned will be
 // the empty string.
 func (msg EnvMsg) Getenv(key string) (v string) {
-	return tv.Environ(msg).Getenv(key)
+	return uv.Environ(msg).Getenv(key)
 }
 
 // LookupEnv retrieves the value of the environment variable named by the key.
@@ -30,5 +30,5 @@ func (msg EnvMsg) Getenv(key string) (v string) {
 // is returned and the boolean is true. Otherwise the returned value will be
 // empty and the boolean will be false.
 func (msg EnvMsg) LookupEnv(key string) (s string, v bool) {
-	return tv.Environ(msg).LookupEnv(key)
+	return uv.Environ(msg).LookupEnv(key)
 }

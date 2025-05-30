@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/colorprofile"
-	"github.com/charmbracelet/tv"
+	"github.com/charmbracelet/uv"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"golang.org/x/sync/errgroup"
@@ -82,11 +82,40 @@ type ViewableModel interface {
 	View() View
 }
 
+// StyledString returns a [Component] that can be styled with ANSI escape
+// codes. It is used to render text with different colors, styles, and other
+// attributes on the terminal screen.
+func StyledString(s string) *uv.StyledString {
+	return uv.NewStyledString(s)
+}
+
+// Buffer represents a terminal cell buffer that defines the current state of
+// the terminal screen.
+type Buffer = uv.Buffer
+
+// Screen represents a read writable canvas that can be used to render
+// components on the terminal screen.
+type Screen = uv.Screen
+
+// Rectangle represents a rectangular area with two points: the top left corner
+// and the bottom right corner. It is used to define the area where components
+// will be rendered on the terminal screen.
+type Rectangle = uv.Rectangle
+
+// Component represents a displayable component on a [Screen].
+type Component interface {
+	// Draw renders the component on the given [Screen] within the specified
+	// [Rectangle]. The component should draw itself within the bounds of the
+	// rectangle, which is defined by the top left corner (x0, y0) and the
+	// bottom right corner (x1, y1).
+	Draw(s Screen, r Rectangle)
+}
+
 // View represents a terminal view that can be composed of multiple layers.
 // It can also contain a cursor that will be rendered on top of the layers.
 type View struct {
-	Layers Layers
-	Cursor *Cursor
+	Component Component
+	Cursor    *Cursor
 }
 
 // Cursor represents a cursor on the terminal screen.
@@ -261,16 +290,16 @@ type Program struct {
 	renderer            renderer
 
 	// the environment variables for the program, defaults to os.Environ().
-	environ tv.Environ
+	environ uv.Environ
 	// the program's logger for debugging.
-	logger tv.Logger
+	logger uv.Logger
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
-	inputReader           *tv.TerminalReader
+	inputReader           *uv.TerminalReader
 	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 	mouseMode             bool // indicates whether we should enable mouse on Windows
@@ -790,8 +819,22 @@ func hasView(model Model) (ok bool) {
 
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
+	var view View
+	switch model := model.(type) {
+	case ViewModel, CursorModel:
+		var frame string
+		switch model := model.(type) {
+		case ViewModel:
+			frame = model.View()
+		case CursorModel:
+			frame, view.Cursor = model.View()
+		}
+		view.Component = uv.NewStyledString(frame)
+	case ViewableModel:
+		view = model.View()
+	}
 	if p.renderer != nil {
-		p.renderer.render(model, p) // send view to renderer
+		p.renderer.render(view, p) // send view to renderer
 	}
 }
 
@@ -1096,7 +1139,10 @@ func (p *Program) flush() error {
 	}
 	_, err := p.output.Write(p.outputBuf.Bytes())
 	p.outputBuf.Reset()
-	return fmt.Errorf("error writing to output: %w", err)
+	if err != nil {
+		return fmt.Errorf("error writing to output: %w", err)
+	}
+	return nil
 }
 
 // shutdown performs operations to free up resources and restore the terminal

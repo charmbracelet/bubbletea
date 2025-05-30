@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/charmbracelet/tv"
+	"github.com/charmbracelet/uv"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -16,6 +16,12 @@ type Layers []*Layer
 func NewLayers(layers ...*Layer) (l Layers) {
 	l.AddLayers(append(Layers{}, layers...)...)
 	return l
+}
+
+// RenderComponent renders the layers into the given screen within the
+// specified area.
+func (l Layers) Draw(buf Screen, _ Rectangle) {
+	renderLayers(l, buf)
 }
 
 // AddLayers adds child layers to the Layers collection.
@@ -248,15 +254,15 @@ func sortLayers(ls []*Layer, reverse bool) {
 }
 
 // renderLayers renders the layers into the given buffer using the specified width method.
-func renderLayers(l []*Layer, buf *tv.Buffer, method ansi.Method) {
+func renderLayers(l []*Layer, buf Screen) {
 	// Render the view layers into the buffer.
 	for _, layer := range l {
 		if layer == nil {
 			continue
 		}
 		area := layer.Bounds()
-		buf.ClearArea(area)
-		ss := tv.NewStyledString(method, layer.Content())
-		ss.RenderComponent(buf, area) //nolint:errcheck,gosec
+		uv.ClearArea(buf, area)
+		ss := uv.NewStyledString(layer.Content())
+		ss.Draw(buf, area)
 	}
 }

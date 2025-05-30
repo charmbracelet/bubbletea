@@ -7,47 +7,45 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/colorprofile"
-	"github.com/charmbracelet/tv"
+	"github.com/charmbracelet/uv"
 	"github.com/charmbracelet/x/ansi"
 )
 
 type cursedRenderer struct {
-	w             io.Writer
-	scr           *tv.TerminalRenderer
-	buf           *tv.Buffer
-	lastFrame     *string
-	lastCur       *Cursor
-	env           []string
-	term          string // the terminal type $TERM
-	width, height int
-	mu            sync.Mutex
-	profile       colorprofile.Profile
-	cursor        Cursor
-	method        ansi.Method
-	logger        tv.Logger
-	altScreen     bool
-	cursorHidden  bool
-	hardTabs      bool // whether to use hard tabs to optimize cursor movements
-	backspace     bool // whether to use backspace to optimize cursor movements
-	mapnl         bool
+	w               io.Writer
+	scr             *uv.TerminalRenderer
+	buf             uv.ScreenBuffer
+	lastFrame       *string
+	lastCur         *Cursor
+	env             []string
+	term            string // the terminal type $TERM
+	width, height   int
+	lastFrameHeight int // the height of the last rendered frame, used to determine if we need to resize the screen buffer
+	mu              sync.Mutex
+	profile         colorprofile.Profile
+	cursor          Cursor
+	method          ansi.Method
+	logger          uv.Logger
+	altScreen       bool
+	cursorHidden    bool
+	hardTabs        bool // whether to use hard tabs to optimize cursor movements
+	backspace       bool // whether to use backspace to optimize cursor movements
+	mapnl           bool
 }
 
 var _ renderer = &cursedRenderer{}
 
-func newCursedRenderer(w io.Writer, env []string, width, height int, hardTabs, backspace, mapnl bool, logger tv.Logger) (s *cursedRenderer) {
+func newCursedRenderer(w io.Writer, env []string, width, height int, hardTabs, backspace, mapnl bool, logger uv.Logger) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
 	s.env = env
-	s.term = tv.Environ(env).Getenv("TERM")
+	s.term = uv.Environ(env).Getenv("TERM")
 	s.logger = logger
 	s.hardTabs = hardTabs
 	s.backspace = backspace
 	s.mapnl = mapnl
 	s.width, s.height = width, height // This needs to happen before [cursedRenderer.reset].
-	s.buf = tv.NewBuffer(s.width, s.height)
-	// TODO: Use [ansi.WcWidth] by default and upgrade to [ansi.GraphemeWidth]
-	// if the terminal supports it.
-	s.method = ansi.GraphemeWidth
+	s.buf = uv.NewScreenBuffer(s.width, s.height)
 	reset(s)
 	return
 }
@@ -58,7 +56,7 @@ func (s *cursedRenderer) close() (err error) {
 	defer s.mu.Unlock()
 
 	// Go to the bottom of the screen.
-	s.scr.MoveTo(s.buf, 0, s.buf.Height()-1)
+	s.scr.MoveTo(0, s.buf.Height()-1)
 
 	// Exit the altScreen and show cursor before closing. It's important that
 	// we don't change the [cursedRenderer] altScreen and cursorHidden states
@@ -102,7 +100,7 @@ func (s *cursedRenderer) flush() error {
 	defer s.mu.Unlock()
 
 	// Render and queue changes to the screen buffer.
-	s.scr.Render(s.buf)
+	s.scr.Render(s.buf.Buffer)
 	if s.lastCur != nil {
 		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
 			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
@@ -121,7 +119,7 @@ func (s *cursedRenderer) flush() error {
 
 		// MoveTo must come after [cellbuf.Screen.Render] because the cursor
 		// position might get updated during rendering.
-		s.scr.MoveTo(s.buf, s.lastCur.X, s.lastCur.Y)
+		s.scr.MoveTo(s.lastCur.X, s.lastCur.Y)
 		s.cursor.Position = s.lastCur.Position
 	}
 
@@ -132,22 +130,41 @@ func (s *cursedRenderer) flush() error {
 }
 
 // render implements renderer.
-func (s *cursedRenderer) render(model Model, p *Program) {
-	var view *View
-	var frame string
-	var cur *Cursor
-	switch model := model.(type) {
-	case ViewModel:
-		frame = model.View()
-	case CursorModel:
-		frame, cur = model.View()
-	case ViewableModel:
-		viewable := model.View()
-		view = &viewable
-		cur = view.Cursor
-		renderLayers(view.Layers, s.buf, s.method)
-		frame = s.buf.Render()
+func (s *cursedRenderer) render(v View, p *Program) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	frameArea := uv.Rect(0, 0, s.width, s.height)
+	if v.Component == nil {
+		// If the component is nil, we should clear the screen buffer.
+		frameArea.Max.Y = 0
 	}
+
+	if b, ok := v.Component.(interface{ Bounds() Rectangle }); ok {
+		if !s.altScreen {
+			// Inline mode resizes the screen based on the frame height and
+			// terminal width. This is because the frame height can change based on
+			// the content of the frame. For example, if the frame contains a list
+			// of items, the height of the frame will be the number of items in the
+			// list. This is different from the alt screen buffer, which has a
+			// fixed height and width.
+			frameArea.Max.Y = b.Bounds().Max.Y
+		}
+	}
+
+	// Resize the screen buffer to match the frame area. This is necessary
+	// to ensure that the screen buffer is the same size as the frame area
+	// and to avoid rendering issues when the frame area is smaller than
+	// the screen buffer.
+	s.buf.Resize(frameArea.Dx(), frameArea.Dy())
+	// Clear our screen buffer before copying the new frame into it to ensure
+	// we erase any old content.
+	s.buf.Clear()
+	if v.Component != nil {
+		v.Component.Draw(s.buf, frameArea)
+	}
+
+	frame := s.buf.Render()
 
 	// If an empty string was passed we should clear existing output and
 	// rendering nothing. Rather than introduce additional state to manage
@@ -157,9 +174,7 @@ func (s *cursedRenderer) render(model Model, p *Program) {
 		frame = " "
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
+	cur := v.Cursor
 	if s.lastFrame != nil && frame == *s.lastFrame &&
 		(s.lastCur == nil && cur == nil || s.lastCur != nil && cur != nil && *s.lastCur == *cur) {
 		return
@@ -171,53 +186,12 @@ func (s *cursedRenderer) render(model Model, p *Program) {
 	}
 
 	s.lastCur = cur
+	s.lastFrameHeight = frameArea.Dy()
 
-	var ss *tv.StyledString
-	var frameArea tv.Rectangle
-	if view == nil {
-		ss = tv.NewStyledString(s.method, frame)
-		frameArea = ss.Bounds()
-		s.lastFrame = &frame
-	} else {
-		frameArea = view.Layers.Bounds()
-	}
-
-	frameArea.Min.X = 0
-	frameArea.Max.X = s.width
-	bufHeight := s.height
-	if !s.altScreen {
-		// Inline mode resizes the screen based on the frame height and
-		// terminal width. This is because the frame height can change based on
-		// the content of the frame. For example, if the frame contains a list
-		// of items, the height of the frame will be the number of items in the
-		// list. This is different from the alt screen buffer, which has a
-		// fixed height and width.
-		bufHeight = frameArea.Dy()
-	}
-
-	// Clear our screen buffer before copying the new frame into it to ensure
-	// we erase any old content.
-	s.buf.Resize(s.width, bufHeight)
-	s.buf.Clear()
-
-	if view == nil {
-		ss.RenderComponent(s.buf, frameArea) //nolint:errcheck,gosec
-	} else {
-		// Render the view layers into the buffer.
-		for _, l := range view.Layers {
-			if l == nil {
-				continue
-			}
-			area := l.Bounds()
-			s.buf.ClearArea(area)
-			ss := tv.NewStyledString(s.method, l.Content())
-			ss.RenderComponent(s.buf, area) //nolint:errcheck,gosec
-		}
-		// Cache the last rendered frame so we can avoid re-rendering it if
-		// the frame hasn't changed.
-		lastFrame := frame
-		s.lastFrame = &lastFrame
-	}
+	// Cache the last rendered frame so we can avoid re-rendering it if
+	// the frame hasn't changed.
+	lastFrame := frame
+	s.lastFrame = &lastFrame
 
 	if cur == nil {
 		enableTextCursor(s, false)
@@ -234,7 +208,7 @@ func (s *cursedRenderer) reset() {
 }
 
 func reset(s *cursedRenderer) {
-	scr := tv.NewTerminalRenderer(s.w, s.env)
+	scr := uv.NewTerminalRenderer(s.w, s.env)
 	scr.SetColorProfile(s.profile)
 	scr.SetRelativeCursor(!s.altScreen)
 	scr.SetTabStops(s.width)
@@ -287,7 +261,7 @@ func (s *cursedRenderer) clearScreen() {
 	// Move the cursor to the top left corner of the screen and trigger a full
 	// screen redraw.
 	_, _ = s.scr.WriteString(ansi.CursorHomePosition)
-	s.scr.Redraw(s.buf) // force redraw
+	s.scr.Redraw(s.buf.Buffer) // force redraw
 	repaint(s)
 	s.mu.Unlock()
 }

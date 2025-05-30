@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/colorprofile"
-	"github.com/charmbracelet/tv"
+	"github.com/charmbracelet/uv"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -241,27 +241,21 @@ func (r *standardRenderer) lastLinesRendered() int {
 
 // write writes to the internal buffer. The buffer will be outputted via the
 // ticker which calls flush().
-func (r *standardRenderer) render(m Model, _ *Program) {
+func (r *standardRenderer) render(v View, _ *Program) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
 
-	var s string
-	switch m := m.(type) {
-	case ViewModel:
-		s = m.View()
-	case CursorModel:
-		s, _ = m.View()
-	case ViewableModel:
-		view := m.View()
-		layers := view.Layers
-		if layers != nil {
-			area := layers.Bounds()
-			buf := tv.NewBuffer(area.Dx(), area.Dy())
-			renderLayers(layers, buf, ansi.WcWidth)
-			s = buf.Render()
+	area := uv.Rect(0, 0, r.width, r.height)
+	if b, ok := v.Component.(interface{ Bounds() uv.Rectangle }); ok {
+		if !r.altScreenActive {
+			area.Max.Y = b.Bounds().Max.Y
 		}
 	}
+
+	buf := uv.NewScreenBuffer(area.Dx(), area.Dy())
+	v.Component.Draw(buf, area)
+	s := buf.Render()
 
 	// If an empty string was passed we should clear existing output and
 	// rendering nothing. Rather than introduce additional state to manage

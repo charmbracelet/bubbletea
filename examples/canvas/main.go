@@ -55,7 +55,7 @@ func (m model) View() tea.View {
 
 	cardA := newCard("Hello").Z(z[0])
 	cardB := newCard("Goodbye").Z(z[1])
-	view.Layers.AddLayers(
+	view.Component = tea.NewLayers(
 		tea.NewLayer(footer),
 		cardA,
 		cardB.X(10).Y(2),

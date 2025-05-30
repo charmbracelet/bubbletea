@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/charmbracelet/tv"
+	"github.com/charmbracelet/uv"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
@@ -114,10 +114,10 @@ func (p *Program) initInputReader(cancel bool) error {
 	// This need to be done after the terminal has been initialized and set to
 	// raw mode.
 
-	drv := tv.NewTerminalReader(p.input, term)
+	drv := uv.NewTerminalReader(p.input, term)
 	drv.SetLogger(p.logger)
 	if p.mouseMode {
-		mouseMode := tv.ReleasesMouseMode | tv.AllMotionMouseMode
+		mouseMode := uv.ReleasesMouseMode | uv.AllMotionMouseMode
 		drv.MouseMode = &mouseMode
 	}
 	p.inputReader = drv
@@ -196,7 +196,7 @@ func (p *Program) checkResize() {
 	}
 
 	var resizeMsg WindowSizeMsg
-	resizeMsg.Width = w
-	resizeMsg.Height = h
+	p.width, p.height = w, h
+	resizeMsg.Width, resizeMsg.Height = w, h
 	p.Send(resizeMsg)
 }
