@@ -5,12 +5,12 @@ go 1.23.1
 replace github.com/charmbracelet/bubbletea/v2 => ../
 
 require (
-	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20250526131538-b3f0c9e42318
+	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20250530195534-e7748f085640
 	github.com/charmbracelet/bubbletea/v2 v2.0.0-beta.1.0.20250420102230-7ecd51915026
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250529185650-1c5efe71d7cb
+	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250530192739-0ec908265ee6
 	github.com/charmbracelet/x/ansi v0.9.3-0.20250516160309-24eee56f89fa
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250514204301-7f4ee4d0d5fe
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
@@ -46,7 +46,3 @@ require (
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
-
-replace github.com/charmbracelet/bubbles/v2 => ../../bubbles
-
-replace github.com/charmbracelet/lipgloss/v2 => ../../lipgloss
