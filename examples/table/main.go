@@ -9,10 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss/v2"
 )
 
-var baseStyle = lipgloss.NewStyle().
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240"))
-
 type model struct {
 	table table.Model
 }
