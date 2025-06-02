@@ -118,6 +118,7 @@ type View struct {
 	Cursor          *Cursor
 	BackgroundColor color.Color
 	ForegroundColor color.Color
+	WindowTitle     string
 }
 
 // Cursor represents a cursor on the terminal screen.
@@ -336,6 +337,7 @@ type Program struct {
 	// when the program is resumed.
 	setBg, setFg, setCc                       color.Color
 	lastBgColor, lastFgColor, lastCursorColor color.Color
+	lastWindowTitle                           string
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -758,7 +760,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}()
 
 			case setWindowTitleMsg:
-				p.execute(ansi.SetWindowTitle(string(msg)))
+				p.renderer.setWindowTitle(p.lastWindowTitle)
+				p.lastWindowTitle = string(msg)
 
 			case WindowSizeMsg:
 				p.renderer.resize(msg.Width, msg.Height)
@@ -823,6 +826,7 @@ func (p *Program) render(model Model) {
 		view.Component = uv.NewStyledString(frame)
 		view.BackgroundColor = p.lastBgColor
 		view.ForegroundColor = p.lastFgColor
+		view.WindowTitle = p.lastWindowTitle
 		if view.Cursor != nil {
 			view.Cursor.Color = p.lastCursorColor
 		}

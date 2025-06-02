@@ -28,6 +28,8 @@ type cursedRenderer struct {
 	method              ansi.Method
 	logger              uv.Logger
 	setCc, setFg, setBg color.Color
+	windowTitleSet      string // the last set window title
+	windowTitle         string // the desired title of the terminal window
 	altScreen           bool
 	cursorHidden        bool
 	hardTabs            bool // whether to use hard tabs to optimize cursor movements
@@ -101,6 +103,11 @@ func (s *cursedRenderer) flush(p *Program) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Set window title.
+	if s.windowTitle != s.windowTitleSet {
+		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.windowTitle))
+		s.windowTitleSet = s.windowTitle
+	}
 	// Set terminal colors.
 	if s.setCc != p.setCc {
 		if s.setCc == nil {
@@ -210,6 +217,8 @@ func (s *cursedRenderer) render(v View) {
 
 	cur := v.Cursor
 
+	s.windowTitle = v.WindowTitle
+
 	// Ensure we have any desired terminal colors set.
 	s.setBg = v.BackgroundColor
 	s.setFg = v.ForegroundColor
@@ -254,6 +263,13 @@ func (s *cursedRenderer) setForegroundColor(c color.Color) {
 func (s *cursedRenderer) setBackgroundColor(c color.Color) {
 	s.mu.Lock()
 	s.setBg = c
+	s.mu.Unlock()
+}
+
+// setWindowTitle implements renderer.
+func (s *cursedRenderer) setWindowTitle(title string) {
+	s.mu.Lock()
+	s.windowTitle = title
 	s.mu.Unlock()
 }
 

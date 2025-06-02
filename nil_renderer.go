@@ -62,3 +62,6 @@ func (n nilRenderer) setForegroundColor(color.Color) {}
 
 // setBackgroundColor implements the Renderer interface.
 func (n nilRenderer) setBackgroundColor(color.Color) {}
+
+// setWindowTitle implements the Renderer interface.
+func (n nilRenderer) setWindowTitle(string) {}

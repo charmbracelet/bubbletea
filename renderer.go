@@ -52,6 +52,9 @@ type renderer interface {
 	// setBackgroundColor sets the terminal's background color.
 	setBackgroundColor(color.Color)
 
+	// setWindowTitle sets the terminal window title.
+	setWindowTitle(string)
+
 	// resize notify the renderer of a terminal resize.
 	resize(int, int)
 

@@ -380,3 +380,4 @@ func (r *standardRenderer) insertAbove(s string) {
 func (r *standardRenderer) setCursorColor(c color.Color)     {}
 func (r *standardRenderer) setForegroundColor(c color.Color) {}
 func (r *standardRenderer) setBackgroundColor(c color.Color) {}
+func (r *standardRenderer) setWindowTitle(s string)          {}
