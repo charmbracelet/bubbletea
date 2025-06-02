@@ -55,7 +55,7 @@ func (m model) View() string {
 	s := strings.Builder{}
 	s.WriteString("What kind of Bubble Tea would you like to order?\n\n")
 
-	for i := 0; i < len(choices); i++ {
+	for i := range choices {
 		if m.cursor == i {
 			s.WriteString("(•) ")
 		} else {

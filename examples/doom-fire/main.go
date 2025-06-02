@@ -41,7 +41,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height * 2 // Double height for half-block characters
 		m.screenBuf = make([]int, m.width*m.height)
 		// Initialize the bottom row with white (maximum intensity)
-		for i := 0; i < m.width; i++ {
+		for i := range m.width {
 			m.screenBuf[(m.height-1)*m.width+i] = len(m.firePalette) - 1
 		}
 	}
@@ -56,7 +56,7 @@ func (m model) View() string {
 	var s strings.Builder
 
 	for y := 0; y < m.height-2; y += 2 {
-		for x := 0; x < m.width; x++ {
+		for x := range m.width {
 			pixelHi := m.screenBuf[y*m.width+x]
 			pixelLo := m.screenBuf[(y+1)*m.width+x]
 
@@ -80,8 +80,8 @@ func (m model) View() string {
 }
 
 func (m *model) spreadFire() {
-	for x := 0; x < m.width; x++ {
-		for y := 0; y < m.height; y++ {
+	for x := range m.width {
+		for y := range m.height {
 			m.spreadPixel(y*m.width + x)
 		}
 	}
@@ -102,10 +102,7 @@ func (m *model) spreadPixel(idx int) {
 	dst := idx - rnd + 1
 	if dst-m.width >= 0 && dst-m.width < len(m.screenBuf) {
 		decay := rnd & 1
-		newValue := pixel - decay
-		if newValue < 0 {
-			newValue = 0
-		}
+		newValue := max(pixel-decay, 0)
 		m.screenBuf[dst-m.width] = newValue
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/uv"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 type cursedRenderer struct {
@@ -110,35 +111,29 @@ func (s *cursedRenderer) flush(p *Program) error {
 		s.windowTitleSet = s.windowTitle
 	}
 	// Set terminal colors.
-	if s.setCc != p.setCc {
-		if s.setCc == nil {
-			// Reset the cursor color if it was set to nil.
-			_, _ = s.scr.WriteString(ansi.ResetCursorColor)
-		} else {
-			// Set the cursor color.
-			_, _ = s.scr.WriteString(ansi.SetCursorColor(s.setCc))
+	for _, c := range []struct {
+		rendererColor *color.Color
+		programColor  *color.Color
+		reset         string
+		setter        func(string) string
+	}{
+		{rendererColor: &s.setCc, programColor: &p.setCc, reset: ansi.ResetCursorColor, setter: ansi.SetCursorColor},
+		{rendererColor: &s.setFg, programColor: &p.setFg, reset: ansi.ResetForegroundColor, setter: ansi.SetForegroundColor},
+		{rendererColor: &s.setBg, programColor: &p.setBg, reset: ansi.ResetBackgroundColor, setter: ansi.SetBackgroundColor},
+	} {
+		if *c.rendererColor == nil && *c.programColor != nil {
+			if *c.rendererColor == nil {
+				// Reset the color if it was set to nil.
+				_, _ = s.scr.WriteString(c.reset)
+			} else {
+				// Set the color.
+				col, ok := colorful.MakeColor(*c.rendererColor)
+				if ok {
+					_, _ = s.scr.WriteString(c.setter(col.Hex()))
+				}
+			}
+			*c.programColor = *c.rendererColor
 		}
-		p.setCc = s.setCc
-	}
-	if s.setFg != p.setFg {
-		if s.setFg == nil {
-			// Reset the foreground color if it was set to nil.
-			_, _ = s.scr.WriteString(ansi.ResetForegroundColor)
-		} else {
-			// Set the foreground color.
-			_, _ = s.scr.WriteString(ansi.SetForegroundColor(s.setFg))
-		}
-		p.setFg = s.setFg
-	}
-	if s.setBg != p.setBg {
-		if s.setBg == nil {
-			// Reset the background color if it was set to nil.
-			_, _ = s.scr.WriteString(ansi.ResetBackgroundColor)
-		} else {
-			// Set the background color.
-			_, _ = s.scr.WriteString(ansi.SetBackgroundColor(s.setBg))
-		}
-		p.setBg = s.setBg
 	}
 
 	// Render and queue changes to the screen buffer.
@@ -153,7 +148,10 @@ func (s *cursedRenderer) flush(p *Program) error {
 		if s.lastCur.Color != s.cursor.Color {
 			seq := ansi.ResetCursorColor
 			if s.lastCur.Color != nil {
-				seq = ansi.SetCursorColor(s.lastCur.Color)
+				c, ok := colorful.MakeColor(s.lastCur.Color)
+				if ok {
+					seq = ansi.SetCursorColor(c.Hex())
+				}
 			}
 			_, _ = s.scr.WriteString(seq)
 			s.cursor.Color = s.lastCur.Color

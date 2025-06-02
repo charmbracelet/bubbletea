@@ -17,7 +17,7 @@ require (
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250513162854-28902d027c40
-	github.com/charmbracelet/x/ansi v0.9.3-0.20250516160309-24eee56f89fa
+	github.com/charmbracelet/x/ansi v0.9.3-0.20250602153603-fb931ed90413
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250514204301-7f4ee4d0d5fe
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
@@ -44,10 +44,8 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
-	github.com/petermattis/goid v0.0.0-20240813172612-4fcff4a6cae7 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect
-	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	github.com/yuin/goldmark-emoji v1.0.5 // indirect

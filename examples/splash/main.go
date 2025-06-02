@@ -74,7 +74,7 @@ func (m model) gradient() string {
 
 	var output strings.Builder
 
-	for lineY := 0; lineY < m.height; lineY++ {
+	for lineY := range m.height {
 		pointY := float64(lineY)*2 - centerY
 		pointX := 0.0 - centerX
 
@@ -94,7 +94,7 @@ func (m model) gradient() string {
 			output.WriteString(style.Render(strings.Repeat("▀", m.width)))
 		} else {
 			// Render each column in the row
-			for x := 0; x < m.width; x++ {
+			for x := range m.width {
 				pos1 := x1 + float64(x)*deltaX
 				pos2 := x2 + float64(x)*deltaX
 				color1 := getGradientColor(pos1)
