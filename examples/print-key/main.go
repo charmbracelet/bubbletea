@@ -44,7 +44,7 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithKeyboardEnhancements(tea.WithKeyReleases, tea.WithUniformKeyLayout))
+	p := tea.NewProgram(model{}, tea.WithKeyReleases(), tea.WithUniformKeyLayout())
 	if _, err := p.Run(); err != nil {
 		log.Printf("Error running program: %v", err)
 	}
