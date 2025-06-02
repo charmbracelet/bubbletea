@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/cellbuf"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 type cursedRenderer struct {
@@ -70,7 +71,10 @@ func (s *cursedRenderer) flush() error {
 		if s.lastCur.Color != s.cursor.Color {
 			seq := ansi.ResetCursorColor
 			if s.lastCur.Color != nil {
-				seq = ansi.SetCursorColor(s.lastCur.Color)
+				c, ok := colorful.MakeColor(s.lastCur.Color)
+				if ok {
+					seq = ansi.SetCursorColor(c.Hex())
+				}
 			}
 			_, _ = io.WriteString(s.w, seq)
 			s.cursor.Color = s.lastCur.Color
