@@ -873,7 +873,10 @@ func (p *Program) render(model Model) {
 		c := v.bgColor
 		if c != p.setBg {
 			if c != nil {
-				p.execute(ansi.SetBackgroundColor(c))
+				col, ok := colorful.MakeColor(c)
+				if ok {
+					p.execute(ansi.SetBackgroundColor(col.Hex()))
+				}
 			} else {
 				p.execute(ansi.ResetBackgroundColor)
 			}
