@@ -27,6 +27,7 @@ type cursedRenderer struct {
 	cursor              Cursor
 	method              ansi.Method
 	logger              uv.Logger
+	layer               Layer // the last rendered layer
 	setCc, setFg, setBg color.Color
 	windowTitleSet      string // the last set window title
 	windowTitle         string // the desired title of the terminal window
@@ -176,12 +177,12 @@ func (s *cursedRenderer) render(v View) {
 	defer s.mu.Unlock()
 
 	frameArea := uv.Rect(0, 0, s.width, s.height)
-	if v.Component == nil {
+	if v.Layer == nil {
 		// If the component is nil, we should clear the screen buffer.
 		frameArea.Max.Y = 0
 	}
 
-	if b, ok := v.Component.(interface{ Bounds() Rectangle }); ok {
+	if b, ok := v.Layer.(interface{ Bounds() Rectangle }); ok {
 		if !s.altScreen {
 			// Inline mode resizes the screen based on the frame height and
 			// terminal width. This is because the frame height can change based on
@@ -201,8 +202,8 @@ func (s *cursedRenderer) render(v View) {
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.buf.Clear()
-	if v.Component != nil {
-		v.Component.Draw(s.buf, frameArea)
+	if v.Layer != nil {
+		v.Layer.Draw(s.buf, frameArea)
 	}
 
 	frame := s.buf.Render()
@@ -230,6 +231,7 @@ func (s *cursedRenderer) render(v View) {
 		return
 	}
 
+	s.layer = v.Layer
 	s.lastCur = cur
 	s.lastFrameHeight = frameArea.Dy()
 
@@ -243,6 +245,21 @@ func (s *cursedRenderer) render(v View) {
 	} else {
 		enableTextCursor(s, true)
 	}
+}
+
+// hit implements renderer.
+func (s *cursedRenderer) hit(x, y int) []Msg {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.layer != nil {
+		if h, ok := s.layer.(Hittable); ok {
+			id := h.Hit(x, y)
+			return []Msg{LayerHitMsg{id}}
+		}
+	}
+
+	return []Msg{}
 }
 
 // setCursorColor implements renderer.

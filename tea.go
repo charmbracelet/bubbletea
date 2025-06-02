@@ -82,7 +82,7 @@ type ViewableModel interface {
 	View() View
 }
 
-// StyledString returns a [Component] that can be styled with ANSI escape
+// StyledString returns a [Layer] that can be styled with ANSI escape
 // codes. It is used to render text with different colors, styles, and other
 // attributes on the terminal screen.
 func StyledString(s string) *uv.StyledString {
@@ -102,8 +102,8 @@ type Screen = uv.Screen
 // will be rendered on the terminal screen.
 type Rectangle = uv.Rectangle
 
-// Component represents a displayable component on a [Screen].
-type Component interface {
+// Layer represents a drawable component on a [Screen].
+type Layer interface {
 	// Draw renders the component on the given [Screen] within the specified
 	// [Rectangle]. The component should draw itself within the bounds of the
 	// rectangle, which is defined by the top left corner (x0, y0) and the
@@ -111,10 +111,19 @@ type Component interface {
 	Draw(s Screen, r Rectangle)
 }
 
+// Hittable is an interface that can be implemented by a [Layer] to test
+// whether a layer was hit by a mouse event.
+type Hittable interface {
+	// Hit tests the layer against the given position. If the position is
+	// inside the layer, it returns the layer ID that was hit. If no
+	// layer was hit, it returns an empty string.
+	Hit(x, y int) string
+}
+
 // View represents a terminal view that can be composed of multiple layers.
 // It can also contain a cursor that will be rendered on top of the layers.
 type View struct {
-	Component       Component
+	Layer           Layer
 	Cursor          *Cursor
 	BackgroundColor color.Color
 	ForegroundColor color.Color
@@ -577,6 +586,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					}
 				}
 
+			case MouseMsg:
+				mouse := msg.Mouse()
+				x, y := mouse.X, mouse.Y
+				for _, m := range p.renderer.hit(x, y) {
+					go p.Send(m) // send hit messages
+				}
+
 			case modeReportMsg:
 				switch msg.Mode {
 				case ansi.GraphemeClusteringMode:
@@ -823,7 +839,7 @@ func (p *Program) render(model Model) {
 		case CursorModel:
 			frame, view.Cursor = model.View()
 		}
-		view.Component = uv.NewStyledString(frame)
+		view.Layer = uv.NewStyledString(frame)
 		view.BackgroundColor = p.lastBgColor
 		view.ForegroundColor = p.lastFgColor
 		view.WindowTitle = p.lastWindowTitle

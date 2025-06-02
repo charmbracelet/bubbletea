@@ -22,6 +22,9 @@ type renderer interface {
 	// render renders a frame to the output.
 	render(View)
 
+	// hit returns possible hit messages for the renderer.
+	hit(x, y int) []Msg
+
 	// flush flushes the renderer's buffer to the output.
 	flush(*Program) error
 

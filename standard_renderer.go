@@ -248,14 +248,14 @@ func (r *standardRenderer) render(v View) {
 	r.buf.Reset()
 
 	area := uv.Rect(0, 0, r.width, r.height)
-	if b, ok := v.Component.(interface{ Bounds() uv.Rectangle }); ok {
+	if b, ok := v.Layer.(interface{ Bounds() uv.Rectangle }); ok {
 		if !r.altScreenActive {
 			area.Max.Y = b.Bounds().Max.Y
 		}
 	}
 
 	buf := uv.NewScreenBuffer(area.Dx(), area.Dy())
-	v.Component.Draw(buf, area)
+	v.Layer.Draw(buf, area)
 	s := buf.Render()
 
 	// If an empty string was passed we should clear existing output and
@@ -381,3 +381,4 @@ func (r *standardRenderer) setCursorColor(c color.Color)     {}
 func (r *standardRenderer) setForegroundColor(c color.Color) {}
 func (r *standardRenderer) setBackgroundColor(c color.Color) {}
 func (r *standardRenderer) setWindowTitle(s string)          {}
+func (r *standardRenderer) hit(x, y int) []Msg               { return nil }
