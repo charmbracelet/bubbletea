@@ -16,11 +16,15 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.EnableMouseCellMotion
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.LayerHitMsg:
+		if mouse, ok := msg.Mouse.(tea.MouseClickMsg); ok {
+			return m, tea.Printf("Layer hit at %d, %d", mouse.X, mouse.Y)
+		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		return m, nil
@@ -55,8 +59,8 @@ func (m model) View() tea.View {
 
 	cardA := newCard("Hello").Z(z[0])
 	cardB := newCard("Goodbye").Z(z[1])
-	view.Component = tea.NewLayers(
-		tea.NewLayer(footer),
+	view.Layer = lipgloss.NewCanvas(
+		lipgloss.NewLayer(footer),
 		cardA,
 		cardB.X(10).Y(2),
 	)
@@ -64,8 +68,8 @@ func (m model) View() tea.View {
 	return view
 }
 
-func newCard(str string) *tea.Layer {
-	return tea.NewLayer(
+func newCard(str string) *lipgloss.Layer {
+	return lipgloss.NewLayer(
 		lipgloss.NewStyle().
 			Width(20).
 			Height(10).
