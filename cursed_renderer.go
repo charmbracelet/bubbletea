@@ -246,14 +246,18 @@ func (s *cursedRenderer) render(v View) {
 }
 
 // hit implements renderer.
-func (s *cursedRenderer) hit(x, y int) []Msg {
+func (s *cursedRenderer) hit(mouse MouseMsg) []Msg {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.layer != nil {
 		if h, ok := s.layer.(Hittable); ok {
-			id := h.Hit(x, y)
-			return []Msg{LayerHitMsg{id}}
+			m := mouse.Mouse()
+			id := h.Hit(m.X, m.Y)
+			return []Msg{LayerHitMsg{
+				ID:    id,
+				Mouse: mouse,
+			}}
 		}
 	}
 

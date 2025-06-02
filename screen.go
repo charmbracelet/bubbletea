@@ -149,5 +149,6 @@ type disableModeMsg struct{ ansi.Mode }
 // was hit by the mouse event. The layer is identified by its ID, which is a
 // string that is unique to the layer.
 type LayerHitMsg struct {
-	ID string
+	ID    string
+	Mouse MouseMsg
 }

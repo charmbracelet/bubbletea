@@ -20,8 +20,6 @@ github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6 h1:AKhOV8
 github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6/go.mod h1:7xBAUTCSADx9mHG0uBf4NDoVpYxMzIQ2j/NMLGdFsFM=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
-github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250513162854-28902d027c40 h1:SxOUomYAVo5zh+6WCH1bGshlAnSKP0ZeovI0FHAl9kg=
-github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250513162854-28902d027c40/go.mod h1:tRlx/Hu0lo/j9viunCN2H+Ze6JrmdjQlXUQvvArgaOc=
 github.com/charmbracelet/x/cellbuf v0.0.14-0.20250516160309-24eee56f89fa h1:lphz0Z3rsiOtMYiz8axkT24i9yFiueDhJbzyNUADmME=
 github.com/charmbracelet/x/cellbuf v0.0.14-0.20250516160309-24eee56f89fa/go.mod h1:xBlh2Yi3DL3zy/2n15kITpg0YZardf/aa/hgUaIM6Rk=
 github.com/charmbracelet/x/exp/charmtone v0.0.0-20250514204301-7f4ee4d0d5fe h1:J7NgefXSPNXUFSvoATgfu2HlNQ77OkARG07zjiwwgxc=

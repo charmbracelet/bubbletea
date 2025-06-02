@@ -588,9 +588,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case MouseMsg:
-				mouse := msg.Mouse()
-				x, y := mouse.X, mouse.Y
-				for _, m := range p.renderer.hit(x, y) {
+				for _, m := range p.renderer.hit(msg) {
 					go p.Send(m) // send hit messages
 				}
 

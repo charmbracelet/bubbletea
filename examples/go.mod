@@ -8,6 +8,8 @@ replace github.com/charmbracelet/bubbletea/v2 => ../
 
 replace github.com/charmbracelet/uv => ../../uv
 
+replace github.com/charmbracelet/lipgloss/v2 => ../../lipgloss
+
 replace github.com/charmbracelet/x/ansi => ../../x/ansi
 
 require (
@@ -16,7 +18,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250513162854-28902d027c40
+	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250529185335-7edbc41e909e
 	github.com/charmbracelet/x/ansi v0.9.3-0.20250602153603-fb931ed90413
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250514204301-7f4ee4d0d5fe
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
