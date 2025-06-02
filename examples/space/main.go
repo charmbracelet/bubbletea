@@ -70,11 +70,11 @@ func (m *model) setupColors() {
 	height := m.height * 2 // double height for half blocks
 	m.colors = make([][]color.Color, height)
 
-	for y := 0; y < height; y++ {
+	for y := range height {
 		m.colors[y] = make([]color.Color, m.width)
 		randomnessFactor := float64(height-y) / float64(height)
 
-		for x := 0; x < m.width; x++ {
+		for x := range m.width {
 			baseValue := randomnessFactor * (float64(height-y) / float64(height))
 			randomOffset := (rand.Float64() * 0.2) - 0.1
 			value := clamp(baseValue+randomOffset, 0, 1)
@@ -102,8 +102,8 @@ func (m model) View() string {
 
 	// Color display
 	var s strings.Builder
-	for y := 0; y < m.height; y++ {
-		for x := 0; x < m.width; x++ {
+	for y := range m.height {
+		for x := range m.width {
 			xi := (x + m.frameCount) % m.width
 			fg := m.colors[y*2][xi]
 			bg := m.colors[y*2+1][xi]

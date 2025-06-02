@@ -69,7 +69,7 @@ type printLineMessage struct {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func Println(args ...interface{}) Cmd {
+func Println(args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprint(args...),
@@ -85,7 +85,7 @@ func Println(args ...interface{}) Cmd {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func Printf(template string, args ...interface{}) Cmd {
+func Printf(template string, args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprintf(template, args...),
