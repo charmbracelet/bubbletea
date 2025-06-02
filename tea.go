@@ -114,8 +114,10 @@ type Component interface {
 // View represents a terminal view that can be composed of multiple layers.
 // It can also contain a cursor that will be rendered on top of the layers.
 type View struct {
-	Component Component
-	Cursor    *Cursor
+	Component       Component
+	Cursor          *Cursor
+	BackgroundColor color.Color
+	ForegroundColor color.Color
 }
 
 // Cursor represents a cursor on the terminal screen.
@@ -332,7 +334,8 @@ type Program struct {
 	// When a program is suspended, the terminal state is saved and the program
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
-	setBg, setFg, setCc color.Color
+	setBg, setFg, setCc                       color.Color
+	lastBgColor, lastFgColor, lastCursorColor color.Color
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -639,28 +642,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(ansi.SetPrimaryClipboard(string(msg)))
 
 			case setBackgroundColorMsg:
-				if msg.Color != nil {
-					p.execute(ansi.SetBackgroundColor(msg.Color))
-				} else {
-					p.execute(ansi.ResetBackgroundColor)
-				}
-				p.setBg = msg.Color
+				p.renderer.setBackgroundColor(msg.Color)
+				p.lastBgColor = msg.Color
 
 			case setForegroundColorMsg:
-				if msg.Color != nil {
-					p.execute(ansi.SetForegroundColor(msg.Color))
-				} else {
-					p.execute(ansi.ResetForegroundColor)
-				}
-				p.setFg = msg.Color
+				p.renderer.setForegroundColor(msg.Color)
+				p.lastFgColor = msg.Color
 
 			case setCursorColorMsg:
-				if msg.Color != nil {
-					p.execute(ansi.SetCursorColor(msg.Color))
-				} else {
-					p.execute(ansi.ResetCursorColor)
-				}
-				p.setCc = msg.Color
+				p.renderer.setCursorColor(msg.Color)
+				p.lastCursorColor = msg.Color
 
 			case backgroundColorMsg:
 				p.execute(ansi.RequestBackgroundColor)
@@ -830,11 +821,16 @@ func (p *Program) render(model Model) {
 			frame, view.Cursor = model.View()
 		}
 		view.Component = uv.NewStyledString(frame)
+		view.BackgroundColor = p.lastBgColor
+		view.ForegroundColor = p.lastFgColor
+		if view.Cursor != nil {
+			view.Cursor.Color = p.lastCursorColor
+		}
 	case ViewableModel:
 		view = model.View()
 	}
 	if p.renderer != nil {
-		p.renderer.render(view, p) // send view to renderer
+		p.renderer.render(view) // send view to renderer
 	}
 }
 
@@ -1327,7 +1323,7 @@ func (p *Program) startRenderer() {
 
 			case <-p.ticker.C:
 				_ = p.flush()
-				_ = p.renderer.flush()
+				_ = p.renderer.flush(p)
 			}
 		}
 	}()
@@ -1344,7 +1340,7 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_ = p.renderer.flush()
+		_ = p.renderer.flush(p)
 	}
 
 	_ = p.renderer.close()

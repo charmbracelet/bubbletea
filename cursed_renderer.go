@@ -2,6 +2,7 @@ package tea
 
 import (
 	"fmt"
+	"image/color"
 	"io"
 	"strings"
 	"sync"
@@ -12,25 +13,26 @@ import (
 )
 
 type cursedRenderer struct {
-	w               io.Writer
-	scr             *uv.TerminalRenderer
-	buf             uv.ScreenBuffer
-	lastFrame       *string
-	lastCur         *Cursor
-	env             []string
-	term            string // the terminal type $TERM
-	width, height   int
-	lastFrameHeight int // the height of the last rendered frame, used to determine if we need to resize the screen buffer
-	mu              sync.Mutex
-	profile         colorprofile.Profile
-	cursor          Cursor
-	method          ansi.Method
-	logger          uv.Logger
-	altScreen       bool
-	cursorHidden    bool
-	hardTabs        bool // whether to use hard tabs to optimize cursor movements
-	backspace       bool // whether to use backspace to optimize cursor movements
-	mapnl           bool
+	w                   io.Writer
+	scr                 *uv.TerminalRenderer
+	buf                 uv.ScreenBuffer
+	lastFrame           *string
+	lastCur             *Cursor
+	env                 []string
+	term                string // the terminal type $TERM
+	width, height       int
+	lastFrameHeight     int // the height of the last rendered frame, used to determine if we need to resize the screen buffer
+	mu                  sync.Mutex
+	profile             colorprofile.Profile
+	cursor              Cursor
+	method              ansi.Method
+	logger              uv.Logger
+	setCc, setFg, setBg color.Color
+	altScreen           bool
+	cursorHidden        bool
+	hardTabs            bool // whether to use hard tabs to optimize cursor movements
+	backspace           bool // whether to use backspace to optimize cursor movements
+	mapnl               bool
 }
 
 var _ renderer = &cursedRenderer{}
@@ -95,9 +97,41 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush() error {
+func (s *cursedRenderer) flush(p *Program) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Set terminal colors.
+	if s.setCc != p.setCc {
+		if s.setCc == nil {
+			// Reset the cursor color if it was set to nil.
+			_, _ = s.scr.WriteString(ansi.ResetCursorColor)
+		} else {
+			// Set the cursor color.
+			_, _ = s.scr.WriteString(ansi.SetCursorColor(s.setCc))
+		}
+		p.setCc = s.setCc
+	}
+	if s.setFg != p.setFg {
+		if s.setFg == nil {
+			// Reset the foreground color if it was set to nil.
+			_, _ = s.scr.WriteString(ansi.ResetForegroundColor)
+		} else {
+			// Set the foreground color.
+			_, _ = s.scr.WriteString(ansi.SetForegroundColor(s.setFg))
+		}
+		p.setFg = s.setFg
+	}
+	if s.setBg != p.setBg {
+		if s.setBg == nil {
+			// Reset the background color if it was set to nil.
+			_, _ = s.scr.WriteString(ansi.ResetBackgroundColor)
+		} else {
+			// Set the background color.
+			_, _ = s.scr.WriteString(ansi.SetBackgroundColor(s.setBg))
+		}
+		p.setBg = s.setBg
+	}
 
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.buf.Buffer)
@@ -130,7 +164,7 @@ func (s *cursedRenderer) flush() error {
 }
 
 // render implements renderer.
-func (s *cursedRenderer) render(v View, p *Program) {
+func (s *cursedRenderer) render(v View) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -175,14 +209,16 @@ func (s *cursedRenderer) render(v View, p *Program) {
 	}
 
 	cur := v.Cursor
+
+	// Ensure we have any desired terminal colors set.
+	s.setBg = v.BackgroundColor
+	s.setFg = v.ForegroundColor
+	if cur != nil {
+		s.setCc = cur.Color
+	}
 	if s.lastFrame != nil && frame == *s.lastFrame &&
 		(s.lastCur == nil && cur == nil || s.lastCur != nil && cur != nil && *s.lastCur == *cur) {
 		return
-	}
-
-	// Ensure we reset the cursor color on exit.
-	if cur != nil {
-		p.setCc = cur.Color
 	}
 
 	s.lastCur = cur
@@ -198,6 +234,27 @@ func (s *cursedRenderer) render(v View, p *Program) {
 	} else {
 		enableTextCursor(s, true)
 	}
+}
+
+// setCursorColor implements renderer.
+func (s *cursedRenderer) setCursorColor(c color.Color) {
+	s.mu.Lock()
+	s.setCc = c
+	s.mu.Unlock()
+}
+
+// setForegroundColor implements renderer.
+func (s *cursedRenderer) setForegroundColor(c color.Color) {
+	s.mu.Lock()
+	s.setFg = c
+	s.mu.Unlock()
+}
+
+// setBackgroundColor implements renderer.
+func (s *cursedRenderer) setBackgroundColor(c color.Color) {
+	s.mu.Lock()
+	s.setBg = c
+	s.mu.Unlock()
 }
 
 // reset implements renderer.

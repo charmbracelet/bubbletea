@@ -1,6 +1,8 @@
 package tea
 
 import (
+	"image/color"
+
 	"github.com/charmbracelet/colorprofile"
 )
 
@@ -38,16 +40,25 @@ func (n nilRenderer) setColorProfile(colorprofile.Profile) {}
 func (n nilRenderer) showCursor() {}
 
 // flush implements the Renderer interface.
-func (nilRenderer) flush() error { return nil }
+func (nilRenderer) flush(*Program) error { return nil }
 
 // close implements the Renderer interface.
 func (nilRenderer) close() error { return nil }
 
 // render implements the Renderer interface.
-func (nilRenderer) render(View, *Program) {}
+func (nilRenderer) render(View) {}
 
 // reset implements the Renderer interface.
 func (nilRenderer) reset() {}
 
 // writeString implements the Renderer interface.
 func (nilRenderer) writeString(string) (int, error) { return 0, nil }
+
+// setCursorColor implements the Renderer interface.
+func (n nilRenderer) setCursorColor(color.Color) {}
+
+// setForegroundColor implements the Renderer interface.
+func (n nilRenderer) setForegroundColor(color.Color) {}
+
+// setBackgroundColor implements the Renderer interface.
+func (n nilRenderer) setBackgroundColor(color.Color) {}

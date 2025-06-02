@@ -2,6 +2,7 @@ package tea
 
 import (
 	"bytes"
+	"image/color"
 	"io"
 	"strings"
 	"sync"
@@ -71,7 +72,7 @@ func (r *standardRenderer) reset() {
 // close closes the renderer and flushes any remaining data.
 func (r *standardRenderer) close() error {
 	// flush locks the mutex
-	_ = r.flush()
+	_ = r.flush(nil)
 
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
@@ -97,7 +98,7 @@ func (r *standardRenderer) writeString(s string) (int, error) {
 }
 
 // flush renders the buffer.
-func (r *standardRenderer) flush() error {
+func (r *standardRenderer) flush(*Program) error {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -241,7 +242,7 @@ func (r *standardRenderer) lastLinesRendered() int {
 
 // write writes to the internal buffer. The buffer will be outputted via the
 // ticker which calls flush().
-func (r *standardRenderer) render(v View, _ *Program) {
+func (r *standardRenderer) render(v View) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
@@ -375,3 +376,7 @@ func (r *standardRenderer) insertAbove(s string) {
 		r.mtx.Unlock()
 	}
 }
+
+func (r *standardRenderer) setCursorColor(c color.Color)     {}
+func (r *standardRenderer) setForegroundColor(c color.Color) {}
+func (r *standardRenderer) setBackgroundColor(c color.Color) {}
