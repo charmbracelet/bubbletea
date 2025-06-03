@@ -27,7 +27,7 @@ func (m model) Init() tea.Cmd {
 		// Attempt to enable keyboard enhancements. By default, this just
 		// enables key disabiguation. For key releases, you'll need to opt-in
 		// to that feature.
-		tea.RequestKeyboardEnhancements(tea.WithKeyReleases),
+		tea.RequestKeyReleases,
 
 		tea.RequestBackgroundColor,
 	)
