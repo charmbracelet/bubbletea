@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -225,19 +226,31 @@ func WithReportFocus() ProgramOption {
 	}
 }
 
-// WithKeyboardEnhancements enables support for enhanced keyboard features. You
-// can enable different keyboard features by passing one or more
-// KeyboardEnhancement functions.
+// WithKeyReleases enables support for reporting key release events. This is
+// useful for terminals that support the Kitty keyboard protocol "Report event
+// types" progressive enhancement feature.
 //
-// This is not supported on all terminals. On Windows, these features are
-// enabled by default.
-func WithKeyboardEnhancements(enhancements ...KeyboardEnhancementOption) ProgramOption {
-	var ke KeyboardEnhancements
-	for _, e := range append(enhancements, withKeyDisambiguation) {
-		e(&ke)
-	}
+// Note that not all terminals support this feature. If the terminal does not
+// support this feature, the program will not receive key release events.
+func WithKeyReleases() ProgramOption {
 	return func(p *Program) {
-		p.requestedEnhancements = ke
+		p.requestedEnhancements.kittyFlags |= ansi.KittyReportEventTypes
+		p.requestedEnhancements.keyReleases = true
+	}
+}
+
+// WithUniformKeyLayout enables support for reporting key events as though they
+// were on a PC-101 layout. This is useful for uniform key event reporting
+// across different keyboard layouts. This is equivalent to the Kitty keyboard
+// protocol "Report alternate keys" and "Report all keys as escape codes"
+// progressive enhancement features.
+//
+// Note that not all terminals support this feature. If the terminal does not
+// support this feature, the program will not receive key events in
+// uniform layout format.
+func WithUniformKeyLayout() ProgramOption {
+	return func(p *Program) {
+		p.requestedEnhancements.kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
 	}
 }
 

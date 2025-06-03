@@ -28,6 +28,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
+	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -599,7 +600,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case setBackgroundColorMsg:
 				if msg.Color != nil {
-					p.execute(ansi.SetBackgroundColor(msg.Color))
+					c, ok := colorful.MakeColor(msg.Color)
+					if ok {
+						p.execute(ansi.SetBackgroundColor(c.Hex()))
+					}
 				} else {
 					p.execute(ansi.ResetBackgroundColor)
 				}
@@ -607,7 +611,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case setForegroundColorMsg:
 				if msg.Color != nil {
-					p.execute(ansi.SetForegroundColor(msg.Color))
+					c, ok := colorful.MakeColor(msg.Color)
+					if ok {
+						p.execute(ansi.SetForegroundColor(c.Hex()))
+					}
 				} else {
 					p.execute(ansi.ResetForegroundColor)
 				}
@@ -615,7 +622,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case setCursorColorMsg:
 				if msg.Color != nil {
-					p.execute(ansi.SetCursorColor(msg.Color))
+					c, ok := colorful.MakeColor(msg.Color)
+					if ok {
+						p.execute(ansi.SetCursorColor(c.Hex()))
+					}
 				} else {
 					p.execute(ansi.ResetCursorColor)
 				}
@@ -1194,13 +1204,22 @@ func (p *Program) RestoreTerminal() error {
 
 	// Restore terminal colors.
 	if p.setBg != nil {
-		p.execute(ansi.SetBackgroundColor(p.setBg))
+		c, ok := colorful.MakeColor(p.setBg)
+		if ok {
+			p.execute(ansi.SetBackgroundColor(c.Hex()))
+		}
 	}
 	if p.setFg != nil {
-		p.execute(ansi.SetForegroundColor(p.setFg))
+		c, ok := colorful.MakeColor(p.setFg)
+		if ok {
+			p.execute(ansi.SetForegroundColor(c.Hex()))
+		}
 	}
 	if p.setCc != nil {
-		p.execute(ansi.SetCursorColor(p.setCc))
+		c, ok := colorful.MakeColor(p.setCc)
+		if ok {
+			p.execute(ansi.SetCursorColor(c.Hex()))
+		}
 	}
 
 	// If the output is a terminal, it may have been resized while another

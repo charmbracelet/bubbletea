@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250603140710-946081c6f1a5
-	github.com/charmbracelet/x/ansi v0.9.3-0.20250516160309-24eee56f89fa
+	github.com/charmbracelet/x/ansi v0.9.3-0.20250602153603-fb931ed90413
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250514204301-7f4ee4d0d5fe
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
