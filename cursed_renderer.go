@@ -61,7 +61,7 @@ func (s *cursedRenderer) flush() error {
 
 	// Render and queue changes to the screen buffer.
 	s.scr.Render()
-	if s.lastCur != nil {
+	if s.lastCur != nil { //nolint:nestif
 		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
 			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
 			_, _ = io.WriteString(s.w, ansi.SetCursorStyle(cursorStyle))
