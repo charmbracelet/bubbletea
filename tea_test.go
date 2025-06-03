@@ -129,7 +129,7 @@ func TestTeaWaitQuit(t *testing.T) {
 	<-progStarted
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		wg.Add(1)
 		go func() {
 			p.Wait()
@@ -179,7 +179,7 @@ func TestTeaWaitKill(t *testing.T) {
 	<-progStarted
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		wg.Add(1)
 		go func() {
 			p.Wait()
