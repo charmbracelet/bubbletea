@@ -121,6 +121,23 @@ type Hittable interface {
 	Hit(x, y int) string
 }
 
+// NewView is a helper function to create a new [View] with the given string or
+// [Layer].
+func NewView(s any) View {
+	var view View
+	switch v := s.(type) {
+	case string:
+		view.Layer = StyledString(v)
+	case fmt.Stringer:
+		view.Layer = StyledString(v.String())
+	case Layer:
+		view.Layer = v
+	default:
+		view.Layer = StyledString(fmt.Sprintf("%v", v))
+	}
+	return view
+}
+
 // View represents a terminal view that can be composed of multiple layers.
 // It can also contain a cursor that will be rendered on top of the layers.
 type View struct {
@@ -309,6 +326,7 @@ type Program struct {
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
+	mu    sync.Mutex
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
