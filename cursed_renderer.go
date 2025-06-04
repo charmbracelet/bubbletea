@@ -338,7 +338,7 @@ func (s *cursedRenderer) resize(w, h int) {
 		// width hasn't changed in inline mode. On the other hand, when using
 		// alt screen mode, we always want to redraw because some terminals
 		// would scroll the screen and our content would be lost.
-		s.scr.Clear()
+		s.scr.Erase()
 	}
 
 	s.scr.Resize(s.width, s.height)
