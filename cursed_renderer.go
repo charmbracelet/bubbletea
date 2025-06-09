@@ -121,7 +121,7 @@ func (s *cursedRenderer) flush(p *Program) error {
 		{rendererColor: &s.setFg, programColor: &p.setFg, reset: ansi.ResetForegroundColor, setter: ansi.SetForegroundColor},
 		{rendererColor: &s.setBg, programColor: &p.setBg, reset: ansi.ResetBackgroundColor, setter: ansi.SetBackgroundColor},
 	} {
-		if *c.rendererColor == nil && *c.programColor != nil {
+		if *c.rendererColor != *c.programColor {
 			if *c.rendererColor == nil {
 				// Reset the color if it was set to nil.
 				_, _ = s.scr.WriteString(c.reset)
