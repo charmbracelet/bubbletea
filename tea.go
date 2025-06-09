@@ -677,36 +677,15 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(ansi.SetPrimaryClipboard(string(msg)))
 
 			case setBackgroundColorMsg:
-				if msg.Color != nil {
-					c, ok := colorful.MakeColor(msg.Color)
-					if ok {
-						p.execute(ansi.SetBackgroundColor(c.Hex()))
-					}
-				} else {
-					p.execute(ansi.ResetBackgroundColor)
-				}
+				// The renderer handles flushing the color to the terminal.
 				p.lastBgColor = msg.Color
 
 			case setForegroundColorMsg:
-				if msg.Color != nil {
-					c, ok := colorful.MakeColor(msg.Color)
-					if ok {
-						p.execute(ansi.SetForegroundColor(c.Hex()))
-					}
-				} else {
-					p.execute(ansi.ResetForegroundColor)
-				}
+				// The renderer handles flushing the color to the terminal.
 				p.lastFgColor = msg.Color
 
 			case setCursorColorMsg:
-				if msg.Color != nil {
-					c, ok := colorful.MakeColor(msg.Color)
-					if ok {
-						p.execute(ansi.SetCursorColor(c.Hex()))
-					}
-				} else {
-					p.execute(ansi.ResetCursorColor)
-				}
+				// The renderer handles flushing the color to the terminal.
 				p.lastCursorColor = msg.Color
 
 			case backgroundColorMsg:
@@ -877,11 +856,11 @@ func (p *Program) render(model Model) {
 		case CursorModel:
 			frame, view.Cursor = model.View()
 		}
-		view.Layer = uv.NewStyledString(frame)
+		view.Layer = StyledString(frame)
 		view.BackgroundColor = p.lastBgColor
 		view.ForegroundColor = p.lastFgColor
 		view.WindowTitle = p.lastWindowTitle
-		if view.Cursor != nil {
+		if view.Cursor != nil && p.lastCursorColor != nil {
 			view.Cursor.Color = p.lastCursorColor
 		}
 	case ViewableModel:
