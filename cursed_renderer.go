@@ -411,18 +411,15 @@ func (s *cursedRenderer) hideCursor() {
 // insertAbove implements renderer.
 func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Lock()
-	var sb strings.Builder
-	for i, line := range strings.Split(lines, "\n") {
+	strLines := strings.Split(lines, "\n")
+	for i, line := range strLines {
 		if ansi.StringWidth(line) > s.width {
 			// If the line is wider than the screen, truncate it.
 			line = ansi.Truncate(line, s.width, "")
 		}
-		sb.WriteString(line)
-		if i > 0 {
-			sb.WriteByte('\n')
-		}
+		strLines[i] = line
 	}
-	s.scr.PrependString(sb.String())
+	s.scr.PrependString(strings.Join(strLines, "\n"))
 	s.mu.Unlock()
 }
 
