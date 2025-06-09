@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
@@ -103,6 +104,74 @@ type CursorModel interface {
 	// Use [NewCursor] to quickly create a cursor for a given position with
 	// default styles.
 	View() (string, *Cursor)
+}
+
+// View represents a view in a program.
+type View struct {
+	body    string
+	canvas  *lipgloss.Canvas
+	cursor  *Cursor
+	bgColor color.Color
+}
+
+// ViewConstructor is a type constraint for the [NewView] function.
+type ViewConstructor interface {
+	string | *lipgloss.Canvas
+}
+
+// NewView is a helper function to create a new view. It takes a string,
+// representing the general portion of the user interface.
+func NewView[T ViewConstructor](frame T) View {
+	var v View
+	switch t := any(frame).(type) {
+	case string:
+		v.body = t
+	case *lipgloss.Canvas:
+		v.canvas = t
+	}
+	return v
+}
+
+// String returns the main body of the view, without additional metadata like
+// the cursor.
+func (v View) String() string {
+	if v.canvas != nil {
+		return v.canvas.Render()
+	}
+	return v.body
+}
+
+// SetCursor renders a cursor. If nil, the cursor will be hidden. Use [NewCursor]
+// to create a cursor for a given position with default styles.
+func (v *View) SetCursor(c *Cursor) {
+	v.cursor = c
+}
+
+// Cursor returns the cursor of the view. If the view does not have a
+// cursor, it returns nil.
+func (v View) Cursor() *Cursor {
+	return v.cursor
+}
+
+// SetBackgroundColor sets the background color of the terminal window. If nil,
+// the background color will be removed.
+func (v *View) SetBackgroundColor(c color.Color) {
+	v.bgColor = c
+}
+
+// BackgroundColor returns the background color of the view. If the view does
+// not have a background color, it returns nil.
+func (v View) BackgroundColor() color.Color {
+	return v.bgColor
+}
+
+// Viewable is an optional interface that can be implemented by the main model
+// to provide a [View]. If the main model does not implement a view interface,
+// the program won't render anything.
+//
+// Use [NewView] to create a new view.
+type Viewable interface {
+	View() View
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
@@ -278,6 +347,9 @@ type Program struct {
 	// is paused. This saves the terminal colors state so they can be restored
 	// when the program is resumed.
 	setBg, setFg, setCc color.Color
+
+	// Lip Gloss canvas instance, used for hit detection.
+	canvas *lipgloss.Canvas
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -780,7 +852,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // hasView returns true if the model has a view.
 func hasView(model Model) (ok bool) {
 	switch model.(type) {
-	case ViewModel, CursorModel:
+	case Viewable, ViewModel, CursorModel:
 		ok = true
 	}
 	return
@@ -788,13 +860,32 @@ func hasView(model Model) (ok bool) {
 
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
-	var view string
+	var frame string
 	var cur *Cursor
 	switch model := model.(type) {
+	case Viewable:
+		v := model.View()
+		frame = v.String()
+		cur = v.cursor
+		p.canvas = v.canvas // store or clear the lipgloss.Canvas
+
+		// Set or clear the background color.
+		c := v.bgColor
+		if c != p.setBg {
+			if c != nil {
+				col, ok := colorful.MakeColor(c)
+				if ok {
+					p.execute(ansi.SetBackgroundColor(col.Hex()))
+				}
+			} else {
+				p.execute(ansi.ResetBackgroundColor)
+			}
+			p.setBg = c
+		}
 	case ViewModel:
-		view = model.View()
+		frame = model.View()
 	case CursorModel:
-		view, cur = model.View()
+		frame, cur = model.View()
 	}
 
 	// Ensure we reset the cursor color on exit.
@@ -802,7 +893,7 @@ func (p *Program) render(model Model) {
 		p.setCc = cur.Color
 	}
 
-	p.renderer.render(view, cur) // send view to renderer
+	p.renderer.render(frame, cur) // send view to renderer
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets

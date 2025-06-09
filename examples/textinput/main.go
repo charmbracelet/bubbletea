@@ -59,19 +59,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	var c *tea.Cursor
 	if !m.textInput.VirtualCursor() {
 		c = m.textInput.Cursor()
 		c.Y += lipgloss.Height(m.headerView())
 	}
-
 	str := lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView())
 	if m.quitting {
 		str += "\n"
 	}
 
-	return str, c
+	v := tea.NewView(str)
+	v.SetCursor(c)
+	return v
 }
 
 func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }
