@@ -89,6 +89,10 @@ func (s *cursedRenderer) close() (err error) {
 	reset(s)
 	s.scr.SetPosition(x, y)
 
+	// Reset cursor style state so that we can restore it again when we start
+	// the renderer again.
+	s.cursor = Cursor{}
+
 	return nil
 }
 
@@ -136,8 +140,6 @@ func (s *cursedRenderer) flush(p *Program) error {
 		}
 	}
 
-	// Render and queue changes to the screen buffer.
-	s.scr.Render(s.buf.Buffer)
 	if s.lastCur != nil {
 		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
 			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
@@ -156,9 +158,13 @@ func (s *cursedRenderer) flush(p *Program) error {
 			_, _ = s.scr.WriteString(seq)
 			s.cursor.Color = s.lastCur.Color
 		}
+	}
 
-		// MoveTo must come after [cellbuf.Screen.Render] because the cursor
-		// position might get updated during rendering.
+	// Render and queue changes to the screen buffer.
+	s.scr.Render(s.buf.Buffer)
+	if s.lastCur != nil {
+		// MoveTo must come after [uv.TerminalRenderer.Render] because the
+		// cursor position might get updated during rendering.
 		s.scr.MoveTo(s.lastCur.X, s.lastCur.Y)
 		s.cursor.Position = s.lastCur.Position
 	}
