@@ -70,7 +70,7 @@ func TestClearMsg(t *testing.T) {
 		},
 		{
 			name: "kitty_start",
-			cmds: []Cmd{DisableKeyboardEnhancements, RequestKeyboardEnhancements(WithKeyReleases)},
+			cmds: []Cmd{DisableKeyboardEnhancements, RequestKeyReleases},
 		},
 	}
 
