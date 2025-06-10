@@ -117,7 +117,7 @@ func (p *Program) initInputReader(cancel bool) error {
 	drv := uv.NewTerminalReader(p.input, term)
 	drv.SetLogger(p.logger)
 	if p.mouseMode {
-		mouseMode := uv.ReleasesMouseMode | uv.AllMotionMouseMode
+		mouseMode := uv.ButtonMouseMode | uv.DragMouseMode | uv.AllMouseMode
 		drv.MouseMode = &mouseMode
 	}
 	p.inputReader = drv
