@@ -9,10 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss/v2"
 )
 
-var baseStyle = lipgloss.NewStyle().
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240"))
-
 type model struct {
 	table table.Model
 }
@@ -43,18 +39,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return baseStyle.Render(m.table.View()) + "\n  " + m.table.HelpView() + "\n"
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.table.View(),
+		m.table.HelpView(),
+	)
 }
 
 func main() {
-	columns := []table.Column{
-		{Title: "Rank", Width: 4},
-		{Title: "City", Width: 10},
-		{Title: "Country", Width: 10},
-		{Title: "Population", Width: 10},
-	}
+	headers := []string{"Rank", "City", "Country", "Population"}
 
-	rows := []table.Row{
+	rows := [][]string{
 		{"1", "Tokyo", "Japan", "37,274,000"},
 		{"2", "Delhi", "India", "32,065,760"},
 		{"3", "Shanghai", "China", "28,516,904"},
@@ -158,11 +153,18 @@ func main() {
 	}
 
 	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
+		table.WithHeaders(headers...),
+		table.WithRows(rows...),
 		table.WithFocused(true),
-		table.WithHeight(7),
+		table.WithHeight(20),
 	)
+
+	// This is another way to initialize the same table.
+	//	t := table.New().
+	//		SetHeaders(headers...).
+	//		SetRows(rows...).
+	//		SetFocused(true).
+	//		SetHeight(20)
 
 	s := table.DefaultStyles()
 	s.Header = s.Header.
@@ -174,9 +176,10 @@ func main() {
 		Foreground(lipgloss.Color("229")).
 		Background(lipgloss.Color("57")).
 		Bold(false)
+
 	t.SetStyles(s)
 
-	m := model{t}
+	m := model{*t}
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
