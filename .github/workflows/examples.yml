@@ -29,7 +29,7 @@ jobs:
         run: |
           (cd ./examples && go mod tidy)
           (cd ./tutorials && go mod tidy)
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "chore: go mod tidy tutorials and examples"
           branch: master
