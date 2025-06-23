@@ -186,15 +186,18 @@ func (s *cursedRenderer) render(v View) {
 		frameArea.Max.Y = 0
 	}
 
-	if b, ok := v.Layer.(interface{ Bounds() Rectangle }); ok {
-		if !s.altScreen {
-			// Inline mode resizes the screen based on the frame height and
-			// terminal width. This is because the frame height can change based on
-			// the content of the frame. For example, if the frame contains a list
-			// of items, the height of the frame will be the number of items in the
-			// list. This is different from the alt screen buffer, which has a
-			// fixed height and width.
-			frameArea.Max.Y = b.Bounds().Max.Y
+	if !s.altScreen {
+		// Inline mode resizes the screen based on the frame height and
+		// terminal width. This is because the frame height can change based on
+		// the content of the frame. For example, if the frame contains a list
+		// of items, the height of the frame will be the number of items in the
+		// list. This is different from the alt screen buffer, which has a
+		// fixed height and width.
+		switch l := v.Layer.(type) {
+		case *uv.StyledString:
+			frameArea.Max.Y = l.Height()
+		case interface{ Bounds() uv.Rectangle }:
+			frameArea.Max.Y = l.Bounds().Dy()
 		}
 	}
 
