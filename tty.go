@@ -132,13 +132,14 @@ func (p *Program) initInputReader(cancel bool) error {
 }
 
 func (p *Program) readInputs() error {
+	var events [256]uv.Event
 	for {
-		events, err := p.inputReader.ReadEvents()
+		n, err := p.inputReader.ReadEvents(events[:])
 		if err != nil {
 			return fmt.Errorf("bubbletea: error reading input: %w", err)
 		}
 
-		for _, msg := range events {
+		for _, msg := range events[:n] {
 			if m := p.translateInputEvent(msg); m != nil {
 				select {
 				case p.msgs <- m:
