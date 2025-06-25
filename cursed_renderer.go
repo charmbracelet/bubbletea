@@ -199,13 +199,13 @@ func (s *cursedRenderer) render(v View) {
 		case interface{ Bounds() uv.Rectangle }:
 			frameArea.Max.Y = l.Bounds().Dy()
 		}
-	}
 
-	// Resize the screen buffer to match the frame area. This is necessary
-	// to ensure that the screen buffer is the same size as the frame area
-	// and to avoid rendering issues when the frame area is smaller than
-	// the screen buffer.
-	s.buf.Resize(frameArea.Dx(), frameArea.Dy())
+		// Resize the screen buffer to match the frame area. This is necessary
+		// to ensure that the screen buffer is the same size as the frame area
+		// and to avoid rendering issues when the frame area is smaller than
+		// the screen buffer.
+		s.buf.Resize(frameArea.Dx(), frameArea.Dy())
+	}
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.buf.Clear()
@@ -348,6 +348,9 @@ func (s *cursedRenderer) resize(w, h int) {
 		// alt screen mode, we always want to redraw because some terminals
 		// would scroll the screen and our content would be lost.
 		s.scr.Erase()
+	}
+	if s.altScreen {
+		s.buf.Resize(w, h)
 	}
 
 	s.scr.Resize(s.width, s.height)
