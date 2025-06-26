@@ -291,3 +291,12 @@ func WithWindowSize(width, height int) ProgramOption {
 		p.height = height
 	}
 }
+
+// WithoutKeyEnhancements disables all key enhancements. This is useful if you
+// want to disable all key enhancements for your program and keep your program
+// legacy compatible with older terminals.
+func WithoutKeyEnhancements() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutKeyEnhancements
+	}
+}

@@ -241,6 +241,7 @@ const (
 	withWindowsInputMode
 	withColorProfile
 	withGraphemeClustering
+	withoutKeyEnhancements
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -704,6 +705,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.activeEnhancements.modifyOtherKeys = msg.modifyOtherKeys
 
 			case enableKeyboardEnhancementsMsg:
+				if p.startupOptions.has(withoutKeyEnhancements) {
+					break
+				}
+
 				if isWindows() {
 					// We use the Windows Console API which supports keyboard
 					// enhancements.
@@ -726,6 +731,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.requestKeyboardEnhancements()
 
 			case disableKeyboardEnhancementsMsg:
+				if p.startupOptions.has(withoutKeyEnhancements) {
+					break
+				}
+
 				if isWindows() {
 					// We use the Windows Console API which supports keyboard
 					// enhancements.
@@ -1045,19 +1054,21 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.modes.Set(ansi.FocusEventMode)
 	}
 
-	if !isWindows() {
-		// Enable unambiguous keys using whichever protocol the terminal prefer.
-		p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
-		if p.requestedEnhancements.modifyOtherKeys == 0 {
-			p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
+	if !p.startupOptions.has(withoutKeyEnhancements) {
+		if !isWindows() {
+			// Enable unambiguous keys using whichever protocol the terminal prefer.
+			p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
+			if p.requestedEnhancements.modifyOtherKeys == 0 {
+				p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
+			}
+			// We use the Windows Console API which supports keyboard
+			// enhancements.
+			p.requestKeyboardEnhancements()
+		} else {
+			// Send an empty message to tell the user we support
+			// keyboard enhancements on Windows.
+			go p.Send(KeyboardEnhancementsMsg{})
 		}
-		// We use the Windows Console API which supports keyboard
-		// enhancements.
-		p.requestKeyboardEnhancements()
-	} else {
-		// Send an empty message to tell the user we support
-		// keyboard enhancements on Windows.
-		go p.Send(KeyboardEnhancementsMsg{})
 	}
 
 	// Start the renderer.
