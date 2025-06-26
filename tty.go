@@ -131,34 +131,10 @@ func (p *Program) initInputReader(cancel bool) error {
 	return nil
 }
 
-func (p *Program) readInputs() error {
-	var events [256]uv.Event
-	for {
-		n, err := p.inputReader.ReadEvents(events[:])
-		if err != nil {
-			return fmt.Errorf("bubbletea: error reading input: %w", err)
-		}
-
-		for _, msg := range events[:n] {
-			if m := p.translateInputEvent(msg); m != nil {
-				select {
-				case p.msgs <- m:
-				case <-p.ctx.Done():
-					err := p.ctx.Err()
-					if err != nil {
-						err = fmt.Errorf("bubbletea: found context error while reading input: %w", err)
-					}
-					return err
-				}
-			}
-		}
-	}
-}
-
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := p.readInputs()
+	err := p.inputReader.ReceiveEvents(p.ctx, p.msgs)
 	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 		select {
 		case <-p.ctx.Done():

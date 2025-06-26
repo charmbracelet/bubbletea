@@ -47,7 +47,7 @@ var ErrInterrupted = errors.New("program was interrupted")
 
 // Msg contain data from the result of a IO operation. Msgs trigger the update
 // function and, henceforth, the UI.
-type Msg any
+type Msg = uv.Event
 
 // Model contains the program's state as well as its core functions.
 type Model interface {
@@ -575,6 +575,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			return model, err
 
 		case msg := <-p.msgs:
+			msg = p.translateInputEvent(msg)
+
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
