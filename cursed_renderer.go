@@ -262,11 +262,12 @@ func (s *cursedRenderer) hit(mouse MouseMsg) []Msg {
 	if s.layer != nil {
 		if h, ok := s.layer.(Hittable); ok {
 			m := mouse.Mouse()
-			id := h.Hit(m.X, m.Y)
-			return []Msg{LayerHitMsg{
-				ID:    id,
-				Mouse: mouse,
-			}}
+			if id := h.Hit(m.X, m.Y); id != "" {
+				return []Msg{LayerHitMsg{
+					ID:    id,
+					Mouse: mouse,
+				}}
+			}
 		}
 	}
 
