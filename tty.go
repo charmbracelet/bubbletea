@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/charmbracelet/uv"
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"

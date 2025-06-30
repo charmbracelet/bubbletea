@@ -3,7 +3,7 @@ package tea
 import (
 	"fmt"
 
-	"github.com/charmbracelet/uv"
+	uv "github.com/charmbracelet/ultraviolet"
 )
 
 // MouseButton represents the button that was pressed during a mouse message.

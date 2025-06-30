@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/colorprofile"
-	"github.com/charmbracelet/uv"
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"github.com/lucasb-eyer/go-colorful"

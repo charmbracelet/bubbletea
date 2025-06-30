@@ -1,6 +1,6 @@
 package tea
 
-import "github.com/charmbracelet/uv"
+import uv "github.com/charmbracelet/ultraviolet"
 
 // modeReportMsg is a message that represents a mode report event (DECRPM).
 //

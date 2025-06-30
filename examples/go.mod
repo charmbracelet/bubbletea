@@ -1,16 +1,16 @@
 module examples
 
-go 1.24.2
-
-toolchain go1.24.3
+go 1.24.3
 
 replace github.com/charmbracelet/bubbletea/v2 => ../
 
-replace github.com/charmbracelet/uv => ../../uv
+replace github.com/charmbracelet/ultraviolet => ../../ultraviolet
 
 replace github.com/charmbracelet/lipgloss/v2 => ../../lipgloss
 
 replace github.com/charmbracelet/x/ansi => ../../x/ansi
+
+replace github.com/charmbracelet/x/exp/toner => ../../x/exp/toner
 
 require (
 	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20250526131538-b3f0c9e42318
@@ -18,9 +18,10 @@ require (
 	github.com/charmbracelet/colorprofile v0.3.1
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1.0.20250529185335-7edbc41e909e
-	github.com/charmbracelet/x/ansi v0.9.3-0.20250602153603-fb931ed90413
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250514204301-7f4ee4d0d5fe
+	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta1
+	github.com/charmbracelet/ultraviolet v0.0.0-00010101000000-000000000000
+	github.com/charmbracelet/x/ansi v0.9.3
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250602192518-9e722df69bbb
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.2.0
@@ -33,7 +34,6 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/uv v0.0.0-00010101000000-000000000000 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.14-0.20250516160309-24eee56f89fa // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20250207160936-21c02780d27a // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250327172914-2fdc97757edf // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/yuin/goldmark v1.7.8 // indirect
 	github.com/yuin/goldmark-emoji v1.0.5 // indirect
 	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )

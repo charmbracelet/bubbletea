@@ -2,18 +2,18 @@ module github.com/charmbracelet/bubbletea/v2
 
 go 1.24.3
 
-replace github.com/charmbracelet/uv => ../uv
+replace github.com/charmbracelet/ultraviolet => ../ultraviolet
 
 require (
 	github.com/charmbracelet/colorprofile v0.3.1
-	github.com/charmbracelet/uv v0.0.0-00010101000000-000000000000
+	github.com/charmbracelet/ultraviolet v0.0.0-00010101000000-000000000000
 	github.com/charmbracelet/x/ansi v0.9.3
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/term v0.2.1
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muesli/cancelreader v0.2.2
-	golang.org/x/sync v0.13.0
-	golang.org/x/sys v0.32.0
+	golang.org/x/sync v0.15.0
+	golang.org/x/sys v0.33.0
 )
 
 require (
