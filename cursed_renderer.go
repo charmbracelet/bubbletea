@@ -354,6 +354,9 @@ func (s *cursedRenderer) resize(w, h int) {
 		s.buf.Resize(w, h)
 	}
 
+	// We need to reset the touched lines buffer to match the new height.
+	s.buf.Touched = make([]*uv.LineData, h)
+
 	s.scr.Resize(s.width, s.height)
 	s.width, s.height = w, h
 	repaint(s)
