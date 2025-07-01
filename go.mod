@@ -2,11 +2,9 @@ module github.com/charmbracelet/bubbletea/v2
 
 go 1.24.3
 
-replace github.com/charmbracelet/ultraviolet => ../ultraviolet
-
 require (
 	github.com/charmbracelet/colorprofile v0.3.1
-	github.com/charmbracelet/ultraviolet v0.0.0-00010101000000-000000000000
+	github.com/charmbracelet/ultraviolet v0.0.0-20250630200803-d5a326545c60
 	github.com/charmbracelet/x/ansi v0.9.3
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/term v0.2.1
