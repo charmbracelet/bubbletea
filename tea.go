@@ -1133,6 +1133,13 @@ func (p *Program) recoverFromPanic(r any) {
 	p.shutdown(true)
 	fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
 	debug.PrintStack()
+	f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
+	if err == nil {
+		defer f.Close() //nolint:errcheck
+		fmt.Fprintln(f, r)
+		fmt.Fprintln(f)
+		fmt.Fprintln(f, fmt.Sprintf("%s", debug.Stack()))
+	}
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input
