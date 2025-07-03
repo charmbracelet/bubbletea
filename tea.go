@@ -83,13 +83,6 @@ type ViewableModel interface {
 	View() View
 }
 
-// StyledString returns a [Layer] that can be styled with ANSI escape
-// codes. It is used to render text with different colors, styles, and other
-// attributes on the terminal screen.
-func StyledString(s string) *uv.StyledString {
-	return uv.NewStyledString(s)
-}
-
 // Buffer represents a terminal cell buffer that defines the current state of
 // the terminal screen.
 type Buffer = uv.Buffer
@@ -127,13 +120,13 @@ func NewView(s any) View {
 	var view View
 	switch v := s.(type) {
 	case string:
-		view.Layer = StyledString(v)
+		view.Layer = uv.NewStyledString(v)
 	case fmt.Stringer:
-		view.Layer = StyledString(v.String())
+		view.Layer = uv.NewStyledString(v.String())
 	case Layer:
 		view.Layer = v
 	default:
-		view.Layer = StyledString(fmt.Sprintf("%v", v))
+		view.Layer = uv.NewStyledString(fmt.Sprintf("%v", v))
 	}
 	return view
 }
@@ -867,7 +860,7 @@ func (p *Program) render(model Model) {
 		case CursorModel:
 			frame, view.Cursor = model.View()
 		}
-		view.Layer = StyledString(frame)
+		view.Layer = uv.NewStyledString(frame)
 		view.BackgroundColor = p.lastBgColor
 		view.ForegroundColor = p.lastFgColor
 		view.WindowTitle = p.lastWindowTitle
