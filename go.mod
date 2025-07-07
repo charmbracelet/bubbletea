@@ -9,12 +9,12 @@ require (
 	github.com/charmbracelet/x/ansi v0.9.3
 	github.com/charmbracelet/x/cellbuf v0.0.14-0.20250505150409-97991a1f17d1
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
-	github.com/charmbracelet/x/input v0.3.5-0.20250509021451-13796e822d86
+	github.com/charmbracelet/x/input v0.3.5
 	github.com/charmbracelet/x/term v0.2.1
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muesli/cancelreader v0.2.2
 	golang.org/x/sync v0.13.0
-	golang.org/x/sys v0.32.0
+	golang.org/x/sys v0.33.0
 )
 
 require (
