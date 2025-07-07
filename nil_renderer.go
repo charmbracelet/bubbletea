@@ -67,4 +67,5 @@ func (n nilRenderer) setBackgroundColor(color.Color) {}
 func (n nilRenderer) setWindowTitle(string) {}
 
 // hit implements the Renderer interface.
-func (n nilRenderer) hit(MouseMsg) []Msg { return nil }
+func (n nilRenderer) hit(MouseMsg) []Msg  { return nil }
+func (n nilRenderer) resetLinesRendered() {}

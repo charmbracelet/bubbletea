@@ -71,6 +71,9 @@ type renderer interface {
 	repaint()
 
 	writeString(string) (int, error)
+
+	// resetLinesRendered ensures exec output remains on screen on exit
+	resetLinesRendered()
 }
 
 // repaintMsg forces a full repaint.

@@ -1220,13 +1220,22 @@ func (p *Program) recoverFromPanic(r any) {
 	default:
 	}
 	p.cancel() // Just in case a previous shutdown has failed.
-	s := strings.ReplaceAll(
-		fmt.Sprintf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r),
-		"\n", "\r\n")
-	fmt.Fprintln(os.Stderr, s)
-	stack := strings.ReplaceAll(fmt.Sprintf("%s", debug.Stack()), "\n", "\r\n")
-	fmt.Fprintln(os.Stderr, stack)
 	p.shutdown(true)
+	// We use "\r\n" to ensure the output is formatted even when restoring the
+	// terminal does not work or when raw mode is still active.
+	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
+	fmt.Fprintf(os.Stderr, "Caught panic:\r\n\r\n%s\r\n\r\nRestoring terminal...\r\n\r\n", rec)
+	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", debug.Stack()), "\n", "\r\n")
+	fmt.Fprint(os.Stderr, stack)
+	if v, err := strconv.ParseBool(os.Getenv("TEA_DEBUG")); err == nil && v {
+		f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
+		if err == nil {
+			defer f.Close()        //nolint:errcheck
+			fmt.Fprintln(f, rec)   //nolint:errcheck
+			fmt.Fprintln(f)        //nolint:errcheck
+			fmt.Fprintln(f, stack) //nolint:errcheck
+		}
+	}
 }
 
 // ReleaseTerminal restores the original terminal state and cancels the input

@@ -382,3 +382,6 @@ func (r *standardRenderer) setForegroundColor(c color.Color) {}
 func (r *standardRenderer) setBackgroundColor(c color.Color) {}
 func (r *standardRenderer) setWindowTitle(s string)          {}
 func (r *standardRenderer) hit(MouseMsg) []Msg               { return nil }
+func (r *standardRenderer) resetLinesRendered() {
+	r.linesRendered = 0
+}

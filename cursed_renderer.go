@@ -104,6 +104,21 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 	return s.scr.WriteString(str)
 }
 
+// resetLinesRendered implements renderer.
+func (s *cursedRenderer) resetLinesRendered() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.altScreen {
+		var frameHeight int
+		if s.lastFrame != nil {
+			frameHeight = strings.Count(*s.lastFrame, "\n") + 1
+		}
+
+		io.WriteString(s.w, strings.Repeat("\n", max(0, frameHeight-1))) //nolint:errcheck,gosec
+	}
+}
+
 // flush implements renderer.
 func (s *cursedRenderer) flush(p *Program) error {
 	s.mu.Lock()
