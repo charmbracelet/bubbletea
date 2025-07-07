@@ -4,7 +4,7 @@ go 1.24.3
 
 require (
 	github.com/charmbracelet/colorprofile v0.3.1
-	github.com/charmbracelet/ultraviolet v0.0.0-20250702164536-3d34e5ecc446
+	github.com/charmbracelet/ultraviolet v0.0.0-20250707134318-0fdaa64b8c5e
 	github.com/charmbracelet/x/ansi v0.9.3
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/term v0.2.1
