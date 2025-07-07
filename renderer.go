@@ -53,6 +53,9 @@ type renderer interface {
 
 	// repaint forces a full repaint.
 	repaint()
+
+	// resetLinesRendered ensures exec output remains on screen on exit
+	resetLinesRendered()
 }
 
 // repaintMsg forces a full repaint.

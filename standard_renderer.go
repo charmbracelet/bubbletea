@@ -355,3 +355,7 @@ func (r *standardRenderer) insertAbove(s string) {
 		r.mtx.Unlock()
 	}
 }
+
+func (r *standardRenderer) resetLinesRendered() {
+	r.linesRendered = 0
+}

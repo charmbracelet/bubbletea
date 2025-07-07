@@ -48,3 +48,5 @@ func (nilRenderer) render(string, *Cursor) {}
 
 // reset implements the Renderer interface.
 func (nilRenderer) reset() {}
+
+func (n nilRenderer) resetLinesRendered() {}
