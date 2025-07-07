@@ -1138,12 +1138,14 @@ func (p *Program) recoverFromPanic(r any) {
 	fmt.Fprintf(os.Stderr, "Caught panic:\r\n\r\n%s\r\n\r\nRestoring terminal...\r\n\r\n", rec)
 	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", debug.Stack()), "\n", "\r\n")
 	fmt.Fprint(os.Stderr, stack)
-	f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
-	if err == nil {
-		defer f.Close()        //nolint:errcheck
-		fmt.Fprintln(f, rec)   //nolint:errcheck
-		fmt.Fprintln(f)        //nolint:errcheck
-		fmt.Fprintln(f, stack) //nolint:errcheck
+	if v, err := strconv.ParseBool(os.Getenv("TEA_DEBUG")); err == nil && v {
+		f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
+		if err == nil {
+			defer f.Close()        //nolint:errcheck
+			fmt.Fprintln(f, rec)   //nolint:errcheck
+			fmt.Fprintln(f)        //nolint:errcheck
+			fmt.Fprintln(f, stack) //nolint:errcheck
+		}
 	}
 }
 
