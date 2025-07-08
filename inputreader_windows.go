@@ -108,7 +108,7 @@ func prepareConsole(input windows.Handle, modes ...uint32) (originalMode uint32,
 	return originalMode, nil
 }
 
-// cancelMixin represents a goroutine-safe cancelation status.
+// cancelMixin represents a goroutine-safe cancellation status.
 type cancelMixin struct {
 	unsafeCanceled bool
 	lock           sync.Mutex
