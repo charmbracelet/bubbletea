@@ -20,9 +20,14 @@ func (p *Program) initInput() (err error) {
 		if err != nil {
 			return fmt.Errorf("error entering raw mode: %w", err)
 		}
+
+		// OPTIM: We can use hard tabs and backspaces to optimize cursor
+		// movements. This is based on termios settings support and whether
+		// they exist and enabled.
+		p.checkOptimizedMovements(p.previousTtyInputState)
 	}
 
-	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
+	if f, ok := p.output.Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
 	}
 

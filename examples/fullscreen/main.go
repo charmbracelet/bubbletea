@@ -8,7 +8,7 @@ import (
 	"log"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 )
 
 type model int
@@ -16,19 +16,22 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	p := tea.NewProgram(model(5), tea.WithAltScreen())
+	p := tea.NewProgram(model(5))
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return tick()
+	return tea.Batch(
+		tick(),
+		tea.EnterAltScreen,
+	)
 }
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
 			return m, tea.Quit

@@ -12,7 +12,7 @@ func TestOptions(t *testing.T) {
 	t.Run("output", func(t *testing.T) {
 		var b bytes.Buffer
 		p := NewProgram(nil, WithOutput(&b))
-		if f, ok := p.output.(*os.File); ok {
+		if f, ok := p.output.Writer().(*os.File); ok {
 			t.Errorf("expected output to custom, got %v", f.Fd())
 		}
 	})
@@ -25,16 +25,6 @@ func TestOptions(t *testing.T) {
 		}
 		if p.inputType != customInput {
 			t.Errorf("expected startup options to have custom input set, got %v", p.input)
-		}
-	})
-
-	t.Run("renderer", func(t *testing.T) {
-		p := NewProgram(nil, WithoutRenderer())
-		switch p.renderer.(type) {
-		case *nilRenderer:
-			return
-		default:
-			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
 		}
 	})
 
@@ -58,7 +48,7 @@ func TestOptions(t *testing.T) {
 
 		p := NewProgram(nil, WithContext(extCtx))
 		if p.externalCtx != extCtx || p.externalCtx == context.Background() {
-			t.Errorf("expected passed in external context, got default (nil)")
+			t.Errorf("expected passed in external context, got default")
 		}
 	})
 
@@ -94,10 +84,6 @@ func TestOptions(t *testing.T) {
 
 		t.Run("bracketed paste disabled", func(t *testing.T) {
 			exercise(t, WithoutBracketedPaste(), withoutBracketedPaste)
-		})
-
-		t.Run("ansi compression", func(t *testing.T) {
-			exercise(t, WithANSICompressor(), withANSICompressor)
 		})
 
 		t.Run("without catch panics", func(t *testing.T) {
