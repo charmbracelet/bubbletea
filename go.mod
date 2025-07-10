@@ -1,5 +1,7 @@
 module github.com/charmbracelet/bubbletea/v2
 
+retract v2.0.0-beta1 // We add a "." after the "beta" in the version number.
+
 go 1.23.0
 
 toolchain go1.23.7
