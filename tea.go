@@ -624,6 +624,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				switch msg.Mode {
 				case ansi.AltScreenSaveCursorMode:
 					p.renderer.enterAltScreen()
+					// Main and alternate screen have their own Kitty keyboard
+					// stack. We need to request keyboard enhancements again
+					// when entering/exiting the alternate screen.
+					p.requestKeyboardEnhancements()
 				case ansi.TextCursorEnableMode:
 					p.renderer.showCursor()
 				case ansi.GraphemeClusteringMode:
@@ -645,6 +649,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				switch msg.Mode {
 				case ansi.AltScreenSaveCursorMode:
 					p.renderer.exitAltScreen()
+					// Main and alternate screen have their own Kitty keyboard
+					// stack. We need to request keyboard enhancements again
+					// when entering/exiting the alternate screen.
+					p.requestKeyboardEnhancements()
 				case ansi.TextCursorEnableMode:
 					p.renderer.hideCursor()
 				default:
@@ -1410,13 +1418,16 @@ func (p *Program) stopRenderer(kill bool) {
 // requestKeyboardEnhancements tries to enable keyboard enhancements and read
 // the active keyboard enhancements from the terminal.
 func (p *Program) requestKeyboardEnhancements() {
+	// XXX: We write to the renderer directly so that we synchronize with the
+	// alt-screen state of the renderer. This is because the main screen and
+	// alternate screen have their own Kitty keyboard state stack.
 	if p.requestedEnhancements.modifyOtherKeys > 0 {
-		p.execute(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys)) //nolint:mnd
-		p.execute(ansi.QueryModifyOtherKeys)
+		_, _ = p.renderer.writeString(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys)) //nolint:mnd
+		_, _ = p.renderer.writeString(ansi.QueryModifyOtherKeys)
 	}
 	if p.requestedEnhancements.kittyFlags > 0 {
-		p.execute(ansi.PushKittyKeyboard(p.requestedEnhancements.kittyFlags))
-		p.execute(ansi.RequestKittyKeyboard)
+		_, _ = p.renderer.writeString(ansi.PushKittyKeyboard(p.requestedEnhancements.kittyFlags))
+		_, _ = p.renderer.writeString(ansi.RequestKittyKeyboard)
 	}
 }
 
