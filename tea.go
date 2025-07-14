@@ -320,12 +320,10 @@ type Program struct {
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
-	mu    sync.Mutex
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
 	inputReader           *uv.TerminalReader
-	traceInput            bool // true if input should be traced
 	readLoopDone          chan struct{}
 	mouseMode             bool // indicates whether we should enable mouse on Windows
 
