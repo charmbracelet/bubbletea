@@ -449,7 +449,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
 	if traceOk && len(tracePath) > 0 {
 		// We have a trace filepath.
-		if f, err := os.OpenFile(tracePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666); err == nil {
+		if f, err := os.OpenFile(tracePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o600); err == nil {
 			p.logger = log.New(f, "bubbletea: ", log.LstdFlags|log.Lshortfile)
 		}
 	}
@@ -783,7 +783,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						case BatchMsg:
 							g, _ := errgroup.WithContext(p.ctx)
 							for _, cmd := range msg {
-								cmd := cmd
 								g.Go(func() error {
 									p.Send(cmd())
 									return nil

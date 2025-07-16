@@ -94,7 +94,7 @@ func (r *standardRenderer) writeString(s string) (int, error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	return r.buf.WriteString(s)
+	return r.buf.WriteString(s) //nolint:wrapcheck
 }
 
 // flush renders the buffer.
@@ -377,11 +377,11 @@ func (r *standardRenderer) insertAbove(s string) {
 	}
 }
 
-func (r *standardRenderer) setCursorColor(c color.Color)     {}
-func (r *standardRenderer) setForegroundColor(c color.Color) {}
-func (r *standardRenderer) setBackgroundColor(c color.Color) {}
-func (r *standardRenderer) setWindowTitle(s string)          {}
-func (r *standardRenderer) hit(MouseMsg) []Msg               { return nil }
+func (r *standardRenderer) setCursorColor(color.Color)     {}
+func (r *standardRenderer) setForegroundColor(color.Color) {}
+func (r *standardRenderer) setBackgroundColor(color.Color) {}
+func (r *standardRenderer) setWindowTitle(string)          {}
+func (r *standardRenderer) hit(MouseMsg) []Msg             { return nil }
 func (r *standardRenderer) resetLinesRendered() {
 	r.linesRendered = 0
 }

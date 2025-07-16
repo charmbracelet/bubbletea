@@ -26,7 +26,6 @@ type cursedRenderer struct {
 	mu                  sync.Mutex
 	profile             colorprofile.Profile
 	cursor              Cursor
-	method              ansi.Method
 	logger              uv.Logger
 	layer               Layer // the last rendered layer
 	setCc, setFg, setBg color.Color
@@ -101,7 +100,7 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.scr.WriteString(str)
+	return s.scr.WriteString(str) //nolint:wrapcheck
 }
 
 // resetLinesRendered implements renderer.
@@ -155,7 +154,7 @@ func (s *cursedRenderer) flush(p *Program) error {
 		}
 	}
 
-	if s.lastCur != nil {
+	if s.lastCur != nil { //nolint:nestif
 		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
 			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
 			_, _ = s.scr.WriteString(ansi.SetCursorStyle(cursorStyle))
