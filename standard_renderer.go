@@ -2,11 +2,13 @@ package tea
 
 import (
 	"bytes"
+	"image/color"
 	"io"
 	"strings"
 	"sync"
 
 	"github.com/charmbracelet/colorprofile"
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -70,7 +72,7 @@ func (r *standardRenderer) reset() {
 // close closes the renderer and flushes any remaining data.
 func (r *standardRenderer) close() error {
 	// flush locks the mutex
-	_ = r.flush()
+	_ = r.flush(nil)
 
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
@@ -87,8 +89,16 @@ func (r *standardRenderer) execute(seq string) {
 	_, _ = io.WriteString(r.out, seq)
 }
 
+// writeString writes a string to the internal buffer.
+func (r *standardRenderer) writeString(s string) (int, error) {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	return r.buf.WriteString(s) //nolint:wrapcheck
+}
+
 // flush renders the buffer.
-func (r *standardRenderer) flush() error {
+func (r *standardRenderer) flush(*Program) error {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
@@ -232,10 +242,21 @@ func (r *standardRenderer) lastLinesRendered() int {
 
 // write writes to the internal buffer. The buffer will be outputted via the
 // ticker which calls flush().
-func (r *standardRenderer) render(s string, _ *Cursor) {
+func (r *standardRenderer) render(v View) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	r.buf.Reset()
+
+	area := uv.Rect(0, 0, r.width, r.height)
+	if b, ok := v.Layer.(interface{ Bounds() uv.Rectangle }); ok {
+		if !r.altScreenActive {
+			area.Max.Y = b.Bounds().Max.Y
+		}
+	}
+
+	buf := uv.NewScreenBuffer(area.Dx(), area.Dy())
+	v.Layer.Draw(buf, area)
+	s := buf.Render()
 
 	// If an empty string was passed we should clear existing output and
 	// rendering nothing. Rather than introduce additional state to manage
@@ -356,6 +377,11 @@ func (r *standardRenderer) insertAbove(s string) {
 	}
 }
 
+func (r *standardRenderer) setCursorColor(color.Color)     {}
+func (r *standardRenderer) setForegroundColor(color.Color) {}
+func (r *standardRenderer) setBackgroundColor(color.Color) {}
+func (r *standardRenderer) setWindowTitle(string)          {}
+func (r *standardRenderer) hit(MouseMsg) []Msg             { return nil }
 func (r *standardRenderer) resetLinesRendered() {
 	r.linesRendered = 0
 }

@@ -30,7 +30,7 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		p.output = newSafeWriter(output)
+		p.output = output
 	}
 }
 
@@ -289,5 +289,14 @@ func WithWindowSize(width, height int) ProgramOption {
 	return func(p *Program) {
 		p.width = width
 		p.height = height
+	}
+}
+
+// WithoutKeyEnhancements disables all key enhancements. This is useful if you
+// want to disable all key enhancements for your program and keep your program
+// legacy compatible with older terminals.
+func WithoutKeyEnhancements() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutKeyEnhancements
 	}
 }

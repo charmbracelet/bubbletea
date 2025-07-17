@@ -117,7 +117,7 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen())
+	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithFPS(120))
 
 	_, err := p.Run()
 	if err != nil {

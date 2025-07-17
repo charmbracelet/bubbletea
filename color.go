@@ -3,7 +3,7 @@ package tea
 import (
 	"image/color"
 
-	"github.com/charmbracelet/x/input"
+	uv "github.com/charmbracelet/ultraviolet"
 )
 
 // backgroundColorMsg is a message that requests the terminal background color.
@@ -67,12 +67,12 @@ type ForegroundColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
 func (e ForegroundColorMsg) String() string {
-	return input.ForegroundColorEvent(e).String()
+	return uv.ForegroundColorEvent(e).String()
 }
 
 // IsDark returns whether the color is dark.
 func (e ForegroundColorMsg) IsDark() bool {
-	return input.ForegroundColorEvent(e).IsDark()
+	return uv.ForegroundColorEvent(e).IsDark()
 }
 
 // BackgroundColorMsg represents a background color message. This message is
@@ -98,12 +98,12 @@ type BackgroundColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
 func (e BackgroundColorMsg) String() string {
-	return input.BackgroundColorEvent(e).String()
+	return uv.BackgroundColorEvent(e).String()
 }
 
 // IsDark returns whether the color is dark.
 func (e BackgroundColorMsg) IsDark() bool {
-	return input.BackgroundColorEvent(e).IsDark()
+	return uv.BackgroundColorEvent(e).IsDark()
 }
 
 // CursorColorMsg represents a cursor color change message. This message is
@@ -112,10 +112,10 @@ type CursorColorMsg struct{ color.Color }
 
 // String returns the hex representation of the color.
 func (e CursorColorMsg) String() string {
-	return input.CursorColorEvent(e).String()
+	return uv.CursorColorEvent(e).String()
 }
 
 // IsDark returns whether the color is dark.
 func (e CursorColorMsg) IsDark() bool {
-	return input.CursorColorEvent(e).IsDark()
+	return uv.CursorColorEvent(e).IsDark()
 }

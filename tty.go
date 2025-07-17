@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/input"
 	"github.com/charmbracelet/x/term"
 	"github.com/muesli/cancelreader"
 )
@@ -81,6 +80,9 @@ func (p *Program) restoreTerminalState() error {
 		p.execute(ansi.ResetCursorColor)
 	}
 
+	// Flush queued commands.
+	_ = p.flush()
+
 	return p.restoreInput()
 }
 
@@ -106,58 +108,33 @@ func (p *Program) initInputReader(cancel bool) error {
 		p.waitForReadLoop()
 	}
 
-	term := p.getenv("TERM")
+	term := p.environ.Getenv("TERM")
 
-	// Initialize the input reader. This needs to be done after the terminal
-	// has been initialized and set to raw mode. On Windows, this will change
-	// the console mode to enable mouse and window events.
-	var flags int
+	// Initialize the input reader.
+	// This need to be done after the terminal has been initialized and set to
+	// raw mode.
+
+	drv := uv.NewTerminalReader(p.input, term)
+	drv.SetLogger(p.logger)
 	if p.mouseMode {
-		flags |= input.FlagMouseMode
-	}
-
-	drv, err := input.NewReader(p.input, term, flags)
-	if err != nil {
-		return fmt.Errorf("bubbletea: error initializing input reader: %w", err)
-	}
-
-	if p.traceInput {
-		drv.SetLogger(log.Default())
+		mouseMode := uv.ButtonMouseMode | uv.DragMouseMode | uv.AllMouseMode
+		drv.MouseMode = &mouseMode
 	}
 	p.inputReader = drv
 	p.readLoopDone = make(chan struct{})
+	if err := p.inputReader.Start(); err != nil {
+		return fmt.Errorf("bubbletea: error starting input reader: %w", err)
+	}
+
 	go p.readLoop()
 
 	return nil
 }
 
-func (p *Program) readInputs() error {
-	for {
-		events, err := p.inputReader.ReadEvents()
-		if err != nil {
-			return fmt.Errorf("bubbletea: error reading input: %w", err)
-		}
-
-		for _, msg := range events {
-			if m := p.translateInputEvent(msg); m != nil {
-				select {
-				case p.msgs <- m:
-				case <-p.ctx.Done():
-					err := p.ctx.Err()
-					if err != nil {
-						err = fmt.Errorf("bubbletea: found context error while reading input: %w", err)
-					}
-					return err
-				}
-			}
-		}
-	}
-}
-
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := p.readInputs()
+	err := p.inputReader.ReceiveEvents(p.ctx, p.msgs)
 	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
 		select {
 		case <-p.ctx.Done():
@@ -196,7 +173,7 @@ func (p *Program) checkResize() {
 	}
 
 	var resizeMsg WindowSizeMsg
-	resizeMsg.Width = w
-	resizeMsg.Height = h
+	p.width, p.height = w, h
+	resizeMsg.Width, resizeMsg.Height = w, h
 	p.Send(resizeMsg)
 }
