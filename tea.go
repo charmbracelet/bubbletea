@@ -1418,7 +1418,10 @@ func (p *Program) requestKeyboardEnhancements() {
 	// XXX: We write to the renderer directly so that we synchronize with the
 	// alt-screen state of the renderer. This is because the main screen and
 	// alternate screen have their own Kitty keyboard state stack.
-	if p.requestedEnhancements.modifyOtherKeys > 0 {
+	// XXX: Tmux has added support for Xterm modifyOtherKeys, but it
+	// is not enabled by default and when enabled, it can cause
+	// issues with some keys like escape and typeing.
+	if p.environ.Getenv("TMUX") == "" && p.requestedEnhancements.modifyOtherKeys > 0 {
 		_, _ = p.renderer.writeString(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys)) //nolint:mnd
 		_, _ = p.renderer.writeString(ansi.QueryModifyOtherKeys)
 	}
