@@ -2,10 +2,6 @@ github.com/aymanbagabas/go-udiff v0.2.0 h1:TK0fH4MteXUDspT88n8CKzvK0X9O2xu9yQjWp
 github.com/aymanbagabas/go-udiff v0.2.0/go.mod h1:RE4Ex0qsGkTAJoQdQQCA0uG+nAzJO/pI/QwceO5fgrA=
 github.com/charmbracelet/colorprofile v0.3.1 h1:k8dTHMd7fgw4bnFd7jXTLZrSU/CQrKnL3m+AxCzDz40=
 github.com/charmbracelet/colorprofile v0.3.1/go.mod h1:/GkGusxNs8VB/RSOh3fu0TJmQ4ICMMPApIIVn0KszZ0=
-github.com/charmbracelet/ultraviolet v0.0.0-20250716141307-2fae2b322afb h1:fMyaSpuEyPP+uuTu98Wx2S/7OY52uhjF+kYfM5w7x+s=
-github.com/charmbracelet/ultraviolet v0.0.0-20250716141307-2fae2b322afb/go.mod h1:XrrgNFfXLrFAyd9DUmrqVc3yQFVv8Uk+okj4PsNNzpc=
-github.com/charmbracelet/ultraviolet v0.0.0-20250721205239-361d65fb7b4c h1:Sm7TRuT03WN/CSvdz9wyrbs4Uhk1h5U+Em8jQkQXcbo=
-github.com/charmbracelet/ultraviolet v0.0.0-20250721205239-361d65fb7b4c/go.mod h1:XrrgNFfXLrFAyd9DUmrqVc3yQFVv8Uk+okj4PsNNzpc=
 github.com/charmbracelet/ultraviolet v0.0.0-20250721205647-f6ac6eda5d42 h1:Zqw2oP9Wo8VzMijVJbtIJcAaZviYyU07stvmCFCfn0Y=
 github.com/charmbracelet/ultraviolet v0.0.0-20250721205647-f6ac6eda5d42/go.mod h1:XrrgNFfXLrFAyd9DUmrqVc3yQFVv8Uk+okj4PsNNzpc=
 github.com/charmbracelet/x/ansi v0.9.3 h1:BXt5DHS/MKF+LjuK4huWrC6NCvHtexww7dMayh6GXd0=

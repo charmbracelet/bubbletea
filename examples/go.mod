@@ -25,7 +25,7 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20250716141307-2fae2b322afb // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20250721205647-f6ac6eda5d42 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.14-0.20250516160309-24eee56f89fa // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20250207160936-21c02780d27a // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250327172914-2fdc97757edf // indirect
