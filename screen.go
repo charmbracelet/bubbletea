@@ -131,7 +131,7 @@ func EnableBracketedPaste() Msg {
 type enableBracketedPasteMsg struct{}
 
 // DisableBracketedPaste is a special command that tells the Bubble Tea program
-// to accept bracketed paste input.
+// to stop processing bracketed paste input.
 //
 // Note that bracketed paste will be automatically disabled when the
 // program quits.
