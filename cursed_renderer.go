@@ -74,6 +74,12 @@ func (s *cursedRenderer) close() (err error) {
 		s.scr.ShowCursor()
 		s.cursorHidden = false
 	}
+	curShape := encodeCursorStyle(s.cursor.Shape, s.cursor.Blink)
+	if curShape != 0 && curShape != 1 {
+		// Reset the cursor style to default if it was set to something other
+		// blinking block.
+		_, _ = s.scr.WriteString(ansi.SetCursorStyle(0))
+	}
 
 	if err := s.scr.Flush(); err != nil {
 		return fmt.Errorf("bubbletea: error closing screen writer: %w", err)
