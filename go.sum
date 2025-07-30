@@ -4,6 +4,8 @@ github.com/charmbracelet/colorprofile v0.3.1 h1:k8dTHMd7fgw4bnFd7jXTLZrSU/CQrKnL
 github.com/charmbracelet/colorprofile v0.3.1/go.mod h1:/GkGusxNs8VB/RSOh3fu0TJmQ4ICMMPApIIVn0KszZ0=
 github.com/charmbracelet/ultraviolet v0.0.0-20250726181641-ffd25af5ab02 h1:42hmfW/Pw6nfk0sErqp2II/nNGjbo+//ougHcqwdxY4=
 github.com/charmbracelet/ultraviolet v0.0.0-20250726181641-ffd25af5ab02/go.mod h1:XrrgNFfXLrFAyd9DUmrqVc3yQFVv8Uk+okj4PsNNzpc=
+github.com/charmbracelet/ultraviolet v0.0.0-20250730211830-fc3042df7c6c h1:H8+tLRwMMFB2YS/2HPd4mKDpd2M1G4krZsryFwZhxkE=
+github.com/charmbracelet/ultraviolet v0.0.0-20250730211830-fc3042df7c6c/go.mod h1:XrrgNFfXLrFAyd9DUmrqVc3yQFVv8Uk+okj4PsNNzpc=
 github.com/charmbracelet/x/ansi v0.9.3 h1:BXt5DHS/MKF+LjuK4huWrC6NCvHtexww7dMayh6GXd0=
 github.com/charmbracelet/x/ansi v0.9.3/go.mod h1:3RQDQ6lDnROptfpWuUVIUG64bD2g2BgntdxH0Ya5TeE=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f h1:UytXHv0UxnsDFmL/7Z9Q5SBYPwSuRLXHbwx+6LycZ2w=
