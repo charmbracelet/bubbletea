@@ -32,6 +32,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"github.com/lucasb-eyer/go-colorful"
+	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -323,7 +324,8 @@ type Program struct {
 	// ttyInput is null if input is not a TTY.
 	ttyInput              term.File
 	previousTtyInputState *term.State
-	inputReader           *uv.TerminalReader
+	cancelReader          cancelreader.CancelReader
+	inputScanner          *uv.InputScanner
 	readLoopDone          chan struct{}
 	mouseMode             bool // indicates whether we should enable mouse on Windows
 
@@ -1199,14 +1201,14 @@ func (p *Program) shutdown(kill bool) {
 		p.handlers.shutdown()
 
 		// Check if the cancel reader has been setup before waiting and closing.
-		if p.inputReader != nil {
+		if p.cancelReader != nil {
 			// Wait for input loop to finish.
-			if p.inputReader.Cancel() {
+			if p.cancelReader.Cancel() {
 				if !kill {
 					p.waitForReadLoop()
 				}
 			}
-			_ = p.inputReader.Close()
+			_ = p.cancelReader.Close()
 		}
 
 		if p.renderer != nil {
@@ -1251,8 +1253,8 @@ func (p *Program) ReleaseTerminal() error {
 
 func (p *Program) releaseTerminal(reset bool) error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
-	if p.inputReader != nil {
-		p.inputReader.Cancel()
+	if p.cancelReader != nil {
+		p.cancelReader.Cancel()
 	}
 
 	p.waitForReadLoop()
@@ -1442,7 +1444,7 @@ func (p *Program) enableMouse(all bool) {
 		// work.
 		if !p.mouseMode {
 			p.mouseMode = true
-			if p.inputReader != nil {
+			if p.inputScanner != nil {
 				// Only reinitialize if the input reader has been initialized.
 				_ = p.initInputReader(true)
 			}
@@ -1467,7 +1469,7 @@ func (p *Program) disableMouse() {
 		// mouse events.
 		if p.mouseMode {
 			p.mouseMode = false
-			if p.inputReader != nil {
+			if p.inputScanner != nil {
 				// Only reinitialize if the input reader has been initialized.
 				_ = p.initInputReader(true)
 			}

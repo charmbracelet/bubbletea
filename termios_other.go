@@ -5,4 +5,7 @@ package tea
 
 import "github.com/charmbracelet/x/term"
 
-func (*Program) checkOptimizedMovements(*term.State) {}
+func (p *Program) checkOptimizedMovements(*term.State) {
+	p.useHardTabs = true
+	p.useBackspace = true
+}
