@@ -43,6 +43,8 @@ var (
 		spinner.Moon,
 		spinner.Monkey,
 		spinner.Meter,
+		spinner.Hamburger,
+		spinner.Ellipsis,
 	}
 	modelStyle = lipgloss.NewStyle().
 			Width(15).
