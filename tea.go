@@ -748,7 +748,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					p.requestedEnhancements.modifyOtherKeys = 0
 				}
 				if p.activeEnhancements.kittyFlags > 0 {
-					p.execute(ansi.DisableKittyKeyboard)
+					p.execute(ansi.KittyKeyboard(0, 1))
 					p.activeEnhancements.kittyFlags = 0
 					p.requestedEnhancements.kittyFlags = 0
 				}
@@ -1294,7 +1294,7 @@ func (p *Program) RestoreTerminal() error {
 		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys)) //nolint:mnd
 	}
 	if p.activeEnhancements.kittyFlags != 0 {
-		p.execute(ansi.PushKittyKeyboard(p.activeEnhancements.kittyFlags))
+		p.execute(ansi.KittyKeyboard(p.activeEnhancements.kittyFlags, 1))
 	}
 	if p.modes.IsSet(ansi.FocusEventMode) {
 		p.execute(ansi.SetFocusEventMode)
@@ -1428,7 +1428,7 @@ func (p *Program) requestKeyboardEnhancements() {
 		_, _ = p.renderer.writeString(ansi.QueryModifyOtherKeys)
 	}
 	if p.requestedEnhancements.kittyFlags > 0 {
-		_, _ = p.renderer.writeString(ansi.PushKittyKeyboard(p.requestedEnhancements.kittyFlags))
+		_, _ = p.renderer.writeString(ansi.KittyKeyboard(p.requestedEnhancements.kittyFlags, 1))
 		_, _ = p.renderer.writeString(ansi.RequestKittyKeyboard)
 	}
 }

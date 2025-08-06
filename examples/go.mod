@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250716211347-10c048e36112
-	github.com/charmbracelet/x/ansi v0.9.3
+	github.com/charmbracelet/x/ansi v0.10.1
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250602192518-9e722df69bbb
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
@@ -25,7 +25,7 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-udiff v0.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20250721205647-f6ac6eda5d42 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20250805213125-4167e4d7080b // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.14-0.20250516160309-24eee56f89fa // indirect
 	github.com/charmbracelet/x/exp/golden v0.0.0-20250207160936-21c02780d27a // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250327172914-2fdc97757edf // indirect

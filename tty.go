@@ -60,7 +60,7 @@ func (p *Program) restoreTerminalState() error {
 		p.execute(ansi.ResetModifyOtherKeys)
 	}
 	if p.activeEnhancements.kittyFlags != 0 {
-		p.execute(ansi.DisableKittyKeyboard)
+		p.execute(ansi.KittyKeyboard(0, 1))
 	}
 	if p.modes.IsSet(ansi.FocusEventMode) {
 		p.execute(ansi.ResetFocusEventMode)
