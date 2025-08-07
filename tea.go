@@ -197,7 +197,7 @@ const (
 	customInput
 )
 
-// String implements the stringer interface for [inputType]. It is inteded to
+// String implements the stringer interface for [inputType]. It is intended to
 // be used in testing.
 func (i inputType) String() string {
 	return [...]string{
@@ -390,7 +390,7 @@ func Suspend() Msg {
 // You can send this message with [Suspend()].
 type SuspendMsg struct{}
 
-// ResumeMsg can be listen to to do something once a program is resumed back
+// ResumeMsg can be listen to do something once a program is resumed back
 // from a suspend state.
 type ResumeMsg struct{}
 
