@@ -32,7 +32,6 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 	"github.com/lucasb-eyer/go-colorful"
-	"golang.org/x/sync/errgroup"
 )
 
 // ErrProgramPanic is returned by [Program.Run] when the program recovers from a panic.
@@ -763,11 +762,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case BatchMsg:
 				for _, cmd := range msg {
-					select {
-					case <-p.ctx.Done():
-						return model, nil
-					case cmds <- cmd:
+					if cmd == nil {
+						continue
 					}
+					go p.Send(cmd())
 				}
 				continue
 
@@ -779,20 +777,27 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 							continue
 						}
 
-						switch msg := cmd().(type) {
+						msg := cmd()
+						switch msg := msg.(type) {
 						case BatchMsg:
-							g, _ := errgroup.WithContext(p.ctx)
+							var wg sync.WaitGroup
 							for _, cmd := range msg {
-								g.Go(func() error {
+								if cmd == nil {
+									continue
+								}
+								wg.Add(1)
+								cmd := cmd
+								go func() {
+									defer wg.Done()
 									p.Send(cmd())
-									return nil
-								})
+								}()
 							}
-
-							_ = g.Wait() // wait for all commands from batch msg to finish
-							continue
+							wg.Wait()
 						case sequenceMsg:
 							for _, cmd := range msg {
+								if cmd == nil {
+									continue
+								}
 								p.Send(cmd())
 							}
 						default:

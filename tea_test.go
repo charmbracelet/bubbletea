@@ -424,6 +424,27 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 	}
 }
 
+func TestTeaNestedSequenceMsg(t *testing.T) {
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	inc := func() Msg {
+		return incrementMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	go p.Send(sequenceMsg{inc, Sequence(inc, inc), Quit})
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	if m.counter.Load() != 3 {
+		t.Fatalf("counter should be 3, got %d", m.counter.Load())
+	}
+}
+
 func TestTeaSend(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
