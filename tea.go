@@ -325,7 +325,7 @@ type Program struct {
 	ttyInput              term.File
 	previousTtyInputState *term.State
 	cancelReader          cancelreader.CancelReader
-	inputScanner          *uv.InputScanner
+	inputScanner          *uv.TerminalReader
 	readLoopDone          chan struct{}
 	mouseMode             bool // indicates whether we should enable mouse on Windows
 

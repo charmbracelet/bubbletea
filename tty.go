@@ -1,15 +1,12 @@
 package tea
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 )
 
 func (p *Program) suspend() {
@@ -120,7 +117,7 @@ func (p *Program) initInputReader(cancel bool) error {
 		return err
 	}
 
-	drv := uv.NewInputScanner(p.cancelReader, term)
+	drv := uv.NewTerminalReader(p.cancelReader, term)
 	drv.SetLogger(p.logger)
 	if p.mouseMode {
 		mouseMode := uv.ButtonMouseMode | uv.DragMouseMode | uv.AllMouseMode
@@ -137,23 +134,11 @@ func (p *Program) initInputReader(cancel bool) error {
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	for p.inputScanner.Scan() {
-		if ev := p.inputScanner.Event(); ev != nil {
-			select {
-			case <-p.ctx.Done():
-				return
-			case p.msgs <- ev:
-			}
-		}
-	}
-
-	if err := p.inputScanner.Err(); err != nil {
-		if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
-			select {
-			case <-p.ctx.Done():
-				return
-			case p.errs <- err:
-			}
+	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
+		select {
+		case <-p.ctx.Done():
+			return
+		case p.errs <- err:
 		}
 	}
 }
