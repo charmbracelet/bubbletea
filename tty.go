@@ -112,7 +112,7 @@ func (p *Program) initInputReader(cancel bool) error {
 	// raw mode.
 
 	var err error
-	p.cancelReader, err = uv.NewCancelreader(p.input)
+	p.cancelReader, err = uv.NewCancelReader(p.input)
 	if err != nil {
 		return err
 	}
