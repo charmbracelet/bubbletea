@@ -69,6 +69,8 @@ func (s *cursedRenderer) close() (err error) {
 	// used when the user suspends the program and then resumes it.
 	if s.altScreen {
 		s.scr.ExitAltScreen()
+	} else {
+		_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
 	}
 	if s.cursorHidden {
 		s.scr.ShowCursor()
