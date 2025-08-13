@@ -215,11 +215,16 @@ func (s *cursedRenderer) render(v View) {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
+		frameHeight := frameArea.Dy()
 		switch l := v.Layer.(type) {
 		case *uv.StyledString:
-			frameArea.Max.Y = l.Height()
+			frameHeight = l.Height()
 		case interface{ Bounds() uv.Rectangle }:
-			frameArea.Max.Y = l.Bounds().Dy()
+			frameHeight = l.Bounds().Dy()
+		}
+
+		if frameHeight != frameArea.Dy() {
+			frameArea.Max.Y = frameHeight
 		}
 
 		// Resize the screen buffer to match the frame area. This is necessary
@@ -228,11 +233,18 @@ func (s *cursedRenderer) render(v View) {
 		// the screen buffer.
 		s.buf.Resize(frameArea.Dx(), frameArea.Dy())
 	}
+
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.buf.Clear()
 	if v.Layer != nil {
-		v.Layer.Draw(s.buf, frameArea)
+		v.Layer.Draw(s.buf, s.buf.Bounds())
+	}
+
+	// If the frame height is greater than the screen height, we drop the
+	// lines from the top of the buffer.
+	if frameHeight := frameArea.Dy(); frameHeight > s.height {
+		s.buf.Lines = s.buf.Lines[frameHeight-s.height:]
 	}
 
 	frame := s.buf.Render()
