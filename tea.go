@@ -765,7 +765,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					if cmd == nil {
 						continue
 					}
-					go p.Send(cmd())
+					go func() { p.Send(cmd()) }()
 				}
 				continue
 
