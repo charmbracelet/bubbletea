@@ -109,12 +109,12 @@ func peekAndReadConsInput(con *conInputReader) ([]coninput.InputRecord, error) {
 	return events, nil
 }
 
-// Convert i to unit32 or panic if it cannot be converted. Check satisifes lint G115.
+// Convert i to unit32 or panic if it cannot be converted. Check satisfies lint G115.
 func intToUint32OrDie(i int) uint32 {
 	if i < 0 {
 		panic("cannot convert numEvents " + fmt.Sprint(i) + " to uint32")
 	}
-	return uint32(i)
+	return uint32(i) //nolint:gosec
 }
 
 // Keeps peeking until there is data or the input is cancelled.
@@ -158,16 +158,16 @@ func mouseEventButton(p, s coninput.ButtonState) (button MouseButton, action Mou
 		return button, action
 	}
 
-	switch {
-	case btn == coninput.FROM_LEFT_1ST_BUTTON_PRESSED: // left button
+	switch btn {
+	case coninput.FROM_LEFT_1ST_BUTTON_PRESSED: // left button
 		button = MouseButtonLeft
-	case btn == coninput.RIGHTMOST_BUTTON_PRESSED: // right button
+	case coninput.RIGHTMOST_BUTTON_PRESSED: // right button
 		button = MouseButtonRight
-	case btn == coninput.FROM_LEFT_2ND_BUTTON_PRESSED: // middle button
+	case coninput.FROM_LEFT_2ND_BUTTON_PRESSED: // middle button
 		button = MouseButtonMiddle
-	case btn == coninput.FROM_LEFT_3RD_BUTTON_PRESSED: // unknown (possibly mouse backward)
+	case coninput.FROM_LEFT_3RD_BUTTON_PRESSED: // unknown (possibly mouse backward)
 		button = MouseButtonBackward
-	case btn == coninput.FROM_LEFT_4TH_BUTTON_PRESSED: // unknown (possibly mouse forward)
+	case coninput.FROM_LEFT_4TH_BUTTON_PRESSED: // unknown (possibly mouse forward)
 		button = MouseButtonForward
 	}
 
