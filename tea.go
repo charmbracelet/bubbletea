@@ -377,6 +377,17 @@ func (p *Program) disableMouse() {
 	p.renderer.disableMouseSGRMode()
 }
 
+// sendCmd a helper function to send a command to the program's command
+// channel. It will not block if the program is already shutting down, in which
+// case it will simply return without sending the command.
+func (p *Program) sendCmd(cmds chan Cmd, cmd Cmd) {
+	select {
+	case <-p.ctx.Done():
+		return
+	case cmds <- cmd:
+	}
+}
+
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
@@ -475,7 +486,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					if cmd == nil {
 						continue
 					}
-					go p.Send(cmd())
+					go p.sendCmd(cmds, cmd)
 				}
 				continue
 
@@ -492,23 +503,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						case BatchMsg:
 							var wg sync.WaitGroup
 							for _, cmd := range msg {
-								if cmd == nil {
-									continue
-								}
 								wg.Add(1)
-								cmd := cmd
 								go func() {
 									defer wg.Done()
-									p.Send(cmd())
+									p.sendCmd(cmds, cmd)
 								}()
 							}
 							wg.Wait()
 						case sequenceMsg:
 							for _, cmd := range msg {
-								if cmd == nil {
-									continue
-								}
-								p.Send(cmd())
+								p.sendCmd(cmds, cmd)
 							}
 						default:
 							p.Send(msg)
