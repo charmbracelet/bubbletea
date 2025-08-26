@@ -13,6 +13,10 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      all:
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -26,6 +30,10 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      all:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directory: "/"
@@ -39,6 +47,10 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      all:
+        patterns:
+          - "*"
 
   - package-ecosystem: "gomod"
     directory: "/examples"
@@ -52,6 +64,10 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      all:
+        patterns:
+          - "*"
 
   - package-ecosystem: "gomod"
     directory: "/tutorials"
@@ -65,3 +81,7 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      all:
+        patterns:
+          - "*"
