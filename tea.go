@@ -475,7 +475,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					if cmd == nil {
 						continue
 					}
-					go p.Send(cmd())
+					select {
+					case <-p.ctx.Done():
+						return model, nil
+					case cmds <- cmd:
+					}
 				}
 				continue
 
