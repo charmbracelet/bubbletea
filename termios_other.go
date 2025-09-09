@@ -1,11 +1,8 @@
-//go:build !darwin && !dragonfly && !freebsd && !linux && !solaris && !aix
-// +build !darwin,!dragonfly,!freebsd,!linux,!solaris,!aix
+//go:build !windows && !darwin && !dragonfly && !freebsd && !linux && !solaris && !aix
+// +build !windows,!darwin,!dragonfly,!freebsd,!linux,!solaris,!aix
 
 package tea
 
 import "github.com/charmbracelet/x/term"
 
-func (p *Program) checkOptimizedMovements(*term.State) {
-	p.useHardTabs = true
-	p.useBackspace = true
-}
+func (*Program) checkOptimizedMovements(*term.State) {}
