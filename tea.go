@@ -1070,9 +1070,6 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			// enhancements.
 			p.requestKeyboardEnhancements()
 		} else {
-			// Turn on Win32 Input Mode.
-			_, _ = p.renderer.writeString(ansi.SetWin32InputMode)
-			p.modes.Set(ansi.Win32InputMode)
 			// Send an empty message to tell the user we support
 			// keyboard enhancements on Windows.
 			go p.Send(KeyboardEnhancementsMsg{})
@@ -1295,9 +1292,6 @@ func (p *Program) RestoreTerminal() error {
 	}
 
 	p.startRenderer()
-	if p.modes.IsSet(ansi.Win32InputMode) {
-		p.execute(ansi.SetWin32InputMode)
-	}
 	if p.modes.IsSet(ansi.BracketedPasteMode) {
 		p.execute(ansi.SetBracketedPasteMode)
 	}

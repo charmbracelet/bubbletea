@@ -38,9 +38,6 @@ func (p *Program) restoreTerminalState() error {
 	// close the renderer. See [screenRenderer.close] and
 	// [cellbuf.Screen.Close].
 
-	if p.modes.IsSet(ansi.Win32InputMode) {
-		p.execute(ansi.ResetWin32InputMode)
-	}
 	if p.modes.IsSet(ansi.BracketedPasteMode) {
 		p.execute(ansi.ResetBracketedPasteMode)
 	}
