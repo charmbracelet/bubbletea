@@ -1060,20 +1060,12 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	}
 
 	if !p.startupOptions.has(withoutKeyEnhancements) {
-		if !isWindows() {
-			// Enable unambiguous keys using whichever protocol the terminal prefer.
-			p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
-			if p.requestedEnhancements.modifyOtherKeys == 0 {
-				p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
-			}
-			// We use the Windows Console API which supports keyboard
-			// enhancements.
-			p.requestKeyboardEnhancements()
-		} else {
-			// Send an empty message to tell the user we support
-			// keyboard enhancements on Windows.
-			go p.Send(KeyboardEnhancementsMsg{})
+		// Enable unambiguous keys using whichever protocol the terminal prefer.
+		p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
+		if p.requestedEnhancements.modifyOtherKeys == 0 {
+			p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
 		}
+		p.requestKeyboardEnhancements()
 	}
 
 	// Start the renderer.

@@ -129,31 +129,18 @@ type KeyboardEnhancementsMsg KeyboardEnhancements
 // SupportsKeyDisambiguation returns whether the terminal supports reporting
 // disambiguous keys as escape codes.
 func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
-	if isWindows() {
-		// We use Windows Console API which supports reporting disambiguous keys.
-		return true
-	}
 	return k.kittyFlags&ansi.KittyDisambiguateEscapeCodes != 0 || k.modifyOtherKeys >= 1
 }
 
 // SupportsKeyReleases returns whether the terminal supports key release
 // events.
 func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
-	if isWindows() {
-		// We use Windows Console API which supports key release events.
-		return k.keyReleases
-	}
 	return k.kittyFlags&ansi.KittyReportEventTypes != 0
 }
 
 // SupportsUniformKeyLayout returns whether the terminal supports reporting key
 // events as though they were on a PC-101 layout.
 func (k KeyboardEnhancementsMsg) SupportsUniformKeyLayout() bool {
-	if isWindows() {
-		// We use Windows Console API which supports reporting key events as
-		// though they were on a PC-101 layout.
-		return true
-	}
 	return k.SupportsKeyDisambiguation() &&
 		k.kittyFlags&ansi.KittyReportAlternateKeys != 0 &&
 		k.kittyFlags&ansi.KittyReportAllKeysAsEscapeCodes != 0
