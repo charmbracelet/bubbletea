@@ -1,15 +1,12 @@
 package tea
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 )
 
 func (p *Program) suspend() {
@@ -103,8 +100,8 @@ func (p *Program) restoreInput() error {
 
 // initInputReader (re)commences reading inputs.
 func (p *Program) initInputReader(cancel bool) error {
-	if cancel && p.inputReader != nil {
-		p.inputReader.Cancel()
+	if cancel && p.cancelReader != nil {
+		p.cancelReader.Cancel()
 		p.waitForReadLoop()
 	}
 
@@ -114,17 +111,20 @@ func (p *Program) initInputReader(cancel bool) error {
 	// This need to be done after the terminal has been initialized and set to
 	// raw mode.
 
-	drv := uv.NewTerminalReader(p.input, term)
+	var err error
+	p.cancelReader, err = uv.NewCancelReader(p.input)
+	if err != nil {
+		return err
+	}
+
+	drv := uv.NewTerminalReader(p.cancelReader, term)
 	drv.SetLogger(p.logger)
 	if p.mouseMode {
 		mouseMode := uv.ButtonMouseMode | uv.DragMouseMode | uv.AllMouseMode
 		drv.MouseMode = &mouseMode
 	}
-	p.inputReader = drv
+	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
-	if err := p.inputReader.Start(); err != nil {
-		return fmt.Errorf("bubbletea: error starting input reader: %w", err)
-	}
 
 	go p.readLoop()
 
@@ -134,10 +134,10 @@ func (p *Program) initInputReader(cancel bool) error {
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := p.inputReader.ReceiveEvents(p.ctx, p.msgs)
-	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
 		select {
 		case <-p.ctx.Done():
+			return
 		case p.errs <- err:
 		}
 	}

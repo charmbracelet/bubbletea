@@ -1,5 +1,5 @@
-//go:build !darwin && !dragonfly && !freebsd && !linux && !solaris && !aix
-// +build !darwin,!dragonfly,!freebsd,!linux,!solaris,!aix
+//go:build !windows && !darwin && !dragonfly && !freebsd && !linux && !solaris && !aix
+// +build !windows,!darwin,!dragonfly,!freebsd,!linux,!solaris,!aix
 
 package tea
 
