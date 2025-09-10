@@ -8,7 +8,7 @@ toolchain go1.24.4
 
 require (
 	github.com/charmbracelet/colorprofile v0.3.2
-	github.com/charmbracelet/ultraviolet v0.0.0-20250909162800-526253ea8b6f
+	github.com/charmbracelet/ultraviolet v0.0.0-20250910155420-aa0094762299
 	github.com/charmbracelet/x/ansi v0.10.1
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/term v0.2.1
