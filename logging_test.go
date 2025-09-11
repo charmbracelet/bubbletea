@@ -16,8 +16,8 @@ func TestLogToFile(t *testing.T) {
 	}
 	log.SetFlags(log.Lmsgprefix)
 	log.Println("some test log")
-	if err := f.Close(); err != nil {
-		t.Error(err)
+	if closeErr := f.Close(); closeErr != nil {
+		t.Error(closeErr)
 	}
 	out, err := os.ReadFile(path)
 	if err != nil {

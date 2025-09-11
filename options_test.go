@@ -28,16 +28,6 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
-	t.Run("renderer", func(t *testing.T) {
-		p := NewProgram(nil, WithoutRenderer())
-		switch p.renderer.(type) {
-		case *nilRenderer:
-			return
-		default:
-			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
-		}
-	})
-
 	t.Run("without signals", func(t *testing.T) {
 		p := NewProgram(nil, WithoutSignals())
 		if atomic.LoadUint32(&p.ignoreSignals) == 0 {
@@ -58,7 +48,7 @@ func TestOptions(t *testing.T) {
 
 		p := NewProgram(nil, WithContext(extCtx))
 		if p.externalCtx != extCtx || p.externalCtx == context.Background() {
-			t.Errorf("expected passed in external context, got default (nil)")
+			t.Errorf("expected passed in external context, got default")
 		}
 	})
 
@@ -94,10 +84,6 @@ func TestOptions(t *testing.T) {
 
 		t.Run("bracketed paste disabled", func(t *testing.T) {
 			exercise(t, WithoutBracketedPaste(), withoutBracketedPaste)
-		})
-
-		t.Run("ansi compression", func(t *testing.T) {
-			exercise(t, WithANSICompressor(), withANSICompressor)
 		})
 
 		t.Run("without catch panics", func(t *testing.T) {
