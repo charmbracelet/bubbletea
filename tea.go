@@ -471,60 +471,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.exec(msg.cmd, msg.fn)
 
 			case BatchMsg:
-				for _, cmd := range msg {
-					if cmd == nil {
-						continue
-					}
-					select {
-					case <-p.ctx.Done():
-						return model, nil
-					case cmds <- cmd:
-					}
-				}
+				go p.execBatchMsg(msg)
 				continue
 
 			case sequenceMsg:
-				go func() {
-					// Execute commands one at a time, in order.
-					for _, cmd := range msg {
-						if cmd == nil {
-							continue
-						}
-
-						msg := cmd()
-						switch msg := msg.(type) {
-						case BatchMsg:
-							var wg sync.WaitGroup
-							for _, cmd := range msg {
-								if cmd == nil {
-									continue
-								}
-								wg.Add(1)
-								cmd := cmd
-								go func() {
-									defer wg.Done()
-									p.Send(cmd())
-								}()
-							}
-							wg.Wait()
-						case sequenceMsg:
-							for _, cmd := range msg {
-								if cmd == nil {
-									continue
-								}
-								p.Send(cmd())
-							}
-						default:
-							p.Send(msg)
-						}
-					}
-				}()
-
-			case setWindowTitleMsg:
-				p.SetWindowTitle(string(msg))
-
-			case windowSizeMsg:
-				go p.checkResize()
+				go p.execSequenceMsg(msg)
+				continue
 			}
 
 			// Process internal messages for the renderer.
@@ -544,6 +496,74 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			p.renderer.write(model.View()) // send view to renderer
 		}
 	}
+}
+
+func (p *Program) execSequenceMsg(msg sequenceMsg) {
+	if !p.startupOptions.has(withoutCatchPanics) {
+		defer func() {
+			if r := recover(); r != nil {
+				p.recoverFromGoPanic(r)
+			}
+		}()
+	}
+
+	// Execute commands one at a time, in order.
+	for _, cmd := range msg {
+		if cmd == nil {
+			continue
+		}
+		msg := cmd()
+		switch msg := msg.(type) {
+		case BatchMsg:
+			p.execBatchMsg(msg)
+		case sequenceMsg:
+			p.execSequenceMsg(msg)
+		default:
+			p.Send(msg)
+		}
+	}
+}
+
+func (p *Program) execBatchMsg(msg BatchMsg) {
+	if !p.startupOptions.has(withoutCatchPanics) {
+		defer func() {
+			if r := recover(); r != nil {
+				p.recoverFromGoPanic(r)
+			}
+		}()
+	}
+
+	// Execute commands one at a time.
+	var wg sync.WaitGroup
+	for _, cmd := range msg {
+		if cmd == nil {
+			continue
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			if !p.startupOptions.has(withoutCatchPanics) {
+				defer func() {
+					if r := recover(); r != nil {
+						p.recoverFromGoPanic(r)
+					}
+				}()
+			}
+
+			msg := cmd()
+			switch msg := msg.(type) {
+			case BatchMsg:
+				p.execBatchMsg(msg)
+			case sequenceMsg:
+				p.execSequenceMsg(msg)
+			default:
+				p.Send(msg)
+			}
+		}()
+	}
+
+	wg.Wait() // wait for all commands from batch msg to finish
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
