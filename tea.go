@@ -499,6 +499,14 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 }
 
 func (p *Program) execSequenceMsg(msg sequenceMsg) {
+	if !p.startupOptions.has(withoutCatchPanics) {
+		defer func() {
+			if r := recover(); r != nil {
+				p.recoverFromGoPanic(r)
+			}
+		}()
+	}
+
 	// Execute commands one at a time, in order.
 	for _, cmd := range msg {
 		if cmd == nil {
@@ -517,14 +525,32 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) {
 }
 
 func (p *Program) execBatchMsg(msg BatchMsg) {
+	if !p.startupOptions.has(withoutCatchPanics) {
+		defer func() {
+			if r := recover(); r != nil {
+				p.recoverFromGoPanic(r)
+			}
+		}()
+	}
+
 	// Execute commands one at a time.
-	g, _ := errgroup.WithContext(p.ctx)
+	var wg sync.WaitGroup
 	for _, cmd := range msg {
-		cmd := cmd
 		if cmd == nil {
 			continue
 		}
-		g.Go(func() error {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			if !p.startupOptions.has(withoutCatchPanics) {
+				defer func() {
+					if r := recover(); r != nil {
+						p.recoverFromGoPanic(r)
+					}
+				}()
+			}
+
 			msg := cmd()
 			switch msg := msg.(type) {
 			case BatchMsg:
@@ -534,12 +560,10 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 			default:
 				p.Send(msg)
 			}
-			return nil
-		})
+		}()
 	}
 
-	//nolint:errcheck
-	g.Wait() // wait for all commands from batch msg to finish
+	wg.Wait() // wait for all commands from batch msg to finish
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
