@@ -2,7 +2,6 @@ package tea
 
 import (
 	"bytes"
-	"fmt"
 	"image/color"
 	"testing"
 
@@ -75,11 +74,7 @@ func TestClearMsg(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		platform := "other"
-		if isWindows() {
-			platform = "windows"
-		}
-		t.Run(fmt.Sprintf("%s_%s", test.name, platform), func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			var in bytes.Buffer
 
