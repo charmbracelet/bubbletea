@@ -8,14 +8,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/exp/teatest"
-	"github.com/muesli/termenv"
 )
-
-func init() {
-	lipgloss.SetColorProfile(termenv.Ascii)
-}
 
 func TestApp(t *testing.T) {
 	m := model(10)

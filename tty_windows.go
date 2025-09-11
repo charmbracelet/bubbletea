@@ -4,34 +4,51 @@
 package tea
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/containerd/console"
+	"github.com/charmbracelet/x/term"
+	"golang.org/x/sys/windows"
 )
 
-func (p *Program) initInput() error {
-	// If input's a file, use console to manage it
-	if f, ok := p.input.(*os.File); ok {
-		// Save a reference to the current stdin then replace stdin with our
-		// input. We do this so we can hand input off to containerd/console to
-		// set raw mode, and do it in this fashion because the method
-		// console.ConsoleFromFile isn't supported on Windows.
-		p.windowsStdin = os.Stdin
-		os.Stdin = f
+func (p *Program) initInput() (err error) {
+	// Save stdin state and enable VT input
+	// We also need to enable VT
+	// input here.
+	if f, ok := p.input.(term.File); ok && term.IsTerminal(f.Fd()) {
+		p.ttyInput = f
+		p.previousTtyInputState, err = term.MakeRaw(p.ttyInput.Fd())
+		if err != nil {
+			return fmt.Errorf("error making raw: %w", err)
+		}
 
-		// Note: this will panic if it fails.
-		c := console.Current()
-		p.console = c
+		// Enable VT input
+		var mode uint32
+		if err := windows.GetConsoleMode(windows.Handle(p.ttyInput.Fd()), &mode); err != nil {
+			return fmt.Errorf("error getting console mode: %w", err)
+		}
+
+		if err := windows.SetConsoleMode(windows.Handle(p.ttyInput.Fd()), mode|windows.ENABLE_VIRTUAL_TERMINAL_INPUT); err != nil {
+			return fmt.Errorf("error setting console mode: %w", err)
+		}
 	}
 
-	return nil
-}
+	// Save output screen buffer state and enable VT processing.
+	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
+		p.ttyOutput = f
+		p.previousOutputState, err = term.GetState(f.Fd())
+		if err != nil {
+			return fmt.Errorf("error getting state: %w", err)
+		}
 
-// restoreInput restores stdout in the event that we placed it aside to handle
-// input with CONIN$, above.
-func (p *Program) restoreInput() error {
-	if p.windowsStdin != nil {
-		os.Stdin = p.windowsStdin
+		var mode uint32
+		if err := windows.GetConsoleMode(windows.Handle(p.ttyOutput.Fd()), &mode); err != nil {
+			return fmt.Errorf("error getting console mode: %w", err)
+		}
+
+		if err := windows.SetConsoleMode(windows.Handle(p.ttyOutput.Fd()), mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
+			return fmt.Errorf("error setting console mode: %w", err)
+		}
 	}
 
 	return nil
@@ -39,9 +56,13 @@ func (p *Program) restoreInput() error {
 
 // Open the Windows equivalent of a TTY.
 func openInputTTY() (*os.File, error) {
-	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0644)
+	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0o644) //nolint:gosec
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 	return f, nil
 }
+
+const suspendSupported = false
+
+func suspendProcess() {}

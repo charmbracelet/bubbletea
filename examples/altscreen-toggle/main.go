@@ -5,18 +5,18 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var (
-	color   = termenv.EnvColorProfile().Color
-	keyword = termenv.Style{}.Foreground(color("204")).Background(color("235")).Styled
-	help    = termenv.Style{}.Foreground(color("241")).Styled
+	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("204")).Background(lipgloss.Color("235"))
+	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
 type model struct {
-	altscreen bool
-	quitting  bool
+	altscreen  bool
+	quitting   bool
+	suspending bool
 }
 
 func (m model) Init() tea.Cmd {
@@ -25,11 +25,17 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.ResumeMsg:
+		m.suspending = false
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
 			m.quitting = true
 			return m, tea.Quit
+		case "ctrl+z":
+			m.suspending = true
+			return m, tea.Suspend
 		case " ":
 			var cmd tea.Cmd
 			if m.altscreen {
@@ -45,6 +51,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
+	if m.suspending {
+		return ""
+	}
+
 	if m.quitting {
 		return "Bye!\n"
 	}
@@ -61,8 +71,8 @@ func (m model) View() string {
 		mode = inlineMode
 	}
 
-	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keyword(mode)) +
-		help("  space: switch modes • q: exit\n")
+	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
+		helpStyle.Render("  space: switch modes • ctrl-z: suspend • q: exit\n")
 }
 
 func main() {

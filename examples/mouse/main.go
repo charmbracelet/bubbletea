@@ -4,21 +4,19 @@ package main
 // coordinates and events.
 
 import (
-	"fmt"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithMouseAllMotion())
+	p := tea.NewProgram(model{}, tea.WithMouseAllMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 type model struct {
-	init       bool
 	mouseEvent tea.MouseEvent
 }
 
@@ -34,20 +32,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.MouseMsg:
-		m.init = true
-		m.mouseEvent = tea.MouseEvent(msg)
+		return m, tea.Printf("(X: %d, Y: %d) %s", msg.X, msg.Y, tea.MouseEvent(msg))
 	}
 
 	return m, nil
 }
 
 func (m model) View() string {
-	s := "Do mouse stuff. When you're done press q to quit.\n\n"
-
-	if m.init {
-		e := m.mouseEvent
-		s += fmt.Sprintf("(X: %d, Y: %d) %s", e.X, e.Y, e)
-	}
+	s := "Do mouse stuff. When you're done press q to quit.\n"
 
 	return s
 }

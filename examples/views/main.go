@@ -14,28 +14,30 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fogleman/ease"
 	"github.com/lucasb-eyer/go-colorful"
-	"github.com/muesli/reflow/indent"
-	"github.com/muesli/termenv"
 )
 
 const (
 	progressBarWidth  = 71
 	progressFullChar  = "█"
 	progressEmptyChar = "░"
+	dotChar           = " • "
 )
 
 // General stuff for styling the view
 var (
-	term          = termenv.EnvColorProfile()
-	keyword       = makeFgStyle("211")
-	subtle        = makeFgStyle("241")
-	progressEmpty = subtle(progressEmptyChar)
-	dot           = colorFg(" • ", "236")
+	keywordStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
+	subtleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	ticksStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("79"))
+	checkboxStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	progressEmpty = subtleStyle.Render(progressEmptyChar)
+	dotStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render(dotChar)
+	mainStyle     = lipgloss.NewStyle().MarginLeft(2)
 
 	// Gradient colors we'll use for the progress bar
-	ramp = makeRamp("#B14FFF", "#00FFA3", progressBarWidth)
+	ramp = makeRampStyles("#B14FFF", "#00FFA3", progressBarWidth)
 )
 
 func main() {
@@ -107,7 +109,7 @@ func (m model) View() string {
 	} else {
 		s = chosenView(m)
 	}
-	return indent.String("\n"+s+"\n\n", 2)
+	return mainStyle.Render("\n" + s + "\n\n")
 }
 
 // Sub-update functions
@@ -183,7 +185,9 @@ func choicesView(m model) string {
 	tpl := "What to do today?\n\n"
 	tpl += "%s\n\n"
 	tpl += "Program quits in %s seconds\n\n"
-	tpl += subtle("j/k, up/down: select") + dot + subtle("enter: choose") + dot + subtle("q, esc: quit")
+	tpl += subtleStyle.Render("j/k, up/down: select") + dotStyle +
+		subtleStyle.Render("enter: choose") + dotStyle +
+		subtleStyle.Render("q, esc: quit")
 
 	choices := fmt.Sprintf(
 		"%s\n%s\n%s\n%s",
@@ -193,7 +197,7 @@ func choicesView(m model) string {
 		checkbox("See friends", c == 3),
 	)
 
-	return fmt.Sprintf(tpl, choices, colorFg(strconv.Itoa(m.Ticks), "79"))
+	return fmt.Sprintf(tpl, choices, ticksStyle.Render(strconv.Itoa(m.Ticks)))
 }
 
 // The second view, after a task has been chosen
@@ -202,18 +206,18 @@ func chosenView(m model) string {
 
 	switch m.Choice {
 	case 0:
-		msg = fmt.Sprintf("Carrot planting?\n\nCool, we'll need %s and %s...", keyword("libgarden"), keyword("vegeutils"))
+		msg = fmt.Sprintf("Carrot planting?\n\nCool, we'll need %s and %s...", keywordStyle.Render("libgarden"), keywordStyle.Render("vegeutils"))
 	case 1:
-		msg = fmt.Sprintf("A trip to the market?\n\nOkay, then we should install %s and %s...", keyword("marketkit"), keyword("libshopping"))
+		msg = fmt.Sprintf("A trip to the market?\n\nOkay, then we should install %s and %s...", keywordStyle.Render("marketkit"), keywordStyle.Render("libshopping"))
 	case 2:
-		msg = fmt.Sprintf("Reading time?\n\nOkay, cool, then we’ll need a library. Yes, an %s.", keyword("actual library"))
+		msg = fmt.Sprintf("Reading time?\n\nOkay, cool, then we’ll need a library. Yes, an %s.", keywordStyle.Render("actual library"))
 	default:
-		msg = fmt.Sprintf("It’s always good to see friends.\n\nFetching %s and %s...", keyword("social-skills"), keyword("conversationutils"))
+		msg = fmt.Sprintf("It’s always good to see friends.\n\nFetching %s and %s...", keywordStyle.Render("social-skills"), keywordStyle.Render("conversationutils"))
 	}
 
 	label := "Downloading..."
 	if m.Loaded {
-		label = fmt.Sprintf("Downloaded. Exiting in %s seconds...", colorFg(strconv.Itoa(m.Ticks), "79"))
+		label = fmt.Sprintf("Downloaded. Exiting in %s seconds...", ticksStyle.Render(strconv.Itoa(m.Ticks)))
 	}
 
 	return msg + "\n\n" + label + "\n" + progressbar(m.Progress) + "%"
@@ -221,7 +225,7 @@ func chosenView(m model) string {
 
 func checkbox(label string, checked bool) string {
 	if checked {
-		return colorFg("[x] "+label, "212")
+		return checkboxStyle.Render("[x] " + label)
 	}
 	return fmt.Sprintf("[ ] %s", label)
 }
@@ -232,7 +236,7 @@ func progressbar(percent float64) string {
 	fullSize := int(math.Round(w * percent))
 	var fullCells string
 	for i := 0; i < fullSize; i++ {
-		fullCells += termenv.String(progressFullChar).Foreground(term.Color(ramp[i])).String()
+		fullCells += ramp[i].Render(progressFullChar)
 	}
 
 	emptySize := int(w) - fullSize
@@ -243,29 +247,19 @@ func progressbar(percent float64) string {
 
 // Utils
 
-// Color a string's foreground with the given value.
-func colorFg(val, color string) string {
-	return termenv.String(val).Foreground(term.Color(color)).String()
-}
-
-// Return a function that will colorize the foreground of a given string.
-func makeFgStyle(color string) func(string) string {
-	return termenv.Style{}.Foreground(term.Color(color)).Styled
-}
-
 // Generate a blend of colors.
-func makeRamp(colorA, colorB string, steps float64) (s []string) {
+func makeRampStyles(colorA, colorB string, steps float64) (s []lipgloss.Style) {
 	cA, _ := colorful.Hex(colorA)
 	cB, _ := colorful.Hex(colorB)
 
 	for i := 0.0; i < steps; i++ {
 		c := cA.BlendLuv(cB, i/steps)
-		s = append(s, colorToHex(c))
+		s = append(s, lipgloss.NewStyle().Foreground(lipgloss.Color(colorToHex(c))))
 	}
 	return
 }
 
-// Convert a colorful.Color to a hexadecimal format compatible with termenv.
+// Convert a colorful.Color to a hexadecimal format.
 func colorToHex(c colorful.Color) string {
 	return fmt.Sprintf("#%s%s%s", colorFloatToHex(c.R), colorFloatToHex(c.G), colorFloatToHex(c.B))
 }

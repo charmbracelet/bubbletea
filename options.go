@@ -3,8 +3,7 @@ package tea
 import (
 	"context"
 	"io"
-
-	"github.com/muesli/termenv"
+	"sync/atomic"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -20,7 +19,7 @@ type ProgramOption func(*Program)
 // cancelled it will exit with an error ErrProgramKilled.
 func WithContext(ctx context.Context) ProgramOption {
 	return func(p *Program) {
-		p.ctx = ctx
+		p.externalCtx = ctx
 	}
 }
 
@@ -28,11 +27,7 @@ func WithContext(ctx context.Context) ProgramOption {
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
 	return func(p *Program) {
-		if o, ok := output.(*termenv.Output); ok {
-			p.output = o
-		} else {
-			p.output = termenv.NewOutput(output, termenv.WithColorCache(true))
-		}
+		p.output = output
 	}
 }
 
@@ -51,6 +46,23 @@ func WithInput(input io.Reader) ProgramOption {
 func WithInputTTY() ProgramOption {
 	return func(p *Program) {
 		p.inputType = ttyInput
+	}
+}
+
+// WithEnvironment sets the environment variables that the program will use.
+// This useful when the program is running in a remote session (e.g. SSH) and
+// you want to pass the environment variables from the remote session to the
+// program.
+//
+// Example:
+//
+//	var sess ssh.Session // ssh.Session is a type from the github.com/charmbracelet/ssh package
+//	pty, _, _ := sess.Pty()
+//	environ := append(sess.Environ(), "TERM="+pty.Term)
+//	p := tea.NewProgram(model, tea.WithEnvironment(environ)
+func WithEnvironment(env []string) ProgramOption {
+	return func(p *Program) {
+		p.environ = env
 	}
 }
 
@@ -76,7 +88,7 @@ func WithoutCatchPanics() ProgramOption {
 // This is mainly useful for testing.
 func WithoutSignals() ProgramOption {
 	return func(p *Program) {
-		p.ignoreSignals = true
+		atomic.StoreUint32(&p.ignoreSignals, 1)
 	}
 }
 
@@ -100,12 +112,22 @@ func WithAltScreen() ProgramOption {
 	}
 }
 
+// WithoutBracketedPaste starts the program with bracketed paste disabled.
+func WithoutBracketedPaste() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutBracketedPaste
+	}
+}
+
 // WithMouseCellMotion starts the program with the mouse enabled in "cell
 // motion" mode.
 //
 // Cell motion mode enables mouse click, release, and wheel events. Mouse
 // movement events are also captured if a mouse button is pressed (i.e., drag
 // events). Cell motion mode is better supported than all motion mode.
+//
+// This will try to enable the mouse in extended mode (SGR), if that is not
+// supported by the terminal it will fall back to normal mode (X10).
 //
 // To enable mouse cell motion once the program has already started running use
 // the EnableMouseCellMotion command. To disable the mouse when the program is
@@ -125,6 +147,9 @@ func WithMouseCellMotion() ProgramOption {
 // EnableMouseAllMotion is a special command that enables mouse click, release,
 // wheel, and motion events, which are delivered regardless of whether a mouse
 // button is pressed, effectively enabling support for hover interactions.
+//
+// This will try to enable the mouse in extended mode (SGR), if that is not
+// supported by the terminal it will fall back to normal mode (X10).
 //
 // Many modern terminals support this, but not all. If in doubt, use
 // EnableMouseCellMotion instead.
@@ -160,6 +185,9 @@ func WithoutRenderer() ProgramOption {
 //
 // This feature is provisional, and may be changed or removed in a future version
 // of this package.
+//
+// Deprecated: this incurs a noticeable performance hit. A future release will
+// optimize ANSI automatically without the performance penalty.
 func WithANSICompressor() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withANSICompressor
@@ -207,5 +235,18 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 func WithFPS(fps int) ProgramOption {
 	return func(p *Program) {
 		p.fps = fps
+	}
+}
+
+// WithReportFocus enables reporting when the terminal gains and loses
+// focus. When this is enabled [FocusMsg] and [BlurMsg] messages will be sent
+// to your Update method.
+//
+// Note that while most terminals and multiplexers support focus reporting,
+// some do not. Also note that tmux needs to be configured to report focus
+// events.
+func WithReportFocus() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withReportFocus
 	}
 }

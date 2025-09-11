@@ -116,6 +116,54 @@ func ShowCursor() Msg {
 // this message with ShowCursor.
 type showCursorMsg struct{}
 
+// EnableBracketedPaste is a special command that tells the Bubble Tea program
+// to accept bracketed paste input.
+//
+// Note that bracketed paste will be automatically disabled when the
+// program quits.
+func EnableBracketedPaste() Msg {
+	return enableBracketedPasteMsg{}
+}
+
+// enableBracketedPasteMsg in an internal message signals that
+// bracketed paste should be enabled. You can send an
+// enableBracketedPasteMsg with EnableBracketedPaste.
+type enableBracketedPasteMsg struct{}
+
+// DisableBracketedPaste is a special command that tells the Bubble Tea program
+// to stop processing bracketed paste input.
+//
+// Note that bracketed paste will be automatically disabled when the
+// program quits.
+func DisableBracketedPaste() Msg {
+	return disableBracketedPasteMsg{}
+}
+
+// disableBracketedPasteMsg in an internal message signals that
+// bracketed paste should be disabled. You can send an
+// disableBracketedPasteMsg with DisableBracketedPaste.
+type disableBracketedPasteMsg struct{}
+
+// enableReportFocusMsg is an internal message that signals to enable focus
+// reporting. You can send an enableReportFocusMsg with EnableReportFocus.
+type enableReportFocusMsg struct{}
+
+// EnableReportFocus is a special command that tells the Bubble Tea program to
+// report focus events to the program.
+func EnableReportFocus() Msg {
+	return enableReportFocusMsg{}
+}
+
+// disableReportFocusMsg is an internal message that signals to disable focus
+// reporting. You can send an disableReportFocusMsg with DisableReportFocus.
+type disableReportFocusMsg struct{}
+
+// DisableReportFocus is a special command that tells the Bubble Tea program to
+// stop reporting focus events to the program.
+func DisableReportFocus() Msg {
+	return disableReportFocusMsg{}
+}
+
 // EnterAltScreen enters the alternate screen buffer, which consumes the entire
 // terminal window. ExitAltScreen will return the terminal to its former state.
 //
@@ -123,6 +171,8 @@ type showCursorMsg struct{}
 func (p *Program) EnterAltScreen() {
 	if p.renderer != nil {
 		p.renderer.enterAltScreen()
+	} else {
+		p.startupOptions |= withAltScreen
 	}
 }
 
@@ -132,6 +182,8 @@ func (p *Program) EnterAltScreen() {
 func (p *Program) ExitAltScreen() {
 	if p.renderer != nil {
 		p.renderer.exitAltScreen()
+	} else {
+		p.startupOptions &^= withAltScreen
 	}
 }
 
@@ -140,7 +192,11 @@ func (p *Program) ExitAltScreen() {
 //
 // Deprecated: Use the WithMouseCellMotion ProgramOption instead.
 func (p *Program) EnableMouseCellMotion() {
-	p.renderer.enableMouseCellMotion()
+	if p.renderer != nil {
+		p.renderer.enableMouseCellMotion()
+	} else {
+		p.startupOptions |= withMouseCellMotion
+	}
 }
 
 // DisableMouseCellMotion disables Mouse Cell Motion tracking. This will be
@@ -148,7 +204,11 @@ func (p *Program) EnableMouseCellMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseCellMotion() {
-	p.renderer.disableMouseCellMotion()
+	if p.renderer != nil {
+		p.renderer.disableMouseCellMotion()
+	} else {
+		p.startupOptions &^= withMouseCellMotion
+	}
 }
 
 // EnableMouseAllMotion enables mouse click, release, wheel and motion events,
@@ -157,7 +217,11 @@ func (p *Program) DisableMouseCellMotion() {
 //
 // Deprecated: Use the WithMouseAllMotion ProgramOption instead.
 func (p *Program) EnableMouseAllMotion() {
-	p.renderer.enableMouseAllMotion()
+	if p.renderer != nil {
+		p.renderer.enableMouseAllMotion()
+	} else {
+		p.startupOptions |= withMouseAllMotion
+	}
 }
 
 // DisableMouseAllMotion disables All Motion mouse tracking. This will be
@@ -165,5 +229,20 @@ func (p *Program) EnableMouseAllMotion() {
 //
 // Deprecated: The mouse will automatically be disabled when the program exits.
 func (p *Program) DisableMouseAllMotion() {
-	p.renderer.disableMouseAllMotion()
+	if p.renderer != nil {
+		p.renderer.disableMouseAllMotion()
+	} else {
+		p.startupOptions &^= withMouseAllMotion
+	}
+}
+
+// SetWindowTitle sets the terminal window title.
+//
+// Deprecated: Use the SetWindowTitle command instead.
+func (p *Program) SetWindowTitle(title string) {
+	if p.renderer != nil {
+		p.renderer.setWindowTitle(title)
+	} else {
+		p.startupTitle = title
+	}
 }

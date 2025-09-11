@@ -43,9 +43,15 @@ func (m model) Init() tea.Cmd {
 // message and send back an updated model accordingly. You can also return
 // a command, which is a function that performs I/O and returns a message.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		return m, tea.Quit
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		case "ctrl+z":
+			return m, tea.Suspend
+		}
+
 	case tickMsg:
 		m--
 		if m <= 0 {
@@ -59,7 +65,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
 func (m model) View() string {
-	return fmt.Sprintf("Hi. This program will exit in %d seconds. To quit sooner press any key.\n", m)
+	return fmt.Sprintf("Hi. This program will exit in %d seconds.\n\nTo quit sooner press ctrl-c, or press ctrl-z to suspend...\n", m)
 }
 
 // Messages are events that we respond to in our Update function. This

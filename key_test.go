@@ -134,10 +134,24 @@ func TestDetectOneMsg(t *testing.T) {
 	// Add tests for the inputs that detectOneMsg() can parse, but
 	// detectSequence() cannot.
 	td = append(td,
+		// focus/blur
+		seqTest{
+			[]byte{'\x1b', '[', 'I'},
+			FocusMsg{},
+		},
+		seqTest{
+			[]byte{'\x1b', '[', 'O'},
+			BlurMsg{},
+		},
 		// Mouse event.
 		seqTest{
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
-			MouseMsg{X: 32, Y: 16, Type: MouseWheelUp},
+			MouseMsg{X: 32, Y: 16, Type: MouseWheelUp, Button: MouseButtonWheelUp, Action: MouseActionPress},
+		},
+		// SGR Mouse event.
+		seqTest{
+			[]byte("\x1b[<0;33;17M"),
+			MouseMsg{X: 32, Y: 16, Type: MouseLeft, Button: MouseButtonLeft, Action: MouseActionPress},
 		},
 		// Runes.
 		seqTest{
@@ -237,7 +251,8 @@ func TestReadInput(t *testing.T) {
 		out     []Msg
 	}
 	testData := []test{
-		{"a",
+		{
+			"a",
 			[]byte{'a'},
 			[]Msg{
 				KeyMsg{
@@ -246,7 +261,8 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{" ",
+		{
+			" ",
 			[]byte{' '},
 			[]Msg{
 				KeyMsg{
@@ -255,14 +271,16 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"a alt+a",
+		{
+			"a alt+a",
 			[]byte{'a', '\x1b', 'a'},
 			[]Msg{
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}, Alt: true},
 			},
 		},
-		{"a alt+a a",
+		{
+			"a alt+a a",
 			[]byte{'a', '\x1b', 'a', 'a'},
 			[]Msg{
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
@@ -270,7 +288,8 @@ func TestReadInput(t *testing.T) {
 				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
 			},
 		},
-		{"ctrl+a",
+		{
+			"ctrl+a",
 			[]byte{byte(keySOH)},
 			[]Msg{
 				KeyMsg{
@@ -278,14 +297,16 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"ctrl+a ctrl+b",
+		{
+			"ctrl+a ctrl+b",
 			[]byte{byte(keySOH), byte(keySTX)},
 			[]Msg{
 				KeyMsg{Type: KeyCtrlA},
 				KeyMsg{Type: KeyCtrlB},
 			},
 		},
-		{"alt+a",
+		{
+			"alt+a",
 			[]byte{byte(0x1b), 'a'},
 			[]Msg{
 				KeyMsg{
@@ -295,7 +316,8 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"abcd",
+		{
+			"abcd",
 			[]byte{'a', 'b', 'c', 'd'},
 			[]Msg{
 				KeyMsg{
@@ -304,7 +326,8 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"up",
+		{
+			"up",
 			[]byte("\x1b[A"),
 			[]Msg{
 				KeyMsg{
@@ -312,35 +335,44 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"wheel up",
+		{
+			"wheel up",
 			[]byte{'\x1b', '[', 'M', byte(32) + 0b0100_0000, byte(65), byte(49)},
 			[]Msg{
 				MouseMsg{
-					X:    32,
-					Y:    16,
-					Type: MouseWheelUp,
+					X:      32,
+					Y:      16,
+					Type:   MouseWheelUp,
+					Button: MouseButtonWheelUp,
+					Action: MouseActionPress,
 				},
 			},
 		},
-		{"left release",
+		{
+			"left motion release",
 			[]byte{
 				'\x1b', '[', 'M', byte(32) + 0b0010_0000, byte(32 + 33), byte(16 + 33),
 				'\x1b', '[', 'M', byte(32) + 0b0000_0011, byte(64 + 33), byte(32 + 33),
 			},
 			[]Msg{
 				MouseMsg(MouseEvent{
-					X:    32,
-					Y:    16,
-					Type: MouseLeft,
+					X:      32,
+					Y:      16,
+					Type:   MouseLeft,
+					Button: MouseButtonLeft,
+					Action: MouseActionMotion,
 				}),
 				MouseMsg(MouseEvent{
-					X:    64,
-					Y:    32,
-					Type: MouseRelease,
+					X:      64,
+					Y:      32,
+					Type:   MouseRelease,
+					Button: MouseButtonNone,
+					Action: MouseActionRelease,
 				}),
 			},
 		},
-		{"shift+tab",
+		{
+			"shift+tab",
 			[]byte{'\x1b', '[', 'Z'},
 			[]Msg{
 				KeyMsg{
@@ -348,11 +380,13 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"enter",
+		{
+			"enter",
 			[]byte{'\r'},
 			[]Msg{KeyMsg{Type: KeyEnter}},
 		},
-		{"alt+enter",
+		{
+			"alt+enter",
 			[]byte{'\x1b', '\r'},
 			[]Msg{
 				KeyMsg{
@@ -361,7 +395,8 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"insert",
+		{
+			"insert",
 			[]byte{'\x1b', '[', '2', '~'},
 			[]Msg{
 				KeyMsg{
@@ -369,7 +404,8 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"alt+ctrl+a",
+		{
+			"alt+ctrl+a",
 			[]byte{'\x1b', byte(keySOH)},
 			[]Msg{
 				KeyMsg{
@@ -378,68 +414,84 @@ func TestReadInput(t *testing.T) {
 				},
 			},
 		},
-		{"?CSI[45 45 45 45 88]?",
+		{
+			"?CSI[45 45 45 45 88]?",
 			[]byte{'\x1b', '[', '-', '-', '-', '-', 'X'},
 			[]Msg{unknownCSISequenceMsg([]byte{'\x1b', '[', '-', '-', '-', '-', 'X'})},
 		},
 		// Powershell sequences.
-		{"up",
+		{
+			"up",
 			[]byte{'\x1b', 'O', 'A'},
 			[]Msg{KeyMsg{Type: KeyUp}},
 		},
-		{"down",
+		{
+			"down",
 			[]byte{'\x1b', 'O', 'B'},
 			[]Msg{KeyMsg{Type: KeyDown}},
 		},
-		{"right",
+		{
+			"right",
 			[]byte{'\x1b', 'O', 'C'},
 			[]Msg{KeyMsg{Type: KeyRight}},
 		},
-		{"left",
+		{
+			"left",
 			[]byte{'\x1b', 'O', 'D'},
 			[]Msg{KeyMsg{Type: KeyLeft}},
 		},
-		{"alt+enter",
+		{
+			"alt+enter",
 			[]byte{'\x1b', '\x0d'},
 			[]Msg{KeyMsg{Type: KeyEnter, Alt: true}},
 		},
-		{"alt+backspace",
+		{
+			"alt+backspace",
 			[]byte{'\x1b', '\x7f'},
 			[]Msg{KeyMsg{Type: KeyBackspace, Alt: true}},
 		},
-		{"ctrl+@",
+		{
+			"ctrl+@",
 			[]byte{'\x00'},
 			[]Msg{KeyMsg{Type: KeyCtrlAt}},
 		},
-		{"alt+ctrl+@",
+		{
+			"alt+ctrl+@",
 			[]byte{'\x1b', '\x00'},
 			[]Msg{KeyMsg{Type: KeyCtrlAt, Alt: true}},
 		},
-		{"esc",
+		{
+			"esc",
 			[]byte{'\x1b'},
 			[]Msg{KeyMsg{Type: KeyEsc}},
 		},
-		{"alt+esc",
+		{
+			"alt+esc",
 			[]byte{'\x1b', '\x1b'},
 			[]Msg{KeyMsg{Type: KeyEsc, Alt: true}},
 		},
-		// Bracketed paste does not work yet.
-		{"?CSI[50 48 48 126]? a   b ?CSI[50 48 49 126]?",
+		{
+			"[a b] o",
 			[]byte{
 				'\x1b', '[', '2', '0', '0', '~',
 				'a', ' ', 'b',
-				'\x1b', '[', '2', '0', '1', '~'},
+				'\x1b', '[', '2', '0', '1', '~',
+				'o',
+			},
 			[]Msg{
-				// What we expect once bracketed paste is recognized properly:
-				//
-				//  KeyMsg{Type: KeyRunes, Runes: []rune("a b")},
-				//
-				// What we get instead (for now):
-				unknownCSISequenceMsg{0x1b, 0x5b, 0x32, 0x30, 0x30, 0x7e},
-				KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
-				KeyMsg{Type: KeySpace, Runes: []rune{' '}},
-				KeyMsg{Type: KeyRunes, Runes: []rune{'b'}},
-				unknownCSISequenceMsg{0x1b, 0x5b, 0x32, 0x30, 0x31, 0x7e},
+				KeyMsg{Type: KeyRunes, Runes: []rune("a b"), Paste: true},
+				KeyMsg{Type: KeyRunes, Runes: []rune("o")},
+			},
+		},
+		{
+			"[a\x03\nb]",
+			[]byte{
+				'\x1b', '[', '2', '0', '0', '~',
+				'a', '\x03', '\n', 'b',
+				'\x1b', '[', '2', '0', '1', '~',
+			},
+			[]Msg{
+				KeyMsg{Type: KeyRunes, Runes: []rune("a\x03\nb"), Paste: true},
 			},
 		},
 	}
@@ -447,11 +499,13 @@ func TestReadInput(t *testing.T) {
 		// Sadly, utf8.DecodeRune([]byte(0xfe)) returns a valid rune on windows.
 		// This is incorrect, but it makes our test fail if we try it out.
 		testData = append(testData,
-			test{"?0xfe?",
+			test{
+				"?0xfe?",
 				[]byte{'\xfe'},
 				[]Msg{unknownInputByteMsg(0xfe)},
 			},
-			test{"a ?0xfe?   b",
+			test{
+				"a ?0xfe?   b",
 				[]byte{'a', '\xfe', ' ', 'b'},
 				[]Msg{
 					KeyMsg{Type: KeyRunes, Runes: []rune{'a'}},
@@ -515,7 +569,7 @@ func testReadInputs(t *testing.T, input io.Reader) []Msg {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		inputErr = readInputs(ctx, msgsC, input)
+		inputErr = readAnsiInputs(ctx, msgsC, input)
 		msgsC <- nil
 	}()
 
@@ -663,7 +717,7 @@ func runTestDetectSequence(
 	}
 }
 
-// TestDetectRandomSequencesLex checks that the map-based sequence
+// TestDetectRandomSequencesMap checks that the map-based sequence
 // detector works over concatenations of random sequences.
 func TestDetectRandomSequencesMap(t *testing.T) {
 	runTestDetectSequence(t, detectSequence)

@@ -109,17 +109,21 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	}
 
 	c.SetStdin(p.input)
-	c.SetStdout(p.output.TTY())
+	c.SetStdout(p.output)
 	c.SetStderr(os.Stderr)
 
 	// Execute system command.
 	if err := c.Run(); err != nil {
+		p.renderer.resetLinesRendered()
 		_ = p.RestoreTerminal() // also try to restore the terminal.
 		if fn != nil {
 			go p.Send(fn(err))
 		}
 		return
 	}
+
+	// Maintain the existing output from the command
+	p.renderer.resetLinesRendered()
 
 	// Have the program re-capture input.
 	err := p.RestoreTerminal()

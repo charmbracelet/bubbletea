@@ -1,10 +1,15 @@
 # Bubble Tea
 
 <p>
-    <img src="https://stuff.charm.sh/bubbletea/bubbletea-github-header-simple.png" width="313" alt="Bubble Tea Title Treatment"><br>
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-light.png" width="308">
+      <source media="(prefers-color-scheme: dark)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-dark.png" width="312">
+      <img src="https://stuff.charm.sh/bubbletea/bubble-tea-v2-light.png" width="308" />
+    </picture>
+    <br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
-    <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
-    <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/workflows/build/badge.svg" alt="Build Status"></a>
+    <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/charmbracelet/bubbletea?status.svg" alt="GoDoc"></a>
+    <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg?branch=main" alt="Build Status"></a>
 </p>
 
 The fun, functional and stateful way to build terminal apps. A Go framework
@@ -16,9 +21,8 @@ complex terminal applications, either inline, full-window, or a mix of both.
 </p>
 
 Bubble Tea is in use in production and includes a number of features and
-performance optimizations we’ve added along the way. Among those is a standard
-framerate-based renderer, a renderer for high-performance scrollable
-regions which works alongside the main renderer, and mouse support.
+performance optimizations we’ve added along the way. Among those is
+a framerate-based renderer, mouse support, focus reporting and more.
 
 To get started, see the tutorial below, the [examples][examples], the
 [docs][docs], the [video tutorials][youtube] and some common [resources](#libraries-we-use-with-bubble-tea).
@@ -34,7 +38,7 @@ Be sure to check out [Bubbles][bubbles], a library of common UI components for B
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
-***
+---
 
 ## Tutorial
 
@@ -48,7 +52,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]:https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[tut-source]: https://github.com/charmbracelet/bubbletea/tree/main/tutorials/basics
 
 ### Enough! Let's get to it.
 
@@ -60,6 +64,10 @@ import will be the Bubble Tea library, which we'll call `tea` for short.
 ```go
 package main
 
+// These imports will be used later on the tutorial. If you save the file
+// now, Go might complain they are unused, but that's fine.
+// You may also need to run `go mod tidy` to download bubbletea and its
+// dependencies.
 import (
     "fmt"
     "os"
@@ -71,9 +79,9 @@ import (
 Bubble Tea programs are comprised of a **model** that describes the application
 state and three simple methods on that model:
 
-* **Init**, a function that returns an initial command for the application to run.
-* **Update**, a function that handles incoming events and updates the model accordingly.
-* **View**, a function that renders the UI based on the data in the model.
+- **Init**, a function that returns an initial command for the application to run.
+- **Update**, a function that handles incoming events and updates the model accordingly.
+- **View**, a function that renders the UI based on the data in the model.
 
 ### The Model
 
@@ -253,8 +261,8 @@ look at the [Command Tutorial][cmd]. It's pretty simple.
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
-[examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
+[cmd]: https://github.com/charmbracelet/bubbletea/tree/main/tutorials/commands/
+[examples]: https://github.com/charmbracelet/bubbletea/tree/main/examples
 [docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
 
 ## Debugging
@@ -266,15 +274,21 @@ delve in headless mode and then connect to it:
 
 ```bash
 # Start the debugger
-$ dlv debug --headless .
-API server listening at: 127.0.0.1:34241
+$ dlv debug --headless --api-version=2 --listen=127.0.0.1:43000 .
+API server listening at: 127.0.0.1:43000
 
 # Connect to it from another terminal
-$ dlv connect 127.0.0.1:34241
+$ dlv connect 127.0.0.1:43000
 ```
 
-Note that the default port used will vary on your system and per run, so
-actually watch out what address the first `dlv` run tells you to connect to.
+If you do not explicitly supply the `--listen` flag, the port used will vary
+per run, so passing this in makes the debugger easier to use from a script
+or your IDE of choice.
+
+Additionally, we pass in `--api-version=2` because delve defaults to version 1
+for backwards compatibility reasons. However, delve recommends using version 2
+for all new development and some clients may no longer work with version 1.
+For more information, see the [Delve documentation](https://github.com/go-delve/delve/tree/master/Documentation/api).
 
 ### Logging Stuff
 
@@ -298,93 +312,68 @@ your program in another window.
 
 ## Libraries we use with Bubble Tea
 
-* [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
-* [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
-* [Harmonica][harmonica]: A spring animation library for smooth, natural motion
-* [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
-* [Termenv][termenv]: Advanced ANSI styling for terminal applications
-* [Reflow][reflow]: Advanced ANSI-aware methods for working with text
+- [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on
+- [Lip Gloss][lipgloss]: Style, format and layout tools for terminal applications
+- [Harmonica][harmonica]: A spring animation library for smooth, natural motion
+- [BubbleZone][bubblezone]: Easy mouse event tracking for Bubble Tea components
+- [ntcharts][ntcharts]: A terminal charting library built for Bubble Tea and [Lip Gloss][lipgloss]
 
 [bubbles]: https://github.com/charmbracelet/bubbles
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [harmonica]: https://github.com/charmbracelet/harmonica
 [bubblezone]: https://github.com/lrstanley/bubblezone
-[termenv]: https://github.com/muesli/termenv
-[reflow]: https://github.com/muesli/reflow
+[ntcharts]: https://github.com/NimbleMarkets/ntcharts
 
 ## Bubble Tea in the Wild
 
-For some Bubble Tea programs in production, see:
+There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/network/dependents) built with Bubble Tea! Here are a handful of ’em.
 
-* [AT CLI](https://github.com/daskycodes/at_cli): execute AT Commands via serial port connections
-* [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
-* [brows](https://github.com/rubysolo/brows): a GitHub release browser
-* [Canard](https://github.com/mrusme/canard): an RSS client
-* [charm](https://github.com/charmbracelet/charm): the official Charm user account manager
-* [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
-* [chtop](https://github.com/chhetripradeep/chtop): monitor your ClickHouse node without leaving terminal
-* [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
-* [clidle](https://github.com/ajeetdsouza/clidle): a Wordle clone
-* [cLive](https://github.com/koki-develop/clive): automate terminal operations and view them live in a browser
-* [container-canary](https://github.com/NVIDIA/container-canary): a container validator
-* [countdown](https://github.com/aldernero/countdown): a multi-event countdown timer
-* [dns53](https://github.com/purpleclay/dns53): dynamic DNS with Amazon Route53. Expose your EC2 quickly, securely and privately
-* [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an eks cluster
-* [enola](https://github.com/sherlock-project/enola): hunt down social media accounts by username across social networks
-* [flapioca](https://github.com/kbrgl/flapioca): Flappy Bird on the CLI!
-* [fm](https://github.com/knipferrc/fm): a terminal-based file manager
-* [fork-cleaner](https://github.com/caarlos0/fork-cleaner): clean up old and inactive forks in your GitHub account
-* [fztea](https://github.com/jon4hz/fztea): a Flipper Zero TUI
-* [gambit](https://github.com/maaslalani/gambit): chess in the terminal
-* [gembro](https://git.sr.ht/~rafael/gembro): a mouse-driven Gemini browser
-* [gh-b](https://github.com/joaom00/gh-b): a GitHub CLI extension for managing branches
-* [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
-* [gitflow-toolkit](https://github.com/mritd/gitflow-toolkit): a GitFlow submission tool
-* [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
-* [gocovsh](https://github.com/orlangure/gocovsh): explore Go coverage reports from the CLI
-* [got](https://github.com/fedeztk/got): a simple translator and text-to-speech app build on top of simplytranslate's APIs
-* [hiSHtory](https://github.com/ddworken/hishtory): your shell history in context, synced, and queryable
-* [httpit](https://github.com/gonetx/httpit): a rapid http(s) benchmark tool
-* [IDNT](https://github.com/r-darwish/idnt): a batch software uninstaller
-* [kboard](https://github.com/CamiloGarciaLaRotta/kboard): a typing game
-* [mandelbrot-cli](https://github.com/MicheleFiladelfia/mandelbrot-cli): a multiplatform terminal mandelbrot set explorer
-* [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
-* [mergestat](https://github.com/mergestat/mergestat): run SQL queries on git repositories
-* [Neon Modem Overdrive](https://github.com/mrusme/neonmodem): a BBS-style TUI client for Discourse, Lemmy, Lobste.rs and Hacker News
-* [Noted](https://github.com/torbratsberg/noted): a note viewer and manager
-* [pathos](https://github.com/chip/pathos): a PATH env variable editor
-* [portal](https://github.com/ZinoKader/portal): secure transfers between computers
-* [redis-viewer](https://github.com/SaltFishPr/redis-viewer): a Redis databases browser
-* [scrabbler](https://github.com/wI2L/scrabbler): Automatic draw TUI for your duplicate Scrabble games
-* [sku](https://github.com/fedeztk/sku): Sudoku on the CLI
-* [Slides](https://github.com/maaslalani/slides): a markdown-based presentation tool
-* [SlurmCommander](https://github.com/CLIP-HPC/SlurmCommander): a Slurm workload manager TUI
-* [Soft Serve](https://github.com/charmbracelet/soft-serve): a command-line-first Git server that runs a TUI over SSH
-* [solitaire-tui](https://github.com/brianstrauch/solitaire-tui): Klondike Solitaire for the terminal
-* [StormForge Optimize Controller](https://github.com/thestormforge/optimize-controller): a tool for experimenting with application configurations in Kubernetes
-* [Storydb](https://github.com/grrlopes/storydb): a bash/zsh ctrl+r improved command history finder.
-* [STTG](https://github.com/wille1101/sttg): a teletext client for SVT, Sweden’s national public television station
-* [sttr](https://github.com/abhimanyu003/sttr): a general-purpose text transformer
-* [tasktimer](https://github.com/caarlos0/tasktimer): a dead-simple task timer
-* [termdbms](https://github.com/mathaou/termdbms): a keyboard and mouse driven database browser
-* [ticker](https://github.com/achannarasappa/ticker): a terminal stock viewer and stock position tracker
-* [tran](https://github.com/abdfnx/tran): securely transfer stuff between computers (based on [portal](https://github.com/ZinoKader/portal))
-* [Typer](https://github.com/maaslalani/typer): a typing test
-* [typioca](https://github.com/bloznelis/typioca): Cozy typing speed tester in terminal 
-* [tz](https://github.com/oz/tz): an aid for scheduling across multiple time zones
-* [ugm](https://github.com/ariasmn/ugm): a unix user and group browser
-* [walk](https://github.com/antonmedv/walk): a terminal navigator
-* [wander](https://github.com/robinovitch61/wander): a HashiCorp Nomad terminal client
-* [WG Commander](https://github.com/AndrianBdn/wg-cmd): a TUI for a simple WireGuard VPN setup 
-* [wishlist](https://github.com/charmbracelet/wishlist): an SSH directory
+### Staff favourites
+
+- [chezmoi](https://github.com/twpayne/chezmoi): securely manage your dotfiles across multiple machines
+- [circumflex](https://github.com/bensadeh/circumflex): read Hacker News in the terminal
+- [gh-dash](https://www.github.com/dlvhdr/gh-dash): a GitHub CLI extension for PRs and issues
+- [Tetrigo](https://github.com/Broderick-Westrope/tetrigo): Tetris in the terminal
+- [Signls](https://github.com/emprcl/signls): a generative midi sequencer designed for composition and live performance
+- [Superfile](https://github.com/yorukot/superfile): a super file manager
+
+### In Industry
+
+- Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
+- Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
+- Cockroach Labs – [CockroachDB](https://github.com/cockroachdb/cockroach): a cloud-native, high-availability distributed SQL database
+- Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
+- NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary): a container validator
+- AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
+- MinIO – [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+- Ubuntu – [Authd](https://github.com/ubuntu/authd): an authentication daemon for cloud-based identity providers
+
+### Charm stuff
+
+- [Glow](https://github.com/charmbracelet/glow): a markdown reader, browser, and online markdown stash
+- [Huh?](https://github.com/charmbracelet/huh): an interactive prompt and form toolkit
+- [Mods](https://github.com/charmbracelet/mods): AI on the CLI, built for pipelines
+- [Wishlist](https://github.com/charmbracelet/wishlist): an SSH directory (and bastion!)
+
+### There’s so much more where that came from
+
+For more applications built with Bubble Tea see [Charm & Friends][community].
+Is there something cool you made with Bubble Tea you want to share? [PRs][community] are
+welcome!
+
+## Contributing
+
+See [contributing][contribute].
+
+[contribute]: https://github.com/charmbracelet/bubbletea/contribute
 
 ## Feedback
 
-We'd love to hear your thoughts on this project. Feel free to drop us a note!
+We’d love to hear your thoughts on this project. Feel free to drop us a note!
 
-* [Twitter](https://twitter.com/charmcli)
-* [The Fediverse](https://mastodon.social/@charmcli)
-* [Discord](https://charm.sh/chat)
+- [Twitter](https://twitter.com/charmcli)
+- [The Fediverse](https://mastodon.social/@charmcli)
+- [Discord](https://charm.sh/chat)
 
 ## Acknowledgments
 
@@ -396,15 +385,16 @@ of days past.
 [elm]: https://guide.elm-lang.org/architecture/
 [gotea]: https://github.com/tj/go-tea
 [zb]: https://de.wikipedia.org/wiki/Zeichenorientierte_Benutzerschnittstelle
+[community]: https://github.com/charm-and-friends/charm-in-the-wild
 
 ## License
 
-[MIT](https://github.com/charmbracelet/bubbletea/raw/master/LICENSE)
+[MIT](https://github.com/charmbracelet/bubbletea/raw/main/LICENSE)
 
-***
+---
 
 Part of [Charm](https://charm.sh).
 
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-banner-next.jpg" width="400"></a>
 
 Charm热爱开源 • Charm loves open source • نحنُ نحب المصادر المفتوحة
