@@ -763,50 +763,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(ansi.RequestTermcap(string(msg)))
 
 			case BatchMsg:
-				for _, cmd := range msg {
-					if cmd == nil {
-						continue
-					}
-					go func() { p.Send(cmd()) }()
-				}
+				go p.execBatchMsg(msg)
 				continue
 
 			case sequenceMsg:
-				go func() {
-					// Execute commands one at a time, in order.
-					for _, cmd := range msg {
-						if cmd == nil {
-							continue
-						}
-
-						msg := cmd()
-						switch msg := msg.(type) {
-						case BatchMsg:
-							var wg sync.WaitGroup
-							for _, cmd := range msg {
-								if cmd == nil {
-									continue
-								}
-								wg.Add(1)
-								cmd := cmd
-								go func() {
-									defer wg.Done()
-									p.Send(cmd())
-								}()
-							}
-							wg.Wait()
-						case sequenceMsg:
-							for _, cmd := range msg {
-								if cmd == nil {
-									continue
-								}
-								p.Send(cmd())
-							}
-						default:
-							p.Send(msg)
-						}
-					}
-				}()
+				go p.execSequenceMsg(msg)
+				continue
 
 			case setWindowTitleMsg:
 				p.renderer.setWindowTitle(p.lastWindowTitle)
@@ -885,6 +847,74 @@ func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(view) // send view to renderer
 	}
+}
+
+func (p *Program) execSequenceMsg(msg sequenceMsg) {
+	if !p.startupOptions.has(withoutCatchPanics) {
+		defer func() {
+			if r := recover(); r != nil {
+				p.recoverFromGoPanic(r)
+			}
+		}()
+	}
+
+	// Execute commands one at a time, in order.
+	for _, cmd := range msg {
+		if cmd == nil {
+			continue
+		}
+		msg := cmd()
+		switch msg := msg.(type) {
+		case BatchMsg:
+			p.execBatchMsg(msg)
+		case sequenceMsg:
+			p.execSequenceMsg(msg)
+		default:
+			p.Send(msg)
+		}
+	}
+}
+
+func (p *Program) execBatchMsg(msg BatchMsg) {
+	if !p.startupOptions.has(withoutCatchPanics) {
+		defer func() {
+			if r := recover(); r != nil {
+				p.recoverFromGoPanic(r)
+			}
+		}()
+	}
+
+	// Execute commands one at a time.
+	var wg sync.WaitGroup
+	for _, cmd := range msg {
+		if cmd == nil {
+			continue
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			if !p.startupOptions.has(withoutCatchPanics) {
+				defer func() {
+					if r := recover(); r != nil {
+						p.recoverFromGoPanic(r)
+					}
+				}()
+			}
+
+			msg := cmd()
+			switch msg := msg.(type) {
+			case BatchMsg:
+				p.execBatchMsg(msg)
+			case sequenceMsg:
+				p.execSequenceMsg(msg)
+			default:
+				p.Send(msg)
+			}
+		}()
+	}
+
+	wg.Wait() // wait for all commands from batch msg to finish
 }
 
 // Run initializes the program and runs its event loops, blocking until it gets
@@ -1218,13 +1248,37 @@ func (p *Program) shutdown(kill bool) {
 
 // recoverFromPanic recovers from a panic, prints the stack trace, and restores
 // the terminal to a usable state.
-func (p *Program) recoverFromPanic(r any) {
+func (p *Program) recoverFromPanic(r interface{}) {
 	select {
 	case p.errs <- ErrProgramPanic:
 	default:
 	}
-	p.cancel() // Just in case a previous shutdown has failed.
-	p.shutdown(true)
+	p.shutdown(true) // Ok to call here, p.Run() cannot do it anymore.
+	// We use "\r\n" to ensure the output is formatted even when restoring the
+	// terminal does not work or when raw mode is still active.
+	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
+	fmt.Fprintf(os.Stderr, "Caught panic:\r\n\r\n%s\r\n\r\nRestoring terminal...\r\n\r\n", rec)
+	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", debug.Stack()), "\n", "\r\n")
+	fmt.Fprint(os.Stderr, stack)
+	if v, err := strconv.ParseBool(os.Getenv("TEA_DEBUG")); err == nil && v {
+		f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
+		if err == nil {
+			defer f.Close()        //nolint:errcheck
+			fmt.Fprintln(f, rec)   //nolint:errcheck
+			fmt.Fprintln(f)        //nolint:errcheck
+			fmt.Fprintln(f, stack) //nolint:errcheck
+		}
+	}
+}
+
+// recoverFromGoPanic recovers from a goroutine panic, prints a stack trace and
+// signals for the program to be killed and terminal restored to a usable state.
+func (p *Program) recoverFromGoPanic(r interface{}) {
+	select {
+	case p.errs <- ErrProgramPanic:
+	default:
+	}
+	p.cancel()
 	// We use "\r\n" to ensure the output is formatted even when restoring the
 	// terminal does not work or when raw mode is still active.
 	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")

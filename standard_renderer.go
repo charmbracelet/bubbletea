@@ -217,7 +217,7 @@ func (r *standardRenderer) flush(*Program) error {
 		// using the full terminal window.
 		buf.WriteString(ansi.CursorPosition(0, len(newLines)))
 	} else {
-		buf.WriteString(ansi.CursorBackward(r.width))
+		buf.WriteByte('\r')
 	}
 
 	_, _ = r.out.Write(buf.Bytes())

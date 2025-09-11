@@ -26,6 +26,10 @@ linters:
     - whitespace
     - wrapcheck
   exclusions:
+    rules:
+      - text: '(slog|log)\.\w+'
+        linters:
+          - noctx
     generated: lax
     presets:
       - common-false-positives

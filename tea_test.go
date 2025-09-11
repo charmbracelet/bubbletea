@@ -18,6 +18,10 @@ type incrementMsg struct{}
 
 type panicMsg struct{}
 
+func panicCmd() Msg {
+	panic("testing goroutine panic behavior")
+}
+
 type testModel struct {
 	executed atomic.Value
 	counter  atomic.Value
@@ -434,14 +438,14 @@ func TestTeaNestedSequenceMsg(t *testing.T) {
 
 	m := &testModel{}
 	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
-	go p.Send(sequenceMsg{inc, Sequence(inc, inc), Quit})
+	go p.Send(sequenceMsg{inc, Sequence(inc, inc, Batch(inc, inc)), Quit})
 
 	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
-	if m.counter.Load() != 3 {
-		t.Fatalf("counter should be 3, got %d", m.counter.Load())
+	if m.counter.Load() != 5 {
+		t.Fatalf("counter should be 5, got %d", m.counter.Load())
 	}
 }
 
@@ -502,10 +506,6 @@ func TestTeaGoroutinePanic(t *testing.T) {
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
-	panicCmd := func() Msg {
-		panic("testing goroutine panic behavior")
-	}
-
 	m := &testModel{}
 	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
 	go func() {
@@ -513,8 +513,9 @@ func TestTeaGoroutinePanic(t *testing.T) {
 			time.Sleep(time.Millisecond)
 			if m.executed.Load() != nil {
 				batch := make(BatchMsg, 10)
-				for i := range batch {
-					batch[i] = panicCmd
+				for i := 0; i < len(batch); i += 2 {
+					batch[i] = Sequence(panicCmd)
+					batch[i+1] = Batch(panicCmd)
 				}
 				p.Send(batch)
 				return

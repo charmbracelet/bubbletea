@@ -9,7 +9,7 @@
     <br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
     <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/charmbracelet/bubbletea?status.svg" alt="GoDoc"></a>
-    <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
+    <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg?branch=main" alt="Build Status"></a>
 </p>
 
 The fun, functional and stateful way to build terminal apps. A Go framework
@@ -406,6 +406,6 @@ of days past.
 
 Part of [Charm](https://charm.sh).
 
-<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-badge.jpg" width="400"></a>
+<a href="https://charm.sh/"><img alt="The Charm logo" src="https://stuff.charm.sh/charm-banner-next.jpg" width="400"></a>
 
 Charm热爱开源 • Charm loves open source • نحنُ نحب المصادر المفتوحة
