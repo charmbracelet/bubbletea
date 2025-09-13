@@ -468,7 +468,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case execMsg:
 				// NB: this blocks.
-				p.exec(msg.cmd, msg.fn)
+				p.exec(model, msg.cmd, msg.fn)
 
 			case BatchMsg:
 				go p.execBatchMsg(msg)
