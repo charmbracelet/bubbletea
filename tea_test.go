@@ -27,7 +27,7 @@ type testModel struct {
 	counter  atomic.Value
 }
 
-func (m testModel) Init() Cmd {
+func (m *testModel) Init() Cmd {
 	return nil
 }
 
@@ -45,7 +45,7 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 			m.counter.Store(i.(int) + 1)
 		}
 
-	case KeyMsg:
+	case KeyPressMsg:
 		return m, Quit
 
 	case panicMsg:
@@ -57,7 +57,7 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 
 func (m *testModel) View() string {
 	m.executed.Store(true)
-	return "success\n"
+	return "success"
 }
 
 func TestTeaModel(t *testing.T) {
@@ -133,7 +133,7 @@ func TestTeaWaitQuit(t *testing.T) {
 	<-progStarted
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		wg.Add(1)
 		go func() {
 			p.Wait()
@@ -183,7 +183,7 @@ func TestTeaWaitKill(t *testing.T) {
 	<-progStarted
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		wg.Add(1)
 		go func() {
 			p.Wait()
@@ -232,7 +232,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 		}
 	}()
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 	if shutdowns != preventCount {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/harmonica"
 )
 
@@ -117,7 +117,7 @@ func (c cellbuffer) ready() bool {
 
 func (c cellbuffer) String() string {
 	var b strings.Builder
-	for i := 0; i < len(c.cells); i++ {
+	for i := range c.cells {
 		if i > 0 && i%c.stride == 0 && i < len(c.cells)-1 {
 			b.WriteRune('\n')
 		}
@@ -148,7 +148,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m, tea.Quit
 	case tea.WindowSizeMsg:
 		if !m.cells.ready() {
@@ -157,10 +157,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.cells.init(msg.Width, msg.Height)
 		return m, nil
 	case tea.MouseMsg:
+		switch msg.(type) {
+		case tea.MouseClickMsg, tea.MouseMotionMsg:
+		default:
+			break
+		}
 		if !m.cells.ready() {
 			return m, nil
 		}
-		m.targetX, m.targetY = float64(msg.X), float64(msg.Y)
+		mouse := msg.Mouse()
+		m.targetX, m.targetY = float64(mouse.X), float64(mouse.Y)
 		return m, nil
 
 	case frameMsg:
@@ -189,7 +195,7 @@ func main() {
 
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
-		fmt.Println("Uh oh:", err)
+		fmt.Fprintln(os.Stderr, "Uh oh:", err)
 		os.Exit(1)
 	}
 }

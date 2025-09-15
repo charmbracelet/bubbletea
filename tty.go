@@ -1,17 +1,16 @@
 package tea
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"time"
 
+	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 )
 
 func (p *Program) suspend() {
-	if err := p.ReleaseTerminal(); err != nil {
+	if err := p.releaseTerminal(true); err != nil {
 		// If we can't release input, abort.
 		return
 	}
@@ -23,38 +22,63 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if _, ok := p.renderer.(*nilRenderer); ok {
+	if !hasView(p.initialModel) {
 		// No need to initialize the terminal if we're not rendering
 		return nil
 	}
 
-	if err := p.initInput(); err != nil {
-		return err
-	}
-
-	p.renderer.hideCursor()
-	return nil
+	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.renderer != nil {
-		p.renderer.disableBracketedPaste()
-		p.renderer.showCursor()
-		p.disableMouse()
+	// We don't need to reset [ansi.AltScreenSaveCursorMode] and
+	// [ansi.TextCursorEnableMode] because they are automatically reset when we
+	// close the renderer. See [screenRenderer.close] and
+	// [cellbuf.Screen.Close].
 
-		if p.renderer.reportFocus() {
-			p.renderer.disableReportFocus()
-		}
-
-		if p.renderer.altScreen() {
-			p.renderer.exitAltScreen()
-
-			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10) //nolint:mnd
-		}
+	if p.modes.IsSet(ansi.BracketedPasteMode) {
+		p.execute(ansi.ResetBracketedPasteMode)
 	}
+
+	btnEvents := p.modes.IsSet(ansi.ButtonEventMouseMode)
+	allEvents := p.modes.IsSet(ansi.AnyEventMouseMode)
+	if btnEvents || allEvents {
+		if btnEvents {
+			p.execute(ansi.ResetButtonEventMouseMode)
+		}
+		if allEvents {
+			p.execute(ansi.ResetAnyEventMouseMode)
+		}
+		p.execute(ansi.ResetSgrExtMouseMode)
+	}
+	if p.activeEnhancements.modifyOtherKeys != 0 {
+		p.execute(ansi.ResetModifyOtherKeys)
+	}
+	if p.activeEnhancements.kittyFlags != 0 {
+		p.execute(ansi.KittyKeyboard(0, 1))
+	}
+	if p.modes.IsSet(ansi.FocusEventMode) {
+		p.execute(ansi.ResetFocusEventMode)
+	}
+	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
+		p.execute(ansi.ResetGraphemeClusteringMode)
+	}
+
+	// Restore terminal colors.
+	if p.setBg != nil {
+		p.execute(ansi.ResetBackgroundColor)
+	}
+	if p.setFg != nil {
+		p.execute(ansi.ResetForegroundColor)
+	}
+	if p.setCc != nil {
+		p.execute(ansi.ResetCursorColor)
+	}
+
+	// Flush queued commands.
+	_ = p.flush()
 
 	return p.restoreInput()
 }
@@ -63,31 +87,45 @@ func (p *Program) restoreTerminalState() error {
 func (p *Program) restoreInput() error {
 	if p.ttyInput != nil && p.previousTtyInputState != nil {
 		if err := term.Restore(p.ttyInput.Fd(), p.previousTtyInputState); err != nil {
-			return fmt.Errorf("error restoring console: %w", err)
+			return fmt.Errorf("bubbletea: error restoring console: %w", err)
 		}
 	}
 	if p.ttyOutput != nil && p.previousOutputState != nil {
 		if err := term.Restore(p.ttyOutput.Fd(), p.previousOutputState); err != nil {
-			return fmt.Errorf("error restoring console: %w", err)
+			return fmt.Errorf("bubbletea: error restoring console: %w", err)
 		}
 	}
 	return nil
 }
 
-// initCancelReader (re)commences reading inputs.
-func (p *Program) initCancelReader(cancel bool) error {
+// initInputReader (re)commences reading inputs.
+func (p *Program) initInputReader(cancel bool) error {
 	if cancel && p.cancelReader != nil {
 		p.cancelReader.Cancel()
 		p.waitForReadLoop()
 	}
 
+	term := p.environ.Getenv("TERM")
+
+	// Initialize the input reader.
+	// This need to be done after the terminal has been initialized and set to
+	// raw mode.
+
 	var err error
-	p.cancelReader, err = newInputReader(p.input, p.mouseMode)
+	p.cancelReader, err = uv.NewCancelReader(p.input)
 	if err != nil {
-		return fmt.Errorf("error creating cancelreader: %w", err)
+		return err
 	}
 
+	drv := uv.NewTerminalReader(p.cancelReader, term)
+	drv.SetLogger(p.logger)
+	if p.mouseMode {
+		mouseMode := uv.ButtonMouseMode | uv.DragMouseMode | uv.AllMouseMode
+		drv.MouseMode = &mouseMode
+	}
+	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
+
 	go p.readLoop()
 
 	return nil
@@ -96,10 +134,10 @@ func (p *Program) initCancelReader(cancel bool) error {
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := readInputs(p.ctx, p.msgs, p.cancelReader)
-	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
 		select {
 		case <-p.ctx.Done():
+			return
 		case p.errs <- err:
 		}
 	}
@@ -134,8 +172,8 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	p.Send(WindowSizeMsg{
-		Width:  w,
-		Height: h,
-	})
+	var resizeMsg WindowSizeMsg
+	p.width, p.height = w, h
+	resizeMsg.Width, resizeMsg.Height = w, h
+	p.Send(resizeMsg)
 }

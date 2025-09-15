@@ -4,6 +4,9 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
+
+	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -166,34 +169,6 @@ func WithMouseAllMotion() ProgramOption {
 	}
 }
 
-// WithoutRenderer disables the renderer. When this is set output and log
-// statements will be plainly sent to stdout (or another output if one is set)
-// without any rendering and redrawing logic. In other words, printing and
-// logging will behave the same way it would in a non-TUI commandline tool.
-// This can be useful if you want to use the Bubble Tea framework for a non-TUI
-// application, or to provide an additional non-TUI mode to your Bubble Tea
-// programs. For example, your program could behave like a daemon if output is
-// not a TTY.
-func WithoutRenderer() ProgramOption {
-	return func(p *Program) {
-		p.renderer = &nilRenderer{}
-	}
-}
-
-// WithANSICompressor removes redundant ANSI sequences to produce potentially
-// smaller output, at the cost of some processing overhead.
-//
-// This feature is provisional, and may be changed or removed in a future version
-// of this package.
-//
-// Deprecated: this incurs a noticeable performance hit. A future release will
-// optimize ANSI automatically without the performance penalty.
-func WithANSICompressor() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withANSICompressor
-	}
-}
-
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter
@@ -248,5 +223,80 @@ func WithFPS(fps int) ProgramOption {
 func WithReportFocus() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withReportFocus
+	}
+}
+
+// WithKeyReleases enables support for reporting key release events. This is
+// useful for terminals that support the Kitty keyboard protocol "Report event
+// types" progressive enhancement feature.
+//
+// Note that not all terminals support this feature. If the terminal does not
+// support this feature, the program will not receive key release events.
+func WithKeyReleases() ProgramOption {
+	return func(p *Program) {
+		p.requestedEnhancements.kittyFlags |= ansi.KittyReportEventTypes
+		p.requestedEnhancements.keyReleases = true
+	}
+}
+
+// WithUniformKeyLayout enables support for reporting key events as though they
+// were on a PC-101 layout. This is useful for uniform key event reporting
+// across different keyboard layouts. This is equivalent to the Kitty keyboard
+// protocol "Report alternate keys" and "Report all keys as escape codes"
+// progressive enhancement features.
+//
+// Note that not all terminals support this feature. If the terminal does not
+// support this feature, the program will not receive key events in
+// uniform layout format.
+func WithUniformKeyLayout() ProgramOption {
+	return func(p *Program) {
+		p.requestedEnhancements.kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
+	}
+}
+
+// WithGraphemeClustering disables grapheme clustering. This is useful if you
+// want to disable grapheme clustering for your program.
+//
+// Grapheme clustering is a character width calculation method that accurately
+// calculates the width of wide characters in a terminal. This is useful for
+// properly rendering double width characters such as emojis and CJK
+// characters.
+//
+// See https://mitchellh.com/writing/grapheme-clusters-in-terminals
+func WithGraphemeClustering() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withGraphemeClustering
+	}
+}
+
+// WithColorProfile sets the color profile that the program will use. This is
+// useful when you want to force a specific color profile. By default, Bubble
+// Tea will try to detect the terminal's color profile from environment
+// variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
+// environment variables.
+func WithColorProfile(profile colorprofile.Profile) ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withColorProfile
+		p.profile = profile
+	}
+}
+
+// WithWindowSize sets the initial size of the terminal window. This is useful
+// when you need to set the initial size of the terminal window, for example
+// during testing or when you want to run your program in a non-interactive
+// environment.
+func WithWindowSize(width, height int) ProgramOption {
+	return func(p *Program) {
+		p.width = width
+		p.height = height
+	}
+}
+
+// WithoutKeyEnhancements disables all key enhancements. This is useful if you
+// want to disable all key enhancements for your program and keep your program
+// legacy compatible with older terminals.
+func WithoutKeyEnhancements() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutKeyEnhancements
 	}
 }
