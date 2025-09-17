@@ -477,6 +477,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case sequenceMsg:
 				go p.execSequenceMsg(msg)
 				continue
+
+			case setWindowTitleMsg:
+				p.SetWindowTitle(string(msg))
+
+			case windowSizeMsg:
+				go p.checkResize()
 			}
 
 			// Process internal messages for the renderer.
