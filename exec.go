@@ -99,7 +99,9 @@ func (c *osExecCommand) SetStderr(w io.Writer) {
 }
 
 // exec runs an ExecCommand and delivers the results to the program as a Msg.
-func (p *Program) exec(c ExecCommand, fn ExecCallback) {
+func (p *Program) exec(model Model, c ExecCommand, fn ExecCallback) {
+	p.renderer.write(model.View()) // ensure the view is rendered one last time before we run the command.
+
 	if err := p.ReleaseTerminal(); err != nil {
 		// If we can't release input, abort.
 		if fn != nil {
