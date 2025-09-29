@@ -1,13 +1,11 @@
 package tea
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 )
 
 func (p *Program) suspend() {
@@ -88,19 +86,87 @@ func (p *Program) initCancelReader(cancel bool) error {
 	}
 
 	p.readLoopDone = make(chan struct{})
-	go p.readLoop()
+	readc := make(chan []byte)
+
+	go func() {
+		defer close(readc)
+		p.readInput(readc)
+	}()
+	go p.readLoop(readc)
 
 	return nil
 }
 
-func (p *Program) readLoop() {
-	defer close(p.readLoopDone)
+const (
+	readTimeout = 50 * time.Millisecond
+	readBufSize = 4096
+)
 
-	err := readInputs(p.ctx, p.msgs, p.cancelReader)
-	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+func (p *Program) readData(readc chan<- []byte) error {
+	for {
+		var readBuf [readBufSize]byte
+		n, err := p.cancelReader.Read(readBuf[:])
+		if err != nil {
+			return err //nolint:wrapcheck
+		}
+
 		select {
 		case <-p.ctx.Done():
-		case p.errs <- err:
+			return nil
+		case readc <- readBuf[:n]:
+		}
+	}
+}
+
+func (p *Program) readLoop(readc chan []byte) {
+	defer close(p.readLoopDone)
+
+	var buf bytes.Buffer
+	timer := time.NewTimer(readTimeout)
+	expires := time.Now().Add(readTimeout)
+
+	for {
+		select {
+		case <-p.ctx.Done():
+			scanInput(buf.Bytes(), true, p.msgs)
+			return
+		case <-timer.C:
+			timedout := time.Now().After(expires)
+			if buf.Len() > 0 && timedout {
+				buf.Next(scanInput(buf.Bytes(), timedout, p.msgs))
+			}
+			if buf.Len() > 0 {
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+
+				timer.Reset(readTimeout)
+			}
+		case data, ok := <-readc:
+			if !ok {
+				scanInput(buf.Bytes(), true, p.msgs)
+				return
+			}
+
+			buf.Write(data)
+			expires = time.Now().Add(readTimeout)
+			n := scanInput(buf.Bytes(), false, p.msgs)
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+
+			if n > 0 {
+				buf.Next(n)
+			}
+			if buf.Len() > 0 {
+				timer.Reset(readTimeout)
+			}
 		}
 	}
 }

@@ -606,6 +606,27 @@ loop:
 	}
 }
 
+func scanInput(b []byte, expired bool, msgs chan<- Msg) (n int) {
+	if len(b) == 0 {
+		return
+	}
+
+	for len(b) > 0 {
+		w, msg := detectOneMsg(b, expired)
+		if w == 0 {
+			// Expecting more bytes beyond the current buffer. Try waiting
+			// for more input.
+			break
+		}
+		b = b[w:]
+		n += w
+
+		msgs <- msg
+	}
+
+	return n
+}
+
 var (
 	unknownCSIRe  = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
 	mouseSGRRegex = regexp.MustCompile(`(\d+);(\d+);(\d+)([Mm])`)

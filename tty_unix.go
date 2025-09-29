@@ -4,12 +4,15 @@
 package tea
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/charmbracelet/x/term"
+	"github.com/muesli/cancelreader"
 )
 
 func (p *Program) initInput() (err error) {
@@ -27,6 +30,16 @@ func (p *Program) initInput() (err error) {
 	}
 
 	return nil
+}
+
+func (p *Program) readInput(readc chan<- []byte) {
+	err := p.readData(readc)
+	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+		select {
+		case <-p.ctx.Done():
+		case p.errs <- err:
+		}
+	}
 }
 
 func openInputTTY() (*os.File, error) {
