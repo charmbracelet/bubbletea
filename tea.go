@@ -306,6 +306,7 @@ type Program struct {
 	Env                  []string
 	DisableSignalHandler bool
 	DisableCatchPanics   bool
+	IgnoreSignals        bool
 
 	initialModel Model
 
@@ -952,6 +953,9 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	}
 	if p.Env == nil {
 		p.Env = os.Environ()
+	}
+	if p.IgnoreSignals {
+		atomic.StoreUint32(&p.ignoreSignals, 1)
 	}
 
 	p.input = p.Input

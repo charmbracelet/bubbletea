@@ -1,8 +1,6 @@
 package tea
 
 import (
-	"sync/atomic"
-
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 )
@@ -14,14 +12,6 @@ import (
 //
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
 type ProgramOption func(*Program)
-
-// WithoutSignals will ignore OS signals.
-// This is mainly useful for testing.
-func WithoutSignals() ProgramOption {
-	return func(p *Program) {
-		atomic.StoreUint32(&p.ignoreSignals, 1)
-	}
-}
 
 // WithAltScreen starts the program with the alternate screen buffer enabled
 // (i.e. the program starts in full window mode). Note that the altscreen will
