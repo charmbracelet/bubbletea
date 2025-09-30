@@ -90,7 +90,7 @@ func TestClearMsg(t *testing.T) {
 
 			go p.Send(append(test.cmds, Quit))
 
-			if _, err := p.Run(); err != nil {
+			if _, err := p.Run(t.Context()); err != nil {
 				t.Fatal(err)
 			}
 			golden.RequireEqual(t, buf.Bytes())

@@ -1,7 +1,6 @@
 package tea
 
 import (
-	"context"
 	"io"
 	"sync/atomic"
 
@@ -16,15 +15,6 @@ import (
 //
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
 type ProgramOption func(*Program)
-
-// WithContext lets you specify a context in which to run the Program. This is
-// useful if you want to cancel the execution from outside. When a Program gets
-// cancelled it will exit with an error ErrProgramKilled.
-func WithContext(ctx context.Context) ProgramOption {
-	return func(p *Program) {
-		p.externalCtx = ctx
-	}
-}
 
 // WithOutput sets the output which, by default, is stdout. In most cases you
 // won't need to use this.

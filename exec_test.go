@@ -84,7 +84,7 @@ func TestTeaExec(t *testing.T) {
 
 			m := &testExecModel{cmd: test.cmd}
 			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
-			if _, err := p.Run(); err != nil {
+			if _, err := p.Run(t.Context()); err != nil {
 				t.Error(err)
 			}
 			p.renderer = &spyRenderer{renderer: p.renderer}

@@ -337,10 +337,6 @@ type Program struct {
 
 	inputType inputType
 
-	// externalCtx is a context that was passed in via WithContext, otherwise defaulting
-	// to ctx.Background() (in case it was not), the internal context is derived from it.
-	externalCtx context.Context
-
 	// ctx is the programs's internal context for signalling internal teardown.
 	// It is built and derived from the externalCtx in NewProgram().
 	ctx    context.Context
@@ -471,14 +467,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	for _, opt := range opts {
 		opt(p)
 	}
-
-	// A context can be provided with a ProgramOption, but if none was provided
-	// we'll use the default background context.
-	if p.externalCtx == nil {
-		p.externalCtx = context.Background()
-	}
-	// Initialize context and teardown channel.
-	p.ctx, p.cancel = context.WithCancel(p.externalCtx)
 
 	// if no output was set, set it to stdout
 	if p.output == nil {
@@ -969,7 +957,15 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
-func (p *Program) Run() (returnModel Model, returnErr error) {
+func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) {
+	// A context can be provided with a ProgramOption, but if none was provided
+	// we'll use the default background context.
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// Initialize context and teardown channel.
+	p.ctx, p.cancel = context.WithCancel(ctx)
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error, 1)
@@ -1183,12 +1179,12 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		err = <-p.errs // Drain a leftover error in case eventLoop crashed.
 	}
 
-	killed := p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil
+	killed := ctx.Err() != nil || p.ctx.Err() != nil || err != nil
 	if killed {
-		if err == nil && p.externalCtx.Err() != nil {
+		if err == nil && ctx.Err() != nil {
 			// Return also as context error the cancellation of an external context.
 			// This is the context the user knows about and should be able to act on.
-			err = fmt.Errorf("%w: %w", ErrProgramKilled, p.externalCtx.Err())
+			err = fmt.Errorf("%w: %w", ErrProgramKilled, ctx.Err())
 		} else if err == nil && p.ctx.Err() != nil {
 			// Return only that the program was killed (not the internal mechanism).
 			// The user does not know or need to care about the internal program context.
