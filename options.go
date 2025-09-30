@@ -12,48 +12,6 @@ import (
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
 type ProgramOption func(*Program)
 
-// WithoutBracketedPaste starts the program with bracketed paste disabled.
-func WithoutBracketedPaste() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutBracketedPaste
-	}
-}
-
-// WithMouseCellMotion starts the program with the mouse enabled in "cell
-// motion" mode.
-//
-// Cell motion mode enables mouse click, release, and wheel events. Mouse
-// movement events are also captured if a mouse button is pressed (i.e., drag
-// events). Cell motion mode is better supported than all motion mode.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// To enable mouse cell motion once the program has already started running use
-// the EnableMouseCellMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-func WithMouseCellMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseCellMotion // set
-		p.startupOptions &^= withMouseAllMotion // clear
-	}
-}
-
-// WithReportFocus enables reporting when the terminal gains and loses
-// focus. When this is enabled [FocusMsg] and [BlurMsg] messages will be sent
-// to your Update method.
-//
-// Note that while most terminals and multiplexers support focus reporting,
-// some do not. Also note that tmux needs to be configured to report focus
-// events.
-func WithReportFocus() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withReportFocus
-	}
-}
-
 // WithKeyReleases enables support for reporting key release events. This is
 // useful for terminals that support the Kitty keyboard protocol "Report event
 // types" progressive enhancement feature.
@@ -79,21 +37,6 @@ func WithKeyReleases() ProgramOption {
 func WithUniformKeyLayout() ProgramOption {
 	return func(p *Program) {
 		p.requestedEnhancements.kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
-	}
-}
-
-// WithGraphemeClustering disables grapheme clustering. This is useful if you
-// want to disable grapheme clustering for your program.
-//
-// Grapheme clustering is a character width calculation method that accurately
-// calculates the width of wide characters in a terminal. This is useful for
-// properly rendering double width characters such as emojis and CJK
-// characters.
-//
-// See https://mitchellh.com/writing/grapheme-clusters-in-terminals
-func WithGraphemeClustering() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withGraphemeClustering
 	}
 }
 

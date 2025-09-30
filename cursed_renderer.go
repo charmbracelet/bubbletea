@@ -36,19 +36,35 @@ type cursedRenderer struct {
 
 var _ renderer = &cursedRenderer{}
 
-func newCursedRenderer(w io.Writer, env []string, width, height int, hardTabs, backspace, mapnl bool, logger uv.Logger) (s *cursedRenderer) {
+func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
 	s.env = env
 	s.term = uv.Environ(env).Getenv("TERM")
-	s.logger = logger
-	s.hardTabs = hardTabs
-	s.backspace = backspace
-	s.mapnl = mapnl
 	s.width, s.height = width, height // This needs to happen before [cursedRenderer.reset].
 	s.buf = uv.NewScreenBuffer(s.width, s.height)
 	reset(s)
 	return
+}
+
+// setLogger sets the logger for the renderer.
+func (s *cursedRenderer) setLogger(logger uv.Logger) {
+	s.mu.Lock()
+	s.logger = logger
+	s.scr.SetLogger(logger)
+	s.mu.Unlock()
+}
+
+// setOptimizations sets the cursor movement optimizations.
+func (s *cursedRenderer) setOptimizations(hardTabs, backspace, mapnl bool) {
+	s.mu.Lock()
+	s.hardTabs = hardTabs
+	s.backspace = backspace
+	s.mapnl = mapnl
+	s.scr.SetTabStops(s.width)
+	s.scr.SetBackspace(s.backspace)
+	s.scr.SetMapNewline(s.mapnl)
+	s.mu.Unlock()
 }
 
 // start implements renderer.
@@ -88,6 +104,19 @@ func (s *cursedRenderer) start() {
 			_, _ = s.scr.WriteString(ansi.SetBackgroundColor(col.Hex()))
 		}
 	}
+	if !s.lastView.DisableBracketedPasteMode {
+		_, _ = s.scr.WriteString(ansi.SetBracketedPasteMode)
+	}
+	if s.lastView.ReportFocus {
+		_, _ = s.scr.WriteString(ansi.SetFocusEventMode)
+	}
+	switch s.lastView.MouseMode {
+	case MouseModeNone:
+	case MouseModeCellMotion:
+		_, _ = s.scr.WriteString(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
+	case MouseModeAllMotion:
+		_, _ = s.scr.WriteString(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
+	}
 	if s.lastView.WindowTitle != "" {
 		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.lastView.WindowTitle))
 	}
@@ -120,7 +149,21 @@ func (s *cursedRenderer) close() (err error) {
 		s.scr.ShowCursor()
 		s.cursorHidden = false
 	}
-	if lv := s.lastView; lv != nil {
+	if lv := s.lastView; lv != nil { //nolint:nestif
+		if !lv.DisableBracketedPasteMode {
+			_, _ = s.scr.WriteString(ansi.ResetBracketedPasteMode)
+		}
+		if lv.ReportFocus {
+			_, _ = s.scr.WriteString(ansi.ResetFocusEventMode)
+		}
+		switch lv.MouseMode {
+		case MouseModeNone:
+		case MouseModeCellMotion, MouseModeAllMotion:
+			_, _ = s.scr.WriteString(ansi.ResetButtonEventMouseMode +
+				ansi.ResetAnyEventMouseMode +
+				ansi.ResetSgrExtMouseMode)
+		}
+
 		if lv.WindowTitle != "" {
 			// Clear the window title if it was set.
 			_, _ = s.scr.WriteString(ansi.SetWindowTitle(""))
@@ -200,9 +243,51 @@ func (s *cursedRenderer) flush(p *Program) error {
 	// Cursor visibility.
 	enableTextCursor(s, view.Cursor != nil)
 
+	// bracketed paste mode.
+	if s.lastView == nil || view.DisableBracketedPasteMode != s.lastView.DisableBracketedPasteMode {
+		if !view.DisableBracketedPasteMode {
+			_, _ = s.scr.WriteString(ansi.SetBracketedPasteMode)
+		} else if s.lastView != nil {
+			_, _ = s.scr.WriteString(ansi.ResetBracketedPasteMode)
+		}
+	}
+
+	// report focus events mode.
+	if s.lastView == nil || s.lastView.ReportFocus != view.ReportFocus {
+		if view.ReportFocus {
+			_, _ = s.scr.WriteString(ansi.SetFocusEventMode)
+		} else if s.lastView != nil {
+			_, _ = s.scr.WriteString(ansi.ResetFocusEventMode)
+		}
+	}
+
+	// mouse events mode.
+	if s.lastView == nil || view.MouseMode != s.lastView.MouseMode {
+		switch view.MouseMode {
+		case MouseModeNone:
+			if s.lastView != nil && s.lastView.MouseMode != MouseModeNone {
+				_, _ = s.scr.WriteString(ansi.ResetButtonEventMouseMode +
+					ansi.ResetAnyEventMouseMode +
+					ansi.ResetSgrExtMouseMode)
+			}
+		case MouseModeCellMotion:
+			if s.lastView != nil && s.lastView.MouseMode == MouseModeAllMotion {
+				_, _ = s.scr.WriteString(ansi.ResetAnyEventMouseMode)
+			}
+			_, _ = s.scr.WriteString(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
+		case MouseModeAllMotion:
+			if s.lastView != nil && s.lastView.MouseMode == MouseModeCellMotion {
+				_, _ = s.scr.WriteString(ansi.ResetButtonEventMouseMode)
+			}
+			_, _ = s.scr.WriteString(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
+		}
+	}
+
 	// Set window title.
 	if s.lastView == nil || view.WindowTitle != s.lastView.WindowTitle {
-		_, _ = s.scr.WriteString(ansi.SetWindowTitle(view.WindowTitle))
+		if s.lastView != nil || view.WindowTitle != "" {
+			_, _ = s.scr.WriteString(ansi.SetWindowTitle(view.WindowTitle))
+		}
 	}
 	// Set terminal colors.
 	var (

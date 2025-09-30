@@ -153,7 +153,48 @@ type View struct {
 	//	}
 	//
 	AltScreen bool
+
+	// ReportFocus enables reporting when the terminal gains and loses focus.
+	// When this is enabled [FocusMsg] and [BlurMsg] messages will be sent to
+	// your Update method.
+	//
+	// Note that while most terminals and multiplexers support focus reporting,
+	// some do not. Also note that tmux needs to be configured to report focus
+	// events.
+	ReportFocus bool
+
+	// DisableBracketedPasteMode disables bracketed paste mode for this view.
+	DisableBracketedPasteMode bool
+
+	// MouseMode sets the mouse mode for this view. It can be one of
+	// [MouseModeNone], [MouseModeCellMotion], or [MouseModeAllMotion].
+	MouseMode MouseMode
 }
+
+// MouseMode represents the mouse mode of a view.
+type MouseMode int
+
+const (
+	// MouseModeNone disables mouse events.
+	MouseModeNone MouseMode = iota
+
+	// MouseModeCellMotion enables mouse click, release, and wheel events.
+	// Mouse movement events are also captured if a mouse button is pressed
+	// (i.e., drag events). Cell motion mode is better supported than all
+	// motion mode.
+	//
+	// This will try to enable the mouse in extended mode (SGR), if that is not
+	// supported by the terminal it will fall back to normal mode (X10).
+	MouseModeCellMotion
+
+	// MouseModeAllMotion enables all mouse events, including click, release,
+	// wheel, and movement events. You will receive mouse movement events even
+	// when no buttons are pressed.
+	//
+	// This will try to enable the mouse in extended mode (SGR), if that is not
+	// supported by the terminal it will fall back to normal mode (X10).
+	MouseModeAllMotion
+)
 
 // ProgressBarState represents the state of the progress bar.
 type ProgressBarState int
@@ -262,15 +303,11 @@ func (s startupOptions) has(option startupOptions) bool {
 }
 
 const (
-	withMouseCellMotion startupOptions = 1 << iota
-	withMouseAllMotion
 	// Catching panics is incredibly useful for restoring the terminal to a
 	// usable state after a panic occurs. When this is set, Bubble Tea will
 	// recover from panics, print the stack trace, and disable raw mode. This
 	// feature is on by default.
-	withoutBracketedPaste
-	withReportFocus
-	withKittyKeyboard
+	withKittyKeyboard startupOptions = 1 << iota
 	withModifyOtherKeys
 	withGraphemeClustering
 	withoutKeyEnhancements
@@ -1065,16 +1102,15 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	if p.renderer == nil { //nolint:nestif
 		if hasView(p.initialModel) {
 			// If no renderer is set use the cursed one.
-			p.renderer = newCursedRenderer(
+			r := newCursedRenderer(
 				p.output,
 				p.environ,
 				resizeMsg.Width,
 				resizeMsg.Height,
-				p.useHardTabs,
-				p.useBackspace,
-				p.ttyInput == nil,
-				p.logger,
 			)
+			r.setLogger(p.logger)
+			r.setOptimizations(p.useHardTabs, p.useBackspace, p.ttyInput == nil)
+			p.renderer = r
 		}
 	}
 
@@ -1111,27 +1147,11 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	p.renderer.hideCursor()
 
 	// Honor program startup options.
-	if p.startupOptions&withoutBracketedPaste == 0 {
-		p.execute(ansi.SetBracketedPasteMode)
-		p.modes.Set(ansi.BracketedPasteMode)
-	}
 	if p.startupOptions&withGraphemeClustering != 0 {
 		p.execute(ansi.SetGraphemeClusteringMode)
 		p.execute(ansi.RequestGraphemeClusteringMode)
 		// We store the state of grapheme clustering after we query it and get
 		// a response in the eventLoop.
-	}
-
-	// Enable mouse mode.
-	cellMotion := p.startupOptions&withMouseCellMotion != 0
-	allMotion := p.startupOptions&withMouseAllMotion != 0
-	if cellMotion || allMotion {
-		p.enableMouse(allMotion)
-	}
-
-	if p.startupOptions&withReportFocus != 0 {
-		p.execute(ansi.SetFocusEventMode)
-		p.modes.Set(ansi.FocusEventMode)
 	}
 
 	if !p.startupOptions.has(withoutKeyEnhancements) {
@@ -1377,35 +1397,13 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initInputReader(false); err != nil {
 		return err
 	}
-	if p.modes.IsReset(ansi.AltScreenSaveCursorMode) {
-		// entering alt screen already causes a repaint.
-		go p.Send(repaintMsg{})
-	}
 
 	p.startRenderer()
-	if p.modes.IsSet(ansi.BracketedPasteMode) {
-		p.execute(ansi.SetBracketedPasteMode)
-	}
 	if p.activeEnhancements.modifyOtherKeys != 0 {
 		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys)) //nolint:mnd
 	}
 	if p.activeEnhancements.kittyFlags != 0 {
 		p.execute(ansi.KittyKeyboard(p.activeEnhancements.kittyFlags, 1))
-	}
-	if p.modes.IsSet(ansi.FocusEventMode) {
-		p.execute(ansi.SetFocusEventMode)
-	}
-	if p.modes.IsSet(ansi.ButtonEventMouseMode) || p.modes.IsSet(ansi.AnyEventMouseMode) {
-		if p.startupOptions&withMouseCellMotion != 0 {
-			p.execute(ansi.SetButtonEventMouseMode)
-			p.execute(ansi.SetSgrExtMouseMode)
-		} else if p.startupOptions&withMouseAllMotion != 0 {
-			p.execute(ansi.SetAnyEventMouseMode)
-			p.execute(ansi.SetSgrExtMouseMode)
-		}
-	}
-	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
-		p.execute(ansi.SetGraphemeClusteringMode)
 	}
 
 	// If the output is a terminal, it may have been resized while another
