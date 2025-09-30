@@ -1,7 +1,6 @@
 package tea
 
 import (
-	"io"
 	"sync/atomic"
 
 	"github.com/charmbracelet/colorprofile"
@@ -15,25 +14,6 @@ import (
 //
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
 type ProgramOption func(*Program)
-
-// WithOutput sets the output which, by default, is stdout. In most cases you
-// won't need to use this.
-func WithOutput(output io.Writer) ProgramOption {
-	return func(p *Program) {
-		p.output = output
-	}
-}
-
-// WithInput sets the input which, by default, is stdin. In most cases you
-// won't need to use this. To disable input entirely pass nil.
-//
-//	p := NewProgram(model, WithInput(nil))
-func WithInput(input io.Reader) ProgramOption {
-	return func(p *Program) {
-		p.input = input
-		p.inputType = customInput
-	}
-}
 
 // WithInputTTY opens a new TTY for input (or console input device on Windows).
 func WithInputTTY() ProgramOption {

@@ -79,7 +79,7 @@ func TestClearMsg(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testModel{}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf),
+			p := NewProgram(m,
 				WithEnvironment([]string{
 					"TERM=xterm-256color", // always use xterm and 256 colors for tests
 				}),
@@ -87,6 +87,9 @@ func TestClearMsg(t *testing.T) {
 				WithColorProfile(colorprofile.ANSI256),
 				// Set the initial window size for the program.
 				WithWindowSize(80, 24))
+
+			p.Input = &in
+			p.Output = &buf
 
 			go p.Send(append(test.cmds, Quit))
 

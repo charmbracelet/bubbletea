@@ -83,7 +83,9 @@ func TestTeaExec(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testExecModel{cmd: test.cmd}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			p := NewProgram(m)
+			p.Input = &in
+			p.output = &buf
 			if _, err := p.Run(t.Context()); err != nil {
 				t.Error(err)
 			}

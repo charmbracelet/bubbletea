@@ -321,6 +321,9 @@ func (h *channelHandlers) shutdown() {
 
 // Program is a terminal user interface.
 type Program struct {
+	Input  io.Reader
+	Output io.Writer
+
 	initialModel Model
 
 	// handlers is a list of channels that need to be waited on before the
@@ -466,11 +469,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// Apply all options to the program.
 	for _, opt := range opts {
 		opt(p)
-	}
-
-	// if no output was set, set it to stdout
-	if p.output == nil {
-		p.output = os.Stdout
 	}
 
 	// if no environment was set, set it to os.Environ()
@@ -970,6 +968,15 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	cmds := make(chan Cmd)
 	p.errs = make(chan error, 1)
 
+	if p.Input == nil {
+		p.Input = os.Stdin
+	}
+	if p.Output == nil {
+		p.Output = os.Stdout
+	}
+
+	p.output = p.Output
+
 	p.finished = make(chan struct{})
 	defer func() {
 		close(p.finished)
@@ -979,7 +986,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 
 	switch p.inputType {
 	case defaultInput:
-		p.input = os.Stdin
+		p.input = p.Input
 
 		// The user has not set a custom input, so we need to check whether or
 		// not standard input is a terminal. If it's not, we open a new TTY for
