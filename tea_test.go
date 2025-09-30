@@ -219,20 +219,20 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 
 	m := &testModel{}
 	shutdowns := uint32(0)
-	p := NewProgram(m,
-		WithFilter(func(_ Model, msg Msg) Msg {
-			if _, ok := msg.(QuitMsg); !ok {
-				return msg
-			}
-			if shutdowns < preventCount {
-				atomic.AddUint32(&shutdowns, 1)
-				return nil
-			}
-			return msg
-		}))
+	p := NewProgram(m)
 
 	p.Input = &in
 	p.Output = &buf
+	p.Filter = func(_ Model, msg Msg) Msg {
+		if _, ok := msg.(QuitMsg); !ok {
+			return msg
+		}
+		if shutdowns < preventCount {
+			atomic.AddUint32(&shutdowns, 1)
+			return nil
+		}
+		return msg
+	}
 
 	go func() {
 		for atomic.LoadUint32(&shutdowns) <= preventCount {

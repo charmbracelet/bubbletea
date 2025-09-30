@@ -308,6 +308,39 @@ type Program struct {
 	DisableCatchPanics   bool
 	IgnoreSignals        bool
 
+	// Filter supplies an event filter that will be invoked before Bubble Tea
+	// processes a tea.Msg. The event filter can return any tea.Msg which will
+	// then get handled by Bubble Tea instead of the original event. If the
+	// event filter returns nil, the event will be ignored and Bubble Tea will
+	// not process it.
+	//
+	// As an example, this could be used to prevent a program from shutting
+	// down if there are unsaved changes.
+	//
+	// Example:
+	//
+	//	func filter(m tea.Model, msg tea.Msg) tea.Msg {
+	//		if _, ok := msg.(tea.QuitMsg); !ok {
+	//			return msg
+	//		}
+	//
+	//		model := m.(myModel)
+	//		if model.hasChanges {
+	//			return nil
+	//		}
+	//
+	//		return msg
+	//	}
+	//
+	//	p := tea.NewProgram(Model{});
+	//	p.Filter = filter
+	//
+	//	if _,err := p.Run(context.Background()); err != nil {
+	//		fmt.Println("Error running program:", err)
+	//		os.Exit(1)
+	//	}
+	Filter func(Model, Msg) Msg
+
 	initialModel Model
 
 	// handlers is a list of channels that need to be waited on before the
@@ -361,8 +394,6 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
 	ignoreSignals uint32
-
-	filter func(Model, Msg) Msg
 
 	// fps is the frames per second we should set on the renderer, if
 	// applicable,
@@ -583,8 +614,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			msg = p.translateInputEvent(msg)
 
 			// Filter messages.
-			if p.filter != nil {
-				msg = p.filter(model, msg)
+			if p.Filter != nil {
+				msg = p.Filter(model, msg)
 			}
 			if msg == nil {
 				continue

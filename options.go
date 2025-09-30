@@ -62,66 +62,6 @@ func WithMouseCellMotion() ProgramOption {
 	}
 }
 
-// WithMouseAllMotion starts the program with the mouse enabled in "all motion"
-// mode.
-//
-// EnableMouseAllMotion is a special command that enables mouse click, release,
-// wheel, and motion events, which are delivered regardless of whether a mouse
-// button is pressed, effectively enabling support for hover interactions.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// Many modern terminals support this, but not all. If in doubt, use
-// EnableMouseCellMotion instead.
-//
-// To enable the mouse once the program has already started running use the
-// EnableMouseAllMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-func WithMouseAllMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseAllMotion   // set
-		p.startupOptions &^= withMouseCellMotion // clear
-	}
-}
-
-// WithFilter supplies an event filter that will be invoked before Bubble Tea
-// processes a tea.Msg. The event filter can return any tea.Msg which will then
-// get handled by Bubble Tea instead of the original event. If the event filter
-// returns nil, the event will be ignored and Bubble Tea will not process it.
-//
-// As an example, this could be used to prevent a program from shutting down if
-// there are unsaved changes.
-//
-// Example:
-//
-//	func filter(m tea.Model, msg tea.Msg) tea.Msg {
-//		if _, ok := msg.(tea.QuitMsg); !ok {
-//			return msg
-//		}
-//
-//		model := m.(myModel)
-//		if model.hasChanges {
-//			return nil
-//		}
-//
-//		return msg
-//	}
-//
-//	p := tea.NewProgram(Model{}, tea.WithFilter(filter));
-//
-//	if _,err := p.Run(); err != nil {
-//		fmt.Println("Error running program:", err)
-//		os.Exit(1)
-//	}
-func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
-	return func(p *Program) {
-		p.filter = filter
-	}
-}
-
 // WithFPS sets a custom maximum FPS at which the renderer should run. If
 // less than 1, the default value of 60 will be used. If over 120, the FPS
 // will be capped at 120.
