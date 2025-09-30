@@ -377,6 +377,11 @@ type Program struct {
 	//	}
 	Filter func(Model, Msg) Msg
 
+	// FPS sets a custom maximum FPS at which the renderer should run. If less
+	// than 1, the default value of 60 will be used. If over 120, the FPS will
+	// be capped at 120.
+	FPS int
+
 	initialModel Model
 
 	// handlers is a list of channels that need to be waited on before the
@@ -430,10 +435,6 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	modes         ansi.Modes
 	ignoreSignals uint32
-
-	// fps is the frames per second we should set on the renderer, if
-	// applicable,
-	fps int
 
 	// ticker is the ticker that will be used to write to the renderer.
 	ticker *time.Ticker
@@ -518,12 +519,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// Apply all options to the program.
 	for _, opt := range opts {
 		opt(p)
-	}
-
-	if p.fps < 1 {
-		p.fps = defaultFPS
-	} else if p.fps > maxFPS {
-		p.fps = maxFPS
 	}
 
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
@@ -1024,6 +1019,11 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	if p.IgnoreSignals {
 		atomic.StoreUint32(&p.ignoreSignals, 1)
 	}
+	if p.FPS < 1 {
+		p.FPS = defaultFPS
+	} else if p.FPS > maxFPS {
+		p.FPS = maxFPS
+	}
 
 	p.input = p.Input
 	p.output = p.Output
@@ -1485,7 +1485,7 @@ func (p *Program) Printf(template string, args ...any) {
 
 // startRenderer starts the renderer.
 func (p *Program) startRenderer() {
-	framerate := time.Second / time.Duration(p.fps)
+	framerate := time.Second / time.Duration(p.FPS)
 	if p.ticker == nil {
 		p.ticker = time.NewTicker(framerate)
 	} else {

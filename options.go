@@ -62,15 +62,6 @@ func WithMouseCellMotion() ProgramOption {
 	}
 }
 
-// WithFPS sets a custom maximum FPS at which the renderer should run. If
-// less than 1, the default value of 60 will be used. If over 120, the FPS
-// will be capped at 120.
-func WithFPS(fps int) ProgramOption {
-	return func(p *Program) {
-		p.fps = fps
-	}
-}
-
 // WithReportFocus enables reporting when the terminal gains and loses
 // focus. When this is enabled [FocusMsg] and [BlurMsg] messages will be sent
 // to your Update method.
