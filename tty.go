@@ -2,6 +2,7 @@ package tea
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
@@ -176,4 +177,9 @@ func (p *Program) checkResize() {
 	p.width, p.height = w, h
 	resizeMsg.Width, resizeMsg.Height = w, h
 	p.Send(resizeMsg)
+}
+
+// OpenTTY opens the running terminal's TTY for reading and writing.
+func OpenTTY() (*os.File, *os.File, error) {
+	return uv.OpenTTY()
 }
