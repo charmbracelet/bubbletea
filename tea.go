@@ -381,6 +381,12 @@ type Program struct {
 	// be capped at 120.
 	FPS int
 
+	// Set the initial size of the terminal window. This is useful when you
+	// need to set the initial size of the terminal window, for example during
+	// testing or when you want to run your program in a non-interactive
+	// environment.
+	InitialWidth, InitialHeight int
+
 	// ColorProfile when not nil, sets the color profile that the program will
 	// use. This is useful when you want to force a specific color profile. By
 	// default, Bubble Tea will try to detect the terminal's color profile from
@@ -1064,7 +1070,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	}
 
 	// Get the initial window size.
-	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
+	width, height := p.InitialWidth, p.InitialHeight
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
@@ -1072,8 +1078,11 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
-		resizeMsg.Width, resizeMsg.Height = w, h
+		width, height = w, h
 	}
+
+	p.width, p.height = width, height
+	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
 
 	if p.renderer == nil { //nolint:nestif
 		if hasView(p.initialModel) {

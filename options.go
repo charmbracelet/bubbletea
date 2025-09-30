@@ -117,17 +117,6 @@ func WithGraphemeClustering() ProgramOption {
 	}
 }
 
-// WithWindowSize sets the initial size of the terminal window. This is useful
-// when you need to set the initial size of the terminal window, for example
-// during testing or when you want to run your program in a non-interactive
-// environment.
-func WithWindowSize(width, height int) ProgramOption {
-	return func(p *Program) {
-		p.width = width
-		p.height = height
-	}
-}
-
 // WithoutKeyEnhancements disables all key enhancements. This is useful if you
 // want to disable all key enhancements for your program and keep your program
 // legacy compatible with older terminals.
