@@ -67,17 +67,6 @@ func (p *Program) restoreTerminalState() error {
 		p.execute(ansi.ResetGraphemeClusteringMode)
 	}
 
-	// Restore terminal colors.
-	if p.setBg != nil {
-		p.execute(ansi.ResetBackgroundColor)
-	}
-	if p.setFg != nil {
-		p.execute(ansi.ResetForegroundColor)
-	}
-	if p.setCc != nil {
-		p.execute(ansi.ResetCursorColor)
-	}
-
 	// Flush queued commands.
 	_ = p.flush()
 

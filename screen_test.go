@@ -9,6 +9,95 @@ import (
 	"github.com/charmbracelet/x/exp/golden"
 )
 
+type testViewOpts struct {
+	altScreen bool
+}
+
+func testViewOptsCmds(opts ...testViewOpts) []Cmd {
+	cmds := make([]Cmd, len(opts))
+	for i, o := range opts {
+		o := o
+		cmds[i] = func() Msg {
+			return o
+		}
+	}
+	return cmds
+}
+
+type testViewModel struct {
+	*testModel
+	opts testViewOpts
+}
+
+func (m *testViewModel) Update(msg Msg) (Model, Cmd) {
+	switch msg := msg.(type) {
+	case testViewOpts:
+		m.opts = msg
+		return m, nil
+	}
+	tm, cmd := m.testModel.Update(msg)
+	m.testModel = tm.(*testModel)
+	return m, cmd
+}
+
+func (m *testViewModel) View() View {
+	v := m.testModel.View()
+	v.AltScreen = m.opts.altScreen
+	return v
+}
+
+func TestViewModel(t *testing.T) {
+	tests := []struct {
+		name string
+		opts []testViewOpts
+	}{
+		{
+			name: "altscreen",
+			opts: []testViewOpts{
+				{altScreen: true},
+				{altScreen: false},
+			},
+		},
+		{
+			name: "altscreen_autoexit",
+			opts: []testViewOpts{
+				{altScreen: true},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			var in bytes.Buffer
+
+			m := &testViewModel{testModel: &testModel{}}
+			p := NewProgram(m)
+
+			// Set the initial window size for the program.
+			p.InitialWidth = 80
+			p.InitialHeight = 24
+
+			// Use ANSI256 to increase test coverage.
+			cp := colorprofile.ANSI256
+			p.ColorProfile = &cp
+
+			p.Input = &in
+			p.Output = &buf
+			p.Env = []string{
+				"TERM=xterm-256color", // always use xterm and 256 colors for tests
+			}
+
+			go p.Send(append(sequenceMsg(testViewOptsCmds(test.opts...)), Quit))
+
+			if _, err := p.Run(t.Context()); err != nil {
+				t.Fatal(err)
+			}
+			golden.RequireEqual(t, buf.Bytes())
+		})
+	}
+}
+
 func TestClearMsg(t *testing.T) {
 	type test struct {
 		name string
@@ -18,14 +107,6 @@ func TestClearMsg(t *testing.T) {
 		{
 			name: "clear_screen",
 			cmds: []Cmd{ClearScreen},
-		},
-		{
-			name: "altscreen",
-			cmds: []Cmd{EnterAltScreen, ExitAltScreen},
-		},
-		{
-			name: "altscreen_autoexit",
-			cmds: []Cmd{EnterAltScreen},
 		},
 		{
 			name: "mouse_cellmotion",

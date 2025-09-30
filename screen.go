@@ -25,26 +25,6 @@ func ClearScreen() Msg {
 // You can send a clearScreenMsg with ClearScreen.
 type clearScreenMsg struct{}
 
-// EnterAltScreen is a special command that tells the Bubble Tea program to
-// enter the alternate screen buffer.
-//
-// Because commands run asynchronously, this command should not be used in your
-// model's Init function. To initialize your program with the altscreen enabled
-// use the WithAltScreen ProgramOption instead.
-func EnterAltScreen() Msg {
-	return enableModeMsg{ansi.AltScreenSaveCursorMode}
-}
-
-// ExitAltScreen is a special command that tells the Bubble Tea program to exit
-// the alternate screen buffer. This command should be used to exit the
-// alternate screen buffer while the program is running.
-//
-// Note that the alternate screen buffer will be automatically exited when the
-// program quits.
-func ExitAltScreen() Msg {
-	return disableModeMsg{ansi.AltScreenSaveCursorMode}
-}
-
 // enableMouseCellMotionMsg is an internal message that signals to enable mouse cell
 // motion events.
 type enableMouseCellMotionMsg struct{}

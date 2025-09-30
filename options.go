@@ -12,26 +12,6 @@ import (
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
 type ProgramOption func(*Program)
 
-// WithAltScreen starts the program with the alternate screen buffer enabled
-// (i.e. the program starts in full window mode). Note that the altscreen will
-// be automatically exited when the program quits.
-//
-// Example:
-//
-//	p := tea.NewProgram(Model{}, tea.WithAltScreen())
-//	if _, err := p.Run(); err != nil {
-//	    fmt.Println("Error running program:", err)
-//	    os.Exit(1)
-//	}
-//
-// To enter the altscreen once the program has already started running use the
-// EnterAltScreen command.
-func WithAltScreen() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withAltScreen
-	}
-}
-
 // WithoutBracketedPaste starts the program with bracketed paste disabled.
 func WithoutBracketedPaste() ProgramOption {
 	return func(p *Program) {

@@ -55,9 +55,9 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testModel) View() string {
+func (m *testModel) View() View {
 	m.executed.Store(true)
-	return "success"
+	return NewView("success")
 }
 
 func TestTeaModel(t *testing.T) {

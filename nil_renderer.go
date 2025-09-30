@@ -1,8 +1,6 @@
 package tea
 
 import (
-	"image/color"
-
 	"github.com/charmbracelet/colorprofile"
 )
 
@@ -11,6 +9,9 @@ import (
 type nilRenderer struct{}
 
 var _ renderer = nilRenderer{}
+
+// start implements renderer.
+func (n nilRenderer) start() {}
 
 // clearScreen implements renderer.
 func (n nilRenderer) clearScreen() {}
@@ -53,18 +54,6 @@ func (nilRenderer) reset() {}
 
 // writeString implements the Renderer interface.
 func (nilRenderer) writeString(string) (int, error) { return 0, nil }
-
-// setCursorColor implements the Renderer interface.
-func (n nilRenderer) setCursorColor(color.Color) {}
-
-// setForegroundColor implements the Renderer interface.
-func (n nilRenderer) setForegroundColor(color.Color) {}
-
-// setBackgroundColor implements the Renderer interface.
-func (n nilRenderer) setBackgroundColor(color.Color) {}
-
-// setWindowTitle implements the Renderer interface.
-func (n nilRenderer) setWindowTitle(string) {}
 
 // hit implements the Renderer interface.
 func (n nilRenderer) hit(MouseMsg) []Msg  { return nil }

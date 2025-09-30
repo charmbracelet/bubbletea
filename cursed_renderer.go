@@ -14,30 +14,24 @@ import (
 )
 
 type cursedRenderer struct {
-	w                   io.Writer
-	scr                 *uv.TerminalRenderer
-	buf                 uv.ScreenBuffer
-	lastFrame           *string
-	lastCur             *Cursor
-	lastProgBar         *ProgressBar // the last rendered state of the progress bar
-	env                 []string
-	term                string // the terminal type $TERM
-	width, height       int
-	lastFrameHeight     int // the height of the last rendered frame, used to determine if we need to resize the screen buffer
-	mu                  sync.Mutex
-	profile             colorprofile.Profile
-	cursor              Cursor
-	progBar             *ProgressBar // the desired state of the progress bar
-	logger              uv.Logger
-	layer               Layer // the last rendered layer
-	setCc, setFg, setBg color.Color
-	windowTitleSet      string // the last set window title
-	windowTitle         string // the desired title of the terminal window
-	altScreen           bool
-	cursorHidden        bool
-	hardTabs            bool // whether to use hard tabs to optimize cursor movements
-	backspace           bool // whether to use backspace to optimize cursor movements
-	mapnl               bool
+	w               io.Writer
+	scr             *uv.TerminalRenderer
+	buf             uv.ScreenBuffer
+	lastFrame       *string
+	lastView        *View
+	env             []string
+	term            string // the terminal type $TERM
+	width, height   int
+	lastFrameHeight int // the height of the last rendered frame, used to determine if we need to resize the screen buffer
+	mu              sync.Mutex
+	profile         colorprofile.Profile
+	logger          uv.Logger
+	view            View
+	altScreen       bool
+	cursorHidden    bool
+	hardTabs        bool // whether to use hard tabs to optimize cursor movements
+	backspace       bool // whether to use backspace to optimize cursor movements
+	mapnl           bool
 }
 
 var _ renderer = &cursedRenderer{}
@@ -55,6 +49,54 @@ func newCursedRenderer(w io.Writer, env []string, width, height int, hardTabs, b
 	s.buf = uv.NewScreenBuffer(s.width, s.height)
 	reset(s)
 	return
+}
+
+// start implements renderer.
+func (s *cursedRenderer) start() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.lastView == nil {
+		return
+	}
+
+	if s.lastView.AltScreen {
+		enableAltScreen(s, true)
+	}
+	if s.lastView.Cursor != nil {
+		enableTextCursor(s, true)
+		if s.lastView.Cursor.Color != nil {
+			col, ok := colorful.MakeColor(s.lastView.Cursor.Color)
+			if ok {
+				_, _ = s.scr.WriteString(ansi.SetCursorColor(col.Hex()))
+			}
+		}
+		curStyle := encodeCursorStyle(s.lastView.Cursor.Shape, s.lastView.Cursor.Blink)
+		if curStyle != 0 && curStyle != 1 {
+			_, _ = s.scr.WriteString(ansi.SetCursorStyle(curStyle))
+		}
+	}
+	if s.lastView.ForegroundColor != nil {
+		col, ok := colorful.MakeColor(s.lastView.ForegroundColor)
+		if ok {
+			_, _ = s.scr.WriteString(ansi.SetForegroundColor(col.Hex()))
+		}
+	}
+	if s.lastView.BackgroundColor != nil {
+		col, ok := colorful.MakeColor(s.lastView.BackgroundColor)
+		if ok {
+			_, _ = s.scr.WriteString(ansi.SetBackgroundColor(col.Hex()))
+		}
+	}
+	if s.lastView.WindowTitle != "" {
+		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.lastView.WindowTitle))
+	}
+	if s.lastView.ProgressBar != nil {
+		setProgressBar(s, s.lastView.ProgressBar)
+	}
+
+	// Force a full repaint to ensure the screen is in a consistent state.
+	repaint(s)
 }
 
 // close implements renderer.
@@ -78,11 +120,33 @@ func (s *cursedRenderer) close() (err error) {
 		s.scr.ShowCursor()
 		s.cursorHidden = false
 	}
-	curShape := encodeCursorStyle(s.cursor.Shape, s.cursor.Blink)
-	if curShape != 0 && curShape != 1 {
-		// Reset the cursor style to default if it was set to something other
-		// blinking block.
-		_, _ = s.scr.WriteString(ansi.SetCursorStyle(0))
+	if lv := s.lastView; lv != nil {
+		if lv.WindowTitle != "" {
+			// Clear the window title if it was set.
+			_, _ = s.scr.WriteString(ansi.SetWindowTitle(""))
+		}
+		if lc := lv.Cursor; lc != nil {
+			curShape := encodeCursorStyle(lc.Shape, lc.Blink)
+			if curShape != 0 && curShape != 1 {
+				// Reset the cursor style to default if it was set to something other
+				// blinking block.
+				_, _ = s.scr.WriteString(ansi.SetCursorStyle(0))
+			}
+
+			if lc.Color != nil {
+				_, _ = s.scr.WriteString(ansi.ResetCursorColor)
+			}
+		}
+
+		if lv.BackgroundColor != nil {
+			_, _ = s.scr.WriteString(ansi.ResetBackgroundColor)
+		}
+		if lv.ForegroundColor != nil {
+			_, _ = s.scr.WriteString(ansi.ResetForegroundColor)
+		}
+		if lv.ProgressBar != nil {
+			_, _ = s.scr.WriteString(ansi.ResetProgressBar)
+		}
 	}
 
 	if err := s.scr.Flush(); err != nil {
@@ -97,10 +161,6 @@ func (s *cursedRenderer) close() (err error) {
 	// cursor position so that we can continue where we left off.
 	reset(s)
 	s.scr.SetPosition(x, y)
-
-	// Reset cursor style state so that we can restore it again when we start
-	// the renderer again.
-	s.cursor = Cursor{}
 
 	return nil
 }
@@ -133,94 +193,89 @@ func (s *cursedRenderer) flush(p *Program) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	view := s.view
+
+	// Alt screen mode.
+	enableAltScreen(s, view.AltScreen)
+	// Cursor visibility.
+	enableTextCursor(s, view.Cursor != nil)
+
 	// Set window title.
-	if s.windowTitle != s.windowTitleSet {
-		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.windowTitle))
-		s.windowTitleSet = s.windowTitle
+	if s.lastView == nil || view.WindowTitle != s.lastView.WindowTitle {
+		_, _ = s.scr.WriteString(ansi.SetWindowTitle(view.WindowTitle))
 	}
 	// Set terminal colors.
+	var (
+		cc, lcc  color.Color
+		lfg, lbg color.Color
+	)
+	if view.Cursor != nil {
+		cc = view.Cursor.Color
+	}
+	if s.lastView != nil {
+		if s.lastView.Cursor != nil {
+			lcc = s.lastView.Cursor.Color
+		}
+		lfg = s.lastView.ForegroundColor
+		lbg = s.lastView.BackgroundColor
+	}
 	for _, c := range []struct {
-		rendererColor *color.Color
-		programColor  *color.Color
-		reset         string
-		setter        func(string) string
+		newColor color.Color
+		oldColor color.Color
+		reset    string
+		setter   func(string) string
 	}{
-		{rendererColor: &s.setCc, programColor: &p.setCc, reset: ansi.ResetCursorColor, setter: ansi.SetCursorColor},
-		{rendererColor: &s.setFg, programColor: &p.setFg, reset: ansi.ResetForegroundColor, setter: ansi.SetForegroundColor},
-		{rendererColor: &s.setBg, programColor: &p.setBg, reset: ansi.ResetBackgroundColor, setter: ansi.SetBackgroundColor},
+		{newColor: cc, oldColor: lcc, reset: ansi.ResetCursorColor, setter: ansi.SetCursorColor},
+		{newColor: view.ForegroundColor, oldColor: lfg, reset: ansi.ResetForegroundColor, setter: ansi.SetForegroundColor},
+		{newColor: view.BackgroundColor, oldColor: lbg, reset: ansi.ResetBackgroundColor, setter: ansi.SetBackgroundColor},
 	} {
-		if *c.rendererColor != *c.programColor {
-			if *c.rendererColor == nil {
+		if c.newColor != c.oldColor {
+			if c.newColor == nil {
 				// Reset the color if it was set to nil.
 				_, _ = s.scr.WriteString(c.reset)
 			} else {
 				// Set the color.
-				col, ok := colorful.MakeColor(*c.rendererColor)
+				col, ok := colorful.MakeColor(c.newColor)
 				if ok {
 					_, _ = s.scr.WriteString(c.setter(col.Hex()))
 				}
 			}
-			*c.programColor = *c.rendererColor
 		}
 	}
 
-	if s.lastCur != nil { //nolint:nestif
-		if s.lastCur.Shape != s.cursor.Shape || s.lastCur.Blink != s.cursor.Blink {
-			cursorStyle := encodeCursorStyle(s.lastCur.Shape, s.lastCur.Blink)
-			_, _ = s.scr.WriteString(ansi.SetCursorStyle(cursorStyle))
-			s.cursor.Shape = s.lastCur.Shape
-			s.cursor.Blink = s.lastCur.Blink
+	if cur := view.Cursor; cur != nil {
+		// Set cursor shape and blink if set.
+		var lcur *Cursor
+		lv := s.lastView
+		if lv != nil {
+			lcur = lv.Cursor
 		}
-		if s.lastCur.Color != s.cursor.Color {
-			seq := ansi.ResetCursorColor
-			if s.lastCur.Color != nil {
-				c, ok := colorful.MakeColor(s.lastCur.Color)
-				if ok {
-					seq = ansi.SetCursorColor(c.Hex())
-				}
-			}
-			_, _ = s.scr.WriteString(seq)
-			s.cursor.Color = s.lastCur.Color
+		if lv == nil || lcur == nil || cur.Shape != lcur.Shape || cur.Blink != lcur.Blink {
+			curStyle := encodeCursorStyle(cur.Shape, cur.Blink)
+			_, _ = s.scr.WriteString(ansi.SetCursorStyle(curStyle))
 		}
 	}
 
-	if s.progBar != nil && (s.lastProgBar == nil || *s.progBar != *s.lastProgBar) {
-		// Render the progress bar if it was added or changed.
-		var seq string
-		switch pb := s.progBar; pb.State {
-		case ProgressBarNone:
-			seq = ansi.ResetProgressBar
-		case ProgressBarDefault:
-			seq = ansi.SetProgressBar(pb.Value)
-		case ProgressBarError:
-			seq = ansi.SetErrorProgressBar(pb.Value)
-		case ProgressBarIndeterminate:
-			seq = ansi.SetIndeterminateProgressBar
-		case ProgressBarWarning:
-			seq = ansi.SetWarningProgressBar(pb.Value)
-		}
-		if seq != "" {
-			_, _ = s.scr.WriteString(seq)
-		}
-	} else if s.progBar == nil && s.lastProgBar != nil {
-		// Clear the progress bar if it was removed.
-		_, _ = s.scr.WriteString(ansi.ResetProgressBar)
+	if (view.ProgressBar == nil) != (s.lastView == nil || s.lastView.ProgressBar == nil) {
+		// Render or clear the progress bar if it was added or removed.
+		setProgressBar(s, view.ProgressBar)
 	}
-
-	s.lastProgBar = s.progBar
 
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.buf.Buffer)
-	if s.lastCur != nil {
+
+	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
 		// cursor position might get updated during rendering.
-		s.scr.MoveTo(s.lastCur.X, s.lastCur.Y)
-		s.cursor.Position = s.lastCur.Position
+		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y)
 	}
 
 	if err := s.scr.Flush(); err != nil {
 		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
+
+	s.lastView = &view
+
 	return nil
 }
 
@@ -284,36 +339,18 @@ func (s *cursedRenderer) render(v View) {
 		frame = " "
 	}
 
-	cur := v.Cursor
+	s.view = v
 
-	s.windowTitle = v.WindowTitle
-	s.progBar = v.ProgressBar
-
-	// Ensure we have any desired terminal colors set.
-	s.setBg = v.BackgroundColor
-	s.setFg = v.ForegroundColor
-	if cur != nil {
-		s.setCc = cur.Color
-	}
-	if s.lastFrame != nil && frame == *s.lastFrame &&
-		(s.lastCur == nil && cur == nil || s.lastCur != nil && cur != nil && *s.lastCur == *cur) {
+	if s.lastFrame != nil && frame == *s.lastFrame && s.lastView != nil && viewEquals(v, *s.lastView) {
 		return
 	}
 
-	s.layer = v.Layer
-	s.lastCur = cur
 	s.lastFrameHeight = frameArea.Dy()
 
 	// Cache the last rendered frame so we can avoid re-rendering it if
 	// the frame hasn't changed.
 	lastFrame := frame
 	s.lastFrame = &lastFrame
-
-	if cur == nil {
-		enableTextCursor(s, false)
-	} else {
-		enableTextCursor(s, true)
-	}
 }
 
 // hit implements renderer.
@@ -321,8 +358,12 @@ func (s *cursedRenderer) hit(mouse MouseMsg) []Msg {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.layer != nil {
-		if h, ok := s.layer.(Hittable); ok {
+	if s.lastView == nil {
+		return nil
+	}
+
+	if l := s.lastView.Layer; l != nil {
+		if h, ok := l.(Hittable); ok {
 			m := mouse.Mouse()
 			if id := h.Hit(m.X, m.Y); id != "" {
 				return []Msg{LayerHitMsg{
@@ -334,34 +375,6 @@ func (s *cursedRenderer) hit(mouse MouseMsg) []Msg {
 	}
 
 	return []Msg{}
-}
-
-// setCursorColor implements renderer.
-func (s *cursedRenderer) setCursorColor(c color.Color) {
-	s.mu.Lock()
-	s.setCc = c
-	s.mu.Unlock()
-}
-
-// setForegroundColor implements renderer.
-func (s *cursedRenderer) setForegroundColor(c color.Color) {
-	s.mu.Lock()
-	s.setFg = c
-	s.mu.Unlock()
-}
-
-// setBackgroundColor implements renderer.
-func (s *cursedRenderer) setBackgroundColor(c color.Color) {
-	s.mu.Lock()
-	s.setBg = c
-	s.mu.Unlock()
-}
-
-// setWindowTitle implements renderer.
-func (s *cursedRenderer) setWindowTitle(title string) {
-	s.mu.Lock()
-	s.windowTitle = title
-	s.mu.Unlock()
 }
 
 // reset implements renderer.
@@ -509,4 +522,87 @@ func (s *cursedRenderer) repaint() {
 
 func repaint(s *cursedRenderer) {
 	s.lastFrame = nil
+}
+
+func setProgressBar(s *cursedRenderer, pb *ProgressBar) {
+	if pb == nil {
+		_, _ = s.scr.WriteString(ansi.ResetProgressBar)
+		return
+	}
+
+	var seq string
+	switch pb.State {
+	case ProgressBarNone:
+		seq = ansi.ResetProgressBar
+	case ProgressBarDefault:
+		seq = ansi.SetProgressBar(pb.Value)
+	case ProgressBarError:
+		seq = ansi.SetErrorProgressBar(pb.Value)
+	case ProgressBarIndeterminate:
+		seq = ansi.SetIndeterminateProgressBar
+	case ProgressBarWarning:
+		seq = ansi.SetWarningProgressBar(pb.Value)
+	}
+	if seq != "" {
+		_, _ = s.scr.WriteString(seq)
+	}
+}
+
+// viewEquals reports whether two views are equal. It compares every field of
+// the [View] struct except for the [View.Layer] field, which is compared using
+// pointer equality.
+func viewEquals(a, b View) bool {
+	if a.AltScreen != b.AltScreen {
+		return false
+	}
+	if a.WindowTitle != b.WindowTitle {
+		return false
+	}
+	if (a.Cursor == nil) != (b.Cursor == nil) {
+		return false
+	}
+	if a.Cursor != nil && b.Cursor != nil {
+		if (a.Cursor.Color == nil) != (b.Cursor.Color == nil) {
+			return false
+		}
+		if a.Cursor.Color != nil && b.Cursor.Color != nil {
+			ar, ag, ab, aa := a.Cursor.Color.RGBA()
+			br, bg, bb, ba := b.Cursor.Color.RGBA()
+			if ar != br || ag != bg || ab != bb || aa != ba {
+				return false
+			}
+		}
+		if a.Cursor.Position != b.Cursor.Position || a.Cursor.Shape != b.Cursor.Shape || a.Cursor.Blink != b.Cursor.Blink {
+			return false
+		}
+	}
+	if (a.ProgressBar == nil) != (b.ProgressBar == nil) {
+		return false
+	}
+	if a.ProgressBar != nil && b.ProgressBar != nil {
+		if *a.ProgressBar != *b.ProgressBar {
+			return false
+		}
+	}
+	if (a.BackgroundColor == nil) != (b.BackgroundColor == nil) {
+		return false
+	}
+	if a.BackgroundColor != nil && b.BackgroundColor != nil {
+		ar, ag, ab, aa := a.BackgroundColor.RGBA()
+		br, bg, bb, ba := b.BackgroundColor.RGBA()
+		if ar != br || ag != bg || ab != bb || aa != ba {
+			return false
+		}
+	}
+	if (a.ForegroundColor == nil) != (b.ForegroundColor == nil) {
+		return false
+	}
+	if a.ForegroundColor != nil && b.ForegroundColor != nil {
+		ar, ag, ab, aa := a.ForegroundColor.RGBA()
+		br, bg, bb, ba := b.ForegroundColor.RGBA()
+		if ar != br || ag != bg || ab != bb || aa != ba {
+			return false
+		}
+	}
+	return true
 }

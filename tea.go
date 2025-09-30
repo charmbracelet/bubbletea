@@ -31,7 +31,6 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
-	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/cancelreader"
 )
 
@@ -140,6 +139,20 @@ type View struct {
 	ForegroundColor color.Color
 	WindowTitle     string
 	ProgressBar     *ProgressBar
+
+	// AltScreen puts the program in the alternate screen buffer
+	// (i.e. the program goes into full window mode). Note that the altscreen will
+	// be automatically exited when the program quits.
+	//
+	// Example:
+	//
+	//	func (m model) View() tea.View {
+	//	    v := tea.NewView("Hello, World!")
+	//	    v.AltScreen = true
+	//	    return v
+	//	}
+	//
+	AltScreen bool
 }
 
 // ProgressBarState represents the state of the progress bar.
@@ -249,8 +262,7 @@ func (s startupOptions) has(option startupOptions) bool {
 }
 
 const (
-	withAltScreen startupOptions = 1 << iota
-	withMouseCellMotion
+	withMouseCellMotion startupOptions = 1 << iota
 	withMouseAllMotion
 	// Catching panics is incredibly useful for restoring the terminal to a
 	// usable state after a panic occurs. When this is set, Bubble Tea will
@@ -260,7 +272,6 @@ const (
 	withReportFocus
 	withKittyKeyboard
 	withModifyOtherKeys
-	withWindowsInputMode
 	withGraphemeClustering
 	withoutKeyEnhancements
 )
@@ -404,10 +415,6 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
-	// startupTitle is the title that will be set on the terminal when the
-	// program starts.
-	startupTitle string
-
 	// ctx is the programs's internal context for signalling internal teardown.
 	// It is built and derived from the externalCtx in NewProgram().
 	ctx    context.Context
@@ -462,13 +469,6 @@ type Program struct {
 	// activeEnhancements stores the active keyboard enhancements read from the
 	// terminal.
 	activeEnhancements KeyboardEnhancements
-
-	// When a program is suspended, the terminal state is saved and the program
-	// is paused. This saves the terminal colors state so they can be restored
-	// when the program is resumed.
-	setBg, setFg, setCc                       color.Color
-	lastBgColor, lastFgColor, lastCursorColor color.Color
-	lastWindowTitle                           string
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -765,18 +765,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case setPrimaryClipboardMsg:
 				p.execute(ansi.SetPrimaryClipboard(string(msg)))
 
-			case setBackgroundColorMsg:
-				// The renderer handles flushing the color to the terminal.
-				p.lastBgColor = msg.Color
-
-			case setForegroundColorMsg:
-				// The renderer handles flushing the color to the terminal.
-				p.lastFgColor = msg.Color
-
-			case setCursorColorMsg:
-				// The renderer handles flushing the color to the terminal.
-				p.lastCursorColor = msg.Color
-
 			case backgroundColorMsg:
 				p.execute(ansi.RequestBackgroundColor)
 
@@ -856,10 +844,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go p.execSequenceMsg(msg)
 				continue
 
-			case setWindowTitleMsg:
-				p.renderer.setWindowTitle(p.lastWindowTitle)
-				p.lastWindowTitle = string(msg)
-
 			case WindowSizeMsg:
 				p.renderer.resize(msg.Width, msg.Height)
 
@@ -921,12 +905,6 @@ func (p *Program) render(model Model) {
 			frame, view.Cursor = model.View()
 		}
 		view.Layer = uv.NewStyledString(frame)
-		view.BackgroundColor = p.lastBgColor
-		view.ForegroundColor = p.lastFgColor
-		view.WindowTitle = p.lastWindowTitle
-		if view.Cursor != nil && p.lastCursorColor != nil {
-			view.Cursor.Color = p.lastCursorColor
-		}
 	case ViewableModel:
 		view = model.View()
 	}
@@ -1086,25 +1064,17 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 
 	if p.renderer == nil { //nolint:nestif
 		if hasView(p.initialModel) {
-			stdr, ok := os.LookupEnv("TEA_STANDARD_RENDERER")
-			if has, _ := strconv.ParseBool(stdr); ok && has {
-				p.renderer = newRenderer(p.output)
-			} else {
-				// If no renderer is set use the cursed one.
-				p.renderer = newCursedRenderer(
-					p.output,
-					p.environ,
-					resizeMsg.Width,
-					resizeMsg.Height,
-					p.useHardTabs,
-					p.useBackspace,
-					p.ttyInput == nil,
-					p.logger,
-				)
-			}
-		} else {
-			// If the model has no view we don't need a renderer.
-			p.renderer = &nilRenderer{}
+			// If no renderer is set use the cursed one.
+			p.renderer = newCursedRenderer(
+				p.output,
+				p.environ,
+				resizeMsg.Width,
+				resizeMsg.Height,
+				p.useHardTabs,
+				p.useBackspace,
+				p.ttyInput == nil,
+				p.logger,
+			)
 		}
 	}
 
@@ -1141,15 +1111,6 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	p.renderer.hideCursor()
 
 	// Honor program startup options.
-	if p.startupTitle != "" {
-		p.execute(ansi.SetWindowTitle(p.startupTitle))
-	}
-	if p.startupOptions&withAltScreen != 0 {
-		// Enter alternate screen mode. This is handled by the renderer so we
-		// don't need to write the sequence here.
-		p.modes.Set(ansi.AltScreenSaveCursorMode)
-		p.renderer.enterAltScreen()
-	}
 	if p.startupOptions&withoutBracketedPaste == 0 {
 		p.execute(ansi.SetBracketedPasteMode)
 		p.modes.Set(ansi.BracketedPasteMode)
@@ -1447,26 +1408,6 @@ func (p *Program) RestoreTerminal() error {
 		p.execute(ansi.SetGraphemeClusteringMode)
 	}
 
-	// Restore terminal colors.
-	if p.setBg != nil {
-		c, ok := colorful.MakeColor(p.setBg)
-		if ok {
-			p.execute(ansi.SetBackgroundColor(c.Hex()))
-		}
-	}
-	if p.setFg != nil {
-		c, ok := colorful.MakeColor(p.setFg)
-		if ok {
-			p.execute(ansi.SetForegroundColor(c.Hex()))
-		}
-	}
-	if p.setCc != nil {
-		c, ok := colorful.MakeColor(p.setCc)
-		if ok {
-			p.execute(ansi.SetCursorColor(c.Hex()))
-		}
-	}
-
 	// If the output is a terminal, it may have been resized while another
 	// process was at the foreground, in which case we may not have received
 	// SIGWINCH. Detect any size change now and propagate the new size as
@@ -1517,6 +1458,7 @@ func (p *Program) startRenderer() {
 	p.once = sync.Once{}
 
 	// Start the renderer.
+	p.renderer.start()
 	go func() {
 		for {
 			select {
