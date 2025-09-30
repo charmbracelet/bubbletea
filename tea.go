@@ -256,7 +256,6 @@ const (
 	// usable state after a panic occurs. When this is set, Bubble Tea will
 	// recover from panics, print the stack trace, and disable raw mode. This
 	// feature is on by default.
-	withoutCatchPanics
 	withoutBracketedPaste
 	withReportFocus
 	withKittyKeyboard
@@ -306,6 +305,7 @@ type Program struct {
 	Output               io.Writer
 	Env                  []string
 	DisableSignalHandler bool
+	DisableCatchPanics   bool
 
 	initialModel Model
 
@@ -549,7 +549,7 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				// until Cmd returns.
 				go func() {
 					// Recover from panics.
-					if !p.startupOptions.has(withoutCatchPanics) {
+					if !p.DisableCatchPanics {
 						defer func() {
 							if r := recover(); r != nil {
 								p.recoverFromPanic(r)
@@ -861,7 +861,7 @@ func (p *Program) render(model Model) {
 }
 
 func (p *Program) execSequenceMsg(msg sequenceMsg) {
-	if !p.startupOptions.has(withoutCatchPanics) {
+	if !p.DisableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
 				p.recoverFromGoPanic(r)
@@ -887,7 +887,7 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) {
 }
 
 func (p *Program) execBatchMsg(msg BatchMsg) {
-	if !p.startupOptions.has(withoutCatchPanics) {
+	if !p.DisableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
 				p.recoverFromGoPanic(r)
@@ -905,7 +905,7 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 		go func() {
 			defer wg.Done()
 
-			if !p.startupOptions.has(withoutCatchPanics) {
+			if !p.DisableCatchPanics {
 				defer func() {
 					if r := recover(); r != nil {
 						p.recoverFromGoPanic(r)
@@ -971,7 +971,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	}
 
 	// Recover from panics.
-	if !p.startupOptions.has(withoutCatchPanics) {
+	if !p.DisableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
 				returnErr = fmt.Errorf("%w: %w", ErrProgramKilled, ErrProgramPanic)

@@ -15,16 +15,6 @@ import (
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
 type ProgramOption func(*Program)
 
-// WithoutCatchPanics disables the panic catching that Bubble Tea does by
-// default. If panic catching is disabled the terminal will be in a fairly
-// unusable state after a panic because Bubble Tea will not perform its usual
-// cleanup on exit.
-func WithoutCatchPanics() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutCatchPanics
-	}
-}
-
 // WithoutSignals will ignore OS signals.
 // This is mainly useful for testing.
 func WithoutSignals() ProgramOption {
