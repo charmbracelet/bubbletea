@@ -80,9 +80,6 @@ func TestClearMsg(t *testing.T) {
 
 			m := &testModel{}
 			p := NewProgram(m,
-				WithEnvironment([]string{
-					"TERM=xterm-256color", // always use xterm and 256 colors for tests
-				}),
 				// Use ANSI256 to increase test coverage.
 				WithColorProfile(colorprofile.ANSI256),
 				// Set the initial window size for the program.
@@ -90,6 +87,9 @@ func TestClearMsg(t *testing.T) {
 
 			p.Input = &in
 			p.Output = &buf
+			p.Env = []string{
+				"TERM=xterm-256color", // always use xterm and 256 colors for tests
+			}
 
 			go p.Send(append(test.cmds, Quit))
 

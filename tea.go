@@ -305,6 +305,7 @@ func (h *channelHandlers) shutdown() {
 type Program struct {
 	Input  io.Reader
 	Output io.Writer
+	Env    []string
 
 	initialModel Model
 
@@ -449,11 +450,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// Apply all options to the program.
 	for _, opt := range opts {
 		opt(p)
-	}
-
-	// if no environment was set, set it to os.Environ()
-	if p.environ == nil {
-		p.environ = os.Environ()
 	}
 
 	if p.fps < 1 {
@@ -954,9 +950,13 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	if p.Output == nil {
 		p.Output = os.Stdout
 	}
+	if p.Env == nil {
+		p.Env = os.Environ()
+	}
 
 	p.input = p.Input
 	p.output = p.Output
+	p.environ = uv.Environ(p.Env)
 
 	p.finished = make(chan struct{})
 	defer func() {
