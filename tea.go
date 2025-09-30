@@ -252,7 +252,6 @@ const (
 	withAltScreen startupOptions = 1 << iota
 	withMouseCellMotion
 	withMouseAllMotion
-	withoutSignalHandler
 	// Catching panics is incredibly useful for restoring the terminal to a
 	// usable state after a panic occurs. When this is set, Bubble Tea will
 	// recover from panics, print the stack trace, and disable raw mode. This
@@ -303,9 +302,10 @@ func (h *channelHandlers) shutdown() {
 
 // Program is a terminal user interface.
 type Program struct {
-	Input  io.Reader
-	Output io.Writer
-	Env    []string
+	Input                io.Reader
+	Output               io.Writer
+	Env                  []string
+	DisableSignalHandler bool
 
 	initialModel Model
 
@@ -966,7 +966,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	defer p.cancel()
 
 	// Handle signals.
-	if !p.startupOptions.has(withoutSignalHandler) {
+	if !p.DisableSignalHandler {
 		p.handlers.add(p.handleSignals())
 	}
 
