@@ -327,6 +327,10 @@ type Program struct {
 	//	p.Env = environ
 	Env []string
 
+	// DisableInput disables all input. This is useful for programs that
+	// don't need input, like a progress bar or a spinner.
+	DisableInput bool
+
 	// DisableSignalHandler disables the signal handler that Bubble Tea sets up
 	// for Programs. This is useful if you want to handle signals yourself.
 	DisableSignalHandler bool
@@ -1008,7 +1012,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	cmds := make(chan Cmd)
 	p.errs = make(chan error, 1)
 
-	if p.Input == nil {
+	if p.Input == nil && !p.DisableInput {
 		p.Input = os.Stdin
 	}
 	if p.Output == nil {
