@@ -261,7 +261,6 @@ const (
 	withKittyKeyboard
 	withModifyOtherKeys
 	withWindowsInputMode
-	withColorProfile
 	withGraphemeClustering
 	withoutKeyEnhancements
 )
@@ -381,6 +380,13 @@ type Program struct {
 	// than 1, the default value of 60 will be used. If over 120, the FPS will
 	// be capped at 120.
 	FPS int
+
+	// ColorProfile when not nil, sets the color profile that the program will
+	// use. This is useful when you want to force a specific color profile. By
+	// default, Bubble Tea will try to detect the terminal's color profile from
+	// environment variables and terminfo capabilities. Use [Program.Env] to
+	// set custom environment variables.
+	ColorProfile *colorprofile.Profile
 
 	initialModel Model
 
@@ -1094,9 +1100,12 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	}
 
 	// Get the color profile and send it to the program.
-	if !p.startupOptions.has(withColorProfile) {
-		p.profile = colorprofile.Detect(p.output, p.environ)
+	if p.ColorProfile == nil {
+		cp := colorprofile.Detect(p.output, p.environ)
+		p.ColorProfile = &cp
 	}
+
+	p.profile = *p.ColorProfile
 
 	// Set the color profile on the renderer and send it to the program.
 	p.renderer.setColorProfile(p.profile)

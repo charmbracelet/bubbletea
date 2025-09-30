@@ -1,7 +1,6 @@
 package tea
 
 import (
-	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -115,18 +114,6 @@ func WithUniformKeyLayout() ProgramOption {
 func WithGraphemeClustering() ProgramOption {
 	return func(p *Program) {
 		p.startupOptions |= withGraphemeClustering
-	}
-}
-
-// WithColorProfile sets the color profile that the program will use. This is
-// useful when you want to force a specific color profile. By default, Bubble
-// Tea will try to detect the terminal's color profile from environment
-// variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
-// environment variables.
-func WithColorProfile(profile colorprofile.Profile) ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withColorProfile
-		p.profile = profile
 	}
 }
 

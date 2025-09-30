@@ -81,9 +81,11 @@ func TestClearMsg(t *testing.T) {
 			m := &testModel{}
 			p := NewProgram(m,
 				// Use ANSI256 to increase test coverage.
-				WithColorProfile(colorprofile.ANSI256),
 				// Set the initial window size for the program.
 				WithWindowSize(80, 24))
+
+			cp := colorprofile.ANSI256
+			p.ColorProfile = &cp
 
 			p.Input = &in
 			p.Output = &buf
