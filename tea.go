@@ -154,6 +154,17 @@ const (
 	ProgressBarWarning
 )
 
+// String return a human-readable value for the given [ProgressBarState].
+func (s ProgressBarState) String() string {
+	return [...]string{
+		"None",
+		"Default",
+		"Error",
+		"Indeterminate",
+		"Warning",
+	}[s]
+}
+
 // ProgressBar represents the terminal progress bar.
 //
 // Support depends on the terminal.
