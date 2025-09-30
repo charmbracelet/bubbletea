@@ -11,11 +11,11 @@ require (
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250716211347-10c048e36112
-	github.com/charmbracelet/x/ansi v0.10.1
+	github.com/charmbracelet/x/ansi v0.10.2
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250602192518-9e722df69bbb
 	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20250324105510-c72bdbf70572
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
-	github.com/lucasb-eyer/go-colorful v1.2.0
+	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/segmentio/ksuid v1.0.4
 )
@@ -35,7 +35,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-runewidth v0.0.17 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect

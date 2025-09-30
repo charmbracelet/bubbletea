@@ -19,6 +19,7 @@ type cursedRenderer struct {
 	buf                 uv.ScreenBuffer
 	lastFrame           *string
 	lastCur             *Cursor
+	lastProgBar         *ProgressBar // the last rendered state of the progress bar
 	env                 []string
 	term                string // the terminal type $TERM
 	width, height       int
@@ -26,6 +27,7 @@ type cursedRenderer struct {
 	mu                  sync.Mutex
 	profile             colorprofile.Profile
 	cursor              Cursor
+	progBar             *ProgressBar // the desired state of the progress bar
 	logger              uv.Logger
 	layer               Layer // the last rendered layer
 	setCc, setFg, setBg color.Color
@@ -182,6 +184,31 @@ func (s *cursedRenderer) flush(p *Program) error {
 		}
 	}
 
+	if s.progBar != nil && (s.lastProgBar == nil || *s.progBar != *s.lastProgBar) {
+		// Render the progress bar if it was added or changed.
+		var seq string
+		switch pb := s.progBar; pb.State {
+		case ProgressBarNone:
+			seq = ansi.ResetProgressBar
+		case ProgressBarDefault:
+			seq = ansi.SetProgressBar(pb.Value)
+		case ProgressBarError:
+			seq = ansi.SetErrorProgressBar(pb.Value)
+		case ProgressBarIndeterminate:
+			seq = ansi.SetIndeterminateProgressBar
+		case ProgressBarWarning:
+			seq = ansi.SetWarningProgressBar(pb.Value)
+		}
+		if seq != "" {
+			_, _ = s.scr.WriteString(seq)
+		}
+	} else if s.progBar == nil && s.lastProgBar != nil {
+		// Clear the progress bar if it was removed.
+		_, _ = s.scr.WriteString(ansi.ResetProgressBar)
+	}
+
+	s.lastProgBar = s.progBar
+
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.buf.Buffer)
 	if s.lastCur != nil {
@@ -260,6 +287,7 @@ func (s *cursedRenderer) render(v View) {
 	cur := v.Cursor
 
 	s.windowTitle = v.WindowTitle
+	s.progBar = v.ProgressBar
 
 	// Ensure we have any desired terminal colors set.
 	s.setBg = v.BackgroundColor

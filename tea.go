@@ -139,6 +139,55 @@ type View struct {
 	BackgroundColor color.Color
 	ForegroundColor color.Color
 	WindowTitle     string
+	ProgressBar     *ProgressBar
+}
+
+// ProgressBarState represents the state of the progress bar.
+type ProgressBarState int
+
+// Progress bar states.
+const (
+	ProgressBarNone ProgressBarState = iota
+	ProgressBarDefault
+	ProgressBarError
+	ProgressBarIndeterminate
+	ProgressBarWarning
+)
+
+// String return a human-readable value for the given [ProgressBarState].
+func (s ProgressBarState) String() string {
+	return [...]string{
+		"None",
+		"Default",
+		"Error",
+		"Indeterminate",
+		"Warning",
+	}[s]
+}
+
+// ProgressBar represents the terminal progress bar.
+//
+// Support depends on the terminal.
+//
+// See https://learn.microsoft.com/en-us/windows/terminal/tutorials/progress-bar-sequences
+type ProgressBar struct {
+	// State is the current state of the progress bar. It can be one of
+	// [ProgressBarNone], [ProgressBarDefault], [ProgressBarError],
+	// [ProgressBarIndeterminate], and [ProgressBarWarn].
+	State ProgressBarState
+	// Value is the current value of the progress bar. It should be between
+	// 0 and 100.
+	Value int
+}
+
+// NewProgressBar returns a new progress bar with the given state and value.
+// The value is ignored if the state is [ProgressBarNone] or
+// [ProgressBarIndeterminate].
+func NewProgressBar(state ProgressBarState, value int) *ProgressBar {
+	return &ProgressBar{
+		State: state,
+		Value: min(max(value, 0), 100),
+	}
 }
 
 // Cursor represents a cursor on the terminal screen.
