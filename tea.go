@@ -301,12 +301,44 @@ func (h *channelHandlers) shutdown() {
 
 // Program is a terminal user interface.
 type Program struct {
-	Input                io.Reader
-	Output               io.Writer
-	Env                  []string
+	// Input sets the input which, by default, is stdin when nil. In most cases
+	// you won't need to use this. To disable input entirely use
+	// [Program.DisableInput].
+	//
+	//	p := NewProgram(model)
+	//	p.Input = customInputFile
+	Input io.Reader
+
+	// Output sets the output which, by default, is stdout. In most cases you
+	// won't need to use this.
+	Output io.Writer
+
+	// Env sets the environment variables that the program will use. This
+	// useful when the program is running in a remote session (e.g. SSH) and
+	// you want to pass the environment variables from the remote session to
+	// the program.
+	//
+	// Example:
+	//
+	//	var sess ssh.Session // ssh.Session is a type from the github.com/charmbracelet/ssh package
+	//	pty, _, _ := sess.Pty()
+	//	environ := append(sess.Environ(), "TERM="+pty.Term)
+	//	p := tea.NewProgram(model)
+	//	p.Env = environ
+	Env []string
+
+	// DisableSignalHandler disables the signal handler that Bubble Tea sets up
+	// for Programs. This is useful if you want to handle signals yourself.
 	DisableSignalHandler bool
-	DisableCatchPanics   bool
-	IgnoreSignals        bool
+
+	// DisableCatchPanics disables the panic catching that Bubble Tea does by
+	// default. If panic catching is disabled the terminal will be in a fairly
+	// unusable state after a panic because Bubble Tea will not perform its usual
+	// cleanup on exit.
+	DisableCatchPanics bool
+
+	// IgnoreSignals will ignore OS signals. This is mainly useful for testing.
+	IgnoreSignals bool
 
 	// Filter supplies an event filter that will be invoked before Bubble Tea
 	// processes a tea.Msg. The event filter can return any tea.Msg which will
