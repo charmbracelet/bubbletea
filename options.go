@@ -15,13 +15,6 @@ import (
 //	p := NewProgram(model, WithInput(someInput), WithOutput(someOutput))
 type ProgramOption func(*Program)
 
-// WithInputTTY opens a new TTY for input (or console input device on Windows).
-func WithInputTTY() ProgramOption {
-	return func(p *Program) {
-		p.inputType = ttyInput
-	}
-}
-
 // WithEnvironment sets the environment variables that the program will use.
 // This useful when the program is running in a remote session (e.g. SSH) and
 // you want to pass the environment variables from the remote session to the

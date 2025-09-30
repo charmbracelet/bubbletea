@@ -238,24 +238,6 @@ type CursorModel interface {
 // update function.
 type Cmd func() Msg
 
-type inputType int
-
-const (
-	defaultInput inputType = iota
-	ttyInput
-	customInput
-)
-
-// String implements the stringer interface for [inputType]. It is intended to
-// be used in testing.
-func (i inputType) String() string {
-	return [...]string{
-		"default input",
-		"tty input",
-		"custom input",
-	}[i]
-}
-
 // Options to customize the program during its initialization. These are
 // generally set with ProgramOptions.
 //
@@ -337,8 +319,6 @@ type Program struct {
 	// startupTitle is the title that will be set on the terminal when the
 	// program starts.
 	startupTitle string
-
-	inputType inputType
 
 	// ctx is the programs's internal context for signalling internal teardown.
 	// It is built and derived from the externalCtx in NewProgram().
@@ -975,6 +955,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 		p.Output = os.Stdout
 	}
 
+	p.input = p.Input
 	p.output = p.Output
 
 	p.finished = make(chan struct{})
@@ -983,44 +964,6 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	}()
 
 	defer p.cancel()
-
-	switch p.inputType {
-	case defaultInput:
-		p.input = p.Input
-
-		// The user has not set a custom input, so we need to check whether or
-		// not standard input is a terminal. If it's not, we open a new TTY for
-		// input. This will allow things to "just work" in cases where data was
-		// piped in or redirected to the application.
-		//
-		// To disable input entirely pass nil to the [WithInput] program option.
-		f, isFile := p.input.(term.File)
-		if !isFile {
-			break
-		}
-		if term.IsTerminal(f.Fd()) {
-			break
-		}
-
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
-
-	case ttyInput:
-		// Open a new TTY, by request
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
-
-	case customInput:
-		// (There is nothing extra to do.)
-	}
 
 	// Handle signals.
 	if !p.startupOptions.has(withoutSignalHandler) {
