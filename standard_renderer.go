@@ -277,7 +277,7 @@ func (r *standardRenderer) flush() {
 		// using the full terminal window.
 		buf.WriteString(ansi.CursorPosition(0, len(newLines)))
 	} else {
-		buf.WriteString(ansi.CursorBackward(r.width))
+		buf.WriteByte('\r')
 	}
 
 	_, _ = r.out.Write(buf.Bytes())
@@ -543,6 +543,10 @@ func (r *standardRenderer) setIgnoredLines(from int, to int) {
 // rendered to again.
 func (r *standardRenderer) clearIgnoredLines() {
 	r.ignoreLines = nil
+}
+
+func (r *standardRenderer) resetLinesRendered() {
+	r.linesRendered = 0
 }
 
 // insertTop effectively scrolls up. It inserts lines at the top of a given

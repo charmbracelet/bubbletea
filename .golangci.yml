@@ -1,24 +1,22 @@
+version: "2"
 run:
   tests: false
-
-issues:
-  include:
-    - EXC0001
-    - EXC0005
-    - EXC0011
-    - EXC0012
-    - EXC0013
-
-  max-issues-per-linter: 0
-  max-same-issues: 0
-
 linters:
   enable:
     - bodyclose
-    - gofumpt
-    - goimports
+    - exhaustive
+    - goconst
+    - godot
+    - gomoddirectives
+    - goprintffuncname
     - gosec
+    - misspell
+    - nakedret
+    - nestif
     - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
     - revive
     - rowserrcheck
     - sqlclosecheck
@@ -26,3 +24,21 @@ linters:
     - unconvert
     - unparam
     - whitespace
+    - wrapcheck
+  exclusions:
+    rules:
+      - text: '(slog|log)\.\w+'
+        linters:
+          - noctx
+    generated: lax
+    presets:
+      - common-false-positives
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax

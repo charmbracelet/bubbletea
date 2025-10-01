@@ -19,7 +19,7 @@ func (p *Program) initInput() (err error) {
 		p.ttyInput = f
 		p.previousTtyInputState, err = term.MakeRaw(p.ttyInput.Fd())
 		if err != nil {
-			return err
+			return fmt.Errorf("error making raw: %w", err)
 		}
 
 		// Enable VT input
@@ -38,7 +38,7 @@ func (p *Program) initInput() (err error) {
 		p.ttyOutput = f
 		p.previousOutputState, err = term.GetState(f.Fd())
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting state: %w", err)
 		}
 
 		var mode uint32
@@ -51,14 +51,14 @@ func (p *Program) initInput() (err error) {
 		}
 	}
 
-	return
+	return nil
 }
 
 // Open the Windows equivalent of a TTY.
 func openInputTTY() (*os.File, error) {
-	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0o644)
+	f, err := os.OpenFile("CONIN$", os.O_RDWR, 0o644) //nolint:gosec
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 	return f, nil
 }

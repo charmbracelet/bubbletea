@@ -3,21 +3,10 @@
 version: '3'
 
 tasks:
-  lint:all:
-    desc: Run all linters
-    cmds:
-      - task: lint
-      - task: lint:soft
-
   lint:
-    desc: Run base linters
+    desc: Run lint
     cmds:
       - golangci-lint run
-
-  lint:soft:
-    desc: Run soft linters
-    cmds:
-      - golangci-lint run --config=.golangci-soft.yml
 
   test:
     desc: Run tests
