@@ -119,5 +119,6 @@ func (m model) View() tea.View {
 		c.Y += lipgloss.Height(viewportView)
 	}
 	v.Cursor = c
+	v.AltScreen = true
 	return v
 }
