@@ -105,12 +105,38 @@ func NewView(s any) View {
 // View represents a terminal view that can be composed of multiple layers.
 // It can also contain a cursor that will be rendered on top of the layers.
 type View struct {
-	Layer           Layer
-	Cursor          *Cursor
+	// Layer is the main content of the view. It represents the screen content
+	// and state and how it should look like. Use [View.SetContent] to set the
+	// content of the [Layer].
+	//
+	// Example:
+	//
+	//  layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
+	//  layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
+	//  canvas := lipgloss.NewCanvas(layer1, layer2)
+	//  v := tea.NewView(canvas)
+	Layer Layer
+
+	// Cursor represents the cursor position, style, and visibility on the
+	// screen. When not nit, the cursor will be shown at the specified
+	// position.
+	Cursor *Cursor
+
+	// BackgroundColor when not nil, sets the terminal background color. Use
+	// nil to reset to the terminal's default background color.
 	BackgroundColor color.Color
+
+	// ForegroundColor when not nil, sets the terminal foreground color. Use
+	// nil to reset to the terminal's default foreground color.
 	ForegroundColor color.Color
-	WindowTitle     string
-	ProgressBar     *ProgressBar
+
+	// WindowTitle sets the terminal window title. Support depends on the
+	// terminal.
+	WindowTitle string
+
+	// ProgressBar when not nil, shows a progress bar in the terminal's
+	// progress bar section. Support depends on the terminal.
+	ProgressBar *ProgressBar
 
 	// AltScreen puts the program in the alternate screen buffer
 	// (i.e. the program goes into full window mode). Note that the altscreen will
