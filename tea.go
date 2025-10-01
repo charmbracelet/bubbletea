@@ -307,27 +307,6 @@ type CursorModel interface {
 // update function.
 type Cmd func() Msg
 
-// Options to customize the program during its initialization. These are
-// generally set with ProgramOptions.
-//
-// The options here are treated as bits.
-type startupOptions int16
-
-func (s startupOptions) has(option startupOptions) bool {
-	return s&option != 0
-}
-
-const (
-	// Catching panics is incredibly useful for restoring the terminal to a
-	// usable state after a panic occurs. When this is set, Bubble Tea will
-	// recover from panics, print the stack trace, and disable raw mode. This
-	// feature is on by default.
-	withKittyKeyboard startupOptions = 1 << iota
-	withModifyOtherKeys
-	withGraphemeClustering
-	withoutKeyEnhancements
-)
-
 // channelHandlers manages the series of channels returned by various processes.
 // It allows us to wait for those processes to terminate before exiting the
 // program.
@@ -462,10 +441,6 @@ type Program struct {
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
 	handlers channelHandlers
-
-	// Configuration options that will set as the program is initializing,
-	// treated as bits. These options can be set via various ProgramOptions.
-	startupOptions startupOptions
 
 	// ctx is the programs's internal context for signalling internal teardown.
 	// It is built and derived from the externalCtx in NewProgram().
