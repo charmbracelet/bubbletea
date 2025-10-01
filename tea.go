@@ -169,6 +169,21 @@ type View struct {
 	// MouseMode sets the mouse mode for this view. It can be one of
 	// [MouseModeNone], [MouseModeCellMotion], or [MouseModeAllMotion].
 	MouseMode MouseMode
+
+	// DisableKeyEnhancements disables all key enhancements for this view.
+	DisableKeyEnhancements bool
+
+	// KeyReleases enables support for reporting key release events. This is
+	// useful for terminals that support the Kitty keyboard protocol "Report
+	// event types" progressive enhancement feature.
+	KeyReleases bool
+
+	// UniformKeyLayout enables support for reporting key events as though they
+	// were on a PC-101 layout. This is useful for uniform key event reporting
+	// across different keyboard layouts. This is equivalent to the Kitty
+	// keyboard protocol "Report alternate keys" and "Report all keys as escape
+	// codes" progressive enhancement features.
+	UniformKeyLayout bool
 }
 
 // MouseMode represents the mouse mode of a view.
@@ -557,17 +572,12 @@ func Interrupt() Msg {
 }
 
 // NewProgram creates a new Program.
-func NewProgram(model Model, opts ...ProgramOption) *Program {
+func NewProgram(model Model) *Program {
 	p := &Program{
 		initialModel: model,
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
 		modes:        ansi.Modes{},
-	}
-
-	// Apply all options to the program.
-	for _, opt := range opts {
-		opt(p)
 	}
 
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
@@ -1145,23 +1155,6 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	// renderer so we don't need to write the sequence here.
 	p.modes.Reset(ansi.TextCursorEnableMode)
 	p.renderer.hideCursor()
-
-	// Honor program startup options.
-	if p.startupOptions&withGraphemeClustering != 0 {
-		p.execute(ansi.SetGraphemeClusteringMode)
-		p.execute(ansi.RequestGraphemeClusteringMode)
-		// We store the state of grapheme clustering after we query it and get
-		// a response in the eventLoop.
-	}
-
-	if !p.startupOptions.has(withoutKeyEnhancements) {
-		// Enable unambiguous keys using whichever protocol the terminal prefer.
-		p.requestedEnhancements.kittyFlags |= ansi.KittyDisambiguateEscapeCodes
-		if p.requestedEnhancements.modifyOtherKeys == 0 {
-			p.requestedEnhancements.modifyOtherKeys = 1 // mode 1
-		}
-		p.requestKeyboardEnhancements()
-	}
 
 	// Start the renderer.
 	p.startRenderer()

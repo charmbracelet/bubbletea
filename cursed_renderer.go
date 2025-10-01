@@ -72,6 +72,9 @@ func (s *cursedRenderer) start() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Force a full repaint to ensure the screen is in a consistent state.
+	repaint(s)
+
 	if s.lastView == nil {
 		return
 	}
@@ -123,9 +126,16 @@ func (s *cursedRenderer) start() {
 	if s.lastView.ProgressBar != nil {
 		setProgressBar(s, s.lastView.ProgressBar)
 	}
-
-	// Force a full repaint to ensure the screen is in a consistent state.
-	repaint(s)
+	if !s.lastView.DisableKeyEnhancements {
+		kittyFlags := ansi.KittyDisambiguateEscapeCodes
+		if s.lastView.KeyReleases {
+			kittyFlags |= ansi.KittyReportEventTypes
+		}
+		if s.lastView.UniformKeyLayout {
+			kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
+		}
+		_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
+	}
 }
 
 // close implements renderer.
@@ -135,6 +145,13 @@ func (s *cursedRenderer) close() (err error) {
 
 	// Go to the bottom of the screen.
 	s.scr.MoveTo(0, s.buf.Height()-1)
+
+	if s.lastView != nil && !s.lastView.DisableKeyEnhancements {
+		// NOTE: This needs to happen before we exit the alt screen. This is
+		// because the specs for the kitty keyboard maintain a different state
+		// for the main and alt screen.
+		_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
+	}
 
 	// Exit the altScreen and show cursor before closing. It's important that
 	// we don't change the [cursedRenderer] altScreen and cursorHidden states
@@ -289,6 +306,27 @@ func (s *cursedRenderer) flush(p *Program) error {
 			_, _ = s.scr.WriteString(ansi.SetWindowTitle(view.WindowTitle))
 		}
 	}
+
+	// kitty keyboard protocol
+	if s.lastView == nil || view.DisableKeyEnhancements != s.lastView.DisableKeyEnhancements ||
+		view.KeyReleases != s.lastView.KeyReleases ||
+		view.UniformKeyLayout != s.lastView.UniformKeyLayout {
+		if view.DisableKeyEnhancements {
+			_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
+		} else {
+			kittyFlags := ansi.KittyDisambiguateEscapeCodes // always enable basic key disambiguation
+			if view.KeyReleases {
+				kittyFlags |= ansi.KittyReportEventTypes
+			}
+			if view.UniformKeyLayout {
+				kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
+			}
+			_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
+		}
+		// Request keyboard enhancements when they change
+		_, _ = s.scr.WriteString(ansi.RequestKittyKeyboard)
+	}
+
 	// Set terminal colors.
 	var (
 		cc, lcc  color.Color
