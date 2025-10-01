@@ -416,31 +416,29 @@ func (s *cursedRenderer) render(v View) {
 		frameArea.Max.Y = 0
 	}
 
-	if !v.AltScreen {
-		// Inline mode resizes the screen based on the frame height and
-		// terminal width. This is because the frame height can change based on
-		// the content of the frame. For example, if the frame contains a list
-		// of items, the height of the frame will be the number of items in the
-		// list. This is different from the alt screen buffer, which has a
-		// fixed height and width.
-		frameHeight := frameArea.Dy()
-		switch l := v.Layer.(type) {
-		case *uv.StyledString:
-			frameHeight = l.Height()
-		case interface{ Bounds() uv.Rectangle }:
-			frameHeight = l.Bounds().Dy()
-		}
-
-		if frameHeight != frameArea.Dy() {
-			frameArea.Max.Y = frameHeight
-		}
-
-		// Resize the screen buffer to match the frame area. This is necessary
-		// to ensure that the screen buffer is the same size as the frame area
-		// and to avoid rendering issues when the frame area is smaller than
-		// the screen buffer.
-		s.buf.Resize(frameArea.Dx(), frameArea.Dy())
+	// We need to resizes the screen based on the frame height and
+	// terminal width. This is because the frame height can change based on
+	// the content of the frame. For example, if the frame contains a list
+	// of items, the height of the frame will be the number of items in the
+	// list. This is different from the alt screen buffer, which has a
+	// fixed height and width.
+	frameHeight := frameArea.Dy()
+	switch l := v.Layer.(type) {
+	case *uv.StyledString:
+		frameHeight = l.Height()
+	case interface{ Bounds() uv.Rectangle }:
+		frameHeight = l.Bounds().Dy()
 	}
+
+	if frameHeight != frameArea.Dy() {
+		frameArea.Max.Y = frameHeight
+	}
+
+	// Resize the screen buffer to match the frame area. This is necessary
+	// to ensure that the screen buffer is the same size as the frame area
+	// and to avoid rendering issues when the frame area is smaller than
+	// the screen buffer.
+	s.buf.Resize(frameArea.Dx(), frameArea.Dy())
 
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
@@ -550,9 +548,6 @@ func (s *cursedRenderer) resize(w, h int) {
 		// alt screen mode, we always want to redraw because some terminals
 		// would scroll the screen and our content would be lost.
 		s.scr.Erase()
-	}
-	if s.view.AltScreen {
-		s.buf.Resize(w, h)
 	}
 
 	// We need to reset the touched lines buffer to match the new height.
