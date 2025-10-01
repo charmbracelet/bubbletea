@@ -990,8 +990,8 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 			r := newCursedRenderer(
 				p.output,
 				p.environ,
-				resizeMsg.Width,
-				resizeMsg.Height,
+				p.width,
+				p.height,
 			)
 			r.setLogger(p.logger)
 			r.setOptimizations(p.useHardTabs, p.useBackspace, p.ttyInput == nil)

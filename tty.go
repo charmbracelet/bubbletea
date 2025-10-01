@@ -124,10 +124,8 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	var resizeMsg WindowSizeMsg
 	p.width, p.height = w, h
-	resizeMsg.Width, resizeMsg.Height = w, h
-	p.Send(resizeMsg)
+	p.Send(WindowSizeMsg{Width: w, Height: h})
 }
 
 // OpenTTY opens the running terminal's TTY for reading and writing.
