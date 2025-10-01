@@ -6,6 +6,7 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -47,6 +48,8 @@ func main() {
 	myFancyColor, _ = colorful.Hex("#6b50ff")
 
 	p := tea.NewProgram(model{})
+	cp := colorprofile.TrueColor
+	p.ColorProfile = &cp
 	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
