@@ -482,6 +482,9 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
+	// initialized is true when the program has been initialized.
+	initialized atomic.Bool
+
 	// ticker is the ticker that will be used to write to the renderer.
 	ticker *time.Ticker
 
@@ -880,6 +883,17 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 	wg.Wait() // wait for all commands from batch msg to finish
 }
 
+func (p *Program) init(ctx context.Context) {
+	if p.initialized.Load() {
+		return
+	}
+	p.ctx = ctx
+	p.msgs = make(chan Msg)
+	p.errs = make(chan error, 1)
+	p.rendererDone = make(chan struct{})
+	p.initialized.Store(true)
+}
+
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
@@ -895,12 +909,10 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	}
 
 	// Initialize context and teardown channel.
+	p.init(nil)
 	p.ctx, p.cancel = context.WithCancel(ctx)
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
-	p.errs = make(chan error, 1)
-	p.msgs = make(chan Msg)
-	p.rendererDone = make(chan struct{})
 
 	if p.Input == nil && !p.DisableInput {
 		p.Input = os.Stdin
@@ -1083,6 +1095,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
 func (p *Program) Send(msg Msg) {
+	p.init(context.Background())
 	select {
 	case <-p.ctx.Done():
 	case p.msgs <- msg:
