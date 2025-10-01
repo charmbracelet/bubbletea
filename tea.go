@@ -996,6 +996,8 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 			r.setLogger(p.logger)
 			r.setOptimizations(p.useHardTabs, p.useBackspace, p.ttyInput == nil)
 			p.renderer = r
+		} else {
+			p.renderer = &nilRenderer{}
 		}
 	}
 
