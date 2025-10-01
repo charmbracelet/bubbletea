@@ -7,6 +7,7 @@ package main
 // implementing a progress bar from scratch here.
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strconv"
@@ -43,7 +44,7 @@ var (
 func main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
@@ -99,17 +100,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // The main view, which just calls the appropriate sub-view
-func (m model) View() string {
+func (m model) View() tea.View {
 	var s string
 	if m.Quitting {
-		return "\n  See you later!\n\n"
+		return tea.NewView("\n  See you later!\n\n")
 	}
 	if !m.Chosen {
 		s = choicesView(m)
 	} else {
 		s = chosenView(m)
 	}
-	return mainStyle.Render("\n" + s)
+	return tea.NewView(mainStyle.Render("\n" + s + "\n"))
 }
 
 // Sub-update functions

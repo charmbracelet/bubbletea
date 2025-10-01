@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -38,16 +39,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.suspending || m.quitting {
-		return ""
+		return tea.NewView("")
 	}
 
-	return "\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n"
+	return tea.NewView("\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n")
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
 		fmt.Println("Error running program:", err)
 		if errors.Is(err, tea.ErrInterrupted) {
 			os.Exit(130)

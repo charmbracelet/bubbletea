@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -38,13 +39,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
+	v := tea.NewView("Press left/right to change the cursor style, q or ctrl+c to quit." +
+		"\n\n" +
+		"  <- This is the cursor (a " + m.describeCursor() + ")")
 	c := tea.NewCursor(0, 2)
 	c.Shape = m.cursor.Shape
 	c.Blink = m.blink
-	return "Press left/right to change the cursor style, q or ctrl+c to quit." +
-		"\n\n" +
-		"  <- This is the cursor (a " + m.describeCursor() + ")", c
+	v.Cursor = c
+	return v
 }
 
 func (m model) describeCursor() string {
@@ -70,7 +73,7 @@ func (m model) describeCursor() string {
 
 func main() {
 	p := tea.NewProgram(model{blink: true})
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v", err)
 		os.Exit(1)
 	}

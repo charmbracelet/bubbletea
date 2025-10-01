@@ -3,6 +3,7 @@ package main
 // A simple program that counts down from 5 and then exits.
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -23,7 +24,7 @@ func main() {
 
 	// Initialize our program
 	p := tea.NewProgram(model(5))
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -64,8 +65,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
-func (m model) View() string {
-	return fmt.Sprintf("Hi. This program will exit in %d seconds.\n\nTo quit sooner press ctrl-c, or press ctrl-z to suspend...\n", m)
+func (m model) View() tea.View {
+	return tea.NewView(fmt.Sprintf("Hi. This program will exit in %d seconds.\n\nTo quit sooner press ctrl-c, or press ctrl-z to suspend...\n", m))
 }
 
 // Messages are events that we respond to in our Update function. This

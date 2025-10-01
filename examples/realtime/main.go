@@ -4,6 +4,7 @@ package main
 // through a channel.
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -69,12 +70,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	s := fmt.Sprintf("\n %s Events received: %d\n\n Press any key to exit\n", m.spinner.View(), m.responses)
 	if m.quitting {
 		s += "\n"
 	}
-	return s
+	return tea.NewView(s)
 }
 
 func main() {
@@ -83,7 +84,7 @@ func main() {
 		spinner: spinner.New(),
 	})
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("could not start program:", err)
 		os.Exit(1)
 	}

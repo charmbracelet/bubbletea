@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -125,8 +126,8 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (e example) View() string {
-	return e.viewport.View() + e.helpView()
+func (e example) View() tea.View {
+	return tea.NewView(e.viewport.View() + e.helpView())
 }
 
 func (e example) helpView() string {
@@ -141,7 +142,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, err := tea.NewProgram(model).Run(); err != nil {
+	if _, err := tea.NewProgram(model).Run(context.Background()); err != nil {
 		fmt.Println("Bummer, there's been an error:", err)
 		os.Exit(1)
 	}

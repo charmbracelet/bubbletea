@@ -7,8 +7,9 @@ type TerminalVersionMsg string
 // version using XTVERSION.
 type terminalVersion struct{}
 
-// TerminalVersion is a command that queries the terminal for its version using
-// XTVERSION. Note that some terminals may not support this command.
-func TerminalVersion() Msg {
+// RequestTerminalVersion is a command that queries the terminal for its
+// version using XTVERSION. Note that some terminals may not support this
+// command.
+func RequestTerminalVersion() Msg {
 	return terminalVersion{}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"image/color"
 	"math/rand"
@@ -28,7 +29,6 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		tea.EnterAltScreen,
 		tickCmd(),
 	)
 }
@@ -96,7 +96,7 @@ func clamp(value, min, max float64) float64 {
 	return value
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	// Title
 	title := lipgloss.NewStyle().Bold(true).Render("Space")
 
@@ -113,13 +113,16 @@ func (m model) View() string {
 		s.WriteByte('\n')
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, title, s.String())
+	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, title, s.String()))
+	v.AltScreen = true
+	return v
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithFPS(120))
+	p := tea.NewProgram(model{})
+	p.FPS = 120
 
-	_, err := p.Run()
+	_, err := p.Run(context.Background())
 	if err != nil {
 		fmt.Printf("Error running program: %v", err)
 		os.Exit(1)

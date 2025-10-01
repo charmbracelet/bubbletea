@@ -4,6 +4,7 @@ package main
 // component library.
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -79,7 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var b strings.Builder
 	b.WriteString("\n  Paginator Example\n\n")
 	start, end := m.paginator.GetSliceBounds(len(m.items))
@@ -88,12 +89,12 @@ func (m model) View() string {
 	}
 	b.WriteString("  " + m.paginator.View())
 	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
-	return b.String()
+	return tea.NewView(b.String())
 }
 
 func main() {
 	p := tea.NewProgram(newModel())
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -4,6 +4,7 @@ package main
 // from outside the program using Program.Send(Msg).
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -73,7 +74,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var b strings.Builder
 
 	if m.quitting {
@@ -98,7 +99,7 @@ func (m model) View() string {
 		b.WriteString("\n")
 	}
 
-	return appStyle.Render(b.String())
+	return tea.NewView(appStyle.Render(b.String()))
 }
 
 func main() {
@@ -117,7 +118,7 @@ func main() {
 		}
 	}()
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

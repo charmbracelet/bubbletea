@@ -4,6 +4,7 @@ package main
 // from the Bubbles component library.
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -152,7 +153,7 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	var b strings.Builder
 	var c *tea.Cursor
 
@@ -183,11 +184,13 @@ func (m model) View() (string, *tea.Cursor) {
 		b.WriteRune('\n')
 	}
 
-	return b.String(), c
+	v := tea.NewView(b.String())
+	v.Cursor = c
+	return v
 }
 
 func main() {
-	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(context.Background()); err != nil {
 		fmt.Printf("could not start program: %s\n", err)
 		os.Exit(1)
 	}

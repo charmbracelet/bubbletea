@@ -3,6 +3,7 @@ package main
 // A program demonstrating how to use the WithFilter option to intercept events.
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -20,9 +21,10 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithFilter(filter))
+	p := tea.NewProgram(initialModel())
+	p.Filter = filter
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -131,13 +133,13 @@ func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.quitting {
 		if m.hasChanges {
 			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yN]"))
-			return quitViewStyle.Render(text)
+			return tea.NewView(quitViewStyle.Render(text))
 		}
-		return "Very important. Thank you.\n"
+		return tea.NewView("Very important. Thank you.\n")
 	}
 
 	helpView := m.help.ShortHelpView([]key.Binding{
@@ -145,10 +147,10 @@ func (m model) View() string {
 		m.keymap.quit,
 	})
 
-	return fmt.Sprintf(
+	return tea.NewView(fmt.Sprintf(
 		"Type some important things.\n%s\n %s\n %s",
 		m.textarea.View(),
 		saveTextStyle.Render(m.saveText),
 		helpView,
-	) + "\n\n"
+	) + "\n\n")
 }

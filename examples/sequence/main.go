@@ -3,6 +3,7 @@ package main
 // A simple example illustrating how to run a series of commands in order.
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -59,12 +60,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return ""
+func (m model) View() tea.View {
+	return tea.NewView("")
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
 		fmt.Println("Uh oh:", err)
 		os.Exit(1)
 	}

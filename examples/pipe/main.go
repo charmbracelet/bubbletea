@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -45,7 +46,7 @@ func main() {
 
 	model := newModel(strings.TrimSpace(b.String()))
 
-	if _, err := tea.NewProgram(model).Run(); err != nil {
+	if _, err := tea.NewProgram(model).Run(context.Background()); err != nil {
 		fmt.Println("Couldn't start program:", err)
 		os.Exit(1)
 	}
@@ -89,9 +90,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
+func (m model) View() tea.View {
+	return tea.NewView(fmt.Sprintf(
 		"\nYou piped in: %s\n\nPress ^C to exit",
 		m.userInput.View(),
-	)
+	))
 }

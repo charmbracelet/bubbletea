@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -32,7 +33,7 @@ func main() {
 	m := model{}
 	m.resetSpinner()
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(m).Run(context.Background()); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}
@@ -85,7 +86,7 @@ func (m *model) resetSpinner() {
 	m.spinner.Spinner = spinners[m.index]
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var gap string
 	switch m.index {
 	case 1:
@@ -97,5 +98,5 @@ func (m model) View() string {
 	var s string
 	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
 	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
-	return s
+	return tea.NewView(s)
 }

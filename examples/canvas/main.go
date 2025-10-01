@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -16,7 +17,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.EnableMouseCellMotion
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -64,6 +65,7 @@ func (m model) View() tea.View {
 		cardA,
 		cardB.X(10).Y(2),
 	)
+	view.MouseMode = tea.MouseModeCellMotion
 
 	return view
 }
@@ -91,7 +93,7 @@ func reverse[T any](s []T) []T {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
 		fmt.Fprintln(os.Stderr, "Urgh:", err)
 		os.Exit(1)
 	}
