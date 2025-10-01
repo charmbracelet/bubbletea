@@ -540,12 +540,10 @@ func Interrupt() Msg {
 	return InterruptMsg{}
 }
 
-// NewProgram creates a new Program.
+// NewProgram creates a new [Program].
 func NewProgram(model Model) *Program {
 	p := &Program{
 		InitialModel: model,
-		msgs:         make(chan Msg),
-		rendererDone: make(chan struct{}),
 	}
 
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
@@ -901,6 +899,8 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error, 1)
+	p.msgs = make(chan Msg)
+	p.rendererDone = make(chan struct{})
 
 	if p.Input == nil && !p.DisableInput {
 		p.Input = os.Stdin
