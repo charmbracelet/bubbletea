@@ -70,7 +70,7 @@ func (p *Program) initInputReader(cancel bool) error {
 	var err error
 	p.cancelReader, err = uv.NewCancelReader(p.input)
 	if err != nil {
-		return err
+		return fmt.Errorf("bubbletea: could not create cancelable reader: %w", err)
 	}
 
 	drv := uv.NewTerminalReader(p.cancelReader, term)
@@ -132,5 +132,9 @@ func (p *Program) checkResize() {
 
 // OpenTTY opens the running terminal's TTY for reading and writing.
 func OpenTTY() (*os.File, *os.File, error) {
-	return uv.OpenTTY()
+	in, out, err := uv.OpenTTY()
+	if err != nil {
+		return nil, nil, fmt.Errorf("bubbletea: could not open TTY: %w", err)
+	}
+	return in, out, nil
 }

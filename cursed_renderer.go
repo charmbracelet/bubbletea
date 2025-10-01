@@ -247,7 +247,7 @@ func (s *cursedRenderer) resetLinesRendered() {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush(p *Program) error {
+func (s *cursedRenderer) flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -686,7 +686,7 @@ func viewEquals(a, b View) bool {
 	if (a.Cursor == nil) != (b.Cursor == nil) {
 		return false
 	}
-	if a.Cursor != nil && b.Cursor != nil {
+	if a.Cursor != nil && b.Cursor != nil { //nolint:nestif
 		if (a.Cursor.Color == nil) != (b.Cursor.Color == nil) {
 			return false
 		}

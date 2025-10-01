@@ -967,7 +967,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	p.width, p.height = width, height
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
 
-	if p.renderer == nil { //nolint:nestif
+	if p.renderer == nil {
 		if hasView(p.InitialModel) {
 			// If no renderer is set use the cursed one.
 			r := newCursedRenderer(
@@ -1310,7 +1310,7 @@ func (p *Program) startRenderer() {
 
 			case <-p.ticker.C:
 				_ = p.flush()
-				_ = p.renderer.flush(p)
+				_ = p.renderer.flush()
 			}
 		}
 	}()
@@ -1327,7 +1327,7 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_ = p.renderer.flush(p)
+		_ = p.renderer.flush()
 	}
 
 	_ = p.renderer.close()
