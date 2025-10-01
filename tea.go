@@ -57,28 +57,9 @@ type Model interface {
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
-}
 
-// ViewModel is an optional interface that can be implemented by the main model
-// to provide a view. If the main model does not implement a view interface,
-// the program won't render anything.
-type ViewModel interface {
-	// View renders the program's UI, which is just a string. The view is
-	// rendered after every Update.
-	View() string
-}
-
-// ViewableModel is an optional interface that can be implemented by the main
-// model to provide a view that can be composed of multiple layers. If the
-// main model does not implement a view interface, the program won't render
-// anything.
-type ViewableModel interface {
-	// View returns a [View] that contains the layers to be rendered. The
-	// layers are rendered based on their z-index, with the lowest z-index
-	// rendered first and the highest z-index rendered last. If some layers
-	// have the same z-index, they are rendered in the order they were added to
-	// the view.
-	// The cursor is optional, if it's nil the cursor will be hidden.
+	// View renders the program's UI, which can be a string or a [Layer]. The
+	// view is rendered after every Update.
 	View() View
 }
 
@@ -445,6 +426,11 @@ type Program struct {
 	// required field when creating a new program.
 	InitialModel Model
 
+	// DisableRenderer prevents the program from rendering to the terminal.
+	// This can be useful for running daemon-like programs that don't require a
+	// UI but still want to take advantage of Bubble Tea's architecture.
+	DisableRenderer bool
+
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
 	handlers channelHandlers
@@ -790,33 +776,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 	}
 }
 
-// hasView returns true if the model has a view.
-func hasView(model Model) (ok bool) {
-	switch model.(type) {
-	case ViewModel, CursorModel, ViewableModel:
-		ok = true
-	}
-	return
-}
-
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
-	var view View
-	switch model := model.(type) {
-	case ViewModel, CursorModel:
-		var frame string
-		switch model := model.(type) {
-		case ViewModel:
-			frame = model.View()
-		case CursorModel:
-			frame, view.Cursor = model.View()
-		}
-		view.Layer = uv.NewStyledString(frame)
-	case ViewableModel:
-		view = model.View()
-	}
 	if p.renderer != nil {
-		p.renderer.render(view) // send view to renderer
+		p.renderer.render(model.View()) // send view to renderer
 	}
 }
 
@@ -985,7 +948,9 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
 
 	if p.renderer == nil {
-		if hasView(p.InitialModel) {
+		if p.DisableRenderer {
+			p.renderer = &nilRenderer{}
+		} else {
 			// If no renderer is set use the cursed one.
 			r := newCursedRenderer(
 				p.output,
@@ -996,8 +961,6 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 			r.setLogger(p.logger)
 			r.setOptimizations(p.useHardTabs, p.useBackspace, p.ttyInput == nil)
 			p.renderer = r
-		} else {
-			p.renderer = &nilRenderer{}
 		}
 	}
 

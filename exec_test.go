@@ -33,8 +33,8 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() string {
-	return "\n"
+func (m *testExecModel) View() View {
+	return NewView("\n")
 }
 
 type spyRenderer struct {

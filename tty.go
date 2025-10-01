@@ -22,11 +22,9 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if !hasView(p.InitialModel) {
-		// No need to initialize the terminal if we're not rendering
+	if p.DisableRenderer {
 		return nil
 	}
-
 	return p.initInput()
 }
 
