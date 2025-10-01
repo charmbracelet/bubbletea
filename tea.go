@@ -117,16 +117,7 @@ type Hittable interface {
 // [Layer].
 func NewView(s any) View {
 	var view View
-	switch v := s.(type) {
-	case string:
-		view.Layer = uv.NewStyledString(v)
-	case fmt.Stringer:
-		view.Layer = uv.NewStyledString(v.String())
-	case Layer:
-		view.Layer = v
-	default:
-		view.Layer = uv.NewStyledString(fmt.Sprintf("%v", v))
-	}
+	view.SetContent(s)
 	return view
 }
 
@@ -184,6 +175,20 @@ type View struct {
 	// keyboard protocol "Report alternate keys" and "Report all keys as escape
 	// codes" progressive enhancement features.
 	UniformKeyLayout bool
+}
+
+// SetContent sets the content of the view to the value.
+func (v *View) SetContent(s any) {
+	switch vi := s.(type) {
+	case string:
+		v.Layer = uv.NewStyledString(vi)
+	case fmt.Stringer:
+		v.Layer = uv.NewStyledString(vi.String())
+	case Layer:
+		v.Layer = vi
+	default:
+		v.Layer = uv.NewStyledString(fmt.Sprintf("%v", vi))
+	}
 }
 
 // MouseMode represents the mouse mode of a view.
