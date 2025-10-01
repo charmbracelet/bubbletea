@@ -11,6 +11,7 @@ package main
 // normal. If not, we simply ignore the inbound message.
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -53,13 +54,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return fmt.Sprintf("Key presses: %d", m.tag) +
-		"\nTo exit press any key, then wait for one second without pressing anything."
+func (m model) View() tea.View {
+	return tea.NewView(fmt.Sprintf("Key presses: %d", m.tag) +
+		"\nTo exit press any key, then wait for one second without pressing anything.")
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
 		fmt.Println("uh oh:", err)
 		os.Exit(1)
 	}

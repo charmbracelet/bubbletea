@@ -17,6 +17,7 @@ package main
 // the progress-animated example.
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -37,7 +38,7 @@ var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 func main() {
 	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
 
-	if _, err := tea.NewProgram(model{progress: prog}).Run(); err != nil {
+	if _, err := tea.NewProgram(model{progress: prog}).Run(context.Background()); err != nil {
 		fmt.Println("Oh no!", err)
 		os.Exit(1)
 	}

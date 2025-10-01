@@ -4,6 +4,7 @@ package main
 // component library.
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -17,7 +18,7 @@ import (
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Fprintf(os.Stderr, "Oof: %v\n", err)
 	}
 }
@@ -110,23 +111,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	viewportView := m.viewport.View()
-	return viewportView + "\n" + m.textarea.View()
-}
-
-// To render a real cursor implement the Cursor() method on your model. To hide
-// the cursor, return nil.
-func (m model) Cursor() *tea.Cursor {
-	// Textarea provides a cursor implementation that can be used directly.
-	// This is the cursor position relative to the textarea, so you'll need to
-	// calculate the absolute position to the textarea.
-	//
-	// Note that when the virtual cursor is enabled, textarea.Cursor() will be
-	// nil.
+	v := tea.NewView(viewportView + "\n" + m.textarea.View())
 	c := m.textarea.Cursor()
 	if c != nil {
-		c.Y += lipgloss.Height(m.viewport.View())
+		c.Y += lipgloss.Height(viewportView)
 	}
-	return c
+	v.Cursor = c
+	return v
 }

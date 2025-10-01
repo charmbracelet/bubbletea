@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -47,7 +48,7 @@ func main() {
 	}
 
 	p := tea.NewProgram(model)
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
 	}

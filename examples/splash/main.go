@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"image/color"
 	"math"
@@ -54,12 +55,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
+	var v tea.View
+	v.AltScreen = true
 	if m.width == 0 {
-		return "Initializing..."
+		v.SetContent("Initializing...")
+		return v
 	}
 
-	return m.gradient()
+	v.SetContent(m.gradient())
+	return v
 }
 
 func (m model) gradient() string {
@@ -161,20 +166,12 @@ func tick() tea.Msg {
 	return tickMsg(time.Now())
 }
 
-func abs(i int) int {
-	if i < 0 {
-		return -i
-	}
-	return i
-}
-
 func main() {
 	p := tea.NewProgram(
 		model{rate: 90},
-		tea.WithAltScreen(),
 	)
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}
 }

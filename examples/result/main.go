@@ -4,6 +4,7 @@ package main
 // program after the Bubble Tea has exited.
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -73,7 +74,7 @@ func main() {
 	p := tea.NewProgram(model{})
 
 	// Run returns the model as a tea.Model.
-	m, err := p.Run()
+	m, err := p.Run(context.Background())
 	if err != nil {
 		fmt.Println("Oh no:", err)
 		os.Exit(1)

@@ -3,6 +3,7 @@ package main
 // A simple program that queries and displays the window-size.
 
 import (
+	"context"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -10,7 +11,7 @@ import (
 
 func main() {
 	p := tea.NewProgram(model{})
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }

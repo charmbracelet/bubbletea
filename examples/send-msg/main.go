@@ -4,6 +4,7 @@ package main
 // from outside the program using Program.Send(Msg).
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -117,7 +118,7 @@ func main() {
 		}
 	}()
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

@@ -4,6 +4,7 @@ package main
 // through a channel.
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -83,7 +84,7 @@ func main() {
 		spinner: spinner.New(),
 	})
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("could not start program:", err)
 		os.Exit(1)
 	}

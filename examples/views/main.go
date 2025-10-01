@@ -7,6 +7,7 @@ package main
 // implementing a progress bar from scratch here.
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strconv"
@@ -43,7 +44,7 @@ var (
 func main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
@@ -109,7 +110,7 @@ func (m model) View() string {
 	} else {
 		s = chosenView(m)
 	}
-	return mainStyle.Render("\n" + s)
+	return mainStyle.Render("\n" + s + "\n")
 }
 
 // Sub-update functions

@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
 	"image/color"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -36,18 +36,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View implements tea.Model.
-func (m model) View() string {
-	return "This will produce the wrong colors on Apple Terminal :)\n\n" +
+func (m model) View() tea.View {
+	return tea.NewView("This will produce the wrong colors on Apple Terminal :)\n\n" +
 		ansi.Style{}.ForegroundColor(myFancyColor).Styled("Howdy!") +
 		"\n\n" +
-		"Press any key to exit."
+		"Press any key to exit.")
 }
 
 func main() {
 	myFancyColor, _ = colorful.Hex("#6b50ff")
 
-	p := tea.NewProgram(model{}, tea.WithColorProfile(colorprofile.TrueColor))
-	if _, err := p.Run(); err != nil {
+	p := tea.NewProgram(model{})
+	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }

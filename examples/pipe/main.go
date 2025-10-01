@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -45,7 +46,7 @@ func main() {
 
 	model := newModel(strings.TrimSpace(b.String()))
 
-	if _, err := tea.NewProgram(model).Run(); err != nil {
+	if _, err := tea.NewProgram(model).Run(context.Background()); err != nil {
 		fmt.Println("Couldn't start program:", err)
 		os.Exit(1)
 	}

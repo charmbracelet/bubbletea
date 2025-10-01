@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -38,11 +39,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Suspend
 		case "space":
 			var cmd tea.Cmd
-			if m.altscreen {
-				cmd = tea.ExitAltScreen
-			} else {
-				cmd = tea.EnterAltScreen
-			}
 			m.altscreen = !m.altscreen
 			return m, cmd
 		}
@@ -50,13 +46,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.suspending {
-		return ""
+		v := tea.NewView("")
+		v.AltScreen = m.altscreen
+		return v
 	}
 
 	if m.quitting {
-		return "Bye!\n"
+		v := tea.NewView("Bye!\n")
+		v.AltScreen = m.altscreen
+		return v
 	}
 
 	const (
@@ -71,12 +71,14 @@ func (m model) View() string {
 		mode = inlineMode
 	}
 
-	return fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
-		helpStyle.Render("  space: switch modes • ctrl-z: suspend • q: exit\n")
+	v := tea.NewView(fmt.Sprintf("\n\n  You're in %s\n\n\n", keywordStyle.Render(mode)) +
+		helpStyle.Render("  space: switch modes • ctrl-z: suspend • q: exit\n"))
+	v.AltScreen = m.altscreen
+	return v
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

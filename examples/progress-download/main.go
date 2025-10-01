@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -100,7 +101,7 @@ func main() {
 	// Start the download
 	go pw.Start()
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		fmt.Println("error running program:", err)
 		os.Exit(1)
 	}

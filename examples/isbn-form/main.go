@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -15,7 +16,7 @@ import (
 func main() {
 	p := tea.NewProgram(initialModel())
 
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -196,7 +197,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(isbnCommand, titleCommand)
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var continueText string
 	if m.canFindBook() {
 		continueText = continueStyle.Render("Find ->")
@@ -220,7 +221,7 @@ func (m model) View() string {
 		}
 	}
 
-	return fmt.Sprintf(
+	return tea.NewView(fmt.Sprintf(
 		` Search book:
  %s
  %s
@@ -241,5 +242,5 @@ func (m model) View() string {
 		titleErrorText,
 
 		continueText,
-	) + "\n"
+	) + "\n")
 }

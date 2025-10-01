@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -59,7 +60,7 @@ func (m model) View() tea.View {
 
 func main() {
 	p := tea.NewProgram(model{value: 50, state: tea.ProgressBarIndeterminate})
-	if _, err := p.Run(); err != nil {
+	if _, err := p.Run(context.Background()); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }
