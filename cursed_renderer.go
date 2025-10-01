@@ -194,7 +194,7 @@ func (s *cursedRenderer) close() (err error) {
 		if lv.ForegroundColor != nil {
 			_, _ = s.scr.WriteString(ansi.ResetForegroundColor)
 		}
-		if lv.ProgressBar != nil {
+		if lv.ProgressBar != nil && lv.ProgressBar.State != ProgressBarNone {
 			_, _ = s.scr.WriteString(ansi.ResetProgressBar)
 		}
 
@@ -379,7 +379,10 @@ func (s *cursedRenderer) flush() error {
 		}
 	}
 
-	if (view.ProgressBar == nil) != (s.lastView == nil || s.lastView.ProgressBar == nil) {
+	// Render progress bar if it's changed.
+	if (s.lastView == nil && view.ProgressBar != nil && view.ProgressBar.State != ProgressBarNone) ||
+		(s.lastView != nil && (s.lastView.ProgressBar == nil) != (view.ProgressBar == nil)) ||
+		(s.lastView != nil && s.lastView.ProgressBar != nil && view.ProgressBar != nil && *s.lastView.ProgressBar != *view.ProgressBar) {
 		// Render or clear the progress bar if it was added or removed.
 		setProgressBar(s, view.ProgressBar)
 	}
