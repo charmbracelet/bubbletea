@@ -146,13 +146,6 @@ func (s *cursedRenderer) close() (err error) {
 	// Go to the bottom of the screen.
 	s.scr.MoveTo(0, s.buf.Height()-1)
 
-	if s.lastView != nil && !s.lastView.DisableKeyEnhancements {
-		// NOTE: This needs to happen before we exit the alt screen. This is
-		// because the specs for the kitty keyboard maintain a different state
-		// for the main and alt screen.
-		_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
-	}
-
 	// Exit the altScreen and show cursor before closing. It's important that
 	// we don't change the [cursedRenderer] altScreen and cursorHidden states
 	// so that we can restore them when we start the renderer again. This is
@@ -206,6 +199,11 @@ func (s *cursedRenderer) close() (err error) {
 		}
 		if lv.ProgressBar != nil {
 			_, _ = s.scr.WriteString(ansi.ResetProgressBar)
+		}
+
+		if s.lastView != nil && !s.lastView.DisableKeyEnhancements {
+			// NOTE: This needs to happen after we exit the alt screen.
+			_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
 		}
 	}
 
@@ -310,7 +308,11 @@ func (s *cursedRenderer) flush(p *Program) error {
 	// kitty keyboard protocol
 	if s.lastView == nil || view.DisableKeyEnhancements != s.lastView.DisableKeyEnhancements ||
 		view.KeyReleases != s.lastView.KeyReleases ||
-		view.UniformKeyLayout != s.lastView.UniformKeyLayout {
+		view.UniformKeyLayout != s.lastView.UniformKeyLayout ||
+		view.AltScreen != s.lastView.AltScreen {
+		// NOTE: We need to reset the keyboard protocol when switching
+		// between main and alt screen. This is because the specs specify
+		// two different states for the main and alt screen.
 		if view.DisableKeyEnhancements {
 			_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
 		} else {
