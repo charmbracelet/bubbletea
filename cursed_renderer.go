@@ -679,6 +679,24 @@ func viewEquals(a, b View) bool {
 	if a.WindowTitle != b.WindowTitle {
 		return false
 	}
+	if a.MouseMode != b.MouseMode {
+		return false
+	}
+	if a.ReportFocus != b.ReportFocus {
+		return false
+	}
+	if a.DisableBracketedPasteMode != b.DisableBracketedPasteMode {
+		return false
+	}
+	if a.DisableKeyEnhancements != b.DisableKeyEnhancements {
+		return false
+	}
+	if a.KeyReleases != b.KeyReleases {
+		return false
+	}
+	if a.UniformKeyLayout != b.UniformKeyLayout {
+		return false
+	}
 	if (a.Cursor == nil) != (b.Cursor == nil) {
 		return false
 	}
