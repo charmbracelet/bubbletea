@@ -27,8 +27,6 @@ type cursedRenderer struct {
 	profile         colorprofile.Profile
 	logger          uv.Logger
 	view            View
-	altScreen       bool
-	cursorHidden    bool
 	hardTabs        bool // whether to use hard tabs to optimize cursor movements
 	backspace       bool // whether to use backspace to optimize cursor movements
 	mapnl           bool
@@ -150,16 +148,15 @@ func (s *cursedRenderer) close() (err error) {
 	// we don't change the [cursedRenderer] altScreen and cursorHidden states
 	// so that we can restore them when we start the renderer again. This is
 	// used when the user suspends the program and then resumes it.
-	if s.altScreen {
-		s.scr.ExitAltScreen()
-	} else {
-		_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
-	}
-	if s.cursorHidden {
-		s.scr.ShowCursor()
-		s.cursorHidden = false
-	}
 	if lv := s.lastView; lv != nil { //nolint:nestif
+		if lv.AltScreen {
+			s.scr.ExitAltScreen()
+		} else {
+			_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
+		}
+		if lv.Cursor == nil {
+			s.scr.ShowCursor()
+		}
 		if !lv.DisableBracketedPasteMode {
 			_, _ = s.scr.WriteString(ansi.ResetBracketedPasteMode)
 		}
@@ -236,7 +233,7 @@ func (s *cursedRenderer) resetLinesRendered() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if !s.altScreen {
+	if s.lastView != nil && !s.lastView.AltScreen {
 		var frameHeight int
 		if s.lastFrame != nil {
 			frameHeight = strings.Count(*s.lastFrame, "\n") + 1
@@ -416,7 +413,7 @@ func (s *cursedRenderer) render(v View) {
 		frameArea.Max.Y = 0
 	}
 
-	if !s.altScreen {
+	if !v.AltScreen {
 		// Inline mode resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
 		// the content of the frame. For example, if the frame contains a list
@@ -513,17 +510,17 @@ func (s *cursedRenderer) reset() {
 func reset(s *cursedRenderer) {
 	scr := uv.NewTerminalRenderer(s.w, s.env)
 	scr.SetColorProfile(s.profile)
-	scr.SetRelativeCursor(!s.altScreen)
+	scr.SetRelativeCursor(s.lastView != nil && !s.lastView.AltScreen)
 	scr.SetTabStops(s.width)
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
 	scr.SetLogger(s.logger)
-	if s.altScreen {
+	if s.lastView != nil && s.lastView.AltScreen {
 		scr.EnterAltScreen()
 	} else {
 		scr.ExitAltScreen()
 	}
-	if !s.cursorHidden {
+	if s.lastView != nil && s.lastView.Cursor != nil {
 		scr.ShowCursor()
 	} else {
 		scr.HideCursor()
@@ -542,7 +539,7 @@ func (s *cursedRenderer) setColorProfile(p colorprofile.Profile) {
 // resize implements renderer.
 func (s *cursedRenderer) resize(w, h int) {
 	s.mu.Lock()
-	if s.altScreen || w != s.width {
+	if s.view.AltScreen || w != s.width {
 		// We need to mark the screen for clear to force a redraw. However, we
 		// only do so if we're using alt screen or the width has changed.
 		// That's because redrawing is expensive and we can avoid it if the
@@ -551,7 +548,7 @@ func (s *cursedRenderer) resize(w, h int) {
 		// would scroll the screen and our content would be lost.
 		s.scr.Erase()
 	}
-	if s.altScreen {
+	if s.view.AltScreen {
 		s.buf.Resize(w, h)
 	}
 
@@ -577,13 +574,12 @@ func (s *cursedRenderer) clearScreen() {
 
 // enableAltScreen sets the alt screen mode.
 func enableAltScreen(s *cursedRenderer, enable bool) {
-	s.altScreen = enable
 	if enable {
 		s.scr.EnterAltScreen()
 	} else {
 		s.scr.ExitAltScreen()
 	}
-	s.scr.SetRelativeCursor(!s.altScreen)
+	s.scr.SetRelativeCursor(!enable)
 	repaint(s)
 }
 
@@ -603,7 +599,6 @@ func (s *cursedRenderer) exitAltScreen() {
 
 // enableTextCursor sets the text cursor mode.
 func enableTextCursor(s *cursedRenderer, enable bool) {
-	s.cursorHidden = !enable
 	if enable {
 		s.scr.ShowCursor()
 	} else {
