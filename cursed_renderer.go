@@ -306,6 +306,7 @@ func (s *cursedRenderer) flush() error {
 	}
 
 	// kitty keyboard protocol
+	//nolint:nestif
 	if s.lastView == nil || view.DisableKeyEnhancements != s.lastView.DisableKeyEnhancements ||
 		view.KeyReleases != s.lastView.KeyReleases ||
 		view.UniformKeyLayout != s.lastView.UniformKeyLayout ||
