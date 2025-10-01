@@ -356,6 +356,7 @@ type Program struct {
 	// where to send output, this will usually be os.Stdout.
 	output    io.Writer
 	outputBuf bytes.Buffer // buffer used to queue commands to be sent to the output
+	outputMu  sync.RWMutex
 
 	// ttyOutput is null if output is not a TTY.
 	ttyOutput           term.File
@@ -1248,19 +1249,26 @@ func (p *Program) Wait() {
 
 // execute writes the given sequence to the program output.
 func (p *Program) execute(seq string) {
+	p.outputMu.Lock()
+	defer p.outputMu.Unlock()
 	_, _ = p.outputBuf.WriteString(seq)
 }
 
 // flush flushes the output buffer to the program output.
 func (p *Program) flush() error {
+	p.outputMu.RLock()
 	if p.outputBuf.Len() == 0 {
+		p.outputMu.RUnlock()
 		return nil
 	}
 	if p.logger != nil {
 		p.logger.Printf("output: %q", p.outputBuf.String())
 	}
 	_, err := p.output.Write(p.outputBuf.Bytes())
+	p.outputMu.RUnlock()
+	p.outputMu.Lock()
 	p.outputBuf.Reset()
+	p.outputMu.Unlock()
 	if err != nil {
 		return fmt.Errorf("error writing to output: %w", err)
 	}
