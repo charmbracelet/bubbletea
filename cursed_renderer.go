@@ -510,7 +510,7 @@ func (s *cursedRenderer) reset() {
 func reset(s *cursedRenderer) {
 	scr := uv.NewTerminalRenderer(s.w, s.env)
 	scr.SetColorProfile(s.profile)
-	scr.SetRelativeCursor(s.lastView != nil && !s.lastView.AltScreen)
+	scr.SetRelativeCursor(s.lastView == nil || !s.lastView.AltScreen)
 	scr.SetTabStops(s.width)
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
