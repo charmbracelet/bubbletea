@@ -887,7 +887,7 @@ func (p *Program) init(ctx context.Context) {
 	if p.initialized.Load() {
 		return
 	}
-	p.ctx = ctx
+	p.ctx, p.cancel = context.WithCancel(ctx)
 	p.msgs = make(chan Msg)
 	p.errs = make(chan error, 1)
 	p.rendererDone = make(chan struct{})
@@ -908,9 +908,9 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 		ctx = context.Background()
 	}
 
+	p.init(ctx)
+
 	// Initialize context and teardown channel.
-	p.init(nil)
-	p.ctx, p.cancel = context.WithCancel(ctx)
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 
@@ -1095,7 +1095,12 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
 func (p *Program) Send(msg Msg) {
-	p.init(context.Background())
+	if !p.initialized.Load() {
+		// Wait for the program to be initialized.
+		time.Sleep(10 * time.Millisecond)
+		p.Send(msg)
+		return
+	}
 	select {
 	case <-p.ctx.Done():
 	case p.msgs <- msg:
