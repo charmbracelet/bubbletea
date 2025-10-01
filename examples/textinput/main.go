@@ -60,7 +60,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	var c *tea.Cursor
 	if !m.textInput.VirtualCursor() {
 		c = m.textInput.Cursor()
@@ -72,7 +72,9 @@ func (m model) View() (string, *tea.Cursor) {
 		str += "\n"
 	}
 
-	return str, c
+	v := tea.NewView(str)
+	v.Cursor = c
+	return v
 }
 
 func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }

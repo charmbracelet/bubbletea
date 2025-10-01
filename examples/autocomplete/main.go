@@ -159,17 +159,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	if len(m.textInput.AvailableSuggestions()) < 1 {
-		return "One sec, we're fetching completions...", nil
+		return tea.NewView("One sec, we're fetching completions...")
 	}
 
-	return lipgloss.JoinVertical(
+	v := tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Left,
 		m.headerView(),
 		m.textInput.View(),
 		m.footerView(),
-	), m.Cursor()
+	))
+	
+	c := m.textInput.Cursor()
+	if c != nil {
+		c.Y += lipgloss.Height(m.headerView())
+	}
+	v.Cursor = c
+	return v
 }
 
 func (m model) headerView() string { return "Enter a Charm™ repo:\n" }

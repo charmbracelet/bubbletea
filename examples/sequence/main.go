@@ -60,8 +60,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return ""
+func (m model) View() tea.View {
+	return tea.NewView("")
 }
 
 func main() {

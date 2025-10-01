@@ -74,7 +74,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var b strings.Builder
 
 	if m.quitting {
@@ -99,7 +99,7 @@ func (m model) View() string {
 		b.WriteString("\n")
 	}
 
-	return appStyle.Render(b.String())
+	return tea.NewView(appStyle.Render(b.String()))
 }
 
 func main() {

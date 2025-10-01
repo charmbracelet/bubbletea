@@ -83,14 +83,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	var s strings.Builder
 	s.WriteString(m.input.View())
 	if m.err != nil {
 		s.WriteString("\n\nError: " + m.err.Error())
 	}
 	s.WriteString("\n\nPress ctrl+c to quit, enter to write the sequence to terminal")
-	return s.String(), m.input.Cursor()
+	v := tea.NewView(s.String())
+	v.Cursor = m.input.Cursor()
+	return v
 }
 
 func main() {

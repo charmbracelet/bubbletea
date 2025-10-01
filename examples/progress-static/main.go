@@ -80,11 +80,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	pad := strings.Repeat(" ", padding)
-	return "\n" +
+	return tea.NewView("\n" +
 		pad + m.progress.ViewAs(m.percent) + "\n\n" +
-		pad + helpStyle("Press any key to quit")
+		pad + helpStyle("Press any key to quit"))
 }
 
 func tickCmd() tea.Cmd {

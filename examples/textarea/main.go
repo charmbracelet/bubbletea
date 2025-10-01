@@ -42,7 +42,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(textarea.Blink, tea.RequestBackgroundColor)
+	return textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,10 +50,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.BackgroundColorMsg:
-		// Update styling now that we know the background color.
-		m.textarea.SetStyles(textarea.DefaultStyles(msg.IsDark()))
-
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
@@ -69,7 +65,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
 		return m, nil
@@ -84,7 +79,7 @@ func (m model) headerView() string {
 	return "Tell me a story.\n"
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	const (
 		footer = "\n(ctrl+c to quit)\n"
 	)
@@ -93,8 +88,6 @@ func (m model) View() (string, *tea.Cursor) {
 	if !m.textarea.VirtualCursor() {
 		c = m.textarea.Cursor()
 
-		// Set the y offset of the cursor based on the position of the textarea
-		// in the application.
 		offset := lipgloss.Height(m.headerView())
 		c.Y += offset
 	}
@@ -105,5 +98,7 @@ func (m model) View() (string, *tea.Cursor) {
 		footer,
 	}, "\n")
 
-	return f, c
+	v := tea.NewView(f)
+	v.Cursor = c
+	return v
 }

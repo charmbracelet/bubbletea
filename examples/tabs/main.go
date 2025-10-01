@@ -51,14 +51,11 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.RequestBackgroundColor
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.BackgroundColorMsg:
-		m.styles = newStyles(msg.IsDark())
-
 	case tea.KeyPressMsg:
 		switch keypress := msg.String(); keypress {
 		case "ctrl+c", "q":
@@ -83,10 +80,9 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	return border
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.styles == nil {
-		// Don't render until we've initialized our styles.
-		return ""
+		return tea.NewView("")
 	}
 
 	doc := strings.Builder{}
@@ -120,7 +116,7 @@ func (m model) View() string {
 	doc.WriteString(row)
 	doc.WriteString("\n")
 	doc.WriteString(s.window.Width((lipgloss.Width(row))).Render(m.TabContent[m.activeTab]))
-	return s.doc.Render(doc.String())
+	return tea.NewView(s.doc.Render(doc.String()))
 }
 
 func main() {

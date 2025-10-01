@@ -90,9 +90,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
+func (m model) View() tea.View {
+	return tea.NewView(fmt.Sprintf(
 		"\nYou piped in: %s\n\nPress ^C to exit",
 		m.userInput.View(),
-	)
+	))
 }

@@ -43,8 +43,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return baseStyle.Render(m.table.View()) + "\n  " + m.table.HelpView() + "\n"
+func (m model) View() tea.View {
+	return tea.NewView(baseStyle.Render(m.table.View()) + "\n  " + m.table.HelpView() + "\n")
 }
 
 func main() {
