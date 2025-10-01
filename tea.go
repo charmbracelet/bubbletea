@@ -436,7 +436,9 @@ type Program struct {
 	// set custom environment variables.
 	ColorProfile *colorprofile.Profile
 
-	initialModel Model
+	// InitialModel is the initial model for the program and is the only
+	// required field when creating a new program.
+	InitialModel Model
 
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
@@ -541,7 +543,7 @@ func Interrupt() Msg {
 // NewProgram creates a new Program.
 func NewProgram(model Model) *Program {
 	p := &Program{
-		initialModel: model,
+		InitialModel: model,
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
 	}
@@ -884,6 +886,10 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
 func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) {
+	if p.InitialModel == nil {
+		return nil, errors.New("bubbletea: InitialModel cannot be nil")
+	}
+
 	// A context can be provided with a ProgramOption, but if none was provided
 	// we'll use the default background context.
 	if ctx == nil {
@@ -943,7 +949,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
-		return p.initialModel, err
+		return p.InitialModel, err
 	}
 
 	// Get the initial window size.
@@ -952,7 +958,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
-			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
+			return p.InitialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
 		width, height = w, h
@@ -962,7 +968,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
 
 	if p.renderer == nil { //nolint:nestif
-		if hasView(p.initialModel) {
+		if hasView(p.InitialModel) {
 			// If no renderer is set use the cursed one.
 			r := newCursedRenderer(
 				p.output,
@@ -996,7 +1002,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	go p.Send(EnvMsg(p.environ))
 
 	// Init the input reader and initial model.
-	model := p.initialModel
+	model := p.InitialModel
 	if p.input != nil {
 		if err := p.initInputReader(false); err != nil {
 			return model, err
