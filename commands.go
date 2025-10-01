@@ -163,23 +163,6 @@ func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	}
 }
 
-// setWindowTitleMsg is an internal message used to set the window title.
-type setWindowTitleMsg string
-
-// SetWindowTitle produces a command that sets the terminal title.
-//
-// For example:
-//
-//	func (m model) Init() (Model, Cmd) {
-//	    // Set title.
-//	    return m, tea.SetWindowTitle("My App")
-//	}
-func SetWindowTitle(title string) Cmd {
-	return func() Msg {
-		return setWindowTitleMsg(title)
-	}
-}
-
 type windowSizeMsg struct{}
 
 // RequestWindowSize is a command that queries the terminal for its current

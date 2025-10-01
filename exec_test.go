@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"os/exec"
+	"runtime"
 	"testing"
 )
 
@@ -62,7 +63,7 @@ func TestTeaExec(t *testing.T) {
 		},
 	}
 
-	if !isWindows() {
+	if runtime.GOOS != "windows" {
 		tests = append(tests, []test{
 			{
 				name:      "true",

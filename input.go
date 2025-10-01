@@ -29,9 +29,7 @@ func (p *Program) translateInputEvent(e uv.Event) Msg {
 	case uv.KeyPressEvent:
 		return KeyPressMsg(e)
 	case uv.KeyReleaseEvent:
-		if !isWindows() || p.requestedEnhancements.keyReleases {
-			return KeyReleaseMsg(e)
-		}
+		return KeyReleaseMsg(e)
 	case uv.MouseClickEvent:
 		return MouseClickMsg(e)
 	case uv.MouseMotionEvent:
@@ -53,15 +51,7 @@ func (p *Program) translateInputEvent(e uv.Event) Msg {
 	case uv.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
 	case uv.KittyEnhancementsEvent:
-		return KeyboardEnhancementsMsg{
-			kittyFlags:      int(e),
-			modifyOtherKeys: p.activeEnhancements.modifyOtherKeys,
-		}
-	case uv.ModifyOtherKeysEvent:
-		return KeyboardEnhancementsMsg{
-			modifyOtherKeys: int(e),
-			kittyFlags:      p.activeEnhancements.kittyFlags,
-		}
+		return KeyboardEnhancementsMsg(e)
 	}
 	return e
 }

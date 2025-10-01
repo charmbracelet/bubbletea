@@ -6,7 +6,6 @@ import (
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
-	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 )
 
@@ -34,39 +33,6 @@ func (p *Program) initTerminal() error {
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	// We don't need to reset [ansi.AltScreenSaveCursorMode] and
-	// [ansi.TextCursorEnableMode] because they are automatically reset when we
-	// close the renderer. See [screenRenderer.close] and
-	// [cellbuf.Screen.Close].
-
-	if p.modes.IsSet(ansi.BracketedPasteMode) {
-		p.execute(ansi.ResetBracketedPasteMode)
-	}
-
-	btnEvents := p.modes.IsSet(ansi.ButtonEventMouseMode)
-	allEvents := p.modes.IsSet(ansi.AnyEventMouseMode)
-	if btnEvents || allEvents {
-		if btnEvents {
-			p.execute(ansi.ResetButtonEventMouseMode)
-		}
-		if allEvents {
-			p.execute(ansi.ResetAnyEventMouseMode)
-		}
-		p.execute(ansi.ResetSgrExtMouseMode)
-	}
-	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.ResetModifyOtherKeys)
-	}
-	if p.activeEnhancements.kittyFlags != 0 {
-		p.execute(ansi.KittyKeyboard(0, 1))
-	}
-	if p.modes.IsSet(ansi.FocusEventMode) {
-		p.execute(ansi.ResetFocusEventMode)
-	}
-	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
-		p.execute(ansi.ResetGraphemeClusteringMode)
-	}
-
 	// Flush queued commands.
 	_ = p.flush()
 
@@ -109,10 +75,6 @@ func (p *Program) initInputReader(cancel bool) error {
 
 	drv := uv.NewTerminalReader(p.cancelReader, term)
 	drv.SetLogger(p.logger)
-	if p.mouseMode {
-		mouseMode := uv.ButtonMouseMode | uv.DragMouseMode | uv.AllMouseMode
-		drv.MouseMode = &mouseMode
-	}
 	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
 

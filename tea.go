@@ -501,10 +501,8 @@ type Program struct {
 	cancelReader          cancelreader.CancelReader
 	inputScanner          *uv.TerminalReader
 	readLoopDone          chan struct{}
-	mouseMode             bool // indicates whether we should enable mouse on Windows
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
-	modes         ansi.Modes
 	ignoreSignals uint32
 
 	// ticker is the ticker that will be used to write to the renderer.
@@ -515,12 +513,6 @@ type Program struct {
 
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
-
-	// stores the requested keyboard enhancements.
-	requestedEnhancements KeyboardEnhancements
-	// activeEnhancements stores the active keyboard enhancements read from the
-	// terminal.
-	activeEnhancements KeyboardEnhancements
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -577,7 +569,6 @@ func NewProgram(model Model) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
-		modes:        ansi.Modes{},
 	}
 
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
@@ -738,68 +729,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					go p.Send(m) // send hit messages
 				}
 
-			case modeReportMsg:
-				switch msg.Mode {
-				case ansi.GraphemeClusteringMode:
-					// 1 means mode is set (see DECRPM).
-					p.modes[ansi.GraphemeClusteringMode] = msg.Value
-				}
-
-			case enableModeMsg:
-				mode := p.modes.Get(msg.Mode)
-				if mode.IsSet() {
-					break
-				}
-
-				p.modes.Set(msg.Mode)
-
-				switch msg.Mode {
-				case ansi.AltScreenSaveCursorMode:
-					p.renderer.enterAltScreen()
-					// Main and alternate screen have their own Kitty keyboard
-					// stack. We need to request keyboard enhancements again
-					// when entering/exiting the alternate screen.
-					p.requestKeyboardEnhancements()
-				case ansi.TextCursorEnableMode:
-					p.renderer.showCursor()
-				case ansi.GraphemeClusteringMode:
-					// We store the state of grapheme clustering after we enable it
-					// and get a response in the eventLoop.
-					p.execute(ansi.SetGraphemeClusteringMode + ansi.RequestGraphemeClusteringMode)
-				default:
-					p.execute(ansi.SetMode(msg.Mode))
-				}
-
-			case disableModeMsg:
-				mode := p.modes.Get(msg.Mode)
-				if mode.IsReset() {
-					break
-				}
-
-				p.modes.Reset(msg.Mode)
-
-				switch msg.Mode {
-				case ansi.AltScreenSaveCursorMode:
-					p.renderer.exitAltScreen()
-					// Main and alternate screen have their own Kitty keyboard
-					// stack. We need to request keyboard enhancements again
-					// when entering/exiting the alternate screen.
-					p.requestKeyboardEnhancements()
-				case ansi.TextCursorEnableMode:
-					p.renderer.hideCursor()
-				default:
-					p.execute(ansi.ResetMode(msg.Mode))
-				}
-
-			case enableMouseCellMotionMsg:
-				p.enableMouse(false)
-
-			case enableMouseAllMotionMsg:
-				p.enableMouse(true)
-
-			case disableMouseMotionMsg:
-				p.disableMouse()
-
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
 
@@ -820,58 +749,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case cursorColorMsg:
 				p.execute(ansi.RequestCursorColor)
-
-			case KeyboardEnhancementsMsg:
-				p.activeEnhancements.kittyFlags = msg.kittyFlags
-				p.activeEnhancements.modifyOtherKeys = msg.modifyOtherKeys
-
-			case enableKeyboardEnhancementsMsg:
-				if p.startupOptions.has(withoutKeyEnhancements) {
-					break
-				}
-
-				if isWindows() {
-					// We use the Windows Console API which supports keyboard
-					// enhancements.
-					// Send an empty message to tell the user we support
-					// keyboard enhancements on Windows.
-					go p.Send(KeyboardEnhancementsMsg{})
-					break
-				}
-
-				var ke KeyboardEnhancements
-				for _, e := range msg {
-					e(&ke)
-				}
-
-				p.requestedEnhancements.kittyFlags |= ke.kittyFlags
-				if ke.modifyOtherKeys > p.requestedEnhancements.modifyOtherKeys {
-					p.requestedEnhancements.modifyOtherKeys = ke.modifyOtherKeys
-				}
-
-				p.requestKeyboardEnhancements()
-
-			case disableKeyboardEnhancementsMsg:
-				if p.startupOptions.has(withoutKeyEnhancements) {
-					break
-				}
-
-				if isWindows() {
-					// We use the Windows Console API which supports keyboard
-					// enhancements.
-					break
-				}
-
-				if p.activeEnhancements.modifyOtherKeys > 0 {
-					p.execute(ansi.ResetModifyOtherKeys)
-					p.activeEnhancements.modifyOtherKeys = 0
-					p.requestedEnhancements.modifyOtherKeys = 0
-				}
-				if p.activeEnhancements.kittyFlags > 0 {
-					p.execute(ansi.KittyKeyboard(0, 1))
-					p.activeEnhancements.kittyFlags = 0
-					p.requestedEnhancements.kittyFlags = 0
-				}
 
 			case execMsg:
 				// NB: this blocks.
@@ -1153,7 +1030,6 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 
 	// Hide the cursor before starting the renderer. This is handled by the
 	// renderer so we don't need to write the sequence here.
-	p.modes.Reset(ansi.TextCursorEnableMode)
 	p.renderer.hideCursor()
 
 	// Start the renderer.
@@ -1392,12 +1268,6 @@ func (p *Program) RestoreTerminal() error {
 	}
 
 	p.startRenderer()
-	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.KeyModifierOptions(4, p.activeEnhancements.modifyOtherKeys)) //nolint:mnd
-	}
-	if p.activeEnhancements.kittyFlags != 0 {
-		p.execute(ansi.KittyKeyboard(p.activeEnhancements.kittyFlags, 1))
-	}
 
 	// If the output is a terminal, it may have been resized while another
 	// process was at the foreground, in which case we may not have received
@@ -1480,85 +1350,4 @@ func (p *Program) stopRenderer(kill bool) {
 	}
 
 	_ = p.renderer.close()
-}
-
-// requestKeyboardEnhancements tries to enable keyboard enhancements and read
-// the active keyboard enhancements from the terminal.
-func (p *Program) requestKeyboardEnhancements() {
-	// XXX: We write to the renderer directly so that we synchronize with the
-	// alt-screen state of the renderer. This is because the main screen and
-	// alternate screen have their own Kitty keyboard state stack.
-	// XXX: Tmux has added support for Xterm modifyOtherKeys, but it
-	// is not enabled by default and when enabled, it can cause
-	// issues with some keys like escape and typeing.
-	if p.environ.Getenv("TMUX") == "" && p.requestedEnhancements.modifyOtherKeys > 0 {
-		_, _ = p.renderer.writeString(ansi.KeyModifierOptions(4, p.requestedEnhancements.modifyOtherKeys)) //nolint:mnd
-		_, _ = p.renderer.writeString(ansi.QueryModifyOtherKeys)
-	}
-	if p.requestedEnhancements.kittyFlags > 0 {
-		_, _ = p.renderer.writeString(ansi.KittyKeyboard(p.requestedEnhancements.kittyFlags, 1))
-		_, _ = p.renderer.writeString(ansi.RequestKittyKeyboard)
-	}
-}
-
-// enableMouse enables mouse events on the terminal. When all is true, it will
-// enable [ansi.AnyEventMouseMode], otherwise, it will use
-// [ansi.ButtonEventMouseMode].
-// Note this has no effect on Windows since we use the Windows Console API.
-func (p *Program) enableMouse(all bool) {
-	if isWindows() {
-		// XXX: This is used to enable mouse mode on Windows. We need
-		// to reinitialize the cancel reader to get the mouse events to
-		// work.
-		if !p.mouseMode {
-			p.mouseMode = true
-			if p.inputScanner != nil {
-				// Only reinitialize if the input reader has been initialized.
-				_ = p.initInputReader(true)
-			}
-		}
-	}
-
-	if all {
-		p.execute(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
-		p.modes.Set(ansi.AnyEventMouseMode, ansi.SgrExtMouseMode)
-	} else {
-		p.execute(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
-		p.modes.Set(ansi.ButtonEventMouseMode, ansi.SgrExtMouseMode)
-	}
-}
-
-// disableMouse disables mouse events on the terminal.
-// Note this has no effect on Windows since we use the Windows Console API.
-func (p *Program) disableMouse() {
-	if isWindows() {
-		// XXX: On Windows, mouse mode is enabled on the input reader
-		// level. We need to instruct the input reader to stop reading
-		// mouse events.
-		if p.mouseMode {
-			p.mouseMode = false
-			if p.inputScanner != nil {
-				// Only reinitialize if the input reader has been initialized.
-				_ = p.initInputReader(true)
-			}
-		}
-	}
-
-	var modes []ansi.Mode
-	if p.modes.IsSet(ansi.AnyEventMouseMode) {
-		modes = append(modes, ansi.AnyEventMouseMode)
-	}
-	if p.modes.IsSet(ansi.ButtonEventMouseMode) {
-		modes = append(modes, ansi.ButtonEventMouseMode)
-	}
-	if len(modes) > 0 {
-		modes = append(modes, ansi.SgrExtMouseMode)
-		for _, m := range modes {
-			// We could combine all of these modes into one single sequence,
-			// but we're being cautious here for terminals that might not support
-			// that format i.e. `CSI ? 10003 ; 1006 l`.
-			p.execute(ansi.ResetMode(m))
-			p.modes.Reset(m)
-		}
-	}
 }

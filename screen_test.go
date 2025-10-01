@@ -10,7 +10,13 @@ import (
 )
 
 type testViewOpts struct {
-	altScreen bool
+	altScreen   bool
+	mouseMode   MouseMode
+	showCursor  bool
+	disableBp   bool
+	disableKe   bool
+	keyReleases bool
+	bgColor     color.Color
 }
 
 func testViewOptsCmds(opts ...testViewOpts) []Cmd {
@@ -64,6 +70,58 @@ func TestViewModel(t *testing.T) {
 				{altScreen: true},
 			},
 		},
+		{
+			name: "mouse_cellmotion",
+			opts: []testViewOpts{
+				{mouseMode: MouseModeCellMotion},
+			},
+		},
+		{
+			name: "mouse_allmotion",
+			opts: []testViewOpts{
+				{mouseMode: MouseModeAllMotion},
+			},
+		},
+		{
+			name: "mouse_disable",
+			opts: []testViewOpts{
+				{mouseMode: MouseModeAllMotion},
+				{mouseMode: MouseModeNone},
+			},
+		},
+		{
+			name: "cursor_hide",
+			opts: []testViewOpts{
+				{},
+			},
+		},
+		{
+			name: "cursor_hideshow",
+			opts: []testViewOpts{
+				{showCursor: false},
+				{showCursor: true},
+			},
+		},
+		{
+			name: "bp_stop_start",
+			opts: []testViewOpts{
+				{disableBp: true},
+				{disableBp: false},
+			},
+		},
+		{
+			name: "kitty_stop_startreleases",
+			opts: []testViewOpts{
+				{disableKe: true},
+				{disableKe: false, keyReleases: true},
+			},
+		},
+		{
+			name: "bg_set_color",
+			opts: []testViewOpts{
+				{bgColor: color.RGBA{255, 255, 255, 255}},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -109,48 +167,12 @@ func TestClearMsg(t *testing.T) {
 			cmds: []Cmd{ClearScreen},
 		},
 		{
-			name: "mouse_cellmotion",
-			cmds: []Cmd{EnableMouseCellMotion},
-		},
-		{
-			name: "mouse_allmotion",
-			cmds: []Cmd{EnableMouseAllMotion},
-		},
-		{
-			name: "mouse_disable",
-			cmds: []Cmd{EnableMouseAllMotion, DisableMouse},
-		},
-		{
-			name: "cursor_hide",
-			cmds: []Cmd{HideCursor},
-		},
-		{
-			name: "cursor_hideshow",
-			cmds: []Cmd{HideCursor, ShowCursor},
-		},
-		{
-			name: "bp_stop_start",
-			cmds: []Cmd{DisableBracketedPaste, EnableBracketedPaste},
-		},
-		{
 			name: "read_set_clipboard",
 			cmds: []Cmd{ReadClipboard, SetClipboard("success")},
 		},
 		{
 			name: "bg_fg_cur_color",
 			cmds: []Cmd{RequestForegroundColor, RequestBackgroundColor, RequestCursorColor},
-		},
-		{
-			name: "bg_set_color",
-			cmds: []Cmd{SetBackgroundColor(color.RGBA{255, 255, 255, 255})},
-		},
-		{
-			name: "grapheme_clustering",
-			cmds: []Cmd{EnableGraphemeClustering},
-		},
-		{
-			name: "kitty_start",
-			cmds: []Cmd{DisableKeyboardEnhancements, RequestKeyReleases},
 		},
 	}
 
