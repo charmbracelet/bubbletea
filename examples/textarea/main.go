@@ -42,7 +42,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return textarea.Blink
+	return tea.Batch(textarea.Blink, tea.RequestBackgroundColor)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,6 +50,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		// Update styling now that we know the background color.
+		m.textarea.SetStyles(textarea.DefaultStyles(msg.IsDark()))
+
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
@@ -65,6 +69,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+		// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
 		return m, nil
@@ -88,6 +93,8 @@ func (m model) View() tea.View {
 	if !m.textarea.VirtualCursor() {
 		c = m.textarea.Cursor()
 
+		// Set the y offset of the cursor based on the position of the textarea
+		// in the application.
 		offset := lipgloss.Height(m.headerView())
 		c.Y += offset
 	}
