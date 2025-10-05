@@ -17,6 +17,10 @@ updates:
       all:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: github.com/charmbracelet/bubbletea/v2
+        versions:
+          - v2.0.0-beta1
 
   - package-ecosystem: "github-actions"
     directory: "/"
