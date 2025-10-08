@@ -317,7 +317,7 @@ func (p *Program) handleResize() chan struct{} {
 
 	if p.ttyOutput != nil {
 		// Get the initial terminal size and send it to the program.
-		go p.checkResize()
+		go p.checkResize(true)
 
 		// Listen for window resizes.
 		go p.listenForResize(ch)
@@ -911,7 +911,7 @@ func (p *Program) RestoreTerminal() error {
 	// process was at the foreground, in which case we may not have received
 	// SIGWINCH. Detect any size change now and propagate the new size as
 	// needed.
-	go p.checkResize()
+	go p.checkResize(false)
 
 	return nil
 }
