@@ -45,15 +45,16 @@ func (m MouseEvent) String() (s string) {
 		s += "shift+"
 	}
 
-	if m.Button == MouseButtonNone { //nolint:nestif
+	switch {
+	case m.Button == MouseButtonNone:
 		if m.Action == MouseActionMotion || m.Action == MouseActionRelease {
 			s += mouseActions[m.Action]
 		} else {
 			s += "unknown"
 		}
-	} else if m.IsWheel() {
+	case m.IsWheel():
 		s += mouseButtons[m.Button]
-	} else {
+	default:
 		btn := mouseButtons[m.Button]
 		if btn != "" {
 			s += btn
@@ -241,11 +242,12 @@ func parseMouseButton(b int, isSGR bool) MouseEvent {
 		bitsMask = 0b0000_0011
 	)
 
-	if e&bitAdd != 0 {
+	switch {
+	case e&bitAdd != 0:
 		m.Button = MouseButtonBackward + MouseButton(e&bitsMask)
-	} else if e&bitWheel != 0 {
+	case e&bitWheel != 0:
 		m.Button = MouseButtonWheelUp + MouseButton(e&bitsMask)
-	} else {
+	default:
 		m.Button = MouseButtonLeft + MouseButton(e&bitsMask)
 		// X10 reports a button release as 0b0000_0011 (3)
 		if e&bitsMask == bitsMask {

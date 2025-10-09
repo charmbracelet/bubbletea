@@ -671,7 +671,8 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 
 	// XXX: Should we enable mouse mode on Windows?
 	// This needs to happen before initializing the cancel and input reader.
-	p.mouseMode = p.startupOptions&withMouseCellMotion != 0 || p.startupOptions&withMouseAllMotion != 0
+	p.mouseMode = p.startupOptions&withMouseCellMotion != 0 ||
+		p.startupOptions&withMouseAllMotion != 0
 
 	if p.startupOptions&withReportFocus != 0 {
 		p.renderer.enableReportFocus()
@@ -720,27 +721,30 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	}
 
 	killed := p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil
-	if killed {
-		if err == nil && p.externalCtx.Err() != nil {
-			// Return also as context error the cancellation of an external context.
-			// This is the context the user knows about and should be able to act on.
-			err = fmt.Errorf("%w: %w", ErrProgramKilled, p.externalCtx.Err())
-		} else if err == nil && p.ctx.Err() != nil {
-			// Return only that the program was killed (not the internal mechanism).
-			// The user does not know or need to care about the internal program context.
-			err = ErrProgramKilled
-		} else {
-			// Return that the program was killed and also the error that caused it.
-			err = fmt.Errorf("%w: %w", ErrProgramKilled, err)
-		}
-	} else {
+	if !killed {
 		// Graceful shutdown of the program (not killed):
 		// Ensure we rendered the final state of the model.
 		p.renderer.write(model.View())
+		p.shutdown(false)
+
+		return model, err
 	}
 
-	// Restore terminal state.
-	p.shutdown(killed)
+	switch {
+	case err == nil && p.externalCtx.Err() != nil:
+		// Return also as context error the cancellation of an external context.
+		// This is the context the user knows about and should be able to act on.
+		err = fmt.Errorf("%w: %w", ErrProgramKilled, p.externalCtx.Err())
+	case err == nil && p.ctx.Err() != nil:
+		// Return only that the program was killed (not the internal mechanism).
+		// The user does not know or need to care about the internal program context.
+		err = ErrProgramKilled
+	default:
+		// Return that the program was killed and also the error that caused it.
+		err = fmt.Errorf("%w: %w", ErrProgramKilled, err)
+	}
+
+	p.shutdown(true)
 
 	return model, err
 }
