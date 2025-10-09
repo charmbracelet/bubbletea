@@ -14,7 +14,6 @@ import (
 var extSequences = func() map[string]Key {
 	s := map[string]Key{}
 	for seq, key := range sequences {
-		key := key
 		s[seq] = key
 		if !key.Alt {
 			key.Alt = true
