@@ -199,7 +199,7 @@ func (r *standardRenderer) flush() {
 				// last cell of the line.
 
 				// Removing previously rendered content at the end of line.
-				line = line + ansi.EraseLineRight
+				line += ansi.EraseLineRight
 			}
 
 			_, _ = buf.WriteString(line)
@@ -248,7 +248,7 @@ func (r *standardRenderer) flush() {
 			// last cell of the line.
 
 			// Removing previously rendered content at the end of line.
-			line = line + ansi.EraseLineRight
+			line += ansi.EraseLineRight
 		}
 
 		_, _ = buf.WriteString(line)
