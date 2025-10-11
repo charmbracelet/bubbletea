@@ -74,6 +74,8 @@ func (s *cursedRenderer) close() (err error) {
 	} else {
 		_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
 	}
+	// Clear the progress bar
+	_, _ = s.scr.WriteString(ansi.ResetProgressBar)
 	if s.cursorHidden {
 		s.scr.ShowCursor()
 		s.cursorHidden = false
