@@ -130,25 +130,20 @@ func TestViewModel(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testViewModel{testModel: &testModel{}}
-			p := NewProgram(m)
-
-			// Set the initial window size for the program.
-			p.InitialWidth = 80
-			p.InitialHeight = 24
-
-			// Use ANSI256 to increase test coverage.
-			cp := colorprofile.ANSI256
-			p.ColorProfile = &cp
-
-			p.Input = &in
-			p.Output = &buf
-			p.Env = []string{
-				"TERM=xterm-256color", // always use xterm and 256 colors for tests
-			}
+			p := NewProgram(m,
+				// Set the initial window size for the program.
+				WithWindowSize(80, 24),
+				// Use ANSI256 to increase test coverage.
+				WithColorProfile(colorprofile.ANSI256),
+				// always use xterm and 256 colors for tests
+				WithEnvironment([]string{"TERM=xterm-256color"}),
+				WithInput(&in),
+				WithOutput(&buf),
+			)
 
 			go p.Send(append(sequenceMsg(testViewOptsCmds(test.opts...)), Quit))
 
-			if _, err := p.Run(t.Context()); err != nil {
+			if _, err := p.Run(); err != nil {
 				t.Fatal(err)
 			}
 			golden.RequireEqual(t, buf.Bytes())
@@ -182,25 +177,20 @@ func TestClearMsg(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testModel{}
-			p := NewProgram(m)
-
-			// Set the initial window size for the program.
-			p.InitialWidth = 80
-			p.InitialHeight = 24
-
-			// Use ANSI256 to increase test coverage.
-			cp := colorprofile.ANSI256
-			p.ColorProfile = &cp
-
-			p.Input = &in
-			p.Output = &buf
-			p.Env = []string{
-				"TERM=xterm-256color", // always use xterm and 256 colors for tests
-			}
+			p := NewProgram(m,
+				// Set the initial window size for the program.
+				WithWindowSize(80, 24),
+				// Use ANSI256 to increase test coverage.
+				WithColorProfile(colorprofile.ANSI256),
+				// always use xterm and 256 colors for tests
+				WithEnvironment([]string{"TERM=xterm-256color"}),
+				WithInput(&in),
+				WithOutput(&buf),
+			)
 
 			go p.Send(append(test.cmds, Quit))
 
-			if _, err := p.Run(t.Context()); err != nil {
+			if _, err := p.Run(); err != nil {
 				t.Fatal(err)
 			}
 			golden.RequireEqual(t, buf.Bytes())

@@ -354,50 +354,21 @@ func (h *channelHandlers) shutdown() {
 
 // Program is a terminal user interface.
 type Program struct {
-	// Input sets the input which, by default, is stdin when nil. In most cases
-	// you won't need to use this. To disable input entirely use
-	// [Program.DisableInput].
-	//
-	//	p := NewProgram(model)
-	//	p.Input = customInputFile
-	Input io.Reader
-
-	// Output sets the output which, by default, is stdout. In most cases you
-	// won't need to use this.
-	Output io.Writer
-
-	// Env sets the environment variables that the program will use. This
-	// useful when the program is running in a remote session (e.g. SSH) and
-	// you want to pass the environment variables from the remote session to
-	// the program.
-	//
-	// Example:
-	//
-	//	var sess ssh.Session // ssh.Session is a type from the github.com/charmbracelet/ssh package
-	//	pty, _, _ := sess.Pty()
-	//	environ := append(sess.Environ(), "TERM="+pty.Term)
-	//	p := tea.NewProgram(model)
-	//	p.Env = environ
-	Env []string
-
-	// DisableInput disables all input. This is useful for programs that
+	// disableInput disables all input. This is useful for programs that
 	// don't need input, like a progress bar or a spinner.
-	DisableInput bool
+	disableInput bool
 
-	// DisableSignalHandler disables the signal handler that Bubble Tea sets up
+	// disableSignalHandler disables the signal handler that Bubble Tea sets up
 	// for Programs. This is useful if you want to handle signals yourself.
-	DisableSignalHandler bool
+	disableSignalHandler bool
 
-	// DisableCatchPanics disables the panic catching that Bubble Tea does by
+	// disableCatchPanics disables the panic catching that Bubble Tea does by
 	// default. If panic catching is disabled the terminal will be in a fairly
 	// unusable state after a panic because Bubble Tea will not perform its usual
 	// cleanup on exit.
-	DisableCatchPanics bool
+	disableCatchPanics bool
 
-	// IgnoreSignals will ignore OS signals. This is mainly useful for testing.
-	IgnoreSignals bool
-
-	// Filter supplies an event filter that will be invoked before Bubble Tea
+	// filter supplies an event filter that will be invoked before Bubble Tea
 	// processes a tea.Msg. The event filter can return any tea.Msg which will
 	// then get handled by Bubble Tea instead of the original event. If the
 	// event filter returns nil, the event will be ignored and Bubble Tea will
@@ -422,35 +393,22 @@ type Program struct {
 	//	}
 	//
 	//	p := tea.NewProgram(Model{});
-	//	p.Filter = filter
+	//	p.filter = filter
 	//
 	//	if _,err := p.Run(context.Background()); err != nil {
 	//		fmt.Println("Error running program:", err)
 	//		os.Exit(1)
 	//	}
-	Filter func(Model, Msg) Msg
+	filter func(Model, Msg) Msg
 
-	// FPS sets a custom maximum FPS at which the renderer should run. If less
-	// than 1, the default value of 60 will be used. If over 120, the FPS will
+	// fps sets a custom maximum fps at which the renderer should run. If less
+	// than 1, the default value of 60 will be used. If over 120, the fps will
 	// be capped at 120.
-	FPS int
+	fps int
 
-	// Set the initial size of the terminal window. This is useful when you
-	// need to set the initial size of the terminal window, for example during
-	// testing or when you want to run your program in a non-interactive
-	// environment.
-	InitialWidth, InitialHeight int
-
-	// ColorProfile when not nil, sets the color profile that the program will
-	// use. This is useful when you want to force a specific color profile. By
-	// default, Bubble Tea will try to detect the terminal's color profile from
-	// environment variables and terminfo capabilities. Use [Program.Env] to
-	// set custom environment variables.
-	ColorProfile *colorprofile.Profile
-
-	// InitialModel is the initial model for the program and is the only
+	// initialModel is the initial model for the program and is the only
 	// required field when creating a new program.
-	InitialModel Model
+	initialModel Model
 
 	// DisableRenderer prevents the program from rendering to the terminal.
 	// This can be useful for running daemon-like programs that don't require a
@@ -466,12 +424,16 @@ type Program struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
+	// externalCtx is a context that was passed in via WithContext, otherwise defaulting
+	// to ctx.Background() (in case it was not), the internal context is derived from it.
+	externalCtx context.Context
+
 	msgs         chan Msg
 	errs         chan error
 	finished     chan struct{}
 	shutdownOnce sync.Once
 
-	profile colorprofile.Profile // the terminal color profile
+	profile *colorprofile.Profile // the terminal color profile
 
 	// where to send output, this will usually be os.Stdout.
 	output    io.Writer
@@ -498,9 +460,6 @@ type Program struct {
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
-
-	// initialized is true when the program has been initialized.
-	initialized atomic.Bool
 
 	// ticker is the ticker that will be used to write to the renderer.
 	ticker *time.Ticker
@@ -561,9 +520,41 @@ func Interrupt() Msg {
 }
 
 // NewProgram creates a new [Program].
-func NewProgram(model Model) *Program {
+func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
-		InitialModel: model,
+		initialModel: model,
+		msgs:         make(chan Msg),
+		errs:         make(chan error, 1),
+		rendererDone: make(chan struct{}),
+	}
+
+	// Apply all options to the program.
+	for _, opt := range opts {
+		opt(p)
+	}
+
+	// A context can be provided with a ProgramOption, but if none was provided
+	// we'll use the default background context.
+	if p.externalCtx == nil {
+		p.externalCtx = context.Background()
+	}
+	// Initialize context and teardown channel.
+	p.ctx, p.cancel = context.WithCancel(p.externalCtx)
+
+	// if no output was set, set it to stdout
+	if p.output == nil {
+		p.output = os.Stdout
+	}
+
+	// if no environment was set, set it to os.Environ()
+	if p.environ == nil {
+		p.environ = os.Environ()
+	}
+
+	if p.fps < 1 {
+		p.fps = defaultFPS
+	} else if p.fps > maxFPS {
+		p.fps = maxFPS
 	}
 
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
@@ -657,7 +648,7 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				// until Cmd returns.
 				go func() {
 					// Recover from panics.
-					if !p.DisableCatchPanics {
+					if !p.disableCatchPanics {
 						defer func() {
 							if r := recover(); r != nil {
 								p.recoverFromPanic(r)
@@ -690,8 +681,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			msg = p.translateInputEvent(msg)
 
 			// Filter messages.
-			if p.Filter != nil {
-				msg = p.Filter(model, msg)
+			if p.filter != nil {
+				msg = p.filter(model, msg)
 			}
 			if msg == nil {
 				continue
@@ -713,9 +704,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case CapabilityMsg:
 				switch msg {
 				case "RGB", "Tc":
-					if p.profile != colorprofile.TrueColor {
-						p.profile = colorprofile.TrueColor
-						go p.Send(ColorProfileMsg{p.profile})
+					if *p.profile != colorprofile.TrueColor {
+						tc := colorprofile.TrueColor
+						p.profile = &tc
+						go p.Send(ColorProfileMsg{*p.profile})
 					}
 				}
 
@@ -810,7 +802,7 @@ func (p *Program) render(model Model) {
 }
 
 func (p *Program) execSequenceMsg(msg sequenceMsg) {
-	if !p.DisableCatchPanics {
+	if !p.disableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
 				p.recoverFromGoPanic(r)
@@ -836,7 +828,7 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) {
 }
 
 func (p *Program) execBatchMsg(msg BatchMsg) {
-	if !p.DisableCatchPanics {
+	if !p.disableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
 				p.recoverFromGoPanic(r)
@@ -854,7 +846,7 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 		go func() {
 			defer wg.Done()
 
-			if !p.DisableCatchPanics {
+			if !p.disableCatchPanics {
 				defer func() {
 					if r := recover(); r != nil {
 						p.recoverFromGoPanic(r)
@@ -877,58 +869,17 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 	wg.Wait() // wait for all commands from batch msg to finish
 }
 
-func (p *Program) init(ctx context.Context) {
-	if p.initialized.Load() {
-		return
-	}
-	p.ctx, p.cancel = context.WithCancel(ctx)
-	p.msgs = make(chan Msg)
-	p.errs = make(chan error, 1)
-	p.rendererDone = make(chan struct{})
-	p.initialized.Store(true)
-}
-
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
-func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) {
-	if p.InitialModel == nil {
+func (p *Program) Run() (returnModel Model, returnErr error) {
+	if p.initialModel == nil {
 		return nil, errors.New("bubbletea: InitialModel cannot be nil")
 	}
-
-	// A context can be provided with a ProgramOption, but if none was provided
-	// we'll use the default background context.
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	p.init(ctx)
 
 	// Initialize context and teardown channel.
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
-
-	if p.Input == nil && !p.DisableInput {
-		p.Input = os.Stdin
-	}
-	if p.Output == nil {
-		p.Output = os.Stdout
-	}
-	if p.Env == nil {
-		p.Env = os.Environ()
-	}
-	if p.IgnoreSignals {
-		atomic.StoreUint32(&p.ignoreSignals, 1)
-	}
-	if p.FPS < 1 {
-		p.FPS = defaultFPS
-	} else if p.FPS > maxFPS {
-		p.FPS = maxFPS
-	}
-
-	p.input = p.Input
-	p.output = p.Output
-	p.environ = uv.Environ(p.Env)
 
 	p.finished = make(chan struct{})
 	defer func() {
@@ -937,13 +888,19 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 
 	defer p.cancel()
 
+	if p.disableInput {
+		p.input = nil
+	} else if p.input == nil {
+		p.input = os.Stdin
+	}
+
 	// Handle signals.
-	if !p.DisableSignalHandler {
+	if !p.disableSignalHandler {
 		p.handlers.add(p.handleSignals())
 	}
 
 	// Recover from panics.
-	if !p.DisableCatchPanics {
+	if !p.disableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
 				returnErr = fmt.Errorf("%w: %w", ErrProgramKilled, ErrProgramPanic)
@@ -955,16 +912,16 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
-		return p.InitialModel, err
+		return p.initialModel, err
 	}
 
 	// Get the initial window size.
-	width, height := p.InitialWidth, p.InitialHeight
+	width, height := p.width, p.height
 	if p.ttyOutput != nil {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
-			return p.InitialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
+			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
 		width, height = w, h
@@ -991,16 +948,14 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	}
 
 	// Get the color profile and send it to the program.
-	if p.ColorProfile == nil {
+	if p.profile == nil {
 		cp := colorprofile.Detect(p.output, p.environ)
-		p.ColorProfile = &cp
+		p.profile = &cp
 	}
 
-	p.profile = *p.ColorProfile
-
 	// Set the color profile on the renderer and send it to the program.
-	p.renderer.setColorProfile(p.profile)
-	go p.Send(ColorProfileMsg{p.profile})
+	p.renderer.setColorProfile(*p.profile)
+	go p.Send(ColorProfileMsg{*p.profile})
 
 	// Send the initial size to the program.
 	go p.Send(resizeMsg)
@@ -1010,7 +965,7 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 	go p.Send(EnvMsg(p.environ))
 
 	// Init the input reader and initial model.
-	model := p.InitialModel
+	model := p.initialModel
 	if p.input != nil {
 		if err := p.initInputReader(false); err != nil {
 			return model, err
@@ -1057,12 +1012,12 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 		err = <-p.errs // Drain a leftover error in case eventLoop crashed.
 	}
 
-	killed := ctx.Err() != nil || p.ctx.Err() != nil || err != nil
+	killed := p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil
 	if killed {
-		if err == nil && ctx.Err() != nil {
+		if err == nil && p.externalCtx.Err() != nil {
 			// Return also as context error the cancellation of an external context.
 			// This is the context the user knows about and should be able to act on.
-			err = fmt.Errorf("%w: %w", ErrProgramKilled, ctx.Err())
+			err = fmt.Errorf("%w: %w", ErrProgramKilled, p.externalCtx.Err())
 		} else if err == nil && p.ctx.Err() != nil {
 			// Return only that the program was killed (not the internal mechanism).
 			// The user does not know or need to care about the internal program context.
@@ -1091,12 +1046,6 @@ func (p *Program) Run(ctx context.Context) (returnModel Model, returnErr error) 
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
 func (p *Program) Send(msg Msg) {
-	if !p.initialized.Load() {
-		// Wait for the program to be initialized.
-		time.Sleep(10 * time.Millisecond)
-		p.Send(msg)
-		return
-	}
 	select {
 	case <-p.ctx.Done():
 	case p.msgs <- msg:
@@ -1300,7 +1249,7 @@ func (p *Program) Printf(template string, args ...any) {
 
 // startRenderer starts the renderer.
 func (p *Program) startRenderer() {
-	framerate := time.Second / time.Duration(p.FPS)
+	framerate := time.Second / time.Duration(p.fps)
 	if p.ticker == nil {
 		p.ticker = time.NewTicker(framerate)
 	} else {

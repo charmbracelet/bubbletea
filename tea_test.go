@@ -68,10 +68,12 @@ func TestTeaModel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
 
-	p := NewProgram(&testModel{})
-	p.Input = &in
-	p.Output = &buf
-	if _, err := p.Run(ctx); err != nil {
+	p := NewProgram(&testModel{},
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -85,9 +87,10 @@ func TestTeaQuit(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -98,7 +101,7 @@ func TestTeaQuit(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(t.Context()); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -112,12 +115,13 @@ func TestTeaWaitQuit(t *testing.T) {
 	errChan := make(chan error, 1)
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 
 	go func() {
-		_, err := p.Run(t.Context())
+		_, err := p.Run()
 		errChan <- err
 	}()
 
@@ -164,12 +168,13 @@ func TestTeaWaitKill(t *testing.T) {
 	errChan := make(chan error, 1)
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 
 	go func() {
-		_, err := p.Run(t.Context())
+		_, err := p.Run()
 		errChan <- err
 	}()
 
@@ -219,11 +224,11 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 
 	m := &testModel{}
 	shutdowns := uint32(0)
-	p := NewProgram(m)
-
-	p.Input = &in
-	p.Output = &buf
-	p.Filter = func(_ Model, msg Msg) Msg {
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+	p.filter = func(_ Model, msg Msg) Msg {
 		if _, ok := msg.(QuitMsg); !ok {
 			return msg
 		}
@@ -241,7 +246,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 		}
 	}()
 
-	if _, err := p.Run(t.Context()); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 	if shutdowns != preventCount {
@@ -254,9 +259,10 @@ func TestTeaKill(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -267,7 +273,7 @@ func TestTeaKill(t *testing.T) {
 		}
 	}()
 
-	_, err := p.Run(t.Context())
+	_, err := p.Run()
 
 	if !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
@@ -286,9 +292,11 @@ func TestTeaContext(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -299,7 +307,7 @@ func TestTeaContext(t *testing.T) {
 		}
 	}()
 
-	_, err := p.Run(ctx)
+	_, err := p.Run()
 
 	if !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
@@ -317,9 +325,11 @@ func TestTeaContextImplodeDeadlock(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -330,7 +340,7 @@ func TestTeaContextImplodeDeadlock(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(ctx); !errors.Is(err, ErrProgramKilled) {
+	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
@@ -346,9 +356,11 @@ func TestTeaContextBatchDeadlock(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -363,7 +375,7 @@ func TestTeaContextBatchDeadlock(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(ctx); !errors.Is(err, ErrProgramKilled) {
+	if _, err := p.Run(); !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
 	}
 }
@@ -377,9 +389,10 @@ func TestTeaBatchMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		p.Send(BatchMsg{inc, inc})
 
@@ -393,7 +406,7 @@ func TestTeaBatchMsg(t *testing.T) {
 		}
 	}()
 
-	if _, err := p.Run(t.Context()); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -411,12 +424,13 @@ func TestTeaSequenceMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go p.Send(sequenceMsg{inc, inc, Quit})
 
-	if _, err := p.Run(t.Context()); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -437,12 +451,13 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go p.Send(sequenceMsg{batch, inc, Quit})
 
-	if _, err := p.Run(t.Context()); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -460,12 +475,13 @@ func TestTeaNestedSequenceMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go p.Send(sequenceMsg{inc, Sequence(inc, inc, Batch(inc, inc)), Quit})
 
-	if _, err := p.Run(t.Context()); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -479,14 +495,15 @@ func TestTeaSend(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 
 	// sending before the program is started is a blocking operation
 	go p.Send(Quit())
 
-	if _, err := p.Run(t.Context()); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -499,9 +516,10 @@ func TestTeaNoRun(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 }
 
 func TestTeaPanic(t *testing.T) {
@@ -509,9 +527,10 @@ func TestTeaPanic(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -522,7 +541,7 @@ func TestTeaPanic(t *testing.T) {
 		}
 	}()
 
-	_, err := p.Run(t.Context())
+	_, err := p.Run()
 
 	if !errors.Is(err, ErrProgramPanic) {
 		t.Fatalf("Expected %v, got %v", ErrProgramPanic, err)
@@ -538,9 +557,10 @@ func TestTeaGoroutinePanic(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m)
-	p.Input = &in
-	p.Output = &buf
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -556,7 +576,7 @@ func TestTeaGoroutinePanic(t *testing.T) {
 		}
 	}()
 
-	_, err := p.Run(t.Context())
+	_, err := p.Run()
 
 	if !errors.Is(err, ErrProgramPanic) {
 		t.Fatalf("Expected %v, got %v", ErrProgramPanic, err)
