@@ -56,5 +56,4 @@ func (nilRenderer) reset() {}
 func (nilRenderer) writeString(string) (int, error) { return 0, nil }
 
 // hit implements the Renderer interface.
-func (n nilRenderer) hit(MouseMsg) []Msg  { return nil }
-func (n nilRenderer) resetLinesRendered() {}
+func (n nilRenderer) hit(MouseMsg) []Msg { return nil }

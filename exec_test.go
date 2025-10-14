@@ -42,11 +42,6 @@ type spyRenderer struct {
 	calledReset bool
 }
 
-func (r *spyRenderer) resetLinesRendered() {
-	r.calledReset = true
-	r.renderer.resetLinesRendered()
-}
-
 func TestTeaExec(t *testing.T) {
 	type test struct {
 		name      string
