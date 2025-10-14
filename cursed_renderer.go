@@ -17,7 +17,6 @@ type cursedRenderer struct {
 	w               io.Writer
 	scr             *uv.TerminalRenderer
 	buf             uv.ScreenBuffer
-	lastFrame       *string
 	lastView        *View
 	env             []string
 	term            string // the terminal type $TERM
@@ -450,11 +449,6 @@ func (s *cursedRenderer) render(v View) {
 
 	s.view = v
 	s.lastFrameHeight = frameArea.Dy()
-
-	// Cache the last rendered frame so we can avoid re-rendering it if
-	// the frame hasn't changed.
-	lastFrame := frame
-	s.lastFrame = &lastFrame
 }
 
 // hit implements renderer.
@@ -552,13 +546,15 @@ func (s *cursedRenderer) clearScreen() {
 
 // enableAltScreen sets the alt screen mode.
 func enableAltScreen(s *cursedRenderer, enable bool) {
+	if enable != s.scr.AltScreen() {
+		repaint(s)
+	}
 	if enable {
 		s.scr.EnterAltScreen()
 	} else {
 		s.scr.ExitAltScreen()
 	}
 	s.scr.SetRelativeCursor(!enable)
-	repaint(s)
 }
 
 // enterAltScreen implements renderer.
@@ -620,7 +616,7 @@ func (s *cursedRenderer) repaint() {
 }
 
 func repaint(s *cursedRenderer) {
-	s.lastFrame = nil
+	s.scr.Erase()
 }
 
 func setProgressBar(s *cursedRenderer, pb *ProgressBar) {
