@@ -69,9 +69,6 @@ func (s *cursedRenderer) start() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Force a full repaint to ensure the screen is in a consistent state.
-	repaint(s)
-
 	if s.lastView == nil {
 		return
 	}
@@ -529,7 +526,6 @@ func (s *cursedRenderer) resize(w, h int) {
 
 	s.scr.Resize(s.width, s.height)
 	s.width, s.height = w, h
-	repaint(s)
 	s.mu.Unlock()
 }
 
@@ -540,15 +536,11 @@ func (s *cursedRenderer) clearScreen() {
 	// screen redraw.
 	_, _ = s.scr.WriteString(ansi.CursorHomePosition)
 	s.scr.Redraw(s.buf.Buffer) // force redraw
-	repaint(s)
 	s.mu.Unlock()
 }
 
 // enableAltScreen sets the alt screen mode.
 func enableAltScreen(s *cursedRenderer, enable bool) {
-	if enable != s.scr.AltScreen() {
-		repaint(s)
-	}
 	if enable {
 		s.scr.EnterAltScreen()
 	} else {
@@ -607,16 +599,6 @@ func (s *cursedRenderer) insertAbove(lines string) {
 	}
 	s.scr.PrependString(strings.Join(strLines, "\n"))
 	s.mu.Unlock()
-}
-
-func (s *cursedRenderer) repaint() {
-	s.mu.Lock()
-	repaint(s)
-	s.mu.Unlock()
-}
-
-func repaint(s *cursedRenderer) {
-	s.scr.Erase()
 }
 
 func setProgressBar(s *cursedRenderer, pb *ProgressBar) {

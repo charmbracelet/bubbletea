@@ -772,9 +772,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case printLineMessage:
 				p.renderer.insertAbove(msg.messageBody)
 
-			case repaintMsg:
-				p.renderer.repaint()
-
 			case clearScreenMsg:
 				p.renderer.clearScreen()
 

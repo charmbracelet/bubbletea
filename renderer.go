@@ -57,14 +57,8 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
-	// repaint forces a full repaint.
-	repaint()
-
 	writeString(string) (int, error)
 }
-
-// repaintMsg forces a full repaint.
-type repaintMsg struct{}
 
 type printLineMessage struct {
 	messageBody string
