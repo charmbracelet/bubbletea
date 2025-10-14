@@ -28,6 +28,7 @@ type cursedRenderer struct {
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 	backspace     bool // whether to use backspace to optimize cursor movements
 	mapnl         bool
+	prependLines  []string
 }
 
 var _ renderer = &cursedRenderer{}
@@ -370,6 +371,14 @@ func (s *cursedRenderer) flush() error {
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.buf.Buffer)
 
+	// Push prepended lines if any.
+	if len(s.prependLines) > 0 {
+		for _, line := range s.prependLines {
+			prependLine(s, line)
+		}
+		s.prependLines = s.prependLines[:0]
+	}
+
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
 		// cursor position might get updated during rendering.
@@ -577,13 +586,17 @@ func (s *cursedRenderer) hideCursor() {
 // insertAbove implements renderer.
 func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Lock()
-	strLines := strings.Split(lines, "\n")
+	s.prependLines = append(s.prependLines, strings.Split(lines, "\n")...)
+	s.mu.Unlock()
+}
+
+func prependLine(s *cursedRenderer, line string) {
+	strLines := strings.Split(line, "\n")
 	for i, line := range strLines {
 		// If the line is wider than the screen, truncate it.
 		strLines[i] = ansi.Truncate(line, s.width, "")
 	}
 	s.scr.PrependString(strings.Join(strLines, "\n"))
-	s.mu.Unlock()
 }
 
 func setProgressBar(s *cursedRenderer, pb *ProgressBar) {
