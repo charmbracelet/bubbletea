@@ -398,10 +398,10 @@ type Program struct {
 	// required field when creating a new program.
 	initialModel Model
 
-	// DisableRenderer prevents the program from rendering to the terminal.
+	// disableRenderer prevents the program from rendering to the terminal.
 	// This can be useful for running daemon-like programs that don't require a
 	// UI but still want to take advantage of Bubble Tea's architecture.
-	DisableRenderer bool
+	disableRenderer bool
 
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
@@ -918,7 +918,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
 
 	if p.renderer == nil {
-		if p.DisableRenderer {
+		if p.disableRenderer {
 			p.renderer = &nilRenderer{}
 		} else {
 			// If no renderer is set use the cursed one.

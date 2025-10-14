@@ -17,6 +17,13 @@ func TestOptions(t *testing.T) {
 		}
 	})
 
+	t.Run("renderer", func(t *testing.T) {
+		p := NewProgram(nil, WithoutRenderer())
+		if !p.disableRenderer {
+			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
+		}
+	})
+
 	t.Run("without signals", func(t *testing.T) {
 		p := NewProgram(nil, WithoutSignals())
 		if atomic.LoadUint32(&p.ignoreSignals) == 0 {
