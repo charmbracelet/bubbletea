@@ -16,9 +16,6 @@ func (n nilRenderer) start() {}
 // clearScreen implements renderer.
 func (n nilRenderer) clearScreen() {}
 
-// repaint implements renderer.
-func (n nilRenderer) repaint() {}
-
 // enterAltScreen implements renderer.
 func (n nilRenderer) enterAltScreen() {}
 
