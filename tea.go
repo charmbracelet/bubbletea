@@ -477,6 +477,8 @@ type Program struct {
 	useHardTabs bool
 	// whether to use backspace to optimize cursor movements
 	useBackspace bool
+
+	mu sync.Mutex
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -1077,11 +1079,16 @@ func (p *Program) Wait() {
 
 // execute writes the given sequence to the program output.
 func (p *Program) execute(seq string) {
+	p.mu.Lock()
 	_, _ = p.outputBuf.WriteString(seq)
+	p.mu.Unlock()
 }
 
 // flush flushes the output buffer to the program output.
 func (p *Program) flush() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if p.outputBuf.Len() == 0 {
 		return nil
 	}
