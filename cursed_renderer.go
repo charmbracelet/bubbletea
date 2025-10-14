@@ -14,21 +14,20 @@ import (
 )
 
 type cursedRenderer struct {
-	w               io.Writer
-	scr             *uv.TerminalRenderer
-	buf             uv.ScreenBuffer
-	lastView        *View
-	env             []string
-	term            string // the terminal type $TERM
-	width, height   int
-	lastFrameHeight int // the height of the last rendered frame, used to determine if we need to resize the screen buffer
-	mu              sync.Mutex
-	profile         colorprofile.Profile
-	logger          uv.Logger
-	view            View
-	hardTabs        bool // whether to use hard tabs to optimize cursor movements
-	backspace       bool // whether to use backspace to optimize cursor movements
-	mapnl           bool
+	w             io.Writer
+	scr           *uv.TerminalRenderer
+	buf           uv.ScreenBuffer
+	lastView      *View
+	env           []string
+	term          string // the terminal type $TERM
+	width, height int
+	mu            sync.Mutex
+	profile       colorprofile.Profile
+	logger        uv.Logger
+	view          View
+	hardTabs      bool // whether to use hard tabs to optimize cursor movements
+	backspace     bool // whether to use backspace to optimize cursor movements
+	mapnl         bool
 }
 
 var _ renderer = &cursedRenderer{}
@@ -435,7 +434,6 @@ func (s *cursedRenderer) render(v View) {
 	}
 
 	s.view = v
-	s.lastFrameHeight = frameArea.Dy()
 }
 
 // hit implements renderer.
