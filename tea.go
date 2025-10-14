@@ -298,18 +298,6 @@ func NewCursor(x, y int) *Cursor {
 	}
 }
 
-// CursorModel is an optional interface that can be implemented by the main
-// model to provide a view that manages the cursor. If the main model does not
-// implement a view interface, the program won't render anything.
-type CursorModel interface {
-	// View renders the program's UI, which is just a string. The view is
-	// rendered after every Update. The cursor is optional, if it's nil the
-	// cursor will be hidden.
-	// Use [NewCursor] to quickly create a cursor for a given position with
-	// default styles.
-	View() (string, *Cursor)
-}
-
 // Cmd is an IO operation that returns a message when it's complete. If it's
 // nil it's considered a no-op. Use it for things like HTTP requests, timers,
 // saving and loading from disk, and so on.
