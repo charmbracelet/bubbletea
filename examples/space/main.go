@@ -101,7 +101,8 @@ func (m model) View() tea.View {
 
 	// Color display
 	var s strings.Builder
-	for y := range m.height {
+	height := m.height - 1 // leave one line for title
+	for y := range height {
 		for x := range m.width {
 			xi := (x + m.frameCount) % m.width
 			fg := m.colors[y*2][xi]
@@ -109,10 +110,15 @@ func (m model) View() tea.View {
 			st := lipgloss.NewStyle().Foreground(fg).Background(bg)
 			s.WriteString(st.Render("▀"))
 		}
-		s.WriteByte('\n')
+		if y < height-1 {
+			s.WriteString("\n")
+		}
 	}
 
-	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, title, s.String()))
+	v := tea.NewView(strings.Join([]string{
+		title,
+		s.String(),
+	}, "\n"))
 	v.AltScreen = true
 	return v
 }
