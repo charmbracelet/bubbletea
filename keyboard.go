@@ -11,7 +11,7 @@ type KeyboardEnhancementsMsg int
 // SupportsKeyDisambiguation returns whether the terminal supports reporting
 // disambiguous keys as escape codes.
 func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
-	return k&ansi.KittyDisambiguateEscapeCodes != 0 || k >= 1
+	return k&ansi.KittyDisambiguateEscapeCodes != 0
 }
 
 // SupportsKeyReleases returns whether the terminal supports key release
