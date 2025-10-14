@@ -44,25 +44,6 @@ func WithInput(input io.Reader) ProgramOption {
 	}
 }
 
-// WithInputTTY opens a new TTY for input (or console input device on Windows).
-//
-// Deprecated: This option is merely a convenience wrapper around OpenTTY and
-// is not recommended for use in new applications. Instead, call OpenTTY
-// directly and pass the returned input and output to WithInput and WithOutput
-// respectively. This makes it clearer that a TTY is being opened and allows
-// you to handle any errors that may occur.
-func WithInputTTY() ProgramOption {
-	return func(p *Program) {
-		in, out, err := OpenTTY()
-		if err != nil {
-			// If we can't open a TTY, fall back to standard input.
-			return
-		}
-		p.input = in
-		p.output = out
-	}
-}
-
 // WithEnvironment sets the environment variables that the program will use.
 // This useful when the program is running in a remote session (e.g. SSH) and
 // you want to pass the environment variables from the remote session to the

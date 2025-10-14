@@ -55,14 +55,6 @@ func TestOptions(t *testing.T) {
 			})
 		})
 
-		t.Run("tty input", func(t *testing.T) {
-			exercise(t, WithInputTTY(), func(p *Program) {
-				if _, ok := p.input.(*os.File); !ok {
-					t.Errorf("expected input to be tty, got %v", p.input)
-				}
-			})
-		})
-
 		t.Run("custom input", func(t *testing.T) {
 			var b bytes.Buffer
 			exercise(t, WithInput(&b), func(p *Program) {
