@@ -464,11 +464,6 @@ func (s *cursedRenderer) render(v View) {
 	}
 
 	s.view = v
-
-	if s.lastFrame != nil && frame == *s.lastFrame && s.lastView != nil && viewEquals(v, *s.lastView) {
-		return
-	}
-
 	s.lastFrameHeight = frameArea.Dy()
 
 	// Cache the last rendered frame so we can avoid re-rendering it if
@@ -665,81 +660,4 @@ func setProgressBar(s *cursedRenderer, pb *ProgressBar) {
 	if seq != "" {
 		_, _ = s.scr.WriteString(seq)
 	}
-}
-
-// viewEquals reports whether two views are equal. It compares every field of
-// the [View] struct except for the [View.Layer] field, which is compared using
-// pointer equality.
-func viewEquals(a, b View) bool {
-	if a.AltScreen != b.AltScreen {
-		return false
-	}
-	if a.WindowTitle != b.WindowTitle {
-		return false
-	}
-	if a.MouseMode != b.MouseMode {
-		return false
-	}
-	if a.ReportFocus != b.ReportFocus {
-		return false
-	}
-	if a.DisableBracketedPasteMode != b.DisableBracketedPasteMode {
-		return false
-	}
-	if a.DisableKeyEnhancements != b.DisableKeyEnhancements {
-		return false
-	}
-	if a.KeyReleases != b.KeyReleases {
-		return false
-	}
-	if a.UniformKeyLayout != b.UniformKeyLayout {
-		return false
-	}
-	if (a.Cursor == nil) != (b.Cursor == nil) {
-		return false
-	}
-	if a.Cursor != nil && b.Cursor != nil { //nolint:nestif
-		if (a.Cursor.Color == nil) != (b.Cursor.Color == nil) {
-			return false
-		}
-		if a.Cursor.Color != nil && b.Cursor.Color != nil {
-			ar, ag, ab, aa := a.Cursor.Color.RGBA()
-			br, bg, bb, ba := b.Cursor.Color.RGBA()
-			if ar != br || ag != bg || ab != bb || aa != ba {
-				return false
-			}
-		}
-		if a.Cursor.Position != b.Cursor.Position || a.Cursor.Shape != b.Cursor.Shape || a.Cursor.Blink != b.Cursor.Blink {
-			return false
-		}
-	}
-	if (a.ProgressBar == nil) != (b.ProgressBar == nil) {
-		return false
-	}
-	if a.ProgressBar != nil && b.ProgressBar != nil {
-		if *a.ProgressBar != *b.ProgressBar {
-			return false
-		}
-	}
-	if (a.BackgroundColor == nil) != (b.BackgroundColor == nil) {
-		return false
-	}
-	if a.BackgroundColor != nil && b.BackgroundColor != nil {
-		ar, ag, ab, aa := a.BackgroundColor.RGBA()
-		br, bg, bb, ba := b.BackgroundColor.RGBA()
-		if ar != br || ag != bg || ab != bb || aa != ba {
-			return false
-		}
-	}
-	if (a.ForegroundColor == nil) != (b.ForegroundColor == nil) {
-		return false
-	}
-	if a.ForegroundColor != nil && b.ForegroundColor != nil {
-		ar, ag, ab, aa := a.ForegroundColor.RGBA()
-		br, bg, bb, ba := b.ForegroundColor.RGBA()
-		if ar != br || ag != bg || ab != bb || aa != ba {
-			return false
-		}
-	}
-	return true
 }
