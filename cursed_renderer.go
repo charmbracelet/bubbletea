@@ -434,16 +434,6 @@ func (s *cursedRenderer) render(v View) {
 		s.buf.Lines = s.buf.Lines[frameHeight-s.height:]
 	}
 
-	frame := s.buf.Render()
-
-	// If an empty string was passed we should clear existing output and
-	// rendering nothing. Rather than introduce additional state to manage
-	// this, we render a single space as a simple (albeit less correct)
-	// solution.
-	if frame == "" {
-		frame = " "
-	}
-
 	s.view = v
 	s.lastFrameHeight = frameArea.Dy()
 }
@@ -591,11 +581,8 @@ func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Lock()
 	strLines := strings.Split(lines, "\n")
 	for i, line := range strLines {
-		if ansi.StringWidth(line) > s.width {
-			// If the line is wider than the screen, truncate it.
-			line = ansi.Truncate(line, s.width, "")
-		}
-		strLines[i] = line
+		// If the line is wider than the screen, truncate it.
+		strLines[i] = ansi.Truncate(line, s.width, "")
 	}
 	s.scr.PrependString(strings.Join(strLines, "\n"))
 	s.mu.Unlock()
