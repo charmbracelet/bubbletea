@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -89,7 +88,7 @@ func main() {
 	fp.CurrentDirectory, _ = os.UserHomeDir()
 
 	m := model{filepicker: fp}
-	tm, _ := tea.NewProgram(m).Run(context.Background())
+	tm, _ := tea.NewProgram(m).Run()
 	mm := tm.(model)
 	fmt.Println("\n  You selected: " + m.filepicker.Styles.Selected.Render(mm.selectedFile) + "\n")
 }

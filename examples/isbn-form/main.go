@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -16,7 +15,7 @@ import (
 func main() {
 	p := tea.NewProgram(initialModel())
 
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

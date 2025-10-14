@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -78,7 +77,7 @@ func (m model) View() tea.View {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

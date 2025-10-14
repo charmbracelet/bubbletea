@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -33,7 +32,7 @@ func main() {
 	m := model{}
 	m.resetSpinner()
 
-	if _, err := tea.NewProgram(m).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}

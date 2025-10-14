@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -82,7 +81,7 @@ func main() {
 
 	p := tea.NewProgram(m)
 
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

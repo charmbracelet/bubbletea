@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"image/color"
 	"log"
 
@@ -50,7 +49,7 @@ func main() {
 	p := tea.NewProgram(model{})
 	cp := colorprofile.TrueColor
 	p.ColorProfile = &cp
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

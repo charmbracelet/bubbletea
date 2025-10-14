@@ -2,7 +2,6 @@ package main
 
 import (
 	"cmp"
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -63,7 +62,7 @@ func (m model) View() tea.View {
 
 func main() {
 	m := model{}
-	if _, err := tea.NewProgram(m).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

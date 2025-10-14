@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -62,7 +61,7 @@ func main() {
 	m.input = textinput.New()
 	m.input.Placeholder = "Enter capability name to request"
 
-	if _, err := tea.NewProgram(m).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Uh oh:", err)
 		os.Exit(1)
 	}

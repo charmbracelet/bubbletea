@@ -3,7 +3,6 @@ package main
 // A program demonstrating how to use the WithFilter option to intercept events.
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -24,7 +23,7 @@ func main() {
 	p := tea.NewProgram(initialModel())
 	p.Filter = filter
 
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

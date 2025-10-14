@@ -4,7 +4,6 @@ package main
 // component library.
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -135,7 +134,7 @@ func main() {
 		model{content: string(content)},
 	)
 
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("could not run program:", err)
 		os.Exit(1)
 	}

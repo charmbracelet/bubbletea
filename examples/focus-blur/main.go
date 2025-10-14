@@ -3,7 +3,6 @@ package main
 // A simple program that handled losing and acquiring focus.
 
 import (
-	"context"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -14,7 +13,7 @@ func main() {
 		focused:   true,
 		reporting: true,
 	})
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -11,7 +11,6 @@ package main
 // normal. If not, we simply ignore the inbound message.
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"time"
@@ -60,7 +59,7 @@ func (m model) View() tea.View {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("uh oh:", err)
 		os.Exit(1)
 	}

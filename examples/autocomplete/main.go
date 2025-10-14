@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -16,7 +15,7 @@ import (
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -170,7 +169,7 @@ func (m model) View() tea.View {
 		m.textInput.View(),
 		m.footerView(),
 	))
-	
+
 	c := m.textInput.Cursor()
 	if c != nil {
 		c.Y += lipgloss.Height(m.headerView())

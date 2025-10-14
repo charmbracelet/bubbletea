@@ -4,7 +4,6 @@ package main
 // component library.
 
 import (
-	"context"
 	"log"
 
 	"github.com/charmbracelet/bubbles/v2/textinput"
@@ -14,7 +13,7 @@ import (
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

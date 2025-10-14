@@ -3,7 +3,6 @@ package main
 // A simple program that counts down from 5 and then exits.
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -24,7 +23,7 @@ func main() {
 
 	// Initialize our program
 	p := tea.NewProgram(model(5))
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

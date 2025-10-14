@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"image/color"
 	"log"
 	"strings"
@@ -195,7 +194,7 @@ func main() {
 		ti: ti,
 	})
 
-	_, err := p.Run(context.Background())
+	_, err := p.Run()
 	if err != nil {
 		log.Fatalf("Error running program: %v", err)
 	}

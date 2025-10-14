@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"image/color"
 	"os"
@@ -157,7 +156,7 @@ func main() {
 		}).
 		Border(lipgloss.ThickBorder())
 
-	if _, err := tea.NewProgram(model{t}).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(model{t}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

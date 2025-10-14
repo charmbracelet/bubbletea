@@ -4,7 +4,6 @@ package main
 // component library.
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -94,7 +93,7 @@ func (m model) View() tea.View {
 
 func main() {
 	p := tea.NewProgram(newModel())
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

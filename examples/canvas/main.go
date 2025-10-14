@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -93,7 +92,7 @@ func reverse[T any](s []T) []T {
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Urgh:", err)
 		os.Exit(1)
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -229,7 +228,7 @@ func (m model) Cursor() *tea.Cursor {
 }
 
 func main() {
-	if _, err := tea.NewProgram(newModel()).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}

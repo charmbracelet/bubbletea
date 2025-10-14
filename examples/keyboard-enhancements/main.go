@@ -4,7 +4,6 @@ package main
 // support.
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -92,7 +91,7 @@ func initialModel() model {
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Urgh: %v\n", err)
 		os.Exit(1)
 	}

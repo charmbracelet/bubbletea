@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -49,7 +48,7 @@ func (m model) View() tea.View {
 
 func main() {
 	p := tea.NewProgram(model{})
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Printf("Error running program: %v", err)
 	}
 }

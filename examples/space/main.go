@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"image/color"
 	"math/rand"
@@ -122,7 +121,7 @@ func main() {
 	p := tea.NewProgram(model{})
 	p.FPS = 120
 
-	_, err := p.Run(context.Background())
+	_, err := p.Run()
 	if err != nil {
 		fmt.Printf("Error running program: %v", err)
 		os.Exit(1)

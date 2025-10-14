@@ -7,7 +7,6 @@ package main
 // implementing a progress bar from scratch here.
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"strconv"
@@ -44,7 +43,7 @@ var (
 func main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)
 	}
 }
@@ -257,7 +256,7 @@ func makeRampStyles(colorA, colorB string, steps float64) (s []lipgloss.Style) {
 		c := cA.BlendLuv(cB, i/steps)
 		s = append(s, lipgloss.NewStyle().Foreground(lipgloss.Color(colorToHex(c))))
 	}
-	return
+	return s
 }
 
 // Convert a colorful.Color to a hexadecimal format.
@@ -272,5 +271,5 @@ func colorFloatToHex(f float64) (s string) {
 	if len(s) == 1 {
 		s = "0" + s
 	}
-	return
+	return s
 }

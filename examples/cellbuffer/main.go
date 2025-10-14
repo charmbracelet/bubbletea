@@ -5,7 +5,6 @@ package main
 // double-width runes.
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -198,7 +197,7 @@ func main() {
 	}
 
 	p := tea.NewProgram(m)
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Uh oh:", err)
 		os.Exit(1)
 	}

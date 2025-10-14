@@ -4,7 +4,6 @@ package main
 // component library.
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -18,7 +17,7 @@ import (
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Oof: %v\n", err)
 	}
 }

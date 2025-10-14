@@ -4,7 +4,6 @@ package main
 // from 5 and then exits.
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
@@ -18,7 +17,7 @@ type tickMsg time.Time
 
 func main() {
 	p := tea.NewProgram(model(5))
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

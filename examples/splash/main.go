@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"image/color"
 	"math"
@@ -171,7 +170,7 @@ func main() {
 		model{rate: 90},
 	)
 
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}
 }

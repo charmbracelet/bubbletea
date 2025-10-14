@@ -4,7 +4,6 @@ package main
 // from the Bubbles component library.
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -190,7 +189,7 @@ func (m model) View() tea.View {
 }
 
 func main() {
-	if _, err := tea.NewProgram(initialModel()).Run(context.Background()); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Printf("could not start program: %s\n", err)
 		os.Exit(1)
 	}

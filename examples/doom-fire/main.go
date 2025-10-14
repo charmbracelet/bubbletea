@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -128,7 +127,7 @@ func initialModel() model {
 
 func main() {
 	p := tea.NewProgram(initialModel())
-	if _, err := p.Run(context.Background()); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}
 }
