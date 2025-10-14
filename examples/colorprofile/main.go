@@ -46,9 +46,7 @@ func (m model) View() tea.View {
 func main() {
 	myFancyColor, _ = colorful.Hex("#6b50ff")
 
-	p := tea.NewProgram(model{})
-	cp := colorprofile.TrueColor
-	p.ColorProfile = &cp
+	p := tea.NewProgram(model{}, tea.WithColorProfile(colorprofile.TrueColor))
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}

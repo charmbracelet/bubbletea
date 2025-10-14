@@ -20,8 +20,7 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
-	p.Filter = filter
+	p := tea.NewProgram(initialModel(), tea.WithFilter(filter))
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)

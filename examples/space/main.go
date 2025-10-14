@@ -118,8 +118,7 @@ func (m model) View() tea.View {
 }
 
 func main() {
-	p := tea.NewProgram(model{})
-	p.FPS = 120
+	p := tea.NewProgram(model{}, tea.WithFPS(120))
 
 	_, err := p.Run()
 	if err != nil {
