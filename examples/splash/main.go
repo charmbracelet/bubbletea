@@ -109,7 +109,9 @@ func (m model) gradient() string {
 				output.WriteString(style.Render("▀"))
 			}
 		}
-		output.WriteString("\n")
+		if lineY < m.height-1 {
+			output.WriteString("\n")
+		}
 	}
 
 	return output.String()
