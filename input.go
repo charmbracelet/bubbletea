@@ -8,12 +8,7 @@ import (
 func (p *Program) translateInputEvent(e uv.Event) Msg {
 	switch e := e.(type) {
 	case uv.ClipboardEvent:
-		switch e.Selection {
-		case uv.SystemClipboard:
-			return ClipboardMsg(e.Content)
-		case uv.PrimaryClipboard:
-			return PrimaryClipboardMsg(e.Content)
-		}
+		return ClipboardMsg(e)
 	case uv.ForegroundColorEvent:
 		return ForegroundColorMsg(e)
 	case uv.BackgroundColorEvent:
