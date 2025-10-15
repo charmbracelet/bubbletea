@@ -61,7 +61,7 @@ func (m model) View() tea.View {
 	fmt.Fprintf(&b, "Terminal supports key releases: %v\n", m.supportsRelease)
 	fmt.Fprintf(&b, "Terminal supports key disambiguation: %v\n", m.supportsDisambiguation)
 	fmt.Fprint(&b, "This demo logs key events. Press ctrl+c to quit.")
-	v.SetContent(b.String())
+	v.SetContent(b.String() + "\n")
 
 	// Attempt to enable keyboard enhancements. By default, this just
 	// enables key disabiguation. For key releases, you'll need to opt-in
