@@ -19,7 +19,7 @@ type renderer interface {
 	start()
 
 	// close closes the renderer and flushes any remaining data.
-	close() error
+	close(bool) error
 
 	// render renders a frame to the output.
 	render(View)

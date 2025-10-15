@@ -41,7 +41,7 @@ func (n nilRenderer) showCursor() {}
 func (nilRenderer) flush() error { return nil }
 
 // close implements the Renderer interface.
-func (nilRenderer) close() error { return nil }
+func (nilRenderer) close(bool) error { return nil }
 
 // render implements the Renderer interface.
 func (nilRenderer) render(View) {}

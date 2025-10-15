@@ -25,6 +25,7 @@ type cursedRenderer struct {
 	profile       colorprofile.Profile
 	logger        uv.Logger
 	view          View
+	inline        bool // whether we've rendered in inline mode at least once
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 	backspace     bool // whether to use backspace to optimize cursor movements
 	mapnl         bool
@@ -133,7 +134,7 @@ func (s *cursedRenderer) start() {
 }
 
 // close implements renderer.
-func (s *cursedRenderer) close() (err error) {
+func (s *cursedRenderer) close(final bool) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -147,8 +148,13 @@ func (s *cursedRenderer) close() (err error) {
 	if lv := s.lastView; lv != nil { //nolint:nestif
 		if lv.AltScreen {
 			s.scr.ExitAltScreen()
-		} else {
-			_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
+		}
+		if !lv.AltScreen || s.inline {
+			if final {
+				_, _ = s.scr.WriteString("\r\n" + ansi.EraseScreenBelow)
+			} else {
+				_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
+			}
 		}
 		if lv.Cursor == nil {
 			s.scr.ShowCursor()
@@ -390,6 +396,12 @@ func (s *cursedRenderer) flush() error {
 	}
 
 	s.lastView = &view
+	if !view.AltScreen {
+		// If we ever enter inline mode, we want to ensure that we add a
+		// trailing newline when we exit the program to avoid messing up the
+		// terminal prompt.
+		s.inline = true
+	}
 
 	return nil
 }

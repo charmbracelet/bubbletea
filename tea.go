@@ -1109,7 +1109,7 @@ func (p *Program) shutdown(kill bool) {
 		}
 
 		if p.renderer != nil {
-			p.stopRenderer(kill)
+			p.stopRenderer(true, kill)
 		}
 
 		_ = p.restoreTerminalState()
@@ -1181,7 +1181,7 @@ func (p *Program) releaseTerminal(reset bool) error {
 	p.waitForReadLoop()
 
 	if p.renderer != nil {
-		p.stopRenderer(false)
+		p.stopRenderer(false, false)
 		if reset {
 			p.renderer.reset()
 		}
@@ -1274,7 +1274,7 @@ func (p *Program) startRenderer() {
 // stopRenderer stops the renderer.
 // If kill is true, the renderer will be stopped immediately without flushing
 // the last frame.
-func (p *Program) stopRenderer(kill bool) {
+func (p *Program) stopRenderer(final, kill bool) {
 	// Stop the renderer before acquiring the mutex to avoid a deadlock.
 	p.once.Do(func() {
 		p.rendererDone <- struct{}{}
@@ -1285,5 +1285,5 @@ func (p *Program) stopRenderer(kill bool) {
 		_ = p.renderer.flush()
 	}
 
-	_ = p.renderer.close()
+	_ = p.renderer.close(final)
 }
