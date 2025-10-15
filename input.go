@@ -45,7 +45,7 @@ func (p *Program) translateInputEvent(e uv.Event) Msg {
 		return CapabilityMsg(e)
 	case uv.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
-	case uv.KittyEnhancementsEvent:
+	case uv.KeyboardEnhancementsEvent:
 		return KeyboardEnhancementsMsg(e)
 	}
 	return e
