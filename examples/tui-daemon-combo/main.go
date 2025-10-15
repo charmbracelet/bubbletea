@@ -35,15 +35,16 @@ func main() {
 		os.Exit(0)
 	}
 
-	p := tea.NewProgram(newModel())
+	opts := []tea.ProgramOption{}
 	if daemonMode || !isatty.IsTerminal(os.Stdout.Fd()) {
 		// If we're in daemon mode don't render the TUI
-		p.DisableRenderer = true
+		opts = append(opts, tea.WithoutRenderer())
 	} else {
 		// If we're in TUI mode, discard log output
 		log.SetOutput(io.Discard)
 	}
 
+	p := tea.NewProgram(newModel(), opts...)
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error starting Bubble Tea program:", err)
 		os.Exit(1)
