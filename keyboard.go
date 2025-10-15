@@ -6,7 +6,7 @@ import (
 
 // KeyboardEnhancementsMsg is a message that gets sent when the terminal
 // supports keyboard enhancements.
-type KeyboardEnhancementsMsg int
+type KeyboardEnhancementsMsg uint8
 
 // SupportsKeyDisambiguation returns whether the terminal supports reporting
 // disambiguous keys as escape codes.
