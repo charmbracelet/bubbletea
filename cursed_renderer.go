@@ -150,11 +150,11 @@ func (s *cursedRenderer) close(final bool) (err error) {
 			s.scr.ExitAltScreen()
 		}
 		if !lv.AltScreen || s.inline {
+			refreshLineContent := "\r"
 			if final {
-				_, _ = s.scr.WriteString("\r\n" + ansi.EraseScreenBelow)
-			} else {
-				_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
+				refreshLineContent += "\n"
 			}
+			_, _ = s.scr.WriteString(refreshLineContent + ansi.EraseScreenBelow)
 		}
 		if lv.Cursor == nil {
 			s.scr.ShowCursor()
