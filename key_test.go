@@ -69,7 +69,6 @@ type seqTest struct {
 func buildBaseSeqTests() []seqTest {
 	td := []seqTest{}
 	for seq, key := range sequences {
-		key := key
 		td = append(td, seqTest{[]byte(seq), KeyMsg(key)})
 		if !key.Alt {
 			key.Alt = true
