@@ -100,6 +100,10 @@ func TestOptions(t *testing.T) {
 			exercise(t, WithANSICompressor(), withANSICompressor)
 		})
 
+		t.Run("without skip render identical lines", func(t *testing.T) {
+			exercise(t, WithoutSkipRenderIdenticalLines(), withANSICompressor)
+		})
+
 		t.Run("without catch panics", func(t *testing.T) {
 			exercise(t, WithoutCatchPanics(), withoutCatchPanics)
 		})
