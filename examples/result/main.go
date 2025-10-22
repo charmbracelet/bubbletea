@@ -51,7 +51,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	s := strings.Builder{}
 	s.WriteString("What kind of Bubble Tea would you like to order?\n\n")
 
@@ -66,7 +66,7 @@ func (m model) View() string {
 	}
 	s.WriteString("\n(press q to quit)\n")
 
-	return s.String()
+	return tea.NewView(s.String())
 }
 
 func main() {

@@ -152,7 +152,7 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	var b strings.Builder
 	var c *tea.Cursor
 
@@ -183,7 +183,9 @@ func (m model) View() (string, *tea.Cursor) {
 		b.WriteRune('\n')
 	}
 
-	return b.String(), c
+	v := tea.NewView(b.String())
+	v.Cursor = c
+	return v
 }
 
 func main() {

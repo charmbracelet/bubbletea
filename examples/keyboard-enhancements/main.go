@@ -23,14 +23,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		// Attempt to enable keyboard enhancements. By default, this just
-		// enables key disabiguation. For key releases, you'll need to opt-in
-		// to that feature.
-		tea.RequestKeyReleases,
-
-		tea.RequestBackgroundColor,
-	)
+	return tea.RequestBackgroundColor
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -62,12 +55,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
+	var v tea.View
 	var b strings.Builder
 	fmt.Fprintf(&b, "Terminal supports key releases: %v\n", m.supportsRelease)
 	fmt.Fprintf(&b, "Terminal supports key disambiguation: %v\n", m.supportsDisambiguation)
 	fmt.Fprint(&b, "This demo logs key events. Press ctrl+c to quit.")
-	return m.styles.ui.Render(b.String())
+	v.SetContent(b.String() + "\n")
+
+	// Attempt to enable keyboard enhancements. By default, this just
+	// enables key disabiguation. For key releases, you'll need to opt-in
+	// to that feature.
+	v.KeyReleases = true
+
+	return v
 }
 
 func (m *model) updateStyles(isDark bool) {

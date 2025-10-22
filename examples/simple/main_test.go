@@ -1,16 +1,6 @@
 package main
 
-import (
-	"bytes"
-	"io"
-	"regexp"
-	"testing"
-	"time"
-
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/x/exp/teatest/v2"
-)
-
+/*
 func TestApp(t *testing.T) {
 	// TODO: Enable this test again
 	// Since we added colorprofile.Writer to standard_renderer.go, this test
@@ -95,3 +85,4 @@ func readBts(tb testing.TB, r io.Reader) []byte {
 	}
 	return bts
 }
+*/

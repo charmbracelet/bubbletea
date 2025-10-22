@@ -93,7 +93,6 @@ type model struct {
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		tea.RequestBackgroundColor,
-		tea.EnterAltScreen,
 	)
 }
 
@@ -170,8 +169,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	return m.styles.app.Render(m.list.View())
+func (m model) View() tea.View {
+	v := tea.NewView(m.styles.app.Render(m.list.View()))
+	v.AltScreen = true
+	return v
 }
 
 func initialModel() model {

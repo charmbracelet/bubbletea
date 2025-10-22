@@ -8,12 +8,7 @@ import (
 func (p *Program) translateInputEvent(e uv.Event) Msg {
 	switch e := e.(type) {
 	case uv.ClipboardEvent:
-		switch e.Selection {
-		case uv.SystemClipboard:
-			return ClipboardMsg(e.Content)
-		case uv.PrimaryClipboard:
-			return PrimaryClipboardMsg(e.Content)
-		}
+		return ClipboardMsg(e)
 	case uv.ForegroundColorEvent:
 		return ForegroundColorMsg(e)
 	case uv.BackgroundColorEvent:
@@ -29,9 +24,7 @@ func (p *Program) translateInputEvent(e uv.Event) Msg {
 	case uv.KeyPressEvent:
 		return KeyPressMsg(e)
 	case uv.KeyReleaseEvent:
-		if !isWindows() || p.requestedEnhancements.keyReleases {
-			return KeyReleaseMsg(e)
-		}
+		return KeyReleaseMsg(e)
 	case uv.MouseClickEvent:
 		return MouseClickMsg(e)
 	case uv.MouseMotionEvent:
@@ -52,16 +45,8 @@ func (p *Program) translateInputEvent(e uv.Event) Msg {
 		return CapabilityMsg(e)
 	case uv.TerminalVersionEvent:
 		return TerminalVersionMsg(e)
-	case uv.KittyEnhancementsEvent:
-		return KeyboardEnhancementsMsg{
-			kittyFlags:      int(e),
-			modifyOtherKeys: p.activeEnhancements.modifyOtherKeys,
-		}
-	case uv.ModifyOtherKeysEvent:
-		return KeyboardEnhancementsMsg{
-			modifyOtherKeys: int(e),
-			kittyFlags:      p.activeEnhancements.kittyFlags,
-		}
+	case uv.KeyboardEnhancementsEvent:
+		return KeyboardEnhancementsMsg(e)
 	}
 	return e
 }

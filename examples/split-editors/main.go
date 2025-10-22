@@ -193,7 +193,7 @@ func (m model) inputViews() []string {
 	return views
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
 		m.keymap.prev,
@@ -202,7 +202,9 @@ func (m model) View() string {
 		m.keymap.quit,
 	})
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, m.inputViews()...) + "\n\n" + help
+	v := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, m.inputViews()...) + "\n\n" + help)
+	v.AltScreen = true
+	return v
 }
 
 func (m model) Cursor() *tea.Cursor {
@@ -226,7 +228,7 @@ func (m model) Cursor() *tea.Cursor {
 }
 
 func main() {
-	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}

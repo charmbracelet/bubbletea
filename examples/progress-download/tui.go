@@ -73,13 +73,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.err != nil {
-		return "Error downloading: " + m.err.Error() + "\n"
+		return tea.NewView("Error downloading: " + m.err.Error() + "\n")
 	}
 
 	pad := strings.Repeat(" ", padding)
-	return "\n" +
+	return tea.NewView("\n" +
 		pad + m.progress.View() + "\n\n" +
-		pad + helpStyle("Press any key to quit")
+		pad + helpStyle("Press any key to quit"))
 }

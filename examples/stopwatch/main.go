@@ -29,7 +29,7 @@ func (m model) Init() tea.Cmd {
 	return m.stopwatch.Init()
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	// Note: you could further customize the time output by getting the
 	// duration from m.stopwatch.Elapsed(), which returns a time.Duration, and
 	// skip m.stopwatch.View() altogether.
@@ -38,7 +38,7 @@ func (m model) View() string {
 		s = "Elapsed: " + s
 		s += m.helpView()
 	}
-	return s
+	return tea.NewView(s)
 }
 
 func (m model) helpView() string {

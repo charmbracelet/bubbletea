@@ -20,6 +20,7 @@ func newModel() model {
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.SetWidth(20)
+	ti.SetVirtualCursor(false)
 	return model{input: ti}
 }
 
@@ -29,7 +30,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return textinput.Blink
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -58,6 +59,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
+			m.input.SetValue("")
+
 			// Write the sequence to the terminal.
 			return m, func() tea.Msg {
 				io.WriteString(os.Stdout, seq)
@@ -65,10 +68,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	default:
-		typ := strings.TrimPrefix(fmt.Sprintf("%T", msg), "tea.")
-		if len(typ) > 0 && unicode.IsUpper(rune(typ[0])) {
+		_, typ, ok := strings.Cut(fmt.Sprintf("%T", msg), ".")
+		if ok && unicode.IsUpper(rune(typ[0])) {
 			// Only log messages that are exported types.
-			cmds = append(cmds, tea.Printf("Received message: %T", msg))
+			cmds = append(cmds, tea.Printf("Received message: %T %+v", msg, msg))
 		}
 	}
 
@@ -79,14 +82,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var s strings.Builder
 	s.WriteString(m.input.View())
 	if m.err != nil {
 		s.WriteString("\n\nError: " + m.err.Error())
 	}
 	s.WriteString("\n\nPress ctrl+c to quit, enter to write the sequence to terminal")
-	return s.String()
+	v := tea.NewView(s.String())
+	v.Cursor = m.input.Cursor()
+	return v
 }
 
 func main() {

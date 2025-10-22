@@ -2,7 +2,6 @@ package tea
 
 import (
 	"fmt"
-	"image/color"
 
 	"github.com/charmbracelet/colorprofile"
 )
@@ -16,6 +15,9 @@ const (
 
 // renderer is the interface for Bubble Tea renderers.
 type renderer interface {
+	// start starts the renderer.
+	start()
+
 	// close closes the renderer and flushes any remaining data.
 	close() error
 
@@ -26,7 +28,7 @@ type renderer interface {
 	hit(MouseMsg) []Msg
 
 	// flush flushes the renderer's buffer to the output.
-	flush(*Program) error
+	flush() error
 
 	// reset resets the renderer's state to its initial state.
 	reset()
@@ -46,18 +48,6 @@ type renderer interface {
 	// hideCursor hides the cursor.
 	hideCursor()
 
-	// setCursorColor sets the terminal's cursor color.
-	setCursorColor(color.Color)
-
-	// setForegroundColor sets the terminal's foreground color.
-	setForegroundColor(color.Color)
-
-	// setBackgroundColor sets the terminal's background color.
-	setBackgroundColor(color.Color)
-
-	// setWindowTitle sets the terminal window title.
-	setWindowTitle(string)
-
 	// resize notify the renderer of a terminal resize.
 	resize(int, int)
 
@@ -67,17 +57,8 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
-	// repaint forces a full repaint.
-	repaint()
-
 	writeString(string) (int, error)
-
-	// resetLinesRendered ensures exec output remains on screen on exit
-	resetLinesRendered()
 }
-
-// repaintMsg forces a full repaint.
-type repaintMsg struct{}
 
 type printLineMessage struct {
 	messageBody string

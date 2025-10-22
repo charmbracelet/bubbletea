@@ -23,10 +23,7 @@ func main() {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		tick(),
-		tea.EnterAltScreen,
-	)
+	return tick()
 }
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
@@ -48,8 +45,10 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
+func (m model) View() tea.View {
+	v := tea.NewView(fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m))
+	v.AltScreen = true
+	return v
 }
 
 func tick() tea.Cmd {

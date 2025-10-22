@@ -46,8 +46,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return "\n" + m.table.String() + "\n"
+func (m model) View() tea.View {
+	v := tea.NewView("\n" + m.table.String() + "\n")
+	v.AltScreen = true
+	return v
 }
 
 func main() {
@@ -154,7 +156,7 @@ func main() {
 		}).
 		Border(lipgloss.ThickBorder())
 
-	if _, err := tea.NewProgram(model{t}, tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{t}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

@@ -16,7 +16,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.EnableMouseCellMotion
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -64,6 +64,7 @@ func (m model) View() tea.View {
 		cardA,
 		cardB.X(10).Y(2),
 	)
+	view.MouseMode = tea.MouseModeCellMotion
 
 	return view
 }

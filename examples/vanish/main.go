@@ -21,11 +21,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m {
-		return ""
+		return tea.NewView("")
 	}
-	return "Press any key to quit.\n(When this program quits, it will vanish without a trace.)"
+	return tea.NewView("Press any key to quit.\n(When this program quits, it will vanish without a trace.)")
 }
 
 func main() {

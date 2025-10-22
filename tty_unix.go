@@ -34,14 +34,6 @@ func (p *Program) initInput() (err error) {
 	return nil
 }
 
-func openInputTTY() (*os.File, error) {
-	f, err := os.Open("/dev/tty")
-	if err != nil {
-		return nil, fmt.Errorf("could not open a new TTY: %w", err)
-	}
-	return f, nil
-}
-
 const suspendSupported = true
 
 // Send SIGTSTP to the entire process group.

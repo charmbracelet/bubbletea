@@ -184,8 +184,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
-	return m.cells.String()
+func (m model) View() tea.View {
+	v := tea.NewView(m.cells.String())
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
 }
 
 func main() {
@@ -193,7 +196,7 @@ func main() {
 		spring: harmonica.NewSpring(harmonica.FPS(fps), frequency, damping),
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Uh oh:", err)
 		os.Exit(1)

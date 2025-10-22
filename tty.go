@@ -2,10 +2,10 @@ package tea
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
-	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 )
 
@@ -22,61 +22,15 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if !hasView(p.initialModel) {
-		// No need to initialize the terminal if we're not rendering
+	if p.disableRenderer {
 		return nil
 	}
-
 	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	// We don't need to reset [ansi.AltScreenSaveCursorMode] and
-	// [ansi.TextCursorEnableMode] because they are automatically reset when we
-	// close the renderer. See [screenRenderer.close] and
-	// [cellbuf.Screen.Close].
-
-	if p.modes.IsSet(ansi.BracketedPasteMode) {
-		p.execute(ansi.ResetBracketedPasteMode)
-	}
-
-	btnEvents := p.modes.IsSet(ansi.ButtonEventMouseMode)
-	allEvents := p.modes.IsSet(ansi.AnyEventMouseMode)
-	if btnEvents || allEvents {
-		if btnEvents {
-			p.execute(ansi.ResetButtonEventMouseMode)
-		}
-		if allEvents {
-			p.execute(ansi.ResetAnyEventMouseMode)
-		}
-		p.execute(ansi.ResetSgrExtMouseMode)
-	}
-	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.ResetModifyOtherKeys)
-	}
-	if p.activeEnhancements.kittyFlags != 0 {
-		p.execute(ansi.KittyKeyboard(0, 1))
-	}
-	if p.modes.IsSet(ansi.FocusEventMode) {
-		p.execute(ansi.ResetFocusEventMode)
-	}
-	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
-		p.execute(ansi.ResetGraphemeClusteringMode)
-	}
-
-	// Restore terminal colors.
-	if p.setBg != nil {
-		p.execute(ansi.ResetBackgroundColor)
-	}
-	if p.setFg != nil {
-		p.execute(ansi.ResetForegroundColor)
-	}
-	if p.setCc != nil {
-		p.execute(ansi.ResetCursorColor)
-	}
-
 	// Flush queued commands.
 	_ = p.flush()
 
@@ -114,15 +68,11 @@ func (p *Program) initInputReader(cancel bool) error {
 	var err error
 	p.cancelReader, err = uv.NewCancelReader(p.input)
 	if err != nil {
-		return err
+		return fmt.Errorf("bubbletea: could not create cancelable reader: %w", err)
 	}
 
 	drv := uv.NewTerminalReader(p.cancelReader, term)
 	drv.SetLogger(p.logger)
-	if p.mouseMode {
-		mouseMode := uv.ButtonMouseMode | uv.DragMouseMode | uv.AllMouseMode
-		drv.MouseMode = &mouseMode
-	}
 	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
 
@@ -172,8 +122,15 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	var resizeMsg WindowSizeMsg
 	p.width, p.height = w, h
-	resizeMsg.Width, resizeMsg.Height = w, h
-	p.Send(resizeMsg)
+	p.Send(WindowSizeMsg{Width: w, Height: h})
+}
+
+// OpenTTY opens the running terminal's TTY for reading and writing.
+func OpenTTY() (*os.File, *os.File, error) {
+	in, out, err := uv.OpenTTY()
+	if err != nil {
+		return nil, nil, fmt.Errorf("bubbletea: could not open TTY: %w", err)
+	}
+	return in, out, nil
 }

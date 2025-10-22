@@ -125,8 +125,8 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (e example) View() string {
-	return e.viewport.View() + e.helpView()
+func (e example) View() tea.View {
+	return tea.NewView(e.viewport.View() + e.helpView())
 }
 
 func (e example) helpView() string {

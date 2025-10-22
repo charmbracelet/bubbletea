@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"os/exec"
+	"runtime"
 	"testing"
 )
 
@@ -32,18 +33,13 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() string {
-	return "\n"
+func (m *testExecModel) View() View {
+	return NewView("\n")
 }
 
 type spyRenderer struct {
 	renderer
 	calledReset bool
-}
-
-func (r *spyRenderer) resetLinesRendered() {
-	r.calledReset = true
-	r.renderer.resetLinesRendered()
 }
 
 func TestTeaExec(t *testing.T) {
@@ -62,7 +58,7 @@ func TestTeaExec(t *testing.T) {
 		},
 	}
 
-	if !isWindows() {
+	if runtime.GOOS != "windows" {
 		tests = append(tests, []test{
 			{
 				name:      "true",
@@ -83,7 +79,10 @@ func TestTeaExec(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testExecModel{cmd: test.cmd}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			p := NewProgram(m,
+				WithInput(&in),
+				WithOutput(&buf),
+			)
 			if _, err := p.Run(); err != nil {
 				t.Error(err)
 			}

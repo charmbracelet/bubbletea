@@ -104,15 +104,11 @@ func (m *model) updateStyles(isDark bool) {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.RequestBackgroundColor
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.BackgroundColorMsg:
-		m.updateStyles(msg.IsDark())
-		return m, nil
-
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width)
 		return m, nil
@@ -137,14 +133,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.choice != "" {
-		return m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
+		return tea.NewView(m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice)))
 	}
 	if m.quitting {
-		return m.styles.quitText.Render("Not hungry? That’s cool.")
+		return tea.NewView(m.styles.quitText.Render("Not hungry? That’s cool."))
 	}
-	return "\n" + m.list.View()
+	return tea.NewView("\n" + m.list.View())
 }
 
 func main() {

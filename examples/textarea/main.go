@@ -68,7 +68,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	// We handle errors just like any other message
+		// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
 		return m, nil
@@ -83,7 +83,7 @@ func (m model) headerView() string {
 	return "Tell me a story.\n"
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	const (
 		footer = "\n(ctrl+c to quit)\n"
 	)
@@ -104,5 +104,7 @@ func (m model) View() (string, *tea.Cursor) {
 		footer,
 	}, "\n")
 
-	return f, c
+	v := tea.NewView(f)
+	v.Cursor = c
+	return v
 }

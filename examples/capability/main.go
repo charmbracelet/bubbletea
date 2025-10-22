@@ -44,16 +44,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View implements tea.Model.
-func (m model) View() string {
+func (m model) View() tea.View {
 	w := min(m.width, 60)
 
 	instructions := lipgloss.NewStyle().
 		Width(w).
 		Render("Query for terminal capabilities. You can enter things like 'TN', 'RGB', 'cols', and so on. This will not work in all terminals and multiplexers.")
 
-	return "\n" + instructions + "\n\n" +
+	return tea.NewView("\n" + instructions + "\n\n" +
 		m.input.View() +
-		"\n\nPress enter to request capability, or ctrl+c to quit."
+		"\n\nPress enter to request capability, or ctrl+c to quit.")
 }
 
 func main() {

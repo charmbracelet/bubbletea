@@ -39,12 +39,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return "Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit."
+func (m model) View() tea.View {
+	v := tea.NewView("Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit.")
+	v.KeyReleases = true
+	v.UniformKeyLayout = true
+	return v
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithKeyReleases(), tea.WithUniformKeyLayout())
+	p := tea.NewProgram(model{})
 	if _, err := p.Run(); err != nil {
 		log.Printf("Error running program: %v", err)
 	}

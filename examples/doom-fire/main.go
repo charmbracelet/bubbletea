@@ -48,9 +48,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.width == 0 {
-		return "Initializing..."
+		return tea.NewView("Initializing...")
 	}
 
 	var s strings.Builder
@@ -60,7 +60,6 @@ func (m model) View() string {
 			pixelHi := m.screenBuf[y*m.width+x]
 			pixelLo := m.screenBuf[(y+1)*m.width+x]
 
-			// Convert palette indices to xterm-256 colors
 			hiColor := m.firePalette[pixelHi]
 			loColor := m.firePalette[pixelLo]
 
@@ -76,7 +75,9 @@ func (m model) View() string {
 
 	elapsed := time.Since(m.startTime)
 	s.WriteString(whiteFg.Render("Press q or ctrl+c to quit. " + fmt.Sprintf("Elapsed: %s", elapsed.Round(time.Second))))
-	return s.String()
+	v := tea.NewView(s.String())
+	v.AltScreen = true
+	return v
 }
 
 func (m *model) spreadFire() {
@@ -125,7 +126,7 @@ func initialModel() model {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}

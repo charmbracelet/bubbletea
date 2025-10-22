@@ -62,7 +62,6 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		tea.EnableMouseAllMotion,
 		tea.RequestBackgroundColor,
 	)
 }
@@ -234,6 +233,8 @@ func (m model) View() tea.View {
 	}
 
 	v.Layer = lipgloss.NewCanvas(layers...)
+	v.MouseMode = tea.MouseModeAllMotion
+	v.AltScreen = true
 
 	return v
 }
@@ -332,7 +333,7 @@ func main() {
 		defer f.Close()
 	}
 
-	if _, err := tea.NewProgram(model{}, tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{}).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}

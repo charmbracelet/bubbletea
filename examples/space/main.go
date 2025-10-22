@@ -28,7 +28,6 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		tea.EnterAltScreen,
 		tickCmd(),
 	)
 }
@@ -96,13 +95,14 @@ func clamp(value, min, max float64) float64 {
 	return value
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	// Title
 	title := lipgloss.NewStyle().Bold(true).Render("Space")
 
 	// Color display
 	var s strings.Builder
-	for y := range m.height {
+	height := m.height - 1 // leave one line for title
+	for y := range height {
 		for x := range m.width {
 			xi := (x + m.frameCount) % m.width
 			fg := m.colors[y*2][xi]
@@ -110,14 +110,21 @@ func (m model) View() string {
 			st := lipgloss.NewStyle().Foreground(fg).Background(bg)
 			s.WriteString(st.Render("▀"))
 		}
-		s.WriteByte('\n')
+		if y < height-1 {
+			s.WriteString("\n")
+		}
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, title, s.String())
+	v := tea.NewView(strings.Join([]string{
+		title,
+		s.String(),
+	}, "\n"))
+	v.AltScreen = true
+	return v
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithFPS(120))
+	p := tea.NewProgram(model{}, tea.WithFPS(120))
 
 	_, err := p.Run()
 	if err != nil {

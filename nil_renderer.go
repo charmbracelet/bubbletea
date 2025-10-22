@@ -1,8 +1,6 @@
 package tea
 
 import (
-	"image/color"
-
 	"github.com/charmbracelet/colorprofile"
 )
 
@@ -12,11 +10,11 @@ type nilRenderer struct{}
 
 var _ renderer = nilRenderer{}
 
+// start implements renderer.
+func (n nilRenderer) start() {}
+
 // clearScreen implements renderer.
 func (n nilRenderer) clearScreen() {}
-
-// repaint implements renderer.
-func (n nilRenderer) repaint() {}
 
 // enterAltScreen implements renderer.
 func (n nilRenderer) enterAltScreen() {}
@@ -40,7 +38,7 @@ func (n nilRenderer) setColorProfile(colorprofile.Profile) {}
 func (n nilRenderer) showCursor() {}
 
 // flush implements the Renderer interface.
-func (nilRenderer) flush(*Program) error { return nil }
+func (nilRenderer) flush() error { return nil }
 
 // close implements the Renderer interface.
 func (nilRenderer) close() error { return nil }
@@ -54,18 +52,5 @@ func (nilRenderer) reset() {}
 // writeString implements the Renderer interface.
 func (nilRenderer) writeString(string) (int, error) { return 0, nil }
 
-// setCursorColor implements the Renderer interface.
-func (n nilRenderer) setCursorColor(color.Color) {}
-
-// setForegroundColor implements the Renderer interface.
-func (n nilRenderer) setForegroundColor(color.Color) {}
-
-// setBackgroundColor implements the Renderer interface.
-func (n nilRenderer) setBackgroundColor(color.Color) {}
-
-// setWindowTitle implements the Renderer interface.
-func (n nilRenderer) setWindowTitle(string) {}
-
 // hit implements the Renderer interface.
-func (n nilRenderer) hit(MouseMsg) []Msg  { return nil }
-func (n nilRenderer) resetLinesRendered() {}
+func (n nilRenderer) hit(MouseMsg) []Msg { return nil }
