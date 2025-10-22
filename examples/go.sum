@@ -22,8 +22,8 @@ github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
 github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250716211347-10c048e36112 h1:SyZEoqRe2oiKZI+h93lgJYXtcBgcS/OsJIOYC7KbR7s=
 github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250716211347-10c048e36112/go.mod h1:BXY7j7rZgAprFwzNcO698++5KTd6GKI6lU83Pr4o0r0=
-github.com/charmbracelet/ultraviolet v0.0.0-20251015160106-36a5aeb2b2dd h1:ipPBsVhyXi5+C3s1Y+yw8bNGh6qkk8xpd3NcPoQj7Bg=
-github.com/charmbracelet/ultraviolet v0.0.0-20251015160106-36a5aeb2b2dd/go.mod h1:KfWwUa0Oe//D72YlhbOq/g40L7UiGtATrvsGI3cciG8=
+github.com/charmbracelet/ultraviolet v0.0.0-20251017140847-d4ace4d6e731 h1:Lr+igmzKpLPdb8yUZBP9noYWwCZP042z2nWPrJZTc+8=
+github.com/charmbracelet/ultraviolet v0.0.0-20251017140847-d4ace4d6e731/go.mod h1:KfWwUa0Oe//D72YlhbOq/g40L7UiGtATrvsGI3cciG8=
 github.com/charmbracelet/x/ansi v0.10.2 h1:ith2ArZS0CJG30cIUfID1LXN7ZFXRCww6RUvAPA+Pzw=
 github.com/charmbracelet/x/ansi v0.10.2/go.mod h1:HbLdJjQH4UH4AqA2HpRWuWNluRE6zxJH/yteYEYCFa8=
 github.com/charmbracelet/x/cellbuf v0.0.14-0.20250516160309-24eee56f89fa h1:lphz0Z3rsiOtMYiz8axkT24i9yFiueDhJbzyNUADmME=
