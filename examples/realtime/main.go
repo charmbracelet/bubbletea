@@ -84,7 +84,7 @@ func main() {
 	})
 
 	if _, err := p.Run(); err != nil {
-		fmt.Println("could not start program:", err)
+		fmt.Println("could nah start program:", err)
 		os.Exit(1)
 	}
 }
