@@ -305,6 +305,9 @@ func (r *standardRenderer) write(s string) {
 	defer r.mtx.Unlock()
 	r.buf.Reset()
 
+	// Remove carriage returns to avoid messing up rendering.
+	s = strings.ReplaceAll(s, "\r", "")
+
 	// If an empty string was passed we should clear existing output and
 	// rendering nothing. Rather than introduce additional state to manage
 	// this, we render a single space as a simple (albeit less correct)
