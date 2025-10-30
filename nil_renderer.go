@@ -38,7 +38,7 @@ func (n nilRenderer) setColorProfile(colorprofile.Profile) {}
 func (n nilRenderer) showCursor() {}
 
 // flush implements the Renderer interface.
-func (nilRenderer) flush() error { return nil }
+func (nilRenderer) flush(bool) error { return nil }
 
 // close implements the Renderer interface.
 func (nilRenderer) close() error { return nil }

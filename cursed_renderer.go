@@ -224,7 +224,7 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush() error {
+func (s *cursedRenderer) flush(closing bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -350,8 +350,10 @@ func (s *cursedRenderer) flush() error {
 			}
 			_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 		}
-		// Request keyboard enhancements when they change
-		_, _ = s.scr.WriteString(ansi.RequestKittyKeyboard)
+		if !closing {
+			// Request keyboard enhancements when they change
+			_, _ = s.scr.WriteString(ansi.RequestKittyKeyboard)
+		}
 	}
 
 	// Set terminal colors.

@@ -28,7 +28,7 @@ type renderer interface {
 	hit(MouseMsg) []Msg
 
 	// flush flushes the renderer's buffer to the output.
-	flush() error
+	flush(closing bool) error
 
 	// reset resets the renderer's state to its initial state.
 	reset()

@@ -1265,7 +1265,7 @@ func (p *Program) startRenderer() {
 
 			case <-p.ticker.C:
 				_ = p.flush()
-				_ = p.renderer.flush()
+				_ = p.renderer.flush(false)
 			}
 		}
 	}()
@@ -1282,7 +1282,7 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_ = p.renderer.flush()
+		_ = p.renderer.flush(true)
 	}
 
 	_ = p.renderer.close()
