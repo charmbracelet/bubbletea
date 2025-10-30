@@ -393,17 +393,21 @@ func (s *cursedRenderer) flush() error {
 		}
 	}
 
-	if cur := view.Cursor; cur != nil {
-		// Set cursor shape and blink if set.
-		var lcur *Cursor
-		lv := s.lastView
-		if lv != nil {
-			lcur = lv.Cursor
-		}
-		if lv == nil || lcur == nil || cur.Shape != lcur.Shape || cur.Blink != lcur.Blink {
-			curStyle := encodeCursorStyle(cur.Shape, cur.Blink)
-			_, _ = s.scr.WriteString(ansi.SetCursorStyle(curStyle))
-		}
+	// Set cursor shape and blink if set.
+	var ccStyle, lcStyle int
+	var lcur *Cursor
+	ccur := view.Cursor
+	if lv := s.lastView; lv != nil {
+		lcur = lv.Cursor
+	}
+	if ccur != nil {
+		ccStyle = encodeCursorStyle(ccur.Shape, ccur.Blink)
+	}
+	if lcur != nil {
+		lcStyle = encodeCursorStyle(lcur.Shape, lcur.Blink)
+	}
+	if ccStyle != lcStyle {
+		_, _ = s.scr.WriteString(ansi.SetCursorStyle(ccStyle))
 	}
 
 	// Render progress bar if it's changed.
