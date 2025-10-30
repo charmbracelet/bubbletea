@@ -137,9 +137,6 @@ func (s *cursedRenderer) close() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Go to the bottom of the screen.
-	s.scr.MoveTo(0, s.buf.Height()-1)
-
 	// Exit the altScreen and show cursor before closing. It's important that
 	// we don't change the [cursedRenderer] altScreen and cursorHidden states
 	// so that we can restore them when we start the renderer again. This is
@@ -148,6 +145,8 @@ func (s *cursedRenderer) close() (err error) {
 		if lv.AltScreen {
 			s.scr.ExitAltScreen()
 		} else {
+			// Go to the bottom of the screen.
+			s.scr.MoveTo(0, s.buf.Height()-1)
 			_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
 		}
 		if lv.Cursor == nil {
@@ -534,8 +533,8 @@ func (s *cursedRenderer) clearScreen() {
 	s.mu.Lock()
 	// Move the cursor to the top left corner of the screen and trigger a full
 	// screen redraw.
-	_, _ = s.scr.WriteString(ansi.CursorHomePosition)
-	s.scr.Redraw(s.buf.Buffer) // force redraw
+	s.scr.MoveTo(0, 0)
+	s.scr.Erase()
 	s.mu.Unlock()
 }
 
