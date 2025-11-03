@@ -46,7 +46,10 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 		}
 
 	case KeyPressMsg:
-		return m, Quit
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, Quit
+		}
 
 	case panicMsg:
 		panic("testing panic behavior")
@@ -584,5 +587,27 @@ func TestTeaGoroutinePanic(t *testing.T) {
 
 	if !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
+func BenchmarkTeaRun(b *testing.B) {
+	for b.Loop() {
+		var buf bytes.Buffer
+		var in bytes.Buffer
+
+		m := &testModel{}
+		p := NewProgram(m,
+			WithInput(&in),
+			WithOutput(&buf),
+			WithWindowSize(80, 24),
+		)
+
+		in.Reset()
+		in.Write([]byte("abc123q"))
+		buf.Reset()
+
+		if _, err := p.Run(); err != nil {
+			b.Errorf("Run failed: %v", err)
+		}
 	}
 }

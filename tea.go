@@ -394,9 +394,9 @@ type Program struct {
 	// be capped at 120.
 	fps int
 
-	// initialModel is the initial model for the program and is the only
-	// required field when creating a new program.
-	initialModel Model
+	// model stores the last updated model as an atomic pointer for safe
+	// concurrent access.
+	model Model
 
 	// disableRenderer prevents the program from rendering to the terminal.
 	// This can be useful for running daemon-like programs that don't require a
@@ -458,6 +458,9 @@ type Program struct {
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
 
+	// rendererModel is used to synchronize model updates with the renderer.
+	rendererModel chan Model
+
 	// Initial window size. Mainly used for testing.
 	width, height int
 
@@ -512,7 +515,7 @@ func Interrupt() Msg {
 // NewProgram creates a new [Program].
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
-		initialModel: model,
+		model:        model,
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
 		rendererDone: make(chan struct{}),
@@ -776,16 +779,18 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case cmds <- cmd: // process command (if any)
 			}
 
-			p.render(model) // render view
+			select {
+			case <-p.ctx.Done():
+				return model, nil
+			case p.rendererModel <- model: // send model to render loop
+			}
 		}
 	}
 }
 
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
-	if p.renderer != nil {
-		p.renderer.render(model.View()) // send view to renderer
-	}
+	p.renderer.render(model.View()) // send view to renderer
 }
 
 func (p *Program) execSequenceMsg(msg sequenceMsg) {
@@ -860,7 +865,8 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
 func (p *Program) Run() (returnModel Model, returnErr error) {
-	if p.initialModel == nil {
+	model := p.model
+	if model == nil {
 		return nil, errors.New("bubbletea: InitialModel cannot be nil")
 	}
 
@@ -868,6 +874,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 
+	p.rendererModel = make(chan Model)
 	p.finished = make(chan struct{})
 	defer func() {
 		close(p.finished)
@@ -899,7 +906,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
-		return p.initialModel, err
+		return model, err
 	}
 
 	// Get the initial window size.
@@ -908,7 +915,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
-			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
+			return model, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
 		width, height = w, h
@@ -952,7 +959,6 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	go p.Send(EnvMsg(p.environ))
 
 	// Init the input reader and initial model.
-	model := p.initialModel
 	if p.input != nil {
 		if err := p.initInputReader(false); err != nil {
 			return model, err
@@ -1257,13 +1263,17 @@ func (p *Program) startRenderer() {
 	// Start the renderer.
 	p.renderer.start()
 	go func() {
+		model := p.model
 		for {
 			select {
 			case <-p.rendererDone:
 				p.ticker.Stop()
 				return
 
+			case model = <-p.rendererModel:
+
 			case <-p.ticker.C:
+				p.render(model) // send view to renderer
 				_ = p.flush()
 				_ = p.renderer.flush(false)
 			}
