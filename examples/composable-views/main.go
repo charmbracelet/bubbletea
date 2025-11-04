@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/v2/spinner"
-	"github.com/charmbracelet/bubbles/v2/timer"
-	tea "github.com/charmbracelet/bubbletea/v2"
+	"charm.land/bubbles/v2/spinner"
+	"charm.land/bubbles/v2/timer"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss/v2"
 )
 

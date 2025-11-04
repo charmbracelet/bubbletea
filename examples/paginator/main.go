@@ -8,10 +8,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/paginator"
+	"charm.land/bubbles/v2/paginator"
 	"github.com/charmbracelet/lipgloss/v2"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 type styles struct {
