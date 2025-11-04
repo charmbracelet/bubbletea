@@ -2,11 +2,11 @@ module examples
 
 go 1.24.3
 
-replace github.com/charmbracelet/bubbletea/v2 => ../
+replace charm.land/bubbletea/v2 => ../
 
 require (
-	github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20251104192512-ffc9ec20b7a5
-	github.com/charmbracelet/bubbletea/v2 v2.0.0-beta.6.0.20251104190126-b947ade70df8
+	charm.land/bubbles/v2 v2.0.0-beta.1.0.20251104195700-a10cfddef91b
+	charm.land/bubbletea/v2 v2.0.0-beta.6.0.20251104195021-b8645799fe45
 	github.com/charmbracelet/colorprofile v0.3.2
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
@@ -35,6 +35,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect

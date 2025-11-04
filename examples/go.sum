@@ -1,3 +1,5 @@
+charm.land/bubbles/v2 v2.0.0-beta.1.0.20251104195700-a10cfddef91b h1:XFxbolw/stOeEEL4VLUCpBoQFtQ7bi2hGQRIfKt9xLw=
+charm.land/bubbles/v2 v2.0.0-beta.1.0.20251104195700-a10cfddef91b/go.mod h1:AlOp6AkdBkvwvdC6F4jX4mXVOoWkc21JcAlAEz0LJHY=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/alecthomas/assert/v2 v2.7.0 h1:QtqSACNS3tF7oasA8CU6A6sXZSBDqnm7RfpLl9bZqbE=
@@ -12,8 +14,6 @@ github.com/aymanbagabas/go-udiff v0.3.1 h1:LV+qyBQ2pqe0u42ZsUEtPiCaUoqgA9gYRDs3v
 github.com/aymanbagabas/go-udiff v0.3.1/go.mod h1:G0fsKmG+P6ylD0r6N/KgQD/nWzgfnl8ZBcNLgcbrw8E=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20251104192512-ffc9ec20b7a5 h1:hXvQL5ojubGJgcntA/QKYKRyD5VoSJcyF9v/WSqZrS4=
-github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1.0.20251104192512-ffc9ec20b7a5/go.mod h1:hbW28mBqjVJiCcPXW8pma8OxYtXvKRvfyRh5TSlkEf0=
 github.com/charmbracelet/colorprofile v0.3.2 h1:9J27WdztfJQVAQKX2WOlSSRB+5gaKqqITmrvb1uTIiI=
 github.com/charmbracelet/colorprofile v0.3.2/go.mod h1:mTD5XzNeWHj8oqHb+S1bssQb7vIHbepiebQ2kPKVKbI=
 github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6 h1:AKhOV8dSRU3KpqMgpGME9JU7ouumB2S6hMmD6PRJeTc=
