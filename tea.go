@@ -692,7 +692,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case CapabilityMsg:
-				switch msg {
+				switch msg.Content {
 				case "RGB", "Tc":
 					if *p.profile != colorprofile.TrueColor {
 						tc := colorprofile.TrueColor

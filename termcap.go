@@ -38,4 +38,11 @@ func RequestCapability(s string) Cmd {
 // (XTGETTCAP) requests.
 //
 // See: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
-type CapabilityMsg string
+type CapabilityMsg struct {
+	Content string
+}
+
+// String returns the capability content as a string.
+func (c CapabilityMsg) String() string {
+	return c.Content
+}
