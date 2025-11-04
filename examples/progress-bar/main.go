@@ -4,7 +4,7 @@ import (
 	"log"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var body = lipgloss.NewStyle().Padding(1, 2)
