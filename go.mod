@@ -1,4 +1,4 @@
-module github.com/charmbracelet/bubbletea/v2
+module charm.land/bubbletea/v2
 
 retract v2.0.0-beta1 // We add a "." after the "beta" in the version number.
 
