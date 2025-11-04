@@ -25,7 +25,7 @@ func main() {
 type model struct {
 	viewport    viewport.Model
 	messages    []string
-	textarea    textarea.Model
+	textarea    *textarea.Model
 	senderStyle lipgloss.Style
 	err         error
 }

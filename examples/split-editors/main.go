@@ -46,7 +46,7 @@ type keymap = struct {
 	next, prev, add, remove, quit key.Binding
 }
 
-func newTextarea() textarea.Model {
+func newTextarea() *textarea.Model {
 	t := textarea.New()
 	t.Prompt = ""
 	t.Placeholder = "Type something"
@@ -77,13 +77,13 @@ type model struct {
 	height int
 	keymap keymap
 	help   help.Model
-	inputs []textarea.Model
+	inputs []*textarea.Model
 	focus  int
 }
 
 func newModel() model {
 	m := model{
-		inputs: make([]textarea.Model, initialInputs),
+		inputs: make([]*textarea.Model, initialInputs),
 		help:   help.New(),
 		keymap: keymap{
 			next: key.NewBinding(
