@@ -8,7 +8,7 @@ require (
 	charm.land/bubbles/v2 v2.0.0-beta.1.0.20251104200223-da0b892d1759
 	charm.land/bubbletea/v2 v2.0.0-beta.6.0.20251104195021-b8645799fe45
 	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251104200114-3aae28661422
-	github.com/charmbracelet/colorprofile v0.3.2
+	github.com/charmbracelet/colorprofile v0.3.3
 	github.com/charmbracelet/glamour/v2 v2.0.0-20250513163904-eeeced3bb3c6
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/x/ansi v0.10.3
@@ -24,7 +24,7 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20251103214348-d3032608aa74 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20251104185819-20e68c88fe84 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20251105181648-75d1e37ff1bb // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.14-0.20250516160309-24eee56f89fa // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250327172914-2fdc97757edf // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
