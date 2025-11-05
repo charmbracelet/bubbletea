@@ -230,53 +230,6 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	view := s.view
 
-	// Figure out the frame size we need.
-	frameArea := uv.Rect(0, 0, s.width, s.height)
-	if view.Layer == nil {
-		// If the component is nil, we should clear the screen buffer.
-		frameArea.Max.Y = 0
-	}
-
-	if !view.AltScreen {
-		// We need to resizes the screen based on the frame height and
-		// terminal width. This is because the frame height can change based on
-		// the content of the frame. For example, if the frame contains a list
-		// of items, the height of the frame will be the number of items in the
-		// list. This is different from the alt screen buffer, which has a
-		// fixed height and width.
-		frameHeight := frameArea.Dy()
-		switch l := view.Layer.(type) {
-		case interface{ Height() int }:
-			frameHeight = l.Height()
-		case interface{ Bounds() uv.Rectangle }:
-			frameHeight = l.Bounds().Dy()
-		}
-
-		if frameHeight != frameArea.Dy() {
-			frameArea.Max.Y = frameHeight
-		}
-	}
-
-	if frameArea != s.buf.Bounds() {
-		// Resize the screen buffer to match the frame area. This is necessary
-		// to ensure that the screen buffer is the same size as the frame area
-		// and to avoid rendering issues when the frame area is smaller than
-		// the screen buffer.
-		s.buf.Resize(frameArea.Dx(), frameArea.Dy())
-	}
-
-	// Clear our screen buffer before copying the new frame into it to ensure
-	// we erase any old content.
-	if view.Layer != nil {
-		view.Layer.Draw(s.buf, s.buf.Bounds())
-	}
-
-	// If the frame height is greater than the screen height, we drop the
-	// lines from the top of the buffer.
-	if frameHeight := frameArea.Dy(); frameHeight > s.height {
-		s.buf.Lines = s.buf.Lines[frameHeight-s.height:]
-	}
-
 	// Alt screen mode.
 	enableAltScreen(s, view.AltScreen)
 	// Cursor visibility.
@@ -449,8 +402,52 @@ func (s *cursedRenderer) flush(closing bool) error {
 // render implements renderer.
 func (s *cursedRenderer) render(v View) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	frameArea := uv.Rect(0, 0, s.width, s.height)
+	if v.Layer == nil {
+		// If the component is nil, we should clear the screen buffer.
+		frameArea.Max.Y = 0
+	}
+
+	// We need to resizes the screen based on the frame height and
+	// terminal width. This is because the frame height can change based on
+	// the content of the frame. For example, if the frame contains a list
+	// of items, the height of the frame will be the number of items in the
+	// list. This is different from the alt screen buffer, which has a
+	// fixed height and width.
+	frameHeight := frameArea.Dy()
+	switch l := v.Layer.(type) {
+	case *uv.StyledString:
+		frameHeight = l.Height()
+	case interface{ Bounds() uv.Rectangle }:
+		frameHeight = l.Bounds().Dy()
+	}
+
+	if frameHeight != frameArea.Dy() {
+		frameArea.Max.Y = frameHeight
+	}
+
+	// Resize the screen buffer to match the frame area. This is necessary
+	// to ensure that the screen buffer is the same size as the frame area
+	// and to avoid rendering issues when the frame area is smaller than
+	// the screen buffer.
+	s.buf.Resize(frameArea.Dx(), frameArea.Dy())
+
+	// Clear our screen buffer before copying the new frame into it to ensure
+	// we erase any old content.
+	s.buf.Clear()
+	if v.Layer != nil {
+		v.Layer.Draw(s.buf, s.buf.Bounds())
+	}
+
+	// If the frame height is greater than the screen height, we drop the
+	// lines from the top of the buffer.
+	if frameHeight := frameArea.Dy(); frameHeight > s.height {
+		s.buf.Lines = s.buf.Lines[frameHeight-s.height:]
+	}
+
 	s.view = v
-	s.mu.Unlock()
 }
 
 // hit implements renderer.
@@ -529,8 +526,8 @@ func (s *cursedRenderer) resize(w, h int) {
 	// We need to reset the touched lines buffer to match the new height.
 	s.buf.Touched = nil
 
-	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
+	s.width, s.height = w, h
 	s.mu.Unlock()
 }
 
