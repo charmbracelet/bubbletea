@@ -15,10 +15,8 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyboardEnhancementsMsg:
-		return m, tea.Printf("Keyboard enhancements: Disambiguation: %v, ReleaseKeys: %v, Uniform keys: %v\n",
-			msg.SupportsKeyDisambiguation(),
-			msg.SupportsKeyReleases(),
-			msg.SupportsUniformKeyLayout())
+		return m, tea.Printf("Keyboard enhancements: EventTypes: %v\n",
+			msg.SupportsEventTypes())
 	case tea.KeyMsg:
 		key := msg.Key()
 		switch msg := msg.(type) {
@@ -41,8 +39,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() tea.View {
 	v := tea.NewView("Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit.")
-	v.KeyReleases = true
-	v.UniformKeyLayout = true
+	v.KeyboardEnhancements.ReportEventTypes = true
 	return v
 }
 

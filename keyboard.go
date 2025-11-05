@@ -7,25 +7,13 @@ import (
 // KeyboardEnhancementsMsg is a message that gets sent when the terminal
 // supports keyboard enhancements.
 type KeyboardEnhancementsMsg struct {
+	// Flags is a bitmask of supported keyboard enhancement features.
+	// See [ansi.KittyReportEventTypes] and other constants for details.
 	Flags int
 }
 
-// SupportsKeyDisambiguation returns whether the terminal supports reporting
-// disambiguous keys as escape codes.
-func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
-	return k.Flags&ansi.KittyDisambiguateEscapeCodes != 0
-}
-
-// SupportsKeyReleases returns whether the terminal supports key release
-// events.
-func (k KeyboardEnhancementsMsg) SupportsKeyReleases() bool {
+// SupportsEventTypes returns whether the terminal supports reporting
+// different types of key events (press, release, repeat).
+func (k KeyboardEnhancementsMsg) SupportsEventTypes() bool {
 	return k.Flags&ansi.KittyReportEventTypes != 0
-}
-
-// SupportsUniformKeyLayout returns whether the terminal supports reporting key
-// events as though they were on a PC-101 layout.
-func (k KeyboardEnhancementsMsg) SupportsUniformKeyLayout() bool {
-	return k.SupportsKeyDisambiguation() &&
-		k.Flags&ansi.KittyReportAlternateKeys != 0 &&
-		k.Flags&ansi.KittyReportAllKeysAsEscapeCodes != 0
 }

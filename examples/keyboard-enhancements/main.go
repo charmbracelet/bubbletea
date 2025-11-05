@@ -17,8 +17,8 @@ type styles struct {
 }
 
 type model struct {
-	supportsRelease        bool
 	supportsDisambiguation bool
+	supportsEventTypes     bool
 	styles                 styles
 }
 
@@ -28,14 +28,13 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	// When tea.RequestKeyboardEnhancements is called, the program will receive
-	// a tea.KeyboardEnhancementsMsg message. This means that an attempt to
-	// enable keyboard enhancements was made, however it doesn't guarantee that
-	// it was successful.
+	// When a [tea.KeyboardEnhancementsMsg] is received, it means that the
+	// terminal supports keyboard enhancements features like key disambiguation
+	// and key releases (if opted-in).
 	case tea.KeyboardEnhancementsMsg:
 		// Check which features were able to be enabled.
-		m.supportsRelease = msg.SupportsKeyReleases()
-		m.supportsDisambiguation = msg.SupportsKeyDisambiguation()
+		m.supportsDisambiguation = true // This is always enabled when this msg is received.
+		m.supportsEventTypes = msg.SupportsEventTypes()
 
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -58,15 +57,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() tea.View {
 	var v tea.View
 	var b strings.Builder
-	fmt.Fprintf(&b, "Terminal supports key releases: %v\n", m.supportsRelease)
+	fmt.Fprintf(&b, "Terminal supports key releases: %v\n", m.supportsEventTypes)
 	fmt.Fprintf(&b, "Terminal supports key disambiguation: %v\n", m.supportsDisambiguation)
 	fmt.Fprint(&b, "This demo logs key events. Press ctrl+c to quit.")
 	v.SetContent(b.String() + "\n")
 
-	// Attempt to enable keyboard enhancements. By default, this just
-	// enables key disabiguation. For key releases, you'll need to opt-in
-	// to that feature.
-	v.KeyReleases = true
+	// Attempt to enable reporting key event types (key presses and key
+	// releases). By default, only key disambiguation is enabled which improves
+	// the ability to distinguish between certain key presses like "enter" and
+	// "shift+enter" or "tab" and "ctrl+i".
+	v.KeyboardEnhancements.ReportEventTypes = true
 
 	return v
 }

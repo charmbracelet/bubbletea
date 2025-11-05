@@ -168,20 +168,26 @@ type View struct {
 	// [MouseModeNone], [MouseModeCellMotion], or [MouseModeAllMotion].
 	MouseMode MouseMode
 
-	// DisableKeyEnhancements disables all key enhancements for this view.
-	DisableKeyEnhancements bool
+	// KeyboardEnhancements describes what keyboard enhancement features Bubble
+	// Tea should request from the terminal.
+	// If the terminal supports any of them, it will respond with a
+	// [KeyboardEnhancementsMsg] that indicates which features are supported.
+	KeyboardEnhancements KeyboardEnhancements
+}
 
-	// KeyReleases enables support for reporting key release events. This is
-	// useful for terminals that support the Kitty keyboard protocol "Report
-	// event types" progressive enhancement feature.
-	KeyReleases bool
+// KeyboardEnhancements describes the requested keyboard enhancement features.
+// If the terminal supports any of them, it will respond with a
+// [KeyboardEnhancementsMsg] that indicates which features are supported.
 
-	// UniformKeyLayout enables support for reporting key events as though they
-	// were on a PC-101 layout. This is useful for uniform key event reporting
-	// across different keyboard layouts. This is equivalent to the Kitty
-	// keyboard protocol "Report alternate keys" and "Report all keys as escape
-	// codes" progressive enhancement features.
-	UniformKeyLayout bool
+// KeyboardEnhancements defines different keyboard enhancement features that
+// can be requested from the terminal.
+type KeyboardEnhancements struct {
+	// ReportEventTypes requests the terminal to report key repeat and release
+	// events.
+	// If supported, your program will receive [KeyReleaseMsg]s and
+	// [KeyPressMsg] with the [Key.IsRepeat] field set indicating that this is
+	// a it's part of a key repeat sequence.
+	ReportEventTypes bool
 }
 
 // SetContent sets the content of the view to the value.
