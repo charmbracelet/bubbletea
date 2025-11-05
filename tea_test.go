@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -46,7 +48,10 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 		}
 
 	case KeyPressMsg:
-		return m, Quit
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, Quit
+		}
 
 	case panicMsg:
 		panic("testing panic behavior")
@@ -584,5 +589,63 @@ func TestTeaGoroutinePanic(t *testing.T) {
 
 	if !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
+type benchModel struct {
+	t testing.TB
+}
+
+func (m benchModel) Init() Cmd {
+	return nil
+}
+
+func (m benchModel) Update(msg Msg) (Model, Cmd) {
+	switch msg := msg.(type) {
+	case KeyPressMsg:
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, Quit
+		}
+	}
+
+	return m, nil
+}
+
+func (m benchModel) View() View {
+	view := strings.Join([]string{
+		" \x1b[38;5;63m╭─────────────────────────╮\x1b[m",
+		" \x1b[38;5;63m│\x1b[m\x1b[25X\x1b[28G\x1b[38;5;63m│\x1b[m",
+		" \x1b[38;5;63m│\x1b[m    \x1b[38;5;231mHello There!\x1b[m    \x1b[38;5;63m│\x1b[m",
+		" \x1b[38;5;63m│\x1b[m\x1b[25X\x1b[28G\x1b[38;5;63m│\x1b[m",
+		" \x1b[38;5;63m╰─────────────────────────╯\x1b[m",
+	}, "\n")
+
+	return NewView(view)
+}
+
+func BenchmarkTeaRun(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var buf bytes.Buffer
+
+		m := benchModel{b}
+		r, w := io.Pipe()
+		p := NewProgram(m,
+			WithInput(r),
+			WithOutput(&buf),
+		)
+
+		go func() {
+			for _, input := range "abcdefghijklmnopq" {
+				time.Sleep(10 * time.Millisecond)
+				w.Write([]byte(string(input)))
+			}
+		}()
+
+		if _, err := p.Run(); err != nil {
+			b.Fatalf("Run failed: %v", err)
+		}
+
+		_ = r.CloseWithError(io.EOF)
 	}
 }
