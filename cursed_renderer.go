@@ -229,6 +229,10 @@ func (s *cursedRenderer) flush(closing bool) error {
 	defer s.mu.Unlock()
 
 	view := s.view
+	if s.lastView != nil && *s.lastView == view {
+		// No changes, nothing to do.
+		return nil
+	}
 
 	// Alt screen mode.
 	enableAltScreen(s, view.AltScreen)
