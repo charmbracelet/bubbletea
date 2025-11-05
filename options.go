@@ -194,6 +194,18 @@ func WithANSICompressor() ProgramOption {
 	}
 }
 
+// WithoutSkipRenderIdenticalLines disables an optimisation of the standard renderer
+// where it will skip writing a line to the screen,
+// if the same line written on the last render is identical.
+// The optimisation is usually without consequences, but can be unwanted if an ANSI coloring tag
+// is added on both sides of the unchanged line. If the line is not rewritten
+// (even though identical) it will not be colored in some terminals
+func WithoutSkipRenderIdenticalLines() ProgramOption {
+	return func(p *Program) {
+		p.startupOptions |= withoutSkipRenderIdenticalLines
+	}
+}
+
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter
