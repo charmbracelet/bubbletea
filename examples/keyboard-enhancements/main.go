@@ -28,9 +28,20 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	// When a [tea.KeyboardEnhancementsMsg] is received, it means that the
-	// terminal supports keyboard enhancements features like key disambiguation
-	// and key releases (if opted-in).
+	// Bubble Tea will send a [tea.KeyboardEnhancementsMsg] on startup if the
+	// terminal supports keyboard enhancements features.
+	//
+	// These features extend the capabilities of keyboard input beyond the basic legacy
+	// support found in most terminals. This includes features like:
+	//  - Key disambiguation: Improved ability to distinguish between certain key presses
+	//     like "enter" and "shift+enter" or "tab" and "ctrl+i".
+	//  - Key event types: The ability to report different types of key events such as
+	//   key presses and key releases.
+	//
+	// This allows for more nuanced input handling in terminal applications.
+	// You can ask Bubble Tea to request additional keyboard enhancements
+	// features by setting fields on the [tea.View.KeyboardEnhancements] struct
+	// in your [tea.View] method.
 	case tea.KeyboardEnhancementsMsg:
 		// Check which features were able to be enabled.
 		m.supportsDisambiguation = true // This is always enabled when this msg is received.

@@ -9,11 +9,25 @@ import (
 type KeyboardEnhancementsMsg struct {
 	// Flags is a bitmask of supported keyboard enhancement features.
 	// See [ansi.KittyReportEventTypes] and other constants for details.
+	//
+	// Example:
+	//
+	//  ```go
+	//  // The hard way
+	//  if msg.Flags&ansi.KittyReportEventTypes != 0 {
+	//     // Terminal supports reporting different key event types
+	//  }
+	//
+	//  // The easy way
+	//  if msg.SupportsEventTypes() {
+	//     // Terminal supports reporting different key event types
+	//  }
+	//  ```
 	Flags int
 }
 
 // SupportsEventTypes returns whether the terminal supports reporting
-// different types of key events (press, release, repeat).
+// different types of key events (press, release, and repeat).
 func (k KeyboardEnhancementsMsg) SupportsEventTypes() bool {
 	return k.Flags&ansi.KittyReportEventTypes != 0
 }

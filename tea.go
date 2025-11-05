@@ -170,8 +170,14 @@ type View struct {
 
 	// KeyboardEnhancements describes what keyboard enhancement features Bubble
 	// Tea should request from the terminal.
-	// If the terminal supports any of them, it will respond with a
-	// [KeyboardEnhancementsMsg] that indicates which features are supported.
+	//
+	// Bubble Tea supports requesting the following keyboard enhancement features:
+	//   - ReportEventTypes: requests the terminal to report key repeat and
+	//     release events.
+	//
+	// If the terminal supports any of these features, your program will
+	// receive  a [KeyboardEnhancementsMsg] that indicates which features are
+	// available.
 	KeyboardEnhancements KeyboardEnhancements
 }
 
@@ -181,6 +187,49 @@ type View struct {
 
 // KeyboardEnhancements defines different keyboard enhancement features that
 // can be requested from the terminal.
+
+// KeyboardEnhancements defines different keyboard enhancement features that
+// can be requested from the terminal.
+//
+// By default, Bubble Tea requests basic key disambiguation features from the
+// terminal. If the terminal supports keyboard enhancements, or any of its
+// additional features, it will respond with a [KeyboardEnhancementsMsg] that
+// indicates which features are supported.
+//
+// Example:
+//
+//	```go
+//	func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+//	  switch msg := msg.(type) {
+//	  case tea.KeyboardEnhancementsMsg:
+//	    // We have basic key disambiguation support.
+//	    // We can handle "shift+enter", "ctrl+i", etc.
+//		m.keyboardEnhancements = msg
+//		if msg.ReportEventTypes {
+//		  // Even better! We can now handle key repeat and release events.
+//		}
+//	  case tea.KeyPressMsg:
+//	    switch msg.String() {
+//	    case "shift+enter":
+//	      // Handle shift+enter
+//	      // This would not be possible without keyboard enhancements.
+//	    case "ctrl+j":
+//	      // Handle ctrl+j
+//	    }
+//	  case tea.KeyReleaseMsg:
+//	    // Whoa! A key was released!
+//	  }
+//
+//	  return m, nil
+//	}
+//
+//	func (m model) View() tea.View {
+//	  v := tea.NewView("Press some keys!")
+//	  // Request reporting key repeat and release events.
+//	  v.KeyboardEnhancements.ReportEventTypes = true
+//	  return v
+//	}
+//	```
 type KeyboardEnhancements struct {
 	// ReportEventTypes requests the terminal to report key repeat and release
 	// events.
