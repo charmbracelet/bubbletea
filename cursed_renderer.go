@@ -526,8 +526,8 @@ func (s *cursedRenderer) resize(w, h int) {
 	// We need to reset the touched lines buffer to match the new height.
 	s.buf.Touched = nil
 
-	s.scr.Resize(s.width, s.height)
 	s.width, s.height = w, h
+	s.scr.Resize(s.width, s.height)
 	s.mu.Unlock()
 }
 
