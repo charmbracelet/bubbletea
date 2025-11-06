@@ -406,7 +406,8 @@ func (s *cursedRenderer) render(v View) {
 		// fixed height and width.
 		frameHeight := frameArea.Dy()
 		switch l := v.Content.(type) {
-		case *uv.StyledString:
+		case interface{ Height() int }:
+			// This covers [uv.StyledString] and [lipgloss.Canvas].
 			frameHeight = l.Height()
 		case interface{ Bounds() uv.Rectangle }:
 			frameHeight = l.Bounds().Dy()
