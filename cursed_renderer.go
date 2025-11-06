@@ -392,7 +392,7 @@ func (s *cursedRenderer) render(v View) {
 	defer s.mu.Unlock()
 
 	frameArea := uv.Rect(0, 0, s.width, s.height)
-	if v.Layer == nil {
+	if v.Content == nil {
 		// If the component is nil, we should clear the screen buffer.
 		frameArea.Max.Y = 0
 	}
@@ -405,7 +405,7 @@ func (s *cursedRenderer) render(v View) {
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
 		frameHeight := frameArea.Dy()
-		switch l := v.Layer.(type) {
+		switch l := v.Content.(type) {
 		case *uv.StyledString:
 			frameHeight = l.Height()
 		case interface{ Bounds() uv.Rectangle }:
@@ -428,8 +428,8 @@ func (s *cursedRenderer) render(v View) {
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.buf.Clear()
-	if v.Layer != nil {
-		v.Layer.Draw(s.buf, s.buf.Bounds())
+	if v.Content != nil {
+		v.Content.Draw(s.buf, s.buf.Bounds())
 	}
 
 	// If the frame height is greater than the screen height, we drop the
@@ -450,7 +450,7 @@ func (s *cursedRenderer) hit(mouse MouseMsg) []Msg {
 		return nil
 	}
 
-	if l := s.lastView.Layer; l != nil {
+	if l := s.lastView.Content; l != nil {
 		if h, ok := l.(Hittable); ok {
 			m := mouse.Mouse()
 			if id := h.Hit(m.X, m.Y); id != "" {

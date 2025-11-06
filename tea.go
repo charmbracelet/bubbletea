@@ -105,9 +105,9 @@ func NewView(s any) View {
 // View represents a terminal view that can be composed of multiple layers.
 // It can also contain a cursor that will be rendered on top of the layers.
 type View struct {
-	// Layer is the main content of the view. It represents the screen content
+	// Content is the main content of the view. It represents the screen content
 	// and state and how it should look like. Use [View.SetContent] to set the
-	// content of the [Layer].
+	// content of the [View].
 	//
 	// Example:
 	//
@@ -115,7 +115,7 @@ type View struct {
 	//  layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
 	//  canvas := lipgloss.NewCanvas(layer1, layer2)
 	//  v := tea.NewView(canvas)
-	Layer Layer
+	Content Layer
 
 	// Cursor represents the cursor position, style, and visibility on the
 	// screen. When not nit, the cursor will be shown at the specified
@@ -243,13 +243,13 @@ type KeyboardEnhancements struct {
 func (v *View) SetContent(s any) {
 	switch vi := s.(type) {
 	case string:
-		v.Layer = uv.NewStyledString(vi)
+		v.Content = uv.NewStyledString(vi)
 	case fmt.Stringer:
-		v.Layer = uv.NewStyledString(vi.String())
+		v.Content = uv.NewStyledString(vi.String())
 	case Layer:
-		v.Layer = vi
+		v.Content = vi
 	default:
-		v.Layer = uv.NewStyledString(fmt.Sprintf("%v", vi))
+		v.Content = uv.NewStyledString(fmt.Sprintf("%v", vi))
 	}
 }
 
