@@ -232,9 +232,9 @@ func (m model) View() tea.View {
 		layers[i+1] = d.view().Z(i + 1)
 	}
 
-	v.Layer = lipgloss.NewCanvas(layers...)
 	v.MouseMode = tea.MouseModeAllMotion
 	v.AltScreen = true
+	v.SetContent(lipgloss.NewCanvas(layers...))
 
 	return v
 }

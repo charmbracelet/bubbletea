@@ -59,12 +59,12 @@ func (m model) View() tea.View {
 
 	cardA := newCard("Hello").Z(z[0])
 	cardB := newCard("Goodbye").Z(z[1])
-	view.Layer = lipgloss.NewCanvas(
+	view.MouseMode = tea.MouseModeCellMotion
+	view.SetContent(lipgloss.NewCanvas(
 		lipgloss.NewLayer(footer),
 		cardA,
 		cardB.X(10).Y(2),
-	)
-	view.MouseMode = tea.MouseModeCellMotion
+	))
 
 	return view
 }
