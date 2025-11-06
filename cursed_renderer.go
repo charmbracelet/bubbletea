@@ -429,7 +429,7 @@ func (s *cursedRenderer) render(v View) {
 	// we erase any old content.
 	s.buf.Clear()
 	if v.Content != nil {
-		v.Content.Draw(s.buf, s.buf.Bounds())
+		v.Content.Draw(s.buf, frameArea)
 	}
 
 	// If the frame height is greater than the screen height, we drop the
