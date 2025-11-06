@@ -120,16 +120,11 @@ func (s *cursedRenderer) start() {
 	if s.lastView.ProgressBar != nil {
 		setProgressBar(s, s.lastView.ProgressBar)
 	}
-	if !s.lastView.DisableKeyEnhancements {
-		kittyFlags := ansi.KittyDisambiguateEscapeCodes
-		if s.lastView.KeyReleases {
-			kittyFlags |= ansi.KittyReportEventTypes
-		}
-		if s.lastView.UniformKeyLayout {
-			kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
-		}
-		_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
+	kittyFlags := ansi.KittyDisambiguateEscapeCodes
+	if s.lastView.KeyboardEnhancements.ReportEventTypes {
+		kittyFlags |= ansi.KittyReportEventTypes
 	}
+	_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 }
 
 // close implements renderer.
@@ -193,10 +188,8 @@ func (s *cursedRenderer) close() (err error) {
 			_, _ = s.scr.WriteString(ansi.ResetProgressBar)
 		}
 
-		if s.lastView != nil && !s.lastView.DisableKeyEnhancements {
-			// NOTE: This needs to happen after we exit the alt screen.
-			_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
-		}
+		// NOTE: This needs to happen after we exit the alt screen.
+		_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
 	}
 
 	if err := s.scr.Flush(); err != nil {
@@ -287,26 +280,16 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	// kitty keyboard protocol
-	//nolint:nestif
-	if s.lastView == nil || view.DisableKeyEnhancements != s.lastView.DisableKeyEnhancements ||
-		view.KeyReleases != s.lastView.KeyReleases ||
-		view.UniformKeyLayout != s.lastView.UniformKeyLayout ||
+	if s.lastView == nil || view.KeyboardEnhancements != s.lastView.KeyboardEnhancements ||
 		view.AltScreen != s.lastView.AltScreen {
 		// NOTE: We need to reset the keyboard protocol when switching
 		// between main and alt screen. This is because the specs specify
 		// two different states for the main and alt screen.
-		if view.DisableKeyEnhancements {
-			_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
-		} else {
-			kittyFlags := ansi.KittyDisambiguateEscapeCodes // always enable basic key disambiguation
-			if view.KeyReleases {
-				kittyFlags |= ansi.KittyReportEventTypes
-			}
-			if view.UniformKeyLayout {
-				kittyFlags |= ansi.KittyReportAlternateKeys | ansi.KittyReportAllKeysAsEscapeCodes
-			}
-			_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
+		kittyFlags := ansi.KittyDisambiguateEscapeCodes // always enable basic key disambiguation
+		if view.KeyboardEnhancements.ReportEventTypes {
+			kittyFlags |= ansi.KittyReportEventTypes
 		}
+		_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 		if !closing {
 			// Request keyboard enhancements when they change
 			_, _ = s.scr.WriteString(ansi.RequestKittyKeyboard)
