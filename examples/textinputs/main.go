@@ -42,6 +42,8 @@ func initialModel() model {
 		t = textinput.New()
 		t.Cursor.Style = cursorStyle
 		t.CharLimit = 32
+		// Set a reasonable width so the full placeholder text is visible
+		t.Width = 20
 
 		switch i {
 		case 0:
