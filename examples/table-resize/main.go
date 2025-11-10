@@ -142,7 +142,7 @@ func main() {
 
 	m := model{t}
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
-		fmt.Println("Error running program:", err)
+		fmt.Println("Blunder runnin' program:", err)
 		os.Exit(1)
 	}
 }

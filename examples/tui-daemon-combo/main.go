@@ -46,7 +46,7 @@ func main() {
 
 	p := tea.NewProgram(newModel(), opts...)
 	if _, err := p.Run(); err != nil {
-		fmt.Println("Error starting Bubble Tea program:", err)
+		fmt.Println("Blunder startin' Bubble Tea program:", err)
 		os.Exit(1)
 	}
 }
@@ -75,7 +75,7 @@ func newModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	log.Println("Starting work...")
+	log.Println("Startin' work...")
 	return tea.Batch(
 		m.spinner.Tick,
 		runPretendProcess,

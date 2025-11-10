@@ -94,7 +94,7 @@ func main() {
 	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab", "Mascara Tab", "Foundation Tab"}
 	m := model{Tabs: tabs, TabContent: tabContent}
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Println("Error running program:", err)
+		fmt.Println("Blunder runnin' program:", err)
 		os.Exit(1)
 	}
 }

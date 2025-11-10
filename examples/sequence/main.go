@@ -62,7 +62,7 @@ func (m model) View() string {
 
 func main() {
 	if _, err := tea.NewProgram(model{}).Run(); err != nil {
-		fmt.Println("Uh oh:", err)
+		fmt.Println("Garr:", err)
 		os.Exit(1)
 	}
 }

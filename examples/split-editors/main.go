@@ -198,7 +198,7 @@ func (m model) View() string {
 
 func main() {
 	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
-		fmt.Println("Error while running program:", err)
+		fmt.Println("Blunder while runnin' program:", err)
 		os.Exit(1)
 	}
 }

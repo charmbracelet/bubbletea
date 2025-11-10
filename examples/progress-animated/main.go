@@ -31,7 +31,7 @@ func main() {
 	}
 
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Println("Oh no!", err)
+		fmt.Println("Shiver me timbers!", err)
 		os.Exit(1)
 	}
 }

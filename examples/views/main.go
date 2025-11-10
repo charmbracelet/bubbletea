@@ -44,7 +44,7 @@ func main() {
 	initialModel := model{0, false, 10, 0, 0, false, false}
 	p := tea.NewProgram(initialModel)
 	if _, err := p.Run(); err != nil {
-		fmt.Println("could not start program:", err)
+		fmt.Println("could nah start program:", err)
 	}
 }
 

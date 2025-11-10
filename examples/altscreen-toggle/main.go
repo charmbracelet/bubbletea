@@ -77,7 +77,7 @@ func (m model) View() string {
 
 func main() {
 	if _, err := tea.NewProgram(model{}).Run(); err != nil {
-		fmt.Println("Error running program:", err)
+		fmt.Println("Blunder runnin' program:", err)
 		os.Exit(1)
 	}
 }

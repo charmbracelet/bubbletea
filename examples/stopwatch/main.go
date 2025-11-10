@@ -97,7 +97,7 @@ func main() {
 	m.keymap.start.SetEnabled(false)
 
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Println("Oh no, it didn't work:", err)
+		fmt.Println("Shiver me timbers, it didn' work:", err)
 		os.Exit(1)
 	}
 }

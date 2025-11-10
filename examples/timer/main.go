@@ -116,7 +116,7 @@ func main() {
 	m.keymap.start.SetEnabled(false)
 
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Println("Uh oh, we encountered an error:", err)
+		fmt.Println("Blimey, we encountered an blunder:", err)
 		os.Exit(1)
 	}
 }

@@ -75,7 +75,7 @@ func main() {
 	// Run returns the model as a tea.Model.
 	m, err := p.Run()
 	if err != nil {
-		fmt.Println("Oh no:", err)
+		fmt.Println("Shiver me timbers:", err)
 		os.Exit(1)
 	}
 
