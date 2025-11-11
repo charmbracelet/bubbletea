@@ -613,7 +613,7 @@ func TestParseSGRMouseEvent(t *testing.T) {
 		if r {
 			re = 'm'
 		}
-		return []byte(fmt.Sprintf("\x1b[<%d;%d;%d%c", b, x+1, y+1, re))
+		return fmt.Appendf(nil, "\x1b[<%d;%d;%d%c", b, x+1, y+1, re)
 	}
 
 	tt := []struct {
