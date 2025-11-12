@@ -232,6 +232,14 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// Cursor visibility.
 	enableTextCursor(s, view.Cursor != nil)
 
+	// Push prepended lines if any.
+	if len(s.prependLines) > 0 {
+		for _, line := range s.prependLines {
+			prependLine(s, line)
+		}
+		s.prependLines = s.prependLines[:0]
+	}
+
 	// bracketed paste mode.
 	if s.lastView == nil || view.DisableBracketedPasteMode != s.lastView.DisableBracketedPasteMode {
 		if !view.DisableBracketedPasteMode {
@@ -362,14 +370,6 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.buf.Buffer)
-
-	// Push prepended lines if any.
-	if len(s.prependLines) > 0 {
-		for _, line := range s.prependLines {
-			prependLine(s, line)
-		}
-		s.prependLines = s.prependLines[:0]
-	}
 
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
