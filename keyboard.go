@@ -7,7 +7,9 @@ import (
 // KeyboardEnhancementsMsg is a message that gets sent when the terminal
 // supports keyboard enhancements.
 type KeyboardEnhancementsMsg struct {
-	// Flags is a bitmask of supported keyboard enhancement features.
+	// Flags is a bitmask of enabled keyboard enhancement features. A non-zero
+	// value indicates that at least we have key disambiguation support.
+	//
 	// See [ansi.KittyReportEventTypes] and other constants for details.
 	//
 	// Example:
