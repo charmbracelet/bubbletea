@@ -28,6 +28,12 @@ type KeyboardEnhancementsMsg struct {
 	Flags int
 }
 
+// SupportsKeyDisambiguation returns whether the terminal supports key
+// disambiguation (e.g., distinguishing between different modifier keys).
+func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
+	return k.Flags > 0
+}
+
 // SupportsEventTypes returns whether the terminal supports reporting
 // different types of key events (press, release, and repeat).
 func (k KeyboardEnhancementsMsg) SupportsEventTypes() bool {
