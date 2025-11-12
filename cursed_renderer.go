@@ -375,6 +375,17 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
 		// cursor position might get updated during rendering.
 		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y)
+	} else if !view.AltScreen {
+		// We don't want the cursor to be dangling at the end of the line in
+		// inline mode because it can cause unwanted line wraps in some
+		// terminals. So we move it to the beginning of the next line if
+		// necessary.
+		// This is only needed when the cursor is hidden because when it's
+		// visible, we already set its position above.
+		x, y := s.scr.Position()
+		if x >= s.width-1 {
+			s.scr.MoveTo(0, y)
+		}
 	}
 
 	if err := s.scr.Flush(); err != nil {
