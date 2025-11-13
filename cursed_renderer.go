@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"bytes"
 	"fmt"
 	"image/color"
 	"io"
@@ -15,8 +16,9 @@ import (
 
 type cursedRenderer struct {
 	w             io.Writer
+	buf           bytes.Buffer // updates buffer to be flushed to [w]
 	scr           *uv.TerminalRenderer
-	buf           uv.ScreenBuffer
+	cellbuf       uv.ScreenBuffer
 	lastView      *View
 	env           []string
 	term          string // the terminal type $TERM
@@ -40,7 +42,7 @@ func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedR
 	s.env = env
 	s.term = uv.Environ(env).Getenv("TERM")
 	s.width, s.height = width, height // This needs to happen before [cursedRenderer.reset].
-	s.buf = uv.NewScreenBuffer(s.width, s.height)
+	s.cellbuf = uv.NewScreenBuffer(s.width, s.height)
 	reset(s)
 	return
 }
@@ -49,7 +51,6 @@ func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedR
 func (s *cursedRenderer) setLogger(logger uv.Logger) {
 	s.mu.Lock()
 	s.logger = logger
-	s.scr.SetLogger(logger)
 	s.mu.Unlock()
 }
 
@@ -77,8 +78,8 @@ func (s *cursedRenderer) start() {
 	if s.lastView.AltScreen {
 		enableAltScreen(s, true)
 	}
+	enableTextCursor(s, s.lastView.Cursor != nil)
 	if s.lastView.Cursor != nil {
-		enableTextCursor(s, true)
 		if s.lastView.Cursor.Color != nil {
 			col, ok := colorful.MakeColor(s.lastView.Cursor.Color)
 			if ok {
@@ -103,17 +104,17 @@ func (s *cursedRenderer) start() {
 		}
 	}
 	if !s.lastView.DisableBracketedPasteMode {
-		_, _ = s.scr.WriteString(ansi.SetBracketedPasteMode)
+		_, _ = s.scr.WriteString(ansi.SetModeBracketedPaste)
 	}
 	if s.lastView.ReportFocus {
-		_, _ = s.scr.WriteString(ansi.SetFocusEventMode)
+		_, _ = s.scr.WriteString(ansi.SetModeFocusEvent)
 	}
 	switch s.lastView.MouseMode {
 	case MouseModeNone:
 	case MouseModeCellMotion:
-		_, _ = s.scr.WriteString(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
+		_, _ = s.scr.WriteString(ansi.SetModeMouseButtonEvent + ansi.SetModeMouseExtSgr)
 	case MouseModeAllMotion:
-		_, _ = s.scr.WriteString(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
+		_, _ = s.scr.WriteString(ansi.SetModeMouseAnyEvent + ansi.SetModeMouseExtSgr)
 	}
 	if s.lastView.WindowTitle != "" {
 		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.lastView.WindowTitle))
@@ -139,27 +140,27 @@ func (s *cursedRenderer) close() (err error) {
 	// used when the user suspends the program and then resumes it.
 	if lv := s.lastView; lv != nil { //nolint:nestif
 		if lv.AltScreen {
-			s.scr.ExitAltScreen()
+			enableAltScreen(s, false)
 		} else {
 			// Go to the bottom of the screen.
-			s.scr.MoveTo(0, s.buf.Height()-1)
-			_, _ = s.scr.WriteString("\r" + ansi.EraseScreenBelow)
+			s.scr.MoveTo(0, s.cellbuf.Height()-1)
+			_, _ = s.scr.WriteString(ansi.EraseScreenBelow)
 		}
 		if lv.Cursor == nil {
-			s.scr.ShowCursor()
+			enableTextCursor(s, true)
 		}
 		if !lv.DisableBracketedPasteMode {
-			_, _ = s.scr.WriteString(ansi.ResetBracketedPasteMode)
+			_, _ = s.scr.WriteString(ansi.ResetModeBracketedPaste)
 		}
 		if lv.ReportFocus {
-			_, _ = s.scr.WriteString(ansi.ResetFocusEventMode)
+			_, _ = s.scr.WriteString(ansi.ResetModeFocusEvent)
 		}
 		switch lv.MouseMode {
 		case MouseModeNone:
 		case MouseModeCellMotion, MouseModeAllMotion:
-			_, _ = s.scr.WriteString(ansi.ResetButtonEventMouseMode +
-				ansi.ResetAnyEventMouseMode +
-				ansi.ResetSgrExtMouseMode)
+			_, _ = s.scr.WriteString(ansi.ResetModeMouseButtonEvent +
+				ansi.ResetModeMouseAnyEvent +
+				ansi.ResetModeMouseExtSgr)
 		}
 
 		if lv.WindowTitle != "" {
@@ -197,6 +198,16 @@ func (s *cursedRenderer) close() (err error) {
 		return fmt.Errorf("bubbletea: error closing screen writer: %w", err)
 	}
 
+	if s.buf.Len() > 0 {
+		if s.logger != nil {
+			s.logger.Printf("output: %q", s.buf.String())
+		}
+		if _, err := io.Copy(s.w, &s.buf); err != nil {
+			return fmt.Errorf("bubbletea: error writing to screen: %w", err)
+		}
+		s.buf.Reset()
+	}
+
 	x, y := s.scr.Position()
 
 	// We want to clear the renderer state but not the cursor position. This is
@@ -229,9 +240,18 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	// Alt screen mode.
-	enableAltScreen(s, view.AltScreen)
+	updateAltScreen := (s.lastView == nil && view.AltScreen) || (s.lastView != nil && s.lastView.AltScreen != view.AltScreen)
+	if updateAltScreen {
+		enableAltScreen(s, view.AltScreen)
+	}
 	// Cursor visibility.
-	enableTextCursor(s, view.Cursor != nil)
+	updateCursorVis := s.lastView == nil || (s.lastView.Cursor != nil) != (view.Cursor != nil)
+	if updateCursorVis || updateAltScreen {
+		// We need to update the cursor visibility if we're entering or exiting
+		// alt screen mode because some terminals have a different cursor
+		// visibility state in alt screen mode.
+		enableTextCursor(s, view.Cursor != nil)
+	}
 
 	// Push prepended lines if any.
 	if len(s.prependLines) > 0 {
@@ -244,18 +264,18 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// bracketed paste mode.
 	if s.lastView == nil || view.DisableBracketedPasteMode != s.lastView.DisableBracketedPasteMode {
 		if !view.DisableBracketedPasteMode {
-			_, _ = s.scr.WriteString(ansi.SetBracketedPasteMode)
+			_, _ = s.scr.WriteString(ansi.SetModeBracketedPaste)
 		} else if s.lastView != nil {
-			_, _ = s.scr.WriteString(ansi.ResetBracketedPasteMode)
+			_, _ = s.scr.WriteString(ansi.ResetModeBracketedPaste)
 		}
 	}
 
 	// report focus events mode.
 	if s.lastView == nil || s.lastView.ReportFocus != view.ReportFocus {
 		if view.ReportFocus {
-			_, _ = s.scr.WriteString(ansi.SetFocusEventMode)
+			_, _ = s.scr.WriteString(ansi.SetModeFocusEvent)
 		} else if s.lastView != nil {
-			_, _ = s.scr.WriteString(ansi.ResetFocusEventMode)
+			_, _ = s.scr.WriteString(ansi.ResetModeFocusEvent)
 		}
 	}
 
@@ -264,20 +284,20 @@ func (s *cursedRenderer) flush(closing bool) error {
 		switch view.MouseMode {
 		case MouseModeNone:
 			if s.lastView != nil && s.lastView.MouseMode != MouseModeNone {
-				_, _ = s.scr.WriteString(ansi.ResetButtonEventMouseMode +
-					ansi.ResetAnyEventMouseMode +
-					ansi.ResetSgrExtMouseMode)
+				_, _ = s.scr.WriteString(ansi.ResetModeMouseButtonEvent +
+					ansi.ResetModeMouseAnyEvent +
+					ansi.ResetModeMouseExtSgr)
 			}
 		case MouseModeCellMotion:
 			if s.lastView != nil && s.lastView.MouseMode == MouseModeAllMotion {
-				_, _ = s.scr.WriteString(ansi.ResetAnyEventMouseMode)
+				_, _ = s.scr.WriteString(ansi.ResetModeMouseAnyEvent)
 			}
-			_, _ = s.scr.WriteString(ansi.SetButtonEventMouseMode + ansi.SetSgrExtMouseMode)
+			_, _ = s.scr.WriteString(ansi.SetModeMouseButtonEvent + ansi.SetModeMouseExtSgr)
 		case MouseModeAllMotion:
 			if s.lastView != nil && s.lastView.MouseMode == MouseModeCellMotion {
-				_, _ = s.scr.WriteString(ansi.ResetButtonEventMouseMode)
+				_, _ = s.scr.WriteString(ansi.ResetModeMouseButtonEvent)
 			}
-			_, _ = s.scr.WriteString(ansi.SetAnyEventMouseMode + ansi.SetSgrExtMouseMode)
+			_, _ = s.scr.WriteString(ansi.SetModeMouseAnyEvent + ansi.SetModeMouseExtSgr)
 		}
 	}
 
@@ -370,7 +390,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	// Render and queue changes to the screen buffer.
-	s.scr.Render(s.buf.Buffer)
+	s.scr.Render(s.cellbuf.Buffer)
 
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
@@ -394,6 +414,44 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	s.lastView = &view
+
+	var buf bytes.Buffer
+	hideShowCursor := !s.syncdUpdates && view.Cursor != nil
+	if s.buf.Len() > 0 {
+		if hideShowCursor {
+			// If we have the cursor visible, we want to hide it during the update
+			// to avoid flickering. Unless we have synchronized updates enabled, in
+			// which case the terminal will handle it for us.
+			buf.WriteString(ansi.ResetModeTextCursorEnable)
+		} else if s.syncdUpdates {
+			// We have synchronized output updates enabled.
+			buf.WriteString(ansi.SetModeSynchronizedOutput)
+		}
+	}
+
+	buf.Write(s.buf.Bytes())
+
+	if s.buf.Len() > 0 {
+		if hideShowCursor {
+			// Now restore the cursor visibility.
+			buf.WriteString(ansi.SetModeTextCursorEnable)
+		} else if s.syncdUpdates {
+			// Close synchronized output mode.
+			buf.WriteString(ansi.ResetModeSynchronizedOutput)
+		}
+	}
+
+	// Reset internal screen renderer buffer.
+	s.buf.Reset()
+
+	if buf.Len() > 0 {
+		if s.logger != nil {
+			s.logger.Printf("output: %q", buf.String())
+		}
+		if _, err := io.Copy(s.w, &buf); err != nil {
+			return fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
+		}
+	}
 
 	return nil
 }
@@ -430,25 +488,25 @@ func (s *cursedRenderer) render(v View) {
 		}
 	}
 
-	if frameArea != s.buf.Bounds() {
+	if frameArea != s.cellbuf.Bounds() {
 		// Resize the screen buffer to match the frame area. This is necessary
 		// to ensure that the screen buffer is the same size as the frame area
 		// and to avoid rendering issues when the frame area is smaller than
 		// the screen buffer.
-		s.buf.Resize(frameArea.Dx(), frameArea.Dy())
+		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
 	}
 
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
-	s.buf.Clear()
+	s.cellbuf.Clear()
 	if v.Content != nil {
-		v.Content.Draw(s.buf, frameArea)
+		v.Content.Draw(s.cellbuf, frameArea)
 	}
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
 	if frameHeight := frameArea.Dy(); frameHeight > s.height {
-		s.buf.Lines = s.buf.Lines[frameHeight-s.height:]
+		s.cellbuf.Lines = s.cellbuf.Lines[frameHeight-s.height:]
 	}
 
 	s.view = v
@@ -486,23 +544,14 @@ func (s *cursedRenderer) reset() {
 }
 
 func reset(s *cursedRenderer) {
-	scr := uv.NewTerminalRenderer(s.w, s.env)
+	s.buf.Reset()
+	scr := uv.NewTerminalRenderer(&s.buf, s.env)
 	scr.SetColorProfile(s.profile)
-	scr.SetRelativeCursor(s.lastView == nil || !s.lastView.AltScreen)
+	scr.SetRelativeCursor(true) // Always start in inline mode
+	scr.SetFullscreen(false)    // Always start in inline mode
 	scr.SetTabStops(s.width)
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
-	scr.SetLogger(s.logger)
-	if s.lastView != nil && s.lastView.AltScreen {
-		scr.EnterAltScreen()
-	} else {
-		scr.ExitAltScreen()
-	}
-	if s.lastView != nil && s.lastView.Cursor != nil {
-		scr.ShowCursor()
-	} else {
-		scr.HideCursor()
-	}
 	s.scr = scr
 }
 
@@ -528,7 +577,7 @@ func (s *cursedRenderer) resize(w, h int) {
 	}
 
 	// We need to reset the touched lines buffer to match the new height.
-	s.buf.Touched = nil
+	s.cellbuf.Touched = nil
 
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
@@ -548,19 +597,23 @@ func (s *cursedRenderer) clearScreen() {
 // enableAltScreen sets the alt screen mode.
 func enableAltScreen(s *cursedRenderer, enable bool) {
 	if enable {
-		s.scr.EnterAltScreen()
+		s.scr.SaveCursor()
+		_, _ = s.scr.WriteString(ansi.SetModeAltScreenSaveCursor)
 	} else {
-		s.scr.ExitAltScreen()
+		s.scr.RestoreCursor()
+		_, _ = s.scr.WriteString(ansi.ResetModeAltScreenSaveCursor)
 	}
+	s.scr.Erase()
+	s.scr.SetFullscreen(enable)
 	s.scr.SetRelativeCursor(!enable)
 }
 
 // enableTextCursor sets the text cursor mode.
 func enableTextCursor(s *cursedRenderer, enable bool) {
 	if enable {
-		s.scr.ShowCursor()
+		_, _ = s.scr.WriteString(ansi.SetModeTextCursorEnable)
 	} else {
-		s.scr.HideCursor()
+		_, _ = s.scr.WriteString(ansi.ResetModeTextCursorEnable)
 	}
 }
 
@@ -581,10 +634,11 @@ func (s *cursedRenderer) insertAbove(lines string) {
 func prependLine(s *cursedRenderer, line string) {
 	strLines := strings.Split(line, "\n")
 	for i, line := range strLines {
-		// If the line is wider than the screen, truncate it.
-		strLines[i] = ansi.Truncate(line, s.width, "")
+		if ansi.StringWidth(line) < s.width {
+			strLines[i] = line + ansi.EraseLineRight
+		}
 	}
-	s.scr.PrependString(strings.Join(strLines, "\n"))
+	s.scr.PrependString(s.cellbuf.Buffer, strings.Join(strLines, "\n"))
 }
 
 func setProgressBar(s *cursedRenderer, pb *ProgressBar) {

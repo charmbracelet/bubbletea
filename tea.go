@@ -1021,10 +1021,6 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		}
 	}
 
-	// Hide the cursor before starting the renderer. This is handled by the
-	// renderer so we don't need to write the sequence here.
-	p.renderer.hideCursor()
-
 	// Start the renderer.
 	p.startRenderer()
 
