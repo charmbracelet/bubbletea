@@ -761,6 +761,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					go p.Send(m) // send hit messages
 				}
 
+			case ModeReportMsg:
+				if msg.Mode == ansi.ModeSynchronizedOutput && msg.Value.IsReset() {
+					// The terminal supports synchronized output and it's
+					// currently disabled, so we can enable it on the renderer.
+					p.renderer.setSyncdUpdates(true)
+				}
+
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
 
@@ -1020,6 +1027,25 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 
 	// Start the renderer.
 	p.startRenderer()
+
+	termType := p.environ.Getenv("TERM")
+	termProg, okTermProg := p.environ.LookupEnv("TERM_PROGRAM")
+	_, okSSHTTY := p.environ.LookupEnv("SSH_TTY")
+	_, okWTSession := p.environ.LookupEnv("WT_SESSION")
+	shouldQuery := (!okTermProg && !okSSHTTY) ||
+		okWTSession ||
+		(!strings.Contains(termProg, "Apple") && !okSSHTTY) ||
+		strings.Contains(termType, "ghostty") ||
+		strings.Contains(termType, "wezterm") ||
+		strings.Contains(termType, "alacritty") ||
+		strings.Contains(termType, "kitty") ||
+		strings.Contains(termType, "rio")
+
+	if shouldQuery {
+		// Query for synchronized updates support (mode 2026). If the terminal
+		// supports it, the renderer will enable it once we get the response.
+		p.execute(ansi.RequestModeSynchronizedOutput)
+	}
 
 	// Initialize the program.
 	initCmd := model.Init()
