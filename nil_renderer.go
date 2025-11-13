@@ -16,15 +16,6 @@ func (n nilRenderer) start() {}
 // clearScreen implements renderer.
 func (n nilRenderer) clearScreen() {}
 
-// enterAltScreen implements renderer.
-func (n nilRenderer) enterAltScreen() {}
-
-// exitAltScreen implements renderer.
-func (n nilRenderer) exitAltScreen() {}
-
-// hideCursor implements renderer.
-func (n nilRenderer) hideCursor() {}
-
 // insertAbove implements renderer.
 func (n nilRenderer) insertAbove(string) {}
 
@@ -33,9 +24,6 @@ func (n nilRenderer) resize(int, int) {}
 
 // setColorProfile implements renderer.
 func (n nilRenderer) setColorProfile(colorprofile.Profile) {}
-
-// showCursor implements renderer.
-func (n nilRenderer) showCursor() {}
 
 // flush implements the Renderer interface.
 func (nilRenderer) flush(bool) error { return nil }
@@ -54,3 +42,6 @@ func (nilRenderer) writeString(string) (int, error) { return 0, nil }
 
 // hit implements the Renderer interface.
 func (n nilRenderer) hit(MouseMsg) []Msg { return nil }
+
+// setSyncdUpdates implements the Renderer interface.
+func (n nilRenderer) setSyncdUpdates(bool) {}

@@ -28,6 +28,7 @@ type cursedRenderer struct {
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 	backspace     bool // whether to use backspace to optimize cursor movements
 	mapnl         bool
+	syncdUpdates  bool // whether to use synchronized output mode for updates
 	prependLines  []string
 }
 
@@ -554,20 +555,6 @@ func enableAltScreen(s *cursedRenderer, enable bool) {
 	s.scr.SetRelativeCursor(!enable)
 }
 
-// enterAltScreen implements renderer.
-func (s *cursedRenderer) enterAltScreen() {
-	s.mu.Lock()
-	enableAltScreen(s, true)
-	s.mu.Unlock()
-}
-
-// exitAltScreen implements renderer.
-func (s *cursedRenderer) exitAltScreen() {
-	s.mu.Lock()
-	enableAltScreen(s, false)
-	s.mu.Unlock()
-}
-
 // enableTextCursor sets the text cursor mode.
 func enableTextCursor(s *cursedRenderer, enable bool) {
 	if enable {
@@ -577,17 +564,10 @@ func enableTextCursor(s *cursedRenderer, enable bool) {
 	}
 }
 
-// showCursor implements renderer.
-func (s *cursedRenderer) showCursor() {
+// setSyncdUpdates implements renderer.
+func (s *cursedRenderer) setSyncdUpdates(syncd bool) {
 	s.mu.Lock()
-	enableTextCursor(s, true)
-	s.mu.Unlock()
-}
-
-// hideCursor implements renderer.
-func (s *cursedRenderer) hideCursor() {
-	s.mu.Lock()
-	enableTextCursor(s, false)
+	s.syncdUpdates = syncd
 	s.mu.Unlock()
 }
 
