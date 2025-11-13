@@ -41,7 +41,7 @@ func filter(teaModel tea.Model, msg tea.Msg) tea.Msg {
 }
 
 type model struct {
-	textarea   *textarea.Model
+	textarea   textarea.Model
 	help       help.Model
 	keymap     keymap
 	saveText   string
