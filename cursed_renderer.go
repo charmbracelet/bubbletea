@@ -434,14 +434,16 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	buf.Write(s.buf.Bytes())
 
-	if s.buf.Len() > 0 {
-		if hideShowCursor {
-			// Now restore the cursor visibility.
-			buf.WriteString(ansi.SetModeTextCursorEnable)
-		} else if s.syncdUpdates {
-			// Close synchronized output mode.
-			buf.WriteString(ansi.ResetModeSynchronizedOutput)
-		}
+	// We need to ensure we're showing the cursor if it was requested in the
+	// view. There is no s.buf.Len() check here because when the update is only
+	// a cursor visibility change, s.buf.Len() will be zero and the
+	// updateCursorVis check above will not write anything to s.buf.
+	if hideShowCursor {
+		// Now restore the cursor visibility.
+		buf.WriteString(ansi.SetModeTextCursorEnable)
+	} else if s.buf.Len() > 0 && s.syncdUpdates {
+		// Close synchronized output mode.
+		buf.WriteString(ansi.ResetModeSynchronizedOutput)
 	}
 
 	// Reset internal screen renderer buffer.
