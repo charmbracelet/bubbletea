@@ -602,15 +602,10 @@ func (s *cursedRenderer) clearScreen() {
 // enableAltScreen sets the alt screen mode.
 func enableAltScreen(s *cursedRenderer, enable bool) {
 	if enable {
-		s.scr.SaveCursor()
-		_, _ = s.scr.WriteString(ansi.SetModeAltScreenSaveCursor)
+		s.scr.EnterAltScreen()
 	} else {
-		s.scr.RestoreCursor()
-		_, _ = s.scr.WriteString(ansi.ResetModeAltScreenSaveCursor)
+		s.scr.ExitAltScreen()
 	}
-	s.scr.Erase()
-	s.scr.SetFullscreen(enable)
-	s.scr.SetRelativeCursor(!enable)
 }
 
 // enableTextCursor sets the text cursor mode.
