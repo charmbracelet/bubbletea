@@ -967,7 +967,7 @@ func shouldQuerySynchronizedOutput(environ uv.Environ) bool {
 
 	return (!okTermProg && !okSSHTTY) ||
 		okWTSession ||
-		(!strings.Contains(termProg, "Apple") && !okSSHTTY) ||
+		(okTermProg && !strings.Contains(termProg, "Apple") && !okSSHTTY) ||
 		strings.Contains(termType, "ghostty") ||
 		strings.Contains(termType, "wezterm") ||
 		strings.Contains(termType, "alacritty") ||
