@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	tea "charm.land/bubbletea/v2"
 	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -23,7 +23,7 @@ func main() {
 type errMsg error
 
 type model struct {
-	textarea *textarea.Model
+	textarea textarea.Model
 	err      error
 }
 
@@ -49,9 +49,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.textarea.SetWidth(msg.Width)
-		m.textarea.SetHeight(msg.Height)
 	case tea.BackgroundColorMsg:
 		// Update styling now that we know the background color.
 		m.textarea.SetStyles(textarea.DefaultStyles(msg.IsDark()))
@@ -108,7 +105,6 @@ func (m model) View() tea.View {
 	}, "\n")
 
 	v := tea.NewView(f)
-	v.AltScreen = true
 	v.Cursor = c
 	return v
 }
