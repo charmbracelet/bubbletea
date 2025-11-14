@@ -246,10 +246,15 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 	// Cursor visibility.
 	updateCursorVis := s.lastView == nil || (s.lastView.Cursor != nil) != (view.Cursor != nil)
-	if updateCursorVis || updateAltScreen {
+	if (updateCursorVis || updateAltScreen) && (s.syncdUpdates || view.Cursor == nil) {
 		// We need to update the cursor visibility if we're entering or exiting
 		// alt screen mode because some terminals have a different cursor
 		// visibility state in alt screen mode.
+		// Note that cursor visibility is also affected by synchronized output
+		// and whether the cursor is already visible or not. If synchronized
+		// output is not enabled, we show the cursor at the end of the update
+		// to avoid flickering. If synchronized output is enabled, we update
+		// cursor visibility here.
 		enableTextCursor(s, view.Cursor != nil)
 	}
 
@@ -413,12 +418,10 @@ func (s *cursedRenderer) flush(closing bool) error {
 		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
 
-	s.lastView = &view
-
 	var buf bytes.Buffer
 	hideShowCursor := !s.syncdUpdates && view.Cursor != nil
 	if s.buf.Len() > 0 {
-		if hideShowCursor {
+		if hideShowCursor && s.lastView != nil && s.lastView.Cursor != nil {
 			// If we have the cursor visible, we want to hide it during the update
 			// to avoid flickering. Unless we have synchronized updates enabled, in
 			// which case the terminal will handle it for us.
@@ -452,6 +455,8 @@ func (s *cursedRenderer) flush(closing bool) error {
 			return fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
 		}
 	}
+
+	s.lastView = &view
 
 	return nil
 }
