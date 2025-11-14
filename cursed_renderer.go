@@ -636,9 +636,8 @@ func (s *cursedRenderer) insertAbove(lines string) {
 func prependLine(s *cursedRenderer, line string) {
 	strLines := strings.Split(line, "\n")
 	for i, line := range strLines {
-		if ansi.StringWidth(line) < s.width {
-			strLines[i] = line + ansi.EraseLineRight
-		}
+		// Always erase to the right of the line to avoid possible artifacts.
+		strLines[i] = line + ansi.EraseLineRight
 	}
 	s.scr.PrependString(s.cellbuf.Buffer, strings.Join(strLines, "\n"))
 }
