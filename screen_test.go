@@ -14,7 +14,6 @@ type testViewOpts struct {
 	mouseMode   MouseMode
 	showCursor  bool
 	disableBp   bool
-	disableKe   bool
 	keyReleases bool
 	bgColor     color.Color
 }
@@ -49,6 +48,13 @@ func (m *testViewModel) Update(msg Msg) (Model, Cmd) {
 func (m *testViewModel) View() View {
 	v := m.testModel.View()
 	v.AltScreen = m.opts.altScreen
+	v.MouseMode = m.opts.mouseMode
+	v.DisableBracketedPasteMode = m.opts.disableBp
+	v.KeyboardEnhancements.ReportEventTypes = m.opts.keyReleases
+	v.BackgroundColor = m.opts.bgColor
+	if m.opts.showCursor {
+		v.Cursor = NewCursor(0, 0)
+	}
 	return v
 }
 
@@ -112,8 +118,8 @@ func TestViewModel(t *testing.T) {
 		{
 			name: "kitty_stop_startreleases",
 			opts: []testViewOpts{
-				{disableKe: true},
-				{disableKe: false, keyReleases: true},
+				{},
+				{keyReleases: true},
 			},
 		},
 		{

@@ -36,17 +36,8 @@ type renderer interface {
 	// insertAbove inserts unmanaged lines above the renderer.
 	insertAbove(string)
 
-	// enterAltScreen enters the alternate screen buffer.
-	enterAltScreen()
-
-	// exitAltScreen exits the alternate screen buffer.
-	exitAltScreen()
-
-	// showCursor shows the cursor.
-	showCursor()
-
-	// hideCursor hides the cursor.
-	hideCursor()
+	// setSyncdUpdates sets whether to use synchronized updates.
+	setSyncdUpdates(bool)
 
 	// resize notify the renderer of a terminal resize.
 	resize(int, int)

@@ -31,7 +31,7 @@ var (
 
 func newModel() model {
 	p := progress.New(
-		progress.WithDefaultGradient(),
+		progress.WithDefaultBlend(),
 		progress.WithWidth(40),
 		progress.WithoutPercentage(),
 	)

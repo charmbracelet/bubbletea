@@ -96,6 +96,19 @@ type Hittable interface {
 
 // NewView is a helper function to create a new [View] with the given string or
 // [Layer].
+//
+// This function accepts any type and tries to convert it to a [Layer]. If the
+// type is not a string, [fmt.Stringer], or [Layer], it will be converted to a
+// string using [fmt.Sprintf].
+//
+// Example:
+//
+//	```go
+//	layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
+//	layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
+//	canvas := lipgloss.NewCanvas(layer1, layer2)
+//	v := tea.NewView(canvas)
+//	```
 func NewView(s any) View {
 	var view View
 	view.SetContent(s)
@@ -111,10 +124,12 @@ type View struct {
 	//
 	// Example:
 	//
+	//  ```go
 	//  layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
 	//  layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
 	//  canvas := lipgloss.NewCanvas(layer1, layer2)
 	//  v := tea.NewView(canvas)
+	//  ```
 	Content Layer
 
 	// Cursor represents the cursor position, style, and visibility on the
@@ -240,6 +255,20 @@ type KeyboardEnhancements struct {
 }
 
 // SetContent sets the content of the view to the value.
+//
+// This function accepts any type and tries to convert it to a [Layer]. If the
+// type is not a string, [fmt.Stringer], or [Layer], it will be converted to a
+// string using [fmt.Sprintf].
+//
+// Example:
+//
+//	```go
+//	var v tea.View
+//	layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
+//	layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
+//	canvas := lipgloss.NewCanvas(layer1, layer2)
+//	v.SetContent(canvas)
+//	```
 func (v *View) SetContent(s any) {
 	switch vi := s.(type) {
 	case string:
@@ -761,6 +790,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					go p.Send(m) // send hit messages
 				}
 
+			case ModeReportMsg:
+				if msg.Mode == ansi.ModeSynchronizedOutput && msg.Value.IsReset() {
+					// The terminal supports synchronized output and it's
+					// currently disabled, so we can enable it on the renderer.
+					p.renderer.setSyncdUpdates(true)
+				}
+
 			case readClipboardMsg:
 				p.execute(ansi.RequestSystemClipboard)
 
@@ -911,6 +947,34 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 	wg.Wait() // wait for all commands from batch msg to finish
 }
 
+// shouldQuerySynchronizedOutput determines whether the terminal should be
+// queried for synchronized output support (mode 2026).
+//
+// This function checks for terminals that are known to support mode 2026,
+// while excluding SSH sessions which may be unreliable, unless it's a
+// known-good terminal like Windows Terminal.
+//
+// The function returns true for:
+//   - Terminals without TERM_PROGRAM set and not in SSH sessions
+//   - Windows Terminal (WT_SESSION is set)
+//   - Terminals with TERM_PROGRAM set (except Apple Terminal) and not in SSH sessions
+//   - Specific terminal types: ghostty, wezterm, alacritty, kitty, rio
+func shouldQuerySynchronizedOutput(environ uv.Environ) bool {
+	termType := environ.Getenv("TERM")
+	termProg, okTermProg := environ.LookupEnv("TERM_PROGRAM")
+	_, okSSHTTY := environ.LookupEnv("SSH_TTY")
+	_, okWTSession := environ.LookupEnv("WT_SESSION")
+
+	return (!okTermProg && !okSSHTTY) ||
+		okWTSession ||
+		(okTermProg && !strings.Contains(termProg, "Apple") && !okSSHTTY) ||
+		strings.Contains(termType, "ghostty") ||
+		strings.Contains(termType, "wezterm") ||
+		strings.Contains(termType, "alacritty") ||
+		strings.Contains(termType, "kitty") ||
+		strings.Contains(termType, "rio")
+}
+
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
@@ -1014,12 +1078,14 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		}
 	}
 
-	// Hide the cursor before starting the renderer. This is handled by the
-	// renderer so we don't need to write the sequence here.
-	p.renderer.hideCursor()
-
 	// Start the renderer.
 	p.startRenderer()
+
+	if shouldQuerySynchronizedOutput(p.environ) {
+		// Query for synchronized updates support (mode 2026). If the terminal
+		// supports it, the renderer will enable it once we get the response.
+		p.execute(ansi.RequestModeSynchronizedOutput)
+	}
 
 	// Initialize the program.
 	initCmd := model.Init()

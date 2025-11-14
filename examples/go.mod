@@ -7,11 +7,11 @@ replace charm.land/bubbletea/v2 => ../
 require (
 	charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8
 	charm.land/bubbletea/v2 v2.0.0-rc.1.0.20251106192006-06c0cda318b3
-	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251106193318-19329a3e8410
+	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251114160003-3248589b24c9
 	github.com/charmbracelet/colorprofile v0.3.3
 	github.com/charmbracelet/glamour/v2 v2.0.0-20251106195642-800eb8175930
 	github.com/charmbracelet/harmonica v0.2.0
-	github.com/charmbracelet/x/ansi v0.11.1-0.20251110210702-903592506081
+	github.com/charmbracelet/x/ansi v0.11.1
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250602192518-9e722df69bbb
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
 	github.com/lucasb-eyer/go-colorful v1.3.0
@@ -23,7 +23,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20251112162901-46098fed0961 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20251114211315-f6a8e3732033 // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250327172914-2fdc97757edf // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
