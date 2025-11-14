@@ -42,30 +42,30 @@ type LayerHitMsg struct {
 //
 // Example:
 //
-//		```go
-//	 func (m model) Init() tea.Cmd {
-//	   // Does my terminal support reporting focus events?
-//	   return tea.Raw(ansi.RequestModeFocusEvent)
-//	 }
+//	```go
+//	func (m model) Init() tea.Cmd {
+//	  // Does my terminal support reporting focus events?
+//	  return tea.Raw(ansi.RequestModeFocusEvent)
+//	}
 //
-//	 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-//	   switch msg := msg.(type) {
-//	   case tea.ModeReportMsg:
-//	     if msg.Mode == ansi.ModeFocusEvent && !msg.Value.IsNotRecognized() {
-//	       // Terminal supports focus events
-//	       m.supportsFocus = true
-//	     }
-//	   }
-//	   return m, nil
-//	 }
+//	func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+//	  switch msg := msg.(type) {
+//	  case tea.ModeReportMsg:
+//	    if msg.Mode == ansi.ModeFocusEvent && !msg.Value.IsNotRecognized() {
+//	      // Terminal supports focus events
+//	      m.supportsFocus = true
+//	    }
+//	  }
+//	  return m, nil
+//	}
 //
-//	 func (m model) View() tea.View {
-//	   var view tea.View
-//	   view.ReportFocus = m.supportsFocus
-//	   view.SetContent(fmt.Sprintf("Terminal supports focus events: %v", m.supportsFocus))
-//	   return view
-//	 }
-//		```
+//	func (m model) View() tea.View {
+//	  var view tea.View
+//	  view.ReportFocus = m.supportsFocus
+//	  view.SetContent(fmt.Sprintf("Terminal supports focus events: %v", m.supportsFocus))
+//	  return view
+//	}
+//	```
 //
 // See: https://vt100.net/docs/vt510-rm/DECRPM.html
 type ModeReportMsg struct {
