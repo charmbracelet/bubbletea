@@ -32,10 +32,14 @@ const (
 	maxWidth = 80
 )
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+var (
+	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+	yellow    = lipgloss.Color("#FDFF8C")
+	pink      = lipgloss.Color("#FF7CCB")
+)
 
 func main() {
-	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
+	prog := progress.New(progress.WithScaled(true), progress.WithColors(pink, yellow))
 
 	if _, err := tea.NewProgram(model{progress: prog}).Run(); err != nil {
 		fmt.Println("Oh no!", err)

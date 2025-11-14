@@ -92,7 +92,7 @@ func main() {
 
 	m := model{
 		pw:       pw,
-		progress: progress.New(progress.WithDefaultGradient()),
+		progress: progress.New(progress.WithDefaultBlend()),
 	}
 	// Start Bubble Tea
 	p = tea.NewProgram(m)
