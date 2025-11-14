@@ -947,6 +947,34 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 	wg.Wait() // wait for all commands from batch msg to finish
 }
 
+// shouldQuerySynchronizedOutput determines whether the terminal should be
+// queried for synchronized output support (mode 2026).
+//
+// This function checks for terminals that are known to support mode 2026,
+// while excluding SSH sessions which may be unreliable, unless it's a
+// known-good terminal like Windows Terminal.
+//
+// The function returns true for:
+//   - Terminals without TERM_PROGRAM set and not in SSH sessions
+//   - Windows Terminal (WT_SESSION is set)
+//   - Terminals with TERM_PROGRAM set (except Apple Terminal) and not in SSH sessions
+//   - Specific terminal types: ghostty, wezterm, alacritty, kitty, rio
+func shouldQuerySynchronizedOutput(environ uv.Environ) bool {
+	termType := environ.Getenv("TERM")
+	termProg, okTermProg := environ.LookupEnv("TERM_PROGRAM")
+	_, okSSHTTY := environ.LookupEnv("SSH_TTY")
+	_, okWTSession := environ.LookupEnv("WT_SESSION")
+
+	return (!okTermProg && !okSSHTTY) ||
+		okWTSession ||
+		(!strings.Contains(termProg, "Apple") && !okSSHTTY) ||
+		strings.Contains(termType, "ghostty") ||
+		strings.Contains(termType, "wezterm") ||
+		strings.Contains(termType, "alacritty") ||
+		strings.Contains(termType, "kitty") ||
+		strings.Contains(termType, "rio")
+}
+
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
@@ -1053,20 +1081,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Start the renderer.
 	p.startRenderer()
 
-	termType := p.environ.Getenv("TERM")
-	termProg, okTermProg := p.environ.LookupEnv("TERM_PROGRAM")
-	_, okSSHTTY := p.environ.LookupEnv("SSH_TTY")
-	_, okWTSession := p.environ.LookupEnv("WT_SESSION")
-	shouldQuery := (!okTermProg && !okSSHTTY) ||
-		okWTSession ||
-		(!strings.Contains(termProg, "Apple") && !okSSHTTY) ||
-		strings.Contains(termType, "ghostty") ||
-		strings.Contains(termType, "wezterm") ||
-		strings.Contains(termType, "alacritty") ||
-		strings.Contains(termType, "kitty") ||
-		strings.Contains(termType, "rio")
-
-	if shouldQuery {
+	if shouldQuerySynchronizedOutput(p.environ) {
 		// Query for synchronized updates support (mode 2026). If the terminal
 		// supports it, the renderer will enable it once we get the response.
 		p.execute(ansi.RequestModeSynchronizedOutput)
