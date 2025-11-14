@@ -96,6 +96,19 @@ type Hittable interface {
 
 // NewView is a helper function to create a new [View] with the given string or
 // [Layer].
+//
+// This function accepts any type and tries to convert it to a [Layer]. If the
+// type is not a string, [fmt.Stringer], or [Layer], it will be converted to a
+// string using [fmt.Sprintf].
+//
+// Example:
+//
+//	```go
+//	layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
+//	layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
+//	canvas := lipgloss.NewCanvas(layer1, layer2)
+//	v := tea.NewView(canvas)
+//	```
 func NewView(s any) View {
 	var view View
 	view.SetContent(s)
@@ -111,10 +124,12 @@ type View struct {
 	//
 	// Example:
 	//
+	//  ```go
 	//  layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
 	//  layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
 	//  canvas := lipgloss.NewCanvas(layer1, layer2)
 	//  v := tea.NewView(canvas)
+	//  ```
 	Content Layer
 
 	// Cursor represents the cursor position, style, and visibility on the
@@ -240,6 +255,20 @@ type KeyboardEnhancements struct {
 }
 
 // SetContent sets the content of the view to the value.
+//
+// This function accepts any type and tries to convert it to a [Layer]. If the
+// type is not a string, [fmt.Stringer], or [Layer], it will be converted to a
+// string using [fmt.Sprintf].
+//
+// Example:
+//
+//	```go
+//	var v tea.View
+//	layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
+//	layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
+//	canvas := lipgloss.NewCanvas(layer1, layer2)
+//	v.SetContent(canvas)
+//	```
 func (v *View) SetContent(s any) {
 	switch vi := s.(type) {
 	case string:
