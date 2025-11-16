@@ -267,9 +267,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if frameArea != s.cellbuf.Bounds() {
-		if view.AltScreen || frameArea.Dx() != s.cellbuf.Width() {
-			s.scr.Erase() // Force a full redraw to avoid artifacts.
-		}
+		s.scr.Erase() // Force a full redraw to avoid artifacts.
 
 		// We need to reset the touched lines buffer to match the new height.
 		s.cellbuf.Touched = nil
@@ -617,15 +615,13 @@ func (s *cursedRenderer) setColorProfile(p colorprofile.Profile) {
 // resize implements renderer.
 func (s *cursedRenderer) resize(w, h int) {
 	s.mu.Lock()
-	if s.view.AltScreen || w != s.cellbuf.Width() {
-		// We need to mark the screen for clear to force a redraw. However, we
-		// only do so if we're using alt screen or the width has changed.
-		// That's because redrawing is expensive and we can avoid it if the
-		// width hasn't changed in inline mode. On the other hand, when using
-		// alt screen mode, we always want to redraw because some terminals
-		// would scroll the screen and our content would be lost.
-		s.scr.Erase()
-	}
+	// We need to mark the screen for clear to force a redraw. However, we
+	// only do so if we're using alt screen or the width has changed.
+	// That's because redrawing is expensive and we can avoid it if the
+	// width hasn't changed in inline mode. On the other hand, when using
+	// alt screen mode, we always want to redraw because some terminals
+	// would scroll the screen and our content would be lost.
+	s.scr.Erase()
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
 	s.mu.Unlock()
