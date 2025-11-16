@@ -76,7 +76,7 @@ func (s *cursedRenderer) start() {
 	}
 
 	if s.lastView.AltScreen {
-		enableAltScreen(s, true)
+		enableAltScreen(s, true, true)
 	}
 	enableTextCursor(s, s.lastView.Cursor != nil)
 	if s.lastView.Cursor != nil {
@@ -140,7 +140,7 @@ func (s *cursedRenderer) close() (err error) {
 	// used when the user suspends the program and then resumes it.
 	if lv := s.lastView; lv != nil { //nolint:nestif
 		if lv.AltScreen {
-			enableAltScreen(s, false)
+			enableAltScreen(s, false, true)
 		} else {
 			// Go to the bottom of the screen.
 			s.scr.MoveTo(0, s.cellbuf.Height()-1)
@@ -239,23 +239,71 @@ func (s *cursedRenderer) flush(closing bool) error {
 		return nil
 	}
 
-	// Alt screen mode.
-	updateAltScreen := (s.lastView == nil && view.AltScreen) || (s.lastView != nil && s.lastView.AltScreen != view.AltScreen)
-	if updateAltScreen {
-		enableAltScreen(s, view.AltScreen)
+	frameArea := uv.Rect(0, 0, s.width, s.height)
+	if view.Content == nil {
+		// If the component is nil, we should clear the screen buffer.
+		frameArea.Max.Y = 0
 	}
-	// Cursor visibility.
-	updateCursorVis := s.lastView == nil || (s.lastView.Cursor != nil) != (view.Cursor != nil)
-	if (updateCursorVis || updateAltScreen) && (s.syncdUpdates || view.Cursor == nil) {
-		// We need to update the cursor visibility if we're entering or exiting
-		// alt screen mode because some terminals have a different cursor
-		// visibility state in alt screen mode.
-		// Note that cursor visibility is also affected by synchronized output
-		// and whether the cursor is already visible or not. If synchronized
-		// output is not enabled, we show the cursor at the end of the update
-		// to avoid flickering. If synchronized output is enabled, we update
-		// cursor visibility here.
-		enableTextCursor(s, view.Cursor != nil)
+
+	if !view.AltScreen {
+		// We need to resizes the screen based on the frame height and
+		// terminal width. This is because the frame height can change based on
+		// the content of the frame. For example, if the frame contains a list
+		// of items, the height of the frame will be the number of items in the
+		// list. This is different from the alt screen buffer, which has a
+		// fixed height and width.
+		frameHeight := frameArea.Dy()
+		switch l := view.Content.(type) {
+		case interface{ Height() int }:
+			// This covers [uv.StyledString] and [lipgloss.Canvas].
+			frameHeight = l.Height()
+		case interface{ Bounds() uv.Rectangle }:
+			frameHeight = l.Bounds().Dy()
+		}
+
+		if frameHeight != frameArea.Dy() {
+			frameArea.Max.Y = frameHeight
+		}
+	}
+
+	if frameArea != s.cellbuf.Bounds() {
+		if view.AltScreen || frameArea.Dx() != s.cellbuf.Width() {
+			s.scr.Erase() // Force a full redraw to avoid artifacts.
+		}
+
+		// We need to reset the touched lines buffer to match the new height.
+		s.cellbuf.Touched = nil
+
+		// Resize the screen buffer to match the frame area. This is necessary
+		// to ensure that the screen buffer is the same size as the frame area
+		// and to avoid rendering issues when the frame area is smaller than
+		// the screen buffer.
+		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
+	}
+
+	// Clear our screen buffer before copying the new frame into it to ensure
+	// we erase any old content.
+	s.cellbuf.Clear()
+	if view.Content != nil {
+		view.Content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	}
+
+	// If the frame height is greater than the screen height, we drop the
+	// lines from the top of the buffer.
+	if frameHeight := frameArea.Dy(); frameHeight > s.height {
+		s.cellbuf.Lines = s.cellbuf.Lines[frameHeight-s.height:]
+	}
+
+	// Alt screen mode.
+	shouldUpdateAltScreen := (s.lastView == nil && view.AltScreen) || (s.lastView != nil && s.lastView.AltScreen != view.AltScreen)
+	if shouldUpdateAltScreen {
+		// We want to enter/exit altscreen mode but defer writing the actual
+		// sequences until we flush the rest of the updates. This is because we
+		// control the cursor visibility and we need to ensure that happens
+		// after entering/exiting alt screen mode. Some terminals have
+		// different cursor visibility states for main and alt screen modes and
+		// this ensures we handle that correctly.
+		enableAltScreen(s, view.AltScreen, false)
 	}
 
 	// Push prepended lines if any.
@@ -468,54 +516,6 @@ func (s *cursedRenderer) render(v View) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	frameArea := uv.Rect(0, 0, s.width, s.height)
-	if v.Content == nil {
-		// If the component is nil, we should clear the screen buffer.
-		frameArea.Max.Y = 0
-	}
-
-	if !v.AltScreen {
-		// We need to resizes the screen based on the frame height and
-		// terminal width. This is because the frame height can change based on
-		// the content of the frame. For example, if the frame contains a list
-		// of items, the height of the frame will be the number of items in the
-		// list. This is different from the alt screen buffer, which has a
-		// fixed height and width.
-		frameHeight := frameArea.Dy()
-		switch l := v.Content.(type) {
-		case interface{ Height() int }:
-			// This covers [uv.StyledString] and [lipgloss.Canvas].
-			frameHeight = l.Height()
-		case interface{ Bounds() uv.Rectangle }:
-			frameHeight = l.Bounds().Dy()
-		}
-
-		if frameHeight != frameArea.Dy() {
-			frameArea.Max.Y = frameHeight
-		}
-	}
-
-	if frameArea != s.cellbuf.Bounds() {
-		// Resize the screen buffer to match the frame area. This is necessary
-		// to ensure that the screen buffer is the same size as the frame area
-		// and to avoid rendering issues when the frame area is smaller than
-		// the screen buffer.
-		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
-	}
-
-	// Clear our screen buffer before copying the new frame into it to ensure
-	// we erase any old content.
-	s.cellbuf.Clear()
-	if v.Content != nil {
-		v.Content.Draw(s.cellbuf, frameArea)
-	}
-
-	// If the frame height is greater than the screen height, we drop the
-	// lines from the top of the buffer.
-	if frameHeight := frameArea.Dy(); frameHeight > s.height {
-		s.cellbuf.Lines = s.cellbuf.Lines[frameHeight-s.height:]
-	}
-
 	s.view = v
 }
 
@@ -573,7 +573,7 @@ func (s *cursedRenderer) setColorProfile(p colorprofile.Profile) {
 // resize implements renderer.
 func (s *cursedRenderer) resize(w, h int) {
 	s.mu.Lock()
-	if s.view.AltScreen || w != s.width {
+	if s.view.AltScreen || w != s.cellbuf.Width() {
 		// We need to mark the screen for clear to force a redraw. However, we
 		// only do so if we're using alt screen or the width has changed.
 		// That's because redrawing is expensive and we can avoid it if the
@@ -582,10 +582,6 @@ func (s *cursedRenderer) resize(w, h int) {
 		// would scroll the screen and our content would be lost.
 		s.scr.Erase()
 	}
-
-	// We need to reset the touched lines buffer to match the new height.
-	s.cellbuf.Touched = nil
-
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
 	s.mu.Unlock()
@@ -602,12 +598,32 @@ func (s *cursedRenderer) clearScreen() {
 }
 
 // enableAltScreen sets the alt screen mode.
-func enableAltScreen(s *cursedRenderer, enable bool) {
+func enableAltScreen(s *cursedRenderer, enable bool, write bool) {
 	if enable {
-		s.scr.EnterAltScreen()
+		enterAltScreen(s, write)
 	} else {
-		s.scr.ExitAltScreen()
+		exitAltScreen(s, write)
 	}
+}
+
+func enterAltScreen(s *cursedRenderer, write bool) {
+	s.scr.SaveCursor()
+	if write {
+		s.buf.WriteString(ansi.SetModeAltScreenSaveCursor)
+	}
+	s.scr.SetFullscreen(true)
+	s.scr.SetRelativeCursor(false)
+	s.scr.Erase()
+}
+
+func exitAltScreen(s *cursedRenderer, write bool) {
+	s.scr.Erase()
+	s.scr.SetRelativeCursor(true)
+	s.scr.SetFullscreen(false)
+	if write {
+		s.buf.WriteString(ansi.ResetModeAltScreenSaveCursor)
+	}
+	s.scr.RestoreCursor()
 }
 
 // enableTextCursor sets the text cursor mode.
