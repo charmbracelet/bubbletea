@@ -466,37 +466,81 @@ func (s *cursedRenderer) flush(closing bool) error {
 		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
 
+	// Check if we have any render updates to flush.
+	hasUpdates := s.buf.Len() > 0
+
+	// Cursor visibility.
+	didShowCursor := s.lastView != nil && s.lastView.Cursor != nil
+	showCursor := view.Cursor != nil
+	hideCursor := !showCursor
+	shouldUpdateCursorVis := (s.lastView == nil || didShowCursor != showCursor) || shouldUpdateAltScreen
+
+	// Build final output buffer with synchronized output or hide/show cursor
+	// updates. But first, enter/exit alt screen mode if needed.
+	//
+	// Here, we have two scenarios:
+	// 1. Synchronized output updates are supported. In this case, we want to
+	//    wrap all updates, unless it's just a cursor visibility change, in
+	//    synchronized output mode. This is because synchronized output mode
+	//    takes care of rendering the updates atomically. In the case of
+	//    just a cursor visibility change, we don't need to enter
+	//    synchronized output mode because it's just a single sequence to
+	//    flush out to the terminal.
+	//
+	// 2. We don't have synchronized output updates support. In this case, and
+	//    if the cursor is visible or should be visible, we wrap the updates
+	//    with hide/show cursor sequences to try and mitigate cursor
+	//    flickering. This is terminal dependent and may still result in
+	//    flickering in some terminals. It's the best effort we can do instead
+	//    of showing the cursor flying around the screen during updates.
+
 	var buf bytes.Buffer
-	hideShowCursor := !s.syncdUpdates && view.Cursor != nil
-	if s.buf.Len() > 0 {
-		if hideShowCursor && s.lastView != nil && s.lastView.Cursor != nil {
-			// If we have the cursor visible, we want to hide it during the update
-			// to avoid flickering. Unless we have synchronized updates enabled, in
-			// which case the terminal will handle it for us.
-			buf.WriteString(ansi.ResetModeTextCursorEnable)
-		} else if s.syncdUpdates {
-			// We have synchronized output updates enabled.
-			buf.WriteString(ansi.SetModeSynchronizedOutput)
+	if shouldUpdateAltScreen {
+		if view.AltScreen {
+			// Entering alt screen mode.
+			buf.WriteString(ansi.SetModeAltScreenSaveCursor)
+		} else {
+			// Exiting alt screen mode.
+			buf.WriteString(ansi.ResetModeAltScreenSaveCursor)
 		}
 	}
 
-	buf.Write(s.buf.Bytes())
+	if s.syncdUpdates {
+		if hasUpdates {
+			// We have synchronized output updates enabled.
+			buf.WriteString(ansi.SetModeSynchronizedOutput)
+		}
+		if shouldUpdateCursorVis && hideCursor {
+			// Do we need to update the cursor visibility to hidden? If so, do
+			// it here before writing any updates to the buffer.
+			_, _ = buf.WriteString(ansi.ResetModeTextCursorEnable)
+		}
+	} else if (shouldUpdateCursorVis && hideCursor) || (hasUpdates && showCursor && didShowCursor) {
+		_, _ = buf.WriteString(ansi.ResetModeTextCursorEnable)
+	}
 
-	// We need to ensure we're showing the cursor if it was requested in the
-	// view. There is no s.buf.Len() check here because when the update is only
-	// a cursor visibility change, s.buf.Len() will be zero and the
-	// updateCursorVis check above will not write anything to s.buf.
-	if hideShowCursor {
-		// Now restore the cursor visibility.
-		buf.WriteString(ansi.SetModeTextCursorEnable)
-	} else if s.buf.Len() > 0 && s.syncdUpdates {
-		// Close synchronized output mode.
-		buf.WriteString(ansi.ResetModeSynchronizedOutput)
+	if hasUpdates {
+		buf.Write(s.buf.Bytes())
+	}
+
+	if s.syncdUpdates {
+		if shouldUpdateCursorVis && showCursor {
+			// Do we need to update the cursor visibility to visible? If so, do
+			// it here after writing any updates to the buffer.
+			_, _ = buf.WriteString(ansi.SetModeTextCursorEnable)
+		}
+		if hasUpdates {
+			// Close synchronized output mode.
+			buf.WriteString(ansi.ResetModeSynchronizedOutput)
+		}
+	} else if (shouldUpdateCursorVis && showCursor) || (hasUpdates && showCursor && didShowCursor) {
+		_, _ = buf.WriteString(ansi.SetModeTextCursorEnable)
 	}
 
 	// Reset internal screen renderer buffer.
 	s.buf.Reset()
 
+	// If our updates flush buffer has content, write it to the output writer.
 	if buf.Len() > 0 {
 		if s.logger != nil {
 			s.logger.Printf("output: %q", buf.String())
