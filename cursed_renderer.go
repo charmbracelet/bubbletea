@@ -234,11 +234,6 @@ func (s *cursedRenderer) flush(closing bool) error {
 	defer s.mu.Unlock()
 
 	view := s.view
-	if s.lastView != nil && *s.lastView == view {
-		// No changes, nothing to do.
-		return nil
-	}
-
 	frameArea := uv.Rect(0, 0, s.width, s.height)
 	if view.Content == nil {
 		// If the component is nil, we should clear the screen buffer.
@@ -264,6 +259,11 @@ func (s *cursedRenderer) flush(closing bool) error {
 		if frameHeight != frameArea.Dy() {
 			frameArea.Max.Y = frameHeight
 		}
+	}
+
+	if s.lastView != nil && *s.lastView == view && frameArea == s.cellbuf.Bounds() {
+		// No changes, nothing to do.
+		return nil
 	}
 
 	if frameArea != s.cellbuf.Bounds() {
