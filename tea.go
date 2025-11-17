@@ -440,38 +440,9 @@ type Program struct {
 	// cleanup on exit.
 	disableCatchPanics bool
 
-	// filter supplies an event filter that will be invoked before Bubble Tea
-	// processes a tea.Msg. The event filter can return any tea.Msg which will
-	// then get handled by Bubble Tea instead of the original event. If the
-	// event filter returns nil, the event will be ignored and Bubble Tea will
-	// not process it.
-	//
-	// As an example, this could be used to prevent a program from shutting
-	// down if there are unsaved changes.
-	//
-	// Example:
-	//
-	//	func filter(m tea.Model, msg tea.Msg) tea.Msg {
-	//		if _, ok := msg.(tea.QuitMsg); !ok {
-	//			return msg
-	//		}
-	//
-	//		model := m.(myModel)
-	//		if model.hasChanges {
-	//			return nil
-	//		}
-	//
-	//		return msg
-	//	}
-	//
-	//	p := tea.NewProgram(Model{});
-	//	p.filter = filter
-	//
-	//	if _,err := p.Run(context.Background()); err != nil {
-	//		fmt.Println("Error running program:", err)
-	//		os.Exit(1)
-	//	}
-	filter func(Model, Msg) Msg
+	// filter provides a way of filtering messages before they are processed by
+	// Bubble Tea. See [WithFilters] for more information.
+	filter MsgFilter
 
 	// fps sets a custom maximum fps at which the renderer should run. If less
 	// than 1, the default value of 60 will be used. If over 120, the fps will

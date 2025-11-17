@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
+	"time"
 
 	"github.com/charmbracelet/colorprofile"
 )
@@ -101,17 +102,23 @@ func WithoutRenderer() ProgramOption {
 	}
 }
 
-// WithFilter supplies an event filter that will be invoked before Bubble Tea
-// processes a tea.Msg. The event filter can return any tea.Msg which will then
-// get handled by Bubble Tea instead of the original event. If the event filter
-// returns nil, the event will be ignored and Bubble Tea will not process it.
+// MsgFilter is a function that can be used to filter messages before they are
+// processed by Bubble Tea. If the provided function returns nil, the message will
+// be ignored and Bubble Tea will not process it.
+type MsgFilter func(Model, Msg) Msg
+
+// WithFilters supplies one or more message filters that will be invoked before
+// Bubble Tea processes a [Msg]. The message filter can return any [Msg] which
+// will then get handled by Bubble Tea instead of the original message. If the
+// filter returns nil for a specific message, the message will be ignored and
+// Bubble Tea will not process it, and not continue to the next filter.
 //
 // As an example, this could be used to prevent a program from shutting down if
-// there are unsaved changes.
+// there are unsaved changes, or used to throttle/drop high-frequency messages.
 //
-// Example:
+// Example -- preventing a program from shutting down if there are unsaved changes:
 //
-//	func filter(m tea.Model, msg tea.Msg) tea.Msg {
+//	func preventUnsavedFilter(m tea.Model, msg tea.Msg) tea.Msg {
 //		if _, ok := msg.(tea.QuitMsg); !ok {
 //			return msg
 //		}
@@ -124,15 +131,54 @@ func WithoutRenderer() ProgramOption {
 //		return msg
 //	}
 //
-//	p := tea.NewProgram(Model{}, tea.WithFilter(filter));
+//	p := tea.NewProgram(Model{}, tea.WithFilters(preventUnsavedFilter));
 //
 //	if _,err := p.Run(); err != nil {
 //		fmt.Println("Error running program:", err)
 //		os.Exit(1)
 //	}
-func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
+func WithFilters(filters ...MsgFilter) ProgramOption {
 	return func(p *Program) {
-		p.filter = filter
+		if len(filters) == 0 {
+			p.filter = nil
+			return
+		}
+		p.filter = func(m Model, msg Msg) Msg {
+			for _, filter := range filters {
+				msg = filter(m, msg)
+				if msg == nil {
+					return nil
+				}
+			}
+			return msg
+		}
+	}
+}
+
+// MouseThrottleFilter is a message filter that throttles [MouseWheelMsg] and
+// [MouseMotionMsg] messages. This is particularly useful when enabling
+// [MouseModeCellMotion] or [MouseModeAllMotion] mouse modes, which can often
+// send excessive messages when the user is moving the mouse very fast, causing
+// high-resource usage and sluggish re-rendering.
+//
+// If the provided throttle duration is 0, the default value of 15ms will be used.
+func MouseThrottleFilter(throttle time.Duration) MsgFilter {
+	if throttle <= 0 {
+		throttle = 15 * time.Millisecond
+	}
+
+	var lastMouseMsg, now time.Time
+
+	return func(_ Model, msg Msg) Msg {
+		switch msg.(type) {
+		case MouseWheelMsg, MouseMotionMsg:
+			now = time.Now()
+			if now.Sub(lastMouseMsg) < throttle {
+				return nil
+			}
+			lastMouseMsg = now
+		}
+		return msg
 	}
 }
 

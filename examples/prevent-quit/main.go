@@ -20,14 +20,14 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithFilter(filter))
+	p := tea.NewProgram(initialModel(), tea.WithFilters(preventUnsavedFilter))
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func filter(teaModel tea.Model, msg tea.Msg) tea.Msg {
+func preventUnsavedFilter(teaModel tea.Model, msg tea.Msg) tea.Msg {
 	if _, ok := msg.(tea.QuitMsg); !ok {
 		return msg
 	}

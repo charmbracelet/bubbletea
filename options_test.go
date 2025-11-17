@@ -32,7 +32,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("filter", func(t *testing.T) {
-		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
+		p := NewProgram(nil, WithFilters(func(_ Model, msg Msg) Msg { return msg }))
 		if p.filter == nil {
 			t.Errorf("expected filter to be set")
 		}
