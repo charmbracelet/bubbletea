@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/fogleman/ease"
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -99,17 +99,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // The main view, which just calls the appropriate sub-view
-func (m model) View() string {
+func (m model) View() tea.View {
 	var s string
 	if m.Quitting {
-		return "\n  See you later!\n\n"
+		return tea.NewView("\n  See you later!\n\n")
 	}
 	if !m.Chosen {
 		s = choicesView(m)
 	} else {
 		s = chosenView(m)
 	}
-	return mainStyle.Render("\n" + s)
+	return tea.NewView(mainStyle.Render("\n" + s + "\n"))
 }
 
 // Sub-update functions
@@ -235,7 +235,7 @@ func progressbar(percent float64) string {
 
 	fullSize := int(math.Round(w * percent))
 	var fullCells string
-	for i := 0; i < fullSize; i++ {
+	for i := range fullSize {
 		fullCells += ramp[i].Render(progressFullChar)
 	}
 
@@ -256,7 +256,7 @@ func makeRampStyles(colorA, colorB string, steps float64) (s []lipgloss.Style) {
 		c := cA.BlendLuv(cB, i/steps)
 		s = append(s, lipgloss.NewStyle().Foreground(lipgloss.Color(colorToHex(c))))
 	}
-	return
+	return s
 }
 
 // Convert a colorful.Color to a hexadecimal format.
@@ -271,5 +271,5 @@ func colorFloatToHex(f float64) (s string) {
 	if len(s) == 1 {
 		s = "0" + s
 	}
-	return
+	return s
 }

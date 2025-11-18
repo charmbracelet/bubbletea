@@ -25,121 +25,53 @@ func ClearScreen() Msg {
 // You can send a clearScreenMsg with ClearScreen.
 type clearScreenMsg struct{}
 
-// EnterAltScreen is a special command that tells the Bubble Tea program to
-// enter the alternate screen buffer.
+// LayerHitMsg is a message that is sent to the program when a layer is hit by
+// a mouse event. This is used to determine which layer in a compostable view
+// was hit by the mouse event. The layer is identified by its ID, which is a
+// string that is unique to the layer.
+type LayerHitMsg struct {
+	ID    string
+	Mouse MouseMsg
+}
+
+// ModeReportMsg is a message that represents a mode report event (DECRPM).
 //
-// Because commands run asynchronously, this command should not be used in your
-// model's Init function. To initialize your program with the altscreen enabled
-// use the WithAltScreen ProgramOption instead.
-func EnterAltScreen() Msg {
-	return enableModeMsg{ansi.AltScreenSaveCursorMode}
-}
-
-// ExitAltScreen is a special command that tells the Bubble Tea program to exit
-// the alternate screen buffer. This command should be used to exit the
-// alternate screen buffer while the program is running.
+// This is sent by the terminal in response to a request for a terminal mode
+// report (DECRQM). It indicates the current setting of a specific terminal
+// mode like cursor visibility, mouse tracking, etc.
 //
-// Note that the alternate screen buffer will be automatically exited when the
-// program quits.
-func ExitAltScreen() Msg {
-	return disableModeMsg{ansi.AltScreenSaveCursorMode}
-}
-
-// enableMouseCellMotionMsg is an internal message that signals to enable mouse cell
-// motion events.
-type enableMouseCellMotionMsg struct{}
-
-// EnableMouseCellMotion is a special command that enables mouse click,
-// release, and wheel events. Mouse movement events are also captured if
-// a mouse button is pressed (i.e., drag events).
+// Example:
 //
-// Because commands run asynchronously, this command should not be used in your
-// model's Init function. Use the WithMouseCellMotion ProgramOption instead.
-func EnableMouseCellMotion() Msg {
-	return enableMouseCellMotionMsg{}
-}
-
-// enableMouseAllMotionMsg is an internal message that signals to enable mouse
-// all motion events.
-type enableMouseAllMotionMsg struct{}
-
-// EnableMouseAllMotion is a special command that enables mouse click, release,
-// wheel, and motion events, which are delivered regardless of whether a mouse
-// button is pressed, effectively enabling support for hover interactions.
+//	```go
+//	func (m model) Init() tea.Cmd {
+//	  // Does my terminal support reporting focus events?
+//	  return tea.Raw(ansi.RequestModeFocusEvent)
+//	}
 //
-// Many modern terminals support this, but not all. If in doubt, use
-// EnableMouseCellMotion instead.
+//	func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+//	  switch msg := msg.(type) {
+//	  case tea.ModeReportMsg:
+//	    if msg.Mode == ansi.ModeFocusEvent && !msg.Value.IsNotRecognized() {
+//	      // Terminal supports focus events
+//	      m.supportsFocus = true
+//	    }
+//	  }
+//	  return m, nil
+//	}
 //
-// Because commands run asynchronously, this command should not be used in your
-// model's Init function. Use the WithMouseAllMotion ProgramOption instead.
-func EnableMouseAllMotion() Msg {
-	return enableMouseAllMotionMsg{}
-}
-
-// disableMouse motionMsg is an internal message that signals to disable mouse
-// motion events.
-type disableMouseMotionMsg struct{}
-
-// DisableMouse is a special command that stops listening for mouse events.
-func DisableMouse() Msg {
-	return disableMouseMotionMsg{}
-}
-
-// HideCursor is a special command for manually instructing Bubble Tea to hide
-// the cursor. In some rare cases, certain operations will cause the terminal
-// to show the cursor, which is normally hidden for the duration of a Bubble
-// Tea program's lifetime. You will most likely not need to use this command.
-func HideCursor() Msg {
-	return disableModeMsg{ansi.TextCursorEnableMode}
-}
-
-// ShowCursor is a special command for manually instructing Bubble Tea to show
-// the cursor.
-func ShowCursor() Msg {
-	return enableModeMsg{ansi.TextCursorEnableMode}
-}
-
-// EnableBracketedPaste is a special command that tells the Bubble Tea program
-// to accept bracketed paste input.
+//	func (m model) View() tea.View {
+//	  var view tea.View
+//	  view.ReportFocus = m.supportsFocus
+//	  view.SetContent(fmt.Sprintf("Terminal supports focus events: %v", m.supportsFocus))
+//	  return view
+//	}
+//	```
 //
-// Note that bracketed paste will be automatically disabled when the
-// program quits.
-func EnableBracketedPaste() Msg {
-	return enableModeMsg{ansi.BracketedPasteMode}
+// See: https://vt100.net/docs/vt510-rm/DECRPM.html
+type ModeReportMsg struct {
+	// Mode is the mode number.
+	Mode ansi.Mode
+
+	// Value is the mode value.
+	Value ansi.ModeSetting
 }
-
-// DisableBracketedPaste is a special command that tells the Bubble Tea program
-// to accept bracketed paste input.
-//
-// Note that bracketed paste will be automatically disabled when the
-// program quits.
-func DisableBracketedPaste() Msg {
-	return disableModeMsg{ansi.BracketedPasteMode}
-}
-
-// EnableGraphemeClustering is a special command that tells the Bubble Tea
-// program to enable grapheme clustering. This is enabled by default.
-func EnableGraphemeClustering() Msg {
-	return enableModeMsg{ansi.GraphemeClusteringMode}
-}
-
-// DisableGraphemeClustering is a special command that tells the Bubble Tea
-// program to disable grapheme clustering. This mode will be disabled
-// automatically when the program quits.
-func DisableGraphemeClustering() Msg {
-	return disableModeMsg{ansi.GraphemeClusteringMode}
-}
-
-// EnableReportFocus is a special command that tells the Bubble Tea program to
-// enable focus reporting.
-func EnableReportFocus() Msg { return enableModeMsg{ansi.FocusEventMode} }
-
-// DisableReportFocus is a special command that tells the Bubble Tea program to
-// disable focus reporting.
-func DisableReportFocus() Msg { return disableModeMsg{ansi.FocusEventMode} }
-
-// enableModeMsg is an internal message that signals to set a terminal mode.
-type enableModeMsg struct{ ansi.Mode }
-
-// disableModeMsg is an internal message that signals to unset a terminal mode.
-type disableModeMsg struct{ ansi.Mode }

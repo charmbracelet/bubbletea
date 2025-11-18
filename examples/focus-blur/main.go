@@ -5,7 +5,7 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
@@ -24,7 +24,7 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.EnableReportFocus
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -45,7 +45,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	s := "Hi. Focus report is currently "
 	if m.reporting {
 		s += "enabled"
@@ -61,5 +61,7 @@ func (m model) View() string {
 			s += "This program is currently blurred!"
 		}
 	}
-	return s + "\n\nTo quit sooner press ctrl-c, or t to toggle focus reporting...\n"
+	v := tea.NewView(s + "\n\nTo quit sooner press ctrl-c, or t to toggle focus reporting...\n")
+	v.ReportFocus = m.reporting
+	return v
 }

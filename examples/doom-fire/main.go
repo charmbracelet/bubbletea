@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // This Doom Fire implementation was ported from @const-void's Node version.
@@ -41,26 +41,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height * 2 // Double height for half-block characters
 		m.screenBuf = make([]int, m.width*m.height)
 		// Initialize the bottom row with white (maximum intensity)
-		for i := 0; i < m.width; i++ {
+		for i := range m.width {
 			m.screenBuf[(m.height-1)*m.width+i] = len(m.firePalette) - 1
 		}
 	}
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.width == 0 {
-		return "Initializing..."
+		return tea.NewView("Initializing...")
 	}
 
 	var s strings.Builder
 
 	for y := 0; y < m.height-2; y += 2 {
-		for x := 0; x < m.width; x++ {
+		for x := range m.width {
 			pixelHi := m.screenBuf[y*m.width+x]
 			pixelLo := m.screenBuf[(y+1)*m.width+x]
 
-			// Convert palette indices to xterm-256 colors
 			hiColor := m.firePalette[pixelHi]
 			loColor := m.firePalette[pixelLo]
 
@@ -76,12 +75,14 @@ func (m model) View() string {
 
 	elapsed := time.Since(m.startTime)
 	s.WriteString(whiteFg.Render("Press q or ctrl+c to quit. " + fmt.Sprintf("Elapsed: %s", elapsed.Round(time.Second))))
-	return s.String()
+	v := tea.NewView(s.String())
+	v.AltScreen = true
+	return v
 }
 
 func (m *model) spreadFire() {
-	for x := 0; x < m.width; x++ {
-		for y := 0; y < m.height; y++ {
+	for x := range m.width {
+		for y := range m.height {
 			m.spreadPixel(y*m.width + x)
 		}
 	}
@@ -102,10 +103,7 @@ func (m *model) spreadPixel(idx int) {
 	dst := idx - rnd + 1
 	if dst-m.width >= 0 && dst-m.width < len(m.screenBuf) {
 		decay := rnd & 1
-		newValue := pixel - decay
-		if newValue < 0 {
-			newValue = 0
-		}
+		newValue := max(pixel-decay, 0)
 		m.screenBuf[dst-m.width] = newValue
 	}
 }
@@ -128,7 +126,7 @@ func initialModel() model {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 	}

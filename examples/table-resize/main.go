@@ -5,9 +5,9 @@ import (
 	"image/color"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
-	"github.com/charmbracelet/lipgloss/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 )
 
 // Pokemon types.
@@ -46,8 +46,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return "\n" + m.table.String() + "\n"
+func (m model) View() tea.View {
+	v := tea.NewView("\n" + m.table.String() + "\n")
+	v.AltScreen = true
+	return v
 }
 
 func main() {
@@ -154,7 +156,7 @@ func main() {
 		}).
 		Border(lipgloss.ThickBorder())
 
-	if _, err := tea.NewProgram(model{t}, tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(model{t}).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

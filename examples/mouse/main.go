@@ -6,7 +6,7 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 type model struct{}
 
 func (m model) Init() tea.Cmd {
-	return tea.EnableMouseAllMotion
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -37,6 +37,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return "Do mouse stuff. When you're done press q to quit.\n"
+func (m model) View() tea.View {
+	v := tea.NewView("Do mouse stuff. When you're done press q to quit.\n")
+	v.MouseMode = tea.MouseModeAllMotion
+	return v
 }

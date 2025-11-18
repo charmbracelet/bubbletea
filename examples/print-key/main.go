@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 type model struct{}
@@ -15,10 +15,8 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyboardEnhancementsMsg:
-		return m, tea.Printf("Keyboard enhancements: Disambiguation: %v, ReleaseKeys: %v, Uniform keys: %v\n",
-			msg.SupportsKeyDisambiguation(),
-			msg.SupportsKeyReleases(),
-			msg.SupportsUniformKeyLayout())
+		return m, tea.Printf("Keyboard enhancements: EventTypes: %v\n",
+			msg.SupportsEventTypes())
 	case tea.KeyMsg:
 		key := msg.Key()
 		switch msg := msg.(type) {
@@ -39,12 +37,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return "Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit."
+func (m model) View() tea.View {
+	v := tea.NewView("Press any key to see its details printed to the terminal. Press 'ctrl+c' to quit.")
+	v.KeyboardEnhancements.ReportEventTypes = true
+	return v
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithKeyboardEnhancements(tea.WithKeyReleases, tea.WithUniformKeyLayout))
+	p := tea.NewProgram(model{})
 	if _, err := p.Run(); err != nil {
 		log.Printf("Error running program: %v", err)
 	}

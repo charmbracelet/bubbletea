@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 type editorFinishedMsg struct{ err error }
@@ -34,11 +34,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "a":
 			m.altscreenActive = !m.altscreenActive
-			cmd := tea.EnterAltScreen
-			if !m.altscreenActive {
-				cmd = tea.ExitAltScreen
-			}
-			return m, cmd
+			return m, nil
 		case "e":
 			return m, openEditor()
 		case "ctrl+c", "q":
@@ -53,11 +49,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.err != nil {
-		return "Error: " + m.err.Error() + "\n"
+		v := tea.NewView("Error: " + m.err.Error() + "\n")
+		v.AltScreen = m.altscreenActive
+		return v
 	}
-	return "Press 'e' to open your EDITOR.\nPress 'a' to toggle the altscreen\nPress 'q' to quit.\n"
+	v := tea.NewView("Press 'e' to open your EDITOR.\nPress 'a' to toggle the altscreen\nPress 'q' to quit.\n")
+	v.AltScreen = m.altscreenActive
+	return v
 }
 
 func main() {

@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/v2/help"
-	"github.com/charmbracelet/bubbles/v2/key"
-	"github.com/charmbracelet/bubbles/v2/timer"
-	tea "github.com/charmbracelet/bubbletea/v2"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/timer"
+	tea "charm.land/bubbletea/v2"
 )
 
 const timeout = time.Second * 5
@@ -73,7 +73,7 @@ func (m model) helpView() string {
 	})
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	// For a more detailed timer view you could read m.timer.Timeout to get
 	// the remaining time as a time.Duration and skip calling m.timer.View()
 	// entirely.
@@ -87,7 +87,7 @@ func (m model) View() string {
 		s = "Exiting in " + s
 		s += m.helpView()
 	}
-	return s
+	return tea.NewView(s)
 }
 
 func main() {

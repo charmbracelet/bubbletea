@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 type model struct {
@@ -38,13 +38,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
+	v := tea.NewView("Press left/right to change the cursor style, q or ctrl+c to quit." +
+		"\n\n" +
+		"  <- This is the cursor (a " + m.describeCursor() + ")")
 	c := tea.NewCursor(0, 2)
 	c.Shape = m.cursor.Shape
 	c.Blink = m.blink
-	return "Press left/right to change the cursor style, q or ctrl+c to quit." +
-		"\n\n" +
-		"  <- This is the cursor (a " + m.describeCursor() + ")", c
+	v.Cursor = c
+	return v
 }
 
 func (m model) describeCursor() string {

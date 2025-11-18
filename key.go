@@ -3,13 +3,13 @@ package tea
 import (
 	"fmt"
 
-	"github.com/charmbracelet/x/input"
+	uv "github.com/charmbracelet/ultraviolet"
 )
 
 const (
 	// KeyExtended is a special key code used to signify that a key event
 	// contains multiple runes.
-	KeyExtended = input.KeyExtended
+	KeyExtended = uv.KeyExtended
 )
 
 // Special key symbols.
@@ -17,174 +17,174 @@ const (
 
 	// Special keys.
 
-	KeyUp     = input.KeyUp
-	KeyDown   = input.KeyDown
-	KeyRight  = input.KeyRight
-	KeyLeft   = input.KeyLeft
-	KeyBegin  = input.KeyBegin
-	KeyFind   = input.KeyFind
-	KeyInsert = input.KeyInsert
-	KeyDelete = input.KeyDelete
-	KeySelect = input.KeySelect
-	KeyPgUp   = input.KeyPgUp
-	KeyPgDown = input.KeyPgDown
-	KeyHome   = input.KeyHome
-	KeyEnd    = input.KeyEnd
+	KeyUp     = uv.KeyUp
+	KeyDown   = uv.KeyDown
+	KeyRight  = uv.KeyRight
+	KeyLeft   = uv.KeyLeft
+	KeyBegin  = uv.KeyBegin
+	KeyFind   = uv.KeyFind
+	KeyInsert = uv.KeyInsert
+	KeyDelete = uv.KeyDelete
+	KeySelect = uv.KeySelect
+	KeyPgUp   = uv.KeyPgUp
+	KeyPgDown = uv.KeyPgDown
+	KeyHome   = uv.KeyHome
+	KeyEnd    = uv.KeyEnd
 
 	// Keypad keys.
 
-	KeyKpEnter    = input.KeyKpEnter
-	KeyKpEqual    = input.KeyKpEqual
-	KeyKpMultiply = input.KeyKpMultiply
-	KeyKpPlus     = input.KeyKpPlus
-	KeyKpComma    = input.KeyKpComma
-	KeyKpMinus    = input.KeyKpMinus
-	KeyKpDecimal  = input.KeyKpDecimal
-	KeyKpDivide   = input.KeyKpDivide
-	KeyKp0        = input.KeyKp0
-	KeyKp1        = input.KeyKp1
-	KeyKp2        = input.KeyKp2
-	KeyKp3        = input.KeyKp3
-	KeyKp4        = input.KeyKp4
-	KeyKp5        = input.KeyKp5
-	KeyKp6        = input.KeyKp6
-	KeyKp7        = input.KeyKp7
-	KeyKp8        = input.KeyKp8
-	KeyKp9        = input.KeyKp9
+	KeyKpEnter    = uv.KeyKpEnter
+	KeyKpEqual    = uv.KeyKpEqual
+	KeyKpMultiply = uv.KeyKpMultiply
+	KeyKpPlus     = uv.KeyKpPlus
+	KeyKpComma    = uv.KeyKpComma
+	KeyKpMinus    = uv.KeyKpMinus
+	KeyKpDecimal  = uv.KeyKpDecimal
+	KeyKpDivide   = uv.KeyKpDivide
+	KeyKp0        = uv.KeyKp0
+	KeyKp1        = uv.KeyKp1
+	KeyKp2        = uv.KeyKp2
+	KeyKp3        = uv.KeyKp3
+	KeyKp4        = uv.KeyKp4
+	KeyKp5        = uv.KeyKp5
+	KeyKp6        = uv.KeyKp6
+	KeyKp7        = uv.KeyKp7
+	KeyKp8        = uv.KeyKp8
+	KeyKp9        = uv.KeyKp9
 
 	// The following are keys defined in the Kitty keyboard protocol.
 	// XXX: Investigate the names of these keys.
-	KeyKpSep    = input.KeyKpSep
-	KeyKpUp     = input.KeyKpUp
-	KeyKpDown   = input.KeyKpDown
-	KeyKpLeft   = input.KeyKpLeft
-	KeyKpRight  = input.KeyKpRight
-	KeyKpPgUp   = input.KeyKpPgUp
-	KeyKpPgDown = input.KeyKpPgDown
-	KeyKpHome   = input.KeyKpHome
-	KeyKpEnd    = input.KeyKpEnd
-	KeyKpInsert = input.KeyKpInsert
-	KeyKpDelete = input.KeyKpDelete
-	KeyKpBegin  = input.KeyKpBegin
+	KeyKpSep    = uv.KeyKpSep
+	KeyKpUp     = uv.KeyKpUp
+	KeyKpDown   = uv.KeyKpDown
+	KeyKpLeft   = uv.KeyKpLeft
+	KeyKpRight  = uv.KeyKpRight
+	KeyKpPgUp   = uv.KeyKpPgUp
+	KeyKpPgDown = uv.KeyKpPgDown
+	KeyKpHome   = uv.KeyKpHome
+	KeyKpEnd    = uv.KeyKpEnd
+	KeyKpInsert = uv.KeyKpInsert
+	KeyKpDelete = uv.KeyKpDelete
+	KeyKpBegin  = uv.KeyKpBegin
 
 	// Function keys.
 
-	KeyF1  = input.KeyF1
-	KeyF2  = input.KeyF2
-	KeyF3  = input.KeyF3
-	KeyF4  = input.KeyF4
-	KeyF5  = input.KeyF5
-	KeyF6  = input.KeyF6
-	KeyF7  = input.KeyF7
-	KeyF8  = input.KeyF8
-	KeyF9  = input.KeyF9
-	KeyF10 = input.KeyF10
-	KeyF11 = input.KeyF11
-	KeyF12 = input.KeyF12
-	KeyF13 = input.KeyF13
-	KeyF14 = input.KeyF14
-	KeyF15 = input.KeyF15
-	KeyF16 = input.KeyF16
-	KeyF17 = input.KeyF17
-	KeyF18 = input.KeyF18
-	KeyF19 = input.KeyF19
-	KeyF20 = input.KeyF20
-	KeyF21 = input.KeyF21
-	KeyF22 = input.KeyF22
-	KeyF23 = input.KeyF23
-	KeyF24 = input.KeyF24
-	KeyF25 = input.KeyF25
-	KeyF26 = input.KeyF26
-	KeyF27 = input.KeyF27
-	KeyF28 = input.KeyF28
-	KeyF29 = input.KeyF29
-	KeyF30 = input.KeyF30
-	KeyF31 = input.KeyF31
-	KeyF32 = input.KeyF32
-	KeyF33 = input.KeyF33
-	KeyF34 = input.KeyF34
-	KeyF35 = input.KeyF35
-	KeyF36 = input.KeyF36
-	KeyF37 = input.KeyF37
-	KeyF38 = input.KeyF38
-	KeyF39 = input.KeyF39
-	KeyF40 = input.KeyF40
-	KeyF41 = input.KeyF41
-	KeyF42 = input.KeyF42
-	KeyF43 = input.KeyF43
-	KeyF44 = input.KeyF44
-	KeyF45 = input.KeyF45
-	KeyF46 = input.KeyF46
-	KeyF47 = input.KeyF47
-	KeyF48 = input.KeyF48
-	KeyF49 = input.KeyF49
-	KeyF50 = input.KeyF50
-	KeyF51 = input.KeyF51
-	KeyF52 = input.KeyF52
-	KeyF53 = input.KeyF53
-	KeyF54 = input.KeyF54
-	KeyF55 = input.KeyF55
-	KeyF56 = input.KeyF56
-	KeyF57 = input.KeyF57
-	KeyF58 = input.KeyF58
-	KeyF59 = input.KeyF59
-	KeyF60 = input.KeyF60
-	KeyF61 = input.KeyF61
-	KeyF62 = input.KeyF62
-	KeyF63 = input.KeyF63
+	KeyF1  = uv.KeyF1
+	KeyF2  = uv.KeyF2
+	KeyF3  = uv.KeyF3
+	KeyF4  = uv.KeyF4
+	KeyF5  = uv.KeyF5
+	KeyF6  = uv.KeyF6
+	KeyF7  = uv.KeyF7
+	KeyF8  = uv.KeyF8
+	KeyF9  = uv.KeyF9
+	KeyF10 = uv.KeyF10
+	KeyF11 = uv.KeyF11
+	KeyF12 = uv.KeyF12
+	KeyF13 = uv.KeyF13
+	KeyF14 = uv.KeyF14
+	KeyF15 = uv.KeyF15
+	KeyF16 = uv.KeyF16
+	KeyF17 = uv.KeyF17
+	KeyF18 = uv.KeyF18
+	KeyF19 = uv.KeyF19
+	KeyF20 = uv.KeyF20
+	KeyF21 = uv.KeyF21
+	KeyF22 = uv.KeyF22
+	KeyF23 = uv.KeyF23
+	KeyF24 = uv.KeyF24
+	KeyF25 = uv.KeyF25
+	KeyF26 = uv.KeyF26
+	KeyF27 = uv.KeyF27
+	KeyF28 = uv.KeyF28
+	KeyF29 = uv.KeyF29
+	KeyF30 = uv.KeyF30
+	KeyF31 = uv.KeyF31
+	KeyF32 = uv.KeyF32
+	KeyF33 = uv.KeyF33
+	KeyF34 = uv.KeyF34
+	KeyF35 = uv.KeyF35
+	KeyF36 = uv.KeyF36
+	KeyF37 = uv.KeyF37
+	KeyF38 = uv.KeyF38
+	KeyF39 = uv.KeyF39
+	KeyF40 = uv.KeyF40
+	KeyF41 = uv.KeyF41
+	KeyF42 = uv.KeyF42
+	KeyF43 = uv.KeyF43
+	KeyF44 = uv.KeyF44
+	KeyF45 = uv.KeyF45
+	KeyF46 = uv.KeyF46
+	KeyF47 = uv.KeyF47
+	KeyF48 = uv.KeyF48
+	KeyF49 = uv.KeyF49
+	KeyF50 = uv.KeyF50
+	KeyF51 = uv.KeyF51
+	KeyF52 = uv.KeyF52
+	KeyF53 = uv.KeyF53
+	KeyF54 = uv.KeyF54
+	KeyF55 = uv.KeyF55
+	KeyF56 = uv.KeyF56
+	KeyF57 = uv.KeyF57
+	KeyF58 = uv.KeyF58
+	KeyF59 = uv.KeyF59
+	KeyF60 = uv.KeyF60
+	KeyF61 = uv.KeyF61
+	KeyF62 = uv.KeyF62
+	KeyF63 = uv.KeyF63
 
 	// The following are keys defined in the Kitty keyboard protocol.
 	// XXX: Investigate the names of these keys.
 
-	KeyCapsLock    = input.KeyCapsLock
-	KeyScrollLock  = input.KeyScrollLock
-	KeyNumLock     = input.KeyNumLock
-	KeyPrintScreen = input.KeyPrintScreen
-	KeyPause       = input.KeyPause
-	KeyMenu        = input.KeyMenu
+	KeyCapsLock    = uv.KeyCapsLock
+	KeyScrollLock  = uv.KeyScrollLock
+	KeyNumLock     = uv.KeyNumLock
+	KeyPrintScreen = uv.KeyPrintScreen
+	KeyPause       = uv.KeyPause
+	KeyMenu        = uv.KeyMenu
 
-	KeyMediaPlay        = input.KeyMediaPlay
-	KeyMediaPause       = input.KeyMediaPause
-	KeyMediaPlayPause   = input.KeyMediaPlayPause
-	KeyMediaReverse     = input.KeyMediaReverse
-	KeyMediaStop        = input.KeyMediaStop
-	KeyMediaFastForward = input.KeyMediaFastForward
-	KeyMediaRewind      = input.KeyMediaRewind
-	KeyMediaNext        = input.KeyMediaNext
-	KeyMediaPrev        = input.KeyMediaPrev
+	KeyMediaPlay        = uv.KeyMediaPlay
+	KeyMediaPause       = uv.KeyMediaPause
+	KeyMediaPlayPause   = uv.KeyMediaPlayPause
+	KeyMediaReverse     = uv.KeyMediaReverse
+	KeyMediaStop        = uv.KeyMediaStop
+	KeyMediaFastForward = uv.KeyMediaFastForward
+	KeyMediaRewind      = uv.KeyMediaRewind
+	KeyMediaNext        = uv.KeyMediaNext
+	KeyMediaPrev        = uv.KeyMediaPrev
 	KeyMediaRecord
 
-	KeyLowerVol = input.KeyLowerVol
-	KeyRaiseVol = input.KeyRaiseVol
-	KeyMute     = input.KeyMute
+	KeyLowerVol = uv.KeyLowerVol
+	KeyRaiseVol = uv.KeyRaiseVol
+	KeyMute     = uv.KeyMute
 
-	KeyLeftShift      = input.KeyLeftShift
-	KeyLeftAlt        = input.KeyLeftAlt
-	KeyLeftCtrl       = input.KeyLeftCtrl
-	KeyLeftSuper      = input.KeyLeftSuper
-	KeyLeftHyper      = input.KeyLeftHyper
-	KeyLeftMeta       = input.KeyLeftMeta
-	KeyRightShift     = input.KeyRightShift
-	KeyRightAlt       = input.KeyRightAlt
-	KeyRightCtrl      = input.KeyRightCtrl
-	KeyRightSuper     = input.KeyRightSuper
-	KeyRightHyper     = input.KeyRightHyper
-	KeyRightMeta      = input.KeyRightMeta
-	KeyIsoLevel3Shift = input.KeyIsoLevel3Shift
-	KeyIsoLevel5Shift = input.KeyIsoLevel5Shift
+	KeyLeftShift      = uv.KeyLeftShift
+	KeyLeftAlt        = uv.KeyLeftAlt
+	KeyLeftCtrl       = uv.KeyLeftCtrl
+	KeyLeftSuper      = uv.KeyLeftSuper
+	KeyLeftHyper      = uv.KeyLeftHyper
+	KeyLeftMeta       = uv.KeyLeftMeta
+	KeyRightShift     = uv.KeyRightShift
+	KeyRightAlt       = uv.KeyRightAlt
+	KeyRightCtrl      = uv.KeyRightCtrl
+	KeyRightSuper     = uv.KeyRightSuper
+	KeyRightHyper     = uv.KeyRightHyper
+	KeyRightMeta      = uv.KeyRightMeta
+	KeyIsoLevel3Shift = uv.KeyIsoLevel3Shift
+	KeyIsoLevel5Shift = uv.KeyIsoLevel5Shift
 
 	// Special names in C0.
 
-	KeyBackspace = input.KeyBackspace
-	KeyTab       = input.KeyTab
-	KeyEnter     = input.KeyEnter
-	KeyReturn    = input.KeyReturn
-	KeyEscape    = input.KeyEscape
-	KeyEsc       = input.KeyEsc
+	KeyBackspace = uv.KeyBackspace
+	KeyTab       = uv.KeyTab
+	KeyEnter     = uv.KeyEnter
+	KeyReturn    = uv.KeyReturn
+	KeyEscape    = uv.KeyEscape
+	KeyEsc       = uv.KeyEsc
 
 	// Special names in G0.
 
-	KeySpace = input.KeySpace
+	KeySpace = uv.KeySpace
 )
 
 // KeyPressMsg represents a key press message.
@@ -194,6 +194,24 @@ type KeyPressMsg Key
 // events. For details, on what this returns see [Key.String].
 func (k KeyPressMsg) String() string {
 	return Key(k).String()
+}
+
+// Keystroke returns the keystroke representation of the [Key]. While less type
+// safe than looking at the individual fields, it will usually be more
+// convenient and readable to use this method when matching against keys.
+//
+// Note that modifier keys are always printed in the following order:
+//   - ctrl
+//   - alt
+//   - shift
+//   - meta
+//   - hyper
+//   - super
+//
+// For example, you'll always see "ctrl+shift+alt+a" and never
+// "shift+ctrl+alt+a".
+func (k KeyPressMsg) Keystroke() string {
+	return uv.Key(k).Keystroke()
 }
 
 // Key returns the underlying key event. This is a syntactic sugar for casting
@@ -209,6 +227,24 @@ type KeyReleaseMsg Key
 // events. For details, on what this returns see [Key.String].
 func (k KeyReleaseMsg) String() string {
 	return Key(k).String()
+}
+
+// Keystroke returns the keystroke representation of the [Key]. While less type
+// safe than looking at the individual fields, it will usually be more
+// convenient and readable to use this method when matching against keys.
+//
+// Note that modifier keys are always printed in the following order:
+//   - ctrl
+//   - alt
+//   - shift
+//   - meta
+//   - hyper
+//   - super
+//
+// For example, you'll always see "ctrl+shift+alt+a" and never
+// "shift+ctrl+alt+a".
+func (k KeyReleaseMsg) Keystroke() string {
+	return uv.Key(k).Keystroke()
 }
 
 // Key returns the underlying key event. This is a convenience method and
@@ -306,10 +342,19 @@ type Key struct {
 	IsRepeat bool
 }
 
-// String implements [fmt.Stringer] and is used to convert a key to a string.
-// While less type safe than looking at the individual fields, it will usually
-// be more convenient and readable to use this method when matching against
-// keys.
+// String implements [fmt.Stringer] and is quite useful for matching key
+// events. It will return the textual representation of the [Key] if there is
+// one, otherwise, it will fallback to [Key.Keystroke].
+//
+// For example, you'll always get "?" and instead of "shift+/" on a US ANSI
+// keyboard.
+func (k Key) String() string {
+	return uv.Key(k).String()
+}
+
+// Keystroke returns the keystroke representation of the [Key]. While less type
+// safe than looking at the individual fields, it will usually be more
+// convenient and readable to use this method when matching against keys.
 //
 // Note that modifier keys are always printed in the following order:
 //   - ctrl
@@ -321,6 +366,6 @@ type Key struct {
 //
 // For example, you'll always see "ctrl+shift+alt+a" and never
 // "shift+ctrl+alt+a".
-func (k Key) String() string {
-	return input.Key(k).String()
+func (k Key) Keystroke() string {
+	return uv.Key(k).Keystroke()
 }

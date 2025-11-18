@@ -5,10 +5,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/charmbracelet/bubbles/v2/key"
-	"github.com/charmbracelet/bubbles/v2/list"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type styles struct {
@@ -79,23 +79,8 @@ func newListKeyMap() *listKeyMap {
 	}
 }
 
-// query tracks which terminal properties have been resolved.
-type query int
-
-const (
-	backgroundColor = 1 << iota
-	windowSize
-)
-
-// Ready returns true if all properties necessary for our app to function have
-// been resolved.
-func (q query) Ready() bool {
-	return q == backgroundColor|windowSize
-}
-
 type model struct {
 	styles        styles
-	queries       query
 	darkBG        bool
 	width, height int
 	once          *sync.Once
@@ -108,61 +93,17 @@ type model struct {
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		tea.RequestBackgroundColor,
-		tea.EnterAltScreen,
 	)
 }
 
 func (m *model) updateListProperties() {
-	// Wait until we've queried for the necessary terminal
-	// properties. Specifically, we need to know the background color and the
-	// window size before we can construct the list.
-	if !m.queries.Ready() {
-		return
-	}
-
-	// Initialize the list, but only once.
-	if m.once == nil {
-		m.once = new(sync.Once)
-	}
-	m.once.Do(func() {
-		m.styles = newStyles(m.darkBG)
-
-		delegateKeys := newDelegateKeyMap()
-		listKeys := newListKeyMap()
-
-		// Make initial list of items.
-		var itemGenerator randomItemGenerator
-		const numItems = 24
-		items := make([]list.Item, numItems)
-		for i := 0; i < numItems; i++ {
-			items[i] = itemGenerator.next()
-		}
-
-		// Setup list.
-		delegate := newItemDelegate(delegateKeys, &m.styles)
-		groceryList := list.New(items, delegate, 0, 0)
-		groceryList.Title = "Groceries"
-		groceryList.Styles.Title = m.styles.title
-		groceryList.AdditionalFullHelpKeys = func() []key.Binding {
-			return []key.Binding{
-				listKeys.toggleSpinner,
-				listKeys.insertItem,
-				listKeys.toggleTitleBar,
-				listKeys.toggleStatusBar,
-				listKeys.togglePagination,
-				listKeys.toggleHelpMenu,
-			}
-		}
-
-		m.list = groceryList
-		m.keys = listKeys
-		m.delegateKeys = delegateKeys
-		m.itemGenerator = &itemGenerator
-	})
-
 	// Update list size.
 	h, v := m.styles.app.GetFrameSize()
 	m.list.SetSize(m.width-h, m.height-v)
+
+	// Update the model and list styles.
+	m.styles = newStyles(m.darkBG)
+	m.list.Styles.Title = m.styles.title
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -171,20 +112,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.BackgroundColorMsg:
 		m.darkBG = msg.IsDark()
-		m.queries |= backgroundColor
 		m.updateListProperties()
 		return m, nil
 
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.queries |= windowSize
 		m.updateListProperties()
-		return m, nil
-	}
-
-	// Don't proceed until we've queried for the necessary terminal properties
-	// above.
-	if !m.queries.Ready() {
 		return m, nil
 	}
 
@@ -236,17 +169,54 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	// Don't render until we have everything we queried for.
-	if !m.queries.Ready() {
-		return ""
+func (m model) View() tea.View {
+	v := tea.NewView(m.styles.app.Render(m.list.View()))
+	v.AltScreen = true
+	return v
+}
+
+func initialModel() model {
+	// Initialize the model and list.
+	m := model{}
+	m.styles = newStyles(false) // default to dark background styles
+
+	delegateKeys := newDelegateKeyMap()
+	listKeys := newListKeyMap()
+
+	// Make initial list of items.
+	var itemGenerator randomItemGenerator
+	const numItems = 24
+	items := make([]list.Item, numItems)
+	for i := range numItems {
+		items[i] = itemGenerator.next()
 	}
 
-	return m.styles.app.Render(m.list.View())
+	// Setup list.
+	delegate := newItemDelegate(delegateKeys, &m.styles)
+	groceryList := list.New(items, delegate, 0, 0)
+	groceryList.Title = "Groceries"
+	groceryList.Styles.Title = m.styles.title
+	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			listKeys.toggleSpinner,
+			listKeys.insertItem,
+			listKeys.toggleTitleBar,
+			listKeys.toggleStatusBar,
+			listKeys.togglePagination,
+			listKeys.toggleHelpMenu,
+		}
+	}
+
+	m.list = groceryList
+	m.keys = listKeys
+	m.delegateKeys = delegateKeys
+	m.itemGenerator = &itemGenerator
+
+	return m
 }
 
 func main() {
-	if _, err := tea.NewProgram(model{}).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

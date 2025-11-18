@@ -1,11 +1,7 @@
-[?25l[?2004hHi. This program will exit in 10 seconds.[K
-[K
-To quit sooner press ctrl-c, or press ctrl-z to suspend...[K
-[K[70D[3AHi. This program will exit in 9 seconds.[K
-<<<<<<< HEAD
-[B[B[70D[2K[?2004l[?25h[?1002l[?1003l[?1006l
-=======
+[?2004h[?25l[=1;1u[?uHi. This program will exit in 10 seconds.
+
+To quit sooner press ctrl-c, or press ctrl-z to suspend...
+[3A[30C9 [P[?25l
 
 
-[70D[2K[?2004l[?25h[?1002l[?1003l[?1006l
->>>>>>> main
+[J[?25h[0 q[?25h[?2004l

@@ -8,10 +8,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/paginator"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/paginator"
+	"charm.land/lipgloss/v2"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 type styles struct {
@@ -30,7 +30,6 @@ func newStyles(bgIsDark bool) (s styles) {
 type model struct {
 	items     []string
 	paginator paginator.Model
-	ready     bool
 }
 
 func newModel() model {
@@ -45,10 +44,19 @@ func newModel() model {
 	p.PerPage = 10
 	p.SetTotalPages(len(items))
 
-	return model{
+	m := model{
 		paginator: p,
 		items:     items,
 	}
+
+	m.updateStyles(true) // default to dark styles
+	return m
+}
+
+func (m *model) updateStyles(isDark bool) {
+	styles := newStyles(isDark)
+	m.paginator.ActiveDot = styles.activeDot.String()
+	m.paginator.InactiveDot = styles.inactiveDot.String()
 }
 
 func (m model) Init() tea.Cmd {
@@ -59,10 +67,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.BackgroundColorMsg:
-		styles := newStyles(msg.IsDark())
-		m.paginator.ActiveDot = styles.activeDot.String()
-		m.paginator.InactiveDot = styles.inactiveDot.String()
-		m.ready = true
+		m.updateStyles(msg.IsDark())
 		return m, nil
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -74,11 +79,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	if !m.ready {
-		return ""
-	}
-
+func (m model) View() tea.View {
 	var b strings.Builder
 	b.WriteString("\n  Paginator Example\n\n")
 	start, end := m.paginator.GetSliceBounds(len(m.items))
@@ -87,7 +88,7 @@ func (m model) View() string {
 	}
 	b.WriteString("  " + m.paginator.View())
 	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
-	return b.String()
+	return tea.NewView(b.String())
 }
 
 func main() {

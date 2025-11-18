@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 type model struct {
@@ -38,12 +38,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.suspending || m.quitting {
-		return ""
+		return tea.NewView("")
 	}
 
-	return "\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n"
+	return tea.NewView("\nPress ctrl-z to suspend, ctrl+c to interrupt, q, or esc to exit\n")
 }
 
 func main() {

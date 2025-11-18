@@ -27,19 +27,11 @@ func (p *Program) initInput() (err error) {
 		p.checkOptimizedMovements(p.previousTtyInputState)
 	}
 
-	if f, ok := p.output.Writer().(term.File); ok && term.IsTerminal(f.Fd()) {
+	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
 	}
 
 	return nil
-}
-
-func openInputTTY() (*os.File, error) {
-	f, err := os.Open("/dev/tty")
-	if err != nil {
-		return nil, fmt.Errorf("could not open a new TTY: %w", err)
-	}
-	return f, nil
 }
 
 const suspendSupported = true

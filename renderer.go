@@ -15,14 +15,20 @@ const (
 
 // renderer is the interface for Bubble Tea renderers.
 type renderer interface {
+	// start starts the renderer.
+	start()
+
 	// close closes the renderer and flushes any remaining data.
 	close() error
 
 	// render renders a frame to the output.
-	render(string, *Cursor)
+	render(View)
+
+	// hit returns possible hit messages for the renderer.
+	hit(MouseMsg) []Msg
 
 	// flush flushes the renderer's buffer to the output.
-	flush() error
+	flush(closing bool) error
 
 	// reset resets the renderer's state to its initial state.
 	reset()
@@ -30,17 +36,8 @@ type renderer interface {
 	// insertAbove inserts unmanaged lines above the renderer.
 	insertAbove(string)
 
-	// enterAltScreen enters the alternate screen buffer.
-	enterAltScreen()
-
-	// exitAltScreen exits the alternate screen buffer.
-	exitAltScreen()
-
-	// showCursor shows the cursor.
-	showCursor()
-
-	// hideCursor hides the cursor.
-	hideCursor()
+	// setSyncdUpdates sets whether to use synchronized updates.
+	setSyncdUpdates(bool)
 
 	// resize notify the renderer of a terminal resize.
 	resize(int, int)
@@ -51,12 +48,8 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
-	// repaint forces a full repaint.
-	repaint()
+	writeString(string) (int, error)
 }
-
-// repaintMsg forces a full repaint.
-type repaintMsg struct{}
 
 type printLineMessage struct {
 	messageBody string
@@ -69,7 +62,7 @@ type printLineMessage struct {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func Println(args ...interface{}) Cmd {
+func Println(args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprint(args...),
@@ -85,7 +78,7 @@ func Println(args ...interface{}) Cmd {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
-func Printf(template string, args ...interface{}) Cmd {
+func Printf(template string, args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprintf(template, args...),

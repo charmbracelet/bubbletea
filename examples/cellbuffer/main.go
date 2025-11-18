@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/harmonica"
 )
 
@@ -117,7 +117,7 @@ func (c cellbuffer) ready() bool {
 
 func (c cellbuffer) String() string {
 	var b strings.Builder
-	for i := 0; i < len(c.cells); i++ {
+	for i := range c.cells {
 		if i > 0 && i%c.stride == 0 && i < len(c.cells)-1 {
 			b.WriteRune('\n')
 		}
@@ -184,8 +184,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
-	return m.cells.String()
+func (m model) View() tea.View {
+	v := tea.NewView(m.cells.String())
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
 }
 
 func main() {
@@ -193,7 +196,7 @@ func main() {
 		spring: harmonica.NewSpring(harmonica.FPS(fps), frequency, damping),
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Uh oh:", err)
 		os.Exit(1)

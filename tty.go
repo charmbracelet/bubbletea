@@ -1,16 +1,12 @@
 package tea
 
 import (
-	"errors"
 	"fmt"
-	"io"
-	"log"
+	"os"
 	"time"
 
-	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/input"
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 )
 
 func (p *Program) suspend() {
@@ -26,60 +22,17 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if !hasView(p.initialModel) {
-		// No need to initialize the terminal if we're not rendering
+	if p.disableRenderer {
 		return nil
 	}
-
 	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	// We don't need to reset [ansi.AltScreenSaveCursorMode] and
-	// [ansi.TextCursorEnableMode] because they are automatically reset when we
-	// close the renderer. See [screenRenderer.close] and
-	// [cellbuf.Screen.Close].
-
-	if p.modes.IsSet(ansi.BracketedPasteMode) {
-		p.execute(ansi.ResetBracketedPasteMode)
-	}
-
-	btnEvents := p.modes.IsSet(ansi.ButtonEventMouseMode)
-	allEvents := p.modes.IsSet(ansi.AnyEventMouseMode)
-	if btnEvents || allEvents {
-		if btnEvents {
-			p.execute(ansi.ResetButtonEventMouseMode)
-		}
-		if allEvents {
-			p.execute(ansi.ResetAnyEventMouseMode)
-		}
-		p.execute(ansi.ResetSgrExtMouseMode)
-	}
-	if p.activeEnhancements.modifyOtherKeys != 0 {
-		p.execute(ansi.ResetModifyOtherKeys)
-	}
-	if p.activeEnhancements.kittyFlags != 0 {
-		p.execute(ansi.DisableKittyKeyboard)
-	}
-	if p.modes.IsSet(ansi.FocusEventMode) {
-		p.execute(ansi.ResetFocusEventMode)
-	}
-	if p.modes.IsSet(ansi.GraphemeClusteringMode) {
-		p.execute(ansi.ResetGraphemeClusteringMode)
-	}
-
-	// Restore terminal colors.
-	if p.setBg != nil {
-		p.execute(ansi.ResetBackgroundColor)
-	}
-	if p.setFg != nil {
-		p.execute(ansi.ResetForegroundColor)
-	}
-	if p.setCc != nil {
-		p.execute(ansi.ResetCursorColor)
-	}
+	// Flush queued commands.
+	_ = p.flush()
 
 	return p.restoreInput()
 }
@@ -101,68 +54,40 @@ func (p *Program) restoreInput() error {
 
 // initInputReader (re)commences reading inputs.
 func (p *Program) initInputReader(cancel bool) error {
-	if cancel && p.inputReader != nil {
-		p.inputReader.Cancel()
+	if cancel && p.cancelReader != nil {
+		p.cancelReader.Cancel()
 		p.waitForReadLoop()
 	}
 
-	term := p.getenv("TERM")
+	term := p.environ.Getenv("TERM")
 
 	// Initialize the input reader.
 	// This need to be done after the terminal has been initialized and set to
 	// raw mode.
-	// On Windows, this will change the console mode to enable mouse and window
-	// events.
-	var flags int
-	if p.mouseMode {
-		flags |= input.FlagMouseMode
-	}
 
-	drv, err := input.NewReader(p.input, term, flags)
+	var err error
+	p.cancelReader, err = uv.NewCancelReader(p.input)
 	if err != nil {
-		return fmt.Errorf("bubbletea: error initializing input reader: %w", err)
+		return fmt.Errorf("bubbletea: could not create cancelable reader: %w", err)
 	}
 
-	if p.traceInput {
-		drv.SetLogger(log.Default())
-	}
-	p.inputReader = drv
+	drv := uv.NewTerminalReader(p.cancelReader, term)
+	drv.SetLogger(p.logger)
+	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
+
 	go p.readLoop()
 
 	return nil
 }
 
-func (p *Program) readInputs() error {
-	for {
-		events, err := p.inputReader.ReadEvents()
-		if err != nil {
-			return fmt.Errorf("bubbletea: error reading input: %w", err)
-		}
-
-		for _, msg := range events {
-			if m := p.translateInputEvent(msg); m != nil {
-				select {
-				case p.msgs <- m:
-				case <-p.ctx.Done():
-					err := p.ctx.Err()
-					if err != nil {
-						err = fmt.Errorf("bubbletea: found context error while reading input: %w", err)
-					}
-					return err
-				}
-			}
-		}
-	}
-}
-
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := p.readInputs()
-	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
 		select {
 		case <-p.ctx.Done():
+			return
 		case p.errs <- err:
 		}
 	}
@@ -197,8 +122,15 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	var resizeMsg WindowSizeMsg
-	resizeMsg.Width = w
-	resizeMsg.Height = h
-	p.Send(resizeMsg)
+	p.width, p.height = w, h
+	p.Send(WindowSizeMsg{Width: w, Height: h})
+}
+
+// OpenTTY opens the running terminal's TTY for reading and writing.
+func OpenTTY() (*os.File, *os.File, error) {
+	in, out, err := uv.OpenTTY()
+	if err != nil {
+		return nil, nil, fmt.Errorf("bubbletea: could not open TTY: %w", err)
+	}
+	return in, out, nil
 }

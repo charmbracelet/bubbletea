@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // An example to show the FPS count of a moving space-like background.
@@ -28,7 +28,6 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
-		tea.EnterAltScreen,
 		tickCmd(),
 	)
 }
@@ -70,11 +69,11 @@ func (m *model) setupColors() {
 	height := m.height * 2 // double height for half blocks
 	m.colors = make([][]color.Color, height)
 
-	for y := 0; y < height; y++ {
+	for y := range height {
 		m.colors[y] = make([]color.Color, m.width)
 		randomnessFactor := float64(height-y) / float64(height)
 
-		for x := 0; x < m.width; x++ {
+		for x := range m.width {
 			baseValue := randomnessFactor * (float64(height-y) / float64(height))
 			randomOffset := (rand.Float64() * 0.2) - 0.1
 			value := clamp(baseValue+randomOffset, 0, 1)
@@ -96,28 +95,36 @@ func clamp(value, min, max float64) float64 {
 	return value
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	// Title
 	title := lipgloss.NewStyle().Bold(true).Render("Space")
 
 	// Color display
 	var s strings.Builder
-	for y := 0; y < m.height; y++ {
-		for x := 0; x < m.width; x++ {
+	height := m.height - 1 // leave one line for title
+	for y := range height {
+		for x := range m.width {
 			xi := (x + m.frameCount) % m.width
 			fg := m.colors[y*2][xi]
 			bg := m.colors[y*2+1][xi]
 			st := lipgloss.NewStyle().Foreground(fg).Background(bg)
 			s.WriteString(st.Render("▀"))
 		}
-		s.WriteByte('\n')
+		if y < height-1 {
+			s.WriteString("\n")
+		}
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, title, s.String())
+	v := tea.NewView(strings.Join([]string{
+		title,
+		s.String(),
+	}, "\n"))
+	v.AltScreen = true
+	return v
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen())
+	p := tea.NewProgram(model{}, tea.WithFPS(120))
 
 	_, err := p.Run()
 	if err != nil {

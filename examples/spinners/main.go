@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/v2/spinner"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var (
@@ -85,7 +85,7 @@ func (m *model) resetSpinner() {
 	m.spinner.Spinner = spinners[m.index]
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var gap string
 	switch m.index {
 	case 1:
@@ -97,5 +97,5 @@ func (m model) View() string {
 	var s string
 	s += fmt.Sprintf("\n %s%s%s\n\n", m.spinner.View(), gap, textStyle("Spinning..."))
 	s += helpStyle("h/l, ←/→: change spinner • q: exit\n")
-	return s
+	return tea.NewView(s)
 }

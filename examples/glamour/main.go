@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/v2/viewport"
-	tea "github.com/charmbracelet/bubbletea/v2"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/glamour/v2"
 	"github.com/charmbracelet/glamour/v2/styles"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/lipgloss/v2"
 )
 
 const content = `
@@ -125,8 +125,8 @@ func (e example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (e example) View() string {
-	return e.viewport.View() + e.helpView()
+func (e example) View() tea.View {
+	return tea.NewView(e.viewport.View() + e.helpView())
 }
 
 func (e example) helpView() string {

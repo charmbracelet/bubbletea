@@ -4,7 +4,9 @@ package tea
 type Position struct{ X, Y int }
 
 // CursorPositionMsg is a message that represents the terminal cursor position.
-type CursorPositionMsg Position
+type CursorPositionMsg struct {
+	X, Y int
+}
 
 // CursorShape represents a terminal cursor shape.
 type CursorShape int

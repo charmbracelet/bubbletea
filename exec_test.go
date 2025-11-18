@@ -33,8 +33,13 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() string {
-	return "\n"
+func (m *testExecModel) View() View {
+	return NewView("\n")
+}
+
+type spyRenderer struct {
+	renderer
+	calledReset bool
 }
 
 func TestTeaExec(t *testing.T) {
@@ -74,13 +79,21 @@ func TestTeaExec(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testExecModel{cmd: test.cmd}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			p := NewProgram(m,
+				WithInput(&in),
+				WithOutput(&buf),
+			)
 			if _, err := p.Run(); err != nil {
 				t.Error(err)
 			}
+			p.renderer = &spyRenderer{renderer: p.renderer}
 
 			if m.err != nil && !test.expectErr {
 				t.Errorf("expected no error, got %v", m.err)
+
+				if !p.renderer.(*spyRenderer).calledReset {
+					t.Error("expected renderer to be reset")
+				}
 			}
 			if m.err == nil && test.expectErr {
 				t.Error("expected error, got nil")

@@ -1,12 +1,13 @@
 package main
 
 import (
+	"image/color"
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/textinput"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -44,6 +45,7 @@ type model struct {
 	state       state
 	choiceIndex int
 	err         error
+	fg, bg, cc  color.Color
 }
 
 func (m model) Init() tea.Cmd {
@@ -60,6 +62,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.state {
 		case chooseState:
+			m.ti.Blur()
 			switch msg.String() {
 			case "j", "down":
 				m.choiceIndex++
@@ -73,6 +76,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "enter":
 				m.state = inputState
+				m.ti.Focus()
 				switch m.choiceIndex {
 				case 0:
 					m.choice = foreground
@@ -84,12 +88,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case inputState:
+			m.ti.Focus()
 			switch msg.String() {
 			case "esc":
 				m.choice = 0
 				m.choiceIndex = 0
 				m.state = chooseState
 				m.err = nil
+				m.ti.Blur()
 			case "enter":
 				val := m.ti.Value()
 				col, err := colorful.Hex(val)
@@ -107,13 +113,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					switch choice {
 					case foreground:
-						return m, tea.SetForegroundColor(col)
+						m.fg = col
 					case background:
-						return m, tea.SetBackgroundColor(col)
+						m.bg = col
 					case cursor:
-						return m, tea.SetCursorColor(col)
+						m.cc = col
 					}
 				}
+
+				m.ti.Blur()
 
 			default:
 				var cmd tea.Cmd
@@ -126,7 +134,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var s strings.Builder
 	instructions := lipgloss.NewStyle().Width(40).Render("Choose a terminal-wide color to set. All settings will be cleared on exit.")
 
@@ -164,15 +172,24 @@ func (m model) View() string {
 
 	s.WriteString("\n")
 
-	return s.String()
+	v := tea.NewView(s.String())
+	if m.ti.Focused() {
+		v.Cursor = m.ti.Cursor()
+		v.Cursor.Y += 2 // account for the prompt
+		v.Cursor.Color = m.cc
+	}
+	v.BackgroundColor = m.bg
+	v.ForegroundColor = m.fg
+
+	return v
 }
 
 func main() {
 	ti := textinput.New()
 	ti.Placeholder = "#ff00ff"
-	ti.Focus()
 	ti.CharLimit = 156
 	ti.SetWidth(20)
+	ti.SetVirtualCursor(false)
 	p := tea.NewProgram(model{
 		ti: ti,
 	})

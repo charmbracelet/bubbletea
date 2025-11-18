@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/list"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 const listHeight = 14
@@ -66,7 +66,6 @@ type model struct {
 	list     list.Model
 	choice   string
 	styles   styles
-	ready    bool
 	quitting bool
 }
 
@@ -90,25 +89,26 @@ func initialModel() model {
 	l.Title = "What do you want for dinner?"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
-	return model{list: l}
+
+	m := model{list: l}
+	m.updateStyles(true) // default to dark styles.
+	return m
+}
+
+func (m *model) updateStyles(isDark bool) {
+	m.styles = newStyles(isDark)
+	m.list.Styles.Title = m.styles.title
+	m.list.Styles.PaginationStyle = m.styles.pagination
+	m.list.Styles.HelpStyle = m.styles.help
+	m.list.SetDelegate(itemDelegate{styles: &m.styles})
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.RequestBackgroundColor
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.BackgroundColorMsg:
-		// Wait until we know the background color to initialize our styles.
-		m.styles = newStyles(msg.IsDark())
-		m.list.Styles.Title = m.styles.title
-		m.list.Styles.PaginationStyle = m.styles.pagination
-		m.list.Styles.HelpStyle = m.styles.help
-		m.list.SetDelegate(itemDelegate{styles: &m.styles})
-		m.ready = true
-		return m, nil
-
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width)
 		return m, nil
@@ -133,19 +133,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	if !m.ready {
-		// Don't render anything until the query for the background color has
-		// finished.
-		return ""
-	}
+func (m model) View() tea.View {
 	if m.choice != "" {
-		return m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
+		return tea.NewView(m.styles.quitText.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice)))
 	}
 	if m.quitting {
-		return m.styles.quitText.Render("Not hungry? That’s cool.")
+		return tea.NewView(m.styles.quitText.Render("Not hungry? That’s cool."))
 	}
-	return "\n" + m.list.View()
+	return tea.NewView("\n" + m.list.View())
 }
 
 func main() {

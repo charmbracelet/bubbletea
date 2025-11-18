@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/charmbracelet/bubbles/v2/help"
-	"github.com/charmbracelet/bubbles/v2/key"
-	"github.com/charmbracelet/bubbles/v2/textarea"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var (
@@ -131,13 +131,13 @@ func (m model) updatePromptView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	if m.quitting {
 		if m.hasChanges {
 			text := lipgloss.JoinHorizontal(lipgloss.Top, "You have unsaved changes. Quit without saving?", choiceStyle.Render("[yN]"))
-			return quitViewStyle.Render(text)
+			return tea.NewView(quitViewStyle.Render(text))
 		}
-		return "Very important. Thank you.\n"
+		return tea.NewView("Very important. Thank you.\n")
 	}
 
 	helpView := m.help.ShortHelpView([]key.Binding{
@@ -145,10 +145,10 @@ func (m model) View() string {
 		m.keymap.quit,
 	})
 
-	return fmt.Sprintf(
+	return tea.NewView(fmt.Sprintf(
 		"Type some important things.\n%s\n %s\n %s",
 		m.textarea.View(),
 		saveTextStyle.Render(m.saveText),
 		helpView,
-	) + "\n\n"
+	) + "\n\n")
 }

@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/viewport"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var (
@@ -91,11 +91,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
+	var v tea.View
+	v.AltScreen = true                    // use the full size of the terminal in its "alternate screen buffer"
+	v.MouseMode = tea.MouseModeCellMotion // turn on mouse support so we can track the mouse wheel
 	if !m.ready {
-		return "\n  Initializing..."
+		v.SetContent("\n  Initializing...")
+	} else {
+		v.SetContent(fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView()))
 	}
-	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
+	return v
 }
 
 func (m model) headerView() string {
@@ -127,8 +132,6 @@ func main() {
 
 	p := tea.NewProgram(
 		model{content: string(content)},
-		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
-		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 	)
 
 	if _, err := p.Run(); err != nil {

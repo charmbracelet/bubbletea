@@ -7,9 +7,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/textarea"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func main() {
@@ -30,7 +30,8 @@ type model struct {
 func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
-	ti.VirtualCursor = false
+	ti.SetVirtualCursor(false)
+	ti.SetStyles(textarea.DefaultStyles(true)) // default to dark styles.
 	ti.Focus()
 
 	return model{
@@ -49,7 +50,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.BackgroundColorMsg:
-		m.textarea.Styles = textarea.DefaultStyles(msg.IsDark())
+		// Update styling now that we know the background color.
+		m.textarea.SetStyles(textarea.DefaultStyles(msg.IsDark()))
 
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -66,7 +68,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	// We handle errors just like any other message
+		// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
 		return m, nil
@@ -81,19 +83,18 @@ func (m model) headerView() string {
 	return "Tell me a story.\n"
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	const (
 		footer = "\n(ctrl+c to quit)\n"
 	)
 
 	var c *tea.Cursor
-	if !m.textarea.VirtualCursor {
+	if !m.textarea.VirtualCursor() {
 		c = m.textarea.Cursor()
 
 		// Set the y offset of the cursor based on the position of the textarea
 		// in the application.
 		offset := lipgloss.Height(m.headerView())
-		log.Printf("offset: %d", offset)
 		c.Y += offset
 	}
 
@@ -103,5 +104,7 @@ func (m model) View() (string, *tea.Cursor) {
 		footer,
 	}, "\n")
 
-	return f, c
+	v := tea.NewView(f)
+	v.Cursor = c
+	return v
 }

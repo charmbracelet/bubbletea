@@ -12,9 +12,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/v2/textinput"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func main() {
@@ -58,14 +58,18 @@ type model struct {
 func newModel(initialValue string) (m model) {
 	i := textinput.New()
 	i.Prompt = ""
-	i.Styles.Cursor.Color = lipgloss.Color("63")
+
+	s := i.Styles()
+	s.Cursor.Color = lipgloss.Color("63")
+	i.SetStyles(s)
+
 	i.SetWidth(48)
 	i.SetValue(initialValue)
 	i.CursorEnd()
 	i.Focus()
 
 	m.userInput = i
-	return
+	return m
 }
 
 func (m model) Init() tea.Cmd {
@@ -85,9 +89,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
+func (m model) View() tea.View {
+	return tea.NewView(fmt.Sprintf(
 		"\nYou piped in: %s\n\nPress ^C to exit",
 		m.userInput.View(),
-	)
+	))
 }

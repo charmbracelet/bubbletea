@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/charmbracelet/bubbles/v2/help"
-	"github.com/charmbracelet/bubbles/v2/key"
-	"github.com/charmbracelet/bubbles/v2/textinput"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func main() {
@@ -87,8 +87,13 @@ func (k keymap) FullHelp() [][]key.Binding {
 func initialModel() model {
 	ti := textinput.New()
 	ti.Prompt = "charmbracelet/"
-	ti.Styles.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
-	ti.Styles.Cursor.Color = lipgloss.Color("63")
+
+	s := ti.Styles()
+	s.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
+	s.Cursor.Color = lipgloss.Color("63")
+	ti.SetStyles(s)
+
+	ti.SetVirtualCursor(false)
 	ti.Focus()
 	ti.CharLimit = 50
 	ti.SetWidth(20)
@@ -116,7 +121,9 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Cursor() *tea.Cursor {
 	c := m.textInput.Cursor()
-	c.Y += lipgloss.Height(m.headerView())
+	if c != nil {
+		c.Y += lipgloss.Height(m.headerView())
+	}
 	return c
 }
 
@@ -151,17 +158,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() (string, *tea.Cursor) {
+func (m model) View() tea.View {
 	if len(m.textInput.AvailableSuggestions()) < 1 {
-		return "One sec, we're fetching completions...", nil
+		return tea.NewView("One sec, we're fetching completions...")
 	}
 
-	return lipgloss.JoinVertical(
+	v := tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Left,
 		m.headerView(),
 		m.textInput.View(),
 		m.footerView(),
-	), m.Cursor()
+	))
+
+	c := m.textInput.Cursor()
+	if c != nil {
+		c.Y += lipgloss.Height(m.headerView())
+	}
+	v.Cursor = c
+	return v
 }
 
 func (m model) headerView() string { return "Enter a Charm™ repo:\n" }

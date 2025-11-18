@@ -2,22 +2,23 @@ package tea
 
 // ClipboardMsg is a clipboard read message event. This message is emitted when
 // a terminal receives an OSC52 clipboard read message event.
-type ClipboardMsg string
+type ClipboardMsg struct {
+	Content   string
+	Selection byte
+}
+
+// Clipboard returns the clipboard selection type. This will be one of the
+// following values:
+//
+//   - c: System clipboard.
+//   - p: Primary clipboard (X11/Wayland only).
+func (e ClipboardMsg) Clipboard() byte {
+	return e.Selection
+}
 
 // String returns the string representation of the clipboard message.
 func (e ClipboardMsg) String() string {
-	return string(e)
-}
-
-// PrimaryClipboardMsg is a primary clipboard read message event. This message
-// is emitted when a terminal receives an OSC52 primary clipboard read message
-// event. Primary clipboard selection is a feature present in X11 and Wayland
-// only.
-type PrimaryClipboardMsg string
-
-// String returns the string representation of the primary clipboard message.
-func (e PrimaryClipboardMsg) String() string {
-	return string(e)
+	return e.Content
 }
 
 // setClipboardMsg is an internal message used to set the system clipboard

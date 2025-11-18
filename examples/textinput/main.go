@@ -6,9 +6,9 @@ package main
 import (
 	"log"
 
-	"github.com/charmbracelet/bubbles/v2/textinput"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func main() {
@@ -25,19 +25,18 @@ type (
 type model struct {
 	textInput textinput.Model
 	err       error
+	quitting  bool
 }
 
 func initialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "Pikachu"
+	ti.SetVirtualCursor(false)
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.SetWidth(20)
 
-	return model{
-		textInput: ti,
-		err:       nil,
-	}
+	return model{textInput: ti}
 }
 
 func (m model) Init() tea.Cmd {
@@ -51,23 +50,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "enter", "ctrl+c", "esc":
+			m.quitting = true
 			return m, tea.Quit
 		}
-
-	// We handle errors just like any other message
-	case errMsg:
-		m.err = msg
-		return m, nil
 	}
 
 	m.textInput, cmd = m.textInput.Update(msg)
 	return m, cmd
 }
 
-func (m model) View() (string, *tea.Cursor) {
-	c := m.textInput.Cursor()
-	c.Y += lipgloss.Height(m.headerView())
-	return lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView()), c
+func (m model) View() tea.View {
+	var c *tea.Cursor
+	if !m.textInput.VirtualCursor() {
+		c = m.textInput.Cursor()
+		c.Y += lipgloss.Height(m.headerView())
+	}
+
+	str := lipgloss.JoinVertical(lipgloss.Top, m.headerView(), m.textInput.View(), m.footerView())
+	if m.quitting {
+		str += "\n"
+	}
+
+	v := tea.NewView(str)
+	v.Cursor = c
+	return v
 }
+
 func (m model) headerView() string { return "What’s your favorite Pokémon?\n" }
 func (m model) footerView() string { return "\n(esc to quit)" }

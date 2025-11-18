@@ -5,7 +5,7 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
@@ -36,6 +36,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return "\nWhen you're done press q to quit.\nPress any other key to query the window-size.\n"
+func (m model) View() tea.View {
+	return tea.NewView("\nWhen you're done press q to quit.\nPress any other key to query the window-size.\n")
 }
