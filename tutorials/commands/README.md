@@ -26,7 +26,7 @@ import (
     "os"
     "time"
 
-    tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 const url = "https://charm.sh/"
@@ -141,10 +141,10 @@ Our view is very straightforward. We look at the current model and build a
 string accordingly:
 
 ```go
-func (m model) View() string {
+func (m model) View() tea.View {
     // If there's an error, print it out and don't do anything else.
     if m.err != nil {
-        return fmt.Sprintf("\nWe had some trouble: %v\n\n", m.err)
+		return tea.NewView(fmt.Sprintf("\nWe had some trouble: %v\n\n", m.err))
     }
 
     // Tell the user we're doing something.
@@ -156,7 +156,7 @@ func (m model) View() string {
     }
 
     // Send off whatever we came up with above for rendering.
-    return "\n" + s + "\n\n"
+	return tea.NewView("\n" + s + "\n\n")
 }
 ```
 
