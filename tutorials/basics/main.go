@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea/v2"
+	tea "charm.land/bubbletea/v2"
 )
 
 type model struct {
@@ -26,7 +26,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.SetWindowTitle("Grocery List")
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -56,7 +56,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	s := "What should we buy at the market?\n\n"
 
 	for i, choice := range m.choices {
@@ -75,7 +75,7 @@ func (m model) View() string {
 
 	s += "\nPress q to quit.\n"
 
-	return s
+	return tea.NewView(s)
 }
 
 func main() {
