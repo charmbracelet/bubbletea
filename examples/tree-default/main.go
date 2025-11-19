@@ -29,8 +29,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return m.tree.View()
+func (m model) View() tea.View {
+	return tea.NewView(m.tree.View())
 }
 
 func main() {
