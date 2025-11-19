@@ -59,8 +59,8 @@ func (m *model) updateStyles() {
 	})
 }
 
-func (m model) View() string {
-	return m.tree.View()
+func (m model) View() tea.View {
+	return tea.NewView(m.tree.View())
 }
 
 type file struct {

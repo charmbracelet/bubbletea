@@ -42,7 +42,7 @@ func (m *model) updateStyles() {
 	})
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	pageNumbers := make([]string, len(m.tree.AllNodes()))
 	for i, node := range m.tree.AllNodes() {
 		v := node.GivenValue()
@@ -56,18 +56,19 @@ func (m model) View() string {
 			pageNumbers[i] = num
 		}
 	}
-	return lipgloss.NewStyle().Padding(1).Render(
+	v := lipgloss.NewStyle().Padding(1).Render(
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			m.tree.View(),
 			lipgloss.JoinVertical(lipgloss.Left, pageNumbers...)),
 	)
+
+	return tea.NewView(v)
 }
 
 const (
-	width           = 60
-	height          = 12
-	enumeratorWidth = 3
+	width  = 60
+	height = 12
 )
 
 func enumerator(_ ltree.Children, _ int) string {

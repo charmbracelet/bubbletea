@@ -47,6 +47,6 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 )
 
-replace charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251205162909-7869489d8971 => ../../lipgloss
+replace charm.land/lipgloss/v2 v2.0.0 => ../../lipgloss
 
 replace charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8 => ../../bubbles
