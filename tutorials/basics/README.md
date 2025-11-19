@@ -164,7 +164,7 @@ the Bubble Tea runtime to quit, exiting the program.
 
 At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the model in its current state and use it to return
-a `string`. That string is our UI!
+a `tea.View`. That is our UI!
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it

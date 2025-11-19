@@ -72,7 +72,7 @@ import (
     "fmt"
     "os"
 
-    tea "github.com/charmbracelet/bubbletea/v2"
+    tea "charm.land/bubbletea/v2"
 )
 ```
 
@@ -122,7 +122,7 @@ to do any I/O, so for the command, we'll just return `nil`, which translates to
 "no command."
 
 ```go
-func (m model) Init() (tea.Model, tea.Cmd) {
+func (m model) Init() tea.Cmd {
 	m = {
 		// Our to-do list is a grocery list
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
@@ -134,7 +134,7 @@ func (m model) Init() (tea.Model, tea.Cmd) {
 	}
 
     // Just return `nil`, which means "no I/O right now, please."
-    return m, nil
+    return nil
 }
 ```
 
@@ -210,14 +210,14 @@ the Bubble Tea runtime to quit, exiting the program.
 
 At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the model in its current state and use it to return
-a `string`. That string is our UI!
+a `tea.View`. That is our UI!
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-func (m model) View() string {
+func (m model) View() tea.View {
     // The header
     s := "What should we buy at the market?\n\n"
 
@@ -244,7 +244,7 @@ func (m model) View() string {
     s += "\nPress q to quit.\n"
 
     // Send the UI for rendering
-    return s
+    return tea.NewView(s)
 }
 ```
 
