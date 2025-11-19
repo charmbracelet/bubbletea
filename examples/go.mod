@@ -48,6 +48,6 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 )
 
-replace github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.1 => ../../lipgloss
+replace charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251114160003-3248589b24c9 => ../../lipgloss
 
-replace github.com/charmbracelet/bubbles/v2 v2.0.0-beta.1 => ../../bubbles
+replace charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8 => ../../bubbles

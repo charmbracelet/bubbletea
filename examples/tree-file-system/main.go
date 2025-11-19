@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/v2/key"
-	"github.com/charmbracelet/bubbles/v2/tree"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
-	ltree "github.com/charmbracelet/lipgloss/v2/tree"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/tree"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	ltree "charm.land/lipgloss/v2/tree"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -59,8 +59,8 @@ func (m *model) updateStyles() {
 	})
 }
 
-func (m model) View() string {
-	return m.tree.View()
+func (m model) View() tea.View {
+	return tea.NewView(m.tree.View())
 }
 
 type file struct {

@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/v2/tree"
-	tea "github.com/charmbracelet/bubbletea/v2"
-	"github.com/charmbracelet/lipgloss/v2"
+	"charm.land/bubbles/v2/tree"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type model struct {
@@ -31,8 +31,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return m.tree.View()
+func (m model) View() tea.View {
+	return tea.NewView(m.tree.View())
 }
 
 func main() {
@@ -41,7 +41,8 @@ func main() {
 	for year := thisYear; year < thisYear+10; year++ {
 		yRoot := tree.Root(fmt.Sprintf("%d", year)).Close()
 		for month := 1; month <= 12; month++ {
-			mRoot := tree.Root(time.Month(month).String()).Close().RootStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("1")))
+			mRoot := tree.Root(time.Month(month).String()).Close().RootStyle(
+				lipgloss.NewStyle().Foreground(lipgloss.Color("1")))
 			for day := 1; day < daysIn(time.Month(month), year); day++ {
 				mRoot.Child(fmt.Sprintf("%d", day))
 			}
