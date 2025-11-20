@@ -235,11 +235,12 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
-	if view.Content == nil {
+	if len(view.Content) == 0 {
 		// If the component is nil, we should clear the screen buffer.
 		frameArea.Max.Y = 0
 	}
 
+	content := uv.NewStyledString(view.Content)
 	if !view.AltScreen {
 		// We need to resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -247,21 +248,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		frameHeight := frameArea.Dy()
-		switch l := view.Content.(type) {
-		case interface{ Height() int }:
-			// This covers [uv.StyledString] and [lipgloss.Canvas].
-			frameHeight = l.Height()
-		case interface{ Bounds() uv.Rectangle }:
-			frameHeight = l.Bounds().Dy()
-		}
-
+		frameHeight := content.Height()
 		if frameHeight != frameArea.Dy() {
 			frameArea.Max.Y = frameHeight
 		}
 	}
 
-	if s.lastView != nil && *s.lastView == view && frameArea == s.cellbuf.Bounds() {
+	if s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return nil
 	}
@@ -282,9 +275,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.cellbuf.Clear()
-	if view.Content != nil {
-		view.Content.Draw(s.cellbuf, s.cellbuf.Bounds())
-	}
+	content.Draw(s.cellbuf, s.cellbuf.Bounds())
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
@@ -561,30 +552,6 @@ func (s *cursedRenderer) render(v View) {
 	s.view = v
 }
 
-// hit implements renderer.
-func (s *cursedRenderer) hit(mouse MouseMsg) []Msg {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.lastView == nil {
-		return nil
-	}
-
-	if l := s.lastView.Content; l != nil {
-		if h, ok := l.(Hittable); ok {
-			m := mouse.Mouse()
-			if id := h.Hit(m.X, m.Y); id != "" {
-				return []Msg{LayerHitMsg{
-					ID:    id,
-					Mouse: mouse,
-				}}
-			}
-		}
-	}
-
-	return []Msg{}
-}
-
 // reset implements renderer.
 func (s *cursedRenderer) reset() {
 	s.mu.Lock()
@@ -689,6 +656,14 @@ func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Unlock()
 }
 
+// callback implements renderer.
+func (s *cursedRenderer) callback(m Msg) Cmd {
+	if s.lastView != nil && s.lastView.Callback != nil {
+		return s.lastView.Callback(m)
+	}
+	return nil
+}
+
 func prependLine(s *cursedRenderer, line string) {
 	strLines := strings.Split(line, "\n")
 	for i, line := range strLines {
@@ -720,4 +695,46 @@ func setProgressBar(s *cursedRenderer, pb *ProgressBar) {
 	if seq != "" {
 		_, _ = s.scr.WriteString(seq)
 	}
+}
+
+func viewEquals(a, b *View) bool {
+	if a == nil || b == nil {
+		return false
+	}
+
+	if a.Content != b.Content ||
+		a.AltScreen != b.AltScreen ||
+		a.DisableBracketedPasteMode != b.DisableBracketedPasteMode ||
+		a.ReportFocus != b.ReportFocus ||
+		a.MouseMode != b.MouseMode ||
+		a.WindowTitle != b.WindowTitle ||
+		a.ForegroundColor != b.ForegroundColor ||
+		a.BackgroundColor != b.BackgroundColor ||
+		a.KeyboardEnhancements != b.KeyboardEnhancements {
+		return false
+	}
+
+	if (a.Cursor == nil) != (b.Cursor == nil) {
+		return false
+	}
+	if a.Cursor != nil && b.Cursor != nil {
+		if a.Cursor.X != b.Cursor.X ||
+			a.Cursor.Y != b.Cursor.Y ||
+			a.Cursor.Shape != b.Cursor.Shape ||
+			a.Cursor.Blink != b.Cursor.Blink ||
+			a.Cursor.Color != b.Cursor.Color {
+			return false
+		}
+	}
+
+	if (a.ProgressBar == nil) != (b.ProgressBar == nil) {
+		return false
+	}
+	if a.ProgressBar != nil && b.ProgressBar != nil {
+		if *a.ProgressBar != *b.ProgressBar {
+			return false
+		}
+	}
+
+	return true
 }

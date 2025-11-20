@@ -40,8 +40,10 @@ func (nilRenderer) reset() {}
 // writeString implements the Renderer interface.
 func (nilRenderer) writeString(string) (int, error) { return 0, nil }
 
-// hit implements the Renderer interface.
-func (n nilRenderer) hit(MouseMsg) []Msg { return nil }
-
 // setSyncdUpdates implements the Renderer interface.
 func (n nilRenderer) setSyncdUpdates(bool) {}
+
+// callback implements the Renderer interface.
+func (n nilRenderer) callback(Msg) Cmd {
+	return nil
+}
