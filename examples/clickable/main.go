@@ -9,6 +9,15 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+// LayerHitMsg is a message that is sent to the program when a layer is hit by
+// a mouse event. This is used to determine which layer in a compostable view
+// was hit by the mouse event. The layer is identified by its ID, which is a
+// string that is unique to the layer.
+type LayerHitMsg struct {
+	ID    string
+	Mouse tea.MouseMsg
+}
+
 const maxDialogs = 999
 
 // Styles
@@ -84,7 +93,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case tea.LayerHitMsg:
+	case LayerHitMsg:
 		mouse := msg.Mouse.Mouse()
 
 		switch msg.Mouse.(type) {
@@ -222,19 +231,33 @@ func (m model) View() tea.View {
 		bgWhitespace...,
 	)
 
-	layers := make([]*lipgloss.Layer, len(m.dialogs)+1)
-	layers[0] = lipgloss.NewLayer(bg).
-		ID("bg").
-		Width(m.width).
-		Height(m.height)
-
+	layers := lipgloss.NewLayer("bg", bg)
 	for i, d := range m.dialogs {
-		layers[i+1] = d.view().Z(i + 1)
+		layers.AddLayers(d.view().Z(i + 1))
 	}
+
+	canvas := lipgloss.NewCanvas(m.width, m.height)
+	canvas.Compose(layers)
 
 	v.MouseMode = tea.MouseModeAllMotion
 	v.AltScreen = true
-	v.SetContent(lipgloss.NewCanvas(layers...))
+	v.Callback = func(m tea.Msg) tea.Cmd {
+		return func() tea.Msg {
+			switch msg := m.(type) {
+			case tea.MouseMsg:
+				mouse := msg.Mouse()
+				x, y := mouse.X, mouse.Y
+				if id := layers.Hit(x, y); id != "" {
+					return LayerHitMsg{
+						ID:    id,
+						Mouse: msg,
+					}
+				}
+			}
+			return nil
+		}
+	}
+	v.SetContent(canvas.Render())
 
 	return v
 }
@@ -306,13 +329,11 @@ func (d dialog) view() *lipgloss.Layer {
 	buttonX := lipgloss.Width(window) - lipgloss.Width(button) - 1 - hGap
 	buttonY := lipgloss.Height(window) - lipgloss.Height(button) - 1 - vGap
 
-	buttonLayer := lipgloss.NewLayer(button).
-		ID(d.buttonID).
+	buttonLayer := lipgloss.NewLayer(d.buttonID, button).
 		X(buttonX).
 		Y(buttonY)
 
-	return lipgloss.NewLayer(window).
-		ID(d.id).
+	return lipgloss.NewLayer(d.id, window).
 		X(d.x).
 		Y(d.y).
 		AddLayers(buttonLayer)
