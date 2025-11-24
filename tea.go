@@ -63,53 +63,16 @@ type Model interface {
 	View() View
 }
 
-// Buffer represents a terminal cell buffer that defines the current state of
-// the terminal screen.
-type Buffer = uv.Buffer
-
-// Screen represents a read writable canvas that can be used to render
-// components on the terminal screen.
-type Screen = uv.Screen
-
-// Rectangle represents a rectangular area with two points: the top left corner
-// and the bottom right corner. It is used to define the area where components
-// will be rendered on the terminal screen.
-type Rectangle = uv.Rectangle
-
-// Layer represents a drawable component on a [Screen].
-type Layer interface {
-	// Draw renders the component on the given [Screen] within the specified
-	// [Rectangle]. The component should draw itself within the bounds of the
-	// rectangle, which is defined by the top left corner (x0, y0) and the
-	// bottom right corner (x1, y1).
-	Draw(s Screen, r Rectangle)
-}
-
-// Hittable is an interface that can be implemented by a [Layer] to test
-// whether a layer was hit by a mouse event.
-type Hittable interface {
-	// Hit tests the layer against the given position. If the position is
-	// inside the layer, it returns the layer ID that was hit. If no
-	// layer was hit, it returns an empty string.
-	Hit(x, y int) string
-}
-
-// NewView is a helper function to create a new [View] with the given string or
-// [Layer].
-//
-// This function accepts any type and tries to convert it to a [Layer]. If the
-// type is not a string, [fmt.Stringer], or [Layer], it will be converted to a
-// string using [fmt.Sprintf].
+// NewView is a helper function to create a new [View] with the given styled
+// string. A styled string represents text with styles and hyperlinks encoded
+// as ANSI escape codes.
 //
 // Example:
 //
 //	```go
-//	layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
-//	layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
-//	canvas := lipgloss.NewCanvas(layer1, layer2)
-//	v := tea.NewView(canvas)
+//	v := tea.NewView("Hello, World!")
 //	```
-func NewView(s any) View {
+func NewView(s string) View {
 	var view View
 	view.SetContent(s)
 	return view
@@ -118,19 +81,48 @@ func NewView(s any) View {
 // View represents a terminal view that can be composed of multiple layers.
 // It can also contain a cursor that will be rendered on top of the layers.
 type View struct {
-	// Content is the main content of the view. It represents the screen content
-	// and state and how it should look like. Use [View.SetContent] to set the
-	// content of the [View].
+	// Content is the screen content of the view. It holds styled strings that
+	// will be rendered to the terminal when the view is rendered.
+	//
+	// A styled string represents text with styles and hyperlinks encoded as
+	// ANSI escape codes.
 	//
 	// Example:
 	//
 	//  ```go
-	//  layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
-	//  layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
-	//  canvas := lipgloss.NewCanvas(layer1, layer2)
-	//  v := tea.NewView(canvas)
+	//  v := tea.NewView("Hello, World!")
 	//  ```
-	Content Layer
+	Content string
+
+	// OnMouse is an optional mouse message handler that can be used to
+	// intercept mouse messages that depends on view content from last render.
+	// It can be useful for implementing view-specific behavior without
+	// breaking the unidirectional data flow of Bubble Tea.
+	//
+	// Example:
+	//
+	//  ```go
+	//  content := "Hello, World!"
+	//  v := tea.NewView(content)
+	//  v.OnMouse = func(msg tea.MouseMsg) tea.Cmd {
+	//      return func() tea.Msg {
+	//        m := msg.Mouse()
+	//        // Check if the mouse is within the bounds of "World!"
+	//        start := strings.Index(content, "World!")
+	//        end := start + len("World!")
+	//        if m.Y == 0 && m.X >= start && m.X < end {
+	//          // Mouse is over "World!"
+	//          return MyCustomMsg{
+	//            MouseMsg: msg,
+	//          }
+	//		  }
+	//      }
+	//    }
+	//    return nil
+	//  }
+	//  return v
+	//  ```
+	OnMouse func(msg MouseMsg) Cmd
 
 	// Cursor represents the cursor position, style, and visibility on the
 	// screen. When not nit, the cursor will be shown at the specified
@@ -254,32 +246,18 @@ type KeyboardEnhancements struct {
 	ReportEventTypes bool
 }
 
-// SetContent sets the content of the view to the value.
-//
-// This function accepts any type and tries to convert it to a [Layer]. If the
-// type is not a string, [fmt.Stringer], or [Layer], it will be converted to a
-// string using [fmt.Sprintf].
+// SetContent is a helper method to set the content of a [View] with a styled
+// string. A styled string represents text with styles and hyperlinks encoded
+// as ANSI escape codes.
 //
 // Example:
 //
 //	```go
 //	var v tea.View
-//	layer1 := lipgloss.NewLayer("Hello, ")          // X == 0 and Y == 0
-//	layer2 := lipgloss.NewLayer("World!").X(7).Y(1)
-//	canvas := lipgloss.NewCanvas(layer1, layer2)
-//	v.SetContent(canvas)
+//	v.SetContent("Hello, World!")
 //	```
-func (v *View) SetContent(s any) {
-	switch vi := s.(type) {
-	case string:
-		v.Content = uv.NewStyledString(vi)
-	case fmt.Stringer:
-		v.Content = uv.NewStyledString(vi.String())
-	case Layer:
-		v.Content = vi
-	default:
-		v.Content = uv.NewStyledString(fmt.Sprintf("%v", vi))
-	}
+func (v *View) SetContent(s string) {
+	v.Content = s
 }
 
 // MouseMode represents the mouse mode of a view.
@@ -785,16 +763,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					}
 				}
 
-			case MouseMsg:
-				for _, m := range p.renderer.hit(msg) {
-					go p.Send(m) // send hit messages
-				}
-
 			case ModeReportMsg:
 				if msg.Mode == ansi.ModeSynchronizedOutput && msg.Value.IsReset() {
 					// The terminal supports synchronized output and it's
 					// currently disabled, so we can enable it on the renderer.
 					p.renderer.setSyncdUpdates(true)
+				}
+
+			case MouseMsg:
+				if cmd := p.renderer.onMouse(msg); cmd != nil {
+					go p.Send(cmd())
 				}
 
 			case readClipboardMsg:

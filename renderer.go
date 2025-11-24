@@ -24,9 +24,6 @@ type renderer interface {
 	// render renders a frame to the output.
 	render(View)
 
-	// hit returns possible hit messages for the renderer.
-	hit(MouseMsg) []Msg
-
 	// flush flushes the renderer's buffer to the output.
 	flush(closing bool) error
 
@@ -48,7 +45,11 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
+	// writeString writes a string to the renderer's output.
 	writeString(string) (int, error)
+
+	// onMouse handles a mouse event.
+	onMouse(MouseMsg) Cmd
 }
 
 type printLineMessage struct {

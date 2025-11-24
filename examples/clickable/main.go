@@ -9,6 +9,15 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+// LayerHitMsg is a message that is sent to the program when a layer is hit by
+// a mouse event. This is used to determine which layer in a compostable view
+// was hit by the mouse event. The layer is identified by its ID, which is a
+// string that is unique to the layer.
+type LayerHitMsg struct {
+	ID    string
+	Mouse tea.MouseMsg
+}
+
 const maxDialogs = 999
 
 // Styles
@@ -84,7 +93,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case tea.LayerHitMsg:
+	case LayerHitMsg:
 		mouse := msg.Mouse.Mouse()
 
 		switch msg.Mouse.(type) {
@@ -222,19 +231,29 @@ func (m model) View() tea.View {
 		bgWhitespace...,
 	)
 
-	layers := make([]*lipgloss.Layer, len(m.dialogs)+1)
-	layers[0] = lipgloss.NewLayer(bg).
-		ID("bg").
-		Width(m.width).
-		Height(m.height)
-
+	root := lipgloss.NewLayer(bg).ID("bg")
 	for i, d := range m.dialogs {
-		layers[i+1] = d.view().Z(i + 1)
+		root.AddLayers(d.view().Z(i + 1))
 	}
+
+	comp := lipgloss.NewCompositor(root)
 
 	v.MouseMode = tea.MouseModeAllMotion
 	v.AltScreen = true
-	v.SetContent(lipgloss.NewCanvas(layers...))
+	v.OnMouse = func(msg tea.MouseMsg) tea.Cmd {
+		return func() tea.Msg {
+			mouse := msg.Mouse()
+			x, y := mouse.X, mouse.Y
+			if id := comp.Hit(x, y); id != "" {
+				return LayerHitMsg{
+					ID:    id,
+					Mouse: msg,
+				}
+			}
+			return nil
+		}
+	}
+	v.SetContent(comp.Render())
 
 	return v
 }
