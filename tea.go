@@ -94,27 +94,35 @@ type View struct {
 	//  ```
 	Content string
 
-	// Callback is an optional view dependent message handler. It can be used
-	// to intercept messages and send commands in response. It can be useful
-	// for implementing view-specific behavior without breaking the
-	// unidirectional data flow of Bubble Tea.
+	// OnMouse is an optional mouse message handler that can be used to
+	// intercept mouse messages that depends on view content from last render.
+	// It can be useful for implementing view-specific behavior without
+	// breaking the unidirectional data flow of Bubble Tea.
 	//
 	// Example:
 	//
 	//  ```go
 	//  content := "Hello, World!"
 	//  v := tea.NewView(content)
-	//  v.Callback = func(m tea.Msg) tea.Cmd {
-	//    if strings.Contains(content, "World") {
+	//  v.OnMouse = func(msg tea.MouseMsg) tea.Cmd {
 	//      return func() tea.Msg {
-	//        return MyCustomMsg{}
+	//        m := msg.Mouse()
+	//        // Check if the mouse is within the bounds of "World!"
+	//        start := strings.Index(content, "World!")
+	//        end := start + len("World!")
+	//        if m.Y == 0 && m.X >= start && m.X < end {
+	//          // Mouse is over "World!"
+	//          return MyCustomMsg{
+	//            MouseMsg: msg,
+	//          }
+	//		  }
 	//      }
 	//    }
 	//    return nil
 	//  }
 	//  return v
 	//  ```
-	Callback func(Msg) Cmd
+	OnMouse func(MouseMsg) Cmd
 
 	// Cursor represents the cursor position, style, and visibility on the
 	// screen. When not nit, the cursor will be shown at the specified
@@ -732,10 +740,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				continue
 			}
 
-			if cmd := p.renderer.callback(msg); cmd != nil {
-				go p.Send(cmd())
-			}
-
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case QuitMsg:
@@ -764,6 +768,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					// The terminal supports synchronized output and it's
 					// currently disabled, so we can enable it on the renderer.
 					p.renderer.setSyncdUpdates(true)
+				}
+
+			case MouseMsg:
+				if cmd := p.renderer.onMouse(msg); cmd != nil {
+					go p.Send(cmd())
 				}
 
 			case readClipboardMsg:

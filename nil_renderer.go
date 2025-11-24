@@ -43,7 +43,7 @@ func (nilRenderer) writeString(string) (int, error) { return 0, nil }
 // setSyncdUpdates implements the Renderer interface.
 func (n nilRenderer) setSyncdUpdates(bool) {}
 
-// callback implements the Renderer interface.
-func (n nilRenderer) callback(Msg) Cmd {
+// onMouse implements the Renderer interface.
+func (n nilRenderer) onMouse(MouseMsg) Cmd {
 	return nil
 }

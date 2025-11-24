@@ -656,10 +656,10 @@ func (s *cursedRenderer) insertAbove(lines string) {
 	s.mu.Unlock()
 }
 
-// callback implements renderer.
-func (s *cursedRenderer) callback(m Msg) Cmd {
-	if s.lastView != nil && s.lastView.Callback != nil {
-		return s.lastView.Callback(m)
+// onMouse implements renderer.
+func (s *cursedRenderer) onMouse(m MouseMsg) Cmd {
+	if s.lastView != nil && s.lastView.OnMouse != nil {
+		return s.lastView.OnMouse(m)
 	}
 	return nil
 }

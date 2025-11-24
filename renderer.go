@@ -45,9 +45,11 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
+	// writeString writes a string to the renderer's output.
 	writeString(string) (int, error)
 
-	callback(Msg) Cmd
+	// onMouse handles a mouse event.
+	onMouse(MouseMsg) Cmd
 }
 
 type printLineMessage struct {
