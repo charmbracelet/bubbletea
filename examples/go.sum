@@ -1,5 +1,7 @@
 charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8 h1:2bzaNBvZHgpLjxlQTDjoeY0YGjQtMflWiDZMEbviiRE=
 charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8/go.mod h1:5AbN6cEd/47gkEf8TgiQ2O3RZ5QxMS14l9W+7F9fPC4=
+charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251124152919-5387b9dbf261 h1:xrL0zXkwT7qBEqGllKYCwWWecbbXBjGgvXc7L8VAPkU=
+charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251124152919-5387b9dbf261/go.mod h1:bjsp2D+VGi56y8f53S7xCphcoqJb36vo3dBVh0RrpP8=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/alecthomas/assert/v2 v2.7.0 h1:QtqSACNS3tF7oasA8CU6A6sXZSBDqnm7RfpLl9bZqbE=
