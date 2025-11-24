@@ -254,7 +254,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 	}
 
-	if s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	if len(s.prependLines) == 0 && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return nil
 	}
