@@ -7,12 +7,18 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/charmbracelet/colorprofile"
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/lucasb-eyer/go-colorful"
 )
+
+// resizeDuration is the duration to wait after a resize event before
+// processing another resize event. This is to avoid processing multiple resize
+// events in quick succession.
+const resizeDuration = 100 * time.Millisecond // milliseconds
 
 type cursedRenderer struct {
 	w             io.Writer
@@ -32,6 +38,7 @@ type cursedRenderer struct {
 	mapnl         bool
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	prependLines  []string
+	resizeTime    time.Time // last resize time
 }
 
 var _ renderer = &cursedRenderer{}
@@ -261,10 +268,16 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 	}
 
-	if s.lastView != nil && *s.lastView == view && frameArea == s.cellbuf.Bounds() {
-		// No changes, nothing to do.
+	if len(s.prependLines) == 0 && s.lastView != nil && *s.lastView == view && frameArea == s.cellbuf.Bounds() {
 		return nil
 	}
+
+	if s.lastView != nil && !s.resizeTime.IsZero() && time.Since(s.resizeTime) < resizeDuration {
+		// Avoid quick successive resizes rendering.
+		return nil
+	}
+
+	s.resizeTime = time.Time{} // reset resize time
 
 	if frameArea != s.cellbuf.Bounds() {
 		s.scr.Erase() // Force a full redraw to avoid artifacts.
@@ -624,6 +637,7 @@ func (s *cursedRenderer) resize(w, h int) {
 	s.scr.Erase()
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
+	s.resizeTime = time.Now()
 	s.mu.Unlock()
 }
 
