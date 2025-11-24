@@ -21,10 +21,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.LayerHitMsg:
-		if mouse, ok := msg.Mouse.(tea.MouseClickMsg); ok {
-			return m, tea.Printf("Layer hit at %d, %d", mouse.X, mouse.Y)
-		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		return m, nil
@@ -59,12 +55,12 @@ func (m model) View() tea.View {
 
 	cardA := newCard("Hello").Z(z[0])
 	cardB := newCard("Goodbye").Z(z[1])
-	view.MouseMode = tea.MouseModeCellMotion
-	view.SetContent(lipgloss.NewCanvas(
+	comp := lipgloss.NewCompositor(
 		lipgloss.NewLayer(footer),
 		cardA,
 		cardB.X(10).Y(2),
-	))
+	)
+	view.SetContent(comp.Render())
 
 	return view
 }

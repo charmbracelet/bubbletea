@@ -231,33 +231,29 @@ func (m model) View() tea.View {
 		bgWhitespace...,
 	)
 
-	layers := lipgloss.NewLayer("bg", bg)
+	root := lipgloss.NewLayer(bg).ID("bg")
 	for i, d := range m.dialogs {
-		layers.AddLayers(d.view().Z(i + 1))
+		root.AddLayers(d.view().Z(i + 1))
 	}
 
-	canvas := lipgloss.NewCanvas(m.width, m.height)
-	canvas.Compose(layers)
+	comp := lipgloss.NewCompositor(root)
 
 	v.MouseMode = tea.MouseModeAllMotion
 	v.AltScreen = true
-	v.Callback = func(m tea.Msg) tea.Cmd {
+	v.OnMouse = func(msg tea.MouseMsg) tea.Cmd {
 		return func() tea.Msg {
-			switch msg := m.(type) {
-			case tea.MouseMsg:
-				mouse := msg.Mouse()
-				x, y := mouse.X, mouse.Y
-				if id := layers.Hit(x, y); id != "" {
-					return LayerHitMsg{
-						ID:    id,
-						Mouse: msg,
-					}
+			mouse := msg.Mouse()
+			x, y := mouse.X, mouse.Y
+			if id := comp.Hit(x, y); id != "" {
+				return LayerHitMsg{
+					ID:    id,
+					Mouse: msg,
 				}
 			}
 			return nil
 		}
 	}
-	v.SetContent(canvas.Render())
+	v.SetContent(comp.Render())
 
 	return v
 }
@@ -329,11 +325,13 @@ func (d dialog) view() *lipgloss.Layer {
 	buttonX := lipgloss.Width(window) - lipgloss.Width(button) - 1 - hGap
 	buttonY := lipgloss.Height(window) - lipgloss.Height(button) - 1 - vGap
 
-	buttonLayer := lipgloss.NewLayer(d.buttonID, button).
+	buttonLayer := lipgloss.NewLayer(button).
+		ID(d.buttonID).
 		X(buttonX).
 		Y(buttonY)
 
-	return lipgloss.NewLayer(d.id, window).
+	return lipgloss.NewLayer(window).
+		ID(d.id).
 		X(d.x).
 		Y(d.y).
 		AddLayers(buttonLayer)
