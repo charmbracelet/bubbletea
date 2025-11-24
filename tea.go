@@ -122,7 +122,7 @@ type View struct {
 	//  }
 	//  return v
 	//  ```
-	OnMouse func(MouseMsg) Cmd
+	OnMouse func(msg MouseMsg) Cmd
 
 	// Cursor represents the cursor position, style, and visibility on the
 	// screen. When not nit, the cursor will be shown at the specified
