@@ -32,6 +32,7 @@ type cursedRenderer struct {
 	mapnl         bool
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	prependLines  []string
+	starting      bool // indicates whether the renderer is starting after being stopped
 }
 
 var _ renderer = &cursedRenderer{}
@@ -70,6 +71,10 @@ func (s *cursedRenderer) setOptimizations(hardTabs, backspace, mapnl bool) {
 func (s *cursedRenderer) start() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Mark that we're starting. This is used to restore some state when
+	// starting the renderer again after it was stopped.
+	s.starting = true
 
 	if s.lastView == nil {
 		return
@@ -254,10 +259,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 	}
 
-	if len(s.prependLines) == 0 && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	if !s.starting && !closing && len(s.prependLines) == 0 && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return nil
 	}
+
+	// We're no longer starting.
+	s.starting = false
 
 	if frameArea != s.cellbuf.Bounds() {
 		s.scr.Erase() // Force a full redraw to avoid artifacts.
