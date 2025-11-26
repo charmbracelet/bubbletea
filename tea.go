@@ -771,8 +771,13 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case MouseMsg:
-				if cmd := p.renderer.onMouse(msg); cmd != nil {
-					go p.Send(cmd())
+				switch msg.(type) {
+				case MouseClickMsg, MouseReleaseMsg, MouseWheelMsg, MouseMotionMsg:
+					// Only send mouse messages to the renderer if they are an
+					// actual mouse event.
+					if cmd := p.renderer.onMouse(msg); cmd != nil {
+						go p.Send(cmd())
+					}
 				}
 
 			case readClipboardMsg:
