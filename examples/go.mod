@@ -7,7 +7,7 @@ replace charm.land/bubbletea/v2 => ../
 require (
 	charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8
 	charm.land/bubbletea/v2 v2.0.0-rc.1.0.20251106192006-06c0cda318b3
-	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251124152919-5387b9dbf261
+	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251202162248-20cca1b26a45
 	github.com/charmbracelet/colorprofile v0.3.3
 	github.com/charmbracelet/glamour/v2 v2.0.0-20251106195642-800eb8175930
 	github.com/charmbracelet/harmonica v0.2.0
@@ -23,7 +23,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20251201184010-2006a959db8b // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20251202162030-ecc8c1ae4b2b // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250327172914-2fdc97757edf // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
