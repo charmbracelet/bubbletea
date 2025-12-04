@@ -144,6 +144,14 @@ func (s *cursedRenderer) close() (err error) {
 	// so that we can restore them when we start the renderer again. This is
 	// used when the user suspends the program and then resumes it.
 	if lv := s.lastView; lv != nil { //nolint:nestif
+		// NOTE: The Kitty keyboard specs specify that the terminal should have
+		// two registries for the main and alt screens. We disable keyboard
+		// enhancements whenever we enter/exit alt screen mode in
+		// [cursedRenderer.flush].
+		// Here, we reset the keyboard protocol of the last screen used
+		// assuming the other screen is already reset when we switched screens.
+		_, _ = s.buf.WriteString(ansi.KittyKeyboard(0, 1))
+
 		if lv.AltScreen {
 			enableAltScreen(s, false, true)
 		} else {
@@ -194,9 +202,6 @@ func (s *cursedRenderer) close() (err error) {
 		if lv.ProgressBar != nil && lv.ProgressBar.State != ProgressBarNone {
 			_, _ = s.scr.WriteString(ansi.ResetProgressBar)
 		}
-
-		// NOTE: This needs to happen after we exit the alt screen.
-		_, _ = s.scr.WriteString(ansi.KittyKeyboard(0, 1))
 	}
 
 	if err := s.scr.Flush(); err != nil {
@@ -493,6 +498,10 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	var buf bytes.Buffer
 	if shouldUpdateAltScreen {
+		// We always disable keyboard enhancements when switching screens
+		// because the terminal is expected to have two different keyboard
+		// registries for main and alt screens.
+		_, _ = buf.WriteString(ansi.KittyKeyboard(0, 1))
 		if view.AltScreen {
 			// Entering alt screen mode.
 			buf.WriteString(ansi.SetModeAltScreenSaveCursor)
