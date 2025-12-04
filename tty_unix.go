@@ -16,7 +16,15 @@ func (p *Program) initInput() (err error) {
 	// Check if input is a terminal
 	if f, ok := p.input.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyInput = f
-		p.previousTtyInputState, err = term.MakeRaw(p.ttyInput.Fd())
+
+		if p.disableOutput {
+			// Use raw mode that preserves output processing
+			p.previousTtyInputState, err = term.MakeRawOutput(p.ttyInput.Fd())
+		} else {
+			// Use standard raw mode
+			p.previousTtyInputState, err = term.MakeRaw(p.ttyInput.Fd())
+		}
+
 		if err != nil {
 			return fmt.Errorf("error entering raw mode: %w", err)
 		}
@@ -24,7 +32,9 @@ func (p *Program) initInput() (err error) {
 		// OPTIM: We can use hard tabs and backspaces to optimize cursor
 		// movements. This is based on termios settings support and whether
 		// they exist and enabled.
-		p.checkOptimizedMovements(p.previousTtyInputState)
+		if !p.disableOutput {
+			p.checkOptimizedMovements(p.previousTtyInputState)
+		}
 	}
 
 	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {

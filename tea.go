@@ -465,6 +465,11 @@ type Program struct {
 	// UI but still want to take advantage of Bubble Tea's architecture.
 	disableRenderer bool
 
+	// disableOutput enables raw mode for input handling but preserves output
+	// processing (ONLCR) so that standard output functions like println work
+	// correctly. The renderer is disabled in this mode.
+	disableOutput bool
+
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
 	handlers channelHandlers
@@ -1020,7 +1025,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	resizeMsg := WindowSizeMsg{Width: p.width, Height: p.height}
 
 	if p.renderer == nil {
-		if p.disableRenderer {
+		if p.disableRenderer || p.disableOutput {
 			p.renderer = &nilRenderer{}
 		} else {
 			// If no renderer is set use the cursed one.

@@ -101,6 +101,23 @@ func WithoutRenderer() ProgramOption {
 	}
 }
 
+// WithoutOutput disables visual output from the renderer while still enabling
+// raw mode for proper keyboard input handling. This is useful when you want
+// keyboard events (like arrow keys) to work properly, but you want to use
+// standard output (println, log libraries, etc.) without interference.
+//
+// Unlike WithoutRenderer, this option preserves output processing (ONLCR flag)
+// so that newlines are automatically converted to carriage return + newline,
+// making standard output functions work correctly.
+//
+// This is ideal for applications that need Bubble Tea's input handling but
+// want to output using standard logging libraries or print statements.
+func WithoutOutput() ProgramOption {
+	return func(p *Program) {
+		p.disableOutput = true
+	}
+}
+
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter

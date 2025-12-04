@@ -33,7 +33,8 @@ func (p *Program) initInput() (err error) {
 	}
 
 	// Save output screen buffer state and enable VT processing.
-	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
+	// Skip output modifications in disableOutput mode to preserve normal output behavior.
+	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) && !p.disableOutput {
 		p.ttyOutput = f
 		p.previousOutputState, err = term.GetState(f.Fd())
 		if err != nil {

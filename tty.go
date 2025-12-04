@@ -22,7 +22,7 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if p.disableRenderer {
+	if p.disableRenderer && !p.disableOutput {
 		return nil
 	}
 	return p.initInput()
