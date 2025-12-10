@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/color"
 	"io"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -585,6 +586,7 @@ func reset(s *cursedRenderer) {
 	scr.SetTabStops(s.width)
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
+	scr.SetScrollOptim(runtime.GOOS != "windows") // disable scroll optimization on Windows due to bugs in some terminals
 	s.scr = scr
 }
 
