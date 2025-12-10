@@ -6,8 +6,6 @@ go 1.24.2
 
 toolchain go1.24.4
 
-replace github.com/charmbracelet/ultraviolet => ../ultraviolet/
-
 require (
 	github.com/charmbracelet/colorprofile v0.3.3
 	github.com/charmbracelet/ultraviolet v0.0.0-20251210202004-13071eeb1ab8
