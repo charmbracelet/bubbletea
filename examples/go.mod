@@ -4,8 +4,6 @@ go 1.25.2
 
 replace charm.land/bubbletea/v2 => ../
 
-replace github.com/charmbracelet/ultraviolet => ../../ultraviolet/
-
 require (
 	charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8
 	charm.land/bubbletea/v2 v2.0.0-rc.1.0.20251106192006-06c0cda318b3
