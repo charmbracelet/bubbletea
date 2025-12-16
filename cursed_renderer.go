@@ -155,9 +155,13 @@ func (s *cursedRenderer) close() (err error) {
 
 		if lv.AltScreen {
 			enableAltScreen(s, false, true)
-		} else {
-			// Go to the bottom of the screen.
-			s.scr.MoveTo(0, s.cellbuf.Height()-1)
+		}
+		// Go to the bottom of the screen.
+		// We need to go to the bottom of the screen regardless of whether
+		// we're in alt screen mode or not to avoid leaving the cursor in the
+		// middle in terminals that don't support alt screen mode.
+		s.scr.MoveTo(0, s.cellbuf.Height()-1)
+		if !lv.AltScreen {
 			_, _ = s.scr.WriteString(ansi.EraseScreenBelow)
 		}
 		if lv.Cursor == nil {
