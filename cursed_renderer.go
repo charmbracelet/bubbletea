@@ -153,15 +153,14 @@ func (s *cursedRenderer) close() (err error) {
 		// assuming the other screen is already reset when we switched screens.
 		_, _ = s.buf.WriteString(ansi.KittyKeyboard(0, 1))
 
-		if lv.AltScreen {
-			enableAltScreen(s, false, true)
-		}
 		// Go to the bottom of the screen.
 		// We need to go to the bottom of the screen regardless of whether
 		// we're in alt screen mode or not to avoid leaving the cursor in the
 		// middle in terminals that don't support alt screen mode.
 		s.scr.MoveTo(0, s.cellbuf.Height()-1)
-		if !lv.AltScreen {
+		if lv.AltScreen {
+			enableAltScreen(s, false, true)
+		} else {
 			_, _ = s.scr.WriteString(ansi.EraseScreenBelow)
 		}
 		if lv.Cursor == nil {
