@@ -158,6 +158,7 @@ func (s *cursedRenderer) close() (err error) {
 		// we're in alt screen mode or not to avoid leaving the cursor in the
 		// middle in terminals that don't support alt screen mode.
 		s.scr.MoveTo(0, s.cellbuf.Height()-1)
+		_ = s.scr.Flush() // we need to flush to write the cursor movement
 		if lv.AltScreen {
 			enableAltScreen(s, false, true)
 		} else {
@@ -627,6 +628,7 @@ func (s *cursedRenderer) clearScreen() {
 }
 
 // enableAltScreen sets the alt screen mode.
+// Note that this writes to the buffer directly if write is true.
 func enableAltScreen(s *cursedRenderer, enable bool, write bool) {
 	if enable {
 		enterAltScreen(s, write)
