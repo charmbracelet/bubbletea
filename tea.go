@@ -94,6 +94,25 @@ type View struct {
 	//  ```
 	Content string
 
+	// ContentDrawable is an alternative to [View.Content] that can be used to
+	// provide a [uv.Drawable] as the content of the view. This allows for
+	// direct drawing to the underlying buffer, which can be more efficient for
+	// complex views.
+	//
+	// If both [View.Content] and [View.ContentDrawable] are set,
+	// [View.ContentDrawable] takes precedence.
+	//
+	// Example:
+	//
+	//  ```go
+	//  var v tea.View
+	//  var layers []*lipgloss.Layer
+	//  comp := lipgloss.NewCompositor(layers...)
+	//  v.ContentDrawable = comp
+	//  return v
+	//  ```
+	ContentDrawable uv.Drawable
+
 	// OnMouse is an optional mouse message handler that can be used to
 	// intercept mouse messages that depends on view content from last render.
 	// It can be useful for implementing view-specific behavior without

@@ -249,33 +249,26 @@ func (s *cursedRenderer) flush(closing bool) error {
 	defer s.mu.Unlock()
 
 	view := s.view
+	drawable := view.ContentDrawable
 	frameArea := uv.Rect(0, 0, s.width, s.height)
-	if len(view.Content) == 0 {
-		// If the component is nil, we should clear the screen buffer.
+
+	if drawable == nil {
+		drawable = uv.NewStyledString(view.Content)
+	}
+
+	// Try to determine the frame area based on the drawable content.
+	switch d := drawable.(type) {
+	case interface{ Height() int }:
+		frameArea.Max.Y = d.Height()
+	case interface{ Bounds() uv.Rectangle }:
+		frameArea.Max.Y = d.Bounds().Dy()
+	}
+
+	if view.ContentDrawable == nil && len(view.Content) == 0 {
+		// If we don't have any content, set the frame height to 0 to avoid
+		// rendering an empty line.
 		frameArea.Max.Y = 0
 	}
-
-	content := uv.NewStyledString(view.Content)
-	if !view.AltScreen {
-		// We need to resizes the screen based on the frame height and
-		// terminal width. This is because the frame height can change based on
-		// the content of the frame. For example, if the frame contains a list
-		// of items, the height of the frame will be the number of items in the
-		// list. This is different from the alt screen buffer, which has a
-		// fixed height and width.
-		frameHeight := content.Height()
-		if frameHeight != frameArea.Dy() {
-			frameArea.Max.Y = frameHeight
-		}
-	}
-
-	if !s.starting && !closing && len(s.prependLines) == 0 && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
-		// No changes, nothing to do.
-		return nil
-	}
-
-	// We're no longer starting.
-	s.starting = false
 
 	if frameArea != s.cellbuf.Bounds() {
 		s.scr.Erase() // Force a full redraw to avoid artifacts.
@@ -290,10 +283,21 @@ func (s *cursedRenderer) flush(closing bool) error {
 		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
 	}
 
-	// Clear our screen buffer before copying the new frame into it to ensure
-	// we erase any old content.
-	s.cellbuf.Clear()
-	content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	// Draw the content into the screen buffer.
+	drawable.Draw(s.cellbuf, s.cellbuf.Bounds())
+
+	contentChanged := s.lastView == nil || !viewEquals(s.lastView, &view)
+	if view.ContentDrawable != nil && s.scr.Touched(s.cellbuf.Buffer) > 0 {
+		contentChanged = true
+	}
+
+	if !s.starting && !closing && len(s.prependLines) == 0 && s.lastView != nil && !contentChanged && frameArea == s.cellbuf.Bounds() {
+		// No changes, nothing to do.
+		return nil
+	}
+
+	// We're no longer starting.
+	s.starting = false
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
