@@ -34,7 +34,7 @@ func (p *Program) initInput() (err error) {
 
 	// Save output screen buffer state and enable VT processing.
 	// Skip output modifications in disableOutput mode to preserve normal output behavior.
-	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) && !p.disableOutput {
+	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
 		p.ttyOutput = f
 		p.previousOutputState, err = term.GetState(f.Fd())
 		if err != nil {
@@ -46,10 +46,17 @@ func (p *Program) initInput() (err error) {
 			return fmt.Errorf("error getting console mode: %w", err)
 		}
 
-		if err := windows.SetConsoleMode(windows.Handle(p.ttyOutput.Fd()),
-			mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING|
-				windows.DISABLE_NEWLINE_AUTO_RETURN); err != nil {
-			return fmt.Errorf("error setting console mode: %w", err)
+		if p.disableOutput {
+			if err := windows.SetConsoleMode(windows.Handle(p.ttyOutput.Fd()),
+				mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
+				return fmt.Errorf("error setting console mode: %w", err)
+			}
+		} else {
+			if err := windows.SetConsoleMode(windows.Handle(p.ttyOutput.Fd()),
+				mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING|
+					windows.DISABLE_NEWLINE_AUTO_RETURN); err != nil {
+				return fmt.Errorf("error setting console mode: %w", err)
+			}
 		}
 
 		//nolint:godox
