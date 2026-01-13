@@ -244,7 +244,7 @@ func (m model) View() tea.View {
 		return func() tea.Msg {
 			mouse := msg.Mouse()
 			x, y := mouse.X, mouse.Y
-			if id := comp.Hit(x, y); id != "" {
+			if id := comp.Hit(x, y).ID(); id != "" {
 				return LayerHitMsg{
 					ID:    id,
 					Mouse: msg,

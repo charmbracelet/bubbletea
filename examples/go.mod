@@ -7,7 +7,7 @@ replace charm.land/bubbletea/v2 => ../
 require (
 	charm.land/bubbles/v2 v2.0.0-beta.1.0.20251110211018-84a82dfeeed8
 	charm.land/bubbletea/v2 v2.0.0-rc.1.0.20251106192006-06c0cda318b3
-	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251202162248-20cca1b26a45
+	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251205162909-7869489d8971
 	github.com/charmbracelet/colorprofile v0.4.1
 	github.com/charmbracelet/glamour/v2 v2.0.0-20251106195642-800eb8175930
 	github.com/charmbracelet/harmonica v0.2.0
