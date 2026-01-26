@@ -457,7 +457,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if s.showRenderDebug {
-		renderTime := uv.NewStyledString(fmt.Sprintf("render time: %s", s.lastRenderTime))
+		renderTime := uv.NewStyledString(fmt.Sprintf("%s", s.lastRenderTime))
 		if len(content.Text) > 0 && !frameArea.Empty() {
 			renderTime.Draw(s.cellbuf, renderTime.Bounds())
 		}
