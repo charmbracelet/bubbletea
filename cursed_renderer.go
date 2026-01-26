@@ -6,8 +6,10 @@ import (
 	"image/color"
 	"io"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/charmbracelet/colorprofile"
 	uv "github.com/charmbracelet/ultraviolet"
@@ -16,24 +18,26 @@ import (
 )
 
 type cursedRenderer struct {
-	w             io.Writer
-	buf           bytes.Buffer // updates buffer to be flushed to [w]
-	scr           *uv.TerminalRenderer
-	cellbuf       uv.ScreenBuffer
-	lastView      *View
-	env           []string
-	term          string // the terminal type $TERM
-	width, height int
-	mu            sync.Mutex
-	profile       colorprofile.Profile
-	logger        uv.Logger
-	view          View
-	hardTabs      bool // whether to use hard tabs to optimize cursor movements
-	backspace     bool // whether to use backspace to optimize cursor movements
-	mapnl         bool
-	syncdUpdates  bool // whether to use synchronized output mode for updates
-	prependLines  []string
-	starting      bool // indicates whether the renderer is starting after being stopped
+	w               io.Writer
+	buf             bytes.Buffer // updates buffer to be flushed to [w]
+	scr             *uv.TerminalRenderer
+	cellbuf         uv.ScreenBuffer
+	lastView        *View
+	env             []string
+	term            string // the terminal type $TERM
+	width, height   int
+	mu              sync.Mutex
+	profile         colorprofile.Profile
+	logger          uv.Logger
+	view            View
+	hardTabs        bool // whether to use hard tabs to optimize cursor movements
+	backspace       bool // whether to use backspace to optimize cursor movements
+	mapnl           bool
+	syncdUpdates    bool // whether to use synchronized output mode for updates
+	prependLines    []string
+	starting        bool // indicates whether the renderer is starting after being stopped
+	showRenderDebug bool
+	lastRenderTime  time.Duration
 }
 
 var _ renderer = &cursedRenderer{}
@@ -45,6 +49,7 @@ func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedR
 	s.term = uv.Environ(env).Getenv("TERM")
 	s.width, s.height = width, height // This needs to happen before [cursedRenderer.reset].
 	s.cellbuf = uv.NewScreenBuffer(s.width, s.height)
+	s.showRenderDebug, _ = strconv.ParseBool(uv.Environ(env).Getenv("TEA_RENDER_DEBUG"))
 	reset(s)
 	return
 }
@@ -247,6 +252,8 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 func (s *cursedRenderer) flush(closing bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	startTime := time.Now()
 
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
@@ -452,6 +459,14 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.cellbuf.Buffer)
 
+	if s.showRenderDebug {
+		renderTime := uv.NewStyledString(fmt.Sprintf("render time: %s", s.lastRenderTime))
+		if len(content.Text) > 0 && !frameArea.Empty() {
+			renderTime.Draw(s.cellbuf, renderTime.Bounds())
+			s.scr.Render(s.cellbuf.Buffer)
+		}
+	}
+
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
 		// cursor position might get updated during rendering.
@@ -562,6 +577,9 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	s.lastView = &view
+
+	endTime := time.Now()
+	s.lastRenderTime = endTime.Sub(startTime)
 
 	return nil
 }
