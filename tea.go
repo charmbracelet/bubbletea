@@ -1031,7 +1031,15 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 				p.height,
 			)
 			r.setLogger(p.logger)
-			r.setOptimizations(p.useHardTabs, p.useBackspace, p.ttyInput == nil)
+			// XXX: This breaks many things especially when we want the output
+			// to be compatible with terminals that are not necessary a TTY.
+			// This was originally done to work around a Wish emulated-pty
+			// issue where when a PTY session is detected, and we don't
+			// allocate a real PTY, the terminal settings (Termios and WinCon)
+			// don't change and the we end up working in cooked mode instead of
+			// raw mode.
+			mapNl := false // p.ttyInput == nil
+			r.setOptimizations(p.useHardTabs, p.useBackspace, mapNl)
 			p.renderer = r
 		}
 	}
