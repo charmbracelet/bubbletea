@@ -456,16 +456,15 @@ func (s *cursedRenderer) flush(closing bool) error {
 		setProgressBar(s, view.ProgressBar)
 	}
 
-	// Render and queue changes to the screen buffer.
-	s.scr.Render(s.cellbuf.Buffer)
-
 	if s.showRenderDebug {
 		renderTime := uv.NewStyledString(fmt.Sprintf("render time: %s", s.lastRenderTime))
 		if len(content.Text) > 0 && !frameArea.Empty() {
 			renderTime.Draw(s.cellbuf, renderTime.Bounds())
-			s.scr.Render(s.cellbuf.Buffer)
 		}
 	}
+
+	// Render and queue changes to the screen buffer.
+	s.scr.Render(s.cellbuf.Buffer)
 
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
