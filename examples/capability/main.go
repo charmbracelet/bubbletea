@@ -60,6 +60,7 @@ func main() {
 	m := model{}
 	m.input = textinput.New()
 	m.input.Placeholder = "Enter capability name to request"
+	m.input.Focus()
 
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Uh oh:", err)
