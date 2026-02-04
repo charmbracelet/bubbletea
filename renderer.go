@@ -31,7 +31,7 @@ type renderer interface {
 	reset()
 
 	// insertAbove inserts unmanaged lines above the renderer.
-	insertAbove(string)
+	insertAbove(string) error
 
 	// setSyncdUpdates sets whether to use synchronized updates.
 	setSyncdUpdates(bool)
