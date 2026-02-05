@@ -517,9 +517,6 @@ type Program struct {
 	// once is used to stop the renderer.
 	once sync.Once
 
-	// rendererDone is used to stop the renderer.
-	rendererDone chan struct{}
-
 	// Initial window size. Mainly used for testing.
 	width, height int
 
@@ -577,7 +574,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
-		rendererDone: make(chan struct{}),
 	}
 
 	// Apply all options to the program.
@@ -729,6 +725,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 		case err := <-p.errs:
 			return model, err
 
+		case <-p.ticker.C:
+			go p.render(model) // render view
+
 		case msg := <-p.msgs:
 			msg = p.translateInputEvent(msg)
 
@@ -849,8 +848,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				return model, nil
 			case cmds <- cmd: // process command (if any)
 			}
-
-			p.render(model) // render view
 		}
 	}
 }
@@ -860,6 +857,8 @@ func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(model.View()) // send view to renderer
 	}
+	_ = p.flush()
+	_ = p.renderer.flush(false)
 }
 
 func (p *Program) execSequenceMsg(msg sequenceMsg) {
@@ -1368,30 +1367,12 @@ func (p *Program) startRenderer() {
 
 	// Start the renderer.
 	p.renderer.start()
-	go func() {
-		for {
-			select {
-			case <-p.rendererDone:
-				p.ticker.Stop()
-				return
-
-			case <-p.ticker.C:
-				_ = p.flush()
-				_ = p.renderer.flush(false)
-			}
-		}
-	}()
 }
 
 // stopRenderer stops the renderer.
 // If kill is true, the renderer will be stopped immediately without flushing
 // the last frame.
 func (p *Program) stopRenderer(kill bool) {
-	// Stop the renderer before acquiring the mutex to avoid a deadlock.
-	p.once.Do(func() {
-		p.rendererDone <- struct{}{}
-	})
-
 	if !kill {
 		// flush locks the mutex
 		_ = p.renderer.flush(true)
