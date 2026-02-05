@@ -32,7 +32,6 @@ type cursedRenderer struct {
 	backspace     bool // whether to use backspace to optimize cursor movements
 	mapnl         bool
 	syncdUpdates  bool // whether to use synchronized output mode for updates
-	prependLines  []string
 	starting      bool // indicates whether the renderer is starting after being stopped
 }
 
@@ -269,7 +268,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 	}
 
-	if !s.starting && !closing && len(s.prependLines) == 0 && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	if !s.starting && !closing && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return nil
 	}
@@ -311,14 +310,6 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// different cursor visibility states for main and alt screen modes and
 		// this ensures we handle that correctly.
 		enableAltScreen(s, view.AltScreen, false)
-	}
-
-	// Push prepended lines if any.
-	if len(s.prependLines) > 0 {
-		for _, line := range s.prependLines {
-			prependLine(s, line)
-		}
-		s.prependLines = s.prependLines[:0]
 	}
 
 	// bracketed paste mode.
@@ -674,10 +665,58 @@ func (s *cursedRenderer) setSyncdUpdates(syncd bool) {
 }
 
 // insertAbove implements renderer.
-func (s *cursedRenderer) insertAbove(lines string) {
+func (s *cursedRenderer) insertAbove(str string) error {
 	s.mu.Lock()
-	s.prependLines = append(s.prependLines, strings.Split(lines, "\n")...)
-	s.mu.Unlock()
+	defer s.mu.Unlock()
+
+	if len(str) == 0 {
+		return nil
+	}
+
+	var sb strings.Builder
+	w, h := s.cellbuf.Width(), s.cellbuf.Height()
+	_, y := s.scr.Position()
+
+	// We need to scroll the screen up by the number of lines in the queue.
+	sb.WriteByte('\r')
+	down := h - y - 1
+	if down > 0 {
+		sb.WriteString(ansi.CursorDown(down))
+	}
+
+	lines := strings.Split(str, "\n")
+	offset := len(lines)
+	for _, line := range lines {
+		lineWidth := ansi.StringWidth(line)
+		if w > 0 && lineWidth > w {
+			offset += (lineWidth / w)
+		}
+	}
+
+	// Scroll the screen up by the offset to make room for the new lines.
+	sb.WriteString(strings.Repeat("\n", offset))
+
+	// XXX: Now go to the top of the screen, insert new lines, and write
+	// the queued strings. It is important to use [Screen.moveCursor]
+	// instead of [Screen.move] because we don't want to perform any checks
+	// on the cursor position.
+	up := offset + h - 1
+	sb.WriteString(ansi.CursorUp(up))
+	sb.WriteString(ansi.InsertLine(offset))
+	for _, line := range lines {
+		sb.WriteString(line)
+		sb.WriteString(ansi.EraseLineRight)
+		sb.WriteString("\r\n")
+	}
+
+	s.scr.SetPosition(0, 0)
+
+	if s.logger != nil {
+		s.logger.Printf("insert above: %q", sb.String())
+	}
+
+	_, err := io.WriteString(s.w, sb.String())
+	return err
 }
 
 // onMouse implements renderer.
@@ -686,15 +725,6 @@ func (s *cursedRenderer) onMouse(m MouseMsg) Cmd {
 		return s.lastView.OnMouse(m)
 	}
 	return nil
-}
-
-func prependLine(s *cursedRenderer, line string) {
-	strLines := strings.Split(line, "\n")
-	for i, line := range strLines {
-		// Always erase to the right of the line to avoid possible artifacts.
-		strLines[i] = line + ansi.EraseLineRight
-	}
-	s.scr.PrependString(s.cellbuf.Buffer, strings.Join(strLines, "\n"))
 }
 
 func setProgressBar(s *cursedRenderer, pb *ProgressBar) {
