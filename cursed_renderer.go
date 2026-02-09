@@ -452,7 +452,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	// Render and queue changes to the screen buffer.
-	s.scr.Render(s.cellbuf.Buffer)
+	s.scr.Render(s.cellbuf.RenderBuffer)
 
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
