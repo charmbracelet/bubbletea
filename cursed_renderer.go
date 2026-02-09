@@ -127,6 +127,10 @@ func (s *cursedRenderer) start() {
 	if s.lastView.ProgressBar != nil {
 		setProgressBar(s, s.lastView.ProgressBar)
 	}
+	// Enable modifyOtherKeys and Kitty keyboard protocol.
+	// Both can coexist; terminals ignore what they don't support.
+	_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
+
 	kittyFlags := ansi.KittyDisambiguateEscapeCodes
 	if s.lastView.KeyboardEnhancements.ReportEventTypes {
 		kittyFlags |= ansi.KittyReportEventTypes
@@ -150,6 +154,7 @@ func (s *cursedRenderer) close() (err error) {
 		// [cursedRenderer.flush].
 		// Here, we reset the keyboard protocol of the last screen used
 		// assuming the other screen is already reset when we switched screens.
+		_, _ = s.buf.WriteString(ansi.ResetModifyOtherKeys)
 		_, _ = s.buf.WriteString(ansi.KittyKeyboard(0, 1))
 
 		// Go to the bottom of the screen.
@@ -365,6 +370,10 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// NOTE: We need to reset the keyboard protocol when switching
 		// between main and alt screen. This is because the specs specify
 		// two different states for the main and alt screen.
+
+		// Enable modifyOtherKeys and Kitty keyboard protocol.
+		_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
+
 		kittyFlags := ansi.KittyDisambiguateEscapeCodes // always enable basic key disambiguation
 		if view.KeyboardEnhancements.ReportEventTypes {
 			kittyFlags |= ansi.KittyReportEventTypes
@@ -497,6 +506,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// We always disable keyboard enhancements when switching screens
 		// because the terminal is expected to have two different keyboard
 		// registries for main and alt screens.
+		_, _ = buf.WriteString(ansi.ResetModifyOtherKeys)
 		_, _ = buf.WriteString(ansi.KittyKeyboard(0, 1))
 		if view.AltScreen {
 			// Entering alt screen mode.
