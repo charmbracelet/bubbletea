@@ -129,7 +129,6 @@ func (s *cursedRenderer) start() {
 	}
 	// Enable modifyOtherKeys and Kitty keyboard protocol.
 	// Both can coexist; terminals ignore what they don't support.
-	_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys1)
 	_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
 	kittyFlags := ansi.KittyDisambiguateEscapeCodes
@@ -373,7 +372,6 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// two different states for the main and alt screen.
 
 		// Enable modifyOtherKeys and Kitty keyboard protocol.
-		_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys1)
 		_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
 		kittyFlags := ansi.KittyDisambiguateEscapeCodes // always enable basic key disambiguation
