@@ -18,7 +18,13 @@ func TestNilRenderer(t *testing.T) {
 	r.showCursor()
 	r.hideCursor()
 	r.enableMouseCellMotion()
+	if r.mouseCellMotionActive() {
+		t.Errorf("mouseCellMotionActive should always return false")
+	}
 	r.disableMouseCellMotion()
 	r.enableMouseAllMotion()
+	if r.mouseAllMotionActive() {
+		t.Errorf("mouseAllMotionActive should always return false")
+	}
 	r.disableMouseAllMotion()
 }

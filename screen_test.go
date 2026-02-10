@@ -80,3 +80,40 @@ func TestClearMsg(t *testing.T) {
 		})
 	}
 }
+
+func TestMouseStateTracking(t *testing.T) {
+	var buf bytes.Buffer
+	r := newRenderer(&buf, false, 60).(*standardRenderer)
+
+	// Initially, mouse should be inactive
+	if r.mouseCellMotionActive() {
+		t.Error("expected mouseCellMotion to be false initially")
+	}
+	if r.mouseAllMotionActive() {
+		t.Error("expected mouseAllMotion to be false initially")
+	}
+
+	// Enable cell motion
+	r.enableMouseCellMotion()
+	if !r.mouseCellMotionActive() {
+		t.Error("expected mouseCellMotion to be true after enable")
+	}
+
+	// Disable cell motion
+	r.disableMouseCellMotion()
+	if r.mouseCellMotionActive() {
+		t.Error("expected mouseCellMotion to be false after disable")
+	}
+
+	// Enable all motion
+	r.enableMouseAllMotion()
+	if !r.mouseAllMotionActive() {
+		t.Error("expected mouseAllMotion to be true after enable")
+	}
+
+	// Disable all motion
+	r.disableMouseAllMotion()
+	if r.mouseAllMotionActive() {
+		t.Error("expected mouseAllMotion to be false after disable")
+	}
+}
