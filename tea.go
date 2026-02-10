@@ -980,7 +980,12 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	if p.disableInput {
 		p.input = nil
 	} else if p.input == nil {
-		p.input = os.Stdin
+		// Always open the TTY for input.
+		ttyIn, _, err := OpenTTY()
+		if err != nil {
+			return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
+		}
+		p.input = ttyIn
 	}
 
 	// Handle signals.
