@@ -123,13 +123,6 @@ func downloadAndInstall(pkg string) tea.Cmd {
 	})
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func main() {
 	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)

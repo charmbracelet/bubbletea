@@ -115,13 +115,6 @@ func (m model) footerView() string {
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func main() {
 	// Load some text for our viewport
 	content, err := os.ReadFile("artichoke.md")
