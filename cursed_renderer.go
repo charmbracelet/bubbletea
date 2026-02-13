@@ -213,6 +213,11 @@ func (s *cursedRenderer) close() (err error) {
 		}
 	}
 
+	if s.cellbuf.Method == ansi.GraphemeWidth {
+		// Make sure to turn off Unicode mode (2027)
+		_, _ = s.scr.WriteString(ansi.ResetModeUnicodeCore)
+	}
+
 	if err := s.scr.Flush(); err != nil {
 		return fmt.Errorf("bubbletea: error closing screen writer: %w", err)
 	}
@@ -671,6 +676,23 @@ func enableTextCursor(s *cursedRenderer, enable bool) {
 func (s *cursedRenderer) setSyncdUpdates(syncd bool) {
 	s.mu.Lock()
 	s.syncdUpdates = syncd
+	s.mu.Unlock()
+}
+
+// setWidthMethod implements renderer.
+func (s *cursedRenderer) setWidthMethod(method ansi.Method) {
+	s.mu.Lock()
+	if method == ansi.GraphemeWidth {
+		// Turn on Unicode mode (2027) for accurate grapheme width calculation.
+		// This is needed for proper rendering of wide characters and emojis.
+		_, _ = s.scr.WriteString(ansi.SetModeUnicodeCore)
+	} else if s.cellbuf.Method == ansi.GraphemeWidth {
+		// Turn off Unicode mode if we're switching away from grapheme width
+		// calculation to avoid issues with some terminals that might still be
+		// in Unicode mode and render characters incorrectly.
+		_, _ = s.scr.WriteString(ansi.ResetModeUnicodeCore)
+	}
+	s.cellbuf.Method = method
 	s.mu.Unlock()
 }
 

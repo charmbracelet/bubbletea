@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
 )
 
 const (
@@ -35,6 +36,9 @@ type renderer interface {
 
 	// setSyncdUpdates sets whether to use synchronized updates.
 	setSyncdUpdates(bool)
+
+	// setWidthMethod sets the method for calculating the width of the terminal.
+	setWidthMethod(ansi.Method)
 
 	// resize notify the renderer of a terminal resize.
 	resize(int, int)

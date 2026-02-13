@@ -2,6 +2,7 @@ package tea
 
 import (
 	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // nilRenderer is a no-op renderer. It implements the Renderer interface but
@@ -42,6 +43,9 @@ func (nilRenderer) writeString(string) (int, error) { return 0, nil }
 
 // setSyncdUpdates implements the Renderer interface.
 func (n nilRenderer) setSyncdUpdates(bool) {}
+
+// setWidthMethod implements the Renderer interface.
+func (n nilRenderer) setWidthMethod(ansi.Method) {}
 
 // onMouse implements the Renderer interface.
 func (n nilRenderer) onMouse(MouseMsg) Cmd {
