@@ -764,10 +764,17 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case ModeReportMsg:
-				if msg.Mode == ansi.ModeSynchronizedOutput && msg.Value.IsReset() {
-					// The terminal supports synchronized output and it's
-					// currently disabled, so we can enable it on the renderer.
-					p.renderer.setSyncdUpdates(true)
+				switch msg.Mode {
+				case ansi.ModeSynchronizedOutput:
+					if msg.Value == ansi.ModeReset {
+						// The terminal supports synchronized output and it's
+						// currently disabled, so we can enable it on the renderer.
+						p.renderer.setSyncdUpdates(true)
+					}
+				case ansi.ModeUnicodeCore:
+					if msg.Value == ansi.ModeReset || msg.Value == ansi.ModeSet || msg.Value == ansi.ModePermanentlySet {
+						p.renderer.setWidthMethod(ansi.GraphemeWidth)
+					}
 				}
 
 			case MouseMsg:
@@ -931,7 +938,7 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 }
 
 // shouldQuerySynchronizedOutput determines whether the terminal should be
-// queried for synchronized output support (mode 2026).
+// queried for various capabilities.
 //
 // This function checks for terminals that are known to support mode 2026,
 // while excluding SSH sessions which may be unreliable, unless it's a
@@ -1078,9 +1085,11 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	p.startRenderer()
 
 	if shouldQuerySynchronizedOutput(p.environ) {
-		// Query for synchronized updates support (mode 2026). If the terminal
-		// supports it, the renderer will enable it once we get the response.
-		p.execute(ansi.RequestModeSynchronizedOutput)
+		// Query for synchronized updates support (mode 2026) and unicode core
+		// (mode 2027). If the terminal supports it, the renderer will enable
+		// it once we get the response.
+		p.execute(ansi.RequestModeSynchronizedOutput +
+			ansi.RequestModeUnicodeCore)
 	}
 
 	// Initialize the program.
