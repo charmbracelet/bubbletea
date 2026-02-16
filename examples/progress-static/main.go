@@ -38,7 +38,7 @@ func main() {
 	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
 
 	if _, err := tea.NewProgram(model{progress: prog}).Run(); err != nil {
-		fmt.Println("Oh no!", err)
+		fmt.Println("Shiver me timbers!", err)
 		os.Exit(1)
 	}
 }

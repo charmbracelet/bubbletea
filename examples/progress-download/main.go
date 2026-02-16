@@ -61,7 +61,7 @@ func main() {
 
 	resp, err := getResponse(*url)
 	if err != nil {
-		fmt.Println("could not get response", err)
+		fmt.Println("could nah get response", err)
 		os.Exit(1)
 	}
 	defer resp.Body.Close() // nolint:errcheck
@@ -76,7 +76,7 @@ func main() {
 	filename := filepath.Base(*url)
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println("could not create file:", err)
+		fmt.Println("could nah create file:", err)
 		os.Exit(1)
 	}
 	defer file.Close() // nolint:errcheck
@@ -101,7 +101,7 @@ func main() {
 	go pw.Start()
 
 	if _, err := p.Run(); err != nil {
-		fmt.Println("error running program:", err)
+		fmt.Println("blunder runnin' program:", err)
 		os.Exit(1)
 	}
 }

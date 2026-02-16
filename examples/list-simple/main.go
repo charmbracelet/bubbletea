@@ -122,7 +122,7 @@ func main() {
 	m := model{list: l}
 
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Println("Error running program:", err)
+		fmt.Println("Blunder runnin' program:", err)
 		os.Exit(1)
 	}
 }

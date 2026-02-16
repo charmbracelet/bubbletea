@@ -134,7 +134,7 @@ func main() {
 	if os.Getenv("HELP_DEBUG") != "" {
 		f, err := tea.LogToFile("debug.log", "help")
 		if err != nil {
-			fmt.Println("Couldn't open a file for logging:", err)
+			fmt.Println("Couldn't open a file fer loggin':", err)
 			os.Exit(1)
 		}
 		defer f.Close() // nolint:errcheck

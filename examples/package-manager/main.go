@@ -127,7 +127,7 @@ func downloadAndInstall(pkg string) tea.Cmd {
 
 func main() {
 	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
-		fmt.Println("Error running program:", err)
+		fmt.Println("Blunder runnin' program:", err)
 		os.Exit(1)
 	}
 }

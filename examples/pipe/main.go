@@ -38,7 +38,7 @@ func main() {
 		}
 		_, err = b.WriteRune(r)
 		if err != nil {
-			fmt.Println("Error getting input:", err)
+			fmt.Println("Blunder gettin' input:", err)
 			os.Exit(1)
 		}
 	}

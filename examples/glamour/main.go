@@ -127,12 +127,12 @@ func (e example) helpView() string {
 func main() {
 	model, err := newExample()
 	if err != nil {
-		fmt.Println("Could not initialize Bubble Tea model:", err)
+		fmt.Println("Could nah initialize Bubble Tea model:", err)
 		os.Exit(1)
 	}
 
 	if _, err := tea.NewProgram(model).Run(); err != nil {
-		fmt.Println("Bummer, there's been an error:", err)
+		fmt.Println("Bummer, thar's been an blunder:", err)
 		os.Exit(1)
 	}
 }
