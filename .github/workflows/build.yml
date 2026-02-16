@@ -17,3 +17,6 @@ jobs:
       go-version: ""
       go-version-file: ./examples/go.mod
       working-directory: ./examples
+
+  build-plan9:
+    uses: charmbracelet/meta/.github/workflows/build-plan9.yml@main
