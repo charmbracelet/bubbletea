@@ -74,6 +74,12 @@ type renderer interface {
 	// reportFocus returns whether reporting focus events is enabled.
 	reportFocus() bool
 
+	// mouseCellMotionActive returns whether mouse cell motion tracking is enabled.
+	mouseCellMotionActive() bool
+
+	// mouseAllMotionActive returns whether mouse all motion tracking is enabled.
+	mouseAllMotionActive() bool
+
 	// enableReportFocus reports focus events to the program.
 	enableReportFocus()
 

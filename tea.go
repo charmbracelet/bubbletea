@@ -184,8 +184,10 @@ type Program struct {
 	altScreenWasActive bool
 	ignoreSignals      uint32
 
-	bpWasActive bool // was the bracketed paste mode active before releasing the terminal?
-	reportFocus bool // was focus reporting active before releasing the terminal?
+	bpWasActive          bool // was the bracketed paste mode active before releasing the terminal?
+	reportFocus          bool // was focus reporting active before releasing the terminal?
+	mouseCellMotionWasActive bool // was mouse cell motion active before releasing the terminal?
+	mouseAllMotionWasActive  bool // was mouse all motion active before releasing the terminal?
 
 	filter func(Model, Msg) Msg
 
@@ -874,6 +876,8 @@ func (p *Program) ReleaseTerminal() error {
 		p.altScreenWasActive = p.renderer.altScreen()
 		p.bpWasActive = p.renderer.bracketedPasteActive()
 		p.reportFocus = p.renderer.reportFocus()
+		p.mouseCellMotionWasActive = p.renderer.mouseCellMotionActive()
+		p.mouseAllMotionWasActive = p.renderer.mouseAllMotionActive()
 	}
 
 	return p.restoreTerminalState()
@@ -905,6 +909,13 @@ func (p *Program) RestoreTerminal() error {
 	}
 	if p.reportFocus {
 		p.renderer.enableReportFocus()
+	}
+	if p.mouseCellMotionWasActive {
+		p.renderer.enableMouseCellMotion()
+		p.renderer.enableMouseSGRMode()
+	} else if p.mouseAllMotionWasActive {
+		p.renderer.enableMouseAllMotion()
+		p.renderer.enableMouseSGRMode()
 	}
 
 	// If the output is a terminal, it may have been resized while another

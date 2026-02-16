@@ -17,6 +17,8 @@ func (n nilRenderer) enableMouseCellMotion()     {}
 func (n nilRenderer) disableMouseCellMotion()    {}
 func (n nilRenderer) enableMouseAllMotion()      {}
 func (n nilRenderer) disableMouseAllMotion()     {}
+func (n nilRenderer) mouseCellMotionActive() bool { return false }
+func (n nilRenderer) mouseAllMotionActive() bool  { return false }
 func (n nilRenderer) enableBracketedPaste()      {}
 func (n nilRenderer) disableBracketedPaste()     {}
 func (n nilRenderer) enableMouseSGRMode()        {}

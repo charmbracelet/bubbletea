@@ -52,6 +52,12 @@ type standardRenderer struct {
 	// reportingFocus whether reporting focus events is enabled
 	reportingFocus bool
 
+	// whether mouse cell motion tracking is enabled
+	mouseCellMotion bool
+
+	// whether mouse all motion tracking is enabled
+	mouseAllMotion bool
+
 	// renderer dimensions; usually the size of the window
 	width  int
 	height int
@@ -416,6 +422,7 @@ func (r *standardRenderer) enableMouseCellMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	r.mouseCellMotion = true
 	r.execute(ansi.SetButtonEventMouseMode)
 }
 
@@ -423,6 +430,7 @@ func (r *standardRenderer) disableMouseCellMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	r.mouseCellMotion = false
 	r.execute(ansi.ResetButtonEventMouseMode)
 }
 
@@ -430,6 +438,7 @@ func (r *standardRenderer) enableMouseAllMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	r.mouseAllMotion = true
 	r.execute(ansi.SetAnyEventMouseMode)
 }
 
@@ -437,6 +446,7 @@ func (r *standardRenderer) disableMouseAllMotion() {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
+	r.mouseAllMotion = false
 	r.execute(ansi.ResetAnyEventMouseMode)
 }
 
@@ -498,6 +508,20 @@ func (r *standardRenderer) reportFocus() bool {
 	defer r.mtx.Unlock()
 
 	return r.reportingFocus
+}
+
+func (r *standardRenderer) mouseCellMotionActive() bool {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	return r.mouseCellMotion
+}
+
+func (r *standardRenderer) mouseAllMotionActive() bool {
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+
+	return r.mouseAllMotion
 }
 
 // setWindowTitle sets the terminal window title.
