@@ -58,23 +58,28 @@ type standardRenderer struct {
 
 	// lines explicitly set not to render
 	ignoreLines map[int]struct{}
+
+	// if a line is equal to the last render of the same line, it will not be re-rendered by default
+	// this setting disables that mechanism
+	dontSkipIdenticalLines bool
 }
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out io.Writer, useANSICompressor bool, fps int) renderer {
+func newRenderer(out io.Writer, useANSICompressor bool, dontSkipIdenticalLines bool, fps int) renderer {
 	if fps < 1 {
 		fps = defaultFPS
 	} else if fps > maxFPS {
 		fps = maxFPS
 	}
 	r := &standardRenderer{
-		out:                out,
-		mtx:                &sync.Mutex{},
-		done:               make(chan struct{}),
-		framerate:          time.Second / time.Duration(fps),
-		useANSICompressor:  useANSICompressor,
-		queuedMessageLines: []string{},
+		out:                    out,
+		mtx:                    &sync.Mutex{},
+		done:                   make(chan struct{}),
+		framerate:              time.Second / time.Duration(fps),
+		useANSICompressor:      useANSICompressor,
+		dontSkipIdenticalLines: dontSkipIdenticalLines,
+		queuedMessageLines:     []string{},
 	}
 	if r.useANSICompressor {
 		r.out = &compressor.Writer{Forward: out}
@@ -212,7 +217,9 @@ func (r *standardRenderer) flush() {
 	// Paint new lines.
 	for i := 0; i < len(newLines); i++ {
 		canSkip := !flushQueuedMessages && // Queuing messages triggers repaint -> we don't have access to previous frame content.
-			len(r.lastRenderedLines) > i && r.lastRenderedLines[i] == newLines[i] // Previously rendered line is the same.
+			len(r.lastRenderedLines) > i &&
+			!r.dontSkipIdenticalLines &&
+			r.lastRenderedLines[i] == newLines[i] // Previously rendered line is the same.
 
 		if _, ignore := r.ignoreLines[i]; ignore || canSkip {
 			// Unless this is the last line, move the cursor down.

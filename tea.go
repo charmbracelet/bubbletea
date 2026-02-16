@@ -105,6 +105,12 @@ const (
 	withoutCatchPanics
 	withoutBracketedPaste
 	withReportFocus
+	// The standard renderer is optimised to skip writing a line to the screen,
+	// if the same line written on the last render is identical.
+	// This is usually without consequences, but can be unwanted if an ANSI coloring tag
+	// is added on both sides of the unchanged line. If the line is not rewritten
+	// (even though identical) it will not be colored in some terminals
+	withoutSkipRenderIdenticalLines
 )
 
 // channelHandlers manages the series of channels returned by various processes.
@@ -642,7 +648,11 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
+		p.renderer = newRenderer(
+			p.output,
+			p.startupOptions.has(withANSICompressor),
+			p.startupOptions.has(withoutSkipRenderIdenticalLines),
+			p.fps)
 	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
