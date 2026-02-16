@@ -4,6 +4,7 @@ run:
 linters:
   enable:
     - bodyclose
+    - copyloopvar
     - exhaustive
     - goconst
     - godot
