@@ -842,8 +842,8 @@ func (p *Program) recoverFromPanic(r interface{}) {
 	case p.errs <- ErrProgramPanic:
 	default:
 	}
-	p.shutdown(true) // Ok to call here, p.Run() cannot do it anymore.
-	fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+	p.shutdown(true)                                                  // Ok to call here, p.Run() cannot do it anymore.
+	fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r) //nolint:forbidigo
 	debug.PrintStack()
 }
 
@@ -855,7 +855,7 @@ func (p *Program) recoverFromGoPanic(r interface{}) {
 	default:
 	}
 	p.cancel()
-	fmt.Printf("Caught goroutine panic:\n\n%s\n\nRestoring terminal...\n\n", r)
+	fmt.Printf("Caught goroutine panic:\n\n%s\n\nRestoring terminal...\n\n", r) //nolint:forbidigo
 	debug.PrintStack()
 }
 

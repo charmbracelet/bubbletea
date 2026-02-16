@@ -5,6 +5,7 @@ linters:
   enable:
     - bodyclose
     - exhaustive
+    - forbidigo
     - goconst
     - godot
     - gomoddirectives
