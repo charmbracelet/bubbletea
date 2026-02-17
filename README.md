@@ -8,7 +8,7 @@
     </picture>
     <br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
-    <a href="https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc"><img src="https://godoc.org/github.com/charmbracelet/bubbletea?status.svg" alt="GoDoc"></a>
+    <a href="https://pkg.go.dev/charm.land/bubbletea/v2?tab=doc"><img src="https://godoc.org/charm.land/bubbletea/v2?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg?branch=main" alt="Build Status"></a>
 </p>
 
@@ -21,8 +21,9 @@ complex terminal applications, either inline, full-window, or a mix of both.
 </p>
 
 Bubble Tea is in use in production and includes a number of features and
-performance optimizations we’ve added along the way. Among those is
-a framerate-based renderer, mouse support, focus reporting and more.
+performance optimizations we’ve added along the way. Among those is the
+cell-based rendering, built-in color downsampling, declarative views,
+improved keyboard and mouse handling, native clipboard support, and more.
 
 To get started, see the tutorial below, the [examples][examples], the
 [docs][docs], the [video tutorials][youtube] and some common [resources](#libraries-we-use-with-bubble-tea).
@@ -72,7 +73,7 @@ import (
     "fmt"
     "os"
 
-    tea "github.com/charmbracelet/bubbletea/v2"
+    tea "charm.land/bubbletea/v2"
 )
 ```
 
@@ -98,9 +99,9 @@ type model struct {
 
 ## Initialization
 
-Next, we’ll define our application’s initial state. In this case, we’re defining
-a function to return our initial model, however, we could just as easily define
-the initial model as a variable elsewhere, too.
+Next, we’ll define our application’s initial state. `Init` can return a `Cmd`
+that could perform some initial I/O. For now, we don’t need to do any I/O, so
+for the command, we’ll just return `nil`, which translates to “no command.”
 
 ```go
 func initialModel() model {
@@ -122,25 +123,15 @@ to do any I/O, so for the command, we'll just return `nil`, which translates to
 "no command."
 
 ```go
-func (m model) Init() (tea.Model, tea.Cmd) {
-	m = {
-		// Our to-do list is a grocery list
-		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
-
-		// A map which indicates which choices are selected. We're using
-		// the map like a mathematical set. The keys refer to the indexes
-		// of the `choices` slice, above.
-		selected: make(map[int]struct{}),
-	}
-
+func (m model) Init() tea.Cmd {
     // Just return `nil`, which means "no I/O right now, please."
-    return m, nil
+    return nil
 }
 ```
 
 ### The Update Method
 
-Next up is the update method. The update function is called when ”things
+Next up is the update method. The update function is called when “things
 happen.” Its job is to look at what has happened and return an updated model in
 response. It can also return a `Cmd` to make more things happen, but for now
 don't worry about that part.
@@ -184,8 +175,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 m.cursor++
             }
 
-        // The "enter" key and the space bar (a literal space) toggle the
-        // selected state for the item that the cursor is pointing at.
+        // The "enter" key and the space bar toggle the selected state
+        // for the item that the cursor is pointing at.
         case "enter", "space":
             _, ok := m.selected[m.cursor]
             if ok {
@@ -209,15 +200,16 @@ the Bubble Tea runtime to quit, exiting the program.
 ### The View Method
 
 At last, it’s time to render our UI. Of all the methods, the view is the
-simplest. We look at the model in its current state and use it to return
-a `string`. That string is our UI!
+simplest. We look at the model in its current state and use it to build a
+`tea.View`. The view declares our UI content and, optionally, terminal features
+like alt screen mode, mouse tracking, cursor position, and more.
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-func (m model) View() string {
+func (m model) View() tea.View {
     // The header
     s := "What should we buy at the market?\n\n"
 
@@ -244,7 +236,7 @@ func (m model) View() string {
     s += "\nPress q to quit.\n"
 
     // Send the UI for rendering
-    return s
+    return tea.NewView(s)
 }
 ```
 
@@ -274,7 +266,7 @@ there are [Go Docs][docs].
 
 [cmd]: https://github.com/charmbracelet/bubbletea/tree/main/tutorials/commands/
 [examples]: https://github.com/charmbracelet/bubbletea/tree/main/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
+[docs]: https://pkg.go.dev/charm.land/bubbletea/v2?tab=doc
 
 ## Debugging
 
@@ -350,14 +342,14 @@ There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/
 
 ### In Industry
 
-- Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
-- Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
+- Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
+- Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
 - Cockroach Labs – [CockroachDB](https://github.com/cockroachdb/cockroach): a cloud-native, high-availability distributed SQL database
-- Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
-- NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary): a container validator
-- AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
-- MinIO – [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
-- Ubuntu – [Authd](https://github.com/ubuntu/authd): an authentication daemon for cloud-based identity providers
+- Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
+- NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary): a container validator
+- AWS – [eks-node-viewer](https://github.com/awslabs/eks-node-viewer): a tool for visualizing dynamic node usage within an EKS cluster
+- MinIO – [mc](https://github.com/minio/mc): the official [MinIO](https://min.io) client
+- Ubuntu – [Authd](https://github.com/ubuntu/authd): an authentication daemon for cloud-based identity providers
 
 ### Charm stuff
 
