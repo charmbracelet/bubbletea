@@ -153,7 +153,8 @@ the Bubble Tea runtime to quit, exiting the program.
 At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the model in its current state and use it to return
 a `tea.View`. The view declares our UI content and, optionally, terminal
-features like alt screen mode, mouse tracking, cursor position, and more.
+features like full-window mode (aka, altscreen mode), mouse tracking, cursor
+position, and more.
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it
