@@ -131,7 +131,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		// Don't match any of the keys below if we're actively filtering.
-		if m.list.FilterState() == list.Filtering {
+		if m.list.SettingFilter() {
 			break
 		}
 
