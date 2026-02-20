@@ -290,6 +290,11 @@ for backwards compatibility reasons. However, delve recommends using version 2
 for all new development and some clients may no longer work with version 1.
 For more information, see the [Delve documentation](https://github.com/go-delve/delve/tree/master/Documentation/api).
 
+If you kill a Bubble Tea app before it finishes,
+by for example prematurely exitting the debugger, it leaves the cursor hidden.
+To fix this run `reset` (clears terminal) or
+`printf '\033[!p' && stty sane` (doesn't clear terminal) after the debugger has stopped.
+
 ### Logging Stuff
 
 You can’t really log to stdout with Bubble Tea because your TUI is busy
