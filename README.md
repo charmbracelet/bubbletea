@@ -2,9 +2,9 @@
 
 <p>
     <picture>
-      <source media="(prefers-color-scheme: light)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-light.png" width="308">
+      <source media="(prefers-color-scheme: light)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-header-light.png" width="308">
       <source media="(prefers-color-scheme: dark)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-dark.png" width="312">
-      <img src="https://stuff.charm.sh/bubbletea/bubble-tea-v2-light.png" width="308" />
+      <img src="https://stuff.charm.sh/bubbletea/bubble-tea-v2-header-light.png" width="308" />
     </picture>
     <br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
