@@ -839,7 +839,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprint(msg.Msg))
 
 			case printLineMessage:
-				p.renderer.insertAbove(msg.messageBody)
+				p.renderer.insertAbove(msg.messageBody) //nolint:errcheck,gosec
 
 			case clearScreenMsg:
 				p.renderer.clearScreen()

@@ -34,7 +34,7 @@ type sequenceMsg []Cmd
 // none it returns nil, if there is exactly one it returns that command
 // directly, else it returns the non-nil commands as type T.
 func compactCmds[T ~[]Cmd](cmds []Cmd) Cmd {
-	var validCmds []Cmd //nolint:prealloc
+	var validCmds []Cmd
 	for _, c := range cmds {
 		if c == nil {
 			continue

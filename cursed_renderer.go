@@ -748,7 +748,11 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	}
 
 	_, err := io.WriteString(s.w, sb.String())
-	return err
+	if err != nil {
+		return fmt.Errorf("bubbletea: error writing insert above to the writer: %w", err)
+	}
+
+	return nil
 }
 
 // onMouse implements renderer.
