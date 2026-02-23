@@ -1,12 +1,7 @@
 # Bubble Tea
 
 <p>
-    <picture>
-      <source media="(prefers-color-scheme: light)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-header-light.png" width="308">
-      <source media="(prefers-color-scheme: dark)" srcset="https://stuff.charm.sh/bubbletea/bubble-tea-v2-header-dark.png" width="312">
-      <img src="https://stuff.charm.sh/bubbletea/bubble-tea-v2-header-light.png" width="308" />
-    </picture>
-    <br>
+    <img src="https://github.com/user-attachments/assets/c7f51b04-617f-4fee-9e78-33e74f8229a8" width="350"><br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
     <a href="https://pkg.go.dev/charm.land/bubbletea/v2?tab=doc"><img src="https://godoc.org/charm.land/bubbletea/v2?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg?branch=main" alt="Build Status"></a>
