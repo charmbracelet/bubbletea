@@ -1,7 +1,7 @@
 # Bubble Tea Basics
 
 Bubble Tea is based on the functional design paradigms of [The Elm
-Architecture][elm], which happens to work nicely with Go. It's a delightful way
+Architecture][elm], which happens to work nicely with Go. It’s a delightful way
 to build applications.
 
 This tutorial assumes you have a working knowledge of Go.
@@ -12,12 +12,12 @@ By the way, the non-annotated source code for this program is available
 [elm]: https://guide.elm-lang.org/architecture/
 [tut-source]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
 
-## Enough! Let's get to it.
+## Enough! Let’s get to it.
 
-For this tutorial, we're making a shopping list.
+For this tutorial, we’re making a shopping list.
 
-To start we'll define our package and import some libraries. Our only external
-import will be the Bubble Tea library, which we'll call `tea` for short.
+To start we’ll define our package and import some libraries. Our only external
+import will be the Bubble Tea library, which we’ll call `tea` for short.
 
 ```go
 package main
@@ -26,7 +26,7 @@ import (
     "fmt"
     "os"
 
-    tea "github.com/charmbracelet/bubbletea/v2"
+    tea "charm.land/bubbletea/v2"
 )
 ```
 
@@ -39,7 +39,7 @@ state and three simple methods on that model:
 
 ## The Model
 
-So let's start by defining our model which will store our application's state.
+So let’s start by defining our model which will store our application’s state.
 It can be any type, but a `struct` usually makes the most sense.
 
 ```go
@@ -70,34 +70,22 @@ func initialModel() model {
 }
 ```
 
-After that, we’ll define our application’s initial state in the `Init` method. `Init`
-can return a `Cmd` that could perform some initial I/O. For now, we don't need
-to do any I/O, so for the command, we'll just return `nil`, which translates to
-"no command."
+After that, we’ll define the `Init` method. `Init` can return a `Cmd` that
+could perform some initial I/O. For now, we don’t need to do any I/O, so for
+the command, we’ll just return `nil`, which translates to "no command."
 
 ```go
-func (m model) Init() (tea.Model, tea.Cmd) {
-	m = {
-		// Our to-do list is a grocery list
-		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
-
-		// A map which indicates which choices are selected. We're using
-		// the map like a mathematical set. The keys refer to the indexes
-		// of the `choices` slice, above.
-		selected: make(map[int]struct{}),
-	}
-
-    // Just return `nil`, which means "no I/O right now, please."
-    return m, nil
+func (m model) Init() tea.Cmd {
+    return nil
 }
 ```
 
 ## The Update Method
 
-Next up is the update method. The update function is called when ”things
+Next up is the update method. The update function is called when “things
 happen.” Its job is to look at what has happened and return an updated model in
 response. It can also return a `Cmd` to make more things happen, but for now
-don't worry about that part.
+don’t worry about that part.
 
 In our case, when a user presses the down arrow, `Update`’s job is to notice
 that the down arrow was pressed and move the cursor accordingly (or not).
@@ -109,7 +97,7 @@ tick, or a response from a server.
 We usually figure out which type of `Msg` we received with a type switch, but
 you could also use a type assertion.
 
-For now, we'll just deal with `tea.KeyPressMsg` messages, which are
+For now, we’ll just deal with `tea.KeyPressMsg` messages, which are
 automatically sent to the update function when keys are pressed.
 
 ```go
@@ -164,14 +152,16 @@ the Bubble Tea runtime to quit, exiting the program.
 
 At last, it’s time to render our UI. Of all the methods, the view is the
 simplest. We look at the model in its current state and use it to return
-a `string`. That string is our UI!
+a `tea.View`. The view declares our UI content and, optionally, terminal
+features like full-window mode (aka, altscreen mode), mouse tracking, cursor
+position, and more.
 
 Because the view describes the entire UI of your application, you don’t have to
 worry about redrawing logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-func (m model) View() string {
+func (m model) View() tea.View {
     // The header
     s := "What should we buy at the market?\n\n"
 
@@ -198,13 +188,13 @@ func (m model) View() string {
     s += "\nPress q to quit.\n"
 
     // Send the UI for rendering
-    return s
+    return tea.NewView(s)
 }
 ```
 
 ## All Together Now
 
-The last step is to simply run our program. We pass an empty model
+The last step is to simply run our program. We pass our initial model to
 `tea.NewProgram` and let it rip:
 
 ```go
@@ -220,15 +210,15 @@ func main() {
 ## What’s Next?
 
 This tutorial covers the basics of building an interactive terminal UI, but
-in the real world you'll also need to perform I/O. To learn about that have a
-look at the [Command Tutorial][cmd]. It's pretty simple.
+in the real world you’ll also need to perform I/O. To learn about that have a
+look at the [Command Tutorial][cmd]. It’s pretty simple.
 
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
 [cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
 [examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/charmbracelet/bubbletea?tab=doc
+[docs]: https://pkg.go.dev/charm.land/bubbletea/v2?tab=doc
 
 ## Additional Resources
 
@@ -237,7 +227,7 @@ there are [Go Docs][docs].
 
 ### Feedback
 
-We'd love to hear your thoughts on this tutorial. Feel free to drop us a note!
+We’d love to hear your thoughts on this tutorial. Feel free to drop us a note!
 
 - [Twitter](https://twitter.com/charmcli)
 - [The Fediverse](https://mastodon.social/@charmcli)
