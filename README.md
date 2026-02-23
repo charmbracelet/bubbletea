@@ -24,6 +24,11 @@ support, and more.
 To get started, see the tutorial below, the [examples][examples], the
 [docs][docs], and some common [resources](#libraries-we-use-with-bubble-tea).
 
+> [!TIP]
+>
+> Upgrading from v1? Check out the [upgrade guide](./UPGRADE_GUIDE_V2.md), or
+> point your LLM at it and let it go to town.
+
 ## By the way
 
 Be sure to check out [Bubbles][bubbles], a library of common UI components for Bubble Tea.
