@@ -323,7 +323,7 @@ your program in another window.
 
 ## Bubble Tea in the Wild
 
-There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/network/dependents) built with Bubble Tea! Here are a handful of ’em.
+There are over [18,000 applications](https://github.com/charmbracelet/bubbletea/network/dependents) built with Bubble Tea! Here are a handful of ’em.
 
 ### Staff favourites
 
