@@ -16,14 +16,13 @@ complex terminal applications, either inline, full-window, or a mix of both.
 </p>
 
 Bubble Tea is in use in production and includes a number of features and
-performance optimizations we’ve added along the way. Among those is the
-cell-based rendering, built-in color downsampling, declarative views,
-improved keyboard and mouse handling, native clipboard support, and more.
+performance optimizations we’ve added along the way. Among those is
+a high-performance cell-based renderer, built-in color downsampling,
+declarative views, high-fidelity keyboard and mouse handling, native clipboard
+support, and more.
 
 To get started, see the tutorial below, the [examples][examples], the
-[docs][docs], the [video tutorials][youtube] and some common [resources](#libraries-we-use-with-bubble-tea).
-
-[youtube]: https://charm.sh/yt
+[docs][docs], and some common [resources](#libraries-we-use-with-bubble-tea).
 
 ## By the way
 
@@ -338,7 +337,7 @@ There are over [10,000 applications](https://github.com/charmbracelet/bubbletea/
 ### In Industry
 
 - Microsoft Azure – [Aztify](https://github.com/Azure/aztfy): bring Microsoft Azure resources under Terraform
-- Daytona – [Daytona](https://github.com/daytonaio/daytona): open source dev environment manager
+- Daytona – [Daytona](https://github.com/daytonaio/daytona): an AI infrastructure platform
 - Cockroach Labs – [CockroachDB](https://github.com/cockroachdb/cockroach): a cloud-native, high-availability distributed SQL database
 - Truffle Security Co. – [Trufflehog](https://github.com/trufflesecurity/trufflehog): find leaked credentials
 - NVIDIA – [container-canary](https://github.com/NVIDIA/container-canary): a container validator
