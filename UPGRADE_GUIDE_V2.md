@@ -1,6 +1,6 @@
 # Bubble Tea v2 Upgrade Guide
 
-This guide covers everything you need to change when upgrading from Bubble Tea v1 to v2. For a tour of all the exciting new features, check out the [What's New](WHATS_NEW_V2.md) doc.
+This guide covers everything you need to change when upgrading from Bubble Tea v1 to v2. For a tour of all the exciting new features, check out the [What's New](https://github.com/charmbracelet/bubbletea/releases/tag/v2.0.0) doc.
 
 > [!NOTE]
 > We don't take API changes lightly and strive to make the upgrade process as simple as possible. If something feels way off, let us know.
