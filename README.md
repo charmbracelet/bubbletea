@@ -1,7 +1,7 @@
 # Bubble Tea
 
 <p>
-    <img src="https://github.com/user-attachments/assets/8d7f2c5a-6e0e-405c-9b3c-1269015bb2da" width="350"><br>
+    <img src="https://github.com/user-attachments/assets/ad408275-8799-488f-9303-441e7f869535" width="350"><br>
     <a href="https://github.com/charmbracelet/bubbletea/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
     <a href="https://pkg.go.dev/charm.land/bubbletea/v2?tab=doc"><img src="https://godoc.org/charm.land/bubbletea/v2?status.svg" alt="GoDoc"></a>
     <a href="https://github.com/charmbracelet/bubbletea/actions"><img src="https://github.com/charmbracelet/bubbletea/actions/workflows/build.yml/badge.svg?branch=main" alt="Build Status"></a>
