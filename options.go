@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
+
+	"github.com/charmbracelet/colorprofile"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -38,14 +40,7 @@ func WithOutput(output io.Writer) ProgramOption {
 func WithInput(input io.Reader) ProgramOption {
 	return func(p *Program) {
 		p.input = input
-		p.inputType = customInput
-	}
-}
-
-// WithInputTTY opens a new TTY for input (or console input device on Windows).
-func WithInputTTY() ProgramOption {
-	return func(p *Program) {
-		p.inputType = ttyInput
+		p.disableInput = input == nil
 	}
 }
 
@@ -70,7 +65,7 @@ func WithEnvironment(env []string) ProgramOption {
 // Programs. This is useful if you want to handle signals yourself.
 func WithoutSignalHandler() ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withoutSignalHandler
+		p.disableSignalHandler = true
 	}
 }
 
@@ -80,7 +75,7 @@ func WithoutSignalHandler() ProgramOption {
 // cleanup on exit.
 func WithoutCatchPanics() ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withoutCatchPanics
+		p.disableCatchPanics = true
 	}
 }
 
@@ -89,80 +84,6 @@ func WithoutCatchPanics() ProgramOption {
 func WithoutSignals() ProgramOption {
 	return func(p *Program) {
 		atomic.StoreUint32(&p.ignoreSignals, 1)
-	}
-}
-
-// WithAltScreen starts the program with the alternate screen buffer enabled
-// (i.e. the program starts in full window mode). Note that the altscreen will
-// be automatically exited when the program quits.
-//
-// Example:
-//
-//	p := tea.NewProgram(Model{}, tea.WithAltScreen())
-//	if _, err := p.Run(); err != nil {
-//	    fmt.Println("Error running program:", err)
-//	    os.Exit(1)
-//	}
-//
-// To enter the altscreen once the program has already started running use the
-// EnterAltScreen command.
-func WithAltScreen() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withAltScreen
-	}
-}
-
-// WithoutBracketedPaste starts the program with bracketed paste disabled.
-func WithoutBracketedPaste() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutBracketedPaste
-	}
-}
-
-// WithMouseCellMotion starts the program with the mouse enabled in "cell
-// motion" mode.
-//
-// Cell motion mode enables mouse click, release, and wheel events. Mouse
-// movement events are also captured if a mouse button is pressed (i.e., drag
-// events). Cell motion mode is better supported than all motion mode.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// To enable mouse cell motion once the program has already started running use
-// the EnableMouseCellMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-func WithMouseCellMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseCellMotion // set
-		p.startupOptions &^= withMouseAllMotion // clear
-	}
-}
-
-// WithMouseAllMotion starts the program with the mouse enabled in "all motion"
-// mode.
-//
-// EnableMouseAllMotion is a special command that enables mouse click, release,
-// wheel, and motion events, which are delivered regardless of whether a mouse
-// button is pressed, effectively enabling support for hover interactions.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// Many modern terminals support this, but not all. If in doubt, use
-// EnableMouseCellMotion instead.
-//
-// To enable the mouse once the program has already started running use the
-// EnableMouseAllMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-func WithMouseAllMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseAllMotion   // set
-		p.startupOptions &^= withMouseCellMotion // clear
 	}
 }
 
@@ -176,21 +97,7 @@ func WithMouseAllMotion() ProgramOption {
 // not a TTY.
 func WithoutRenderer() ProgramOption {
 	return func(p *Program) {
-		p.renderer = &nilRenderer{}
-	}
-}
-
-// WithANSICompressor removes redundant ANSI sequences to produce potentially
-// smaller output, at the cost of some processing overhead.
-//
-// This feature is provisional, and may be changed or removed in a future version
-// of this package.
-//
-// Deprecated: this incurs a noticeable performance hit. A future release will
-// optimize ANSI automatically without the performance penalty.
-func WithANSICompressor() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withANSICompressor
+		p.disableRenderer = true
 	}
 }
 
@@ -238,15 +145,24 @@ func WithFPS(fps int) ProgramOption {
 	}
 }
 
-// WithReportFocus enables reporting when the terminal gains and loses
-// focus. When this is enabled [FocusMsg] and [BlurMsg] messages will be sent
-// to your Update method.
-//
-// Note that while most terminals and multiplexers support focus reporting,
-// some do not. Also note that tmux needs to be configured to report focus
-// events.
-func WithReportFocus() ProgramOption {
+// WithColorProfile sets the color profile that the program will use. This is
+// useful when you want to force a specific color profile. By default, Bubble
+// Tea will try to detect the terminal's color profile from environment
+// variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
+// environment variables.
+func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withReportFocus
+		p.profile = &profile
+	}
+}
+
+// WithWindowSize sets the initial size of the terminal window. This is useful
+// when you need to set the initial size of the terminal window, for example
+// during testing or when you want to run your program in a non-interactive
+// environment.
+func WithWindowSize(width, height int) ProgramOption {
+	return func(p *Program) {
+		p.width = width
+		p.height = height
 	}
 }

@@ -4,11 +4,12 @@ package main
 // component library.
 
 import (
-	"fmt"
 	"log"
+	"strings"
 
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func main() {
@@ -29,6 +30,8 @@ type model struct {
 func initialModel() model {
 	ti := textarea.New()
 	ti.Placeholder = "Once upon a time..."
+	ti.SetVirtualCursor(false)
+	ti.SetStyles(textarea.DefaultStyles(true)) // default to dark styles.
 	ti.Focus()
 
 	return model{
@@ -38,7 +41,7 @@ func initialModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return textarea.Blink
+	return tea.Batch(textarea.Blink, tea.RequestBackgroundColor)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,13 +49,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEsc:
+	case tea.BackgroundColorMsg:
+		// Update styling now that we know the background color.
+		m.textarea.SetStyles(textarea.DefaultStyles(msg.IsDark()))
+
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "esc":
 			if m.textarea.Focused() {
 				m.textarea.Blur()
 			}
-		case tea.KeyCtrlC:
+		case "ctrl+c":
 			return m, tea.Quit
 		default:
 			if !m.textarea.Focused() {
@@ -61,7 +68,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	// We handle errors just like any other message
+		// We handle errors just like any other message
 	case errMsg:
 		m.err = msg
 		return m, nil
@@ -72,10 +79,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
-		"Tell me a story.\n\n%s\n\n%s",
+func (m model) headerView() string {
+	return "Tell me a story.\n"
+}
+
+func (m model) View() tea.View {
+	const (
+		footer = "\n(ctrl+c to quit)\n"
+	)
+
+	var c *tea.Cursor
+	if !m.textarea.VirtualCursor() {
+		c = m.textarea.Cursor()
+
+		// Set the y offset of the cursor based on the position of the textarea
+		// in the application.
+		offset := lipgloss.Height(m.headerView())
+		c.Y += offset
+	}
+
+	f := strings.Join([]string{
+		m.headerView(),
 		m.textarea.View(),
-		"(ctrl+c to quit)",
-	) + "\n\n"
+		footer,
+	}, "\n")
+
+	v := tea.NewView(f)
+	v.Cursor = c
+	return v
 }

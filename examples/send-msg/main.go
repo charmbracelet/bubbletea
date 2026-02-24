@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var (
@@ -58,7 +58,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.quitting = true
 		return m, tea.Quit
 	case resultMsg:
@@ -73,30 +73,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
-	var s string
+func (m model) View() tea.View {
+	var b strings.Builder
 
 	if m.quitting {
-		s += "That’s all for today!"
+		b.WriteString("That's all for today!")
 	} else {
-		s += m.spinner.View() + " Eating food..."
+		b.WriteString(m.spinner.View())
+		b.WriteString(" Eating food...")
 	}
 
-	s += "\n\n"
+	b.WriteString("\n\n")
 
 	for _, res := range m.results {
-		s += res.String() + "\n"
+		b.WriteString(res.String())
+		b.WriteString("\n")
 	}
 
 	if !m.quitting {
-		s += helpStyle.Render("Press any key to exit")
+		b.WriteString(helpStyle.Render("Press any key to exit"))
 	}
 
 	if m.quitting {
-		s += "\n"
+		b.WriteString("\n")
 	}
 
-	return appStyle.Render(s)
+	return tea.NewView(appStyle.Render(b.String()))
 }
 
 func main() {

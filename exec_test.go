@@ -14,7 +14,7 @@ type testExecModel struct {
 	err error
 }
 
-func (m testExecModel) Init() Cmd {
+func (m *testExecModel) Init() Cmd {
 	c := exec.Command(m.cmd) //nolint:gosec
 	return ExecProcess(c, func(err error) Msg {
 		return execFinishedMsg{err}
@@ -33,18 +33,13 @@ func (m *testExecModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testExecModel) View() string {
-	return "\n"
+func (m *testExecModel) View() View {
+	return NewView("\n")
 }
 
 type spyRenderer struct {
 	renderer
 	calledReset bool
-}
-
-func (r *spyRenderer) resetLinesRendered() {
-	r.calledReset = true
-	r.renderer.resetLinesRendered()
 }
 
 func TestTeaExec(t *testing.T) {
@@ -53,6 +48,8 @@ func TestTeaExec(t *testing.T) {
 		cmd       string
 		expectErr bool
 	}
+
+	// TODO: add more tests for windows
 	tests := []test{
 		{
 			name:      "invalid command",
@@ -82,7 +79,10 @@ func TestTeaExec(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testExecModel{cmd: test.cmd}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			p := NewProgram(m,
+				WithInput(&in),
+				WithOutput(&buf),
+			)
 			if _, err := p.Run(); err != nil {
 				t.Error(err)
 			}

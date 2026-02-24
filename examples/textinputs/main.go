@@ -8,10 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/cursor"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/cursor"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var (
@@ -30,6 +30,7 @@ type model struct {
 	focusIndex int
 	inputs     []textinput.Model
 	cursorMode cursor.Mode
+	quitting   bool
 }
 
 func initialModel() model {
@@ -40,15 +41,20 @@ func initialModel() model {
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
-		t.Cursor.Style = cursorStyle
 		t.CharLimit = 32
+
+		s := t.Styles()
+		s.Cursor.Color = lipgloss.Color("205")
+		s.Focused.Prompt = focusedStyle
+		s.Focused.Text = focusedStyle
+		s.Blurred.Prompt = blurredStyle
+		s.Focused.Text = focusedStyle
+		t.SetStyles(s)
 
 		switch i {
 		case 0:
 			t.Placeholder = "Nickname"
 			t.Focus()
-			t.PromptStyle = focusedStyle
-			t.TextStyle = focusedStyle
 		case 1:
 			t.Placeholder = "Email"
 			t.CharLimit = 64
@@ -70,9 +76,10 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
+			m.quitting = true
 			return m, tea.Quit
 
 		// Change cursor mode
@@ -83,7 +90,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := range m.inputs {
-				cmds[i] = m.inputs[i].Cursor.SetMode(m.cursorMode)
+				s := m.inputs[i].Styles()
+				s.Cursor.Blink = m.cursorMode == cursor.CursorBlink
+				m.inputs[i].SetStyles(s)
 			}
 			return m, tea.Batch(cmds...)
 
@@ -115,14 +124,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if i == m.focusIndex {
 					// Set focused state
 					cmds[i] = m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = focusedStyle
-					m.inputs[i].TextStyle = focusedStyle
 					continue
 				}
 				// Remove focused state
 				m.inputs[i].Blur()
-				m.inputs[i].PromptStyle = noStyle
-				m.inputs[i].TextStyle = noStyle
 			}
 
 			return m, tea.Batch(cmds...)
@@ -147,13 +152,20 @@ func (m *model) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	var b strings.Builder
+	var c *tea.Cursor
 
-	for i := range m.inputs {
+	for i, in := range m.inputs {
 		b.WriteString(m.inputs[i].View())
 		if i < len(m.inputs)-1 {
 			b.WriteRune('\n')
+		}
+		if m.cursorMode != cursor.CursorHide && in.Focused() {
+			c = in.Cursor()
+			if c != nil {
+				c.Y += i
+			}
 		}
 	}
 
@@ -167,7 +179,13 @@ func (m model) View() string {
 	b.WriteString(cursorModeHelpStyle.Render(m.cursorMode.String()))
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
 
-	return b.String()
+	if m.quitting {
+		b.WriteRune('\n')
+	}
+
+	v := tea.NewView(b.String())
+	v.Cursor = c
+	return v
 }
 
 func main() {

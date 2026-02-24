@@ -6,19 +6,17 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithMouseAllMotion())
+	p := tea.NewProgram(model{})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-type model struct {
-	mouseEvent tea.MouseEvent
-}
+type model struct{}
 
 func (m model) Init() tea.Cmd {
 	return nil
@@ -26,20 +24,21 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if s := msg.String(); s == "ctrl+c" || s == "q" || s == "esc" {
 			return m, tea.Quit
 		}
 
 	case tea.MouseMsg:
-		return m, tea.Printf("(X: %d, Y: %d) %s", msg.X, msg.Y, tea.MouseEvent(msg))
+		mouse := msg.Mouse()
+		return m, tea.Printf("(X: %d, Y: %d) %s", mouse.X, mouse.Y, mouse)
 	}
 
 	return m, nil
 }
 
-func (m model) View() string {
-	s := "Do mouse stuff. When you're done press q to quit.\n"
-
-	return s
+func (m model) View() tea.View {
+	v := tea.NewView("Do mouse stuff. When you're done press q to quit.\n")
+	v.MouseMode = tea.MouseModeAllMotion
+	return v
 }

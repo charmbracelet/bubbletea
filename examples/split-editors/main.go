@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	cursorColor = lipgloss.Color("212")
 
 	cursorLineStyle = lipgloss.NewStyle().
 			Background(lipgloss.Color("57")).
@@ -27,9 +27,6 @@ var (
 
 	placeholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("238"))
-
-	endOfBufferStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("235"))
 
 	focusedPlaceholderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("99"))
@@ -40,6 +37,9 @@ var (
 
 	blurredBorderStyle = lipgloss.NewStyle().
 				Border(lipgloss.HiddenBorder())
+
+	endOfBufferStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("235"))
 )
 
 type keymap = struct {
@@ -51,14 +51,20 @@ func newTextarea() textarea.Model {
 	t.Prompt = ""
 	t.Placeholder = "Type something"
 	t.ShowLineNumbers = true
-	t.Cursor.Style = cursorStyle
-	t.FocusedStyle.Placeholder = focusedPlaceholderStyle
-	t.BlurredStyle.Placeholder = placeholderStyle
-	t.FocusedStyle.CursorLine = cursorLineStyle
-	t.FocusedStyle.Base = focusedBorderStyle
-	t.BlurredStyle.Base = blurredBorderStyle
-	t.FocusedStyle.EndOfBuffer = endOfBufferStyle
-	t.BlurredStyle.EndOfBuffer = endOfBufferStyle
+	t.SetVirtualCursor(true)
+
+	s := t.Styles()
+	s.Cursor.Color = cursorColor
+	s.Focused.Placeholder = focusedPlaceholderStyle
+	s.Blurred.Placeholder = placeholderStyle
+	s.Focused.CursorLine = cursorLineStyle
+	s.Focused.CursorLineNumber = cursorLineStyle
+	s.Focused.Base = focusedBorderStyle
+	s.Blurred.Base = blurredBorderStyle
+	s.Focused.EndOfBuffer = endOfBufferStyle
+	s.Blurred.EndOfBuffer = endOfBufferStyle
+	t.SetStyles(s)
+
 	t.KeyMap.DeleteWordBackward.SetEnabled(false)
 	t.KeyMap.LineNext = key.NewBinding(key.WithKeys("down"))
 	t.KeyMap.LinePrevious = key.NewBinding(key.WithKeys("up"))
@@ -102,7 +108,7 @@ func newModel() model {
 			),
 		},
 	}
-	for i := 0; i < initialInputs; i++ {
+	for i := range initialInputs {
 		m.inputs[i] = newTextarea()
 	}
 	m.inputs[m.focus].Focus()
@@ -118,7 +124,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, m.keymap.quit):
 			for i := range m.inputs {
@@ -179,7 +185,15 @@ func (m *model) updateKeybindings() {
 	m.keymap.remove.SetEnabled(len(m.inputs) > minInputs)
 }
 
-func (m model) View() string {
+func (m model) inputViews() []string {
+	var views []string
+	for i := range m.inputs {
+		views = append(views, m.inputs[i].View())
+	}
+	return views
+}
+
+func (m model) View() tea.View {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
 		m.keymap.prev,
@@ -188,16 +202,33 @@ func (m model) View() string {
 		m.keymap.quit,
 	})
 
-	var views []string
-	for i := range m.inputs {
-		views = append(views, m.inputs[i].View())
+	v := tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, m.inputViews()...) + "\n\n" + help)
+	v.AltScreen = true
+	return v
+}
+
+func (m model) Cursor() *tea.Cursor {
+	focusedInput := m.inputs[m.focus]
+	if focusedInput.VirtualCursor() {
+		return nil
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help
+	views := m.inputViews()
+	c := focusedInput.Cursor()
+
+	// Find textrea offset to position real cursor.
+	//
+	// To do this we calculate the width of all textareas to the left of
+	// the focused one.
+	for i := range m.focus {
+		c.X += lipgloss.Width(views[i])
+	}
+
+	return c
 }
 
 func main() {
-	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}

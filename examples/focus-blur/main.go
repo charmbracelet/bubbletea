@@ -5,15 +5,14 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func main() {
 	p := tea.NewProgram(model{
-		// assume we start focused...
 		focused:   true,
 		reporting: true,
-	}, tea.WithReportFocus())
+	})
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -34,7 +33,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.focused = true
 	case tea.BlurMsg:
 		m.focused = false
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "t":
 			m.reporting = !m.reporting
@@ -46,7 +45,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	s := "Hi. Focus report is currently "
 	if m.reporting {
 		s += "enabled"
@@ -62,5 +61,7 @@ func (m model) View() string {
 			s += "This program is currently blurred!"
 		}
 	}
-	return s + "\n\nTo quit sooner press ctrl-c, or t to toggle focus reporting...\n"
+	v := tea.NewView(s + "\n\nTo quit sooner press ctrl-c, or t to toggle focus reporting...\n")
+	v.ReportFocus = m.reporting
+	return v
 }

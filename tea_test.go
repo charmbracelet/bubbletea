@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -27,7 +29,7 @@ type testModel struct {
 	counter  atomic.Value
 }
 
-func (m testModel) Init() Cmd {
+func (m *testModel) Init() Cmd {
 	return nil
 }
 
@@ -45,8 +47,11 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 			m.counter.Store(i.(int) + 1)
 		}
 
-	case KeyMsg:
-		return m, Quit
+	case KeyPressMsg:
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, Quit
+		}
 
 	case panicMsg:
 		panic("testing panic behavior")
@@ -55,9 +60,9 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testModel) View() string {
+func (m *testModel) View() View {
 	m.executed.Store(true)
-	return "success\n"
+	return NewView("success")
 }
 
 func TestTeaModel(t *testing.T) {
@@ -65,10 +70,14 @@ func TestTeaModel(t *testing.T) {
 	var in bytes.Buffer
 	in.Write([]byte("q"))
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
 
-	p := NewProgram(&testModel{}, WithInput(&in), WithOutput(&buf), WithContext(ctx))
+	p := NewProgram(&testModel{},
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +92,10 @@ func TestTeaQuit(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -108,7 +120,10 @@ func TestTeaWaitQuit(t *testing.T) {
 	errChan := make(chan error, 1)
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 
 	go func() {
 		_, err := p.Run()
@@ -133,7 +148,7 @@ func TestTeaWaitQuit(t *testing.T) {
 	<-progStarted
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		wg.Add(1)
 		go func() {
 			p.Wait()
@@ -158,7 +173,10 @@ func TestTeaWaitKill(t *testing.T) {
 	errChan := make(chan error, 1)
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 
 	go func() {
 		_, err := p.Run()
@@ -183,7 +201,7 @@ func TestTeaWaitKill(t *testing.T) {
 	<-progStarted
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		wg.Add(1)
 		go func() {
 			p.Wait()
@@ -214,16 +232,17 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 	p := NewProgram(m,
 		WithInput(&in),
 		WithOutput(&buf),
-		WithFilter(func(_ Model, msg Msg) Msg {
-			if _, ok := msg.(QuitMsg); !ok {
-				return msg
-			}
-			if shutdowns < preventCount {
-				atomic.AddUint32(&shutdowns, 1)
-				return nil
-			}
+	)
+	p.filter = func(_ Model, msg Msg) Msg {
+		if _, ok := msg.(QuitMsg); !ok {
 			return msg
-		}))
+		}
+		if shutdowns < preventCount {
+			atomic.AddUint32(&shutdowns, 1)
+			return nil
+		}
+		return msg
+	}
 
 	go func() {
 		for atomic.LoadUint32(&shutdowns) <= preventCount {
@@ -232,7 +251,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 		}
 	}()
 
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
 	if shutdowns != preventCount {
@@ -245,7 +264,10 @@ func TestTeaKill(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -270,12 +292,16 @@ func TestTeaKill(t *testing.T) {
 }
 
 func TestTeaContext(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -299,12 +325,16 @@ func TestTeaContext(t *testing.T) {
 }
 
 func TestTeaContextImplodeDeadlock(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -321,7 +351,7 @@ func TestTeaContextImplodeDeadlock(t *testing.T) {
 }
 
 func TestTeaContextBatchDeadlock(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -331,7 +361,11 @@ func TestTeaContextBatchDeadlock(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -360,7 +394,10 @@ func TestTeaBatchMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		p.Send(BatchMsg{inc, inc})
 
@@ -392,7 +429,10 @@ func TestTeaSequenceMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go p.Send(sequenceMsg{inc, inc, Quit})
 
 	if _, err := p.Run(); err != nil {
@@ -416,7 +456,10 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go p.Send(sequenceMsg{batch, inc, Quit})
 
 	if _, err := p.Run(); err != nil {
@@ -437,7 +480,10 @@ func TestTeaNestedSequenceMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go p.Send(sequenceMsg{inc, Sequence(inc, inc, Batch(inc, inc)), Quit})
 
 	if _, err := p.Run(); err != nil {
@@ -454,7 +500,10 @@ func TestTeaSend(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 
 	// sending before the program is started is a blocking operation
 	go p.Send(Quit())
@@ -472,7 +521,10 @@ func TestTeaNoRun(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	NewProgram(m, WithInput(&in), WithOutput(&buf))
+	NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 }
 
 func TestTeaPanic(t *testing.T) {
@@ -480,7 +532,10 @@ func TestTeaPanic(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -507,7 +562,10 @@ func TestTeaGoroutinePanic(t *testing.T) {
 	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -531,5 +589,63 @@ func TestTeaGoroutinePanic(t *testing.T) {
 
 	if !errors.Is(err, ErrProgramKilled) {
 		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
+type benchModel struct {
+	t testing.TB
+}
+
+func (m benchModel) Init() Cmd {
+	return nil
+}
+
+func (m benchModel) Update(msg Msg) (Model, Cmd) {
+	switch msg := msg.(type) {
+	case KeyPressMsg:
+		switch msg.String() {
+		case "q", "ctrl+c":
+			return m, Quit
+		}
+	}
+
+	return m, nil
+}
+
+func (m benchModel) View() View {
+	view := strings.Join([]string{
+		" \x1b[38;5;63m╭─────────────────────────╮\x1b[m",
+		" \x1b[38;5;63m│\x1b[m\x1b[25X\x1b[28G\x1b[38;5;63m│\x1b[m",
+		" \x1b[38;5;63m│\x1b[m    \x1b[38;5;231mHello There!\x1b[m    \x1b[38;5;63m│\x1b[m",
+		" \x1b[38;5;63m│\x1b[m\x1b[25X\x1b[28G\x1b[38;5;63m│\x1b[m",
+		" \x1b[38;5;63m╰─────────────────────────╯\x1b[m",
+	}, "\n")
+
+	return NewView(view)
+}
+
+func BenchmarkTeaRun(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var buf bytes.Buffer
+
+		m := benchModel{b}
+		r, w := io.Pipe()
+		p := NewProgram(m,
+			WithInput(r),
+			WithOutput(&buf),
+		)
+
+		go func() {
+			for _, input := range "abcdefghijklmnopq" {
+				time.Sleep(10 * time.Millisecond)
+				w.Write([]byte(string(input)))
+			}
+		}()
+
+		if _, err := p.Run(); err != nil {
+			b.Fatalf("Run failed: %v", err)
+		}
+
+		_ = r.CloseWithError(io.EOF)
 	}
 }

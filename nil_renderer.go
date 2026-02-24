@@ -1,29 +1,53 @@
 package tea
 
+import (
+	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/ansi"
+)
+
+// nilRenderer is a no-op renderer. It implements the Renderer interface but
+// doesn't render anything to the terminal.
 type nilRenderer struct{}
 
-func (n nilRenderer) start()                     {}
-func (n nilRenderer) stop()                      {}
-func (n nilRenderer) kill()                      {}
-func (n nilRenderer) write(_ string)             {}
-func (n nilRenderer) repaint()                   {}
-func (n nilRenderer) clearScreen()               {}
-func (n nilRenderer) altScreen() bool            { return false }
-func (n nilRenderer) enterAltScreen()            {}
-func (n nilRenderer) exitAltScreen()             {}
-func (n nilRenderer) showCursor()                {}
-func (n nilRenderer) hideCursor()                {}
-func (n nilRenderer) enableMouseCellMotion()     {}
-func (n nilRenderer) disableMouseCellMotion()    {}
-func (n nilRenderer) enableMouseAllMotion()      {}
-func (n nilRenderer) disableMouseAllMotion()     {}
-func (n nilRenderer) enableBracketedPaste()      {}
-func (n nilRenderer) disableBracketedPaste()     {}
-func (n nilRenderer) enableMouseSGRMode()        {}
-func (n nilRenderer) disableMouseSGRMode()       {}
-func (n nilRenderer) bracketedPasteActive() bool { return false }
-func (n nilRenderer) setWindowTitle(_ string)    {}
-func (n nilRenderer) reportFocus() bool          { return false }
-func (n nilRenderer) enableReportFocus()         {}
-func (n nilRenderer) disableReportFocus()        {}
-func (n nilRenderer) resetLinesRendered()        {}
+var _ renderer = nilRenderer{}
+
+// start implements renderer.
+func (n nilRenderer) start() {}
+
+// clearScreen implements renderer.
+func (n nilRenderer) clearScreen() {}
+
+// insertAbove implements renderer.
+func (n nilRenderer) insertAbove(string) error { return nil }
+
+// resize implements renderer.
+func (n nilRenderer) resize(int, int) {}
+
+// setColorProfile implements renderer.
+func (n nilRenderer) setColorProfile(colorprofile.Profile) {}
+
+// flush implements the Renderer interface.
+func (nilRenderer) flush(bool) error { return nil }
+
+// close implements the Renderer interface.
+func (nilRenderer) close() error { return nil }
+
+// render implements the Renderer interface.
+func (nilRenderer) render(View) {}
+
+// reset implements the Renderer interface.
+func (nilRenderer) reset() {}
+
+// writeString implements the Renderer interface.
+func (nilRenderer) writeString(string) (int, error) { return 0, nil }
+
+// setSyncdUpdates implements the Renderer interface.
+func (n nilRenderer) setSyncdUpdates(bool) {}
+
+// setWidthMethod implements the Renderer interface.
+func (n nilRenderer) setWidthMethod(ansi.Method) {}
+
+// onMouse implements the Renderer interface.
+func (n nilRenderer) onMouse(MouseMsg) Cmd {
+	return nil
+}

@@ -1,17 +1,16 @@
 package tea
 
 import (
-	"errors"
 	"fmt"
-	"io"
+	"os"
 	"time"
 
+	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/term"
-	"github.com/muesli/cancelreader"
 )
 
 func (p *Program) suspend() {
-	if err := p.ReleaseTerminal(); err != nil {
+	if err := p.releaseTerminal(true); err != nil {
 		// If we can't release input, abort.
 		return
 	}
@@ -23,38 +22,17 @@ func (p *Program) suspend() {
 }
 
 func (p *Program) initTerminal() error {
-	if _, ok := p.renderer.(*nilRenderer); ok {
-		// No need to initialize the terminal if we're not rendering
+	if p.disableRenderer {
 		return nil
 	}
-
-	if err := p.initInput(); err != nil {
-		return err
-	}
-
-	p.renderer.hideCursor()
-	return nil
+	return p.initInput()
 }
 
 // restoreTerminalState restores the terminal to the state prior to running the
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
-	if p.renderer != nil {
-		p.renderer.disableBracketedPaste()
-		p.renderer.showCursor()
-		p.disableMouse()
-
-		if p.renderer.reportFocus() {
-			p.renderer.disableReportFocus()
-		}
-
-		if p.renderer.altScreen() {
-			p.renderer.exitAltScreen()
-
-			// give the terminal a moment to catch up
-			time.Sleep(time.Millisecond * 10) //nolint:mnd
-		}
-	}
+	// Flush queued commands.
+	_ = p.flush()
 
 	return p.restoreInput()
 }
@@ -63,31 +41,41 @@ func (p *Program) restoreTerminalState() error {
 func (p *Program) restoreInput() error {
 	if p.ttyInput != nil && p.previousTtyInputState != nil {
 		if err := term.Restore(p.ttyInput.Fd(), p.previousTtyInputState); err != nil {
-			return fmt.Errorf("error restoring console: %w", err)
+			return fmt.Errorf("bubbletea: error restoring console: %w", err)
 		}
 	}
 	if p.ttyOutput != nil && p.previousOutputState != nil {
 		if err := term.Restore(p.ttyOutput.Fd(), p.previousOutputState); err != nil {
-			return fmt.Errorf("error restoring console: %w", err)
+			return fmt.Errorf("bubbletea: error restoring console: %w", err)
 		}
 	}
 	return nil
 }
 
-// initCancelReader (re)commences reading inputs.
-func (p *Program) initCancelReader(cancel bool) error {
+// initInputReader (re)commences reading inputs.
+func (p *Program) initInputReader(cancel bool) error {
 	if cancel && p.cancelReader != nil {
 		p.cancelReader.Cancel()
 		p.waitForReadLoop()
 	}
 
+	term := p.environ.Getenv("TERM")
+
+	// Initialize the input reader.
+	// This need to be done after the terminal has been initialized and set to
+	// raw mode.
+
 	var err error
-	p.cancelReader, err = newInputReader(p.input, p.mouseMode)
+	p.cancelReader, err = uv.NewCancelReader(p.input)
 	if err != nil {
-		return fmt.Errorf("error creating cancelreader: %w", err)
+		return fmt.Errorf("bubbletea: could not create cancelable reader: %w", err)
 	}
 
+	drv := uv.NewTerminalReader(p.cancelReader, term)
+	drv.SetLogger(p.logger)
+	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
+
 	go p.readLoop()
 
 	return nil
@@ -96,10 +84,10 @@ func (p *Program) initCancelReader(cancel bool) error {
 func (p *Program) readLoop() {
 	defer close(p.readLoopDone)
 
-	err := readInputs(p.ctx, p.msgs, p.cancelReader)
-	if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
 		select {
 		case <-p.ctx.Done():
+			return
 		case p.errs <- err:
 		}
 	}
@@ -134,8 +122,15 @@ func (p *Program) checkResize() {
 		return
 	}
 
-	p.Send(WindowSizeMsg{
-		Width:  w,
-		Height: h,
-	})
+	p.width, p.height = w, h
+	p.Send(WindowSizeMsg{Width: w, Height: h})
+}
+
+// OpenTTY opens the running terminal's TTY for reading and writing.
+func OpenTTY() (*os.File, *os.File, error) {
+	in, out, err := uv.OpenTTY()
+	if err != nil {
+		return nil, nil, fmt.Errorf("bubbletea: could not open TTY: %w", err)
+	}
+	return in, out, nil
 }

@@ -2,28 +2,35 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
-	"time"
+	"sync"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
-var (
-	appStyle = lipgloss.NewStyle().Padding(1, 2)
+type styles struct {
+	app           lipgloss.Style
+	title         lipgloss.Style
+	statusMessage lipgloss.Style
+}
 
-	titleStyle = lipgloss.NewStyle().
+func newStyles(darkBG bool) styles {
+	lightDark := lipgloss.LightDark(darkBG)
+
+	return styles{
+		app: lipgloss.NewStyle().
+			Padding(1, 2),
+		title: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFDF5")).
 			Background(lipgloss.Color("#25A065")).
-			Padding(0, 1)
-
-	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
-				Render
-)
+			Padding(0, 1),
+		statusMessage: lipgloss.NewStyle().
+			Foreground(lightDark(lipgloss.Color("#04B575"), lipgloss.Color("#04B575"))),
+	}
+}
 
 type item struct {
 	title       string
@@ -73,63 +80,49 @@ func newListKeyMap() *listKeyMap {
 }
 
 type model struct {
+	styles        styles
+	darkBG        bool
+	width, height int
+	once          *sync.Once
 	list          list.Model
 	itemGenerator *randomItemGenerator
 	keys          *listKeyMap
 	delegateKeys  *delegateKeyMap
 }
 
-func newModel() model {
-	var (
-		itemGenerator randomItemGenerator
-		delegateKeys  = newDelegateKeyMap()
-		listKeys      = newListKeyMap()
+func (m model) Init() tea.Cmd {
+	return tea.Batch(
+		tea.RequestBackgroundColor,
 	)
-
-	// Make initial list of items
-	const numItems = 24
-	items := make([]list.Item, numItems)
-	for i := 0; i < numItems; i++ {
-		items[i] = itemGenerator.next()
-	}
-
-	// Setup list
-	delegate := newItemDelegate(delegateKeys)
-	groceryList := list.New(items, delegate, 0, 0)
-	groceryList.Title = "Groceries"
-	groceryList.Styles.Title = titleStyle
-	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
-		return []key.Binding{
-			listKeys.toggleSpinner,
-			listKeys.insertItem,
-			listKeys.toggleTitleBar,
-			listKeys.toggleStatusBar,
-			listKeys.togglePagination,
-			listKeys.toggleHelpMenu,
-		}
-	}
-
-	return model{
-		list:          groceryList,
-		keys:          listKeys,
-		delegateKeys:  delegateKeys,
-		itemGenerator: &itemGenerator,
-	}
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m *model) updateListProperties() {
+	// Update list size.
+	h, v := m.styles.app.GetFrameSize()
+	m.list.SetSize(m.width-h, m.height-v)
+
+	// Update the model and list styles.
+	m.styles = newStyles(m.darkBG)
+	m.list.Styles.Title = m.styles.title
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		h, v := appStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
+	case tea.BackgroundColorMsg:
+		m.darkBG = msg.IsDark()
+		m.updateListProperties()
+		return m, nil
 
-	case tea.KeyMsg:
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		m.updateListProperties()
+		return m, nil
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyPressMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {
 			break
@@ -163,7 +156,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.delegateKeys.remove.SetEnabled(true)
 			newItem := m.itemGenerator.next()
 			insCmd := m.list.InsertItem(0, newItem)
-			statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
+			statusCmd := m.list.NewStatusMessage(m.styles.statusMessage.Render("Added " + newItem.Title()))
 			return m, tea.Batch(insCmd, statusCmd)
 		}
 	}
@@ -176,14 +169,54 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	return appStyle.Render(m.list.View())
+func (m model) View() tea.View {
+	v := tea.NewView(m.styles.app.Render(m.list.View()))
+	v.AltScreen = true
+	return v
+}
+
+func initialModel() model {
+	// Initialize the model and list.
+	m := model{}
+	m.styles = newStyles(false) // default to dark background styles
+
+	delegateKeys := newDelegateKeyMap()
+	listKeys := newListKeyMap()
+
+	// Make initial list of items.
+	var itemGenerator randomItemGenerator
+	const numItems = 24
+	items := make([]list.Item, numItems)
+	for i := range numItems {
+		items[i] = itemGenerator.next()
+	}
+
+	// Setup list.
+	delegate := newItemDelegate(delegateKeys, &m.styles)
+	groceryList := list.New(items, delegate, 0, 0)
+	groceryList.Title = "Groceries"
+	groceryList.Styles.Title = m.styles.title
+	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			listKeys.toggleSpinner,
+			listKeys.insertItem,
+			listKeys.toggleTitleBar,
+			listKeys.toggleStatusBar,
+			listKeys.togglePagination,
+			listKeys.toggleHelpMenu,
+		}
+	}
+
+	m.list = groceryList
+	m.keys = listKeys
+	m.delegateKeys = delegateKeys
+	m.itemGenerator = &itemGenerator
+
+	return m
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
-	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

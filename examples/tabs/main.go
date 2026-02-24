@@ -5,13 +5,47 @@ import (
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
+
+type styles struct {
+	doc         lipgloss.Style
+	highlight   lipgloss.Style
+	inactiveTab lipgloss.Style
+	activeTab   lipgloss.Style
+	window      lipgloss.Style
+}
+
+func newStyles(bgIsDark bool) *styles {
+	lightDark := lipgloss.LightDark(bgIsDark)
+
+	inactiveTabBorder := tabBorderWithBottom("┴", "─", "┴")
+	activeTabBorder := tabBorderWithBottom("┘", " ", "└")
+	highlightColor := lightDark(lipgloss.Color("#874BFD"), lipgloss.Color("#7D56F4"))
+
+	s := new(styles)
+	s.doc = lipgloss.NewStyle().
+		Padding(1, 2, 1, 2)
+	s.inactiveTab = lipgloss.NewStyle().
+		Border(inactiveTabBorder, true).
+		BorderForeground(highlightColor).
+		Padding(0, 1)
+	s.activeTab = s.inactiveTab.
+		Border(activeTabBorder, true)
+	s.window = lipgloss.NewStyle().
+		BorderForeground(highlightColor).
+		Padding(2, 0).
+		Align(lipgloss.Center).
+		Border(lipgloss.NormalBorder()).
+		UnsetBorderTop()
+	return s
+}
 
 type model struct {
 	Tabs       []string
 	TabContent []string
+	styles     *styles
 	activeTab  int
 }
 
@@ -21,7 +55,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch keypress := msg.String(); keypress {
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -45,18 +79,13 @@ func tabBorderWithBottom(left, middle, right string) lipgloss.Border {
 	return border
 }
 
-var (
-	inactiveTabBorder = tabBorderWithBottom("┴", "─", "┴")
-	activeTabBorder   = tabBorderWithBottom("┘", " ", "└")
-	docStyle          = lipgloss.NewStyle().Padding(1, 2, 1, 2)
-	highlightColor    = lipgloss.AdaptiveColor{Light: "#874BFD", Dark: "#7D56F4"}
-	inactiveTabStyle  = lipgloss.NewStyle().Border(inactiveTabBorder, true).BorderForeground(highlightColor).Padding(0, 1)
-	activeTabStyle    = inactiveTabStyle.Border(activeTabBorder, true)
-	windowStyle       = lipgloss.NewStyle().BorderForeground(highlightColor).Padding(2, 0).Align(lipgloss.Center).Border(lipgloss.NormalBorder()).UnsetBorderTop()
-)
+func (m model) View() tea.View {
+	if m.styles == nil {
+		return tea.NewView("")
+	}
 
-func (m model) View() string {
 	doc := strings.Builder{}
+	s := m.styles
 
 	var renderedTabs []string
 
@@ -64,9 +93,9 @@ func (m model) View() string {
 		var style lipgloss.Style
 		isFirst, isLast, isActive := i == 0, i == len(m.Tabs)-1, i == m.activeTab
 		if isActive {
-			style = activeTabStyle
+			style = s.activeTab
 		} else {
-			style = inactiveTabStyle
+			style = s.inactiveTab
 		}
 		border, _, _, _, _ := style.GetBorder()
 		if isFirst && isActive {
@@ -85,14 +114,14 @@ func (m model) View() string {
 	row := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 	doc.WriteString(row)
 	doc.WriteString("\n")
-	doc.WriteString(windowStyle.Width((lipgloss.Width(row) - windowStyle.GetHorizontalFrameSize())).Render(m.TabContent[m.activeTab]))
-	return docStyle.Render(doc.String())
+	doc.WriteString(s.window.Width((lipgloss.Width(row))).Render(m.TabContent[m.activeTab]))
+	return tea.NewView(s.doc.Render(doc.String()))
 }
 
 func main() {
 	tabs := []string{"Lip Gloss", "Blush", "Eye Shadow", "Mascara", "Foundation"}
 	tabContent := []string{"Lip Gloss Tab", "Blush Tab", "Eye Shadow Tab", "Mascara Tab", "Foundation Tab"}
-	m := model{Tabs: tabs, TabContent: tabContent}
+	m := model{Tabs: tabs, TabContent: tabContent, styles: newStyles(true)} // default to dark styles.
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

@@ -100,7 +100,7 @@ func (c *osExecCommand) SetStderr(w io.Writer) {
 
 // exec runs an ExecCommand and delivers the results to the program as a Msg.
 func (p *Program) exec(c ExecCommand, fn ExecCallback) {
-	if err := p.ReleaseTerminal(); err != nil {
+	if err := p.releaseTerminal(false); err != nil {
 		// If we can't release input, abort.
 		if fn != nil {
 			go p.Send(fn(err))
@@ -114,16 +114,12 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 
 	// Execute system command.
 	if err := c.Run(); err != nil {
-		p.renderer.resetLinesRendered()
 		_ = p.RestoreTerminal() // also try to restore the terminal.
 		if fn != nil {
 			go p.Send(fn(err))
 		}
 		return
 	}
-
-	// Maintain the existing output from the command
-	p.renderer.resetLinesRendered()
 
 	// Have the program re-capture input.
 	err := p.RestoreTerminal()

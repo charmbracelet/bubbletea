@@ -7,12 +7,15 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 type model struct{}
 
 func (m model) Init() tea.Cmd {
+	// A tea.Sequence is a command that runs a series of commands in
+	// order. Contrast this with tea.Batch, which runs a series of commands
+	// concurrently, with no order guarantees.
 	return tea.Sequence(
 		tea.Batch(
 			tea.Sequence(
@@ -50,14 +53,14 @@ func SleepPrintln(s string, milisecond int) tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m, tea.Quit
 	}
 	return m, nil
 }
 
-func (m model) View() string {
-	return ""
+func (m model) View() tea.View {
+	return tea.NewView("")
 }
 
 func main() {

@@ -8,7 +8,7 @@ import (
 	"log"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 type model int
@@ -16,7 +16,7 @@ type model int
 type tickMsg time.Time
 
 func main() {
-	p := tea.NewProgram(model(5), tea.WithAltScreen())
+	p := tea.NewProgram(model(5))
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q", "esc", "ctrl+c":
 			return m, tea.Quit
@@ -45,8 +45,10 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
-	return fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m)
+func (m model) View() tea.View {
+	v := tea.NewView(fmt.Sprintf("\n\n     Hi. This program will exit in %d seconds...", m))
+	v.AltScreen = true
+	return v
 }
 
 func tick() tea.Cmd {

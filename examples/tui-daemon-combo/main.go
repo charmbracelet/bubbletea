@@ -9,9 +9,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-isatty"
 )
 
@@ -24,7 +24,6 @@ func main() {
 	var (
 		daemonMode bool
 		showHelp   bool
-		opts       []tea.ProgramOption
 	)
 
 	flag.BoolVar(&daemonMode, "d", false, "run as a daemon")
@@ -36,9 +35,10 @@ func main() {
 		os.Exit(0)
 	}
 
+	opts := []tea.ProgramOption{}
 	if daemonMode || !isatty.IsTerminal(os.Stdout.Fd()) {
 		// If we're in daemon mode don't render the TUI
-		opts = []tea.ProgramOption{tea.WithoutRenderer()}
+		opts = append(opts, tea.WithoutRenderer())
 	} else {
 		// If we're in TUI mode, discard log output
 		log.SetOutput(io.Discard)
@@ -84,7 +84,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		m.quitting = true
 		return m, tea.Quit
 	case spinner.TickMsg:
@@ -102,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
 	s := "\n" +
 		m.spinner.View() + " Doing some work...\n\n"
 
@@ -120,7 +120,7 @@ func (m model) View() string {
 		s += "\n"
 	}
 
-	return mainStyle.Render(s)
+	return tea.NewView(mainStyle.Render(s))
 }
 
 // processFinishedMsg is sent when a pretend process completes.

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -44,7 +44,7 @@ type model struct {
 type tickMsg time.Time
 
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v\n", err)
 	}
@@ -73,10 +73,7 @@ func (m *model) updateEyePositions() {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		tickCmd(),
-		tea.EnterAltScreen,
-	)
+	return tickCmd()
 }
 
 func tickCmd() tea.Cmd {
@@ -88,7 +85,8 @@ func tickCmd() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.Type == tea.KeyCtrlC || msg.Type == tea.KeyEsc {
+		switch msg.String() {
+		case "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 
@@ -124,7 +122,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tickCmd()
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
+	var v tea.View
+	v.AltScreen = true // Use alternate screen buffer
+
 	// Create empty canvas
 	canvas := make([][]string, m.height)
 	for y := range canvas {
@@ -170,7 +171,9 @@ func (m model) View() string {
 	style := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#F0F0F0"))
 
-	return style.Render(s.String())
+	v.SetContent(style.Render(s.String()))
+
+	return v
 }
 
 func drawEllipse(canvas [][]string, x0, y0, rx, ry int) {

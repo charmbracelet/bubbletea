@@ -20,6 +20,11 @@ func (p *Program) initInput() (err error) {
 		if err != nil {
 			return fmt.Errorf("error entering raw mode: %w", err)
 		}
+
+		// OPTIM: We can use hard tabs and backspaces to optimize cursor
+		// movements. This is based on termios settings support and whether
+		// they exist and enabled.
+		p.checkOptimizedMovements(p.previousTtyInputState)
 	}
 
 	if f, ok := p.output.(term.File); ok && term.IsTerminal(f.Fd()) {
@@ -27,14 +32,6 @@ func (p *Program) initInput() (err error) {
 	}
 
 	return nil
-}
-
-func openInputTTY() (*os.File, error) {
-	f, err := os.Open("/dev/tty")
-	if err != nil {
-		return nil, fmt.Errorf("could not open a new TTY: %w", err)
-	}
-	return f, nil
 }
 
 const suspendSupported = true

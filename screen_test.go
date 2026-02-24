@@ -2,59 +2,178 @@ package tea
 
 import (
 	"bytes"
+	"image/color"
 	"testing"
+
+	"github.com/charmbracelet/colorprofile"
+	"github.com/charmbracelet/x/exp/golden"
 )
 
-func TestClearMsg(t *testing.T) {
+type testViewOpts struct {
+	altScreen   bool
+	mouseMode   MouseMode
+	showCursor  bool
+	disableBp   bool
+	keyReleases bool
+	bgColor     color.Color
+}
+
+func testViewOptsCmds(opts ...testViewOpts) []Cmd {
+	cmds := make([]Cmd, len(opts))
+	for i, o := range opts {
+		o := o
+		cmds[i] = func() Msg {
+			return o
+		}
+	}
+	return cmds
+}
+
+type testViewModel struct {
+	*testModel
+	opts testViewOpts
+}
+
+func (m *testViewModel) Update(msg Msg) (Model, Cmd) {
+	switch msg := msg.(type) {
+	case testViewOpts:
+		m.opts = msg
+		return m, nil
+	}
+	tm, cmd := m.testModel.Update(msg)
+	m.testModel = tm.(*testModel)
+	return m, cmd
+}
+
+func (m *testViewModel) View() View {
+	v := m.testModel.View()
+	v.AltScreen = m.opts.altScreen
+	v.MouseMode = m.opts.mouseMode
+	v.DisableBracketedPasteMode = m.opts.disableBp
+	v.KeyboardEnhancements.ReportEventTypes = m.opts.keyReleases
+	v.BackgroundColor = m.opts.bgColor
+	if m.opts.showCursor {
+		v.Cursor = NewCursor(0, 0)
+	}
+	return v
+}
+
+func TestViewModel(t *testing.T) {
 	tests := []struct {
-		name     string
-		cmds     sequenceMsg
-		expected string
+		name string
+		opts []testViewOpts
 	}{
 		{
-			name:     "clear_screen",
-			cmds:     []Cmd{ClearScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[2J\x1b[H\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "altscreen",
+			opts: []testViewOpts{
+				{altScreen: true},
+				{altScreen: false},
+			},
 		},
 		{
-			name:     "altscreen",
-			cmds:     []Cmd{EnterAltScreen, ExitAltScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[H\x1b[?25l\x1b[?1049l\x1b[?25l\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "altscreen_autoexit",
+			opts: []testViewOpts{
+				{altScreen: true},
+			},
 		},
 		{
-			name:     "altscreen_autoexit",
-			cmds:     []Cmd{EnterAltScreen},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1049h\x1b[2J\x1b[H\x1b[?25l\x1b[H\rsuccess\x1b[K\r\n\x1b[K\x1b[2;H\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?1049l\x1b[?25h",
+			name: "mouse_cellmotion",
+			opts: []testViewOpts{
+				{mouseMode: MouseModeCellMotion},
+			},
 		},
 		{
-			name:     "mouse_cellmotion",
-			cmds:     []Cmd{EnableMouseCellMotion},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1002h\x1b[?1006h\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "mouse_allmotion",
+			opts: []testViewOpts{
+				{mouseMode: MouseModeAllMotion},
+			},
 		},
 		{
-			name:     "mouse_allmotion",
-			cmds:     []Cmd{EnableMouseAllMotion},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "mouse_disable",
+			opts: []testViewOpts{
+				{mouseMode: MouseModeAllMotion},
+				{mouseMode: MouseModeNone},
+			},
 		},
 		{
-			name:     "mouse_disable",
-			cmds:     []Cmd{EnableMouseAllMotion, DisableMouse},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?1003h\x1b[?1006h\x1b[?1002l\x1b[?1003l\x1b[?1006l\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "cursor_hide",
+			opts: []testViewOpts{
+				{},
+			},
 		},
 		{
-			name:     "cursor_hide",
-			cmds:     []Cmd{HideCursor},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "cursor_hideshow",
+			opts: []testViewOpts{
+				{showCursor: false},
+				{showCursor: true},
+			},
 		},
 		{
-			name:     "cursor_hideshow",
-			cmds:     []Cmd{HideCursor, ShowCursor},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?25l\x1b[?25h\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "bp_stop_start",
+			opts: []testViewOpts{
+				{disableBp: true},
+				{disableBp: false},
+			},
 		},
 		{
-			name:     "bp_stop_start",
-			cmds:     []Cmd{DisableBracketedPaste, EnableBracketedPaste},
-			expected: "\x1b[?25l\x1b[?2004h\x1b[?2004l\x1b[?2004h\rsuccess\x1b[K\r\n\x1b[K\r\x1b[2K\r\x1b[?2004l\x1b[?25h\x1b[?1002l\x1b[?1003l\x1b[?1006l",
+			name: "kitty_stop_startreleases",
+			opts: []testViewOpts{
+				{},
+				{keyReleases: true},
+			},
+		},
+		{
+			name: "bg_set_color",
+			opts: []testViewOpts{
+				{bgColor: color.RGBA{255, 255, 255, 255}},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			var in bytes.Buffer
+
+			m := &testViewModel{testModel: &testModel{}}
+			p := NewProgram(m,
+				// Set the initial window size for the program.
+				WithWindowSize(80, 24),
+				// Use ANSI256 to increase test coverage.
+				WithColorProfile(colorprofile.ANSI256),
+				// always use xterm and 256 colors for tests
+				WithEnvironment([]string{"TERM=xterm-256color"}),
+				WithInput(&in),
+				WithOutput(&buf),
+			)
+
+			go p.Send(append(sequenceMsg(testViewOptsCmds(test.opts...)), Quit))
+
+			if _, err := p.Run(); err != nil {
+				t.Fatal(err)
+			}
+			golden.RequireEqual(t, buf.Bytes())
+		})
+	}
+}
+
+func TestClearMsg(t *testing.T) {
+	type test struct {
+		name string
+		cmds sequenceMsg
+	}
+	tests := []test{
+		{
+			name: "clear_screen",
+			cmds: []Cmd{ClearScreen},
+		},
+		{
+			name: "read_set_clipboard",
+			cmds: []Cmd{ReadClipboard, SetClipboard("success")},
+		},
+		{
+			name: "bg_fg_cur_color",
+			cmds: []Cmd{RequestForegroundColor, RequestBackgroundColor, RequestCursorColor},
 		},
 	}
 
@@ -64,19 +183,23 @@ func TestClearMsg(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testModel{}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			p := NewProgram(m,
+				// Set the initial window size for the program.
+				WithWindowSize(80, 24),
+				// Use ANSI256 to increase test coverage.
+				WithColorProfile(colorprofile.ANSI256),
+				// always use xterm and 256 colors for tests
+				WithEnvironment([]string{"TERM=xterm-256color"}),
+				WithInput(&in),
+				WithOutput(&buf),
+			)
 
-			test.cmds = append([]Cmd{func() Msg { return WindowSizeMsg{80, 24} }}, test.cmds...)
-			test.cmds = append(test.cmds, Quit)
-			go p.Send(test.cmds)
+			go p.Send(append(test.cmds, Quit))
 
 			if _, err := p.Run(); err != nil {
 				t.Fatal(err)
 			}
-
-			if buf.String() != test.expected {
-				t.Errorf("expected embedded sequence:\n%q\ngot:\n%q", test.expected, buf.String())
-			}
+			golden.RequireEqual(t, buf.Bytes())
 		})
 	}
 }

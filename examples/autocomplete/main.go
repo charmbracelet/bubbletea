@@ -2,16 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func main() {
@@ -21,8 +20,10 @@ func main() {
 	}
 }
 
-type gotReposSuccessMsg []repo
-type gotReposErrMsg error
+type (
+	gotReposSuccessMsg []repo
+	gotReposErrMsg     error
+)
 
 type repo struct {
 	Name string `json:"name"`
@@ -66,66 +67,116 @@ type model struct {
 	keymap    keymap
 }
 
-type keymap struct{}
+type keymap struct {
+	complete, next, prev, quit key.Binding
+}
 
 func (k keymap) ShortHelp() []key.Binding {
 	return []key.Binding{
-		key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete")),
-		key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next")),
-		key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev")),
-		key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "quit")),
+		k.complete,
+		k.next,
+		k.prev,
+		k.quit,
 	}
 }
+
 func (k keymap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{k.ShortHelp()}
 }
 
 func initialModel() model {
 	ti := textinput.New()
-	ti.Placeholder = "repository"
 	ti.Prompt = "charmbracelet/"
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+
+	s := ti.Styles()
+	s.Focused.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).MarginLeft(2)
+	s.Cursor.Color = lipgloss.Color("63")
+	ti.SetStyles(s)
+
+	ti.SetVirtualCursor(false)
 	ti.Focus()
 	ti.CharLimit = 50
-	ti.Width = 20
+	ti.SetWidth(20)
 	ti.ShowSuggestions = true
 
-	h := help.New()
+	km := keymap{
+		// XXX: we should be using the keybindings on the textinput model.
+		complete: key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "complete"), key.WithDisabled()),
+		next:     key.NewBinding(key.WithKeys("ctrl+n"), key.WithHelp("ctrl+n", "next"), key.WithDisabled()),
+		prev:     key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "prev"), key.WithDisabled()),
 
-	km := keymap{}
+		quit: key.NewBinding(key.WithKeys("enter", "ctrl+c", "esc"), key.WithHelp("esc", "quit")),
+	}
 
-	return model{textInput: ti, help: h, keymap: km}
+	return model{
+		textInput: ti,
+		keymap:    km,
+		help:      help.New(),
+	}
 }
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(getRepos, textinput.Blink)
 }
 
+func (m model) Cursor() *tea.Cursor {
+	c := m.textInput.Cursor()
+	if c != nil {
+		c.Y += lipgloss.Height(m.headerView())
+	}
+	return c
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter, tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
-		}
+
 	case gotReposSuccessMsg:
 		var suggestions []string
 		for _, r := range msg {
 			suggestions = append(suggestions, r.Name)
 		}
 		m.textInput.SetSuggestions(suggestions)
+
+	case tea.KeyPressMsg:
+		switch {
+		case key.Matches(msg, m.keymap.quit):
+			return m, tea.Quit
+		}
 	}
 
 	var cmd tea.Cmd
 	m.textInput, cmd = m.textInput.Update(msg)
+
+	// Determine whether to show completion keybindings.
+	//
+	// XXX: we should be using the keybindings on the textinput model.
+	hasChoices := len(m.textInput.MatchedSuggestions()) > 1
+	m.keymap.complete.SetEnabled(hasChoices)
+	m.keymap.next.SetEnabled(hasChoices)
+	m.keymap.prev.SetEnabled(hasChoices)
+
 	return m, cmd
 }
 
-func (m model) View() string {
-	return fmt.Sprintf(
-		"Pick a Charm™ repo:\n\n  %s\n\n%s\n\n",
+func (m model) View() tea.View {
+	if len(m.textInput.AvailableSuggestions()) < 1 {
+		return tea.NewView("One sec, we're fetching completions...")
+	}
+
+	v := tea.NewView(lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.headerView(),
 		m.textInput.View(),
-		m.help.View(m.keymap),
-	)
+		m.footerView(),
+	))
+
+	c := m.textInput.Cursor()
+	if c != nil {
+		c.Y += lipgloss.Height(m.headerView())
+	}
+	v.Cursor = c
+	return v
 }
+
+func (m model) headerView() string { return "Enter a Charm™ repo:\n" }
+func (m model) footerView() string { return "\n" + m.help.View(m.keymap) }
