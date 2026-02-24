@@ -34,7 +34,7 @@ To get started, see the tutorial below, the [examples][examples], the
 Be sure to check out [Bubbles][bubbles], a library of common UI components for Bubble Tea.
 
 <p>
-    <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles/bubbles-badge.png" width="174" alt="Bubbles Badge"></a>&nbsp;&nbsp;
+    <a href="https://github.com/charmbracelet/bubbles"><img src="https://github.com/user-attachments/assets/b6dc4638-b67a-4bfa-88d0-a8e8833c3ac9" width="172" alt="Bubbles Badge"></a>&nbsp;&nbsp;
     <a href="https://github.com/charmbracelet/bubbles"><img src="https://stuff.charm.sh/bubbles-examples/textinput.gif" width="400" alt="Text Input Example from Bubbles"></a>
 </p>
 
