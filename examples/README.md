@@ -234,7 +234,7 @@ The `spinner` example demonstrates a spinner bubble being used to indicate loadi
 
 ### Spinners
 
-The `spinner` example shows various spinner types that are available.
+The `spinners` example shows various spinner types that are available.
 
 <a href="./spinners/main.go">
   <img width="750" src="./spinners/spinners.gif" />
