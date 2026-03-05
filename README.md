@@ -208,7 +208,7 @@ worry about redrawing logic and stuff like that. Bubble Tea takes care of it
 for you.
 
 ```go
-func (m model) View() tea.View {
+func (m model) View() string {
     // The header
     s := "What should we buy at the market?\n\n"
 
@@ -235,7 +235,7 @@ func (m model) View() tea.View {
     s += "\nPress q to quit.\n"
 
     // Send the UI for rendering
-    return tea.NewView(s)
+    return s
 }
 ```
 
