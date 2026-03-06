@@ -19,6 +19,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -1051,8 +1052,8 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			// issue where when a PTY session is detected, and we don't
 			// allocate a real PTY, the terminal settings (Termios and WinCon)
 			// don't change and the we end up working in cooked mode instead of
-			// raw mode.
-			mapNl := false // p.ttyInput == nil
+			// raw mode. See issue #1572.
+			mapNl := runtime.GOOS != "windows" && p.ttyInput == nil
 			r.setOptimizations(p.useHardTabs, p.useBackspace, mapNl)
 			p.renderer = r
 		}
