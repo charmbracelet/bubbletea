@@ -7,14 +7,14 @@ go 1.24.2
 toolchain go1.24.4
 
 require (
-	github.com/charmbracelet/colorprofile v0.4.1
+	github.com/charmbracelet/colorprofile v0.4.2
 	github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8
 	github.com/charmbracelet/x/ansi v0.11.6
 	github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/muesli/cancelreader v0.2.2
-	golang.org/x/sys v0.40.0
+	golang.org/x/sys v0.41.0
 )
 
 require (
