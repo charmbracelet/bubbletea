@@ -89,7 +89,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		// If we set a width on the help menu it can gracefully truncate
 		// its view as needed.
-		m.help.Width = msg.Width
+		m.help.SetWidth(msg.Width)
 
 	case tea.KeyPressMsg:
 		switch {
