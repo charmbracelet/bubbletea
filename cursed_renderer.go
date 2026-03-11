@@ -135,6 +135,9 @@ func (s *cursedRenderer) start() {
 	if s.lastView.KeyboardEnhancements.ReportEventTypes {
 		kittyFlags |= ansi.KittyReportEventTypes
 	}
+	if s.lastView.KeyboardEnhancements.ReportAllKeysAsEscapeCodes {
+		kittyFlags |= ansi.KittyReportAllKeysAsEscapeCodes
+	}
 	_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 }
 
@@ -382,6 +385,9 @@ func (s *cursedRenderer) flush(closing bool) error {
 		kittyFlags := ansi.KittyDisambiguateEscapeCodes // always enable basic key disambiguation
 		if view.KeyboardEnhancements.ReportEventTypes {
 			kittyFlags |= ansi.KittyReportEventTypes
+		}
+		if view.KeyboardEnhancements.ReportAllKeysAsEscapeCodes {
+			kittyFlags |= ansi.KittyReportAllKeysAsEscapeCodes
 		}
 		_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 		if !closing {
