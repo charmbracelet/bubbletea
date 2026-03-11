@@ -2,9 +2,7 @@ module charm.land/bubbletea/v2
 
 retract v2.0.0-beta1 // We add a "." after the "beta" in the version number.
 
-go 1.24.2
-
-toolchain go1.24.4
+go 1.24.6
 
 require (
 	github.com/charmbracelet/colorprofile v0.4.2
