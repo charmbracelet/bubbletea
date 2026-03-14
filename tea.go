@@ -245,6 +245,14 @@ type KeyboardEnhancements struct {
 	// [KeyPressMsg] with the [Key.IsRepeat] field set indicating that this is
 	// a it's part of a key repeat sequence.
 	ReportEventTypes bool
+
+	// ReportAllKeysAsEscapeCodes requests the terminal to report all key
+	// events as escape codes, including printable characters like Space. This
+	// is useful when you need accurate modifier information for all keys.
+	// Without this, keys like Shift+Space may not report the Shift modifier
+	// on press because the terminal sends the raw character byte which
+	// carries no modifier information.
+	ReportAllKeysAsEscapeCodes bool
 }
 
 // SetContent is a helper method to set the content of a [View] with a styled

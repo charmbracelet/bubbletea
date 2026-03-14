@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -19,6 +20,8 @@ type styles struct {
 type model struct {
 	supportsDisambiguation bool
 	supportsEventTypes     bool
+	supportsAllKeys        bool
+	allKeysAsEscapeCodes   bool
 	styles                 styles
 }
 
@@ -46,6 +49,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Check which features were able to be enabled.
 		m.supportsDisambiguation = true // This is always enabled when this msg is received.
 		m.supportsEventTypes = msg.SupportsEventTypes()
+		m.supportsAllKeys = msg.SupportsAllKeysAsEscapeCodes()
 
 	case tea.KeyPressMsg:
 		switch msg.String() {
@@ -70,6 +74,10 @@ func (m model) View() tea.View {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Terminal supports key releases: %v\n", m.supportsEventTypes)
 	fmt.Fprintf(&b, "Terminal supports key disambiguation: %v\n", m.supportsDisambiguation)
+	fmt.Fprintf(&b, "Terminal supports all keys as escape codes: %v\n", m.supportsAllKeys)
+	if m.allKeysAsEscapeCodes {
+		fmt.Fprint(&b, "Mode: all keys as escape codes (--all-keys)\n")
+	}
 	fmt.Fprint(&b, "This demo logs key events. Press ctrl+c to quit.")
 	v.SetContent(b.String() + "\n")
 
@@ -78,6 +86,7 @@ func (m model) View() tea.View {
 	// the ability to distinguish between certain key presses like "enter" and
 	// "shift+enter" or "tab" and "ctrl+i".
 	v.KeyboardEnhancements.ReportEventTypes = true
+	v.KeyboardEnhancements.ReportAllKeysAsEscapeCodes = m.allKeysAsEscapeCodes
 
 	return v
 }
@@ -95,7 +104,9 @@ func (m *model) updateStyles(isDark bool) {
 }
 
 func initialModel() model {
-	m := model{}
+	m := model{
+		allKeysAsEscapeCodes: slices.Contains(os.Args[1:], "--all-keys"),
+	}
 	m.updateStyles(true) // default to dark styles.
 	return m
 }
