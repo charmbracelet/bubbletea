@@ -39,3 +39,21 @@ func (k KeyboardEnhancementsMsg) SupportsKeyDisambiguation() bool {
 func (k KeyboardEnhancementsMsg) SupportsEventTypes() bool {
 	return k.Flags&ansi.KittyReportEventTypes != 0
 }
+
+// SupportsAlternateKeys returns whether the terminal supports reporting
+// alternate key codes.
+func (k KeyboardEnhancementsMsg) SupportsAlternateKeys() bool {
+	return k.Flags&ansi.KittyReportAlternateKeys != 0
+}
+
+// SupportsAllKeysAsEscapeCodes returns whether the terminal supports reporting
+// all keys as escape codes.
+func (k KeyboardEnhancementsMsg) SupportsAllKeysAsEscapeCodes() bool {
+	return k.Flags&ansi.KittyReportAllKeysAsEscapeCodes != 0
+}
+
+// SupportsAssociatedText returns whether the terminal supports reporting
+// associated text with key events.
+func (k KeyboardEnhancementsMsg) SupportsAssociatedText() bool {
+	return k.Flags&ansi.KittyReportAssociatedKeys != 0
+}
