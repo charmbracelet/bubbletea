@@ -7,8 +7,8 @@ replace charm.land/bubbletea/v2 => ../
 require (
 	charm.land/bubbles/v2 v2.0.0
 	charm.land/bubbletea/v2 v2.0.0
-	charm.land/lipgloss/v2 v2.0.0
-	github.com/charmbracelet/colorprofile v0.4.2
+	charm.land/lipgloss/v2 v2.0.2
+	github.com/charmbracelet/colorprofile v0.4.3
 	github.com/charmbracelet/glamour/v2 v2.0.0-20251106195642-800eb8175930
 	github.com/charmbracelet/harmonica v0.2.0
 	github.com/charmbracelet/x/ansi v0.11.6
@@ -43,6 +43,6 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.5 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
