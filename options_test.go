@@ -93,5 +93,21 @@ func TestOptions(t *testing.T) {
 				}
 			})
 		})
+
+		t.Run("with hard tabs", func(t *testing.T) {
+			exercise(t, WithHardTabs(true), func(p *Program) {
+				if p.hardTabsOverride == nil || !*p.hardTabsOverride {
+					t.Errorf("expected hardTabsOverride to be true, got %v", p.hardTabsOverride)
+				}
+			})
+		})
+
+		t.Run("without hard tabs", func(t *testing.T) {
+			exercise(t, WithHardTabs(false), func(p *Program) {
+				if p.hardTabsOverride == nil || *p.hardTabsOverride {
+					t.Errorf("expected hardTabsOverride to be false, got %v", p.hardTabsOverride)
+				}
+			})
+		})
 	})
 }
