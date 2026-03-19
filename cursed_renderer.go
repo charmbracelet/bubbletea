@@ -61,7 +61,11 @@ func (s *cursedRenderer) setOptimizations(hardTabs, backspace, mapnl bool) {
 	s.hardTabs = hardTabs
 	s.backspace = backspace
 	s.mapnl = mapnl
-	s.scr.SetTabStops(s.width)
+	if hardTabs {
+		s.scr.SetTabStops(s.width)
+	} else {
+		s.scr.SetTabStops(-1) // Disable hard tabs to preserve column alignment
+	}
 	s.scr.SetBackspace(s.backspace)
 	s.scr.SetMapNewline(s.mapnl)
 	s.mu.Unlock()
@@ -593,7 +597,11 @@ func reset(s *cursedRenderer) {
 	scr.SetColorProfile(s.profile)
 	scr.SetRelativeCursor(true) // Always start in inline mode
 	scr.SetFullscreen(false)    // Always start in inline mode
-	scr.SetTabStops(s.width)
+	if s.hardTabs {
+		scr.SetTabStops(s.width)
+	} else {
+		scr.SetTabStops(-1) // Disable hard tabs to preserve column alignment
+	}
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
 	scr.SetScrollOptim(runtime.GOOS != "windows") // disable scroll optimization on Windows due to bugs in some terminals
