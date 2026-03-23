@@ -25,6 +25,7 @@ func WithContext(ctx context.Context) ProgramOption {
 	}
 }
 
+
 // WithOutput sets the output which, by default, is stdout. In most cases you
 // won't need to use this.
 func WithOutput(output io.Writer) ProgramOption {
@@ -32,6 +33,7 @@ func WithOutput(output io.Writer) ProgramOption {
 		p.output = output
 	}
 }
+
 
 // WithInput sets the input which, by default, is stdin. In most cases you
 // won't need to use this. To disable input entirely pass nil.
@@ -43,6 +45,7 @@ func WithInput(input io.Reader) ProgramOption {
 		p.disableInput = input == nil
 	}
 }
+
 
 // WithEnvironment sets the environment variables that the program will use.
 // This useful when the program is running in a remote session (e.g. SSH) and
@@ -61,6 +64,7 @@ func WithEnvironment(env []string) ProgramOption {
 	}
 }
 
+
 // WithoutSignalHandler disables the signal handler that Bubble Tea sets up for
 // Programs. This is useful if you want to handle signals yourself.
 func WithoutSignalHandler() ProgramOption {
@@ -68,6 +72,7 @@ func WithoutSignalHandler() ProgramOption {
 		p.disableSignalHandler = true
 	}
 }
+
 
 // WithoutCatchPanics disables the panic catching that Bubble Tea does by
 // default. If panic catching is disabled the terminal will be in a fairly
@@ -79,6 +84,7 @@ func WithoutCatchPanics() ProgramOption {
 	}
 }
 
+
 // WithoutSignals will ignore OS signals.
 // This is mainly useful for testing.
 func WithoutSignals() ProgramOption {
@@ -86,6 +92,7 @@ func WithoutSignals() ProgramOption {
 		atomic.StoreUint32(&p.ignoreSignals, 1)
 	}
 }
+
 
 // WithoutRenderer disables the renderer. When this is set output and log
 // statements will be plainly sent to stdout (or another output if one is set)
@@ -100,6 +107,7 @@ func WithoutRenderer() ProgramOption {
 		p.disableRenderer = true
 	}
 }
+
 
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
@@ -136,6 +144,7 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 	}
 }
 
+
 // WithFPS sets a custom maximum FPS at which the renderer should run. If
 // less than 1, the default value of 60 will be used. If over 120, the FPS
 // will be capped at 120.
@@ -144,6 +153,7 @@ func WithFPS(fps int) ProgramOption {
 		p.fps = fps
 	}
 }
+
 
 // WithColorProfile sets the color profile that the program will use. This is
 // useful when you want to force a specific color profile. By default, Bubble
@@ -156,6 +166,8 @@ func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 	}
 }
 
+
+
 // WithWindowSize sets the initial size of the terminal window. This is useful
 // when you need to set the initial size of the terminal window, for example
 // during testing or when you want to run your program in a non-interactive
@@ -166,3 +178,16 @@ func WithWindowSize(width, height int) ProgramOption {
 		p.height = height
 	}
 }
+
+// WithHardTabs sets whether to use hard tabs to optimize cursor movements.
+// When false (the default), tab compression is disabled, preserving space-based
+// column alignment in View() output. When true, the renderer may replace space
+// runs with tab characters for faster cursor movement.
+// Use WithHardTabs(true) only if you do not rely on spaces for alignment.
+func WithHardTabs(enable bool) ProgramOption {
+	return func(p *Program) {
+		p.hardTabsOverride = &enable
+	}
+}
+
+
