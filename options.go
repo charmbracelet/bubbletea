@@ -166,3 +166,14 @@ func WithWindowSize(width, height int) ProgramOption {
 		p.height = height
 	}
 }
+
+// WithHardTabs sets whether to use hard tabs to optimize cursor movements.
+// When true (the default), the renderer may replace space runs with tab
+// characters for faster cursor movement. When false, tab compression is
+// disabled, preserving space-based column alignment in View() output.
+// Use WithHardTabs(false) if your layout relies on spaces for alignment.
+func WithHardTabs(enable bool) ProgramOption {
+	return func(p *Program) {
+		p.hardTabsOverride = &enable
+	}
+}
