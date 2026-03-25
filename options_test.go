@@ -6,6 +6,8 @@ import (
 	"os"
 	"sync/atomic"
 	"testing"
+
+	uv "github.com/charmbracelet/ultraviolet"
 )
 
 func TestOptions(t *testing.T) {
@@ -93,5 +95,18 @@ func TestOptions(t *testing.T) {
 				}
 			})
 		})
+	})
+
+	t.Run("without caps", func(t *testing.T) {
+		p := NewProgram(nil, WithoutCaps(uv.CapCBT, uv.CapREP))
+		if len(p.disabledCaps) != 2 {
+			t.Fatalf("expected 2 disabled caps, got %d", len(p.disabledCaps))
+		}
+		if p.disabledCaps[0] != uv.CapCBT {
+			t.Errorf("expected first cap to be CapCBT, got %d", p.disabledCaps[0])
+		}
+		if p.disabledCaps[1] != uv.CapREP {
+			t.Errorf("expected second cap to be CapREP, got %d", p.disabledCaps[1])
+		}
 	})
 }
