@@ -529,6 +529,9 @@ type Program struct {
 	// whether to use backspace to optimize cursor movements
 	useBackspace bool
 
+	// disabledCaps is a list of ultraviolet terminal capabilities to disable.
+	disabledCaps []uv.Capability
+
 	mu sync.Mutex
 }
 
@@ -1045,6 +1048,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 				p.width,
 				p.height,
 			)
+			r.setDisabledCaps(p.disabledCaps)
 			r.setLogger(p.logger)
 			// XXX: This breaks many things especially when we want the output
 			// to be compatible with terminals that are not necessary a TTY.
