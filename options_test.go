@@ -72,6 +72,13 @@ func TestOptions(t *testing.T) {
 		})
 	})
 
+	t.Run("without hard tabs", func(t *testing.T) {
+		p := NewProgram(nil, WithoutHardTabs())
+		if !p.disableHardTabs {
+			t.Errorf("expected hard tabs to be disabled")
+		}
+	})
+
 	t.Run("startup options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, fn func(*Program)) {
 			p := NewProgram(nil, opt)

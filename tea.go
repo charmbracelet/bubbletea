@@ -526,6 +526,8 @@ type Program struct {
 
 	// whether to use hard tabs to optimize cursor movements
 	useHardTabs bool
+	// whether to disable hard tab optimization (user override)
+	disableHardTabs bool
 	// whether to use backspace to optimize cursor movements
 	useBackspace bool
 
@@ -1054,7 +1056,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			// don't change and the we end up working in cooked mode instead of
 			// raw mode. See issue #1572.
 			mapNl := runtime.GOOS != "windows" && p.ttyInput == nil
-			r.setOptimizations(p.useHardTabs, p.useBackspace, mapNl)
+			r.setOptimizations(p.useHardTabs && !p.disableHardTabs, p.useBackspace, mapNl)
 			p.renderer = r
 		}
 	}
