@@ -156,6 +156,15 @@ func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 	}
 }
 
+// WithoutHardTabs disables the hard-tab cursor movement optimization. This is
+// useful when your View() output relies on exact column alignment, since hard
+// tabs can shift columns depending on tab stop positions.
+func WithoutHardTabs() ProgramOption {
+	return func(p *Program) {
+		p.disableHardTabs = true
+	}
+}
+
 // WithWindowSize sets the initial size of the terminal window. This is useful
 // when you need to set the initial size of the terminal window, for example
 // during testing or when you want to run your program in a non-interactive
