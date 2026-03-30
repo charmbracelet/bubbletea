@@ -14,7 +14,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.6
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250602192518-9e722df69bbb
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
-	github.com/lucasb-eyer/go-colorful v1.3.0
+	github.com/lucasb-eyer/go-colorful v1.4.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/segmentio/ksuid v1.0.4
 )
