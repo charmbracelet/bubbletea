@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/charmbracelet/colorprofile"
+	uv "github.com/charmbracelet/ultraviolet"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -164,5 +165,17 @@ func WithWindowSize(width, height int) ProgramOption {
 	return func(p *Program) {
 		p.width = width
 		p.height = height
+	}
+}
+
+// WithoutCaps disables specific ultraviolet terminal capabilities. Use this
+// when a terminal emulator is known to mishandle certain escape sequences.
+// For example, JediTerm (GoLand/IntelliJ) does not correctly implement CBT
+// (Cursor Backward Tab), so you can disable it:
+//
+//	p := tea.NewProgram(model, tea.WithoutCaps(uv.CapCBT))
+func WithoutCaps(caps ...uv.Capability) ProgramOption {
+	return func(p *Program) {
+		p.disabledCaps = caps
 	}
 }

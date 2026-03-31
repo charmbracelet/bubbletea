@@ -33,6 +33,7 @@ type cursedRenderer struct {
 	mapnl         bool
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
+	disabledCaps  []uv.Capability // capabilities to disable on the terminal renderer
 }
 
 var _ renderer = &cursedRenderer{}
@@ -597,6 +598,7 @@ func reset(s *cursedRenderer) {
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
 	scr.SetScrollOptim(runtime.GOOS != "windows") // disable scroll optimization on Windows due to bugs in some terminals
+	scr.DisableCaps(s.disabledCaps...)
 	s.scr = scr
 }
 
@@ -827,4 +829,13 @@ func viewEquals(a, b *View) bool {
 	}
 
 	return true
+}
+
+// setDisabledCaps stores the capabilities to disable and applies them to the
+// current terminal renderer. They will also be applied on subsequent reset() calls.
+func (s *cursedRenderer) setDisabledCaps(caps []uv.Capability) {
+	s.mu.Lock()
+	s.disabledCaps = caps
+	s.scr.DisableCaps(caps...)
+	s.mu.Unlock()
 }
