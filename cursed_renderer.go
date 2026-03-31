@@ -131,10 +131,7 @@ func (s *cursedRenderer) start() {
 	// Both can coexist; terminals ignore what they don't support.
 	_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
-	kittyFlags := ansi.KittyDisambiguateEscapeCodes
-	if s.lastView.KeyboardEnhancements.ReportEventTypes {
-		kittyFlags |= ansi.KittyReportEventTypes
-	}
+	kittyFlags := keyboardEnhancementsFlags(s.lastView.KeyboardEnhancements)
 	_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 }
 
@@ -379,10 +376,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// Enable modifyOtherKeys and Kitty keyboard protocol.
 		_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
-		kittyFlags := ansi.KittyDisambiguateEscapeCodes // always enable basic key disambiguation
-		if view.KeyboardEnhancements.ReportEventTypes {
-			kittyFlags |= ansi.KittyReportEventTypes
-		}
+		kittyFlags := keyboardEnhancementsFlags(view.KeyboardEnhancements)
 		_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 		if !closing {
 			// Request keyboard enhancements when they change
@@ -827,4 +821,21 @@ func viewEquals(a, b *View) bool {
 	}
 
 	return true
+}
+
+func keyboardEnhancementsFlags(ke KeyboardEnhancements) int {
+	flags := 1 // always enable basic key disambiguation
+	if ke.ReportEventTypes {
+		flags |= ansi.KittyReportEventTypes
+	}
+	if ke.ReportAlternateKeys {
+		flags |= ansi.KittyReportAlternateKeys
+	}
+	if ke.ReportAllKeysAsEscapeCodes {
+		flags |= ansi.KittyReportAllKeysAsEscapeCodes
+	}
+	if ke.ReportAssociatedText {
+		flags |= ansi.KittyReportAssociatedKeys
+	}
+	return flags
 }
