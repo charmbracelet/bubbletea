@@ -1228,12 +1228,17 @@ func (p *Program) shutdown(kill bool) {
 
 		// Check if the cancel reader has been setup before waiting and closing.
 		if p.cancelReader != nil {
-			// Wait for input loop to finish.
-			if p.cancelReader.Cancel() {
-				if !kill {
-					p.waitForReadLoop()
-				}
+			// Cancel the reader to unblock any pending Read calls.
+			p.cancelReader.Cancel()
+
+			// Always wait for the read loop goroutine to finish before
+			// closing the cancel reader. This prevents a data race between
+			// cancelReader.Close() and the goroutine still accessing
+			// cancelSignalReader.Fd() inside cancelreader.wait().
+			if !kill {
+				p.waitForReadLoop()
 			}
+
 			_ = p.cancelReader.Close()
 		}
 
