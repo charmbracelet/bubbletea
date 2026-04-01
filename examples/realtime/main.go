@@ -1,65 +1,79 @@
 package main
 
 // A simple example that shows how to send activity to Bubble Tea in real-time
-// through a channel.
+// through a channel. This example demonstrates passing actual data over the
+// channel rather than empty structs, simulating a real-world scenario like
+// receiving messages from an external service.
 
 import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 )
 
-// A message used to indicate that activity has occurred. In the real world (for
-// example, chat) this would contain actual data.
-type responseMsg struct{}
+// foodMsg delivers a food item name from the background goroutine to Update.
+type foodMsg string
 
-// Simulate a process that sends events at an irregular interval in real time.
-// In this case, we'll send events on the channel at a random interval between
-// 100 to 1000 milliseconds. As a command, Bubble Tea will run this
-// asynchronously.
-func listenForActivity(sub chan struct{}) tea.Cmd {
+var foods = []string{
+	"a]n apple",
+	"a pear",
+	"a grapefruit",
+	"a tangerine",
+	"a banana",
+	"a strawberry",
+	"a kiwi",
+	"a mango",
+	"a pineapple",
+}
+
+// listenForFood simulates an external process that produces food items at
+// random intervals. Each item is sent over the channel with its actual data.
+func listenForFood(foodChan chan string) tea.Cmd {
 	return func() tea.Msg {
 		for {
-			time.Sleep(time.Millisecond * time.Duration(rand.Int63n(900)+100)) // nolint:gosec
-			sub <- struct{}{}
+			time.Sleep(time.Millisecond * time.Duration(rand.Int63n(900)+100)) //nolint:gosec
+			food := foods[rand.Intn(len(foods))]                               //nolint:gosec
+			foodChan <- food
 		}
 	}
 }
 
-// A command that waits for the activity on a channel.
-func waitForActivity(sub chan struct{}) tea.Cmd {
+// waitForFood waits for the next food item on the channel and wraps it in
+// a foodMsg so that it can be handled in Update.
+func waitForFood(foodChan chan string) tea.Cmd {
 	return func() tea.Msg {
-		return responseMsg(<-sub)
+		return foodMsg(<-foodChan)
 	}
 }
 
 type model struct {
-	sub       chan struct{} // where we'll receive activity notifications
-	responses int           // how many responses we've received
-	spinner   spinner.Model
-	quitting  bool
+	foodChan chan string // where we receive food deliveries
+	foods    []string   // food items received so far
+	spinner  spinner.Model
+	quitting bool
 }
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		m.spinner.Tick,
-		listenForActivity(m.sub), // generate activity
-		waitForActivity(m.sub),   // wait for activity
+		listenForFood(m.foodChan), // start producing food
+		waitForFood(m.foodChan),   // wait for the first item
 	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		m.quitting = true
 		return m, tea.Quit
-	case responseMsg:
-		m.responses++                    // record external activity
-		return m, waitForActivity(m.sub) // wait for next event
+	case foodMsg:
+		m.foods = append(m.foods, string(msg))
+		return m, waitForFood(m.foodChan) // wait for the next item
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -70,17 +84,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() tea.View {
-	s := fmt.Sprintf("\n %s Events received: %d\n\n Press any key to exit\n", m.spinner.View(), m.responses)
-	if m.quitting {
-		s += "\n"
+	var s strings.Builder
+	s.WriteString(fmt.Sprintf("\n %s Waiting for food... (%d received)\n\n", m.spinner.View(), len(m.foods)))
+
+	// Show the last 5 food items received.
+	start := 0
+	if len(m.foods) > 5 {
+		start = len(m.foods) - 5
 	}
-	return tea.NewView(s)
+	for _, food := range m.foods[start:] {
+		s.WriteString(fmt.Sprintf("   Got %s\n", food))
+	}
+
+	if len(m.foods) > 5 {
+		s.WriteString(fmt.Sprintf("   ... and %d more\n", len(m.foods)-5))
+	}
+
+	s.WriteString("\n Press any key to exit\n")
+	if m.quitting {
+		s.WriteString("\n")
+	}
+	return tea.NewView(s.String())
 }
 
 func main() {
 	p := tea.NewProgram(model{
-		sub:     make(chan struct{}),
-		spinner: spinner.New(),
+		foodChan: make(chan string),
+		spinner:  spinner.New(),
 	})
 
 	if _, err := p.Run(); err != nil {
