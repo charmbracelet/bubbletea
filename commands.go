@@ -163,6 +163,52 @@ func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	}
 }
 
+// Chain creates a command that pipes the output of each command as input to
+// the next. Unlike [Sequence], which simply runs commands in order and sends
+// each result to Update independently, Chain passes each command's resulting
+// Msg to the next function in the chain. The final Msg is sent to Update.
+//
+// Each function in the chain receives the Msg produced by the previous command
+// and returns a new Cmd. The first function receives nil as its input.
+//
+// This is useful when you need to transform or react to a command's result
+// before deciding what to do next, without going through the Update cycle.
+//
+// Example:
+//
+//	cmd := tea.Chain(
+//	    func(msg tea.Msg) tea.Cmd {
+//	        // First step: start an HTTP request
+//	        return fetchData
+//	    },
+//	    func(msg tea.Msg) tea.Cmd {
+//	        // Second step: msg contains the result of fetchData
+//	        resp := msg.(fetchResponseMsg)
+//	        return processData(resp)
+//	    },
+//	    func(msg tea.Msg) tea.Cmd {
+//	        // Third step: msg contains the result of processData
+//	        return func() tea.Msg { return doneMsg{} }
+//	    },
+//	)
+func Chain(steps ...func(Msg) Cmd) Cmd {
+	if len(steps) == 0 {
+		return nil
+	}
+	return func() Msg {
+		var msg Msg
+		for _, step := range steps {
+			cmd := step(msg)
+			if cmd == nil {
+				msg = nil
+				continue
+			}
+			msg = cmd()
+		}
+		return msg
+	}
+}
+
 type windowSizeMsg struct{}
 
 // RequestWindowSize is a command that queries the terminal for its current
