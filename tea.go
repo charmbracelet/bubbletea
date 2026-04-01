@@ -512,6 +512,10 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
+	// sigquitDumpFile, when set, enables writing goroutine stack dumps to
+	// this file on SIGQUIT.
+	sigquitDumpFile *os.File
+
 	// ticker is the ticker that will be used to write to the renderer.
 	ticker *time.Ticker
 
@@ -996,6 +1000,11 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			}
 			p.input = ttyIn
 		}
+	}
+
+	// Handle SIGQUIT for goroutine dumps if enabled.
+	if p.sigquitDumpFile != nil {
+		p.handlers.add(p.handleSIGQUIT(p.sigquitDumpFile))
 	}
 
 	// Handle signals.

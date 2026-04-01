@@ -3,6 +3,7 @@ package tea
 import (
 	"context"
 	"io"
+	"os"
 	"sync/atomic"
 
 	"github.com/charmbracelet/colorprofile"
@@ -153,6 +154,23 @@ func WithFPS(fps int) ProgramOption {
 func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 	return func(p *Program) {
 		p.profile = &profile
+	}
+}
+
+// WithSIGQUITDump enables writing a goroutine stack dump to the given file
+// when SIGQUIT is received. By default, Bubble Tea captures all signals and
+// SIGQUIT's normal behavior of printing a goroutine dump is suppressed. This
+// option restores that behavior by writing all goroutine stacks to the
+// specified file (typically os.Stderr).
+//
+// On Windows this option is a no-op since SIGQUIT is not available.
+//
+// Example:
+//
+//	p := tea.NewProgram(model, tea.WithSIGQUITDump(os.Stderr))
+func WithSIGQUITDump(w *os.File) ProgramOption {
+	return func(p *Program) {
+		p.sigquitDumpFile = w
 	}
 }
 
