@@ -749,6 +749,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case InterruptMsg:
 				return model, ErrInterrupted
 
+			case FatalErrMsg:
+				return model, msg
+
 			case SuspendMsg:
 				if suspendSupported {
 					p.suspend()

@@ -163,6 +163,43 @@ func Tick(d time.Duration, fn func(time.Time) Msg) Cmd {
 	}
 }
 
+// FatalErrMsg is a message that, when received by the runtime, causes the
+// program to exit with a non-zero status code. The error message will be
+// written to stderr after the program restores the terminal state. You can send
+// a FatalErrMsg with [Fatal].
+type FatalErrMsg struct {
+	// Err is the error that caused the fatal exit.
+	Err error
+}
+
+// Error returns the error message.
+func (f FatalErrMsg) Error() string {
+	return f.Err.Error()
+}
+
+// Fatal is a command that tells the program to exit with a non-zero status code
+// and write the given error to stderr. The terminal will be properly restored
+// before the error is printed.
+//
+// This is useful when a model encounters an unrecoverable error and wants to
+// communicate that error to the user while ensuring the terminal is left in a
+// clean state.
+//
+// Example:
+//
+//	func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+//	    data, err := loadCriticalData()
+//	    if err != nil {
+//	        return m, tea.Fatal(err)
+//	    }
+//	    return m, nil
+//	}
+func Fatal(err error) Cmd {
+	return func() Msg {
+		return FatalErrMsg{Err: err}
+	}
+}
+
 type windowSizeMsg struct{}
 
 // RequestWindowSize is a command that queries the terminal for its current

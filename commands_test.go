@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -23,6 +24,24 @@ func TestTick(t *testing.T) {
 	if expected != msg {
 		t.Fatalf("expected a msg %v but got %v", expected, msg)
 	}
+}
+
+func TestFatal(t *testing.T) {
+	t.Run("creates FatalErrMsg with error", func(t *testing.T) {
+		err := fmt.Errorf("something went wrong")
+		cmd := Fatal(err)
+		msg := cmd()
+		fatalMsg, ok := msg.(FatalErrMsg)
+		if !ok {
+			t.Fatalf("expected FatalErrMsg, got %T", msg)
+		}
+		if fatalMsg.Err != err {
+			t.Fatalf("expected error %v, got %v", err, fatalMsg.Err)
+		}
+		if fatalMsg.Error() != "something went wrong" {
+			t.Fatalf("expected error string 'something went wrong', got %q", fatalMsg.Error())
+		}
+	})
 }
 
 func TestBatch(t *testing.T) {
