@@ -156,6 +156,24 @@ func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 	}
 }
 
+// WithoutSkipping disables frame skipping in the renderer. By default, the
+// renderer operates at a fixed FPS (default 60) and only the most recent view
+// is rendered on each tick. This means that if multiple updates occur between
+// ticks, intermediate frames are skipped.
+//
+// When this option is enabled, every call to View() will be immediately flushed
+// to the terminal. This is useful for programs where every frame matters, such
+// as animations or programs with very infrequent updates where latency is more
+// important than performance.
+//
+// Note that this may reduce performance for programs with very frequent updates
+// since every update triggers an immediate render.
+func WithoutSkipping() ProgramOption {
+	return func(p *Program) {
+		p.disableSkipping = true
+	}
+}
+
 // WithWindowSize sets the initial size of the terminal window. This is useful
 // when you need to set the initial size of the terminal window, for example
 // during testing or when you want to run your program in a non-interactive

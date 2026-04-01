@@ -512,6 +512,11 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
+	// disableSkipping, when true, causes the renderer to flush immediately
+	// after every render instead of waiting for the next tick. This ensures
+	// every frame is displayed.
+	disableSkipping bool
+
 	// ticker is the ticker that will be used to write to the renderer.
 	ticker *time.Ticker
 
@@ -867,6 +872,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(model.View()) // send view to renderer
+		if p.disableSkipping {
+			// When frame skipping is disabled, flush immediately after each
+			// render to ensure every frame is displayed.
+			_ = p.flush()
+			_ = p.renderer.flush(false)
+		}
 	}
 }
 
