@@ -1350,7 +1350,7 @@ func (p *Program) RestoreTerminal() error {
 // If the altscreen is active no output will be printed.
 func (p *Program) Println(args ...any) {
 	p.msgs <- printLineMessage{
-		messageBody: fmt.Sprint(args...),
+		messageBody: fmt.Sprintln(args...),
 	}
 }
 
