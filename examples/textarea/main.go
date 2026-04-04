@@ -92,10 +92,12 @@ func (m model) View() tea.View {
 	if !m.textarea.VirtualCursor() {
 		c = m.textarea.Cursor()
 
-		// Set the y offset of the cursor based on the position of the textarea
-		// in the application.
-		offset := lipgloss.Height(m.headerView())
-		c.Y += offset
+		if c != nil {
+			// Set the y offset of the cursor based on the position of the textarea
+			// in the application.
+			offset := lipgloss.Height(m.headerView())
+			c.Y += offset
+		}
 	}
 
 	f := strings.Join([]string{
