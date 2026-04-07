@@ -245,6 +245,25 @@ type KeyboardEnhancements struct {
 	// [KeyPressMsg] with the [Key.IsRepeat] field set indicating that this is
 	// a it's part of a key repeat sequence.
 	ReportEventTypes bool
+
+	// ReportAlternateKeys requests the terminal to report alternate key values
+	// in addition to the main ones.
+	// Note that only key events represented as escape codes will affected by
+	// this enhancement.
+	ReportAlternateKeys bool
+
+	// ReportAllKeysAsEscapeCodes requests the terminal to report all key
+	// events, including plain text keys, as escape codes.
+	// When this is enabled, text won't be sent as plain text but instead as
+	// escape codes that encode the key value and modifiers.
+	ReportAllKeysAsEscapeCodes bool
+
+	// ReportAssociatedText requests the terminal to report the text associated
+	// with key events.
+	// Note that this is an enhancement to
+	// [KeyboardEnhancements.ReportAllKeysAsEscapeCodes] and only has an effect
+	// if that is enabled.
+	ReportAssociatedText bool
 }
 
 // SetContent is a helper method to set the content of a [View] with a styled
