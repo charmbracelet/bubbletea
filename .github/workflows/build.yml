@@ -12,6 +12,7 @@ jobs:
       go-version-file: ./go.mod
 
   build-examples:
+    if: github.actor != 'dependabot[bot]'
     uses: charmbracelet/meta/.github/workflows/build.yml@main
     with:
       go-version: ""
