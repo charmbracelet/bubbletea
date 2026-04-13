@@ -61,7 +61,11 @@ func (s *cursedRenderer) setOptimizations(hardTabs, backspace, mapnl bool) {
 	s.hardTabs = hardTabs
 	s.backspace = backspace
 	s.mapnl = mapnl
-	s.scr.SetTabStops(s.width)
+	if s.hardTabs {
+		s.scr.SetTabStops(s.width)
+	} else {
+		s.scr.SetTabStops(-1)
+	}
 	s.scr.SetBackspace(s.backspace)
 	s.scr.SetMapNewline(s.mapnl)
 	s.mu.Unlock()
@@ -273,6 +277,11 @@ func (s *cursedRenderer) flush(closing bool) error {
 		if frameHeight != frameArea.Dy() {
 			frameArea.Max.Y = frameHeight
 		}
+	}
+
+	// Restore tab stops if we have tab optimizations enabled.
+	if s.starting && s.hardTabs {
+		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
 	if !s.starting && !closing && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
@@ -587,7 +596,11 @@ func reset(s *cursedRenderer) {
 	scr.SetColorProfile(s.profile)
 	scr.SetRelativeCursor(true) // Always start in inline mode
 	scr.SetFullscreen(false)    // Always start in inline mode
-	scr.SetTabStops(s.width)
+	if s.hardTabs {
+		scr.SetTabStops(s.width)
+	} else {
+		scr.SetTabStops(-1)
+	}
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
 	scr.SetScrollOptim(runtime.GOOS != "windows") // disable scroll optimization on Windows due to bugs in some terminals
