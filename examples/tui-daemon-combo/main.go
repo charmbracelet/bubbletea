@@ -12,7 +12,7 @@ import (
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/mattn/go-isatty"
+	"github.com/charmbracelet/x/term"
 )
 
 var (
@@ -36,7 +36,7 @@ func main() {
 	}
 
 	opts := []tea.ProgramOption{}
-	if daemonMode || !isatty.IsTerminal(os.Stdout.Fd()) {
+	if daemonMode || !term.IsTerminal(os.Stdout.Fd()) {
 		// If we're in daemon mode don't render the TUI
 		opts = append(opts, tea.WithoutRenderer())
 	} else {
