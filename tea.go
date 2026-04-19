@@ -1347,8 +1347,10 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initTerminal(); err != nil {
 		return err
 	}
-	if err := p.initInputReader(false); err != nil {
-		return err
+	if p.input != nil {
+		if err := p.initInputReader(false); err != nil {
+			return err
+		}
 	}
 
 	p.startRenderer()

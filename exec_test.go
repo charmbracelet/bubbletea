@@ -14,9 +14,17 @@ type testExecModel struct {
 	err error
 }
 
+type testExecNoInputModel struct{ testExecModel }
+
 func (m *testExecModel) Init() Cmd {
 	c := exec.Command(m.cmd) //nolint:gosec
 	return ExecProcess(c, func(err error) Msg {
+		return execFinishedMsg{err}
+	})
+}
+
+func (m *testExecNoInputModel) Init() Cmd {
+	return ExecProcess(successExecCommand(), func(err error) Msg {
 		return execFinishedMsg{err}
 	})
 }
@@ -40,6 +48,13 @@ func (m *testExecModel) View() View {
 type spyRenderer struct {
 	renderer
 	calledReset bool
+}
+
+func successExecCommand() *exec.Cmd {
+	if runtime.GOOS == "windows" {
+		return exec.Command("cmd", "/c", "exit 0")
+	}
+	return exec.Command("true")
 }
 
 func TestTeaExec(t *testing.T) {
@@ -99,5 +114,22 @@ func TestTeaExec(t *testing.T) {
 				t.Error("expected error, got nil")
 			}
 		})
+	}
+}
+
+func TestTeaExecWithNilInput(t *testing.T) {
+	var buf bytes.Buffer
+
+	m := &testExecNoInputModel{}
+	p := NewProgram(m,
+		WithInput(nil),
+		WithOutput(&buf),
+	)
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+	if m.err != nil {
+		t.Fatalf("expected no error, got %v", m.err)
 	}
 }
