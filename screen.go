@@ -11,6 +11,12 @@ type WindowSizeMsg struct {
 	Height int
 }
 
+// PixelSizeMsg is used to report the terminal's window pixel size.
+type PixelSizeMsg struct {
+	Width  int
+	Height int
+}
+
 // ClearScreen is a special command that tells the program to clear the screen
 // before the next update. This can be used to move the cursor to the top left
 // of the screen and clear visual clutter when the alt screen is not in use.
