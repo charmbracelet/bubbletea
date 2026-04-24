@@ -49,6 +49,8 @@ func (p *Program) translateInputEvent(e uv.Event) Msg {
 		return KeyboardEnhancementsMsg(e)
 	case uv.ModeReportEvent:
 		return ModeReportMsg(e)
+	case uv.PixelSizeEvent:
+		return PixelSizeMsg(e)
 	}
 	return e
 }

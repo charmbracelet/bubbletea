@@ -260,12 +260,18 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
-	if len(view.Content) == 0 {
+	if len(view.Content) == 0 && view.ContentDrawable == nil {
 		// If the component is nil, we should clear the screen buffer.
 		frameArea.Max.Y = 0
 	}
 
-	content := uv.NewStyledString(view.Content)
+	var content uv.Drawable
+	if view.ContentDrawable != nil {
+		content = view.ContentDrawable
+	} else {
+		content = uv.NewStyledString(view.Content)
+	}
+
 	if !view.AltScreen {
 		// We need to resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -273,7 +279,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		frameHeight := content.Height()
+		frameHeight := frameArea.Dy()
+		switch content := content.(type) {
+		case interface{ Height() int }:
+			frameHeight = content.Height()
+		case interface{ Bounds() uv.Rectangle }:
+			frameHeight = content.Bounds().Dy()
+		}
 		if frameHeight != frameArea.Dy() {
 			frameArea.Max.Y = frameHeight
 		}
@@ -460,7 +472,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.cellbuf.RenderBuffer)
 
-	if cur := view.Cursor; cur != nil {
+	if cur := view.Cursor; cur != nil && cur.X >= 0 && cur.Y >= 0 {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
 		// cursor position might get updated during rendering.
 		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y)
@@ -800,6 +812,7 @@ func viewEquals(a, b *View) bool {
 	}
 
 	if a.Content != b.Content ||
+		a.ContentDrawable != nil || b.ContentDrawable != nil ||
 		a.AltScreen != b.AltScreen ||
 		a.DisableBracketedPasteMode != b.DisableBracketedPasteMode ||
 		a.ReportFocus != b.ReportFocus ||
