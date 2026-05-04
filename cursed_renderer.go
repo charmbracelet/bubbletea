@@ -764,8 +764,14 @@ func (s *cursedRenderer) insertAbove(str string) error {
 
 // onMouse implements renderer.
 func (s *cursedRenderer) onMouse(m MouseMsg) Cmd {
-	if s.lastView != nil && s.lastView.OnMouse != nil {
-		return s.lastView.OnMouse(m)
+	var onMouse func(MouseMsg) Cmd
+	s.mu.Lock()
+	if s.lastView != nil {
+		onMouse = s.lastView.OnMouse
+	}
+	s.mu.Unlock()
+	if onMouse != nil {
+		return onMouse(m)
 	}
 	return nil
 }

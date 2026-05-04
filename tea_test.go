@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -66,6 +67,7 @@ func (m *testModel) View() View {
 }
 
 func TestTeaModel(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 	in.Write([]byte("q"))
@@ -88,6 +90,7 @@ func TestTeaModel(t *testing.T) {
 }
 
 func TestTeaQuit(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -112,6 +115,7 @@ func TestTeaQuit(t *testing.T) {
 }
 
 func TestTeaWaitQuit(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -165,6 +169,7 @@ func TestTeaWaitQuit(t *testing.T) {
 }
 
 func TestTeaWaitKill(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -218,9 +223,12 @@ func TestTeaWaitKill(t *testing.T) {
 }
 
 func TestTeaWithFilter(t *testing.T) {
-	testTeaWithFilter(t, 0)
-	testTeaWithFilter(t, 1)
-	testTeaWithFilter(t, 2)
+	for _, preventCount := range []uint32{0, 1, 2} {
+		t.Run(fmt.Sprintf("prevent_%d", preventCount), func(t *testing.T) {
+			t.Parallel()
+			testTeaWithFilter(t, preventCount)
+		})
+	}
 }
 
 func testTeaWithFilter(t *testing.T, preventCount uint32) {
@@ -260,6 +268,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 }
 
 func TestTeaKill(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -292,6 +301,7 @@ func TestTeaKill(t *testing.T) {
 }
 
 func TestTeaContext(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(t.Context())
 	var buf bytes.Buffer
 	var in bytes.Buffer
@@ -325,6 +335,7 @@ func TestTeaContext(t *testing.T) {
 }
 
 func TestTeaContextImplodeDeadlock(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(t.Context())
 	var buf bytes.Buffer
 	var in bytes.Buffer
@@ -351,6 +362,7 @@ func TestTeaContextImplodeDeadlock(t *testing.T) {
 }
 
 func TestTeaContextBatchDeadlock(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(t.Context())
 	var buf bytes.Buffer
 	var in bytes.Buffer
@@ -386,6 +398,7 @@ func TestTeaContextBatchDeadlock(t *testing.T) {
 }
 
 func TestTeaBatchMsg(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -421,6 +434,7 @@ func TestTeaBatchMsg(t *testing.T) {
 }
 
 func TestTeaSequenceMsg(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -445,6 +459,7 @@ func TestTeaSequenceMsg(t *testing.T) {
 }
 
 func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -472,6 +487,7 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 }
 
 func TestTeaNestedSequenceMsg(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -496,6 +512,7 @@ func TestTeaNestedSequenceMsg(t *testing.T) {
 }
 
 func TestTeaSend(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -517,6 +534,7 @@ func TestTeaSend(t *testing.T) {
 }
 
 func TestTeaNoRun(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -528,6 +546,7 @@ func TestTeaNoRun(t *testing.T) {
 }
 
 func TestTeaPanic(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 
@@ -558,6 +577,7 @@ func TestTeaPanic(t *testing.T) {
 }
 
 func TestTeaGoroutinePanic(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	var in bytes.Buffer
 

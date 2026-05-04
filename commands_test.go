@@ -6,6 +6,7 @@ import (
 )
 
 func TestEvery(t *testing.T) {
+	t.Parallel()
 	expected := "every ms"
 	msg := Every(time.Millisecond, func(t time.Time) Msg {
 		return expected
@@ -16,6 +17,7 @@ func TestEvery(t *testing.T) {
 }
 
 func TestTick(t *testing.T) {
+	t.Parallel()
 	expected := "tick"
 	msg := Tick(time.Millisecond, func(t time.Time) Msg {
 		return expected
@@ -26,31 +28,37 @@ func TestTick(t *testing.T) {
 }
 
 func TestBatch(t *testing.T) {
+	t.Parallel()
 	testMultipleCommands[BatchMsg](t, Batch)
 }
 
 func TestSequence(t *testing.T) {
+	t.Parallel()
 	testMultipleCommands[sequenceMsg](t, Sequence)
 }
 
 func testMultipleCommands[T ~[]Cmd](t *testing.T, createFn func(cmd ...Cmd) Cmd) {
 	t.Run("nil cmd", func(t *testing.T) {
+		t.Parallel()
 		if b := createFn(nil); b != nil {
 			t.Fatalf("expected nil, got %+v", b)
 		}
 	})
 	t.Run("empty cmd", func(t *testing.T) {
+		t.Parallel()
 		if b := createFn(); b != nil {
 			t.Fatalf("expected nil, got %+v", b)
 		}
 	})
 	t.Run("single cmd", func(t *testing.T) {
+		t.Parallel()
 		b := createFn(Quit)()
 		if _, ok := b.(QuitMsg); !ok {
 			t.Fatalf("expected a QuitMsg, got %T", b)
 		}
 	})
 	t.Run("mixed nil cmds", func(t *testing.T) {
+		t.Parallel()
 		b := createFn(nil, Quit, nil, Quit, nil, nil)()
 		if l := len(b.(T)); l != 2 {
 			t.Fatalf("expected a []Cmd with len 2, got %d", l)

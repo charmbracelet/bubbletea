@@ -1,6 +1,6 @@
 # https://taskfile.dev
 
-version: '3'
+version: "3"
 
 tasks:
   lint:
@@ -11,4 +11,4 @@ tasks:
   test:
     desc: Run tests
     cmds:
-      - go test ./... {{.CLI_ARGS}}
+      - go test -race -count 4 -cpu 1,4 ./... {{.CLI_ARGS}}

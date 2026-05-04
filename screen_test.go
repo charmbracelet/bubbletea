@@ -132,6 +132,7 @@ func TestViewModel(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			var buf bytes.Buffer
 			var in bytes.Buffer
 
@@ -179,6 +180,7 @@ func TestClearMsg(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			var buf bytes.Buffer
 			var in bytes.Buffer
 
