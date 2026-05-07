@@ -3,7 +3,7 @@
 package tea
 
 // initInput sets up input handling for WASM.
-// On WASM, input comes through custom readers (e.g., from booba's JavaScript bridge),
+// On WASM, input comes through custom readers (e.g., JavaScript bridges),
 // so we don't need to interact with TTY directly.
 func (p *Program) initInput() error {
 	return nil
