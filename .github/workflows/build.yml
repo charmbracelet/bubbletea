@@ -18,3 +18,43 @@ jobs:
       go-version: ""
       go-version-file: ./examples/go.mod
       working-directory: ./examples
+
+  build-examples-wasm:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { goos: wasip1, goarch: wasm }
+          - { goos: js,     goarch: wasm }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ./examples/go.mod
+          cache: true
+      - name: Tidy Go modules
+        working-directory: ./examples
+        run: go mod tidy
+      - name: Build examples for ${{ matrix.target.goos }}/${{ matrix.target.goarch }}
+        working-directory: ./examples
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+        run: |
+          # Examples whose dep graph pulls atotto/clipboard, which has no
+          # wasm stubs upstream. Revisit if/when that's fixed.
+          exclude='^(autocomplete|capability|chat|dynamic-textarea|isbn-form|list-default|list-fancy|list-simple|pipe|prevent-quit|query-term|set-terminal-color|split-editors|textarea|textinput|textinputs)$'
+          fail=0
+          for d in */; do
+            d="${d%/}"
+            ls "$d"/*.go >/dev/null 2>&1 || continue
+            [[ "$d" =~ $exclude ]] && { echo "skip $d"; continue; }
+            echo "build $d"
+            if ! go build -o /tmp/wasm-out ./"$d"; then
+              fail=1
+            fi
+          done
+          rm -f /tmp/wasm-out
+          exit $fail
