@@ -649,3 +649,27 @@ func BenchmarkTeaRun(b *testing.B) {
 		_ = r.CloseWithError(io.EOF)
 	}
 }
+
+func TestKillDuringStartupRace(t *testing.T) {
+	for range 100 {
+		p := NewProgram(&testModel{},
+			WithInput(bytes.NewBuffer(nil)),
+			WithOutput(io.Discard),
+			WithoutSignals(),
+		)
+
+		done := make(chan struct{})
+		go func() {
+			_, _ = p.Run()
+			close(done)
+		}()
+
+		p.Kill()
+
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatal("program did not stop")
+		}
+	}
+}
