@@ -618,16 +618,45 @@ func (s *cursedRenderer) setColorProfile(p colorprofile.Profile) {
 // resize implements renderer.
 func (s *cursedRenderer) resize(w, h int) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// In inline mode, eagerly erase the previous frame from the terminal
+	// before the next render. The renderer's clearUpdate path defers the
+	// physical erase to flush time and emits it as a relative move(0, 0)
+	// followed by ED-0. When [cursedRenderer.insertAbove] has just reset
+	// the renderer's tracked cursor to (0, 0), that move degenerates to a
+	// no-op and ED-0 fires at whatever physical position the cursor ends
+	// up at after terminal reflow, leaving the previous frame stranded
+	// above the new one and pushing it into scrollback on subsequent
+	// resizes. Anchoring the erase to the renderer's known column-0
+	// position before the reflow propagates avoids that drift. Alt-screen
+	// mode uses absolute positioning and its own clear semantics, so we
+	// skip this path there.
+	if s.lastView != nil && !s.lastView.AltScreen {
+		_, y := s.scr.Position()
+		var sb strings.Builder
+		sb.WriteByte('')
+		if y > 0 {
+			sb.WriteString(ansi.CursorUp(y))
+		}
+		sb.WriteString(ansi.EraseScreenBelow)
+		if s.logger != nil {
+			s.logger.Printf("resize erase: %q", sb.String())
+		}
+		_, _ = io.WriteString(s.w, sb.String())
+		// Force moveCursor's first-move safety on the next render so an
+		// explicit  is emitted before the next cursor move regardless of
+		// whether the target happens to be (0, 0).
+		s.scr.SetPosition(-1, -1)
+	}
+
 	// We need to mark the screen for clear to force a redraw. However, we
 	// only do so if we're using alt screen or the width has changed.
-	// That's because redrawing is expensive and we can avoid it if the
-	// width hasn't changed in inline mode. On the other hand, when using
-	// alt screen mode, we always want to redraw because some terminals
-	// would scroll the screen and our content would be lost.
+	// That's because redrawing is expensive and we can avoid it if we're
+	// not using alt screen and the width hasn't changed.
 	s.scr.Erase()
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
-	s.mu.Unlock()
 }
 
 // clearScreen implements renderer.
