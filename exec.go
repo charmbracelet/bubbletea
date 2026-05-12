@@ -100,6 +100,14 @@ func (c *osExecCommand) SetStderr(w io.Writer) {
 
 // exec runs an ExecCommand and delivers the results to the program as a Msg.
 func (p *Program) exec(c ExecCommand, fn ExecCallback) {
+	// Clear the current view before releasing the terminal so the renderer's
+	// final flush doesn't write the last View() output to stdout. Without
+	// this, the view content leaks to the terminal and persists after the
+	// subprocess exits.
+	if p.renderer != nil {
+		p.renderer.render(View{})
+	}
+
 	if err := p.releaseTerminal(false); err != nil {
 		// If we can't release input, abort.
 		if fn != nil {
