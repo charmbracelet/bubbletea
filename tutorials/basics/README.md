@@ -10,7 +10,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]: https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+[tut-source]: https://github.com/charmbracelet/bubbletea/tree/main/tutorials/basics
 
 ## Enough! Let’s get to it.
 
@@ -216,8 +216,8 @@ look at the [Command Tutorial][cmd]. It’s pretty simple.
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: http://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/
-[examples]: http://github.com/charmbracelet/bubbletea/tree/master/examples
+[cmd]: https://github.com/charmbracelet/bubbletea/tree/main/tutorials/commands/
+[examples]: https://github.com/charmbracelet/bubbletea/tree/main/examples
 [docs]: https://pkg.go.dev/charm.land/bubbletea/v2?tab=doc
 
 ## Additional Resources

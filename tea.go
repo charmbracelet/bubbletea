@@ -4,9 +4,9 @@
 // both. It's been battle-tested in several large projects and is
 // production-ready.
 //
-// A tutorial is available at https://github.com/charmbracelet/bubbletea/tree/master/tutorials
+// A tutorial is available at https://github.com/charmbracelet/bubbletea/tree/main/tutorials
 //
-// Example programs can be found at https://github.com/charmbracelet/bubbletea/tree/master/examples
+// Example programs can be found at https://github.com/charmbracelet/bubbletea/tree/main/examples
 package tea
 
 import (
