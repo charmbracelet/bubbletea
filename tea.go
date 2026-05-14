@@ -534,6 +534,10 @@ type Program struct {
 	// ticker is the ticker that will be used to write to the renderer.
 	ticker *time.Ticker
 
+	// rendererRequest is used to request the renderer goroutine to flush the frame.
+	// It is always a 1 element channel.
+	rendererRequest chan struct{}
+
 	// once is used to stop the renderer.
 	once sync.Once
 
@@ -751,7 +755,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 		case msg := <-p.msgs:
 			msg = p.translateInputEvent(msg)
-
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
@@ -878,6 +881,14 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			p.render(model) // render view
+
+			// Send to p.rendererRequest. This may block
+			// until the renderer goroutine in startRenderer flushes output.
+			select {
+			case <-p.ctx.Done():
+				return model, nil
+			case p.rendererRequest <- struct{}{}:
+			}
 		}
 	}
 }
@@ -1102,6 +1113,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			return model, err
 		}
 	}
+
+	// Initialize p.rendererRequest to a size 1 channel so that
+	// successive render requests can be blocked until flushed
+	p.rendererRequest = make(chan struct{}, 1)
 
 	// Start the renderer.
 	p.startRenderer()
@@ -1406,16 +1421,31 @@ func (p *Program) startRenderer() {
 
 	// Start the renderer.
 	p.renderer.start()
+
 	go func() {
 		for {
+			// Flush buffered rendererRequest messages limited to this frame.
+		FlushRequests:
+			for {
+				select {
+				case <-p.rendererDone:
+					p.ticker.Stop()
+					return
+				case _ = <-p.rendererRequest:
+				case <-p.ticker.C:
+					break FlushRequests
+				}
+			}
+
+			_ = p.flush()
+			_ = p.renderer.flush(false)
+
+			// Wait until next frame.
 			select {
 			case <-p.rendererDone:
 				p.ticker.Stop()
 				return
-
 			case <-p.ticker.C:
-				_ = p.flush()
-				_ = p.renderer.flush(false)
 			}
 		}
 	}()
