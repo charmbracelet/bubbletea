@@ -887,8 +887,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			select {
 			case <-p.ctx.Done():
 				return model, nil
-			case err := <-p.errs:
-				return model, err
 			case p.rendererRequest <- struct{}{}:
 			}
 		}
@@ -1274,7 +1272,6 @@ func (p *Program) shutdown(kill bool) {
 		}
 
 		if p.renderer != nil {
-			close(p.rendererRequest)
 			p.stopRenderer(kill)
 		}
 
@@ -1424,17 +1421,31 @@ func (p *Program) startRenderer() {
 
 	// Start the renderer.
 	p.renderer.start()
+
 	go func() {
 		for {
+			// Flush buffered rendererRequest messages limited to this frame.
+		FlushRequests:
+			for {
+				select {
+				case <-p.rendererDone:
+					p.ticker.Stop()
+					return
+				case _ = <-p.rendererRequest:
+				case <-p.ticker.C:
+					break FlushRequests
+				}
+			}
+
+			_ = p.flush()
+			_ = p.renderer.flush(false)
+
+			// Wait until next frame.
 			select {
 			case <-p.rendererDone:
 				p.ticker.Stop()
 				return
-
 			case <-p.ticker.C:
-				_ = <-p.rendererRequest
-				_ = p.flush()
-				_ = p.renderer.flush(false)
 			}
 		}
 	}()
