@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -30,8 +31,14 @@ type testModel struct {
 	counter  atomic.Value
 }
 
+type quitModel struct{}
+
 func (m *testModel) Init() Cmd {
 	return nil
+}
+
+func (quitModel) Init() Cmd {
+	return Quit
 }
 
 func (m *testModel) Update(msg Msg) (Model, Cmd) {
@@ -66,6 +73,14 @@ func (m *testModel) View() View {
 	return NewView("success")
 }
 
+func (quitModel) Update(msg Msg) (Model, Cmd) {
+	return quitModel{}, nil
+}
+
+func (quitModel) View() View {
+	return NewView("")
+}
+
 func TestTeaModel(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
@@ -86,6 +101,27 @@ func TestTeaModel(t *testing.T) {
 
 	if buf.Len() == 0 {
 		t.Fatal("no output")
+	}
+}
+
+func TestTeaProgramRunsWithDevNullInput(t *testing.T) {
+	t.Parallel()
+
+	devNull, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer devNull.Close()
+
+	p := NewProgram(
+		quitModel{},
+		WithInput(devNull),
+		WithOutput(io.Discard),
+		WithoutSignals(),
+	)
+
+	if _, err := p.Run(); err != nil {
+		t.Fatalf("expected /dev/null input to be accepted, got %v", err)
 	}
 }
 
