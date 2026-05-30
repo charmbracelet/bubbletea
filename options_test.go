@@ -10,6 +10,7 @@ import (
 
 func TestOptions(t *testing.T) {
 	t.Run("output", func(t *testing.T) {
+		t.Parallel()
 		var b bytes.Buffer
 		p := NewProgram(nil, WithOutput(&b))
 		if f, ok := p.output.(*os.File); ok {
@@ -18,6 +19,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("renderer", func(t *testing.T) {
+		t.Parallel()
 		p := NewProgram(nil, WithoutRenderer())
 		if !p.disableRenderer {
 			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
@@ -25,6 +27,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("without signals", func(t *testing.T) {
+		t.Parallel()
 		p := NewProgram(nil, WithoutSignals())
 		if atomic.LoadUint32(&p.ignoreSignals) == 0 {
 			t.Errorf("ignore signals should have been set")
@@ -32,6 +35,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("filter", func(t *testing.T) {
+		t.Parallel()
 		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
 		if p.filter == nil {
 			t.Errorf("expected filter to be set")
@@ -39,6 +43,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("external context", func(t *testing.T) {
+		t.Parallel()
 		extCtx, extCancel := context.WithCancel(context.Background())
 		defer extCancel()
 
@@ -55,6 +60,7 @@ func TestOptions(t *testing.T) {
 		}
 
 		t.Run("nil input", func(t *testing.T) {
+			t.Parallel()
 			exercise(t, WithInput(nil), func(p *Program) {
 				if !p.disableInput || p.input != nil {
 					t.Errorf("expected input to be disabled, got %v", p.input)
@@ -63,6 +69,7 @@ func TestOptions(t *testing.T) {
 		})
 
 		t.Run("custom input", func(t *testing.T) {
+			t.Parallel()
 			var b bytes.Buffer
 			exercise(t, WithInput(&b), func(p *Program) {
 				if p.input != &b {
@@ -79,6 +86,7 @@ func TestOptions(t *testing.T) {
 		}
 
 		t.Run("without catch panics", func(t *testing.T) {
+			t.Parallel()
 			exercise(t, WithoutCatchPanics(), func(p *Program) {
 				if !p.disableCatchPanics {
 					t.Errorf("expected catch panics to be disabled")
@@ -87,6 +95,7 @@ func TestOptions(t *testing.T) {
 		})
 
 		t.Run("without signal handler", func(t *testing.T) {
+			t.Parallel()
 			exercise(t, WithoutSignalHandler(), func(p *Program) {
 				if !p.disableSignalHandler {
 					t.Errorf("expected signal handler to be disabled")
