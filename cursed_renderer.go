@@ -635,7 +635,7 @@ func (s *cursedRenderer) resize(w, h int) {
 	if s.lastView != nil && !s.lastView.AltScreen {
 		_, y := s.scr.Position()
 		var sb strings.Builder
-		sb.WriteByte('')
+		sb.WriteByte('')
 		if y > 0 {
 			sb.WriteString(ansi.CursorUp(y))
 		}
@@ -645,7 +645,7 @@ func (s *cursedRenderer) resize(w, h int) {
 		}
 		_, _ = io.WriteString(s.w, sb.String())
 		// Force moveCursor's first-move safety on the next render so an
-		// explicit  is emitted before the next cursor move regardless of
+		// explicit  is emitted before the next cursor move regardless of
 		// whether the target happens to be (0, 0).
 		s.scr.SetPosition(-1, -1)
 	}
