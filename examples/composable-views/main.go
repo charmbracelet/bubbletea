@@ -18,8 +18,8 @@ haven't already read our tutorials on the basics of Bubble Tea and working with
 commands, we recommend reading those first.
 
 Find them at:
-https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands
-https://github.com/charmbracelet/bubbletea/tree/master/tutorials/basics
+https://github.com/charmbracelet/bubbletea/tree/main/tutorials/commands
+https://github.com/charmbracelet/bubbletea/tree/main/tutorials/basics
 */
 
 // sessionState is used to track which model is focused
