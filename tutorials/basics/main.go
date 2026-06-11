@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -57,6 +58,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() tea.View {
+	var sb strings.Builder
 	s := "What should we buy at the market?\n\n"
 
 	for i, choice := range m.choices {
@@ -70,9 +72,10 @@ func (m model) View() tea.View {
 			checked = "x"
 		}
 
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		fmt.Fprintf(&sb, "%s [%s] %s\n", cursor, checked, choice)
 	}
 
+	s += sb.String()
 	s += "\nPress q to quit.\n"
 
 	v := tea.NewView(s)
