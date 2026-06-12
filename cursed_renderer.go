@@ -712,6 +712,17 @@ func (s *cursedRenderer) insertAbove(str string) error {
 		return nil
 	}
 
+	if s.profile != colorprofile.TrueColor {
+		// Downsample the queued content to the renderer's color profile,
+		// matching what the screen renderer does for view content. Only the
+		// message content goes through the writer; the cursor movements
+		// composed below must reach the terminal untouched.
+		var conv strings.Builder
+		cw := colorprofile.Writer{Forward: &conv, Profile: s.profile}
+		_, _ = cw.WriteString(str) // writing to a strings.Builder cannot fail
+		str = conv.String()
+	}
+
 	var sb strings.Builder
 	w, h := s.cellbuf.Width(), s.cellbuf.Height()
 	_, y := s.scr.Position()
