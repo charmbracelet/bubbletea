@@ -669,3 +669,23 @@ func BenchmarkTeaRun(b *testing.B) {
 		_ = r.CloseWithError(io.EOF)
 	}
 }
+
+func TestFallbackZeroSize(t *testing.T) {
+	cases := []struct {
+		w, h           int
+		wantW, wantH   int
+	}{
+		{0, 0, fallbackWidth, fallbackHeight},   // tmux startup: both zero
+		{0, 50, fallbackWidth, 50},              // zero width only
+		{120, 0, 120, fallbackHeight},           // zero height only
+		{200, 50, 200, 50},                      // real size: unchanged
+		{-1, -5, fallbackWidth, fallbackHeight}, // defensive: negatives
+	}
+	for _, c := range cases {
+		gotW, gotH := fallbackZeroSize(c.w, c.h)
+		if gotW != c.wantW || gotH != c.wantH {
+			t.Errorf("fallbackZeroSize(%d, %d) = (%d, %d); want (%d, %d)",
+				c.w, c.h, gotW, gotH, c.wantW, c.wantH)
+		}
+	}
+}
