@@ -985,6 +985,30 @@ func shouldQuerySynchronizedOutput(environ uv.Environ) bool {
 		strings.Contains(termType, "rio")
 }
 
+// Standard fallback terminal dimensions, used when the initial size
+// query returns a zero dimension (see fallbackZeroSize).
+const (
+	fallbackWidth  = 80
+	fallbackHeight = 24
+)
+
+// fallbackZeroSize substitutes standard dimensions for any zero
+// dimension reported by the initial terminal size query. Some terminals
+// — tmux is the common one — return 0 from the startup size ioctl with
+// no error, before the pty size has been negotiated. Using that 0 to
+// size the renderer blanks the entire first frame until a real SIGWINCH
+// arrives. A non-zero fallback lets the first frame paint; the genuine
+// size then arrives via WindowSizeMsg and re-renders correctly.
+func fallbackZeroSize(w, h int) (int, int) {
+	if w <= 0 {
+		w = fallbackWidth
+	}
+	if h <= 0 {
+		h = fallbackHeight
+	}
+	return w, h
+}
+
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
@@ -1047,7 +1071,14 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
-		width, height = w, h
+		// Some terminals (notably tmux before the pty size is
+		// negotiated) return 0 from the initial size ioctl with no
+		// error. Resizing the renderer to 0 blanks the whole first
+		// frame until a real SIGWINCH arrives, which looks like the
+		// program hung. Fall back to a standard size so the first frame
+		// paints; the real size replaces it via WindowSizeMsg a moment
+		// later.
+		width, height = fallbackZeroSize(w, h)
 	}
 
 	p.width, p.height = width, height
