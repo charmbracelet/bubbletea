@@ -317,8 +317,13 @@ const (
 	ProgressBarWarning
 )
 
-// String return a human-readable value for the given [ProgressBarState].
+// String returns a human-readable value for the given [ProgressBarState].
+// Values outside the defined range are rendered as ProgressBarState(N) rather
+// than panicking, since [ProgressBar.State] is exported and may hold any int.
 func (s ProgressBarState) String() string {
+	if s < ProgressBarNone || s > ProgressBarWarning {
+		return fmt.Sprintf("ProgressBarState(%d)", int(s))
+	}
 	return [...]string{
 		"None",
 		"Default",

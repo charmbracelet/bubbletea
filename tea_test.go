@@ -669,3 +669,32 @@ func BenchmarkTeaRun(b *testing.B) {
 		_ = r.CloseWithError(io.EOF)
 	}
 }
+
+func TestProgressBarStateString(t *testing.T) {
+	type test struct {
+		name  string
+		state ProgressBarState
+		want  string
+	}
+
+	tests := []test{
+		{name: "none", state: ProgressBarNone, want: "None"},
+		{name: "default", state: ProgressBarDefault, want: "Default"},
+		{name: "error", state: ProgressBarError, want: "Error"},
+		{name: "indeterminate", state: ProgressBarIndeterminate, want: "Indeterminate"},
+		{name: "warning", state: ProgressBarWarning, want: "Warning"},
+		{name: "above range", state: ProgressBarWarning + 1, want: "ProgressBarState(5)"},
+		{name: "negative", state: -1, want: "ProgressBarState(-1)"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			// String must never panic, even for values outside the
+			// defined range, because ProgressBar.State is exported.
+			if got := test.state.String(); got != test.want {
+				t.Errorf("ProgressBarState(%d).String() = %q, want %q", int(test.state), got, test.want)
+			}
+		})
+	}
+}
