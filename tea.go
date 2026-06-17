@@ -189,13 +189,6 @@ type View struct {
 	KeyboardEnhancements KeyboardEnhancements
 }
 
-// KeyboardEnhancements describes the requested keyboard enhancement features.
-// If the terminal supports any of them, it will respond with a
-// [KeyboardEnhancementsMsg] that indicates which features are supported.
-
-// KeyboardEnhancements defines different keyboard enhancement features that
-// can be requested from the terminal.
-
 // KeyboardEnhancements defines different keyboard enhancement features that
 // can be requested from the terminal.
 //
@@ -213,7 +206,7 @@ type View struct {
 //	    // We have basic key disambiguation support.
 //	    // We can handle "shift+enter", "ctrl+i", etc.
 //		m.keyboardEnhancements = msg
-//		if msg.ReportEventTypes {
+//		if msg.SupportsEventTypes() {
 //		  // Even better! We can now handle key repeat and release events.
 //		}
 //	  case tea.KeyPressMsg:
@@ -548,6 +541,13 @@ type Program struct {
 	// whether to use backspace to optimize cursor movements
 	useBackspace bool
 
+	// hardTabsOverride, when non-nil, overrides the auto-detected hard tabs
+	// setting from termios.
+	hardTabsOverride *bool
+	// backspaceOverride, when non-nil, overrides the auto-detected backspace
+	// setting from termios.
+	backspaceOverride *bool
+
 	mu sync.Mutex
 }
 
@@ -573,11 +573,11 @@ func Suspend() Msg {
 // You can send this message with [Suspend()].
 type SuspendMsg struct{}
 
-// ResumeMsg can be listen to do something once a program is resumed back
+// ResumeMsg can be listened to do something once a program is resumed back
 // from a suspend state.
 type ResumeMsg struct{}
 
-// InterruptMsg signals the program should suspend.
+// InterruptMsg signals the program should interrupt.
 // This usually happens when ctrl+c is pressed on common programs, but since
 // bubbletea puts the terminal in raw mode, we need to handle it in a
 // per-program basis.
@@ -1073,6 +1073,13 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			// don't change and the we end up working in cooked mode instead of
 			// raw mode. See issue #1572.
 			mapNl := runtime.GOOS != "windows" && p.ttyInput == nil
+			// Apply any explicit overrides from ProgramOptions.
+			if p.hardTabsOverride != nil {
+				p.useHardTabs = *p.hardTabsOverride
+			}
+			if p.backspaceOverride != nil {
+				p.useBackspace = *p.backspaceOverride
+			}
 			r.setOptimizations(p.useHardTabs, p.useBackspace, mapNl)
 			p.renderer = r
 		}
