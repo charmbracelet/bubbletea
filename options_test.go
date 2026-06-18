@@ -37,7 +37,7 @@ func TestWithBackspace(t *testing.T) {
 	// Test disabling backspace
 	opt = WithBackspace(false)
 	opt(p)
-	if p.hardTabsOverride == nil || *p.backspaceOverride != false {
+	if p.backspaceOverride == nil || *p.backspaceOverride != false {
 		t.Error("WithBackspace(false) did not set backspaceOverride to false")
 	}
 }
