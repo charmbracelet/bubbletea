@@ -27,4 +27,4 @@ require (
 	golang.org/x/sync v0.21.0 // indirect
 )
 
-replace github.com/charmbracelet/ultraviolet => /home/luis/Projects/AI/ultraviolet-fork
+replace github.com/charmbracelet/ultraviolet => github.com/luispabon/ultraviolet v0.0.0-20260625204701-67215642e1d1
