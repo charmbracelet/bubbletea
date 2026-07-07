@@ -8,6 +8,8 @@ updates:
       day: "monday"
       time: "05:00"
       timezone: "America/New_York"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
     commit-message:
@@ -29,6 +31,8 @@ updates:
       day: "monday"
       time: "05:00"
       timezone: "America/New_York"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
     commit-message:
@@ -46,6 +50,8 @@ updates:
       day: "monday"
       time: "05:00"
       timezone: "America/New_York"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
     commit-message:
@@ -63,6 +69,8 @@ updates:
       day: "monday"
       time: "05:00"
       timezone: "America/New_York"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
     commit-message:
@@ -80,6 +88,8 @@ updates:
       day: "monday"
       time: "05:00"
       timezone: "America/New_York"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
     commit-message:
