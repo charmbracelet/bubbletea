@@ -669,3 +669,22 @@ func BenchmarkTeaRun(b *testing.B) {
 		_ = r.CloseWithError(io.EOF)
 	}
 }
+
+func TestProgressBarStateString(t *testing.T) {
+	for _, tc := range []struct {
+		state ProgressBarState
+		want  string
+	}{
+		{ProgressBarNone, "None"},
+		{ProgressBarDefault, "Default"},
+		{ProgressBarError, "Error"},
+		{ProgressBarIndeterminate, "Indeterminate"},
+		{ProgressBarWarning, "Warning"},
+		{ProgressBarState(5), "ProgressBarState(5)"},
+		{ProgressBarState(-1), "ProgressBarState(-1)"},
+	} {
+		if got := tc.state.String(); got != tc.want {
+			t.Errorf("ProgressBarState(%d).String() = %q, want %q", int(tc.state), got, tc.want)
+		}
+	}
+}
