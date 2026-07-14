@@ -54,8 +54,8 @@ func (e ForegroundColorMsg) IsDark() bool {
 // [BackgroundColorMsg.IsDark] to determine if the color is dark or light. For
 // example:
 //
-//	func (m Model) Init() (Model, Cmd) {
-//	  return m, RequestBackgroundColor()
+//	func (m Model) Init() Cmd {
+//	  return RequestBackgroundColor
 //	}
 //
 //	func (m Model) Update(msg Msg) (Model, Cmd) {
@@ -63,6 +63,7 @@ func (e ForegroundColorMsg) IsDark() bool {
 //	  case BackgroundColorMsg:
 //	      m.styles = newStyles(msg.IsDark())
 //	  }
+//	  return m, nil
 //	}
 type BackgroundColorMsg struct{ color.Color }
 

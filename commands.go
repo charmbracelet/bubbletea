@@ -9,8 +9,8 @@ import (
 //
 // Example:
 //
-//	    func (m model) Init() (Model, Cmd) {
-//		       return m, tea.Batch(someCommand, someOtherCommand)
+//	    func (m model) Init() Cmd {
+//		       return tea.Batch(someCommand, someOtherCommand)
 //	    }
 func Batch(cmds ...Cmd) Cmd {
 	return compactCmds[BatchMsg](cmds)
@@ -84,9 +84,9 @@ func compactCmds[T ~[]Cmd](cmds []Cmd) Cmd {
 //	    })
 //	}
 //
-//	func (m model) Init() (Model, Cmd) {
+//	func (m model) Init() Cmd {
 //	    // Start ticking.
-//	    return m, tickEvery()
+//	    return tickEvery()
 //	}
 //
 //	func (m model) Update(msg Msg) (Model, Cmd) {
@@ -138,9 +138,9 @@ func Every(duration time.Duration, fn func(time.Time) Msg) Cmd {
 //	    })
 //	}
 //
-//	func (m model) Init() (Model, Cmd) {
+//	func (m model) Init() Cmd {
 //	    // Start ticking.
-//	    return m, doTick()
+//	    return doTick()
 //	}
 //
 //	func (m model) Update(msg Msg) (Model, Cmd) {
