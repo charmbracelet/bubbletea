@@ -1,8 +1,10 @@
 package tea
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 	"time"
 )
@@ -76,5 +78,39 @@ func TestCursedRenderer_mouseVsFlush(t *testing.T) {
 	case <-runDone:
 	case <-time.After(5 * time.Second):
 		t.Fatal("program did not exit after Quit")
+	}
+}
+
+func TestCursedRenderer_insertAboveFlushesQueuedView(t *testing.T) {
+	var output bytes.Buffer
+	r := newCursedRenderer(
+		&output,
+		[]string{"TERM=xterm-256color", "TERM_PROGRAM=Apple_Terminal"},
+		80,
+		24,
+	)
+
+	r.render(NewView("stale frame\nstale row"))
+	if err := r.flush(false); err != nil {
+		t.Fatalf("flush initial view: %v", err)
+	}
+
+	output.Reset()
+	r.render(NewView("current frame"))
+	if err := r.insertAbove("committed block"); err != nil {
+		t.Fatalf("insert above: %v", err)
+	}
+
+	if r.lastView == nil || r.lastView.Content != "current frame" {
+		t.Fatalf("insertAbove did not flush the queued view: %#v", r.lastView)
+	}
+	written := output.String()
+	currentAt := strings.Index(written, "current frame")
+	committedAt := strings.Index(written, "committed block")
+	if currentAt < 0 || committedAt < 0 {
+		t.Fatalf("output missing markers (current=%d, committed=%d): %q", currentAt, committedAt, written)
+	}
+	if currentAt > committedAt {
+		t.Fatalf("inserted scrollback before flushing current frame: %q", written)
 	}
 }

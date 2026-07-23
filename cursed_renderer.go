@@ -705,12 +705,22 @@ func (s *cursedRenderer) setWidthMethod(method ansi.Method) {
 
 // insertAbove implements renderer.
 func (s *cursedRenderer) insertAbove(str string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if len(str) == 0 {
 		return nil
 	}
+
+	// render only queues the latest View; the frame ticker flushes it later.
+	// A Println can therefore reach insertAbove after the model has changed
+	// View but before that frame is physically on the terminal. Scrolling with
+	// the previous cellbuf geometry can weld rows from the stale frame into
+	// native scrollback. Flush the queued View first so cellbuf, the terminal,
+	// and the geometry below all describe one frame.
+	if err := s.flush(false); err != nil {
+		return fmt.Errorf("bubbletea: error flushing before insert above: %w", err)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	var sb strings.Builder
 	w, h := s.cellbuf.Width(), s.cellbuf.Height()
