@@ -257,6 +257,16 @@ The `stopwatch` example shows a sample stop watch built with Bubble Tea.
   <img width="750" src="./stopwatch/stopwatch.gif" />
 </a>
 
+### Stop Watches in a Table
+
+The `stopwatches-in-table` example shows how to run several independent
+`stopwatch` bubbles at once, one per row of a `table`, each with its own
+start/stop and reset controls.
+
+<a href="./stopwatches-in-table/main.go">
+  <img width="750" src="./stopwatches-in-table/stopwatches-in-table.gif" />
+</a>
+
 ### Table
 
 The `table` example demonstrates the table bubble being used to display tabular
