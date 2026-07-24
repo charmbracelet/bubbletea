@@ -714,6 +714,26 @@ func (s *cursedRenderer) insertAbove(str string) error {
 
 	var sb strings.Builder
 	w, h := s.cellbuf.Width(), s.cellbuf.Height()
+
+	// The cellbuf is created at the full terminal height in
+	// [newCursedRenderer] and is only resized to the current frame height
+	// inside [cursedRenderer.flush]. If an insertAbove happens before the
+	// first flush (e.g. a tea.Println/tea.Printf issued from Model.Init), the
+	// cellbuf height is still the full terminal height. Using it below would
+	// move the cursor down a full screen and scroll the whole viewport. Clamp
+	// the height to the currently stashed frame height so we only scroll the
+	// lines the frame actually occupies. In alt screen mode the frame always
+	// occupies the full height, so it's left untouched.
+	if !s.view.AltScreen {
+		frameHeight := 0
+		if len(s.view.Content) > 0 {
+			frameHeight = uv.NewStyledString(s.view.Content).Height()
+		}
+		if frameHeight < h {
+			h = frameHeight
+		}
+	}
+
 	_, y := s.scr.Position()
 
 	// We need to scroll the screen up by the number of lines in the queue.
