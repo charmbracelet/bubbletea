@@ -669,3 +669,23 @@ func BenchmarkTeaRun(b *testing.B) {
 		_ = r.CloseWithError(io.EOF)
 	}
 }
+
+// TestProgressBarStateStringOutOfRange is a regression test for
+// https://github.com/charmbracelet/bubbletea/issues/1711: String panicked
+// with an index-out-of-range error for any ProgressBarState outside the
+// [ProgressBarNone, ProgressBarWarning] range. Since State is an exported
+// field on ProgressBar, callers can assign such a value without going
+// through NewProgressBar.
+func TestProgressBarStateStringOutOfRange(t *testing.T) {
+	for _, s := range []ProgressBarState{-1, 5, 100} {
+		if got, want := s.String(), "Unknown"; got != want {
+			t.Errorf("ProgressBarState(%d).String() = %q, want %q", int(s), got, want)
+		}
+	}
+
+	for s := ProgressBarNone; s <= ProgressBarWarning; s++ {
+		if got := s.String(); got == "Unknown" {
+			t.Errorf("ProgressBarState(%d).String() = %q, want a known name", int(s), got)
+		}
+	}
+}

@@ -319,13 +319,17 @@ const (
 
 // String return a human-readable value for the given [ProgressBarState].
 func (s ProgressBarState) String() string {
-	return [...]string{
+	states := [...]string{
 		"None",
 		"Default",
 		"Error",
 		"Indeterminate",
 		"Warning",
-	}[s]
+	}
+	if s < 0 || int(s) >= len(states) {
+		return "Unknown"
+	}
+	return states[s]
 }
 
 // ProgressBar represents the terminal progress bar.
