@@ -136,7 +136,7 @@ func (s *cursedRenderer) start() {
 	_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
 	kittyFlags := keyboardEnhancementsFlags(s.lastView.KeyboardEnhancements)
-	_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
+	_, _ = s.scr.WriteString(ansi.PushKittyKeyboard(kittyFlags))
 }
 
 // close implements renderer.
@@ -156,7 +156,7 @@ func (s *cursedRenderer) close() (err error) {
 		// Here, we reset the keyboard protocol of the last screen used
 		// assuming the other screen is already reset when we switched screens.
 		_, _ = s.buf.WriteString(ansi.ResetModifyOtherKeys)
-		_, _ = s.buf.WriteString(ansi.KittyKeyboard(0, 1))
+		_, _ = s.buf.WriteString(ansi.PopKittyKeyboard(1))
 
 		// Go to the bottom of the screen.
 		// We need to go to the bottom of the screen regardless of whether
@@ -385,8 +385,14 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// Enable modifyOtherKeys and Kitty keyboard protocol.
 		_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
+		if s.lastView != nil {
+			// Pop the entry we pushed for this screen. When switching
+			// screens, we already pop the current screen's entry in the
+			// flush buffer below before entering the other screen.
+			_, _ = s.scr.WriteString(ansi.PopKittyKeyboard(1))
+		}
 		kittyFlags := keyboardEnhancementsFlags(view.KeyboardEnhancements)
-		_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
+		_, _ = s.scr.WriteString(ansi.PushKittyKeyboard(kittyFlags))
 		if !closing {
 			// Request keyboard enhancements when they change
 			_, _ = s.scr.WriteString(ansi.RequestKittyKeyboard)
@@ -515,7 +521,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// because the terminal is expected to have two different keyboard
 		// registries for main and alt screens.
 		_, _ = buf.WriteString(ansi.ResetModifyOtherKeys)
-		_, _ = buf.WriteString(ansi.KittyKeyboard(0, 1))
+		_, _ = buf.WriteString(ansi.PopKittyKeyboard(1))
 		if view.AltScreen {
 			// Entering alt screen mode.
 			buf.WriteString(ansi.SetModeAltScreenSaveCursor)
