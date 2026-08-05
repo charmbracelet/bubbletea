@@ -38,7 +38,7 @@ const (
 	MouseBackward   = uv.MouseBackward
 	MouseForward    = uv.MouseForward
 	MouseButton10   = uv.MouseButton10
-	MouseButton11
+	MouseButton11   = uv.MouseButton11
 )
 
 // MouseMsg represents a mouse message. This is a generic mouse message that
