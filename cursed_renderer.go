@@ -33,6 +33,7 @@ type cursedRenderer struct {
 	mapnl         bool
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
+	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
 }
 
 var _ renderer = &cursedRenderer{}
@@ -284,13 +285,14 @@ func (s *cursedRenderer) flush(closing bool) error {
 		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
-	if !s.starting && !closing && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return nil
 	}
 
 	// We're no longer starting.
 	s.starting = false
+	s.pendingErase = false
 
 	if frameArea != s.cellbuf.Bounds() {
 		s.scr.Erase() // Force a full redraw to avoid artifacts.
@@ -627,6 +629,7 @@ func (s *cursedRenderer) resize(w, h int) {
 	s.scr.Erase()
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
+	s.pendingErase = true
 	s.mu.Unlock()
 }
 
@@ -637,6 +640,7 @@ func (s *cursedRenderer) clearScreen() {
 	// screen redraw.
 	s.scr.MoveTo(0, 0)
 	s.scr.Erase()
+	s.pendingErase = true
 	s.mu.Unlock()
 }
 
