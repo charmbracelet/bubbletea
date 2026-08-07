@@ -336,7 +336,7 @@ func (s ProgressBarState) String() string {
 type ProgressBar struct {
 	// State is the current state of the progress bar. It can be one of
 	// [ProgressBarNone], [ProgressBarDefault], [ProgressBarError],
-	// [ProgressBarIndeterminate], and [ProgressBarWarn].
+	// [ProgressBarIndeterminate], and [ProgressBarWarning].
 	State ProgressBarState
 	// Value is the current value of the progress bar. It should be between
 	// 0 and 100.
