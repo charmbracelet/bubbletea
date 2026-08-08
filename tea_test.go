@@ -533,6 +533,49 @@ func TestTeaSend(t *testing.T) {
 	p.Send(Quit())
 }
 
+func TestProgramPrintAfterExit(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	p := NewProgram(&testModel{},
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+	go p.Send(Quit())
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name  string
+		print func()
+	}{
+		{"Println", func() { p.Println("after exit") }},
+		{"Printf", func() { p.Printf("after %s", "exit") }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			done := make(chan struct{})
+			go func() {
+				tt.print()
+				close(done)
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(100 * time.Millisecond):
+				// Receive only after detecting the block. This releases the
+				// direct channel send used before this regression was fixed,
+				// so the test does not leak a goroutine against the old code.
+				<-p.msgs
+				<-done
+				t.Fatal("print blocked after the program exited")
+			}
+		})
+	}
+}
+
 func TestTeaNoRun(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
