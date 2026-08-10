@@ -1,11 +1,52 @@
 package tea
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 	"time"
 )
+
+func renderScrolledFrame(t *testing.T, scrollOptim, resetRenderer bool) string {
+	t.Helper()
+	var output bytes.Buffer
+	r := newCursedRenderer(&output, []string{"TERM=xterm-256color"}, 10, 5, scrollOptim)
+	if resetRenderer {
+		r.reset()
+	}
+	r.render(View{Content: "AAAAAAAAAA\nBBBBBBBBBB\nCCCCCCCCCC\nDDDDDDDDDD\nEEEEEEEEEE", AltScreen: true})
+	if err := r.flush(false); err != nil {
+		t.Fatalf("initial flush failed: %v", err)
+	}
+	output.Reset()
+	r.render(View{Content: "CCCCCCCCCC\nDDDDDDDDDD\nEEEEEEEEEE\nFFFFFFFFFF\nGGGGGGGGGG", AltScreen: true})
+	if err := r.flush(false); err != nil {
+		t.Fatalf("scrolled flush failed: %v", err)
+	}
+	return output.String()
+}
+
+func TestCursedRenderer_scrollOptimization(t *testing.T) {
+	for _, resetRenderer := range []bool{false, true} {
+		resetRenderer := resetRenderer
+		t.Run(fmt.Sprintf("reset=%v", resetRenderer), func(t *testing.T) {
+			t.Parallel()
+			enabled := renderScrolledFrame(t, true, resetRenderer)
+			disabled := renderScrolledFrame(t, false, resetRenderer)
+
+			if !strings.Contains(enabled, "\x1b[2S") {
+				t.Fatalf("enabled renderer did not use scroll optimization: %q", enabled)
+			}
+			for _, sequence := range []string{"\x1b[S", "\x1b[2S", "\x1b[T", "\x1b[2T", "\x1b[L", "\x1b[M"} {
+				if strings.Contains(disabled, sequence) {
+					t.Fatalf("disabled renderer emitted scroll optimization sequence %q: %q", sequence, disabled)
+				}
+			}
+		})
+	}
+}
 
 type mouseRaceModel struct {
 	i int

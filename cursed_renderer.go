@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image/color"
 	"io"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -31,17 +30,19 @@ type cursedRenderer struct {
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 	backspace     bool // whether to use backspace to optimize cursor movements
 	mapnl         bool
+	scrollOptim   bool // whether to use terminal scroll/insert/delete-line optimizations
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
 }
 
 var _ renderer = &cursedRenderer{}
 
-func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedRenderer) {
+func newCursedRenderer(w io.Writer, env []string, width, height int, scrollOptim bool) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
 	s.env = env
 	s.term = uv.Environ(env).Getenv("TERM")
+	s.scrollOptim = scrollOptim
 	s.width, s.height = width, height // This needs to happen before [cursedRenderer.reset].
 	s.cellbuf = uv.NewScreenBuffer(s.width, s.height)
 	reset(s)
@@ -603,7 +604,7 @@ func reset(s *cursedRenderer) {
 	}
 	scr.SetBackspace(s.backspace)
 	scr.SetMapNewline(s.mapnl)
-	scr.SetScrollOptim(runtime.GOOS != "windows") // disable scroll optimization on Windows due to bugs in some terminals
+	scr.SetScrollOptim(s.scrollOptim)
 	s.scr = scr
 }
 

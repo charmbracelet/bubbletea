@@ -101,6 +101,20 @@ func WithoutRenderer() ProgramOption {
 	}
 }
 
+// WithScrollOptimization controls whether the renderer may use terminal
+// scrolling primitives when transforming one frame into the next. By default,
+// scroll optimization is enabled on non-Windows platforms and disabled on
+// Windows for compatibility with terminals that mishandle these sequences.
+//
+// Disable this option when the display terminal is known to render scroll,
+// insert-line, or delete-line sequences incorrectly. It has no effect when the
+// renderer is disabled with [WithoutRenderer].
+func WithScrollOptimization(enabled bool) ProgramOption {
+	return func(p *Program) {
+		p.scrollOptimization = &enabled
+	}
+}
+
 // WithFilter supplies an event filter that will be invoked before Bubble Tea
 // processes a tea.Msg. The event filter can return any tea.Msg which will then
 // get handled by Bubble Tea instead of the original event. If the event filter
