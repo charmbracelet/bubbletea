@@ -39,6 +39,9 @@ func TestCursedRenderer_scrollOptimization(t *testing.T) {
 			if !strings.Contains(enabled, "\x1b[2S") {
 				t.Fatalf("enabled renderer did not use scroll optimization: %q", enabled)
 			}
+			if strings.Contains(disabled, "\x1b[2J") {
+				t.Fatalf("disabled renderer used a full-screen clear for a regular frame update: %q", disabled)
+			}
 			for _, sequence := range []string{"\x1b[S", "\x1b[2S", "\x1b[T", "\x1b[2T", "\x1b[L", "\x1b[M"} {
 				if strings.Contains(disabled, sequence) {
 					t.Fatalf("disabled renderer emitted scroll optimization sequence %q: %q", sequence, disabled)
