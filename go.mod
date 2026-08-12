@@ -26,3 +26,5 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sync v0.21.0 // indirect
 )
+
+replace github.com/charmbracelet/ultraviolet => github.com/luispabon/ultraviolet v0.0.0-20260625204701-67215642e1d1

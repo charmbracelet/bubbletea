@@ -16,23 +16,24 @@ import (
 )
 
 type cursedRenderer struct {
-	w             io.Writer
-	buf           bytes.Buffer // updates buffer to be flushed to [w]
-	scr           *uv.TerminalRenderer
-	cellbuf       uv.ScreenBuffer
-	lastView      *View
-	env           []string
-	term          string // the terminal type $TERM
-	width, height int
-	mu            sync.Mutex
-	profile       colorprofile.Profile
-	logger        uv.Logger
-	view          View
-	hardTabs      bool // whether to use hard tabs to optimize cursor movements
-	backspace     bool // whether to use backspace to optimize cursor movements
-	mapnl         bool
-	syncdUpdates  bool // whether to use synchronized output mode for updates
-	starting      bool // indicates whether the renderer is starting after being stopped
+	w                io.Writer
+	buf              bytes.Buffer // updates buffer to be flushed to [w]
+	scr              *uv.TerminalRenderer
+	cellbuf          uv.ScreenBuffer
+	lastView         *View
+	env              []string
+	term             string // the terminal type $TERM
+	width, height    int
+	mu               sync.Mutex
+	profile          colorprofile.Profile
+	logger           uv.Logger
+	view             View
+	hardTabs         bool // whether to use hard tabs to optimize cursor movements
+	backspace        bool // whether to use backspace to optimize cursor movements
+	mapnl            bool
+	syncdUpdates     bool     // whether to use synchronized output mode for updates
+	starting         bool     // indicates whether the renderer is starting after being stopped
+	lastContentLines []string // previous frame's View lines for scroll detection
 }
 
 var _ renderer = &cursedRenderer{}
@@ -303,12 +304,80 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// and to avoid rendering issues when the frame area is smaller than
 		// the screen buffer.
 		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
+
+		// Clear after resize so stale cells at newly-visible positions don't
+		// persist if content doesn't cover them.
+		s.cellbuf.Clear()
+
+		// Invalidate scroll detection state after resize: dimensions changed so
+		// previous content lines don't correspond to new buffer geometry.
+		s.lastContentLines = nil
 	}
 
-	// Clear our screen buffer before copying the new frame into it to ensure
-	// we erase any old content.
-	s.cellbuf.Clear()
-	content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	// Detect content scroll and shift cellbuf lines so DrawOver finds
+	// matching cells for preserved lines. Only the N new lines get marked
+	// as touched, so transformLine skips the shifted lines entirely.
+	//
+	// When no shift is detected, fall back to the original Clear+Draw path
+	// to avoid stale cells from DrawOver (printString doesn't clear cells
+	// beyond each line's content, so shorter lines would leave artifacts).
+	newLines := strings.Split(view.Content, "\n")
+	shift, regionStart, matchCount := detectContentShift(s.lastContentLines, newLines)
+	var repair []int
+	shiftOK := true
+	if shift != 0 {
+		repair, shiftOK = verifyShift(s.lastContentLines, newLines, shift, regionStart, matchCount)
+	}
+	if shift != 0 && shiftOK {
+		absShift := shift
+		if absShift < 0 {
+			absShift = -absShift
+		}
+		regionEnd := regionStart + matchCount + absShift
+		shiftCellbufRegion(&s.cellbuf, regionStart, regionEnd, shift)
+		s.scr.HardScroll(s.cellbuf.RenderBuffer, shift, regionStart, regionEnd-1)
+
+		// Clear lines outside the shifted region that changed.
+		for i := regionEnd; i < len(newLines) && i < len(s.lastContentLines); i++ {
+			if newLines[i] != s.lastContentLines[i] {
+				clearCellbufLine(&s.cellbuf, i)
+			}
+		}
+
+		width := s.cellbuf.Width()
+		height := s.cellbuf.Height()
+		drawStart := regionStart + matchCount
+
+		for _, r := range repair {
+			s.cellbuf.ClearArea(uv.Rect(0, r, width, 1))
+			uv.NewStyledString(newLines[r]).DrawOver(s.cellbuf, uv.Rect(0, r, width, 1))
+		}
+
+		if shift > 0 {
+			changedContent := strings.Join(newLines[drawStart:], "\n")
+			partial := uv.NewStyledString(changedContent)
+			partial.DrawOver(s.cellbuf, uv.Rect(0, drawStart, width, height))
+		} else {
+			topEnd := regionStart + absShift
+			topContent := strings.Join(newLines[regionStart:topEnd], "\n")
+			top := uv.NewStyledString(topContent)
+			top.DrawOver(s.cellbuf, uv.Rect(0, regionStart, width, topEnd))
+			if regionEnd < len(newLines) {
+				bottomContent := strings.Join(newLines[regionEnd:], "\n")
+				bottom := uv.NewStyledString(bottomContent)
+				bottom.DrawOver(s.cellbuf, uv.Rect(0, regionEnd, width, height))
+			}
+		}
+
+		contentHeight := strings.Count(view.Content, "\n") + 1
+		if contentHeight < height {
+			s.cellbuf.ClearArea(uv.Rect(0, contentHeight, width, height))
+		}
+	} else {
+		s.cellbuf.Clear()
+		content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	}
+	s.lastContentLines = newLines
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
@@ -592,6 +661,7 @@ func (s *cursedRenderer) reset() {
 
 func reset(s *cursedRenderer) {
 	s.buf.Reset()
+	s.lastContentLines = nil
 	scr := uv.NewTerminalRenderer(&s.buf, s.env)
 	scr.SetColorProfile(s.profile)
 	scr.SetRelativeCursor(true) // Always start in inline mode
