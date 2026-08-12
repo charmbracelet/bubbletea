@@ -61,6 +61,8 @@ func detectContentShift(oldLines, newLines []string) (shift, regionStart, matchC
 	old := oldLines[top:bot]
 	new_ := newLines[top:bot]
 
+	bestShift, bestCount := 0, 0
+
 	for shift := 1; shift <= maxShift; shift++ {
 		count := 0
 		for i := 0; i+shift < regionHeight; i++ {
@@ -69,8 +71,8 @@ func detectContentShift(oldLines, newLines []string) (shift, regionStart, matchC
 			}
 			count++
 		}
-		if count >= minMatch {
-			return shift, top, count
+		if count >= minMatch && count > bestCount && matchedRunHasVariety(new_, 0, count) {
+			bestShift, bestCount = shift, count
 		}
 	}
 
@@ -82,12 +84,57 @@ func detectContentShift(oldLines, newLines []string) (shift, regionStart, matchC
 			}
 			count++
 		}
-		if count >= minMatch {
-			return -shift, top, count
+		if count >= minMatch && count > bestCount && matchedRunHasVariety(new_, shift, count) {
+			bestShift, bestCount = -shift, count
 		}
 	}
 
-	return 0, 0, 0
+	if bestShift == 0 {
+		return 0, 0, 0
+	}
+	return bestShift, top, bestCount
+}
+
+// matchedRunHasVariety reports whether the run of lines new_[start:start+count]
+// contains at least 2 distinct values. This guards against accepting a shift
+// candidate over degenerate (e.g. all-blank) content, which would otherwise
+// "match" any shift and trigger a pointless scroll sequence.
+func matchedRunHasVariety(new_ []string, start, count int) bool {
+	if count < 2 {
+		return false
+	}
+	first := new_[start]
+	for i := start + 1; i < start+count; i++ {
+		if new_[i] != first {
+			return true
+		}
+	}
+	return false
+}
+
+// verifyShift returns the absolute row indices within the matched run whose
+// content is not exactly equal to its shifted source, and whether the
+// optimisation is still worth taking. linesMatchForShift is a fuzzy check
+// used only to *find* a candidate shift; only exact equality may be *trusted*
+// to skip a repaint, so every row in the matched run is re-verified here.
+func verifyShift(oldLines, newLines []string, shift, regionStart, matchCount int) (repair []int, ok bool) {
+	if shift > 0 {
+		for r := regionStart; r < regionStart+matchCount; r++ {
+			if newLines[r] != oldLines[r+shift] {
+				repair = append(repair, r)
+			}
+		}
+	} else {
+		absShift := -shift
+		start := regionStart + absShift
+		for r := start; r < start+matchCount; r++ {
+			if newLines[r] != oldLines[r-absShift] {
+				repair = append(repair, r)
+			}
+		}
+	}
+	ok = matchCount-len(repair) >= 4
+	return repair, ok
 }
 
 // shiftCellbufRegion shifts lines [regionStart, regionEnd) of the cell buffer
