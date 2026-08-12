@@ -2,6 +2,7 @@ package tea
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -197,6 +198,37 @@ func TestDetectContentShift(t *testing.T) {
 			wantMatchCount: 0,
 		},
 		{
+			// A short shift=1 candidate matches by coincidence (count=5,
+			// eligible since minMatch=5), but a shift=-2 candidate matches
+			// more of the region (count=10). detectContentShift must pick
+			// the larger candidate rather than the first one found.
+			name: "picks best of multiple eligible candidates",
+			old: func() []string {
+				s := make([]string, 20)
+				s[0], s[1], s[2], s[3], s[4], s[5] = "C", "A", "B", "C", "A", "B"
+				for i := 6; i < 10; i++ {
+					s[i] = fmt.Sprintf("X%d", i)
+				}
+				for i := 10; i < 20; i++ {
+					s[i] = fmt.Sprintf("O%d", i)
+				}
+				return s
+			}(),
+			new: func() []string {
+				s := make([]string, 20)
+				s[0], s[1], s[2], s[3], s[4], s[5] = "A", "B", "C", "A", "B", "C"
+				s[6], s[7] = "A", "B"
+				s[8], s[9] = "X6", "X7"
+				s[10], s[11] = "X8", "X9"
+				for i := 12; i < 20; i++ {
+					s[i] = fmt.Sprintf("N%d", i)
+				}
+				return s
+			}(),
+			wantShift:      -2,
+			wantMatchCount: 10,
+		},
+		{
 			name:           "scroll up with scrollbar suffix",
 			old:            makeSuffixLines(0, 20, "│▓│"),
 			new:            append(makeSuffixLines(1, 19, "│░│"), makeSuffixLines(20, 1, "│░│")...),
@@ -273,6 +305,136 @@ func TestDetectContentShift(t *testing.T) {
 					gotShift, gotRegionStart, gotMatch, tt.wantShift, tt.wantRegionStart, tt.wantMatchCount)
 			}
 		})
+	}
+}
+
+func TestVerifyShift(t *testing.T) {
+	t.Run("shift up all trusted rows match exactly", func(t *testing.T) {
+		old := makeLines(0, 20)
+		new_ := append(makeLines(1, 19), "newline")
+		repair, ok := verifyShift(old, new_, 1, 0, 19)
+		if len(repair) != 0 {
+			t.Errorf("repair = %v, want empty", repair)
+		}
+		if !ok {
+			t.Errorf("ok = false, want true")
+		}
+	})
+
+	t.Run("shift down all trusted rows match exactly", func(t *testing.T) {
+		old := makeLines(1, 20)
+		new_ := append([]string{"line0"}, makeLines(1, 19)...)
+		repair, ok := verifyShift(old, new_, -1, 0, 19)
+		if len(repair) != 0 {
+			t.Errorf("repair = %v, want empty", repair)
+		}
+		if !ok {
+			t.Errorf("ok = false, want true")
+		}
+	})
+
+	t.Run("shift up suffix-only mismatch is flagged for repair", func(t *testing.T) {
+		old := makeSuffixLines(0, 20, "│")
+		old[10] = strings.TrimSuffix(old[10], "│") + "\x1b[7mT\x1b[0m"
+		new_ := append(makeSuffixLines(1, 19, "│"), makeSuffixLines(20, 1, "│")...)
+
+		repair, ok := verifyShift(old, new_, 1, 0, 19)
+		if !ok {
+			t.Fatalf("ok = false, want true")
+		}
+		if len(repair) != 1 || repair[0] != 9 {
+			t.Errorf("repair = %v, want [9]", repair)
+		}
+	})
+
+	t.Run("shift down suffix-only mismatch is flagged for repair", func(t *testing.T) {
+		new_ := makeSuffixLines(0, 20, "│")
+		new_[9] = strings.TrimSuffix(new_[9], "│") + "\x1b[7mT\x1b[0m"
+		old := append(makeSuffixLines(1, 19, "│"), makeSuffixLines(20, 1, "│")...)
+
+		// shift=-1, regionStart=0, matchCount=19: trusted rows are [1,19),
+		// compared as new_[r] vs old[r-1].
+		repair, ok := verifyShift(old, new_, -1, 0, 19)
+		if !ok {
+			t.Fatalf("ok = false, want true")
+		}
+		if len(repair) != 1 || repair[0] != 9 {
+			t.Errorf("repair = %v, want [9]", repair)
+		}
+	})
+
+	t.Run("too many mismatches makes shift not worthwhile", func(t *testing.T) {
+		old := makeLines(0, 20)
+		new_ := append(makeLines(1, 19), "newline")
+		for i := 0; i < 17; i++ {
+			new_[i] = fmt.Sprintf("corrupted%d", i)
+		}
+		repair, ok := verifyShift(old, new_, 1, 0, 19)
+		if len(repair) != 17 {
+			t.Errorf("len(repair) = %d, want 17", len(repair))
+		}
+		if ok {
+			t.Errorf("ok = true, want false (matchCount-len(repair) = %d < 4)", 19-len(repair))
+		}
+	})
+}
+
+// TestScrollShiftSuffixOnlyMismatchIsRepainted is a regression test for a bug
+// where linesMatchForShift's fuzzy trailing-byte tolerance let a row with a
+// genuinely different scrollbar thumb glyph pass as "matching" during shift
+// detection, silently skipping its repaint. verifyShift must catch this and
+// the flush pipeline must repaint the row (and mark it Touched) rather than
+// leaving stale content in place.
+func TestScrollShiftSuffixOnlyMismatchIsRepainted(t *testing.T) {
+	old := makeSuffixLines(0, 20, "│")
+	old[10] = strings.TrimSuffix(old[10], "│") + "\x1b[7mT\x1b[0m"
+	new_ := append(makeSuffixLines(1, 19, "│"), makeSuffixLines(20, 1, "│")...)
+
+	shift, regionStart, matchCount := detectContentShift(old, new_)
+	if shift != 1 {
+		t.Fatalf("detectContentShift() shift = %d, want 1", shift)
+	}
+
+	repair, ok := verifyShift(old, new_, shift, regionStart, matchCount)
+	if !ok {
+		t.Fatalf("verifyShift() ok = false, want true")
+	}
+	if len(repair) != 1 || repair[0] != 9 {
+		t.Fatalf("verifyShift() repair = %v, want [9]", repair)
+	}
+
+	// Drive a real flush() to confirm the row is actually repainted and
+	// marked Touched, not silently skipped.
+	const width, height = 200, 20
+	env := []string{"TERM=xterm-256color", "COLORTERM=truecolor"}
+	r := newCursedRenderer(io.Discard, env, width, height)
+	r.syncdUpdates = false
+
+	view := View{Content: strings.Join(old, "\n"), AltScreen: true}
+	r.render(view)
+	if err := r.flush(false); err != nil {
+		t.Fatalf("flush() error = %v", err)
+	}
+
+	view.Content = strings.Join(new_, "\n")
+	r.render(view)
+	if err := r.flush(false); err != nil {
+		t.Fatalf("flush() error = %v", err)
+	}
+
+	row := 9
+	var got strings.Builder
+	for _, cell := range r.cellbuf.Lines[row] {
+		got.WriteString(cell.Content)
+	}
+	if !strings.Contains(got.String(), "│") {
+		t.Errorf("row %d content = %q, want it to contain the new track glyph", row, got.String())
+	}
+	if strings.Contains(got.String(), "T") {
+		t.Errorf("row %d content = %q, still contains stale thumb glyph", row, got.String())
+	}
+	if r.cellbuf.Touched[row] == nil {
+		t.Errorf("row %d Touched = nil, want non-nil (repaint must mark the row touched)", row)
 	}
 }
 

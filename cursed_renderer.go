@@ -322,7 +322,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// to avoid stale cells from DrawOver (printString doesn't clear cells
 	// beyond each line's content, so shorter lines would leave artifacts).
 	newLines := strings.Split(view.Content, "\n")
-	if shift, regionStart, matchCount := detectContentShift(s.lastContentLines, newLines); shift != 0 {
+	shift, regionStart, matchCount := detectContentShift(s.lastContentLines, newLines)
+	var repair []int
+	shiftOK := true
+	if shift != 0 {
+		repair, shiftOK = verifyShift(s.lastContentLines, newLines, shift, regionStart, matchCount)
+	}
+	if shift != 0 && shiftOK {
 		absShift := shift
 		if absShift < 0 {
 			absShift = -absShift
@@ -341,6 +347,11 @@ func (s *cursedRenderer) flush(closing bool) error {
 		width := s.cellbuf.Width()
 		height := s.cellbuf.Height()
 		drawStart := regionStart + matchCount
+
+		for _, r := range repair {
+			s.cellbuf.ClearArea(uv.Rect(0, r, width, 1))
+			uv.NewStyledString(newLines[r]).DrawOver(s.cellbuf, uv.Rect(0, r, width, 1))
+		}
 
 		if shift > 0 {
 			changedContent := strings.Join(newLines[drawStart:], "\n")
