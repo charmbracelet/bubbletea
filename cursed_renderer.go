@@ -33,6 +33,7 @@ type cursedRenderer struct {
 	mapnl         bool
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
+	kittyPushed   bool // whether we have an entry on the terminal's Kitty keyboard stack
 }
 
 var _ renderer = &cursedRenderer{}
@@ -118,6 +119,7 @@ func (s *cursedRenderer) start() {
 	if s.lastView.ReportFocus {
 		_, _ = s.scr.WriteString(ansi.SetModeFocusEvent)
 	}
+	// Mouse modes.
 	switch s.lastView.MouseMode {
 	case MouseModeNone:
 	case MouseModeCellMotion:
@@ -131,12 +133,15 @@ func (s *cursedRenderer) start() {
 	if s.lastView.ProgressBar != nil {
 		setProgressBar(s, s.lastView.ProgressBar)
 	}
-	// Enable modifyOtherKeys and Kitty keyboard protocol.
-	// Both can coexist; terminals ignore what they don't support.
+	// Enable modifyOtherKeys. The Kitty keyboard protocol is restored
+	// by flush below.
 	_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
-	kittyFlags := keyboardEnhancementsFlags(s.lastView.KeyboardEnhancements)
-	_, _ = s.scr.WriteString(ansi.PushKittyKeyboard(kittyFlags))
+	// The last view no longer describes what is on the screen: the
+	// sequences above re-applied everything except the content, which
+	// the next flush repaints. Clearing it makes the next flush treat
+	// the frame as the first render of the restored session.
+	s.lastView = nil
 }
 
 // close implements renderer.
@@ -156,7 +161,8 @@ func (s *cursedRenderer) close() (err error) {
 		// Here, we pop the keyboard protocol of the last screen used
 		// assuming the other screen is already popped when we switched screens.
 		_, _ = s.buf.WriteString(ansi.ResetModifyOtherKeys)
-		_, _ = s.buf.WriteString(ansi.PopKittyKeyboard(0))
+		_, _ = s.buf.WriteString(ansi.PopKittyKeyboard(1))
+		s.kittyPushed = false
 
 		// Go to the bottom of the screen.
 		// We need to go to the bottom of the screen regardless of whether
@@ -290,6 +296,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	// We're no longer starting.
+	starting := s.starting
 	s.starting = false
 
 	if frameArea != s.cellbuf.Bounds() {
@@ -318,13 +325,14 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	// Alt screen mode.
 	shouldUpdateAltScreen := (s.lastView == nil && view.AltScreen) || (s.lastView != nil && s.lastView.AltScreen != view.AltScreen)
-	if shouldUpdateAltScreen {
+	if shouldUpdateAltScreen && !starting {
 		// We want to enter/exit altscreen mode but defer writing the actual
 		// sequences until we flush the rest of the updates. This is because we
 		// control the cursor visibility and we need to ensure that happens
 		// after entering/exiting alt screen mode. Some terminals have
 		// different cursor visibility states for main and alt screen modes and
-		// this ensures we handle that correctly.
+		// this ensures we handle that correctly. When the renderer was just
+		// restarted, start() already entered the alt screen if needed.
 		enableAltScreen(s, view.AltScreen, false)
 	}
 
@@ -376,7 +384,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	// kitty keyboard protocol
-	if s.lastView == nil || view.KeyboardEnhancements != s.lastView.KeyboardEnhancements ||
+	if !s.kittyPushed || s.lastView == nil || view.KeyboardEnhancements != s.lastView.KeyboardEnhancements ||
 		view.AltScreen != s.lastView.AltScreen {
 		// NOTE: We need to reset the keyboard protocol when switching
 		// between main and alt screen. This is because the specs specify
@@ -387,8 +395,17 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 		kittyFlags := keyboardEnhancementsFlags(view.KeyboardEnhancements)
 		if s.lastView == nil || view.AltScreen != s.lastView.AltScreen {
+			// First render, renderer restart, or screen switch: the
+			// previous screen's entry (if any) is popped below, so push a
+			// fresh one for this screen.
 			_, _ = s.scr.WriteString(ansi.PushKittyKeyboard(kittyFlags))
+			s.kittyPushed = true
 		} else {
+			// Only the flags changed while the same screen stays active.
+			// Update the topmost stack entry in place instead of popping
+			// and re-pushing, so a keyboard change doesn't churn the
+			// stack. Note that this overwrites whatever entry is currently
+			// on top, which is normally ours.
 			_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
 		}
 		if !closing {
@@ -515,12 +532,16 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	var buf bytes.Buffer
 	if shouldUpdateAltScreen {
-		if s.lastView != nil {
-			// We always disable keyboard enhancements when switching screens
-			// because the terminal is expected to have two different keyboard
-			// registries for main and alt screens.
-			_, _ = buf.WriteString(ansi.ResetModifyOtherKeys)
-			_, _ = buf.WriteString(ansi.PopKittyKeyboard(0))
+		// We always reset keyboard enhancements when switching screens
+		// because the terminal is expected to have two different keyboard
+		// registries for main and alt screens. modifyOtherKeys has no
+		// stack, so it is reset in place; the Kitty keyboard stack is
+		// popped, but only if we pushed an entry for the screen we're
+		// leaving (kittyPushed is false on the very first render).
+		_, _ = buf.WriteString(ansi.ResetModifyOtherKeys)
+		if s.kittyPushed {
+			_, _ = buf.WriteString(ansi.PopKittyKeyboard(1))
+			s.kittyPushed = false
 		}
 		if view.AltScreen {
 			// Entering alt screen mode.
