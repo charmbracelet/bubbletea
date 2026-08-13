@@ -201,3 +201,21 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+func TestCursedRenderer_insertAboveBeforeFirstFlush(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	renderer := newCursedRenderer(&output, []string{"TERM=xterm-256color"}, 80, 24)
+	renderer.render(NewView("footer"))
+
+	if err := renderer.insertAbove("startup"); err != nil {
+		t.Fatal(err)
+	}
+
+	want := "\r" + ansi.CursorDown(1) + "\n" + ansi.CursorUp(1) +
+		ansi.InsertLine(1) + "startup" + ansi.EraseLineRight + "\r\n"
+	if got := output.String(); got != want {
+		t.Fatalf("unexpected insertAbove output:\nwant: %q\n got: %q", want, got)
+	}
+}
