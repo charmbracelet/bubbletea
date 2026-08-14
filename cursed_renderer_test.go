@@ -93,7 +93,7 @@ func TestCursedRenderer_insertAboveBeforeFirstFlush(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := "\r" + ansi.CursorDown(1) + "\n" + ansi.CursorUp(1) +
+	want := "\r\n" + ansi.CursorUp(1) +
 		ansi.InsertLine(1) + "startup" + ansi.EraseLineRight + "\r\n"
 	if got := output.String(); got != want {
 		t.Fatalf("unexpected insertAbove output:\nwant: %q\n got: %q", want, got)
