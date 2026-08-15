@@ -1296,7 +1296,10 @@ func (p *Program) recoverFromGoPanic(r interface{}) {
 	case p.errs <- ErrProgramPanic:
 	default:
 	}
-	p.cancel()
+	// Use shutdown(true) to properly clean up the renderer, input reader,
+	// and terminal state. Previously, this only called p.cancel() which left
+	// the renderer running and the cancelReader open, causing resource leaks.
+	p.shutdown(true)
 	// We use "\r\n" to ensure the output is formatted even when restoring the
 	// terminal does not work or when raw mode is still active.
 	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
