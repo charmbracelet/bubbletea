@@ -320,17 +320,20 @@ const (
 // String returns a human-readable name for the given [ProgressBarState].
 // Values outside the known range return "Unknown".
 func (s ProgressBarState) String() string {
-	states := [...]string{
-		"None",
-		"Default",
-		"Error",
-		"Indeterminate",
-		"Warning",
-	}
-	if s < 0 || int(s) >= len(states) {
+	switch s {
+	case ProgressBarNone:
+		return "None"
+	case ProgressBarDefault:
+		return "Default"
+	case ProgressBarError:
+		return "Error"
+	case ProgressBarIndeterminate:
+		return "Indeterminate"
+	case ProgressBarWarning:
+		return "Warning"
+	default:
 		return "Unknown"
 	}
-	return states[s]
 }
 
 // ProgressBar represents the terminal progress bar.
