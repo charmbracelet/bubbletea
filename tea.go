@@ -317,7 +317,8 @@ const (
 	ProgressBarWarning
 )
 
-// String return a human-readable value for the given [ProgressBarState].
+// String returns a human-readable name for the given [ProgressBarState].
+// Values outside the known range return "Unknown".
 func (s ProgressBarState) String() string {
 	states := [...]string{
 		"None",
