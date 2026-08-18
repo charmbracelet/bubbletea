@@ -505,6 +505,11 @@ type Program struct {
 
 	profile *colorprofile.Profile // the terminal color profile
 
+	// forcedProfile reports that the color profile came from
+	// [WithColorProfile] rather than from detection. A forced profile is not
+	// upgraded when the terminal reports that it supports more colors.
+	forcedProfile bool
+
 	// where to send output, this will usually be os.Stdout.
 	output    io.Writer
 	outputBuf bytes.Buffer // buffer used to queue commands to be sent to the output
@@ -776,7 +781,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case CapabilityMsg:
 				switch msg.Content {
 				case "RGB", "Tc":
-					if *p.profile != colorprofile.TrueColor {
+					if !p.forcedProfile && *p.profile != colorprofile.TrueColor {
 						tc := colorprofile.TrueColor
 						p.profile = &tc
 						go p.Send(ColorProfileMsg{*p.profile})

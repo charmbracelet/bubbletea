@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/charmbracelet/colorprofile"
 )
 
 type ctxImplodeMsg struct {
@@ -111,6 +113,40 @@ func TestTeaQuit(t *testing.T) {
 
 	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// TestTeaForcedColorProfile: a profile set with [WithColorProfile] must survive
+// a terminal capability report. Before the fix, a "RGB" or "Tc" report replaced
+// it with TrueColor, so the option did not force anything.
+func TestTeaForcedColorProfile(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+		WithColorProfile(colorprofile.NoTTY),
+	)
+	go func() {
+		for {
+			time.Sleep(time.Millisecond)
+			if m.executed.Load() != nil {
+				p.Send(CapabilityMsg{Content: "RGB"})
+				p.Quit()
+				return
+			}
+		}
+	}()
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := *p.profile; got != colorprofile.NoTTY {
+		t.Errorf("forced color profile became %v, want %v", got, colorprofile.NoTTY)
 	}
 }
 
