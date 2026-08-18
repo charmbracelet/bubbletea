@@ -669,3 +669,45 @@ func BenchmarkTeaRun(b *testing.B) {
 		_ = r.CloseWithError(io.EOF)
 	}
 }
+
+func TestProgressBarStateString(t *testing.T) {
+	for _, tc := range []struct {
+		state ProgressBarState
+		want  string
+	}{
+		{ProgressBarNone, "None"},
+		{ProgressBarDefault, "Default"},
+		{ProgressBarError, "Error"},
+		{ProgressBarIndeterminate, "Indeterminate"},
+		{ProgressBarWarning, "Warning"},
+	} {
+		if got := tc.state.String(); got != tc.want {
+			t.Errorf("ProgressBarState(%d).String() = %q, want %q", int(tc.state), got, tc.want)
+		}
+	}
+}
+
+// State is an exported field, so a ProgressBar can carry a value that was never
+// declared as a constant. String must describe it rather than panic.
+func TestProgressBarStateStringOutOfRange(t *testing.T) {
+	for _, tc := range []struct {
+		state ProgressBarState
+		want  string
+	}{
+		{ProgressBarState(-1), "ProgressBarState(-1)"},
+		{ProgressBarState(5), "ProgressBarState(5)"},
+		{ProgressBarState(7), "ProgressBarState(7)"},
+	} {
+		got := func() (s string) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("ProgressBarState(%d).String() panicked: %v", int(tc.state), r)
+				}
+			}()
+			return tc.state.String()
+		}()
+		if got != tc.want {
+			t.Errorf("ProgressBarState(%d).String() = %q, want %q", int(tc.state), got, tc.want)
+		}
+	}
+}
