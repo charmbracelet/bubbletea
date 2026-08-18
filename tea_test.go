@@ -30,6 +30,34 @@ type testModel struct {
 	counter  atomic.Value
 }
 
+func TestProgressBarStateString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		state ProgressBarState
+		want  string
+	}{
+		{ProgressBarNone, "None"},
+		{ProgressBarDefault, "Default"},
+		{ProgressBarError, "Error"},
+		{ProgressBarIndeterminate, "Indeterminate"},
+		{ProgressBarWarning, "Warning"},
+		{ProgressBarState(-1), "ProgressBarState(-1)"},
+		{ProgressBarState(5), "ProgressBarState(5)"},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.want, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.state.String(); got != tt.want {
+				t.Fatalf("ProgressBarState(%d).String() = %q, want %q", tt.state, got, tt.want)
+			}
+		})
+	}
+}
+
 func (m *testModel) Init() Cmd {
 	return nil
 }
