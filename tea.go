@@ -993,16 +993,23 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		return nil, errors.New("bubbletea: InitialModel cannot be nil")
 	}
 
-	// Initialize context and teardown channel.
-	p.handlers = channelHandlers{}
-	cmds := make(chan Cmd)
-
 	p.finished = make(chan struct{})
 	defer func() {
 		close(p.finished)
 	}()
 
 	defer p.cancel()
+
+	// If the context has already been cancelled (e.g. Kill() was
+	// called before Run()), return early without initializing the
+	// terminal.
+	if p.ctx.Err() != nil {
+		return p.initialModel, ErrProgramKilled
+	}
+
+	// Initialize context and teardown channel.
+	p.handlers = channelHandlers{}
+	cmds := make(chan Cmd)
 
 	if p.disableInput {
 		p.input = nil
@@ -1202,7 +1209,7 @@ func (p *Program) Quit() {
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
 func (p *Program) Kill() {
-	p.shutdown(true)
+	p.cancel()
 }
 
 // Wait waits/blocks until the underlying Program finished shutting down.
