@@ -222,6 +222,31 @@ func TestTeaWaitKill(t *testing.T) {
 	}
 }
 
+func TestKillDuringStartupRace(t *testing.T) {
+	t.Parallel()
+	for range 100 {
+		p := NewProgram(&testModel{},
+			WithInput(bytes.NewBuffer(nil)),
+			WithOutput(io.Discard),
+			WithoutSignals(),
+		)
+
+		done := make(chan struct{})
+		go func() {
+			_, _ = p.Run()
+			close(done)
+		}()
+
+		p.Kill()
+
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatal("program did not stop")
+		}
+	}
+}
+
 func TestTeaWithFilter(t *testing.T) {
 	for _, preventCount := range []uint32{0, 1, 2} {
 		t.Run(fmt.Sprintf("prevent_%d", preventCount), func(t *testing.T) {
