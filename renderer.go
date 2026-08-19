@@ -49,6 +49,13 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
+	// clearView blanks the current view's content while preserving terminal
+	// mode flags such as AltScreen, so the next flush writes no View output to
+	// the terminal. It is used before handing the terminal to a subprocess
+	// (see Exec and ExecProcess) so the last View() does not leak to stdout
+	// and persist after the subprocess exits. See issue #431.
+	clearView()
+
 	// writeString writes a string to the renderer's output.
 	writeString(string) (int, error)
 
