@@ -493,6 +493,10 @@ type Program struct {
 	// UI but still want to take advantage of Bubble Tea's architecture.
 	disableRenderer bool
 
+	// scrollOptimization overrides the platform default for renderer-level
+	// terminal scrolling primitives. Nil preserves the default behavior.
+	scrollOptimization *bool
+
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
 	handlers channelHandlers
@@ -1066,11 +1070,13 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			p.renderer = &nilRenderer{}
 		} else {
 			// If no renderer is set use the cursed one.
+			scrollOptimization := scrollOptimizationEnabled(runtime.GOOS, p.scrollOptimization)
 			r := newCursedRenderer(
 				p.output,
 				p.environ,
 				p.width,
 				p.height,
+				scrollOptimization,
 			)
 			r.setLogger(p.logger)
 			// XXX: This breaks many things especially when we want the output
@@ -1179,6 +1185,13 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	p.shutdown(killed)
 
 	return model, err
+}
+
+func scrollOptimizationEnabled(goos string, configured *bool) bool {
+	if configured != nil {
+		return *configured
+	}
+	return goos != "windows"
 }
 
 // Send sends a message to the main update function, effectively allowing

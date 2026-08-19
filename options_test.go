@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"sync/atomic"
 	"testing"
@@ -23,6 +24,40 @@ func TestOptions(t *testing.T) {
 		p := NewProgram(nil, WithoutRenderer())
 		if !p.disableRenderer {
 			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
+		}
+	})
+
+	t.Run("scroll optimization", func(t *testing.T) {
+		for _, enabled := range []bool{false, true} {
+			enabled := enabled
+			t.Run(fmt.Sprint(enabled), func(t *testing.T) {
+				t.Parallel()
+				p := NewProgram(nil, WithScrollOptimization(enabled))
+				if p.scrollOptimization == nil || *p.scrollOptimization != enabled {
+					t.Fatalf("expected scroll optimization %v, got %v", enabled, p.scrollOptimization)
+				}
+			})
+		}
+
+		trueValue := true
+		falseValue := false
+		for _, tt := range []struct {
+			name       string
+			goos       string
+			configured *bool
+			want       bool
+		}{
+			{name: "windows default", goos: "windows", want: false},
+			{name: "non-windows default", goos: "linux", want: true},
+			{name: "windows explicit true", goos: "windows", configured: &trueValue, want: true},
+			{name: "non-windows explicit false", goos: "darwin", configured: &falseValue, want: false},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				if got := scrollOptimizationEnabled(tt.goos, tt.configured); got != tt.want {
+					t.Fatalf("scrollOptimizationEnabled(%q, %v) = %v, want %v", tt.goos, tt.configured, got, tt.want)
+				}
+			})
 		}
 	})
 
