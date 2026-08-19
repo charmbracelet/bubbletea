@@ -1,10 +1,14 @@
 package tea
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/charmbracelet/colorprofile"
 )
 
 type mouseRaceModel struct {
@@ -77,4 +81,46 @@ func TestCursedRenderer_mouseVsFlush(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("program did not exit after Quit")
 	}
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1709
+func TestCursedRenderer_insertAboveDownsamples(t *testing.T) {
+	t.Parallel()
+
+	const colored = "println: \x1b[38;2;255;0;0mred\x1b[m"
+	env := []string{"TERM=xterm-256color"}
+
+	t.Run("ascii", func(t *testing.T) {
+		t.Parallel()
+
+		var buf bytes.Buffer
+		s := newCursedRenderer(&buf, env, 80, 24)
+		s.setColorProfile(colorprofile.Ascii)
+
+		if err := s.insertAbove(colored); err != nil {
+			t.Fatal(err)
+		}
+		out := buf.String()
+		if strings.Contains(out, "\x1b[38;2;255;0;0m") {
+			t.Errorf("insertAbove kept a color the profile cannot display: %q", out)
+		}
+		if !strings.Contains(out, "red") {
+			t.Errorf("insertAbove dropped message content: %q", out)
+		}
+	})
+
+	t.Run("truecolor", func(t *testing.T) {
+		t.Parallel()
+
+		var buf bytes.Buffer
+		s := newCursedRenderer(&buf, env, 80, 24)
+		s.setColorProfile(colorprofile.TrueColor)
+
+		if err := s.insertAbove(colored); err != nil {
+			t.Fatal(err)
+		}
+		if out := buf.String(); !strings.Contains(out, "\x1b[38;2;255;0;0mred") {
+			t.Errorf("insertAbove altered content the profile can display: %q", out)
+		}
+	})
 }
