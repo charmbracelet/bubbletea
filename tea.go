@@ -1377,10 +1377,11 @@ func (p *Program) RestoreTerminal() error {
 // and will persist across renders by the Program.
 //
 // If the altscreen is active no output will be printed.
+// If the program has already exited this is a no-op.
 func (p *Program) Println(args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprint(args...),
-	}
+	})
 }
 
 // Printf prints above the Program. It takes a format template followed by
@@ -1391,10 +1392,11 @@ func (p *Program) Println(args ...any) {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
+// If the program has already exited this is a no-op.
 func (p *Program) Printf(template string, args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
-	}
+	})
 }
 
 // startRenderer starts the renderer.
