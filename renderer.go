@@ -70,7 +70,7 @@ type printLineMessage struct {
 func Println(args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
-			messageBody: fmt.Sprint(args...),
+			messageBody: fmt.Sprintln(args...),
 		}
 	}
 }
