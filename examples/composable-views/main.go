@@ -43,6 +43,9 @@ var (
 		spinner.Globe,
 		spinner.Moon,
 		spinner.Monkey,
+		spinner.Meter,
+		spinner.Hamburger,
+		spinner.Ellipsis,
 	}
 	modelStyle = lipgloss.NewStyle().
 			Width(15).
@@ -103,7 +106,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		switch m.state {
-		// update whichever model is focused
+		// send KeyMsg to models for handling
 		case spinnerView:
 			m.spinner, cmd = m.spinner.Update(msg)
 			cmds = append(cmds, cmd)
