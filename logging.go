@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"unicode"
+	"unicode/utf8"
 )
 
 // LogToFile sets up default logging to log to a file. This is helpful as we
@@ -42,8 +43,8 @@ func LogToFileWith(path string, prefix string, log LogOptionsSetter) (*os.File, 
 	// Add a space after the prefix if a prefix is being specified and it
 	// doesn't already have a trailing space.
 	if len(prefix) > 0 {
-		finalChar := prefix[len(prefix)-1]
-		if !unicode.IsSpace(rune(finalChar)) {
+		finalRune, _ := utf8.DecodeLastRuneInString(prefix)
+		if !unicode.IsSpace(finalRune) {
 			prefix += " "
 		}
 	}
