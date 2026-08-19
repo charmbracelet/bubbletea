@@ -719,6 +719,14 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	var sb strings.Builder
 	w, h := s.cellbuf.Width(), s.cellbuf.Height()
 	_, y := s.scr.Position()
+	// Before the first flush, the cell buffer still has the terminal height
+	// rather than the height of the current inline view.
+	if s.lastView == nil && !s.view.AltScreen {
+		h = uv.NewStyledString(s.view.Content).Height()
+		if y < 0 {
+			y = 0
+		}
+	}
 
 	// We need to scroll the screen up by the number of lines in the queue.
 	sb.WriteByte('\r')
