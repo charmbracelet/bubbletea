@@ -98,9 +98,7 @@ type model struct {
 
 ## Initialization
 
-Next, we’ll define our application’s initial state. `Init` can return a `Cmd`
-that could perform some initial I/O. For now, we don’t need to do any I/O, so
-for the command, we’ll just return `nil`, which translates to “no command.”
+Next, we’ll define our application’s initial state.
 
 ```go
 func initialModel() model {
@@ -116,7 +114,7 @@ func initialModel() model {
 }
 ```
 
-After that, we’ll define our application’s initial state in the `Init` method. `Init`
+After that, `Init`
 can return a `Cmd` that could perform some initial I/O. For now, we don't need
 to do any I/O, so for the command, we'll just return `nil`, which translates to
 "no command."
