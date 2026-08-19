@@ -42,6 +42,8 @@ func initialModel() model {
 	for i := range m.inputs {
 		t = textinput.New()
 		t.CharLimit = 32
+		// Set a reasonable width so the full placeholder text is visible
+		t.Width = 20
 
 		s := t.Styles()
 		s.Cursor.Color = lipgloss.Color("205")
