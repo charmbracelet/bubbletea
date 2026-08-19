@@ -166,3 +166,31 @@ func WithWindowSize(width, height int) ProgramOption {
 		p.height = height
 	}
 }
+
+// WithHardTabs sets whether to use hard tabs to optimize cursor movements.
+// By default, Bubble Tea will auto-detect this from the terminal's termios
+// settings. Some terminals incorrectly report TAB0 support, which can cause
+// column alignment issues when the renderer replaces spaces with tabs. Use
+// this option to explicitly disable hard tab optimization.
+//
+// Example:
+//
+//	p := tea.NewProgram(model{}, tea.WithHardTabs(false))
+func WithHardTabs(hardTabs bool) ProgramOption {
+	return func(p *Program) {
+		p.hardTabsOverride = &hardTabs
+	}
+}
+
+// WithBackspace sets whether to use backspace to optimize cursor movements.
+// By default, Bubble Tea will auto-detect this from the terminal's termios
+// settings. Use this option to explicitly control backspace optimization.
+//
+// Example:
+//
+//	p := tea.NewProgram(model{}, tea.WithBackspace(false))
+func WithBackspace(backspace bool) ProgramOption {
+	return func(p *Program) {
+		p.backspaceOverride = &backspace
+	}
+}
