@@ -26,7 +26,7 @@ func Exec(c ExecCommand, fn ExecCallback) Cmd {
 }
 
 // ExecProcess runs the given *exec.Cmd in a blocking fashion, effectively
-// pausing the Program while the command is running. After the *exec.Cmd exists
+// pausing the Program while the command is running. After the *exec.Cmd exits
 // the Program resumes. It's useful for spawning other interactive applications
 // such as editors and shells from within a Program.
 //
