@@ -34,6 +34,14 @@ func (p *Program) restoreTerminalState() error {
 	// Flush queued commands.
 	_ = p.flush()
 
+	// Drain any pending terminal responses from the TTY input buffer before
+	// restoring it. The program may have sent capability queries (e.g.
+	// DECRQM for modes 2026/2027) whose responses arrive asynchronously and
+	// were not consumed by the cancelled input reader. Without this, those
+	// bytes are read by the user's shell after exit and printed as garbage
+	// characters. See issue #1590.
+	p.drainInput()
+
 	return p.restoreInput()
 }
 
