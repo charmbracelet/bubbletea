@@ -36,24 +36,26 @@ func (m model) View() tea.View {
 func main() {
 	t := tree.New(tree.Root("~/charm").
 		Child(
-			"ayman",
-			tree.Root("bash").
+			tree.Root("amolith").Close(),
+			tree.Root("andrey").
+				Child(
+					tree.Root("snacks").Close(),
+					tree.Root("tools").
+						Child("helix",
+							"task",
+						),
+				),
+			tree.Root("drew").Close(),
+			tree.Root("kieran").
 				Child(
 					tree.Root("tools").
-						Child("zsh",
-							"doom-emacs",
-						),
-				),
-			tree.Root("carlos").
-				Child(
-					tree.Root("emotes").
 						Child(
-							"chefkiss.png",
-							"kekw.png",
+							"nixos",
+							"jj",
 						),
-				),
-			"maas",
+						),
 		), 70, 13)
+	t.SetCursorCharacter("•")
 
 	if _, err := tea.NewProgram(model{tree: t}).Run(); err != nil {
 		fmt.Println("Oh no:", err)
