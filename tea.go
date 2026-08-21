@@ -1228,6 +1228,7 @@ func (p *Program) execute(seq string) {
 	p.mu.Lock()
 	_, _ = p.outputBuf.WriteString(seq)
 	p.mu.Unlock()
+	p.wakeRenderer()
 }
 
 func (p *Program) wakeRenderer() {

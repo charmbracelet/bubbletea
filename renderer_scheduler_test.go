@@ -101,6 +101,10 @@ func TestRendererWakesForQueuedTerminalOutput(t *testing.T) {
 	t.Cleanup(func() { program.stopRenderer(true) })
 
 	program.execute("terminal query")
-	program.render(program.initialModel)
 	waitForSchedulerFlush(t, renderer)
+	program.mu.Lock()
+	defer program.mu.Unlock()
+	if program.outputBuf.Len() != 0 {
+		t.Fatalf("queued terminal output was not flushed: %q", program.outputBuf.String())
+	}
 }
