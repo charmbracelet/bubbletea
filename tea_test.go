@@ -66,6 +66,24 @@ func (m *testModel) View() View {
 	return NewView("success")
 }
 
+func TestStopStartRendererKeepsTickerAlive(t *testing.T) {
+	t.Parallel()
+	p := NewProgram(&testModel{}, WithOutput(io.Discard), WithFPS(50))
+	p.renderer = nilRenderer{}
+
+	p.startRenderer()
+	for i := 0; i < 40; i++ {
+		p.stopRenderer(false)
+		p.startRenderer()
+	}
+	select {
+	case <-p.ticker.C:
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("ticker did not fire after stop/start cycles; Stop raced Reset (#1778)")
+	}
+	p.stopRenderer(true)
+}
+
 func TestTeaModel(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer

@@ -548,6 +548,11 @@ type Program struct {
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
 
+	// rendererStopped is closed by the renderer goroutine when it exits.
+	// stopRenderer waits on it so ticker.Stop cannot race ticker.Reset on the
+	// next startRenderer (tea.Exec / RestoreTerminal). See #1778.
+	rendererStopped chan struct{}
+
 	// Initial window size. Mainly used for testing.
 	width, height int
 
@@ -1415,7 +1420,10 @@ func (p *Program) startRenderer() {
 
 	// Start the renderer.
 	p.renderer.start()
+	stopped := make(chan struct{})
+	p.rendererStopped = stopped
 	go func() {
+		defer close(stopped)
 		for {
 			select {
 			case <-p.rendererDone:
@@ -1436,7 +1444,11 @@ func (p *Program) startRenderer() {
 func (p *Program) stopRenderer(kill bool) {
 	// Stop the renderer before acquiring the mutex to avoid a deadlock.
 	p.once.Do(func() {
+		if p.rendererStopped == nil {
+			return
+		}
 		p.rendererDone <- struct{}{}
+		<-p.rendererStopped
 	})
 
 	if !kill {
