@@ -645,7 +645,7 @@ func (m benchModel) View() View {
 }
 
 func BenchmarkTeaRun(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var buf bytes.Buffer
 
 		m := benchModel{b}
