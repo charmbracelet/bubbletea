@@ -548,6 +548,16 @@ type Program struct {
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
 
+	// renderWake tells the renderer goroutine that a new view has been produced and
+	// its ticker needs to be running. Buffered by one and sent to without blocking:
+	// it signals that there is work, it is not a queue of the work.
+	renderWake chan struct{}
+
+	// renderPending is set when a view has arrived since the last flush. The
+	// renderer goroutine clears it as it flushes and stops the ticker on the first
+	// tick that finds it clear.
+	renderPending atomic.Bool
+
 	// Initial window size. Mainly used for testing.
 	width, height int
 
@@ -606,6 +616,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
 		rendererDone: make(chan struct{}),
+		renderWake:   make(chan struct{}, 1),
 	}
 
 	// Apply all options to the program.
@@ -894,6 +905,20 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(model.View()) // send view to renderer
+		p.wakeRenderer()
+	}
+}
+
+// wakeRenderer records that there is a frame to flush and nudges the renderer
+// goroutine in case its ticker is stopped.
+//
+// The send is non-blocking on a buffered channel: if a wake is already queued the
+// renderer has not looked at it yet, and a second would tell it nothing new.
+func (p *Program) wakeRenderer() {
+	p.renderPending.Store(true)
+	select {
+	case p.renderWake <- struct{}{}:
+	default:
 	}
 }
 
@@ -1429,6 +1454,23 @@ func (p *Program) startRenderer() {
 	// the done channel and its corresponding sync.Once.
 	p.once = sync.Once{}
 
+	// The ticker rate-limits redraws; it does not cause them. So it runs only while
+	// there is something to draw. A burst of messages is still collapsed into one
+	// frame per interval, and an idle program stops waking altogether.
+	//
+	// Previously the ticker ran unconditionally for the program's whole lifetime.
+	// The draw was already skipped on an unchanged view (see cursedRenderer.flush),
+	// so the cost was never the drawing: it was fps process wakeups per second,
+	// forever, whether or not anything had happened. For a long-lived TUI that is
+	// enough to keep a laptop's package out of its deep idle states continuously.
+	p.ticker.Stop()
+	armed := false
+	// drawn gates the leading edge below on the program having rendered at least
+	// once. The first frame stays on the ordinary path so startup emits exactly the
+	// bytes it always did: the shutdown flush redraws unconditionally, so drawing
+	// eagerly before it would put the same frame on the wire twice.
+	drawn := false
+
 	// Start the renderer.
 	p.renderer.start()
 	go func() {
@@ -1438,9 +1480,38 @@ func (p *Program) startRenderer() {
 				p.ticker.Stop()
 				return
 
-			case <-p.ticker.C:
+			case <-p.renderWake:
+				if armed {
+					continue
+				}
+				if !drawn {
+					// Nothing has been drawn yet; leave the first frame to the tick.
+					p.ticker.Reset(framerate)
+					armed = true
+					continue
+				}
+				// Leading edge: the first frame after an idle stretch is drawn at
+				// once rather than waiting out an interval. There is nothing to
+				// rate-limit yet, because the previous frame was long ago. This is
+				// what keeps a low fps usable interactively: the interval only ever
+				// delays the *second* frame of a burst.
+				p.renderPending.Store(false)
 				_ = p.flush()
 				_ = p.renderer.flush(false)
+				p.ticker.Reset(framerate)
+				armed = true
+
+			case <-p.ticker.C:
+				if !p.renderPending.Swap(false) {
+					// Nothing arrived during the last interval, so no later tick
+					// would draw anything either. Sleep until a view wakes us.
+					p.ticker.Stop()
+					armed = false
+					continue
+				}
+				_ = p.flush()
+				_ = p.renderer.flush(false)
+				drawn = true
 			}
 		}
 	}()
