@@ -153,6 +153,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.inputs = m.inputs[:len(m.inputs)-1]
 			if m.focus > len(m.inputs)-1 {
 				m.focus = len(m.inputs) - 1
+				cmds = append(cmds, m.inputs[m.focus].Focus())
 			}
 		}
 	case tea.WindowSizeMsg:
