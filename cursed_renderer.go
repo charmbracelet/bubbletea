@@ -514,16 +514,28 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// cursor position might get updated during rendering.
 		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y)
 	} else if !view.AltScreen {
-		// We don't want the cursor to be dangling at the end of the line in
-		// inline mode because it can cause unwanted line wraps in some
-		// terminals. So we move it to the beginning of the next line if
-		// necessary.
-		// This is only needed when the cursor is hidden because when it's
-		// visible, we already set its position above.
-		x, y := s.scr.Position()
-		if x >= s.width-1 {
-			s.scr.MoveTo(0, y)
+		// Park the cursor at the beginning of the frame's last line. The
+		// cursor is hidden in this branch (a visible cursor is positioned
+		// above), so parking it never moves anything the user can see, and
+		// like before, it keeps the cursor from dangling at the end of the
+		// last drawn line, which can cause unwanted line wraps in some
+		// terminals.
+		//
+		// The frame's height counts the view's trailing blank lines, so
+		// parking here also commits the renderer to them: a frame ending
+		// in intentional blank lines keeps its bottom margin, and output
+		// printed after the program exits starts below the frame rather
+		// than on its last visible line. Frames taller than the screen
+		// have their top rows dropped, so their last visible row is the
+		// screen's.
+		y := frameArea.Dy() - 1
+		if y >= s.height {
+			y = s.height - 1
 		}
+		if y < 0 {
+			y = 0
+		}
+		s.scr.MoveTo(0, y)
 	}
 
 	if err := s.scr.Flush(); err != nil {
