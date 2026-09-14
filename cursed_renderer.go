@@ -754,11 +754,44 @@ func (s *cursedRenderer) setWidthMethod(method ansi.Method) {
 }
 
 // insertAbove implements renderer.
-func (s *cursedRenderer) insertAbove(str string) error {
+func (s *cursedRenderer) insertAbove(str string, persist bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if len(str) == 0 {
+		return nil
+	}
+
+	inAltScreen := s.lastView != nil && s.lastView.AltScreen
+
+	if inAltScreen {
+		if !persist {
+			// Drop the message: writing to the altscreen buffer would corrupt
+			// the TUI display.
+			return nil
+		}
+
+		// Leave the altscreen, write to the normal screen buffer, then restore
+		// the altscreen so the message persists in scrollback.
+		var sb strings.Builder
+		sb.WriteString(ansi.ResetModeAltScreenSaveCursor)
+		for i, line := range strings.Split(str, "\n") {
+			if i > 0 {
+				sb.WriteString("\r\n")
+			}
+			sb.WriteString(line)
+		}
+		sb.WriteString("\r\n")
+		sb.WriteString(ansi.SetModeAltScreenSaveCursor)
+
+		if s.logger != nil {
+			s.logger.Printf("insert above (altscreen): %q", sb.String())
+		}
+
+		_, err := io.WriteString(s.w, sb.String())
+		if err != nil {
+			return fmt.Errorf("bubbletea: error writing insert above to the writer: %w", err)
+		}
 		return nil
 	}
 
