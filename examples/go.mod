@@ -1,6 +1,6 @@
 module examples
 
-go 1.25.8
+go 1.26.7
 
 replace charm.land/bubbletea/v2 => ../
 
