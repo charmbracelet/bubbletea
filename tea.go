@@ -1019,9 +1019,14 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		if !term.IsTerminal(os.Stdin.Fd()) {
 			ttyIn, _, err := OpenTTY()
 			if err != nil {
-				return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
+				// On platforms without TTY support, such as WASM targets,
+				// stdin is managed by the runtime, so keep using it.
+				if !errors.Is(err, uv.ErrPlatformNotSupported) {
+					return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
+				}
+			} else {
+				p.input = ttyIn
 			}
-			p.input = ttyIn
 		}
 	}
 
