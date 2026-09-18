@@ -62,7 +62,9 @@ func (s *cursedRenderer) setLogger(logger uv.Logger) {
 // without input, the terminal's response to a keyboard enhancement query
 // would arrive after the program has exited and leak into the shell.
 func (s *cursedRenderer) setNoInput(noInput bool) {
+	s.mu.Lock()
 	s.noInput = noInput
+	s.mu.Unlock()
 }
 
 // resetKeyboardEnhancements writes the sequences that reset keyboard

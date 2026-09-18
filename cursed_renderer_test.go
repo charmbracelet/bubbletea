@@ -256,6 +256,41 @@ func TestCursedRenderer_resumePushesKittyKeyboardAgain(t *testing.T) {
 	}
 }
 
+// setNoInput must hold the renderer mutex like every other setter: flush
+// reads the field under the lock, and a caller may flip it while the render
+// ticker goroutine is flushing.
+func TestCursedRenderer_setNoInputIsSafeDuringFlush(t *testing.T) {
+	t.Parallel()
+
+	r := newCursedRenderer(io.Discard, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := range 50 {
+			r.render(NewView(strconv.Itoa(i)))
+			if err := r.flush(false); err != nil {
+				t.Errorf("flush: %v", err)
+				return
+			}
+		}
+	}()
+	// Keep toggling until the flusher is done so the accesses overlap.
+	for toggling := true; toggling; {
+		select {
+		case <-done:
+			toggling = false
+		default:
+			r.setNoInput(true)
+			r.setNoInput(false)
+		}
+	}
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 	t.Parallel()
 
