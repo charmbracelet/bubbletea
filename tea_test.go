@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 type ctxImplodeMsg struct {
@@ -86,6 +88,33 @@ func TestTeaModel(t *testing.T) {
 
 	if buf.Len() == 0 {
 		t.Fatal("no output")
+	}
+}
+
+func TestTeaDisabledInputSendsNoTerminalQueries(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+
+	p := NewProgram(&testModel{},
+		WithInput(nil),
+		WithOutput(&buf),
+		WithWindowSize(80, 24),
+		// An environment in which shouldQuerySynchronizedOutput reports
+		// true: no TERM_PROGRAM and no SSH_TTY set.
+		WithEnvironment([]string{"TERM=xterm-256color"}),
+	)
+	go p.Send(Quit())
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	// With input disabled nothing ever reads the terminal's replies, so no
+	// query may be sent: its response would leak into the user's shell after
+	// the program exits.
+	for _, seq := range []string{ansi.RequestModeSynchronizedOutput, ansi.RequestModeUnicodeCore} {
+		if strings.Contains(buf.String(), seq) {
+			t.Errorf("expected no terminal query %q with input disabled, got %q", seq, buf.String())
+		}
 	}
 }
 
