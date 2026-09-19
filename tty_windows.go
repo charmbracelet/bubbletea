@@ -21,13 +21,14 @@ func (p *Program) initInput() (err error) {
 			return fmt.Errorf("error making terminal raw: %w", err)
 		}
 
-		// Enable VT input
+		// Set ENABLE_VIRTUAL_TERMINAL_INPUT false, VT can not represent sequences like shift+enter.
+		// also win32-input-mode is the modern one.
 		var mode uint32
 		if err := windows.GetConsoleMode(windows.Handle(p.ttyInput.Fd()), &mode); err != nil {
 			return fmt.Errorf("error getting console mode: %w", err)
 		}
 
-		if err := windows.SetConsoleMode(windows.Handle(p.ttyInput.Fd()), mode|windows.ENABLE_VIRTUAL_TERMINAL_INPUT); err != nil {
+		if err := windows.SetConsoleMode(windows.Handle(p.ttyInput.Fd()), mode&^windows.ENABLE_VIRTUAL_TERMINAL_INPUT); err != nil {
 			return fmt.Errorf("error setting console mode: %w", err)
 		}
 	}
