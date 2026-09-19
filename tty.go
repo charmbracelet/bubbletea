@@ -2,7 +2,9 @@ package tea
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
@@ -52,6 +54,33 @@ func (p *Program) restoreInput() error {
 	return nil
 }
 
+type fallbackInputReader struct {
+	io.Reader
+}
+
+func shouldRetryCancelReaderWithoutFD(input io.Reader, err error) bool {
+	if err == nil || !strings.Contains(err.Error(), "add reader to epoll interest list") {
+		return false
+	}
+
+	file, ok := input.(*os.File)
+	if !ok || term.IsTerminal(file.Fd()) {
+		return false
+	}
+
+	info, statErr := file.Stat()
+	if statErr != nil {
+		return false
+	}
+
+	devNullInfo, statErr := os.Stat(os.DevNull)
+	if statErr != nil {
+		return false
+	}
+
+	return os.SameFile(info, devNullInfo)
+}
+
 // initInputReader (re)commences reading inputs.
 func (p *Program) initInputReader(cancel bool) error {
 	if cancel && p.cancelReader != nil {
@@ -67,6 +96,9 @@ func (p *Program) initInputReader(cancel bool) error {
 
 	var err error
 	p.cancelReader, err = uv.NewCancelReader(p.input)
+	if shouldRetryCancelReaderWithoutFD(p.input, err) {
+		p.cancelReader, err = uv.NewCancelReader(fallbackInputReader{Reader: p.input})
+	}
 	if err != nil {
 		return fmt.Errorf("bubbletea: could not create cancelable reader: %w", err)
 	}
