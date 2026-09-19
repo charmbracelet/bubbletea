@@ -150,9 +150,13 @@ func WithFPS(fps int) ProgramOption {
 // Tea will try to detect the terminal's color profile from environment
 // variables and terminfo capabilities. Use [tea.WithEnvironment] to set custom
 // environment variables.
+//
+// A profile set with this option is not upgraded when the terminal reports
+// that it supports more colors.
 func WithColorProfile(profile colorprofile.Profile) ProgramOption {
 	return func(p *Program) {
 		p.profile = &profile
+		p.forcedProfile = true
 	}
 }
 
