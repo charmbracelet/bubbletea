@@ -138,6 +138,8 @@ func TestViewModel(t *testing.T) {
 
 			m := &testViewModel{testModel: &testModel{}}
 			p := NewProgram(m,
+				// Prevent the renderer ticker from flushing intermediate test output.
+				WithFPS(1),
 				// Set the initial window size for the program.
 				WithWindowSize(80, 24),
 				// Use ANSI256 to increase test coverage.
