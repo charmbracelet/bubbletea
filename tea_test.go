@@ -511,6 +511,51 @@ func TestTeaNestedSequenceMsg(t *testing.T) {
 	}
 }
 
+type windowSizeModel struct {
+	sizes []WindowSizeMsg
+}
+
+func (m *windowSizeModel) Init() Cmd { return nil }
+
+func (m *windowSizeModel) Update(msg Msg) (Model, Cmd) {
+	switch msg := msg.(type) {
+	case WindowSizeMsg:
+		m.sizes = append(m.sizes, msg)
+		if len(m.sizes) == 1 {
+			return m, RequestWindowSize
+		}
+		return m, Quit
+	}
+	return m, nil
+}
+
+func (m *windowSizeModel) View() View {
+	return NewView("ok")
+}
+
+func TestRequestWindowSizeWithoutTTY(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	m := &windowSizeModel{}
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithWindowSize(80, 24),
+		WithInput(&bytes.Buffer{}),
+		WithOutput(&bytes.Buffer{}),
+	)
+
+	_, err := p.Run()
+	if len(m.sizes) < 2 {
+		t.Fatalf("RequestWindowSize should deliver WindowSizeMsg when WithWindowSize is set, got %v (err=%v)", m.sizes, err)
+	}
+	got := m.sizes[1]
+	if got.Width != 80 || got.Height != 24 {
+		t.Fatalf("RequestWindowSize delivered %+v, want 80x24", got)
+	}
+}
+
 func TestTeaSend(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer

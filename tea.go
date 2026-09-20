@@ -855,6 +855,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				continue
 
 			case WindowSizeMsg:
+				p.width, p.height = msg.Width, msg.Height
 				p.renderer.resize(msg.Width, msg.Height)
 
 			case windowSizeMsg:
