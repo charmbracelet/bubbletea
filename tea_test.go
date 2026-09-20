@@ -511,6 +511,117 @@ func TestTeaNestedSequenceMsg(t *testing.T) {
 	}
 }
 
+func TestTeaSequenceStopsAfterQuit(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	var ranAfterQuit atomic.Bool
+	afterQuit := func() Msg {
+		ranAfterQuit.Store(true)
+		return incrementMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+	go p.Send(sequenceMsg{Quit, afterQuit})
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Give a detached sequence goroutine a moment to finish if it ignored Quit.
+	time.Sleep(50 * time.Millisecond)
+	if ranAfterQuit.Load() {
+		t.Fatal("Sequence ran a command after Quit")
+	}
+}
+
+func TestTeaNestedSequenceStopsAfterQuit(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	var ranAfterQuit atomic.Bool
+	afterQuit := func() Msg {
+		ranAfterQuit.Store(true)
+		return incrementMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+	go p.Send(sequenceMsg{Sequence(Quit), afterQuit})
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	if ranAfterQuit.Load() {
+		t.Fatal("Sequence ran a command after a nested Quit")
+	}
+}
+
+func TestTeaSequenceStopsOnContextDone(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	started := make(chan struct{})
+	var ranAfter atomic.Bool
+
+	first := func() Msg {
+		close(started)
+		<-ctx.Done()
+		return incrementMsg{}
+	}
+	second := func() Msg {
+		ranAfter.Store(true)
+		return incrementMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m,
+		WithContext(ctx),
+		WithInput(&bytes.Buffer{}),
+		WithOutput(&bytes.Buffer{}),
+	)
+	go p.Send(sequenceMsg{first, second})
+
+	errCh := make(chan error, 1)
+	go func() {
+		_, err := p.Run()
+		errCh <- err
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(3 * time.Second):
+		t.Fatal("first sequence command did not start")
+	}
+	cancel()
+
+	select {
+	case err := <-errCh:
+		if !errors.Is(err, ErrProgramKilled) {
+			t.Fatalf("expected ErrProgramKilled, got %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("program did not exit")
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	if ranAfter.Load() {
+		t.Fatal("Sequence ran a command after context cancellation")
+	}
+}
+
 func TestTeaSend(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer

@@ -897,7 +897,7 @@ func (p *Program) render(model Model) {
 	}
 }
 
-func (p *Program) execSequenceMsg(msg sequenceMsg) {
+func (p *Program) execSequenceMsg(msg sequenceMsg) (stop bool) {
 	if !p.disableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
@@ -906,21 +906,34 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) {
 		}()
 	}
 
-	// Execute commands one at a time, in order.
+	// Execute commands one at a time, in order. Stop if the program is
+	// shutting down or a command returns a message that ends the event loop,
+	// so later commands (and their side effects) do not run after Quit.
 	for _, cmd := range msg {
 		if cmd == nil {
 			continue
+		}
+		select {
+		case <-p.ctx.Done():
+			return true
+		default:
 		}
 		msg := cmd()
 		switch msg := msg.(type) {
 		case BatchMsg:
 			p.execBatchMsg(msg)
 		case sequenceMsg:
-			p.execSequenceMsg(msg)
+			if p.execSequenceMsg(msg) {
+				return true
+			}
+		case QuitMsg, InterruptMsg:
+			p.Send(msg)
+			return true
 		default:
 			p.Send(msg)
 		}
 	}
+	return false
 }
 
 func (p *Program) execBatchMsg(msg BatchMsg) {
