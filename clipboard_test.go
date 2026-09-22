@@ -196,15 +196,22 @@ func TestClipboardBackendErrorsDoNotHangReads(t *testing.T) {
 func TestClipboardFallbackDetection(t *testing.T) {
 	t.Parallel()
 
-	t.Run("apple terminal selects a backend on darwin", func(t *testing.T) {
+	t.Run("apple terminal selects a backend when tools are available", func(t *testing.T) {
 		t.Parallel()
-		p := NewProgram(&testModel{}, WithEnvironment([]string{"TERM_PROGRAM=Apple_Terminal", "TERM=xterm-256color"}))
-		if runtime.GOOS == "darwin" {
+		// The environment has no DISPLAY or WAYLAND_DISPLAY, so no Linux
+		// clipboard tool is reachable no matter where the test runs.
+		p := NewProgram(&testModel{},
+			WithEnvironment([]string{"TERM_PROGRAM=Apple_Terminal", "TERM=xterm-256color"}))
+		switch runtime.GOOS {
+		case "darwin", "windows":
+			// pbcopy and clip.exe ship with the OS.
 			if p.clipboard == nil {
-				t.Error("expected a clipboard backend on darwin")
+				t.Errorf("expected a clipboard backend on %s", runtime.GOOS)
 			}
-		} else if p.clipboard != nil {
-			t.Error("expected no clipboard backend without a terminal clipboard tool")
+		default:
+			if p.clipboard != nil {
+				t.Error("expected no clipboard backend without a display")
+			}
 		}
 	})
 
