@@ -3,13 +3,21 @@ package tea
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/term"
 	xpty "github.com/charmbracelet/x/xpty"
 )
+
+// ptyDrainTimeout bounds how long execBridged waits for a command's output to
+// be drained before giving up and closing the pseudo-terminal. It is long
+// enough to drain the kernel's pty buffer, and keeps the program from hanging
+// when a command's descendants keep the pty open after it exits.
+const ptyDrainTimeout = 500 * time.Millisecond
 
 // execBridged runs c on a pseudo-terminal and bridges its clipboard traffic
 // through the program's clipboard backend. This is what makes copy and paste
@@ -38,6 +46,13 @@ func (p *Program) execBridged(c *exec.Cmd) error {
 	preparePtyCommand(c)
 	if err := pt.Start(c); err != nil {
 		return fmt.Errorf("bubbletea: could not start command on pty: %w", err)
+	}
+
+	// Close the slave end in the parent, so that the command is its only
+	// holder. When the command exits, reads on the master report EOF after
+	// draining its output, instead of blocking forever.
+	if slave, ok := pt.(interface{ Slave() *os.File }); ok {
+		_ = slave.Slave().Close()
 	}
 
 	var wg sync.WaitGroup
@@ -91,14 +106,25 @@ func (p *Program) execBridged(c *exec.Cmd) error {
 
 	waitErr := xpty.WaitProcess(p.ctx, c)
 
-	// Stop forwarding and wait for the goroutines, so they don't steal input
-	// from the program once it resumes.
+	// Stop forwarding, then wait for the pumps to drain the command's output
+	// before closing the pseudo-terminal. Output written just before the
+	// command exited may still be buffered in the pty, and closing it too
+	// early would discard it. Waiting also ensures the goroutines don't steal
+	// input from the program once it resumes.
 	stop()
 	if cancelInput != nil {
 		cancelInput()
 	}
+	drained := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(drained)
+	}()
+	select {
+	case <-drained:
+	case <-time.After(ptyDrainTimeout):
+	}
 	_ = pt.Close()
-	wg.Wait()
 
 	if waitErr != nil {
 		return fmt.Errorf("bubbletea: command failed: %w", waitErr)

@@ -3,11 +3,25 @@
 
 package tea
 
-import uv "github.com/charmbracelet/ultraviolet"
+import (
+	"os/exec"
 
-// newLocalClipboardBackend always returns nil on Windows: Windows Terminal
-// supports OSC52 natively, and Windows has no clipboard tool that can read the
-// clipboard without an additional dependency.
+	uv "github.com/charmbracelet/ultraviolet"
+)
+
+// newLocalClipboardBackend returns a clipboard backend backed by the Windows
+// clip.exe tool, or nil when it is not available.
+//
+// Windows Terminal supports OSC52 natively, so this is only used on terminals
+// without OSC52 support. clip.exe can only write, so reads report
+// [ErrClipboardUnavailable].
 func newLocalClipboardBackend(uv.Environ) ClipboardBackend {
-	return nil
+	clip, err := exec.LookPath("clip")
+	if err != nil {
+		return nil
+	}
+	return commandClipboardBackend{
+		set: func(ClipboardSelection) (string, []string) { return clip, nil },
+		get: func(ClipboardSelection) (string, []string) { return "", nil },
+	}
 }
