@@ -312,6 +312,31 @@ if len(os.Getenv("DEBUG")) > 0 {
 To see what’s being logged in real time, run `tail -f debug.log` while you run
 your program in another window.
 
+## Clipboard
+
+Bubble Tea copies to and pastes from the system clipboard with
+`tea.SetClipboard`, `tea.SetPrimaryClipboard`, and `tea.ReadClipboard`. Copy
+results arrive as a `tea.ClipboardMsg`.
+
+By default this uses OSC52, which requires terminal support. On terminals
+without it, such as Apple’s Terminal.app, Bubble Tea falls back to the
+operating system’s clipboard tools: `pbcopy` and `pbpaste` on macOS, and
+`wl-clipboard`, `xclip`, or `xsel` on Linux. Commands started with `tea.Exec`
+and `tea.ExecProcess` get the same treatment: when the terminal can’t handle
+OSC52, they run on a pseudo-terminal whose clipboard traffic is bridged for
+them.
+
+A custom backend can be supplied with `tea.WithClipboardBackend`, and the
+fallback can be turned off entirely with `tea.WithoutClipboardFallback`. See
+the [clipboard example][clipboard-example] for a complete program.
+
+Note that sessions reached over SSH always use OSC52, because the clipboard
+that matters is the one on the terminal the user is sitting at. Clipboard
+sequences passed through tmux can’t be traced back to the terminal running
+tmux, so tmux is assumed to support OSC52 as well.
+
+[clipboard-example]: https://github.com/charmbracelet/bubbletea/tree/main/examples/clipboard
+
 ## Libraries we use with Bubble Tea
 
 - [Bubbles][bubbles]: Common Bubble Tea components such as text inputs, viewports, spinners and so on

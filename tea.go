@@ -493,6 +493,19 @@ type Program struct {
 	// UI but still want to take advantage of Bubble Tea's architecture.
 	disableRenderer bool
 
+	// clipboard is the backend used to bridge clipboard operations when the
+	// terminal does not support OSC52. When nil, clipboard operations are
+	// written to the terminal as OSC52 sequences.
+	clipboard ClipboardBackend
+
+	// clipboardBackendSet reports whether a clipboard backend was provided
+	// explicitly with WithClipboardBackend.
+	clipboardBackendSet bool
+
+	// disableClipboardFallback disables the operating system clipboard
+	// fallback used on terminals without OSC52 support.
+	disableClipboardFallback bool
+
 	// handlers is a list of channels that need to be waited on before the
 	// program can exit.
 	handlers channelHandlers
@@ -629,6 +642,12 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// if no environment was set, set it to os.Environ()
 	if p.environ == nil {
 		p.environ = os.Environ()
+	}
+
+	// Fall back to the operating system clipboard on terminals that do not
+	// support OSC52, such as Apple's Terminal.app.
+	if !p.clipboardBackendSet && !p.disableClipboardFallback && !supportsOSC52(p.environ) {
+		p.clipboard = newLocalClipboardBackend(p.environ)
 	}
 
 	if p.fps < 1 {
@@ -816,16 +835,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case readClipboardMsg:
-				p.execute(ansi.RequestSystemClipboard)
+				p.handleReadClipboard(uv.SystemClipboard)
 
 			case setClipboardMsg:
-				p.execute(ansi.SetSystemClipboard(string(msg)))
+				p.handleSetClipboard(uv.SystemClipboard, string(msg))
 
 			case readPrimaryClipboardMsg:
-				p.execute(ansi.RequestPrimaryClipboard)
+				p.handleReadClipboard(uv.PrimaryClipboard)
 
 			case setPrimaryClipboardMsg:
-				p.execute(ansi.SetPrimaryClipboard(string(msg)))
+				p.handleSetClipboard(uv.PrimaryClipboard, string(msg))
 
 			case backgroundColorMsg:
 				p.execute(ansi.RequestBackgroundColor)
