@@ -166,3 +166,27 @@ func WithWindowSize(width, height int) ProgramOption {
 		p.height = height
 	}
 }
+
+// WithClipboardBackend sets the clipboard backend used to copy and paste
+// outside of the terminal. This overrides the automatic fallback that Bubble
+// Tea applies on terminals without OSC52 support, such as Apple's
+// Terminal.app.
+//
+// Passing a nil backend opts out of the fallback and always uses OSC52.
+//
+// See [ClipboardBackend] and [WithoutClipboardFallback].
+func WithClipboardBackend(backend ClipboardBackend) ProgramOption {
+	return func(p *Program) {
+		p.clipboard = backend
+		p.clipboardBackendSet = true
+	}
+}
+
+// WithoutClipboardFallback disables the operating system clipboard fallback
+// that Bubble Tea enables on terminals without OSC52 support. Clipboard
+// operations will always be sent to the terminal as OSC52 sequences.
+func WithoutClipboardFallback() ProgramOption {
+	return func(p *Program) {
+		p.disableClipboardFallback = true
+	}
+}

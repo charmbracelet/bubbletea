@@ -108,12 +108,21 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 		return
 	}
 
-	c.SetStdin(p.input)
-	c.SetStdout(p.output)
-	c.SetStderr(os.Stderr)
+	var err error
+	if osCmd, ok := c.(*osExecCommand); ok && p.clipboard != nil {
+		// Bridge the command's OSC52 clipboard traffic through the
+		// program's clipboard backend.
+		err = p.execBridged(osCmd.Cmd)
+	} else {
+		c.SetStdin(p.input)
+		c.SetStdout(p.output)
+		c.SetStderr(os.Stderr)
 
-	// Execute system command.
-	if err := c.Run(); err != nil {
+		// Execute system command.
+		err = c.Run()
+	}
+
+	if err != nil {
 		_ = p.RestoreTerminal() // also try to restore the terminal.
 		if fn != nil {
 			go p.Send(fn(err))
@@ -122,7 +131,7 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	}
 
 	// Have the program re-capture input.
-	err := p.RestoreTerminal()
+	err = p.RestoreTerminal()
 	if fn != nil {
 		go p.Send(fn(err))
 	}
