@@ -66,8 +66,8 @@ func main() {
 	}
 	defer resp.Body.Close() // nolint:errcheck
 
-	// Don't add TUI if the header doesn't include content size
-	// it's impossible see progress without total
+		// Don't add TUI if the header doesn't include content size, since it's
+		// impossible to show progress without a total.
 	if resp.ContentLength <= 0 {
 		fmt.Println("can't parse content length, aborting download")
 		os.Exit(1)
