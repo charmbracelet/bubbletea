@@ -1019,9 +1019,14 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		if !term.IsTerminal(os.Stdin.Fd()) {
 			ttyIn, _, err := OpenTTY()
 			if err != nil {
-				return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
+				// On platforms without TTY support, such as WASM targets,
+				// stdin is managed by the runtime, so keep using it.
+				if !errors.Is(err, uv.ErrPlatformNotSupported) {
+					return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
+				}
+			} else {
+				p.input = ttyIn
 			}
-			p.input = ttyIn
 		}
 	}
 
@@ -1115,7 +1120,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Start the renderer.
 	p.startRenderer()
 
-	if !p.disableRenderer && shouldQuerySynchronizedOutput(p.environ) {
+	// Skip the queries when input is disabled: nothing would read the
+	// terminal's replies and they would leak into the user's shell after the
+	// program exits.
+	if !p.disableRenderer && !p.disableInput && shouldQuerySynchronizedOutput(p.environ) {
 		// Query for synchronized updates support (mode 2026) and unicode core
 		// (mode 2027). If the terminal supports it, the renderer will enable
 		// it once we get the response.
