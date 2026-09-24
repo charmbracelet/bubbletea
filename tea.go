@@ -1230,6 +1230,11 @@ func (p *Program) execute(seq string) {
 // reply on p.input, so when input is disabled the query is skipped: the
 // program cannot read the response, and the terminal's reply would leak into
 // the shell once the program exits (#1590).
+//
+// This covers every query that expects a reply, not just the startup
+// capability probe: background, foreground, and cursor color requests, cursor
+// position reports, clipboard reads, and terminal version and termcap
+// queries.
 func (p *Program) executeQuery(seq string) {
 	if p.disableInput {
 		return

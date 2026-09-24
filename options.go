@@ -37,6 +37,13 @@ func WithOutput(output io.Writer) ProgramOption {
 // won't need to use this. To disable input entirely pass nil.
 //
 //	p := NewProgram(model, WithInput(nil))
+//
+// Note that with input disabled, no terminal query is ever sent, since the
+// reply could not be read: commands that expect a response, such as
+// [RequestBackgroundColor], [RequestCursorPosition], [ReadClipboard], or
+// [RequestTerminalVersion], are skipped, as is the startup capability probe.
+// A model waiting on the reply message of any of those commands will never
+// receive it.
 func WithInput(input io.Reader) ProgramOption {
 	return func(p *Program) {
 		p.input = input

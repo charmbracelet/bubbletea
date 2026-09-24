@@ -712,7 +712,11 @@ func TestTeaNoCapabilityQueryWithoutInput(t *testing.T) {
 			}
 
 			// The queued output may not have been flushed if the program
-			// exited before the first tick, so inspect it too.
+			// exited before the first tick, so inspect it too. Reading
+			// p.outputBuf here is deliberate: it checks the buffered bytes
+			// that would have been flushed, without depending on flush
+			// timing (and it ties the test to the renderer's buffer, which
+			// is an intentional trade-off).
 			got := buf.String() + p.outputBuf.String()
 			if strings.Contains(got, query) != tt.want {
 				t.Fatalf("capability query present = %v, want %v; output: %q", !tt.want, tt.want, got)
@@ -749,6 +753,11 @@ func (m queryModel) Update(msg Msg) (Model, Cmd) {
 	case backgroundColorMsg, foregroundColorMsg, cursorColorMsg,
 		readClipboardMsg, readPrimaryClipboardMsg, terminalVersion,
 		requestCapabilityMsg, requestCursorPosMsg:
+		// Each query is handled by an intermediate reader that turns the
+		// terminal's reply into a message, so Update only sees the request
+		// messages because the event loop passes them through after the
+		// intermediate reads. If that pass-through ever changes, this test
+		// will hang instead of quitting.
 		m.handled++
 		if m.handled == len(terminalQueryCmds) {
 			return m, Quit
@@ -801,7 +810,11 @@ func TestTeaNoTerminalQueriesWithoutInput(t *testing.T) {
 			}
 
 			// The queued output may not have been flushed if the program
-			// exited before the first tick, so inspect it too.
+			// exited before the first tick, so inspect it too. Reading
+			// p.outputBuf here is deliberate: it checks the buffered bytes
+			// that would have been flushed, without depending on flush
+			// timing (and it ties the test to the renderer's buffer, which
+			// is an intentional trade-off).
 			got := buf.String() + p.outputBuf.String()
 			for _, query := range queries {
 				if strings.Contains(got, query) != tt.want {
