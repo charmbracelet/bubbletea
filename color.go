@@ -10,6 +10,7 @@ import (
 type backgroundColorMsg struct{}
 
 // RequestBackgroundColor is a command that requests the terminal background color.
+// Use [WithInput] to enable input, since the reply cannot be read otherwise.
 func RequestBackgroundColor() Msg {
 	return backgroundColorMsg{}
 }
@@ -18,6 +19,7 @@ func RequestBackgroundColor() Msg {
 type foregroundColorMsg struct{}
 
 // RequestForegroundColor is a command that requests the terminal foreground color.
+// Use [WithInput] to enable input, since the reply cannot be read otherwise.
 func RequestForegroundColor() Msg {
 	return foregroundColorMsg{}
 }
@@ -26,6 +28,7 @@ func RequestForegroundColor() Msg {
 type cursorColorMsg struct{}
 
 // RequestCursorColor is a command that requests the terminal cursor color.
+// Use [WithInput] to enable input, since the reply cannot be read otherwise.
 func RequestCursorColor() Msg {
 	return cursorColorMsg{}
 }
