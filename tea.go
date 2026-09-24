@@ -674,11 +674,13 @@ func (p *Program) handleSignals() chan struct{} {
 
 			case s := <-sig:
 				if atomic.LoadUint32(&p.ignoreSignals) == 0 {
-					switch s {
-					case syscall.SIGINT:
-						p.msgs <- InterruptMsg{}
-					default:
-						p.msgs <- QuitMsg{}
+					var msg Msg = QuitMsg{}
+					if s == syscall.SIGINT {
+						msg = InterruptMsg{}
+					}
+					select {
+					case p.msgs <- msg:
+					case <-p.ctx.Done():
 					}
 					return
 				}
