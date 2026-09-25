@@ -794,9 +794,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case ModeReportMsg:
 				switch msg.Mode {
 				case ansi.ModeSynchronizedOutput:
-					if msg.Value == ansi.ModeReset {
-						// The terminal supports synchronized output and it's
-						// currently disabled, so we can enable it on the renderer.
+					if msg.Value == ansi.ModeReset || msg.Value == ansi.ModeSet || msg.Value == ansi.ModePermanentlySet {
+						// The terminal supports synchronized output. Whether it's
+						// currently disabled or already enabled, we use synchronized
+						// output to wrap individual frames and prevent flickering.
 						p.renderer.setSyncdUpdates(true)
 					}
 				case ansi.ModeUnicodeCore:
@@ -1321,7 +1322,10 @@ func (p *Program) recoverFromGoPanic(r interface{}) {
 	case p.errs <- ErrProgramPanic:
 	default:
 	}
-	p.cancel()
+	// Use shutdown(true) to properly clean up the renderer, input reader,
+	// and terminal state. Previously, this only called p.cancel() which left
+	// the renderer running and the cancelReader open, causing resource leaks.
+	p.shutdown(true)
 	// We use "\r\n" to ensure the output is formatted even when restoring the
 	// terminal does not work or when raw mode is still active.
 	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
@@ -1395,9 +1399,9 @@ func (p *Program) RestoreTerminal() error {
 //
 // If the altscreen is active no output will be printed.
 func (p *Program) Println(args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprint(args...),
-	}
+	})
 }
 
 // Printf prints above the Program. It takes a format template followed by
@@ -1409,9 +1413,9 @@ func (p *Program) Println(args ...any) {
 //
 // If the altscreen is active no output will be printed.
 func (p *Program) Printf(template string, args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
-	}
+	})
 }
 
 // startRenderer starts the renderer.
