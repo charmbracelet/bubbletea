@@ -1395,8 +1395,9 @@ func (p *Program) RestoreTerminal() error {
 //
 // If the altscreen is active no output will be printed.
 func (p *Program) Println(args ...any) {
-	p.msgs <- printLineMessage{
-		messageBody: fmt.Sprint(args...),
+	select {
+	case p.msgs <- printLineMessage{messageBody: fmt.Sprint(args...)}:
+	case <-p.ctx.Done():
 	}
 }
 
@@ -1409,8 +1410,9 @@ func (p *Program) Println(args ...any) {
 //
 // If the altscreen is active no output will be printed.
 func (p *Program) Printf(template string, args ...any) {
-	p.msgs <- printLineMessage{
-		messageBody: fmt.Sprintf(template, args...),
+	select {
+	case p.msgs <- printLineMessage{messageBody: fmt.Sprintf(template, args...)}:
+	case <-p.ctx.Done():
 	}
 }
 
