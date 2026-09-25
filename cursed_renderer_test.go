@@ -201,3 +201,136 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+func TestCursedRenderer_windowTitleStacking(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	view := NewView("hello")
+	view.WindowTitle = "Initial Title"
+	render(view)
+
+	// Updating title should not push again to the stack.
+	view.WindowTitle = "Updated Title"
+	render(view)
+
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	if n := strings.Count(got, saveIconAndWindowTitle); n != 1 {
+		t.Fatalf("expected title stack to be pushed once, got %d times in %q", n, got)
+	}
+	if n := strings.Count(got, restoreIconAndWindowTitle); n != 1 {
+		t.Fatalf("expected title stack to be popped once, got %d times in %q", n, got)
+	}
+	if strings.Contains(got, ansi.SetWindowTitle("")) {
+		t.Fatalf("expected empty window title not to be emitted, got %q", got)
+	}
+
+	assertInOrder(t, got,
+		saveIconAndWindowTitle,
+		ansi.SetWindowTitle("Initial Title"),
+		ansi.SetWindowTitle("Updated Title"),
+		restoreIconAndWindowTitle,
+	)
+}
+
+func TestCursedRenderer_windowTitleStackingResume(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	view := NewView("hello")
+	view.WindowTitle = "App Title"
+	render(view)
+
+	// Suspend renderer.
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Resume renderer.
+	r.start()
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	// Exit renderer.
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	if n := strings.Count(got, saveIconAndWindowTitle); n != 2 {
+		t.Fatalf("expected title stack to be pushed 2 times, got %d times in %q", n, got)
+	}
+	if n := strings.Count(got, restoreIconAndWindowTitle); n != 2 {
+		t.Fatalf("expected title stack to be popped 2 times, got %d times in %q", n, got)
+	}
+
+	assertInOrder(t, got,
+		saveIconAndWindowTitle,
+		ansi.SetWindowTitle("App Title"),
+		restoreIconAndWindowTitle,
+		saveIconAndWindowTitle,
+		ansi.SetWindowTitle("App Title"),
+		restoreIconAndWindowTitle,
+	)
+}
+
+func TestCursedRenderer_windowTitleEmptyNoStacking(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	view := NewView("hello")
+	render(view)
+
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	if strings.Contains(got, saveIconAndWindowTitle) {
+		t.Fatalf("expected title stack not to be pushed, got %q", got)
+	}
+	if strings.Contains(got, restoreIconAndWindowTitle) {
+		t.Fatalf("expected title stack not to be popped, got %q", got)
+	}
+	if strings.Contains(got, ansi.SetWindowTitle("")) {
+		t.Fatalf("expected empty window title not to be emitted, got %q", got)
+	}
+}
