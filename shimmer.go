@@ -43,7 +43,7 @@ type ShimmerMsg struct {
 //	    )
 //	    return tea.NewView(s)
 //	}
-func NewShimmer(text string, interval time.Duration) Cmd {
+func NewShimmer(_ string, interval time.Duration) Cmd {
 	return func() Msg {
 		time.Sleep(interval)
 		return ShimmerMsg{Progress: 0.03}
@@ -94,7 +94,7 @@ func ShimmerText(text string, progress float64, shimmerColor color.Color, opts .
 	col := 0
 	inShimmer := false
 
-	for _, r := range []rune(text) {
+	for _, r := range text {
 		rw := ansi.StringWidth(string(r))
 		if rw <= 0 {
 			rw = 1
@@ -211,7 +211,7 @@ func (s *ShimmerState) Reset() {
 }
 
 // colorToAnsi converts an image/color.Color to an ANSI foreground escape
-// sequence using the ECMA-48 24-bit color format: \x1b[38;2;R;G;Bm
+// sequence using the ECMA-48 24-bit color format: \x1b[38;2;R;G;Bm.
 func colorToAnsi(c color.Color) string {
 	if c == nil {
 		return ""
@@ -223,14 +223,14 @@ func colorToAnsi(c color.Color) string {
 	case color.NRGBA:
 		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", col.R, col.G, col.B)
 	case color.RGBA64:
-		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", uint8(col.R>>8), uint8(col.G>>8), uint8(col.B>>8))
+		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", col.R>>8, col.G>>8, col.B>>8)
 	case color.NRGBA64:
-		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", uint8(col.R>>8), uint8(col.G>>8), uint8(col.B>>8))
+		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", col.R>>8, col.G>>8, col.B>>8)
 	case color.Gray:
 		v := col.Y
 		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", v, v, v)
 	default:
 		r, g, b, _ := c.RGBA()
-		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", uint8(r>>8), uint8(g>>8), uint8(b>>8))
+		return fmt.Sprintf("\x1b[38;2;%d;%d;%dm", r>>8, g>>8, b>>8)
 	}
 }
