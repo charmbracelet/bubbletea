@@ -49,6 +49,10 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
+	// repaint re-enters modes from the last view, drops cell-diff state, and
+	// forces the next flush to emit a full frame even if the view is unchanged.
+	repaint()
+
 	// writeString writes a string to the renderer's output.
 	writeString(string) (int, error)
 
