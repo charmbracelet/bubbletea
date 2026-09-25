@@ -66,6 +66,8 @@ func checkServer() tea.Msg {
         // in a message and return it.
         return errMsg{err}
     }
+    defer res.Body.Close()
+
     // We received a response from the server. Return the HTTP status code
     // as a message.
     return statusMsg(res.StatusCode)
@@ -203,6 +205,8 @@ func checkSomeUrl(url string) tea.Cmd {
         if err != nil {
             return errMsg{err}
         }
+        defer res.Body.Close()
+
         return statusMsg(res.StatusCode)
     }
 }
