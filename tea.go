@@ -867,7 +867,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprint(msg.Msg))
 
 			case printLineMessage:
-				p.renderer.insertAbove(msg.messageBody) //nolint:errcheck,gosec
+				p.renderer.insertAbove(msg.messageBody, msg.persistOnAltScreen) //nolint:errcheck,gosec
 
 			case clearScreenMsg:
 				p.renderer.clearScreen()
@@ -1393,7 +1393,8 @@ func (p *Program) RestoreTerminal() error {
 // Println prints above the Program. This output is unmanaged by the program
 // and will persist across renders by the Program.
 //
-// If the altscreen is active no output will be printed.
+// If the altscreen is active no output will be printed. Use [Program.PrintlnAbove]
+// to print to the normal screen buffer even while altscreen is active.
 func (p *Program) Println(args ...any) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprint(args...),
@@ -1407,10 +1408,40 @@ func (p *Program) Println(args ...any) {
 // Unlike fmt.Printf (but similar to log.Printf) the message will be print on
 // its own line.
 //
-// If the altscreen is active no output will be printed.
+// If the altscreen is active no output will be printed. Use [Program.PrintfAbove]
+// to print to the normal screen buffer even while altscreen is active.
 func (p *Program) Printf(template string, args ...any) {
 	p.msgs <- printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
+	}
+}
+
+// PrintlnAbove prints above the Program, persisting even when the altscreen is
+// active. The output is written to the normal screen buffer, which means it
+// will remain visible in the terminal's scrollback history after the program
+// exits.
+//
+// When the altscreen is not active, this behaves identically to [Program.Println].
+func (p *Program) PrintlnAbove(args ...any) {
+	p.msgs <- printLineMessage{
+		messageBody:        fmt.Sprint(args...),
+		persistOnAltScreen: true,
+	}
+}
+
+// PrintfAbove prints above the Program, persisting even when the altscreen is
+// active. It takes a format template followed by values similar to fmt.Printf.
+// The output is written to the normal screen buffer, which means it will
+// remain visible in the terminal's scrollback history after the program exits.
+//
+// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
+// its own line.
+//
+// When the altscreen is not active, this behaves identically to [Program.Printf].
+func (p *Program) PrintfAbove(template string, args ...any) {
+	p.msgs <- printLineMessage{
+		messageBody:        fmt.Sprintf(template, args...),
+		persistOnAltScreen: true,
 	}
 }
 
