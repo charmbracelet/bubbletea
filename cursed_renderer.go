@@ -776,7 +776,7 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	lines := strings.Split(str, "\n")
 	offset := len(lines)
 	for _, line := range lines {
-		lineWidth := ansi.StringWidth(line)
+		lineWidth := s.cellbuf.Method.StringWidth(line)
 		if w > 0 && lineWidth > w {
 			offset += (lineWidth / w)
 		}
