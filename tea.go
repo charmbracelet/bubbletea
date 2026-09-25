@@ -1314,14 +1314,14 @@ func (p *Program) recoverFromPanic(r interface{}) {
 	}
 }
 
-// recoverFromGoPanic recovers from a goroutine panic, prints a stack trace and
-// signals for the program to be killed and terminal restored to a usable state.
+// recoverFromGoPanic recovers from a goroutine panic, prints a stack trace,
+// restores the terminal to a usable state, and signals the program to be killed.
 func (p *Program) recoverFromGoPanic(r interface{}) {
 	select {
 	case p.errs <- ErrProgramPanic:
 	default:
 	}
-	p.cancel()
+	p.shutdown(true)
 	// We use "\r\n" to ensure the output is formatted even when restoring the
 	// terminal does not work or when raw mode is still active.
 	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
