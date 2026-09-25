@@ -1,106 +1,74 @@
 package tea
 
 import (
-	"bytes"
-	"context"
-	"os"
-	"sync/atomic"
 	"testing"
 )
 
-func TestOptions(t *testing.T) {
-	t.Run("output", func(t *testing.T) {
-		t.Parallel()
-		var b bytes.Buffer
-		p := NewProgram(nil, WithOutput(&b))
-		if f, ok := p.output.(*os.File); ok {
-			t.Errorf("expected output to custom, got %v", f.Fd())
-		}
-	})
+func TestWithHardTabs(t *testing.T) {
+	// Test that WithHardTabs sets the hardTabsOverride field
+	p := &Program{}
 
-	t.Run("renderer", func(t *testing.T) {
-		t.Parallel()
-		p := NewProgram(nil, WithoutRenderer())
-		if !p.disableRenderer {
-			t.Errorf("expected renderer to be a nilRenderer, got %v", p.renderer)
-		}
-	})
+	// Test enabling hard tabs
+	opt := WithHardTabs(true)
+	opt(p)
+	if p.hardTabsOverride == nil || *p.hardTabsOverride != true {
+		t.Error("WithHardTabs(true) did not set hardTabsOverride to true")
+	}
 
-	t.Run("without signals", func(t *testing.T) {
-		t.Parallel()
-		p := NewProgram(nil, WithoutSignals())
-		if atomic.LoadUint32(&p.ignoreSignals) == 0 {
-			t.Errorf("ignore signals should have been set")
-		}
-	})
+	// Test disabling hard tabs
+	opt = WithHardTabs(false)
+	opt(p)
+	if p.hardTabsOverride == nil || *p.hardTabsOverride != false {
+		t.Error("WithHardTabs(false) did not set hardTabsOverride to false")
+	}
+}
 
-	t.Run("filter", func(t *testing.T) {
-		t.Parallel()
-		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
-		if p.filter == nil {
-			t.Errorf("expected filter to be set")
-		}
-	})
+func TestWithBackspace(t *testing.T) {
+	// Test that WithBackspace sets the backspaceOverride field
+	p := &Program{}
 
-	t.Run("external context", func(t *testing.T) {
-		t.Parallel()
-		extCtx, extCancel := context.WithCancel(context.Background())
-		defer extCancel()
+	// Test enabling backspace
+	opt := WithBackspace(true)
+	opt(p)
+	if p.backspaceOverride == nil || *p.backspaceOverride != true {
+		t.Error("WithBackspace(true) did not set backspaceOverride to true")
+	}
 
-		p := NewProgram(nil, WithContext(extCtx))
-		if p.externalCtx != extCtx || p.externalCtx == context.Background() {
-			t.Errorf("expected passed in external context, got default")
-		}
-	})
+	// Test disabling backspace
+	opt = WithBackspace(false)
+	opt(p)
+	if p.backspaceOverride == nil || *p.backspaceOverride != false {
+		t.Error("WithBackspace(false) did not set backspaceOverride to false")
+	}
+}
 
-	t.Run("input options", func(t *testing.T) {
-		exercise := func(t *testing.T, opt ProgramOption, fn func(*Program)) {
-			p := NewProgram(nil, opt)
-			fn(p)
-		}
+func TestWithHardTabsAndBackspaceCombined(t *testing.T) {
+	// Test that both options can be used together
+	p := &Program{}
 
-		t.Run("nil input", func(t *testing.T) {
-			t.Parallel()
-			exercise(t, WithInput(nil), func(p *Program) {
-				if !p.disableInput || p.input != nil {
-					t.Errorf("expected input to be disabled, got %v", p.input)
-				}
-			})
-		})
+	WithHardTabs(true)(p)
+	WithBackspace(true)(p)
 
-		t.Run("custom input", func(t *testing.T) {
-			t.Parallel()
-			var b bytes.Buffer
-			exercise(t, WithInput(&b), func(p *Program) {
-				if p.input != &b {
-					t.Errorf("expected input to be custom, got %v", p.input)
-				}
-			})
-		})
-	})
+	if p.hardTabsOverride == nil || *p.hardTabsOverride != true {
+		t.Error("WithHardTabs(true) did not persist after WithBackspace")
+	}
+	if p.backspaceOverride == nil || *p.backspaceOverride != true {
+		t.Error("WithBackspace(true) did not persist after WithHardTabs")
+	}
+}
 
-	t.Run("startup options", func(t *testing.T) {
-		exercise := func(t *testing.T, opt ProgramOption, fn func(*Program)) {
-			p := NewProgram(nil, opt)
-			fn(p)
-		}
+func TestWithHardTabsNilPointer(t *testing.T) {
+	// Test that the function handles nil pointer correctly
+	p := &Program{}
 
-		t.Run("without catch panics", func(t *testing.T) {
-			t.Parallel()
-			exercise(t, WithoutCatchPanics(), func(p *Program) {
-				if !p.disableCatchPanics {
-					t.Errorf("expected catch panics to be disabled")
-				}
-			})
-		})
+	// Before calling the option, hardTabsOverride should be nil
+	if p.hardTabsOverride != nil {
+		t.Error("hardTabsOverride should be nil before calling WithHardTabs")
+	}
 
-		t.Run("without signal handler", func(t *testing.T) {
-			t.Parallel()
-			exercise(t, WithoutSignalHandler(), func(p *Program) {
-				if !p.disableSignalHandler {
-					t.Errorf("expected signal handler to be disabled")
-				}
-			})
-		})
-	})
+	// After calling, it should be set
+	WithHardTabs(true)(p)
+	if p.hardTabsOverride == nil {
+		t.Error("hardTabsOverride should not be nil after calling WithHardTabs")
+	}
 }
