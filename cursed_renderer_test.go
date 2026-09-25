@@ -95,6 +95,53 @@ func assertInOrder(t *testing.T, got string, wants ...string) {
 	}
 }
 
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1780
+func TestCursedRenderer_resizeVsFlushRace(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 5)
+	r.start()
+
+	r.render(NewView("old"))
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+
+	// resize() runs first in the event loop and arms a redraw for the new
+	// size, but render() hasn't stored a view laid out for that size yet.
+	// A flush landing in this exact window, as the renderer's own ticker
+	// can do, must not draw the old view into the newly resized buffer.
+	r.resize(20, 5)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := out.String(); got != "" {
+		t.Fatalf("flush() drew before render() caught up with the resize: %q", got)
+	}
+	if got := r.cellbuf.Bounds().Dx(); got != 10 {
+		t.Fatalf("cell buffer should still be the old width until render() catches up, got %d", got)
+	}
+
+	// render() catches up with a view for the new size; only now should the
+	// resize actually take effect and the new content reach the output.
+	r.render(NewView("new"))
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "new") {
+		t.Fatalf("expected the new view to be drawn once render() caught up, got %q", got)
+	}
+	if strings.Contains(got, "old") {
+		t.Fatalf("the stale view should never have reached the output, got %q", got)
+	}
+	if got := r.cellbuf.Bounds().Dx(); got != 20 {
+		t.Fatalf("cell buffer should be resized once the deferred flush runs, got %d", got)
+	}
+}
+
 func TestCursedRenderer_restoresKittyKeyboardStack(t *testing.T) {
 	t.Parallel()
 
