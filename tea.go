@@ -758,11 +758,20 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			return model, err
 
 		case msg := <-p.msgs:
+			// A Sequence that produced a message ending the program waits to
+			// hear whether it did: a filter may drop or replace the message.
+			var seqAck chan<- bool
+			if m, ok := msg.(sequenceTerminalMsg); ok {
+				msg, seqAck = m.msg, m.done
+			}
 			msg = p.translateInputEvent(msg)
 
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
+			}
+			if seqAck != nil {
+				seqAck <- isTerminalMsg(msg)
 			}
 			if msg == nil {
 				continue
@@ -897,6 +906,23 @@ func (p *Program) render(model Model) {
 	}
 }
 
+// sequenceTerminalMsg carries a QuitMsg or InterruptMsg produced by a Sequence
+// to the event loop, which answers on done whether the message, once the
+// filter has seen it, ended the program. Only then does the sequence stop.
+type sequenceTerminalMsg struct {
+	msg  Msg
+	done chan<- bool
+}
+
+// isTerminalMsg reports whether msg ends the event loop.
+func isTerminalMsg(msg Msg) bool {
+	switch msg.(type) {
+	case QuitMsg, InterruptMsg:
+		return true
+	}
+	return false
+}
+
 func (p *Program) execSequenceMsg(msg sequenceMsg) (stop bool) {
 	if !p.disableCatchPanics {
 		defer func() {
@@ -927,8 +953,19 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) (stop bool) {
 				return true
 			}
 		case QuitMsg, InterruptMsg:
-			p.Send(msg)
-			return true
+			// Whether this message ends the program is decided in the event
+			// loop, after WithFilter has seen it. A filter that drops or
+			// replaces it keeps the sequence going.
+			done := make(chan bool, 1)
+			p.Send(sequenceTerminalMsg{msg: msg, done: done})
+			select {
+			case stopped := <-done:
+				if stopped {
+					return true
+				}
+			case <-p.ctx.Done():
+				return true
+			}
 		default:
 			p.Send(msg)
 		}

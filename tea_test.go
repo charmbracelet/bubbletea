@@ -568,6 +568,79 @@ func TestTeaNestedSequenceStopsAfterQuit(t *testing.T) {
 	}
 }
 
+func TestTeaSequenceContinuesWhenFilterRejectsQuit(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	// The first Quit is dropped by the filter, so the sequence must go on to
+	// its next command, whose Quit the filter lets through.
+	var rejected atomic.Bool
+	var ranAfter atomic.Bool
+	later := func() Msg {
+		ranAfter.Store(true)
+		return QuitMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+		WithFilter(func(_ Model, msg Msg) Msg {
+			if _, ok := msg.(QuitMsg); ok && rejected.CompareAndSwap(false, true) {
+				return nil
+			}
+			return msg
+		}),
+	)
+	go p.Send(sequenceMsg{Quit, later})
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+	if !ranAfter.Load() {
+		t.Fatal("Sequence stopped after a Quit the filter rejected")
+	}
+}
+
+func TestTeaSequenceContinuesWhenFilterReplacesQuit(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	// The first Quit is replaced by an ordinary message, which the model
+	// counts; the sequence must go on, and the program ends on its next Quit.
+	var replaced atomic.Bool
+	var ranAfter atomic.Bool
+	later := func() Msg {
+		ranAfter.Store(true)
+		return QuitMsg{}
+	}
+
+	m := &testModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+		WithFilter(func(_ Model, msg Msg) Msg {
+			if _, ok := msg.(QuitMsg); ok && replaced.CompareAndSwap(false, true) {
+				return incrementMsg{}
+			}
+			return msg
+		}),
+	)
+	go p.Send(sequenceMsg{Quit, later})
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+	if !ranAfter.Load() {
+		t.Fatal("Sequence stopped after a Quit the filter replaced")
+	}
+	if m.counter.Load() != 1 {
+		t.Fatalf("expected the replacement message to reach the model once, got %v", m.counter.Load())
+	}
+}
+
 func TestTeaSequenceStopsOnContextDone(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(t.Context())
