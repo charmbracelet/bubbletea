@@ -628,6 +628,13 @@ func (s *cursedRenderer) render(v View) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Snapshot pointer-backed cursor state at the render boundary. The
+	// renderer retains the previous View for equality checks, so retaining an
+	// application-owned *Cursor would let later mutation rewrite both frames.
+	if v.Cursor != nil {
+		cursor := *v.Cursor
+		v.Cursor = &cursor
+	}
 	s.view = v
 }
 
