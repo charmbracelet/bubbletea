@@ -511,60 +511,129 @@ func TestTeaNestedSequenceMsg(t *testing.T) {
 	}
 }
 
-func TestTeaSequenceStopsAfterQuit(t *testing.T) {
-	t.Parallel()
-	var buf bytes.Buffer
-	var in bytes.Buffer
+// runSequence runs cmds as a Sequence against a running Program with the given
+// filter, the way the event loop runs one, and reports whether the Sequence
+// stopped. It returns only once the Sequence has, so the caller sees exactly
+// which commands ran, then ends the program and waits for Run to return.
+func runSequence(t *testing.T, m Model, filter func(Model, Msg) Msg, cmds ...Cmd) bool {
+	t.Helper()
+	p := NewProgram(m, WithInput(&bytes.Buffer{}), WithOutput(&bytes.Buffer{}), WithFilter(filter))
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_, _ = p.Run()
+	}()
 
-	var ranAfterQuit atomic.Bool
-	afterQuit := func() Msg {
-		ranAfterQuit.Store(true)
-		return incrementMsg{}
+	stopped := p.execSequenceMsg(sequenceMsg(cmds))
+
+	p.Quit()
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("program did not exit")
 	}
-
-	m := &testModel{}
-	p := NewProgram(m,
-		WithInput(&in),
-		WithOutput(&buf),
-	)
-	go p.Send(sequenceMsg{Quit, afterQuit})
-
-	if _, err := p.Run(); err != nil {
-		t.Fatal(err)
-	}
-
-	// Give a detached sequence goroutine a moment to finish if it ignored Quit.
-	time.Sleep(50 * time.Millisecond)
-	if ranAfterQuit.Load() {
-		t.Fatal("Sequence ran a command after Quit")
-	}
+	return stopped
 }
 
-func TestTeaNestedSequenceStopsAfterQuit(t *testing.T) {
+func TestTeaSequenceFollowsTheEventLoop(t *testing.T) {
 	t.Parallel()
-	var buf bytes.Buffer
-	var in bytes.Buffer
 
-	var ranAfterQuit atomic.Bool
-	afterQuit := func() Msg {
-		ranAfterQuit.Store(true)
-		return incrementMsg{}
+	noop := func() Msg { return nil }
+	increment := func() Msg { return incrementMsg{} }
+	// Sequence and Batch return a lone command as is, so nest them literally.
+	seq := func(cmds ...Cmd) Cmd { return func() Msg { return sequenceMsg(cmds) } }
+	batch := func(cmds ...Cmd) Cmd { return func() Msg { return BatchMsg(cmds) } }
+
+	dropFirstQuit := func() func(Model, Msg) Msg {
+		var dropped atomic.Bool
+		return func(_ Model, msg Msg) Msg {
+			if _, ok := msg.(QuitMsg); ok && dropped.CompareAndSwap(false, true) {
+				return nil
+			}
+			return msg
+		}
+	}
+	replaceFirstQuit := func() func(Model, Msg) Msg {
+		var replaced atomic.Bool
+		return func(_ Model, msg Msg) Msg {
+			if _, ok := msg.(QuitMsg); ok && replaced.CompareAndSwap(false, true) {
+				return incrementMsg{}
+			}
+			return msg
+		}
+	}
+	incrementToQuit := func() func(Model, Msg) Msg {
+		return func(_ Model, msg Msg) Msg {
+			if _, ok := msg.(incrementMsg); ok {
+				return QuitMsg{}
+			}
+			return msg
+		}
 	}
 
-	m := &testModel{}
-	p := NewProgram(m,
-		WithInput(&in),
-		WithOutput(&buf),
-	)
-	go p.Send(sequenceMsg{Sequence(Quit), afterQuit})
-
-	if _, err := p.Run(); err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name       string
+		cmd        Cmd
+		filter     func() func(Model, Msg) Msg
+		stop       bool
+		increments int
+	}{
+		{"quit", Quit, nil, true, 0},
+		{"interrupt", Interrupt, nil, true, 0},
+		{"quit in nested sequence", seq(noop, Quit), nil, true, 0},
+		{"quit in batch", batch(Quit), nil, true, 0},
+		{"quit in batch in nested sequence", seq(batch(Quit)), nil, true, 0},
+		{"quit in nested sequence in batch", batch(seq(noop, Quit)), nil, true, 0},
+		{"quit dropped by the filter", Quit, dropFirstQuit, false, 0},
+		{"quit in batch dropped by the filter", batch(Quit), dropFirstQuit, false, 0},
+		{"quit in nested sequence dropped by the filter", seq(noop, Quit), dropFirstQuit, false, 0},
+		{"quit replaced by the filter", Quit, replaceFirstQuit, false, 1},
+		{"quit in batch replaced by the filter", batch(Quit), replaceFirstQuit, false, 1},
+		{"message the filter turns into quit", increment, incrementToQuit, true, 0},
+		{"message in batch the filter turns into quit", batch(increment), incrementToQuit, true, 0},
 	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var ranLater atomic.Bool
+			laterRan := make(chan struct{})
+			later := func() Msg {
+				ranLater.Store(true)
+				close(laterRan)
+				return nil
+			}
 
-	time.Sleep(50 * time.Millisecond)
-	if ranAfterQuit.Load() {
-		t.Fatal("Sequence ran a command after a nested Quit")
+			// The filter holds a message that ends the program until the next
+			// command has run, or for 100ms: a Sequence that does not wait for
+			// the event loop's decision runs that command in the meantime.
+			var caseFilter func(Model, Msg) Msg
+			if tc.filter != nil {
+				caseFilter = tc.filter()
+			}
+			filter := func(m Model, msg Msg) Msg {
+				if caseFilter != nil {
+					msg = caseFilter(m, msg)
+				}
+				if isTerminalMsg(msg) {
+					select {
+					case <-laterRan:
+					case <-time.After(100 * time.Millisecond):
+					}
+				}
+				return msg
+			}
+
+			m := &testModel{}
+			if stopped := runSequence(t, m, filter, tc.cmd, later); stopped != tc.stop {
+				t.Errorf("Sequence stopped: got %v, want %v", stopped, tc.stop)
+			}
+			if ranLater.Load() == tc.stop {
+				t.Errorf("next command ran: got %v, want %v", ranLater.Load(), !tc.stop)
+			}
+			if got, _ := m.counter.Load().(int); got != tc.increments {
+				t.Errorf("messages the model counted: got %d, want %d", got, tc.increments)
+			}
+		})
 	}
 }
 
@@ -646,12 +715,9 @@ func TestTeaSequenceStopsOnContextDone(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	started := make(chan struct{})
 	var ranAfter atomic.Bool
-
 	first := func() Msg {
-		close(started)
-		<-ctx.Done()
+		cancel()
 		return incrementMsg{}
 	}
 	second := func() Msg {
@@ -659,37 +725,14 @@ func TestTeaSequenceStopsOnContextDone(t *testing.T) {
 		return incrementMsg{}
 	}
 
-	m := &testModel{}
-	p := NewProgram(m,
+	p := NewProgram(&testModel{},
 		WithContext(ctx),
 		WithInput(&bytes.Buffer{}),
 		WithOutput(&bytes.Buffer{}),
 	)
-	go p.Send(sequenceMsg{first, second})
-
-	errCh := make(chan error, 1)
-	go func() {
-		_, err := p.Run()
-		errCh <- err
-	}()
-
-	select {
-	case <-started:
-	case <-time.After(3 * time.Second):
-		t.Fatal("first sequence command did not start")
+	if !p.execSequenceMsg(sequenceMsg{first, second}) {
+		t.Error("Sequence did not report that it stopped")
 	}
-	cancel()
-
-	select {
-	case err := <-errCh:
-		if !errors.Is(err, ErrProgramKilled) {
-			t.Fatalf("expected ErrProgramKilled, got %v", err)
-		}
-	case <-time.After(3 * time.Second):
-		t.Fatal("program did not exit")
-	}
-
-	time.Sleep(50 * time.Millisecond)
 	if ranAfter.Load() {
 		t.Fatal("Sequence ran a command after context cancellation")
 	}

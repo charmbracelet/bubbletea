@@ -758,11 +758,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			return model, err
 
 		case msg := <-p.msgs:
-			// A Sequence that produced a message ending the program waits to
-			// hear whether it did: a filter may drop or replace the message.
-			var seqAck chan<- bool
-			if m, ok := msg.(sequenceTerminalMsg); ok {
-				msg, seqAck = m.msg, m.done
+			// A command run by a Sequence or a Batch waits to hear whether its
+			// message ended the program, which the filter decides: it may drop
+			// or replace a QuitMsg, or turn another message into one.
+			var ack chan<- bool
+			if m, ok := msg.(awaitedMsg); ok {
+				msg, ack = m.msg, m.done
 			}
 			msg = p.translateInputEvent(msg)
 
@@ -770,8 +771,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			if p.filter != nil {
 				msg = p.filter(model, msg)
 			}
-			if seqAck != nil {
-				seqAck <- isTerminalMsg(msg)
+			if ack != nil {
+				ack <- isTerminalMsg(msg)
 			}
 			if msg == nil {
 				continue
@@ -906,10 +907,10 @@ func (p *Program) render(model Model) {
 	}
 }
 
-// sequenceTerminalMsg carries a QuitMsg or InterruptMsg produced by a Sequence
-// to the event loop, which answers on done whether the message, once the
-// filter has seen it, ended the program. Only then does the sequence stop.
-type sequenceTerminalMsg struct {
+// awaitedMsg carries the message of a command run by a Sequence or a Batch to
+// the event loop, which answers on done whether the message, once the filter
+// has seen it, ended the program.
+type awaitedMsg struct {
 	msg  Msg
 	done chan<- bool
 }
@@ -923,6 +924,25 @@ func isTerminalMsg(msg Msg) bool {
 	return false
 }
 
+// sendAndAwait sends msg to the event loop and reports whether it ended the
+// program, or whether the program is shutting down.
+func (p *Program) sendAndAwait(msg Msg) bool {
+	done := make(chan bool, 1)
+	select {
+	case <-p.ctx.Done():
+		return true
+	case p.msgs <- awaitedMsg{msg: msg, done: done}:
+	}
+	select {
+	case stopped := <-done:
+		return stopped
+	case <-p.ctx.Done():
+		return true
+	}
+}
+
+// execSequenceMsg runs the commands of a Sequence one at a time, in order, and
+// reports whether it stopped because the program ended.
 func (p *Program) execSequenceMsg(msg sequenceMsg) (stop bool) {
 	if !p.disableCatchPanics {
 		defer func() {
@@ -932,9 +952,11 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) (stop bool) {
 		}()
 	}
 
-	// Execute commands one at a time, in order. Stop if the program is
-	// shutting down or a command returns a message that ends the event loop,
-	// so later commands (and their side effects) do not run after Quit.
+	// Stop once the program is shutting down or a command's message ended the
+	// event loop, so later commands (and their side effects) do not run after
+	// Quit. Whether a message ends it is decided in the event loop, after
+	// WithFilter has seen it, and that decision comes back through a nested
+	// Batch or Sequence too.
 	for _, cmd := range msg {
 		if cmd == nil {
 			continue
@@ -944,36 +966,29 @@ func (p *Program) execSequenceMsg(msg sequenceMsg) (stop bool) {
 			return true
 		default:
 		}
-		msg := cmd()
-		switch msg := msg.(type) {
-		case BatchMsg:
-			p.execBatchMsg(msg)
-		case sequenceMsg:
-			if p.execSequenceMsg(msg) {
-				return true
-			}
-		case QuitMsg, InterruptMsg:
-			// Whether this message ends the program is decided in the event
-			// loop, after WithFilter has seen it. A filter that drops or
-			// replaces it keeps the sequence going.
-			done := make(chan bool, 1)
-			p.Send(sequenceTerminalMsg{msg: msg, done: done})
-			select {
-			case stopped := <-done:
-				if stopped {
-					return true
-				}
-			case <-p.ctx.Done():
-				return true
-			}
-		default:
-			p.Send(msg)
+		if p.execCmdMsg(cmd()) {
+			return true
 		}
 	}
 	return false
 }
 
-func (p *Program) execBatchMsg(msg BatchMsg) {
+// execCmdMsg delivers the message of a command run by a Sequence or a Batch,
+// running a nested Batch or Sequence, and reports whether the program ended.
+func (p *Program) execCmdMsg(msg Msg) bool {
+	switch msg := msg.(type) {
+	case BatchMsg:
+		return p.execBatchMsg(msg)
+	case sequenceMsg:
+		return p.execSequenceMsg(msg)
+	default:
+		return p.sendAndAwait(msg)
+	}
+}
+
+// execBatchMsg runs the commands of a Batch concurrently and reports whether
+// one of them ended the program.
+func (p *Program) execBatchMsg(msg BatchMsg) bool {
 	if !p.disableCatchPanics {
 		defer func() {
 			if r := recover(); r != nil {
@@ -984,6 +999,7 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 
 	// Execute commands one at a time.
 	var wg sync.WaitGroup
+	var stopped atomic.Bool
 	for _, cmd := range msg {
 		if cmd == nil {
 			continue
@@ -1000,19 +1016,14 @@ func (p *Program) execBatchMsg(msg BatchMsg) {
 				}()
 			}
 
-			msg := cmd()
-			switch msg := msg.(type) {
-			case BatchMsg:
-				p.execBatchMsg(msg)
-			case sequenceMsg:
-				p.execSequenceMsg(msg)
-			default:
-				p.Send(msg)
+			if p.execCmdMsg(cmd()) {
+				stopped.Store(true)
 			}
 		}()
 	}
 
 	wg.Wait() // wait for all commands from batch msg to finish
+	return stopped.Load()
 }
 
 // shouldQuerySynchronizedOutput determines whether the terminal should be
