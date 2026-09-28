@@ -163,8 +163,82 @@ func TestCursedRenderer_trailingBlankLinesTallFrame(t *testing.T) {
 	if x, y := r.scr.Position(); x != 0 || y != 23 {
 		t.Fatalf("cursor parked at (%d, %d), want (0, 23)", x, y)
 	}
+
+	// An unchanged flush must be a no-op. The frame area is capped at the
+	// screen height, so it stays equal to the screen buffer's bounds across
+	// flushes. Otherwise every flush redraws the whole frame, which scrolls
+	// the screen each time in terminals where the frame exceeds the visible
+	// area, flooding the scrollback (notably in tmux).
+	out.Reset()
+	r.render(NewView(content))
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := out.String(); got != "" {
+		t.Fatalf("expected no output for unchanged tall frame, got %q", got)
+	}
+
+	// A changed flush of a tall frame must redraw only the changed lines,
+	// not the whole frame.
+	out.Reset()
+	changed := strings.Repeat("line\n", 29) + "CHANGED\n"
+	r.render(NewView(changed))
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "CHANGED") {
+		t.Fatalf("expected changed line to be rendered, got %q", got)
+	}
+	if strings.Contains(got, ansi.EraseScreenBelow) || strings.Contains(got, "line\r\nline") {
+		t.Fatalf("expected partial redraw for tall frame, got %q", got)
+	}
 	if err := r.close(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// A view without a trailing newline has content on its last row. On exit
+// the cursor must move below that row so the closing erase and the shell
+// prompt that follows don't overwrite the frame's last line.
+func TestCursedRenderer_closeBelowFrameWithoutTrailingNewline(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+
+	r.render(NewView("hello"))
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	// The cursor must go one row below the frame's last row before the
+	// closing erase-below, so the erase (and the shell prompt) start below
+	// the frame rather than on its last line.
+	assertInOrder(t, got, "\r\n", ansi.EraseScreenBelow)
+	if x, y := r.scr.Position(); x != 0 || y != 0 {
+		t.Fatalf("cursor parked at (%d, %d), want (0, 0)", x, y)
+	}
+
+	// A view ending in a newline already parks the cursor on the blank row
+	// below the frame, so no extra newline is needed.
+	out.Reset()
+	r.start()
+	r.render(NewView("hello\n"))
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := out.String(); strings.Contains(got, "\r\n"+ansi.EraseScreenBelow) {
+		t.Fatalf("expected no extra newline before closing erase, got %q", got)
 	}
 }
 
