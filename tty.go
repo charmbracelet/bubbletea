@@ -59,6 +59,18 @@ func (p *Program) initInputReader(cancel bool) error {
 		p.waitForReadLoop()
 	}
 
+	// Close the reader we are about to replace, otherwise its resources (e.g.
+	// the epoll file descriptor on Linux) leak on every ReleaseTerminal and
+	// RestoreTerminal cycle. Only close it once its read loop has exited: if
+	// waitForReadLoop timed out, the loop may still be using it.
+	if p.cancelReader != nil && p.readLoopDone != nil {
+		select {
+		case <-p.readLoopDone:
+			_ = p.cancelReader.Close()
+		default:
+		}
+	}
+
 	term := p.environ.Getenv("TERM")
 
 	// Initialize the input reader.
