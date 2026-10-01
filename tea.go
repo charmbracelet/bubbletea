@@ -539,14 +539,15 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
-	// ticker is the ticker that will be used to write to the renderer.
-	ticker *time.Ticker
-
 	// once is used to stop the renderer.
 	once sync.Once
 
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
+
+	// rendererWake wakes the renderer when it has stopped its ticker because
+	// nothing was changing. See [Program.startRenderer].
+	rendererWake chan struct{}
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -606,6 +607,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
 		rendererDone: make(chan struct{}),
+		rendererWake: make(chan struct{}, 1),
 	}
 
 	// Apply all options to the program.
@@ -896,6 +898,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(model.View()) // send view to renderer
+		p.wakeRenderer()
+	}
+}
+
+// wakeRenderer restarts the renderer's ticker if it was stopped because
+// nothing was changing. It never blocks.
+func (p *Program) wakeRenderer() {
+	select {
+	case p.rendererWake <- struct{}{}:
+	default:
 	}
 }
 
@@ -1226,6 +1238,7 @@ func (p *Program) execute(seq string) {
 	p.mu.Lock()
 	_, _ = p.outputBuf.WriteString(seq)
 	p.mu.Unlock()
+	p.wakeRenderer()
 }
 
 // executeQuery writes a terminal query to the program output. Queries expect a
@@ -1419,13 +1432,12 @@ func (p *Program) Printf(template string, args ...any) {
 // startRenderer starts the renderer.
 func (p *Program) startRenderer() {
 	framerate := time.Second / time.Duration(p.fps)
-	if p.ticker == nil {
-		p.ticker = time.NewTicker(framerate)
-	} else {
-		// If the ticker already exists, it has been stopped and we need to
-		// reset it.
-		p.ticker.Reset(framerate)
-	}
+	// Stop ticking after about half a second of frames with nothing to draw.
+	idleFrames := max(p.fps/2, 1)
+
+	// Each run of the renderer gets its own ticker, so a goroutine that is
+	// still exiting can't stop the ticker of the next one.
+	ticker := time.NewTicker(framerate)
 
 	// Since the renderer can be restarted after a stop, we need to reset
 	// the done channel and its corresponding sync.Once.
@@ -1434,15 +1446,43 @@ func (p *Program) startRenderer() {
 	// Start the renderer.
 	p.renderer.start()
 	go func() {
+		defer ticker.Stop()
+
+		var (
+			idle    int       // consecutive frames with nothing to draw
+			parked  bool      // whether the ticker is stopped
+			realign bool      // whether the ticker runs a shortened interval
+			last    time.Time // when the ticker last fired
+		)
 		for {
 			select {
 			case <-p.rendererDone:
-				p.ticker.Stop()
 				return
 
-			case <-p.ticker.C:
+			case <-p.rendererWake:
+				if !parked {
+					continue
+				}
+				// Resume on the same frame boundaries as if the ticker had
+				// never stopped, so frames are drawn exactly when they
+				// would have been.
+				parked, realign = false, true
+				ticker.Reset(framerate - time.Since(last)%framerate)
+
+			case last = <-ticker.C:
+				if realign {
+					realign = false
+					ticker.Reset(framerate)
+				}
 				_ = p.flush()
-				_ = p.renderer.flush(false)
+				if drew, _ := p.renderer.flush(false); drew {
+					idle = 0
+				} else if idle++; idle >= idleFrames {
+					// Nothing is changing. Stop waking up every frame until
+					// there is something to draw, see [Program.wakeRenderer].
+					ticker.Stop()
+					parked = true
+				}
 			}
 		}
 	}()
@@ -1459,7 +1499,7 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_ = p.renderer.flush(true)
+		_, _ = p.renderer.flush(true)
 	}
 
 	_ = p.renderer.close()
