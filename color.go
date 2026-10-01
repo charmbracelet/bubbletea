@@ -52,20 +52,21 @@ func (e ForegroundColorMsg) IsDark() bool {
 // emitted when the program requests the terminal background color with the
 // [RequestBackgroundColor] Cmd.
 //
-// This is commonly used in [Update.Init] to get the terminal background color
+// This is commonly used in [Model.Init] to get the terminal background color
 // for style definitions. For that you'll want to call
 // [BackgroundColorMsg.IsDark] to determine if the color is dark or light. For
 // example:
 //
-//	func (m Model) Init() Cmd {
-//	  return RequestBackgroundColor()
+//	func (m model) Init() Cmd {
+//	  return RequestBackgroundColor
 //	}
 //
-//	func (m Model) Update(msg Msg) (Model, Cmd) {
+//	func (m model) Update(msg Msg) (Model, Cmd) {
 //	  switch msg := msg.(type) {
 //	  case BackgroundColorMsg:
 //	      m.styles = newStyles(msg.IsDark())
 //	  }
+//	  return m, nil
 //	}
 type BackgroundColorMsg struct{ color.Color }
 
