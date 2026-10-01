@@ -291,6 +291,12 @@ func (s *cursedRenderer) flush(closing bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	return s.flushLocked(closing)
+}
+
+// flushLocked is also used by insertAbove, which holds the lock for the entire
+// flush/insert/restore transaction.
+func (s *cursedRenderer) flushLocked(closing bool) error {
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
 	if len(view.Content) == 0 {
@@ -761,54 +767,82 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	if len(str) == 0 {
 		return nil
 	}
-
-	var sb strings.Builder
-	w, h := s.cellbuf.Width(), s.cellbuf.Height()
-	_, y := s.scr.Position()
-
-	// We need to scroll the screen up by the number of lines in the queue.
-	sb.WriteByte('\r')
-	down := h - y - 1
-	if down > 0 {
-		sb.WriteString(ansi.CursorDown(down))
+	// Measure the physical frame after flushing any pending View or resize.
+	if err := s.flushLocked(false); err != nil {
+		return err
+	}
+	if s.view.AltScreen {
+		return nil
 	}
 
-	lines := strings.Split(str, "\n")
-	offset := len(lines)
-	for _, line := range lines {
-		lineWidth := ansi.StringWidth(line)
-		if w > 0 && lineWidth > w {
-			offset += (lineWidth / w)
+	lines := strings.Split(s.cellbuf.Method.Hardwrap(str, max(1, s.width), true), "\n")
+	h := s.cellbuf.Height()
+	budget := s.height - h
+	if h == 0 || budget <= 0 {
+		// Without room for reservations, release only the managed frame and
+		// let ordinary terminal scrolling append the text to native history.
+		// Rebase at the next line and repaint the frame below the inserted text.
+		s.scr.MoveTo(0, 0)
+		_, _ = s.scr.WriteString(ansi.EraseScreenBelow)
+		if err := s.scr.Flush(); err != nil {
+			return fmt.Errorf("bubbletea: error releasing inline frame: %w", err)
 		}
+		if _, err := io.Copy(s.w, &s.buf); err != nil {
+			return fmt.Errorf("bubbletea: error writing inline handoff: %w", err)
+		}
+		for _, line := range lines {
+			if err := s.writeInsert(line + "\r\n"); err != nil {
+				return err
+			}
+		}
+		s.scr.SetPosition(0, 0)
+		s.scr.Erase()
+		s.pendingErase = true
+		return s.flushLocked(false)
 	}
 
-	// Scroll the screen up by the offset to make room for the new lines.
-	sb.WriteString(strings.Repeat("\n", offset))
-
-	// XXX: Now go to the top of the screen, insert new lines, and write
-	// the queued strings. It is important to use [Screen.moveCursor]
-	// instead of [Screen.move] because we don't want to perform any checks
-	// on the cursor position.
-	up := offset + h - 1
-	sb.WriteString(ansi.CursorUp(up))
-	sb.WriteString(ansi.InsertLine(offset))
-	for _, line := range lines {
-		sb.WriteString(line)
-		sb.WriteString(ansi.EraseLineRight)
-		sb.WriteString("\r\n")
+	// Reserving more rows than fit above the frame would scroll the frame
+	// itself away. Insert in groups bounded by the available physical rows.
+	for start := 0; start < len(lines); start += budget {
+		end := min(len(lines), start+budget)
+		var sb strings.Builder
+		_, y := s.scr.Position()
+		sb.WriteByte('\r')
+		if down := h - y - 1; down > 0 {
+			sb.WriteString(ansi.CursorDown(down))
+		}
+		offset := end - start
+		sb.WriteString(strings.Repeat("\n", offset))
+		sb.WriteString(ansi.CursorUp(offset + h - 1))
+		sb.WriteString(ansi.InsertLine(offset))
+		for _, line := range lines[start:end] {
+			sb.WriteString(line)
+			// CR cancels delayed wrap at the exact right margin.
+			sb.WriteString("\r\n")
+		}
+		if err := s.writeInsert(sb.String()); err != nil {
+			return err
+		}
+		s.scr.SetPosition(0, 0)
 	}
 
-	s.scr.SetPosition(0, 0)
+	// Insertion changed the terminal cursor even if the View is identical.
+	// Bypass the equality fast path to restore the View and cursor now.
+	s.pendingErase = true
+	return s.flushLocked(false)
+}
 
+func (s *cursedRenderer) writeInsert(str string) error {
 	if s.logger != nil {
-		s.logger.Printf("insert above: %q", sb.String())
+		s.logger.Printf("insert above: %q", str)
 	}
-
-	_, err := io.WriteString(s.w, sb.String())
+	n, err := io.WriteString(s.w, str)
+	if err == nil && n != len(str) {
+		err = io.ErrShortWrite
+	}
 	if err != nil {
 		return fmt.Errorf("bubbletea: error writing insert above to the writer: %w", err)
 	}
-
 	return nil
 }
 
