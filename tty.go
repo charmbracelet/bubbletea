@@ -117,8 +117,7 @@ func (p *Program) fallbackDimensions(width, height int) (int, int) {
 		var cols string
 		if p != nil && p.environ != nil {
 			cols = p.environ.Getenv("COLUMNS")
-		}
-		if cols == "" {
+		} else {
 			cols = os.Getenv("COLUMNS")
 		}
 		if c, err := strconv.Atoi(cols); err == nil && c > 0 {
@@ -131,8 +130,7 @@ func (p *Program) fallbackDimensions(width, height int) (int, int) {
 		var lines string
 		if p != nil && p.environ != nil {
 			lines = p.environ.Getenv("LINES")
-		}
-		if lines == "" {
+		} else {
 			lines = os.Getenv("LINES")
 		}
 		if l, err := strconv.Atoi(lines); err == nil && l > 0 {

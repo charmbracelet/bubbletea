@@ -81,10 +81,24 @@ func TestFallbackDimensions(t *testing.T) {
 	})
 
 	t.Run("fallback to COLUMNS and LINES from program environment", func(t *testing.T) {
+		t.Setenv("COLUMNS", "200")
+		t.Setenv("LINES", "100")
+
 		p := NewProgram(nil, WithEnvironment([]string{"COLUMNS=150", "LINES=60"}))
 		w, h := p.fallbackDimensions(0, 0)
 		if w != 150 || h != 60 {
 			t.Errorf("expected 150x60, got %dx%d", w, h)
+		}
+	})
+
+	t.Run("program environment without COLUMNS and LINES falls back to 80x24 skipping os env", func(t *testing.T) {
+		t.Setenv("COLUMNS", "200")
+		t.Setenv("LINES", "100")
+
+		p := NewProgram(nil, WithEnvironment([]string{"OTHER_VAR=1"}))
+		w, h := p.fallbackDimensions(0, 0)
+		if w != defaultWidth || h != defaultHeight {
+			t.Errorf("expected %dx%d, got %dx%d", defaultWidth, defaultHeight, w, h)
 		}
 	})
 
@@ -108,31 +122,8 @@ func TestFallbackDimensions(t *testing.T) {
 	})
 }
 
-func TestProgramWindowSizeFallback(t *testing.T) {
-	t.Run("falls back to 80x24 when terminal size is not set", func(t *testing.T) {
-		t.Setenv("COLUMNS", "")
-		t.Setenv("LINES", "")
-
-		var buf bytes.Buffer
-		var in bytes.Buffer
-		m := &windowSizeModel{}
-
-		p := NewProgram(m,
-			WithInput(&in),
-			WithOutput(&buf),
-		)
-
-		if _, err := p.Run(); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if m.windowSize.Width != defaultWidth || m.windowSize.Height != defaultHeight {
-			t.Errorf("expected WindowSizeMsg %dx%d, got %dx%d",
-				defaultWidth, defaultHeight, m.windowSize.Width, m.windowSize.Height)
-		}
-	})
-
-	t.Run("falls back to COLUMNS and LINES when terminal size is not set", func(t *testing.T) {
+func TestProgramNonTTYDimensions(t *testing.T) {
+	t.Run("non-tty output does not receive fallback dimensions", func(t *testing.T) {
 		t.Setenv("COLUMNS", "110")
 		t.Setenv("LINES", "35")
 
@@ -149,13 +140,34 @@ func TestProgramWindowSizeFallback(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if m.windowSize.Width != 110 || m.windowSize.Height != 35 {
-			t.Errorf("expected WindowSizeMsg 110x35, got %dx%d",
+		if m.windowSize.Width != 0 || m.windowSize.Height != 0 {
+			t.Errorf("expected WindowSizeMsg 0x0 for non-TTY output, got %dx%d",
 				m.windowSize.Width, m.windowSize.Height)
 		}
 	})
 
-	t.Run("preserves WithWindowSize when specified", func(t *testing.T) {
+	t.Run("non-tty output with program environment does not receive fallback dimensions", func(t *testing.T) {
+		var buf bytes.Buffer
+		var in bytes.Buffer
+		m := &windowSizeModel{}
+
+		p := NewProgram(m,
+			WithInput(&in),
+			WithOutput(&buf),
+			WithEnvironment([]string{"COLUMNS=150", "LINES=60"}),
+		)
+
+		if _, err := p.Run(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if m.windowSize.Width != 0 || m.windowSize.Height != 0 {
+			t.Errorf("expected WindowSizeMsg 0x0 for non-TTY output, got %dx%d",
+				m.windowSize.Width, m.windowSize.Height)
+		}
+	})
+
+	t.Run("non-tty output preserves WithWindowSize when specified", func(t *testing.T) {
 		var buf bytes.Buffer
 		var in bytes.Buffer
 		m := &windowSizeModel{}
