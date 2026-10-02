@@ -100,9 +100,16 @@ func (s *cursedRenderer) setOptimizations(hardTabs, backspace, mapnl bool) {
 func (s *cursedRenderer) start() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.startLocked()
+}
 
+// startLocked restores terminal modes from lastView and marks the next flush
+// as a forced repaint. Caller must hold s.mu. A nil lastView is a no-op on
+// modes (first start); the caller may still Erase.
+func (s *cursedRenderer) startLocked() {
 	// Mark that we're starting. This is used to restore some state when
-	// starting the renderer again after it was stopped.
+	// starting the renderer again after it was stopped, and to bypass the
+	// unchanged-view skip in flush.
 	s.starting = true
 
 	if s.lastView == nil {
@@ -166,6 +173,24 @@ func (s *cursedRenderer) start() {
 		// one for the screen we're about to restore.
 		_, _ = s.scr.WriteString(ansi.PushKittyKeyboard(kittyFlags))
 	}
+}
+
+// repaint implements renderer. It recovers from external terminal damage
+// (for example a child writing ESC[?1049l) in one locked transaction: drop
+// cell-diff state, re-enter modes from lastView, and force the next flush
+// to emit a full frame even if the logical view is unchanged.
+//
+// Erase after reset is required because a fresh TerminalRenderer believes
+// the screen is blank, so cells that are blank in our frame would otherwise
+// be treated as unchanged and stale content under them would survive.
+func (s *cursedRenderer) repaint() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	reset(s)
+	s.startLocked()
+	s.scr.MoveTo(0, 0)
+	s.scr.Erase()
+	s.pendingErase = true
 }
 
 // close implements renderer.
