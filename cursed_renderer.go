@@ -287,7 +287,7 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush(closing bool) error {
+func (s *cursedRenderer) flush(closing bool) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -319,7 +319,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
-		return nil
+		return false, nil
 	}
 
 	// We're no longer starting.
@@ -527,7 +527,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if err := s.scr.Flush(); err != nil {
-		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
+		return true, fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
 
 	// Check if we have any render updates to flush.
@@ -614,13 +614,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 			s.logger.Printf("output: %q", buf.String())
 		}
 		if _, err := io.Copy(s.w, &buf); err != nil {
-			return fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
+			return true, fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
 		}
 	}
 
 	s.lastView = &view
 
-	return nil
+	return true, nil
 }
 
 // render implements renderer.
