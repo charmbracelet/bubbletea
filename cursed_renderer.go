@@ -105,66 +105,86 @@ func (s *cursedRenderer) start() {
 	// starting the renderer again after it was stopped.
 	s.starting = true
 
-	if s.lastView == nil {
+	s.restoreModes(true)
+}
+
+// restoreModes replays the terminal modes from the last rendered view. It is
+// used when the renderer starts again after being stopped and when recovering
+// from external writes to the terminal, e.g. a stray alt-screen exit.
+//
+// The caller must hold s.mu. When pushKitty is true a fresh Kitty keyboard
+// stack entry is pushed, which is what [cursedRenderer.start] wants since
+// [cursedRenderer.close] popped the previous one. Otherwise the topmost entry
+// is updated in place so repeated calls, such as one per ClearScreen, don't
+// grow the stack.
+func (s *cursedRenderer) restoreModes(pushKitty bool) {
+	lv := s.lastView
+	if lv == nil {
 		return
 	}
 
-	if s.lastView.AltScreen {
+	if lv.AltScreen {
 		enableAltScreen(s, true, true)
 	}
-	enableTextCursor(s, s.lastView.Cursor != nil)
-	if s.lastView.Cursor != nil {
-		if s.lastView.Cursor.Color != nil {
-			col, ok := colorful.MakeColor(s.lastView.Cursor.Color)
+	enableTextCursor(s, lv.Cursor != nil)
+	if lv.Cursor != nil {
+		if lv.Cursor.Color != nil {
+			col, ok := colorful.MakeColor(lv.Cursor.Color)
 			if ok {
 				_, _ = s.scr.WriteString(ansi.SetCursorColor(col.Hex()))
 			}
 		}
-		curStyle := encodeCursorStyle(s.lastView.Cursor.Shape, s.lastView.Cursor.Blink)
+		curStyle := encodeCursorStyle(lv.Cursor.Shape, lv.Cursor.Blink)
 		if curStyle != 0 && curStyle != 1 {
 			_, _ = s.scr.WriteString(ansi.SetCursorStyle(curStyle))
 		}
 	}
-	if s.lastView.ForegroundColor != nil {
-		col, ok := colorful.MakeColor(s.lastView.ForegroundColor)
+	if lv.ForegroundColor != nil {
+		col, ok := colorful.MakeColor(lv.ForegroundColor)
 		if ok {
 			_, _ = s.scr.WriteString(ansi.SetForegroundColor(col.Hex()))
 		}
 	}
-	if s.lastView.BackgroundColor != nil {
-		col, ok := colorful.MakeColor(s.lastView.BackgroundColor)
+	if lv.BackgroundColor != nil {
+		col, ok := colorful.MakeColor(lv.BackgroundColor)
 		if ok {
 			_, _ = s.scr.WriteString(ansi.SetBackgroundColor(col.Hex()))
 		}
 	}
-	if !s.lastView.DisableBracketedPasteMode {
+	if !lv.DisableBracketedPasteMode {
 		_, _ = s.scr.WriteString(ansi.SetModeBracketedPaste)
 	}
-	if s.lastView.ReportFocus {
+	if lv.ReportFocus {
 		_, _ = s.scr.WriteString(ansi.SetModeFocusEvent)
 	}
-	switch s.lastView.MouseMode {
+	switch lv.MouseMode {
 	case MouseModeNone:
 	case MouseModeCellMotion:
 		_, _ = s.scr.WriteString(ansi.SetModeMouseButtonEvent + ansi.SetModeMouseExtSgr)
 	case MouseModeAllMotion:
 		_, _ = s.scr.WriteString(ansi.SetModeMouseAnyEvent + ansi.SetModeMouseExtSgr)
 	}
-	if s.lastView.WindowTitle != "" {
-		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.lastView.WindowTitle))
+	if lv.WindowTitle != "" {
+		_, _ = s.scr.WriteString(ansi.SetWindowTitle(lv.WindowTitle))
 	}
-	if s.lastView.ProgressBar != nil {
-		setProgressBar(s, s.lastView.ProgressBar)
+	if lv.ProgressBar != nil {
+		setProgressBar(s, lv.ProgressBar)
 	}
 	if !s.noInput {
 		// Enable modifyOtherKeys and Kitty keyboard protocol.
 		// Both can coexist; terminals ignore what they don't support.
 		_, _ = s.scr.WriteString(ansi.SetModifyOtherKeys2)
 
-		kittyFlags := keyboardEnhancementsFlags(s.lastView.KeyboardEnhancements)
-		// The entry was popped when the renderer was stopped, so push a fresh
-		// one for the screen we're about to restore.
-		_, _ = s.scr.WriteString(ansi.PushKittyKeyboard(kittyFlags))
+		kittyFlags := keyboardEnhancementsFlags(lv.KeyboardEnhancements)
+		if pushKitty {
+			// The entry was popped when the renderer was stopped, so push a
+			// fresh one for the screen we're about to restore.
+			_, _ = s.scr.WriteString(ansi.PushKittyKeyboard(kittyFlags))
+		} else {
+			// Update the topmost stack entry in place instead of pushing so
+			// repeated calls don't grow the stack.
+			_, _ = s.scr.WriteString(ansi.KittyKeyboard(kittyFlags, 1))
+		}
 	}
 }
 
@@ -682,12 +702,20 @@ func (s *cursedRenderer) resize(w, h int) {
 // clearScreen implements renderer.
 func (s *cursedRenderer) clearScreen() {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// The terminal may have been modified from the outside, e.g. a child
+	// process exiting the alt screen. Reset the cell diff so the next flush
+	// repaints everything, then replay the modes from the last view so the
+	// terminal is fully restored.
+	reset(s)
+	s.restoreModes(false)
+
 	// Move the cursor to the top left corner of the screen and trigger a full
 	// screen redraw.
 	s.scr.MoveTo(0, 0)
 	s.scr.Erase()
 	s.pendingErase = true
-	s.mu.Unlock()
 }
 
 // enableAltScreen sets the alt screen mode.
