@@ -15,6 +15,13 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
+var (
+	// saveIconAndWindowTitle pushes the window title onto the terminal title stack.
+	saveIconAndWindowTitle = ansi.WindowOp(22, 0)
+	// restoreIconAndWindowTitle pops the window title from the terminal title stack.
+	restoreIconAndWindowTitle = ansi.WindowOp(23, 0)
+)
+
 type cursedRenderer struct {
 	w             io.Writer
 	buf           bytes.Buffer // updates buffer to be flushed to [w]
@@ -35,6 +42,7 @@ type cursedRenderer struct {
 	starting      bool // indicates whether the renderer is starting after being stopped
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	titlePushed   bool // whether the window title has been pushed onto the terminal stack
 }
 
 var _ renderer = &cursedRenderer{}
@@ -151,6 +159,10 @@ func (s *cursedRenderer) start() {
 		_, _ = s.scr.WriteString(ansi.SetModeMouseAnyEvent + ansi.SetModeMouseExtSgr)
 	}
 	if s.lastView.WindowTitle != "" {
+		if !s.titlePushed {
+			_, _ = s.scr.WriteString(saveIconAndWindowTitle)
+			s.titlePushed = true
+		}
 		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.lastView.WindowTitle))
 	}
 	if s.lastView.ProgressBar != nil {
@@ -219,9 +231,10 @@ func (s *cursedRenderer) close() (err error) {
 				ansi.ResetModeMouseExtSgr)
 		}
 
-		if lv.WindowTitle != "" {
-			// Clear the window title if it was set.
-			_, _ = s.scr.WriteString(ansi.SetWindowTitle(""))
+		if s.titlePushed {
+			// Restore the window title from the terminal title stack.
+			_, _ = s.scr.WriteString(restoreIconAndWindowTitle)
+			s.titlePushed = false
 		}
 		if lc := lv.Cursor; lc != nil {
 			curShape := encodeCursorStyle(lc.Shape, lc.Blink)
@@ -405,6 +418,10 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// Set window title.
 	if s.lastView == nil || view.WindowTitle != s.lastView.WindowTitle {
 		if s.lastView != nil || view.WindowTitle != "" {
+			if !s.titlePushed && view.WindowTitle != "" {
+				_, _ = s.scr.WriteString(saveIconAndWindowTitle)
+				s.titlePushed = true
+			}
 			_, _ = s.scr.WriteString(ansi.SetWindowTitle(view.WindowTitle))
 		}
 	}
