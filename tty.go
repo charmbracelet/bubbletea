@@ -108,7 +108,9 @@ func (p *Program) waitForReadLoop() {
 // via a WindowSizeMsg.
 func (p *Program) checkResize() {
 	if p.ttyOutput == nil {
-		// can't query window size
+		// No TTY to query. Fall back to the last known / configured size so
+		// RequestWindowSize still works in tests and other non-TTY setups.
+		p.Send(WindowSizeMsg{Width: p.width, Height: p.height})
 		return
 	}
 
