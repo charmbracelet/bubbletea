@@ -200,6 +200,16 @@ func (s *cursedRenderer) close() (err error) {
 		if lv.AltScreen {
 			enableAltScreen(s, false, true)
 		} else {
+			// A view without a trailing newline has content on its last row,
+			// unlike a view ending in a newline whose last row is the
+			// intentional blank line below the frame. Move the cursor one row
+			// further down (scrolling the screen if the frame fills it, just
+			// like printing a trailing newline would) so the closing erase and
+			// the shell prompt that follows start below the frame instead of
+			// overwriting its last line.
+			if lv.Content != "" && !strings.HasSuffix(lv.Content, "\n") {
+				_, _ = s.scr.WriteString("\r\n")
+			}
 			_, _ = s.scr.WriteString(ansi.EraseScreenBelow)
 		}
 		if lv.Cursor == nil {
@@ -299,6 +309,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	content := uv.NewStyledString(view.Content)
+	contentHeight := content.Height()
 	if !view.AltScreen {
 		// We need to resizes the screen based on the frame height and
 		// terminal width. This is because the frame height can change based on
@@ -306,7 +317,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// of items, the height of the frame will be the number of items in the
 		// list. This is different from the alt screen buffer, which has a
 		// fixed height and width.
-		frameHeight := content.Height()
+		//
+		// Frames taller than the screen can only show their bottom rows, so
+		// the frame area is capped at the screen height. Keeping the frame
+		// area equal to what's actually on screen also keeps it equal to the
+		// screen buffer's bounds across flushes, which lets unchanged frames
+		// render as no-ops instead of forcing a full redraw every flush.
+		frameHeight := min(contentHeight, s.height)
 		if frameHeight != frameArea.Dy() {
 			frameArea.Max.Y = frameHeight
 		}
@@ -342,13 +359,16 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.cellbuf.Clear()
-	content.Draw(s.cellbuf, s.cellbuf.Bounds())
-
-	// If the frame height is greater than the screen height, we drop the
-	// lines from the top of the buffer.
-	if frameHeight := frameArea.Dy(); frameHeight > s.height {
-		s.cellbuf.Lines = s.cellbuf.Lines[frameHeight-s.height:]
+	// Frames taller than the screen are drawn with their top rows shifted
+	// above the buffer so they get clipped away, and the buffer keeps only
+	// the bottom, visible rows. Drawing the frame this way, instead of
+	// resizing the buffer to the full frame height and slicing its lines,
+	// keeps the buffer's bounds stable across flushes.
+	drawArea := s.cellbuf.Bounds()
+	if !view.AltScreen && contentHeight > drawArea.Dy() {
+		drawArea.Min.Y -= contentHeight - drawArea.Dy()
 	}
+	content.Draw(s.cellbuf, drawArea)
 
 	// Alt screen mode.
 	shouldUpdateAltScreen := (s.lastView == nil && view.AltScreen) || (s.lastView != nil && s.lastView.AltScreen != view.AltScreen)
@@ -514,16 +534,22 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// cursor position might get updated during rendering.
 		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y)
 	} else if !view.AltScreen {
-		// We don't want the cursor to be dangling at the end of the line in
-		// inline mode because it can cause unwanted line wraps in some
-		// terminals. So we move it to the beginning of the next line if
-		// necessary.
-		// This is only needed when the cursor is hidden because when it's
-		// visible, we already set its position above.
-		x, y := s.scr.Position()
-		if x >= s.width-1 {
-			s.scr.MoveTo(0, y)
-		}
+		// Park the cursor at the beginning of the frame's last line. The
+		// cursor is hidden in this branch (a visible cursor is positioned
+		// above), so parking it never moves anything the user can see, and
+		// like before, it keeps the cursor from dangling at the end of the
+		// last drawn line, which can cause unwanted line wraps in some
+		// terminals.
+		//
+		// The frame's height counts the view's trailing blank lines, so
+		// parking here also commits the renderer to them: a frame ending
+		// in intentional blank lines keeps its bottom margin, and output
+		// printed after the program exits starts below the frame rather
+		// than on its last visible line. The frame area is capped at the
+		// screen height, so frames taller than the screen park on the
+		// screen's last row, which is their last visible row.
+		y := max(frameArea.Dy()-1, 0)
+		s.scr.MoveTo(0, y)
 	}
 
 	if err := s.scr.Flush(); err != nil {
