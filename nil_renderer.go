@@ -18,7 +18,7 @@ func (n nilRenderer) start() {}
 func (n nilRenderer) clearScreen() {}
 
 // insertAbove implements renderer.
-func (n nilRenderer) insertAbove(string) error { return nil }
+func (n nilRenderer) insertAbove(string, bool) error { return nil }
 
 // resize implements renderer.
 func (n nilRenderer) resize(int, int) {}

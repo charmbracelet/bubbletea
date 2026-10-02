@@ -32,7 +32,11 @@ type renderer interface {
 	reset()
 
 	// insertAbove inserts unmanaged lines above the renderer.
-	insertAbove(string) error
+	// When persist is true the lines are written to the normal screen buffer
+	// even when the altscreen is active, so they survive after the program
+	// exits. When persist is false and the altscreen is active the call is a
+	// no-op.
+	insertAbove(str string, persist bool) error
 
 	// setSyncdUpdates sets whether to use synchronized updates.
 	setSyncdUpdates(bool)
@@ -57,7 +61,8 @@ type renderer interface {
 }
 
 type printLineMessage struct {
-	messageBody string
+	messageBody        string
+	persistOnAltScreen bool
 }
 
 // Println prints above the Program. This output is unmanaged by the program and
@@ -66,7 +71,8 @@ type printLineMessage struct {
 // Unlike fmt.Println (but similar to log.Println) the message will be print on
 // its own line.
 //
-// If the altscreen is active no output will be printed.
+// If the altscreen is active no output will be printed. Use [PrintlnAbove] to
+// print to the normal screen buffer even while altscreen is active.
 func Println(args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
@@ -82,11 +88,48 @@ func Println(args ...any) Cmd {
 // Unlike fmt.Printf (but similar to log.Printf) the message will be print on
 // its own line.
 //
-// If the altscreen is active no output will be printed.
+// If the altscreen is active no output will be printed. Use [PrintfAbove] to
+// print to the normal screen buffer even while altscreen is active.
 func Printf(template string, args ...any) Cmd {
 	return func() Msg {
 		return printLineMessage{
 			messageBody: fmt.Sprintf(template, args...),
+		}
+	}
+}
+
+// PrintlnAbove prints above the Program, persisting even when the altscreen is
+// active. The output is written to the normal screen buffer, which means it
+// will remain visible in the terminal's scrollback history after the program
+// exits.
+//
+// When the altscreen is not active, this behaves identically to [Println].
+//
+// Unlike fmt.Println (but similar to log.Println) the message will be print on
+// its own line.
+func PrintlnAbove(args ...any) Cmd {
+	return func() Msg {
+		return printLineMessage{
+			messageBody:        fmt.Sprint(args...),
+			persistOnAltScreen: true,
+		}
+	}
+}
+
+// PrintfAbove prints above the Program, persisting even when the altscreen is
+// active. It takes a format template followed by values similar to fmt.Printf.
+// The output is written to the normal screen buffer, which means it will
+// remain visible in the terminal's scrollback history after the program exits.
+//
+// When the altscreen is not active, this behaves identically to [Printf].
+//
+// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
+// its own line.
+func PrintfAbove(template string, args ...any) Cmd {
+	return func() Msg {
+		return printLineMessage{
+			messageBody:        fmt.Sprintf(template, args...),
+			persistOnAltScreen: true,
 		}
 	}
 }
