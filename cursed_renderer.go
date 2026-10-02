@@ -318,7 +318,9 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
-		// No changes, nothing to do.
+		// No visual changes, but OnMouse is a closure that can capture
+		// updated model state even when the drawn content is unchanged.
+		s.lastView.OnMouse = view.OnMouse
 		return nil
 	}
 
