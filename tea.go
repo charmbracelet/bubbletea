@@ -1057,7 +1057,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
-		width, height = w, h
+		width, height = p.fallbackDimensions(w, h)
 	}
 
 	p.width, p.height = width, height

@@ -3,6 +3,7 @@ package tea
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
@@ -104,6 +105,43 @@ func (p *Program) waitForReadLoop() {
 	}
 }
 
+const (
+	defaultWidth  = 80
+	defaultHeight = 24
+)
+
+// fallbackDimensions returns width and height, falling back to COLUMNS/LINES
+// environment variables or 80x24 defaults when dimensions are non-positive.
+func (p *Program) fallbackDimensions(width, height int) (int, int) {
+	if width <= 0 {
+		var cols string
+		if p != nil && p.environ != nil {
+			cols = p.environ.Getenv("COLUMNS")
+		} else {
+			cols = os.Getenv("COLUMNS")
+		}
+		if c, err := strconv.Atoi(cols); err == nil && c > 0 {
+			width = c
+		} else {
+			width = defaultWidth
+		}
+	}
+	if height <= 0 {
+		var lines string
+		if p != nil && p.environ != nil {
+			lines = p.environ.Getenv("LINES")
+		} else {
+			lines = os.Getenv("LINES")
+		}
+		if l, err := strconv.Atoi(lines); err == nil && l > 0 {
+			height = l
+		} else {
+			height = defaultHeight
+		}
+	}
+	return width, height
+}
+
 // checkResize detects the current size of the output and informs the program
 // via a WindowSizeMsg.
 func (p *Program) checkResize() {
@@ -121,6 +159,8 @@ func (p *Program) checkResize() {
 
 		return
 	}
+
+	w, h = p.fallbackDimensions(w, h)
 
 	p.width, p.height = w, h
 	p.Send(WindowSizeMsg{Width: w, Height: h})
