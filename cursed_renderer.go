@@ -34,6 +34,7 @@ type cursedRenderer struct {
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	viewStale     bool // resize() ran but render() hasn't stored a view for the new size yet
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
 }
 
@@ -290,6 +291,17 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 func (s *cursedRenderer) flush(closing bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.viewStale && !closing {
+		// resize() has already updated s.width/s.height, but the event loop
+		// hasn't reached render() yet to store a view laid out for that new
+		// size. Drawing s.view now would draw the previous size's content
+		// into a buffer already resized for the new one, a one-tick "ghost"
+		// frame that render()'s own flush then has to draw over. Waiting for
+		// render() costs at most one tick, since it always follows resize()
+		// in the same event-loop iteration.
+		return nil
+	}
 
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
@@ -629,6 +641,7 @@ func (s *cursedRenderer) render(v View) {
 	defer s.mu.Unlock()
 
 	s.view = v
+	s.viewStale = false
 }
 
 // reset implements renderer.
@@ -676,6 +689,7 @@ func (s *cursedRenderer) resize(w, h int) {
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
 	s.pendingErase = true
+	s.viewStale = true
 	s.mu.Unlock()
 }
 
