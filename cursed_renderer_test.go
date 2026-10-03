@@ -201,3 +201,34 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+func TestCursedRenderer_cursorSnapshotSurvivesPointerMutation(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	cursor := NewCursor(1, 2)
+	r.render(View{Content: "stable", Cursor: cursor})
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	firstBytes := out.Len()
+	if firstBytes == 0 || !bytes.Contains(out.Bytes(), []byte("stable")) {
+		t.Fatalf("first flush must emit content: bytes=%d output=%q", firstBytes, out.String())
+	}
+
+	cursor.X = 7
+	r.render(View{Content: "stable", Cursor: cursor})
+	// Mutating the application-owned pointer after render must not rewrite the
+	// renderer's pending snapshot or its retained previous snapshot.
+	cursor.X = 9
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if out.Len() <= firstBytes {
+		t.Fatalf("cursor-only update must flush a second frame: first=%d final=%d", firstBytes, out.Len())
+	}
+	if !bytes.Contains(out.Bytes()[firstBytes:], []byte(ansi.CursorRight(6))) {
+		t.Fatalf("second frame must move to the requested X=7 position: delta=%q", out.Bytes()[firstBytes:])
+	}
+}
