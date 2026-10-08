@@ -628,6 +628,13 @@ func (s *cursedRenderer) render(v View) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Snapshot pointer-backed progress bar state at the render boundary. The
+	// renderer retains the previous View for equality checks, so retaining an
+	// application-owned pointer would let later mutation rewrite both frames.
+	if v.ProgressBar != nil {
+		progressBar := *v.ProgressBar
+		v.ProgressBar = &progressBar
+	}
 	s.view = v
 }
 
