@@ -146,6 +146,20 @@ type View struct {
 	// progress bar section. Support depends on the terminal.
 	ProgressBar *ProgressBar
 
+	// ProgramStatus when not nil, reports the program status to the terminal
+	// using the Program Status Protocol (OSC 7501): whether the program is
+	// idle, working, waiting on the user, done, or failed. Support depends on
+	// the terminal.
+	//
+	// The status usually addresses the root record (empty ID). Changing it
+	// sends a new report, and setting it back to nil clears the record.
+	//
+	// The status is not cleared when the program exits, so done and error
+	// reports stay visible to the user. Report [ProgramStateDone],
+	// [ProgramStateError], or [ProgramStateIdle] before quitting rather than
+	// leaving a working or blocked status behind.
+	ProgramStatus *ProgramStatus
+
 	// AltScreen puts the program in the alternate screen buffer
 	// (i.e. the program goes into full window mode). Note that the altscreen will
 	// be automatically exited when the program quits.
@@ -837,6 +851,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case cursorColorMsg:
 				p.executeQuery(ansi.RequestCursorColor)
+
+			case programStatusSupportMsg:
+				p.executeQuery(ansi.RequestProgramStatusSupport)
 
 			case execMsg:
 				// NB: this blocks.
