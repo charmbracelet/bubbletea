@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -88,6 +91,28 @@ func TestTeaModel(t *testing.T) {
 
 	if buf.Len() == 0 {
 		t.Fatal("no output")
+	}
+}
+
+func TestProgramClosesTraceFile(t *testing.T) {
+	tracePath := filepath.Join(t.TempDir(), "trace.log")
+	t.Setenv("TEA_TRACE", tracePath)
+
+	p := NewProgram(quitModel{}, WithInput(nil), WithOutput(io.Discard), WithoutRenderer())
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	logger, ok := p.logger.(*log.Logger)
+	if !ok {
+		t.Fatalf("logger has type %T, want *log.Logger", p.logger)
+	}
+	traceFile, ok := logger.Writer().(*os.File)
+	if !ok {
+		t.Fatalf("trace writer has type %T, want *os.File", logger.Writer())
+	}
+	if _, err := traceFile.Stat(); !errors.Is(err, os.ErrClosed) {
+		t.Fatalf("trace file remains open after Run: Stat error = %v", err)
 	}
 }
 
