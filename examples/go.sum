@@ -22,10 +22,10 @@ github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex
 github.com/charmbracelet/colorprofile v0.4.3/go.mod h1:/zT4BhpD5aGFpqQQqw7a+VtHCzu+zrQtt1zhMt9mR4Q=
 github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
-github.com/charmbracelet/ultraviolet v0.0.0-20261008083718-81e46302c0fb h1:btvAGZDB6lhVcjr4fS9VxCQmqS3VDR6ru+jrPj1Dxkc=
-github.com/charmbracelet/ultraviolet v0.0.0-20261008083718-81e46302c0fb/go.mod h1:zWMLSkUXtrC5cCo6GqBURjcxGFaySLaudLLFdRJ6vZw=
-github.com/charmbracelet/x/ansi v0.11.9-0.20261008082244-a4a2f9b961a0 h1:S2rX7/fXbupwo7ViWOi/yQrgCbJUqXeXTRjo6DtsDUw=
-github.com/charmbracelet/x/ansi v0.11.9-0.20261008082244-a4a2f9b961a0/go.mod h1:DG/hpOnaI2QJ/KMMqLL2h0KVhluuJLazf8973P+Vy5w=
+github.com/charmbracelet/ultraviolet v0.0.0-20261008173134-6b8d4baf91b4 h1:hISLzUbwcvJbGoNR6A3L/TpguRRnACBmZOee8LcHLJw=
+github.com/charmbracelet/ultraviolet v0.0.0-20261008173134-6b8d4baf91b4/go.mod h1:aJDVk+WOVM1K04rdc/71PMPoUGfjxjhvXfP3Pjz1Zio=
+github.com/charmbracelet/x/ansi v0.11.9 h1:kIrqLBxtTVbLyyHO2Evoi93EjQo1mylWmpNEsfPxXAM=
+github.com/charmbracelet/x/ansi v0.11.9/go.mod h1:DG/hpOnaI2QJ/KMMqLL2h0KVhluuJLazf8973P+Vy5w=
 github.com/charmbracelet/x/exp/charmtone v0.0.0-20250602192518-9e722df69bbb h1:oTM8tZxV7FY0ehvYjFuICouuhzE08UZYNqUIp/lDQdY=
 github.com/charmbracelet/x/exp/charmtone v0.0.0-20250602192518-9e722df69bbb/go.mod h1:T9jr8CzFpjhFVHjNjKwbAD7KwBNyFnj2pntAO7F2zw0=
 github.com/charmbracelet/x/exp/golden v0.0.0-20250806222409-83e3a29d542f h1:pk6gmGpCE7F3FcjaOEKYriCvpmIN4+6OS/RD0vm4uIA=
