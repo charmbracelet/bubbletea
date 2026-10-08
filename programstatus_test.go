@@ -9,74 +9,130 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+type programStatusRenderer struct {
+	t   *testing.T
+	out bytes.Buffer
+	r   *cursedRenderer
+}
+
+func newProgramStatusRenderer(t *testing.T) *programStatusRenderer {
+	t.Helper()
+	pr := &programStatusRenderer{t: t}
+	pr.r = newCursedRenderer(&pr.out, []string{"TERM=xterm-256color"}, 80, 24)
+	pr.r.start()
+	return pr
+}
+
+// step renders a frame with ps and returns what was written.
+func (pr *programStatusRenderer) step(ps *ProgramStatus) string {
+	pr.t.Helper()
+	pr.out.Reset()
+	v := NewView("hello")
+	v.ProgramStatus = ps
+	pr.r.render(v)
+	if err := pr.r.flush(false); err != nil {
+		pr.t.Fatal(err)
+	}
+	return pr.out.String()
+}
+
+// close closes the renderer and returns what was written.
+func (pr *programStatusRenderer) close() string {
+	pr.t.Helper()
+	pr.out.Reset()
+	if err := pr.r.close(); err != nil {
+		pr.t.Fatal(err)
+	}
+	return pr.out.String()
+}
+
+// restart starts the renderer again and returns what was written.
+func (pr *programStatusRenderer) restart() string {
+	pr.t.Helper()
+	pr.out.Reset()
+	pr.r.start()
+	if err := pr.r.flush(false); err != nil {
+		pr.t.Fatal(err)
+	}
+	return pr.out.String()
+}
+
 func TestCursedRenderer_programStatus(t *testing.T) {
 	t.Parallel()
-
-	var out bytes.Buffer
-	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
-	r.start()
-
-	step := func(name string, ps *ProgramStatus) string {
-		t.Helper()
-		out.Reset()
-		v := NewView("hello")
-		v.ProgramStatus = ps
-		r.render(v)
-		if err := r.flush(false); err != nil {
-			t.Fatalf("%s: %v", name, err)
-		}
-		return out.String()
-	}
+	pr := newProgramStatusRenderer(t)
 
 	working := &ProgramStatus{State: ProgramStateWorking, App: "tea", Message: "Building"}
-	if got := step("first", working); !strings.Contains(got, ansi.SetProgramStatus(*working)) {
+	if got := pr.step(working); !strings.Contains(got, ansi.SetProgramStatus(*working)) {
 		t.Fatalf("first frame: missing report in %q", got)
 	}
 
 	same := *working
-	if got := step("unchanged", &same); strings.Contains(got, "7501") {
+	if got := pr.step(&same); strings.Contains(got, "7501") {
 		t.Fatalf("unchanged status was written again: %q", got)
 	}
 
 	changed := same
 	changed.Message = "Linking"
-	if got := step("changed", &changed); !strings.Contains(got, ansi.SetProgramStatus(changed)) {
+	if got := pr.step(&changed); !strings.Contains(got, ansi.SetProgramStatus(changed)) {
 		t.Fatalf("changed status not written: %q", got)
 	}
 
-	child := &ProgramStatus{State: ProgramStateBlocked, ID: "job", Kind: ProgramStatusKindQuestion}
-	got := step("id change", child)
-	if strings.Contains(got, ansi.ClearProgramStatusID("job")) {
-		t.Fatalf("new record should not be cleared: %q", got)
-	}
-	assertInOrder(t, got, ansi.ClearProgramStatus, ansi.SetProgramStatus(*child))
-
-	if got := step("removed", nil); !strings.Contains(got, ansi.ClearProgramStatusID("job")) {
+	if got := pr.step(nil); !strings.Contains(got, ansi.ClearProgramStatus) {
 		t.Fatalf("removed status not cleared: %q", got)
 	}
+}
 
-	if got := step("invalid", &ProgramStatus{State: ProgramStateIdle, ID: "bad id"}); strings.Contains(got, "7501") {
-		t.Fatalf("invalid status was written: %q", got)
+func TestCursedRenderer_programStatusUnsendable(t *testing.T) {
+	t.Parallel()
+
+	for name, ps := range map[string]*ProgramStatus{
+		"child id":      {State: ProgramStateBlocked, ID: "job"},
+		"invalid id":    {State: ProgramStateIdle, ID: "bad id"},
+		"clear state":   {State: ProgramStateClear},
+		"unknown state": {State: "busy"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			pr := newProgramStatusRenderer(t)
+			pr.step(&ProgramStatus{State: ProgramStateWorking})
+			if got := pr.step(ps); strings.Contains(got, "7501") {
+				t.Fatalf("unsendable status touched the terminal: %q", got)
+			}
+		})
+	}
+}
+
+func TestCursedRenderer_programStatusClose(t *testing.T) {
+	t.Parallel()
+
+	for _, state := range []ProgramState{ProgramStateDone, ProgramStateError} {
+		t.Run(string(state), func(t *testing.T) {
+			t.Parallel()
+			pr := newProgramStatusRenderer(t)
+			ps := &ProgramStatus{State: state, App: "tea"}
+			pr.step(ps)
+			if got := pr.close(); strings.Contains(got, "7501") {
+				t.Fatalf("close should leave a %s status, got %q", state, got)
+			}
+			if got := pr.restart(); !strings.Contains(got, ansi.SetProgramStatus(*ps)) {
+				t.Fatalf("restart did not restore the status: %q", got)
+			}
+		})
 	}
 
-	done := &ProgramStatus{State: ProgramStateDone, App: "tea"}
-	step("done", done)
-	out.Reset()
-	if err := r.close(); err != nil {
-		t.Fatal(err)
-	}
-	if got := out.String(); strings.Contains(got, "7501") {
-		t.Fatalf("close should leave the status in place, got %q", got)
-	}
-
-	// Resuming re-sends the last status.
-	out.Reset()
-	r.start()
-	if err := r.flush(false); err != nil {
-		t.Fatal(err)
-	}
-	if got := out.String(); !strings.Contains(got, ansi.SetProgramStatus(*done)) {
-		t.Fatalf("restart did not restore the status: %q", got)
+	for _, state := range []ProgramState{ProgramStateIdle, ProgramStateWorking, ProgramStateBlocked} {
+		t.Run(string(state), func(t *testing.T) {
+			t.Parallel()
+			pr := newProgramStatusRenderer(t)
+			ps := &ProgramStatus{State: state, App: "tea"}
+			pr.step(ps)
+			if got := pr.close(); !strings.Contains(got, ansi.ClearProgramStatus) {
+				t.Fatalf("close should clear a %s status, got %q", state, got)
+			}
+			if got := pr.restart(); !strings.Contains(got, ansi.SetProgramStatus(*ps)) {
+				t.Fatalf("restart did not restore the status: %q", got)
+			}
+		})
 	}
 }
 
