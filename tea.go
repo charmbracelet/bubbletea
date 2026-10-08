@@ -151,13 +151,11 @@ type View struct {
 	// idle, working, waiting on the user, done, or failed. Support depends on
 	// the terminal.
 	//
-	// The status usually addresses the root record (empty ID). Changing it
-	// sends a new report, and setting it back to nil clears the record.
+	// Changing the status sends a new report, and setting it back to nil
+	// clears it.
 	//
-	// The status is not cleared when the program exits, so done and error
-	// reports stay visible to the user. Report [ProgramStateDone],
-	// [ProgramStateError], or [ProgramStateIdle] before quitting rather than
-	// leaving a working or blocked status behind.
+	// When the program exits or is suspended, a done or error status is left
+	// for the user to find and any other status is cleared.
 	ProgramStatus *ProgramStatus
 
 	// AltScreen puts the program in the alternate screen buffer
