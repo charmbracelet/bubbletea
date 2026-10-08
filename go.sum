@@ -2,10 +2,10 @@ github.com/aymanbagabas/go-udiff v0.2.0 h1:TK0fH4MteXUDspT88n8CKzvK0X9O2xu9yQjWp
 github.com/aymanbagabas/go-udiff v0.2.0/go.mod h1:RE4Ex0qsGkTAJoQdQQCA0uG+nAzJO/pI/QwceO5fgrA=
 github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=
 github.com/charmbracelet/colorprofile v0.4.3/go.mod h1:/zT4BhpD5aGFpqQQqw7a+VtHCzu+zrQtt1zhMt9mR4Q=
-github.com/charmbracelet/ultraviolet v0.0.0-20261008083718-81e46302c0fb h1:btvAGZDB6lhVcjr4fS9VxCQmqS3VDR6ru+jrPj1Dxkc=
-github.com/charmbracelet/ultraviolet v0.0.0-20261008083718-81e46302c0fb/go.mod h1:zWMLSkUXtrC5cCo6GqBURjcxGFaySLaudLLFdRJ6vZw=
-github.com/charmbracelet/x/ansi v0.11.9-0.20261008082244-a4a2f9b961a0 h1:S2rX7/fXbupwo7ViWOi/yQrgCbJUqXeXTRjo6DtsDUw=
-github.com/charmbracelet/x/ansi v0.11.9-0.20261008082244-a4a2f9b961a0/go.mod h1:DG/hpOnaI2QJ/KMMqLL2h0KVhluuJLazf8973P+Vy5w=
+github.com/charmbracelet/ultraviolet v0.0.0-20261008173134-6b8d4baf91b4 h1:hISLzUbwcvJbGoNR6A3L/TpguRRnACBmZOee8LcHLJw=
+github.com/charmbracelet/ultraviolet v0.0.0-20261008173134-6b8d4baf91b4/go.mod h1:aJDVk+WOVM1K04rdc/71PMPoUGfjxjhvXfP3Pjz1Zio=
+github.com/charmbracelet/x/ansi v0.11.9 h1:kIrqLBxtTVbLyyHO2Evoi93EjQo1mylWmpNEsfPxXAM=
+github.com/charmbracelet/x/ansi v0.11.9/go.mod h1:DG/hpOnaI2QJ/KMMqLL2h0KVhluuJLazf8973P+Vy5w=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f h1:UytXHv0UxnsDFmL/7Z9Q5SBYPwSuRLXHbwx+6LycZ2w=
 github.com/charmbracelet/x/exp/golden v0.0.0-20241212170349-ad4b7ae0f25f/go.mod h1:wDlXFlCrmJ8J+swcL/MnGUuYnqgQdW9rhSD61oNMb6U=
 github.com/charmbracelet/x/term v0.2.2 h1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=
