@@ -62,7 +62,7 @@ func TestCursedRenderer_programStatus(t *testing.T) {
 	pr := newProgramStatusRenderer(t)
 
 	working := &ProgramStatus{State: ProgramStateWorking, App: "tea", Message: "Building"}
-	if got := pr.step(working); !strings.Contains(got, ansi.SetProgramStatus(*working)) {
+	if got := pr.step(working); !strings.Contains(got, ansi.SetProgramStatus(working.toANSI())) {
 		t.Fatalf("first frame: missing report in %q", got)
 	}
 
@@ -73,7 +73,7 @@ func TestCursedRenderer_programStatus(t *testing.T) {
 
 	changed := same
 	changed.Message = "Linking"
-	if got := pr.step(&changed); !strings.Contains(got, ansi.SetProgramStatus(changed)) {
+	if got := pr.step(&changed); !strings.Contains(got, ansi.SetProgramStatus(changed.toANSI())) {
 		t.Fatalf("changed status not written: %q", got)
 	}
 
@@ -82,23 +82,12 @@ func TestCursedRenderer_programStatus(t *testing.T) {
 	}
 }
 
-func TestCursedRenderer_programStatusUnsendable(t *testing.T) {
+func TestCursedRenderer_programStatusInvalid(t *testing.T) {
 	t.Parallel()
-
-	for name, ps := range map[string]*ProgramStatus{
-		"child id":      {State: ProgramStateBlocked, ID: "job"},
-		"invalid id":    {State: ProgramStateIdle, ID: "bad id"},
-		"clear state":   {State: ProgramStateClear},
-		"unknown state": {State: "busy"},
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			pr := newProgramStatusRenderer(t)
-			pr.step(&ProgramStatus{State: ProgramStateWorking})
-			if got := pr.step(ps); strings.Contains(got, "7501") {
-				t.Fatalf("unsendable status touched the terminal: %q", got)
-			}
-		})
+	pr := newProgramStatusRenderer(t)
+	pr.step(&ProgramStatus{State: ProgramStateWorking})
+	if got := pr.step(&ProgramStatus{State: "busy"}); strings.Contains(got, "7501") {
+		t.Fatalf("invalid status touched the terminal: %q", got)
 	}
 }
 
@@ -114,7 +103,7 @@ func TestCursedRenderer_programStatusClose(t *testing.T) {
 			if got := pr.close(); strings.Contains(got, "7501") {
 				t.Fatalf("close should leave a %s status, got %q", state, got)
 			}
-			if got := pr.restart(); !strings.Contains(got, ansi.SetProgramStatus(*ps)) {
+			if got := pr.restart(); !strings.Contains(got, ansi.SetProgramStatus(ps.toANSI())) {
 				t.Fatalf("restart did not restore the status: %q", got)
 			}
 		})
@@ -129,7 +118,7 @@ func TestCursedRenderer_programStatusClose(t *testing.T) {
 			if got := pr.close(); !strings.Contains(got, ansi.ClearProgramStatus) {
 				t.Fatalf("close should clear a %s status, got %q", state, got)
 			}
-			if got := pr.restart(); !strings.Contains(got, ansi.SetProgramStatus(*ps)) {
+			if got := pr.restart(); !strings.Contains(got, ansi.SetProgramStatus(ps.toANSI())) {
 				t.Fatalf("restart did not restore the status: %q", got)
 			}
 		})

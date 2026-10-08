@@ -1,6 +1,9 @@
 package tea
 
-import uv "github.com/charmbracelet/ultraviolet"
+import (
+	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/charmbracelet/x/ansi"
+)
 
 // ProgramStatus is a Program Status Protocol (OSC 7501) report. It tells the
 // terminal whether the program is idle, working, waiting on the user, done,
@@ -9,7 +12,38 @@ import uv "github.com/charmbracelet/ultraviolet"
 // Support depends on the terminal. Terminals that don't support it ignore it.
 //
 // See: https://www.superlogical.com/rex/docs/build/program-status
-type ProgramStatus = uv.ProgramStatus
+type ProgramStatus struct {
+	// State is the program state. Required.
+	State ProgramState
+	// App is a stable machine-readable program name matching
+	// [A-Za-z0-9_.+-]{1,32}. Invalid values are omitted.
+	App string
+	// Kind says what a blocked program waits for. Only used with
+	// [ProgramStateBlocked].
+	Kind ProgramStatusKind
+	// Progress is a percentage between 0 and 100. Only used with
+	// [ProgramStateWorking] and [ProgramStateBlocked] when HasProgress is
+	// true. Otherwise progress is indeterminate.
+	Progress int
+	// HasProgress reports whether Progress is set.
+	HasProgress bool
+	// Title is a short human-readable label.
+	Title string
+	// Message is one human-readable line describing the status.
+	Message string
+}
+
+func (ps ProgramStatus) toANSI() ansi.ProgramStatus {
+	return ansi.ProgramStatus{
+		State:       ps.State,
+		App:         ps.App,
+		Kind:        ps.Kind,
+		Progress:    ps.Progress,
+		HasProgress: ps.HasProgress,
+		Title:       ps.Title,
+		Message:     ps.Message,
+	}
+}
 
 // ProgramState is the state of a [ProgramStatus].
 type ProgramState = uv.ProgramState
@@ -17,14 +51,13 @@ type ProgramState = uv.ProgramState
 // ProgramStatusKind says what a blocked program waits for.
 type ProgramStatusKind = uv.ProgramStatusKind
 
-// Program states.
+// Program states. Set [View.ProgramStatus] to nil to clear the status.
 const (
 	ProgramStateIdle    = uv.ProgramStateIdle
 	ProgramStateWorking = uv.ProgramStateWorking
 	ProgramStateDone    = uv.ProgramStateDone
 	ProgramStateBlocked = uv.ProgramStateBlocked
 	ProgramStateError   = uv.ProgramStateError
-	ProgramStateClear   = uv.ProgramStateClear
 )
 
 // Program status kinds.

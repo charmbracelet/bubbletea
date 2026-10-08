@@ -151,9 +151,8 @@ type View struct {
 	// idle, working, waiting on the user, done, or failed. Support depends on
 	// the terminal.
 	//
-	// The status describes the program itself, so ID must be empty and State
-	// must not be [ProgramStateClear]; such statuses are not sent. Changing
-	// the status sends a new report, and setting it back to nil clears it.
+	// Changing the status sends a new report, and setting it back to nil
+	// clears it.
 	//
 	// When the program exits or is suspended, a done or error status is left
 	// for the user to find and any other status is cleared.

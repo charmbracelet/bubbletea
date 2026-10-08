@@ -874,18 +874,14 @@ func programStatusEquals(a, b *ProgramStatus) bool {
 	return *a == *b
 }
 
-// setProgramStatus reports ps on the root record, or clears it when ps is
-// nil. A status the View cannot express (a child ID, the clear state, or one
-// the terminal would discard) is not sent, so the previous report stays.
+// setProgramStatus reports ps, or clears it when ps is nil. An invalid status
+// encodes to nothing, so the previous report stays.
 func setProgramStatus(s *cursedRenderer, ps *ProgramStatus) {
 	if ps == nil {
 		_, _ = s.scr.WriteString(ansi.ClearProgramStatus)
 		return
 	}
-	if ps.ID != "" || ps.State == ProgramStateClear {
-		return
-	}
-	_, _ = s.scr.WriteString(ansi.SetProgramStatus(*ps))
+	_, _ = s.scr.WriteString(ansi.SetProgramStatus(ps.toANSI()))
 }
 
 func viewEquals(a, b *View) bool {
