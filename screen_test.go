@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"image/color"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/exp/golden"
@@ -202,6 +203,105 @@ func TestClearMsg(t *testing.T) {
 				t.Fatal(err)
 			}
 			golden.RequireEqual(t, buf.Bytes())
+		})
+	}
+}
+
+func TestPrintAbove(t *testing.T) {
+	tests := []struct {
+		name      string
+		altScreen bool
+		cmds      sequenceMsg
+	}{
+		{
+			name: "println_above_inline",
+			cmds: sequenceMsg{PrintlnAbove("hello from above")},
+		},
+		{
+			name: "printf_above_inline",
+			cmds: sequenceMsg{PrintfAbove("formatted %s", "message")},
+		},
+		{
+			name:      "println_above_altscreen",
+			altScreen: true,
+			cmds:      sequenceMsg{PrintlnAbove("persisted line")},
+		},
+		{
+			name:      "println_dropped_altscreen",
+			altScreen: true,
+			cmds:      sequenceMsg{Println("this should not appear")},
+		},
+		{
+			name:      "printf_above_altscreen",
+			altScreen: true,
+			cmds:      sequenceMsg{PrintfAbove("log: %d", 42)},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			var buf bytes.Buffer
+			var in bytes.Buffer
+
+			var m Model
+			if test.altScreen {
+				m = &testViewModel{testModel: &testModel{}, opts: testViewOpts{altScreen: true}}
+			} else {
+				m = &testModel{}
+			}
+
+			p := NewProgram(m,
+				WithWindowSize(80, 24),
+				WithColorProfile(colorprofile.ANSI256),
+				WithEnvironment([]string{"TERM=xterm-256color"}),
+				WithInput(&in),
+				WithOutput(&buf),
+			)
+
+			// Wait for the first render to flush so insertAbove observes an
+			// established lastView.
+			msgs := make(sequenceMsg, 0, len(test.cmds)+2)
+			msgs = append(msgs, func() Msg { time.Sleep(20 * time.Millisecond); return nil })
+			msgs = append(msgs, test.cmds...)
+			msgs = append(msgs, Quit)
+			go p.Send(msgs)
+
+			if _, err := p.Run(); err != nil {
+				t.Fatal(err)
+			}
+			golden.RequireEqual(t, buf.Bytes())
+		})
+	}
+}
+
+func TestPrintAboveCmds(t *testing.T) {
+	tests := []struct {
+		name    string
+		cmd     Cmd
+		body    string
+		persist bool
+	}{
+		{name: "PrintlnAbove", cmd: PrintlnAbove("hello"), body: "hello", persist: true},
+		{name: "PrintfAbove", cmd: PrintfAbove("val=%d", 7), body: "val=7", persist: true},
+		{name: "Println", cmd: Println("regular"), body: "regular", persist: false},
+		{name: "Printf", cmd: Printf("fmt=%s", "x"), body: "fmt=x", persist: false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			msg := test.cmd()
+			plm, ok := msg.(printLineMessage)
+			if !ok {
+				t.Fatalf("%s returned %T, want printLineMessage", test.name, msg)
+			}
+			if plm.persistOnAltScreen != test.persist {
+				t.Errorf("%s: persistOnAltScreen = %v, want %v", test.name, plm.persistOnAltScreen, test.persist)
+			}
+			if plm.messageBody != test.body {
+				t.Errorf("%s: messageBody = %q, want %q", test.name, plm.messageBody, test.body)
+			}
 		})
 	}
 }
