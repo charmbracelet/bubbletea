@@ -553,8 +553,10 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
-	// ticker is the ticker that will be used to write to the renderer.
-	ticker *time.Ticker
+	// renderWake notifies the renderer that a view or terminal sequence is
+	// ready. The channel deliberately coalesces wakeups: one pending wake is
+	// enough to render the latest state.
+	renderWake chan struct{}
 
 	// once is used to stop the renderer.
 	once sync.Once
@@ -619,6 +621,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
+		renderWake:   make(chan struct{}, 1),
 		rendererDone: make(chan struct{}),
 	}
 
@@ -913,6 +916,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(model.View()) // send view to renderer
+		p.wakeRenderer()
 	}
 }
 
@@ -1243,6 +1247,14 @@ func (p *Program) execute(seq string) {
 	p.mu.Lock()
 	_, _ = p.outputBuf.WriteString(seq)
 	p.mu.Unlock()
+	p.wakeRenderer()
+}
+
+func (p *Program) wakeRenderer() {
+	select {
+	case p.renderWake <- struct{}{}:
+	default:
+	}
 }
 
 // executeQuery writes a terminal query to the program output. Queries expect a
@@ -1398,6 +1410,7 @@ func (p *Program) RestoreTerminal() error {
 	}
 
 	p.startRenderer()
+	p.wakeRenderer()
 
 	// If the output is a terminal, it may have been resized while another
 	// process was at the foreground, in which case we may not have received
@@ -1436,13 +1449,6 @@ func (p *Program) Printf(template string, args ...any) {
 // startRenderer starts the renderer.
 func (p *Program) startRenderer() {
 	framerate := time.Second / time.Duration(p.fps)
-	if p.ticker == nil {
-		p.ticker = time.NewTicker(framerate)
-	} else {
-		// If the ticker already exists, it has been stopped and we need to
-		// reset it.
-		p.ticker.Reset(framerate)
-	}
 
 	// Since the renderer can be restarted after a stop, we need to reset
 	// the done channel and its corresponding sync.Once.
@@ -1451,15 +1457,57 @@ func (p *Program) startRenderer() {
 	// Start the renderer.
 	p.renderer.start()
 	go func() {
+		var (
+			lastFlush time.Time
+			pending   bool
+			timer     *time.Timer
+			timerC    <-chan time.Time
+		)
+		stopTimer := func() {
+			if timer != nil && !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+		}
+		flush := func() {
+			_ = p.flush()
+			_ = p.renderer.flush(false)
+			lastFlush = time.Now()
+			pending = false
+		}
+
 		for {
 			select {
 			case <-p.rendererDone:
-				p.ticker.Stop()
+				stopTimer()
 				return
 
-			case <-p.ticker.C:
-				_ = p.flush()
-				_ = p.renderer.flush(false)
+			case <-p.renderWake:
+				pending = true
+				if timerC != nil {
+					continue
+				}
+				if lastFlush.IsZero() {
+					timer = time.NewTimer(framerate)
+					timerC = timer.C
+					continue
+				}
+				delay := time.Until(lastFlush.Add(framerate))
+				if delay <= 0 {
+					flush()
+					continue
+				}
+				timer = time.NewTimer(delay)
+				timerC = timer.C
+
+			case <-timerC:
+				timer = nil
+				timerC = nil
+				if pending {
+					flush()
+				}
 			}
 		}
 	}()
