@@ -205,3 +205,32 @@ func TestClearMsg(t *testing.T) {
 		})
 	}
 }
+
+func TestRepaintProgram(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testViewModel{
+		testModel: &testModel{},
+		opts: testViewOpts{
+			altScreen: true,
+		},
+	}
+	p := NewProgram(m,
+		WithWindowSize(80, 24),
+		WithColorProfile(colorprofile.ANSI256),
+		WithEnvironment([]string{"TERM=xterm-256color"}),
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+
+	go func() {
+		p.Repaint()
+		p.Quit()
+	}()
+
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+}
