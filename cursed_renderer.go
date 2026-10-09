@@ -34,6 +34,7 @@ type cursedRenderer struct {
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	pendingTabReset bool // a tab stops reset is pending on next flush
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
 }
 
@@ -83,6 +84,9 @@ func (s *cursedRenderer) resetKeyboardEnhancements(buf *bytes.Buffer) {
 // setOptimizations sets the cursor movement optimizations.
 func (s *cursedRenderer) setOptimizations(hardTabs, backspace, mapnl bool) {
 	s.mu.Lock()
+	if hardTabs && !s.hardTabs {
+		s.pendingTabReset = true
+	}
 	s.hardTabs = hardTabs
 	s.backspace = backspace
 	s.mapnl = mapnl
@@ -319,17 +323,18 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	// Restore tab stops if we have tab optimizations enabled.
-	if s.starting && s.hardTabs {
+	if (s.starting || s.pendingTabReset) && s.hardTabs {
 		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
-	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	if !s.starting && !closing && !s.pendingErase && !s.pendingTabReset && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return nil
 	}
 
 	// We're no longer starting.
 	s.starting = false
+	s.pendingTabReset = false
 	s.pendingErase = false
 
 	if frameArea != s.cellbuf.Bounds() {
@@ -687,6 +692,9 @@ func (s *cursedRenderer) resize(w, h int) {
 	// width hasn't changed in inline mode. On the other hand, when using
 	// alt screen mode, we always want to redraw because some terminals
 	// would scroll the screen and our content would be lost.
+	if w != s.width {
+		s.pendingTabReset = true
+	}
 	s.scr.Erase()
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
