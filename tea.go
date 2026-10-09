@@ -1414,9 +1414,9 @@ func (p *Program) RestoreTerminal() error {
 //
 // If the altscreen is active no output will be printed.
 func (p *Program) Println(args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprint(args...),
-	}
+	})
 }
 
 // Printf prints above the Program. It takes a format template followed by
@@ -1428,9 +1428,9 @@ func (p *Program) Println(args ...any) {
 //
 // If the altscreen is active no output will be printed.
 func (p *Program) Printf(template string, args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
-	}
+	})
 }
 
 // startRenderer starts the renderer.
