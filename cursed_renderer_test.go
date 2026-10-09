@@ -201,3 +201,58 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1838
+func TestCursedRenderer_restoresTabStopsOnResize(t *testing.T) {
+	t.Parallel()
+
+	render := func(t *testing.T, r *cursedRenderer, v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	t.Run("hard tabs", func(t *testing.T) {
+		t.Parallel()
+
+		var out bytes.Buffer
+		r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+		r.setOptimizations(true, false, false)
+		r.start()
+		render(t, r, NewView("hello"))
+
+		got := out.String()
+		if n := strings.Count(got, ansi.SetTabEvery8Columns); n != 1 {
+			t.Fatalf("expected initial %q once, got %d in %q", ansi.SetTabEvery8Columns, n, got)
+		}
+
+		// Widen, then flush. resize queues DECST8C (and refreshes tab stops);
+		// the following flush is what writes it to the terminal.
+		r.resize(160, 24)
+		render(t, r, NewView("hello"))
+
+		got = out.String()
+		if n := strings.Count(got, ansi.SetTabEvery8Columns); n != 2 {
+			t.Fatalf("expected %q again after widen, got %d in %q", ansi.SetTabEvery8Columns, n, got)
+		}
+		assertInOrder(t, got, ansi.SetTabEvery8Columns, ansi.SetTabEvery8Columns)
+	})
+
+	t.Run("no hard tabs", func(t *testing.T) {
+		t.Parallel()
+
+		var out bytes.Buffer
+		r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+		r.setOptimizations(false, false, false)
+		r.start()
+		render(t, r, NewView("hello"))
+		r.resize(160, 24)
+		render(t, r, NewView("hello"))
+
+		if strings.Contains(out.String(), ansi.SetTabEvery8Columns) {
+			t.Fatalf("expected no %q without hard tabs, got %q", ansi.SetTabEvery8Columns, out.String())
+		}
+	})
+}
