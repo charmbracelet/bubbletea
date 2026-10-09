@@ -16,26 +16,26 @@ import (
 )
 
 type cursedRenderer struct {
-	w             io.Writer
-	buf           bytes.Buffer // updates buffer to be flushed to [w]
-	scr           *uv.TerminalRenderer
-	cellbuf       uv.ScreenBuffer
-	lastView      *View
-	env           []string
-	term          string // the terminal type $TERM
-	width, height int
-	mu            sync.Mutex
-	profile       colorprofile.Profile
-	logger        uv.Logger
-	view          View
-	hardTabs      bool // whether to use hard tabs to optimize cursor movements
-	backspace     bool // whether to use backspace to optimize cursor movements
-	mapnl         bool
-	syncdUpdates  bool // whether to use synchronized output mode for updates
-	starting      bool // indicates whether the renderer is starting after being stopped
-	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	w               io.Writer
+	buf             bytes.Buffer // updates buffer to be flushed to [w]
+	scr             *uv.TerminalRenderer
+	cellbuf         uv.ScreenBuffer
+	lastView        *View
+	env             []string
+	term            string // the terminal type $TERM
+	width, height   int
+	mu              sync.Mutex
+	profile         colorprofile.Profile
+	logger          uv.Logger
+	view            View
+	hardTabs        bool // whether to use hard tabs to optimize cursor movements
+	backspace       bool // whether to use backspace to optimize cursor movements
+	mapnl           bool
+	syncdUpdates    bool // whether to use synchronized output mode for updates
+	starting        bool // indicates whether the renderer is starting after being stopped
+	pendingErase    bool // an scr.Erase() is pending and hasn't been drained by flush yet
 	pendingTabReset bool // a tab stops reset is pending on next flush
-	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	noInput         bool // whether input is disabled, in which case keyboard enhancement queries are pointless
 }
 
 var _ renderer = &cursedRenderer{}
