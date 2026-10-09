@@ -523,6 +523,7 @@ type Program struct {
 	msgs         chan Msg
 	errs         chan error
 	finished     chan struct{}
+	runMu        sync.Mutex
 	shutdownOnce sync.Once
 
 	profile *colorprofile.Profile // the terminal color profile
@@ -619,6 +620,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
+		finished:     make(chan struct{}),
 		rendererDone: make(chan struct{}),
 	}
 
@@ -1020,6 +1022,18 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		return nil, errors.New("bubbletea: InitialModel cannot be nil")
 	}
 
+	// Acquire runMu for the duration of initialization. Kill() will also
+	// acquire runMu before calling shutdown(), preventing data races between
+	// Run() writing to fields like p.handlers, p.renderer, and
+	// p.cancelReader and Kill() reading them.
+	p.runMu.Lock()
+	initialized := false
+	defer func() {
+		if !initialized {
+			p.runMu.Unlock()
+		}
+	}()
+
 	// Initialize context and teardown channel.
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
@@ -1167,6 +1181,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Process commands.
 	p.handlers.add(p.handleCommands(cmds))
 
+	// Initialization is complete. Release the lock so Kill() can proceed.
+	p.runMu.Unlock()
+	initialized = true
+
 	// Run event loop, handle updates and draw.
 	var err error
 	model, err = p.eventLoop(model, cmds)
@@ -1229,7 +1247,16 @@ func (p *Program) Quit() {
 // Kill stops the program immediately and restores the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
+//
+// If [Program.Run] is concurrently initializing, Kill will wait for it to
+// finish before performing shutdown. This prevents data races that could
+// occur when Kill reads fields that Run is still setting up.
 func (p *Program) Kill() {
+	// Wait for Run() to finish initializing before calling shutdown().
+	// This prevents data races between Run() writing to fields like
+	// p.handlers, p.renderer, and p.cancelReader and Kill() reading them.
+	p.runMu.Lock()
+	defer p.runMu.Unlock()
 	p.shutdown(true)
 }
 
