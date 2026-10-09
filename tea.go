@@ -1036,10 +1036,17 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	} else if p.input == nil {
 		p.input = os.Stdin
 		if !term.IsTerminal(os.Stdin.Fd()) {
-			ttyIn, _, err := OpenTTY()
+			ttyIn, ttyOut, err := OpenTTY()
 			if err != nil {
 				return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
 			}
+			// Nothing else owns these files: close them when Run returns so
+			// each Run doesn't leak a /dev/tty fd (on Windows, CONIN$ and
+			// CONOUT$ handles).
+			defer func() {
+				_ = ttyIn.Close()
+				_ = ttyOut.Close()
+			}()
 			p.input = ttyIn
 		}
 	}
