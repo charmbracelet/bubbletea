@@ -10,6 +10,7 @@ import (
 type backgroundColorMsg struct{}
 
 // RequestBackgroundColor is a command that requests the terminal background color.
+// Use [WithInput] to enable input, since the reply cannot be read otherwise.
 func RequestBackgroundColor() Msg {
 	return backgroundColorMsg{}
 }
@@ -18,6 +19,7 @@ func RequestBackgroundColor() Msg {
 type foregroundColorMsg struct{}
 
 // RequestForegroundColor is a command that requests the terminal foreground color.
+// Use [WithInput] to enable input, since the reply cannot be read otherwise.
 func RequestForegroundColor() Msg {
 	return foregroundColorMsg{}
 }
@@ -26,6 +28,7 @@ func RequestForegroundColor() Msg {
 type cursorColorMsg struct{}
 
 // RequestCursorColor is a command that requests the terminal cursor color.
+// Use [WithInput] to enable input, since the reply cannot be read otherwise.
 func RequestCursorColor() Msg {
 	return cursorColorMsg{}
 }
@@ -49,20 +52,21 @@ func (e ForegroundColorMsg) IsDark() bool {
 // emitted when the program requests the terminal background color with the
 // [RequestBackgroundColor] Cmd.
 //
-// This is commonly used in [Update.Init] to get the terminal background color
+// This is commonly used in [Model.Init] to get the terminal background color
 // for style definitions. For that you'll want to call
 // [BackgroundColorMsg.IsDark] to determine if the color is dark or light. For
 // example:
 //
-//	func (m Model) Init() Cmd {
-//	  return RequestBackgroundColor()
+//	func (m model) Init() Cmd {
+//	  return RequestBackgroundColor
 //	}
 //
-//	func (m Model) Update(msg Msg) (Model, Cmd) {
+//	func (m model) Update(msg Msg) (Model, Cmd) {
 //	  switch msg := msg.(type) {
 //	  case BackgroundColorMsg:
 //	      m.styles = newStyles(msg.IsDark())
 //	  }
+//	  return m, nil
 //	}
 type BackgroundColorMsg struct{ color.Color }
 

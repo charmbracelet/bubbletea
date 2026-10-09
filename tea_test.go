@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 type ctxImplodeMsg struct {
@@ -667,6 +669,159 @@ func BenchmarkTeaRun(b *testing.B) {
 		}
 
 		_ = r.CloseWithError(io.EOF)
+	}
+}
+
+// quitModel quits as soon as it starts.
+type quitModel struct{}
+
+func (quitModel) Init() Cmd               { return Quit }
+func (quitModel) Update(Msg) (Model, Cmd) { return quitModel{}, nil }
+func (quitModel) View() View              { return NewView("") }
+
+// TestTeaNoCapabilityQueryWithoutInput is a regression test for
+// https://github.com/charmbracelet/gum/issues/1118: programs without input
+// can't read the terminal's responses to capability queries, so the replies
+// leak into the shell after the program exits. Don't send the queries when
+// input is disabled.
+func TestTeaNoCapabilityQueryWithoutInput(t *testing.T) {
+	t.Parallel()
+
+	query := ansi.RequestModeSynchronizedOutput + ansi.RequestModeUnicodeCore
+	env := []string{"TERM=xterm-256color", "TERM_PROGRAM=ghostty"}
+
+	for _, tt := range []struct {
+		name  string
+		input io.Reader
+		want  bool
+	}{
+		{name: "input disabled", input: nil, want: false},
+		{name: "input enabled", input: bytes.NewReader(nil), want: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			p := NewProgram(quitModel{},
+				WithInput(tt.input),
+				WithOutput(&buf),
+				WithEnvironment(env),
+			)
+			if _, err := p.Run(); err != nil {
+				t.Fatal(err)
+			}
+
+			// The queued output may not have been flushed if the program
+			// exited before the first tick, so inspect it too. Reading
+			// p.outputBuf here is deliberate: it checks the buffered bytes
+			// that would have been flushed, without depending on flush
+			// timing (and it ties the test to the renderer's buffer, which
+			// is an intentional trade-off).
+			got := buf.String() + p.outputBuf.String()
+			if strings.Contains(got, query) != tt.want {
+				t.Fatalf("capability query present = %v, want %v; output: %q", !tt.want, tt.want, got)
+			}
+		})
+	}
+}
+
+// terminalQueryCmds lists every command that sends a terminal query whose
+// reply must be read from the input reader.
+var terminalQueryCmds = []Cmd{
+	RequestBackgroundColor,
+	RequestForegroundColor,
+	RequestCursorColor,
+	ReadClipboard,
+	ReadPrimaryClipboard,
+	RequestTerminalVersion,
+	RequestCapability("TN"),
+	RequestCursorPosition,
+}
+
+// queryModel issues every terminal query that needs a reply on the input
+// reader, then quits once each one has been handled.
+type queryModel struct {
+	handled int
+}
+
+func (queryModel) Init() Cmd {
+	return Batch(terminalQueryCmds...)
+}
+
+func (m queryModel) Update(msg Msg) (Model, Cmd) {
+	switch msg.(type) {
+	case backgroundColorMsg, foregroundColorMsg, cursorColorMsg,
+		readClipboardMsg, readPrimaryClipboardMsg, terminalVersion,
+		requestCapabilityMsg, requestCursorPosMsg:
+		// Each query is handled by an intermediate reader that turns the
+		// terminal's reply into a message, so Update only sees the request
+		// messages because the event loop passes them through after the
+		// intermediate reads. If that pass-through ever changes, this test
+		// will hang instead of quitting.
+		m.handled++
+		if m.handled == len(terminalQueryCmds) {
+			return m, Quit
+		}
+	}
+	return m, nil
+}
+
+func (queryModel) View() View { return NewView("") }
+
+// TestTeaNoTerminalQueriesWithoutInput is a regression test for
+// https://github.com/charmbracelet/gum/issues/1118: programs without input
+// can't read the terminal's responses, so query replies leak into the shell
+// after the program exits. No input-dependent query should be sent when input
+// is disabled.
+func TestTeaNoTerminalQueriesWithoutInput(t *testing.T) {
+	t.Parallel()
+
+	queries := []string{
+		ansi.RequestSystemClipboard,
+		ansi.RequestPrimaryClipboard,
+		ansi.RequestBackgroundColor,
+		ansi.RequestForegroundColor,
+		ansi.RequestCursorColor,
+		ansi.RequestNameVersion,
+		ansi.RequestTermcap("TN"),
+		ansi.RequestCursorPositionReport,
+	}
+	env := []string{"TERM=xterm-256color", "TERM_PROGRAM=ghostty"}
+
+	for _, tt := range []struct {
+		name  string
+		input io.Reader
+		want  bool
+	}{
+		{name: "input disabled", input: nil, want: false},
+		{name: "input enabled", input: bytes.NewReader(nil), want: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			p := NewProgram(queryModel{},
+				WithInput(tt.input),
+				WithOutput(&buf),
+				WithEnvironment(env),
+			)
+			if _, err := p.Run(); err != nil {
+				t.Fatal(err)
+			}
+
+			// The queued output may not have been flushed if the program
+			// exited before the first tick, so inspect it too. Reading
+			// p.outputBuf here is deliberate: it checks the buffered bytes
+			// that would have been flushed, without depending on flush
+			// timing (and it ties the test to the renderer's buffer, which
+			// is an intentional trade-off).
+			got := buf.String() + p.outputBuf.String()
+			for _, query := range queries {
+				if strings.Contains(got, query) != tt.want {
+					t.Errorf("query %q present = %v, want %v; output: %q", query, !tt.want, tt.want, got)
+				}
+			}
+		})
 	}
 }
 

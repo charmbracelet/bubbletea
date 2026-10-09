@@ -16,7 +16,8 @@ type terminalVersion struct{}
 
 // RequestTerminalVersion is a command that queries the terminal for its
 // version using XTVERSION. Note that some terminals may not support this
-// command.
+// command. Use [WithInput] to enable input, since the reply cannot be read
+// otherwise.
 func RequestTerminalVersion() Msg {
 	return terminalVersion{}
 }
