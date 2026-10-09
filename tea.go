@@ -1062,6 +1062,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
+		// The input may already be in raw mode at this point (on Windows it
+		// is made raw before the output console-mode setup), so restore the
+		// terminal before returning the error.
+		_ = p.restoreTerminalState()
 		return p.initialModel, err
 	}
 
@@ -1071,6 +1075,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
+			_ = p.restoreTerminalState()
 			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
@@ -1127,6 +1132,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	model := p.initialModel
 	if p.input != nil {
 		if err := p.initInputReader(false); err != nil {
+			_ = p.restoreTerminalState()
 			return model, err
 		}
 	}
