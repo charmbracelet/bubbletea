@@ -891,6 +891,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case clearScreenMsg:
 				p.renderer.clearScreen()
 
+			case repaintMsg:
+				p.renderer.repaint()
+
 			case ColorProfileMsg:
 				p.renderer.setColorProfile(msg.Profile)
 			}
