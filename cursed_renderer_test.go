@@ -201,3 +201,38 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+func TestCursedRenderer_onMouseUsesLatestHandler(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+
+	var hits []int
+	view1 := NewView("same")
+	view1.OnMouse = func(MouseMsg) Cmd {
+		hits = append(hits, 1)
+		return nil
+	}
+	r.render(view1)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	view2 := NewView("same")
+	view2.OnMouse = func(MouseMsg) Cmd {
+		hits = append(hits, 2)
+		return nil
+	}
+	r.render(view2)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if cmd := r.onMouse(MouseClickMsg{X: 0, Y: 0, Button: MouseLeft}); cmd != nil {
+		_ = cmd()
+	}
+	if len(hits) != 1 || hits[0] != 2 {
+		t.Fatalf("expected the latest OnMouse handler to run, got %v", hits)
+	}
+}
