@@ -895,6 +895,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case clearScreenMsg:
 				p.renderer.clearScreen()
 
+			case RepaintMsg:
+				p.renderer.repaint()
+
 			case ColorProfileMsg:
 				p.renderer.setColorProfile(msg.Profile)
 			}
@@ -1228,6 +1231,15 @@ func (p *Program) Send(msg Msg) {
 // if the program is unstarted or has already exited.
 func (p *Program) Quit() {
 	p.Send(Quit())
+}
+
+// Repaint is a convenience function for repainting Bubble Tea programs. Use it
+// when you need to force a full redraw and restore terminal modes from the
+// outside.
+//
+// If you wish to repaint from within a Bubble Tea program use the Repaint command.
+func (p *Program) Repaint() {
+	p.Send(Repaint())
 }
 
 // Kill stops the program immediately and restores the former terminal state.
