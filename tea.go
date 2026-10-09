@@ -1418,6 +1418,13 @@ func (p *Program) recoverFromPanic(r interface{}) {
 // recoverFromGoPanic recovers from a goroutine panic, prints a stack trace,
 // restores the terminal to a usable state, and signals the program to be killed.
 func (p *Program) recoverFromGoPanic(r interface{}) {
+	p.recoverFromGoPanicWithStack(r, debug.Stack())
+}
+
+// recoverFromGoPanicWithStack is [Program.recoverFromGoPanic] with the stack
+// captured at the panic site. The renderer ticker goroutine uses this because
+// it must not block in [Program.shutdown].
+func (p *Program) recoverFromGoPanicWithStack(r interface{}, trace []byte) {
 	select {
 	case p.errs <- ErrProgramPanic:
 	default:
@@ -1427,7 +1434,7 @@ func (p *Program) recoverFromGoPanic(r interface{}) {
 	// terminal does not work or when raw mode is still active.
 	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
 	fmt.Fprintf(os.Stderr, "Caught panic:\r\n\r\n%s\r\n\r\nRestoring terminal...\r\n\r\n", rec)
-	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", debug.Stack()), "\n", "\r\n")
+	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", trace), "\n", "\r\n")
 	fmt.Fprint(os.Stderr, stack)
 	if v, err := strconv.ParseBool(os.Getenv("TEA_DEBUG")); err == nil && v {
 		f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
@@ -1536,10 +1543,11 @@ func (p *Program) startRenderer() {
 		defer ticker.Stop()
 
 		var (
-			idle    int       // consecutive frames with nothing to draw
-			parked  bool      // whether the ticker is stopped
-			realign bool      // whether the ticker runs a shortened interval
-			last    time.Time // when the ticker last fired
+			idle     int       // consecutive frames with nothing to draw
+			parked   bool      // whether the ticker is stopped
+			realign  bool      // whether the ticker runs a shortened interval
+			last     time.Time // when the ticker last fired
+			panicked bool      // whether a flush has already panicked
 		)
 		for {
 			select {
@@ -1557,12 +1565,39 @@ func (p *Program) startRenderer() {
 				ticker.Reset(framerate - time.Since(last)%framerate)
 
 			case last = <-ticker.C:
+				if panicked {
+					// The renderer panicked on a previous flush; the panic was
+					// recovered and the program is shutting down. Keep draining
+					// the ticker so we stay alive to receive rendererDone.
+					continue
+				}
 				if realign {
 					realign = false
 					ticker.Reset(framerate)
 				}
-				_ = p.flush()
-				if drew, _ := p.renderer.flush(false); drew {
+				drew := func() (drew bool) {
+					if !p.disableCatchPanics {
+						defer func() {
+							if r := recover(); r != nil {
+								panicked = true
+								// Recover off this goroutine: shutdown's
+								// stopRenderer sends on rendererDone, which
+								// only this goroutine can receive.
+								trace := debug.Stack()
+								go p.recoverFromGoPanicWithStack(r, trace)
+							}
+						}()
+					}
+					_ = p.flush()
+					drew, _ = p.renderer.flush(false)
+					return drew
+				}()
+				if panicked {
+					// Don't park the ticker: it has to keep draining so
+					// stopRenderer's rendererDone send is still received.
+					continue
+				}
+				if drew {
 					idle = 0
 				} else if idle++; idle >= idleFrames {
 					// Nothing is changing. Stop waking up every frame until
