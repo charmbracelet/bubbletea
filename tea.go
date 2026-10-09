@@ -676,27 +676,36 @@ func (p *Program) handleSignals() chan struct{} {
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-		defer func() {
-			signal.Stop(sig)
-			close(ch)
-		}()
+		defer signal.Stop(sig)
 
+		var quitSent bool
 		for {
 			select {
 			case <-p.ctx.Done():
+				// The program is shutting down: report the handler done so
+				// shutdown can proceed, but keep the signal subscription
+				// alive until Run returns. A second SIGINT/SIGTERM arriving
+				// while the terminal is being restored is then caught and
+				// dropped instead of taking the runtime's default path —
+				// which re-raises it and kills the process mid-teardown.
+				close(ch)
+				if p.finished != nil {
+					<-p.finished
+				}
 				return
 
 			case s := <-sig:
-				if atomic.LoadUint32(&p.ignoreSignals) == 0 {
-					var msg Msg = QuitMsg{}
-					if s == syscall.SIGINT {
-						msg = InterruptMsg{}
-					}
-					select {
-					case p.msgs <- msg:
-					case <-p.ctx.Done():
-					}
-					return
+				if quitSent || atomic.LoadUint32(&p.ignoreSignals) != 0 {
+					continue
+				}
+				var msg Msg = QuitMsg{}
+				if s == syscall.SIGINT {
+					msg = InterruptMsg{}
+				}
+				select {
+				case p.msgs <- msg:
+					quitSent = true
+				case <-p.ctx.Done():
 				}
 			}
 		}
