@@ -65,3 +65,11 @@ func testMultipleCommands[T ~[]Cmd](t *testing.T, createFn func(cmd ...Cmd) Cmd)
 		}
 	})
 }
+
+func TestRepaintCmd(t *testing.T) {
+	t.Parallel()
+	msg := Repaint()
+	if _, ok := msg.(RepaintMsg); !ok {
+		t.Fatalf("expected RepaintMsg, got %T", msg)
+	}
+}
