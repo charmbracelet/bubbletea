@@ -1451,6 +1451,7 @@ func (p *Program) startRenderer() {
 	// Start the renderer.
 	p.renderer.start()
 	go func() {
+		var panicked bool
 		for {
 			select {
 			case <-p.rendererDone:
@@ -1458,8 +1459,24 @@ func (p *Program) startRenderer() {
 				return
 
 			case <-p.ticker.C:
-				_ = p.flush()
-				_ = p.renderer.flush(false)
+				if panicked {
+					// The renderer panicked on a previous flush; the panic was
+					// recovered and the program is shutting down. Keep draining
+					// the ticker so we stay alive to receive rendererDone.
+					continue
+				}
+				func() {
+					if !p.disableCatchPanics {
+						defer func() {
+							if r := recover(); r != nil {
+								panicked = true
+								p.recoverFromGoPanic(r)
+							}
+						}()
+					}
+					_ = p.flush()
+					_ = p.renderer.flush(false)
+				}()
 			}
 		}
 	}()
