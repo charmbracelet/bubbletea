@@ -83,6 +83,40 @@ func TestCursedRenderer_mouseVsFlush(t *testing.T) {
 	}
 }
 
+// uncomparableColor is a color.Color implementation whose dynamic type is
+// uncomparable (it contains a slice), so comparing two values with == panics.
+type uncomparableColor struct {
+	pad []int
+}
+
+func (uncomparableColor) RGBA() (r, g, b, a uint32) {
+	return 0xffff, 0, 0, 0xffff
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1848
+func TestCursedRenderer_uncomparableViewColors(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+
+	view := NewView("hello")
+	view.AltScreen = true
+	view.ForegroundColor = uncomparableColor{pad: []int{1}}
+	view.BackgroundColor = uncomparableColor{pad: []int{2}}
+	view.Cursor = &Cursor{Color: uncomparableColor{pad: []int{3}}}
+
+	// Render the same view twice. The second flush takes the viewEquals
+	// early-return path, which compares the color.Color interface values.
+	for range 2 {
+		r.render(view)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func assertInOrder(t *testing.T, got string, wants ...string) {
 	t.Helper()
 	rest := got
