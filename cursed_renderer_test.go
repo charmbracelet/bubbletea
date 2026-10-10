@@ -201,3 +201,48 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1780
+func TestCursedRenderer_resizeStaleFrame(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+
+	// Render the initial frame at 80x24.
+	initialView := NewView("initial 80x24 content")
+	initialView.AltScreen = true
+	r.render(initialView)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+
+	// Simulate window resize: resize() is called first, updating dimensions.
+	r.resize(100, 30)
+
+	// In the race window, the 60Hz ticker fires flush() BEFORE render() provides the new View.
+	// flush() must NOT output the stale initialView at the new 100x30 size.
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if out.Len() > 0 {
+		t.Fatalf("expected no output during stale resize race window, got %q", out.String())
+	}
+
+	// Now render() provides the new View matching the new 100x30 size.
+	newView := NewView("resized 100x30 content")
+	newView.AltScreen = true
+	r.render(newView)
+
+	// The subsequent flush() must draw the new view.
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(out.String(), "resized 100x30 content") {
+		t.Fatalf("expected output to contain resized view, got %q", out.String())
+	}
+}
