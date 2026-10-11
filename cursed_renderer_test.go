@@ -201,3 +201,45 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1802
+//
+// insertAbove must measure wrapped lines with the active screen buffer's
+// width method. When the terminal never answers the Unicode-core query the
+// buffer stays on WcWidth, but insertAbove used grapheme semantics, so wide
+// grapheme clusters inserted the wrong number of lines.
+func TestCursedRenderer_insertAboveUsesActiveWidthMethod(t *testing.T) {
+	t.Parallel()
+
+	insertNewlines := func(method ansi.Method, s string) int {
+		var out bytes.Buffer
+		r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 8, 4)
+		r.setWidthMethod(method)
+		if got := r.cellbuf.WidthMethod(); got != method {
+			t.Fatalf("expected width method %v, got %v", method, got)
+		}
+		if err := r.insertAbove(s); err != nil {
+			t.Fatal(err)
+		}
+		// One "\n" per inserted line, plus the trailing newline after each
+		// printed line.
+		return bytes.Count(out.Bytes(), []byte("\n"))
+	}
+
+	// "👨‍👩‍👧‍👦" is a single grapheme cluster (width 2) made of four wide
+	// codepoints (width 8), so the wrapped-line count differs per method.
+	// With an 8-column buffer: grapheme width 10 -> 1 extra line,
+	// wcwidth 16 -> 2 extra lines.
+	const line = "👨‍👩‍👧‍👦aaaaaaaa"
+
+	// WcWidth fallback: 1 line + 16/8 extra -> 3 inserted lines, 4 newlines.
+	if got := insertNewlines(ansi.WcWidth, line); got != 4 {
+		t.Errorf("WcWidth: expected 4 newlines, got %d", got)
+	}
+
+	// GraphemeWidth (Unicode-core mode): 1 line + 10/8 extra -> 2 inserted
+	// lines, 3 newlines.
+	if got := insertNewlines(ansi.GraphemeWidth, line); got != 3 {
+		t.Errorf("GraphemeWidth: expected 3 newlines, got %d", got)
+	}
+}
