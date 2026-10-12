@@ -16,28 +16,30 @@ import (
 )
 
 type cursedRenderer struct {
-	w                   io.Writer
-	buf                 bytes.Buffer // updates buffer to be flushed to [w]
-	scr                 *uv.TerminalRenderer
-	cellbuf             uv.ScreenBuffer
-	lastView            *View
-	env                 []string
-	term                string // the terminal type $TERM
-	width, height       int
-	mu                  sync.Mutex
-	profile             colorprofile.Profile
-	logger              uv.Logger
-	view                View
-	hardTabs            bool // whether to use hard tabs to optimize cursor movements
-	backspace           bool // whether to use backspace to optimize cursor movements
-	mapnl               bool
-	syncdUpdates        bool // whether to use synchronized output mode for updates
-	starting            bool // indicates whether the renderer is starting after being stopped
-	pendingErase        bool // an scr.Erase() is pending and hasn't been drained by flush yet
-	noInput             bool // whether input is disabled, in which case keyboard enhancement queries are pointless
-	originalCursorStyle int  // host DECSCUSR value reported before the first cursor style change
-	cursorStyleKnown    bool // whether a valid host cursor style report has been received
-	cursorStyleChanged  bool // whether cleanup must restore the host style or the default fallback
+	w                          io.Writer
+	buf                        bytes.Buffer // updates buffer to be flushed to [w]
+	scr                        *uv.TerminalRenderer
+	cellbuf                    uv.ScreenBuffer
+	lastView                   *View
+	env                        []string
+	term                       string // the terminal type $TERM
+	width, height              int
+	mu                         sync.Mutex
+	profile                    colorprofile.Profile
+	logger                     uv.Logger
+	view                       View
+	hardTabs                   bool // whether to use hard tabs to optimize cursor movements
+	backspace                  bool // whether to use backspace to optimize cursor movements
+	mapnl                      bool
+	syncdUpdates               bool // whether to use synchronized output mode for updates
+	starting                   bool // indicates whether the renderer is starting after being stopped
+	pendingErase               bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	noInput                    bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	originalCursorStyle        int  // host DECSCUSR value reported before the first cursor style change
+	cursorStyleKnown           bool // whether a valid host cursor style report has been received
+	cursorStyleChanged         bool // whether cleanup must restore the host style or the default fallback
+	cursorStyleRequested       bool // whether the one-time host snapshot request has been issued
+	cursorStyleCaptureFinished bool // capture replied or its terminal ownership interval ended
 }
 
 var _ renderer = &cursedRenderer{}
@@ -179,6 +181,8 @@ func (s *cursedRenderer) start() {
 func (s *cursedRenderer) close() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	// Replies arriving after handoff must not be mistaken for the host snapshot.
+	s.cursorStyleCaptureFinished = true
 
 	// Exit the altScreen and show cursor before closing. It's important that
 	// we don't change the [cursedRenderer] altScreen and cursorHidden states
@@ -506,16 +510,17 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 	preserve := ccur != nil && ccur.PreserveStyle
 	wasPreserved := lcur != nil && lcur.PreserveStyle
-	if preserve && lcur != nil && !wasPreserved {
-		style := 0
-		if s.cursorStyleKnown {
-			style = s.originalCursorStyle
+	if !preserve {
+		styleChanged := ccStyle != lcStyle
+		if wasPreserved {
+			// A visible explicit cursor takes ownership; hiding a preserved
+			// cursor only changes visibility, not its terminal style.
+			styleChanged = ccur != nil
 		}
-		_, _ = s.scr.WriteString(ansi.SetCursorStyle(style))
-		s.cursorStyleChanged = true
-	} else if !preserve && !(ccur == nil && wasPreserved) && (ccStyle != lcStyle || (ccur != nil && wasPreserved)) {
-		_, _ = s.scr.WriteString(ansi.SetCursorStyle(ccStyle))
-		s.cursorStyleChanged = true
+		if styleChanged {
+			_, _ = s.scr.WriteString(ansi.SetCursorStyle(ccStyle))
+			s.cursorStyleChanged = true
+		}
 	}
 
 	// Render progress bar if it's changed.
@@ -923,6 +928,7 @@ func viewEquals(a, b *View) bool {
 	}
 	if a.Cursor != nil && b.Cursor != nil {
 		if a.Cursor.X != b.Cursor.X ||
+			a.Cursor.PreserveStyle != b.Cursor.PreserveStyle ||
 			a.Cursor.Y != b.Cursor.Y ||
 			a.Cursor.Shape != b.Cursor.Shape ||
 			a.Cursor.Blink != b.Cursor.Blink ||

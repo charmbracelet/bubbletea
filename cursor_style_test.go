@@ -28,7 +28,9 @@ func TestRestoreCursorStyle(t *testing.T) {
 	for _, hidden := range []bool{false, true} {
 		var output bytes.Buffer
 		r := newCursedRenderer(&output, []string{"TERM=xterm"}, 80, 24)
+		r.requestCursorStyleCapture()
 		r.saveCursorStyle(6)
+		r.requestCursorStyleCapture()
 		r.saveCursorStyle(2) // A later query must not overwrite the host style.
 		r.start()
 		view := NewView("query")

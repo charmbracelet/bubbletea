@@ -138,6 +138,9 @@ func TestViewModel(t *testing.T) {
 
 			m := &testViewModel{testModel: &testModel{}}
 			p := NewProgram(m,
+				// These goldens cover the coalesced final frame, not intermediate
+				// animation frames produced at the default 60 FPS under load.
+				WithFPS(1),
 				// Set the initial window size for the program.
 				WithWindowSize(80, 24),
 				// Use ANSI256 to increase test coverage.
@@ -186,6 +189,7 @@ func TestClearMsg(t *testing.T) {
 
 			m := &testModel{}
 			p := NewProgram(m,
+				WithFPS(1),
 				// Set the initial window size for the program.
 				WithWindowSize(80, 24),
 				// Use ANSI256 to increase test coverage.
