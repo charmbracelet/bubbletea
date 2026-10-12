@@ -64,3 +64,36 @@ func TestRestoreCursorStyle(t *testing.T) {
 		}
 	}
 }
+
+func TestPreserveCursorStyle(t *testing.T) {
+	var output bytes.Buffer
+	r := newCursedRenderer(&output, []string{"TERM=xterm"}, 80, 24)
+	r.start()
+	v := NewView("native")
+	v.Cursor = NewCursor(2, 0)
+	v.Cursor.PreserveStyle = true
+	r.render(v)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	r.start()
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	v.Cursor = nil
+	r.render(v)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	for style := 0; style <= 6; style++ {
+		if strings.Contains(output.String(), ansi.SetCursorStyle(style)) {
+			t.Fatalf("preserved cursor emitted style %d: %q", style, output.String())
+		}
+	}
+}

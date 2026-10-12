@@ -377,6 +377,10 @@ func NewProgressBar(state ProgressBarState, value int) *ProgressBar {
 
 // Cursor represents a cursor on the terminal screen.
 type Cursor struct {
+	// PreserveStyle leaves the terminal's cursor shape and blink state unchanged.
+	// Shape and Blink are ignored. Position, visibility, and Color still apply.
+	PreserveStyle bool
+
 	// Position is a [Position] that determines the cursor's position on the
 	// screen relative to the top left corner of the frame.
 	Position
