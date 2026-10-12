@@ -776,6 +776,17 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 		case msg := <-p.msgs:
 			msg = p.translateInputEvent(msg)
 
+			// Consume the renderer's cursor-style report before user filters can
+			// discard it. Unrelated DCS events retain their existing behavior.
+			if report, ok := msg.(uv.UnknownDcsEvent); ok {
+				if style, valid := parseCursorStyleReport(string(report)); valid {
+					if r, ok := p.renderer.(*cursedRenderer); ok {
+						r.saveCursorStyle(style)
+					}
+					continue
+				}
+			}
+
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
@@ -1127,6 +1138,15 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	model := p.initialModel
 	if p.input != nil {
 		if err := p.initInputReader(false); err != nil {
+			return model, err
+		}
+	}
+
+	// Query before any rendering can change the cursor style. No wait is
+	// necessary: the terminal processes this before subsequent DECSCUSR writes.
+	if !p.disableRenderer {
+		p.executeQuery(requestCursorStyle)
+		if err := p.flush(); err != nil {
 			return model, err
 		}
 	}

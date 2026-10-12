@@ -16,25 +16,28 @@ import (
 )
 
 type cursedRenderer struct {
-	w             io.Writer
-	buf           bytes.Buffer // updates buffer to be flushed to [w]
-	scr           *uv.TerminalRenderer
-	cellbuf       uv.ScreenBuffer
-	lastView      *View
-	env           []string
-	term          string // the terminal type $TERM
-	width, height int
-	mu            sync.Mutex
-	profile       colorprofile.Profile
-	logger        uv.Logger
-	view          View
-	hardTabs      bool // whether to use hard tabs to optimize cursor movements
-	backspace     bool // whether to use backspace to optimize cursor movements
-	mapnl         bool
-	syncdUpdates  bool // whether to use synchronized output mode for updates
-	starting      bool // indicates whether the renderer is starting after being stopped
-	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
-	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	w                   io.Writer
+	buf                 bytes.Buffer // updates buffer to be flushed to [w]
+	scr                 *uv.TerminalRenderer
+	cellbuf             uv.ScreenBuffer
+	lastView            *View
+	env                 []string
+	term                string // the terminal type $TERM
+	width, height       int
+	mu                  sync.Mutex
+	profile             colorprofile.Profile
+	logger              uv.Logger
+	view                View
+	hardTabs            bool // whether to use hard tabs to optimize cursor movements
+	backspace           bool // whether to use backspace to optimize cursor movements
+	mapnl               bool
+	syncdUpdates        bool // whether to use synchronized output mode for updates
+	starting            bool // indicates whether the renderer is starting after being stopped
+	pendingErase        bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	noInput             bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	originalCursorStyle int
+	cursorStyleKnown    bool
+	cursorStyleChanged  bool
 }
 
 var _ renderer = &cursedRenderer{}
@@ -121,9 +124,8 @@ func (s *cursedRenderer) start() {
 			}
 		}
 		curStyle := encodeCursorStyle(s.lastView.Cursor.Shape, s.lastView.Cursor.Blink)
-		if curStyle != 0 && curStyle != 1 {
-			_, _ = s.scr.WriteString(ansi.SetCursorStyle(curStyle))
-		}
+		_, _ = s.scr.WriteString(ansi.SetCursorStyle(curStyle))
+		s.cursorStyleChanged = true
 	}
 	if s.lastView.ForegroundColor != nil {
 		col, ok := colorful.MakeColor(s.lastView.ForegroundColor)
@@ -226,14 +228,14 @@ func (s *cursedRenderer) close() (err error) {
 			// Clear the window title if it was set.
 			_, _ = s.scr.WriteString(ansi.SetWindowTitle(""))
 		}
-		if lc := lv.Cursor; lc != nil {
-			curShape := encodeCursorStyle(lc.Shape, lc.Blink)
-			if curShape != 0 && curShape != 1 {
-				// Reset the cursor style to default if it was set to something other
-				// blinking block.
-				_, _ = s.scr.WriteString(ansi.SetCursorStyle(0))
+		if s.cursorStyleChanged {
+			style := 0
+			if s.cursorStyleKnown {
+				style = s.originalCursorStyle
 			}
-
+			_, _ = s.scr.WriteString(ansi.SetCursorStyle(style))
+		}
+		if lc := lv.Cursor; lc != nil {
 			if lc.Color != nil {
 				_, _ = s.scr.WriteString(ansi.ResetCursorColor)
 			}
@@ -502,6 +504,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 	if ccStyle != lcStyle {
 		_, _ = s.scr.WriteString(ansi.SetCursorStyle(ccStyle))
+		s.cursorStyleChanged = true
 	}
 
 	// Render progress bar if it's changed.
