@@ -827,7 +827,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					// Only send mouse messages to the renderer if they are an
 					// actual mouse event.
 					if cmd := p.renderer.onMouse(msg); cmd != nil {
-						go p.Send(cmd())
+						go func() {
+							if !p.disableCatchPanics {
+								defer func() {
+									if r := recover(); r != nil {
+										p.recoverFromGoPanic(r)
+									}
+								}()
+							}
+							p.Send(cmd())
+						}()
 					}
 				}
 
