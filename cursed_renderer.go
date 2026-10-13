@@ -16,25 +16,30 @@ import (
 )
 
 type cursedRenderer struct {
-	w             io.Writer
-	buf           bytes.Buffer // updates buffer to be flushed to [w]
-	scr           *uv.TerminalRenderer
-	cellbuf       uv.ScreenBuffer
-	lastView      *View
-	env           []string
-	term          string // the terminal type $TERM
-	width, height int
-	mu            sync.Mutex
-	profile       colorprofile.Profile
-	logger        uv.Logger
-	view          View
-	hardTabs      bool // whether to use hard tabs to optimize cursor movements
-	backspace     bool // whether to use backspace to optimize cursor movements
-	mapnl         bool
-	syncdUpdates  bool // whether to use synchronized output mode for updates
-	starting      bool // indicates whether the renderer is starting after being stopped
-	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
-	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	w                          io.Writer
+	buf                        bytes.Buffer // updates buffer to be flushed to [w]
+	scr                        *uv.TerminalRenderer
+	cellbuf                    uv.ScreenBuffer
+	lastView                   *View
+	env                        []string
+	term                       string // the terminal type $TERM
+	width, height              int
+	mu                         sync.Mutex
+	profile                    colorprofile.Profile
+	logger                     uv.Logger
+	view                       View
+	hardTabs                   bool // whether to use hard tabs to optimize cursor movements
+	backspace                  bool // whether to use backspace to optimize cursor movements
+	mapnl                      bool
+	syncdUpdates               bool // whether to use synchronized output mode for updates
+	starting                   bool // indicates whether the renderer is starting after being stopped
+	pendingErase               bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	noInput                    bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	originalCursorStyle        int  // host DECSCUSR value reported before the first cursor style change
+	cursorStyleKnown           bool // whether a valid host cursor style report has been received
+	cursorStyleChanged         bool // whether cleanup must restore the host style or the default fallback
+	cursorStyleRequested       bool // whether the one-time host snapshot request has been issued
+	cursorStyleCaptureFinished bool // capture replied or its terminal ownership interval ended
 }
 
 var _ renderer = &cursedRenderer{}
@@ -120,9 +125,10 @@ func (s *cursedRenderer) start() {
 				_, _ = s.scr.WriteString(ansi.SetCursorColor(col.Hex()))
 			}
 		}
-		curStyle := encodeCursorStyle(s.lastView.Cursor.Shape, s.lastView.Cursor.Blink)
-		if curStyle != 0 && curStyle != 1 {
+		if !s.lastView.Cursor.PreserveStyle {
+			curStyle := encodeCursorStyle(s.lastView.Cursor.Shape, s.lastView.Cursor.Blink)
 			_, _ = s.scr.WriteString(ansi.SetCursorStyle(curStyle))
+			s.cursorStyleChanged = true
 		}
 	}
 	if s.lastView.ForegroundColor != nil {
@@ -175,6 +181,8 @@ func (s *cursedRenderer) start() {
 func (s *cursedRenderer) close() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	// Replies arriving after handoff must not be mistaken for the host snapshot.
+	s.cursorStyleCaptureFinished = true
 
 	// Exit the altScreen and show cursor before closing. It's important that
 	// we don't change the [cursedRenderer] altScreen and cursorHidden states
@@ -226,14 +234,14 @@ func (s *cursedRenderer) close() (err error) {
 			// Clear the window title if it was set.
 			_, _ = s.scr.WriteString(ansi.SetWindowTitle(""))
 		}
-		if lc := lv.Cursor; lc != nil {
-			curShape := encodeCursorStyle(lc.Shape, lc.Blink)
-			if curShape != 0 && curShape != 1 {
-				// Reset the cursor style to default if it was set to something other
-				// blinking block.
-				_, _ = s.scr.WriteString(ansi.SetCursorStyle(0))
+		if s.cursorStyleChanged {
+			style := 0
+			if s.cursorStyleKnown {
+				style = s.originalCursorStyle
 			}
-
+			_, _ = s.scr.WriteString(ansi.SetCursorStyle(style))
+		}
+		if lc := lv.Cursor; lc != nil {
 			if lc.Color != nil {
 				_, _ = s.scr.WriteString(ansi.ResetCursorColor)
 			}
@@ -500,8 +508,19 @@ func (s *cursedRenderer) flush(closing bool) error {
 	if lcur != nil {
 		lcStyle = encodeCursorStyle(lcur.Shape, lcur.Blink)
 	}
-	if ccStyle != lcStyle {
-		_, _ = s.scr.WriteString(ansi.SetCursorStyle(ccStyle))
+	preserve := ccur != nil && ccur.PreserveStyle
+	wasPreserved := lcur != nil && lcur.PreserveStyle
+	if !preserve {
+		styleChanged := ccStyle != lcStyle
+		if wasPreserved {
+			// A visible explicit cursor takes ownership; hiding a preserved
+			// cursor only changes visibility, not its terminal style.
+			styleChanged = ccur != nil
+		}
+		if styleChanged {
+			_, _ = s.scr.WriteString(ansi.SetCursorStyle(ccStyle))
+			s.cursorStyleChanged = true
+		}
 	}
 
 	// Render progress bar if it's changed.
@@ -909,6 +928,7 @@ func viewEquals(a, b *View) bool {
 	}
 	if a.Cursor != nil && b.Cursor != nil {
 		if a.Cursor.X != b.Cursor.X ||
+			a.Cursor.PreserveStyle != b.Cursor.PreserveStyle ||
 			a.Cursor.Y != b.Cursor.Y ||
 			a.Cursor.Shape != b.Cursor.Shape ||
 			a.Cursor.Blink != b.Cursor.Blink ||

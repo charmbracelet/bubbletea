@@ -377,6 +377,12 @@ func NewProgressBar(state ProgressBarState, value int) *ProgressBar {
 
 // Cursor represents a cursor on the terminal screen.
 type Cursor struct {
+	// PreserveStyle leaves the terminal's cursor shape and blink state unchanged.
+	// Shape and Blink are ignored. Position, visibility, and Color still apply.
+	// This does not restore an earlier style: after an explicit cursor or an
+	// external process changes the style, the current terminal style is retained.
+	PreserveStyle bool
+
 	// Position is a [Position] that determines the cursor's position on the
 	// screen relative to the top left corner of the frame.
 	Position
@@ -549,6 +555,7 @@ type Program struct {
 	cancelReader          cancelreader.CancelReader
 	inputScanner          *uv.TerminalReader
 	readLoopDone          chan struct{}
+	cancelReadLoop        context.CancelFunc
 
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
@@ -776,6 +783,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 		case msg := <-p.msgs:
 			msg = p.translateInputEvent(msg)
 
+			// Consume the renderer's cursor-style report before user filters can
+			// discard it. Unrelated DCS events retain their existing behavior.
+			if p.consumeCursorStyleReport(msg) {
+				continue
+			}
+
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
@@ -912,7 +925,20 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // render renders the given view to the renderer.
 func (p *Program) render(model Model) {
 	if p.renderer != nil {
-		p.renderer.render(model.View()) // send view to renderer
+		view := model.View()
+		if r, ok := p.renderer.(*cursedRenderer); ok && view.Cursor != nil && !view.Cursor.PreserveStyle && r.requestCursorStyleCapture() {
+			// Capture before the first explicit style is rendered. Preserve-only
+			// applications never need a terminal snapshot or its asynchronous reply.
+			p.executeQuery(requestCursorStyle)
+			if err := p.flush(); err != nil {
+				select {
+				case p.errs <- err:
+				default:
+				}
+				return
+			}
+		}
+		p.renderer.render(view) // send view to renderer
 	}
 }
 
@@ -1293,9 +1319,7 @@ func (p *Program) shutdown(kill bool) {
 		if p.cancelReader != nil {
 			// Wait for input loop to finish.
 			if p.cancelReader.Cancel() {
-				if !kill {
-					p.waitForReadLoop()
-				}
+				p.waitForReadLoop()
 			}
 			_ = p.cancelReader.Close()
 		}
@@ -1366,6 +1390,9 @@ func (p *Program) ReleaseTerminal() error {
 
 func (p *Program) releaseTerminal(reset bool) error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
+	if p.cancelReadLoop != nil {
+		p.cancelReadLoop()
+	}
 	if p.cancelReader != nil {
 		p.cancelReader.Cancel()
 	}
@@ -1454,7 +1481,6 @@ func (p *Program) startRenderer() {
 		for {
 			select {
 			case <-p.rendererDone:
-				p.ticker.Stop()
 				return
 
 			case <-p.ticker.C:
@@ -1471,6 +1497,9 @@ func (p *Program) startRenderer() {
 func (p *Program) stopRenderer(kill bool) {
 	// Stop the renderer before acquiring the mutex to avoid a deadlock.
 	p.once.Do(func() {
+		// Stop before acknowledging renderer shutdown. Otherwise the old
+		// render goroutine can stop a ticker already reset by RestoreTerminal.
+		p.ticker.Stop()
 		p.rendererDone <- struct{}{}
 	})
 

@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -77,19 +78,45 @@ func (p *Program) initInputReader(cancel bool) error {
 	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
 
-	go p.readLoop()
+	ctx, cancelInputLoop := context.WithCancel(p.ctx)
+	p.cancelReadLoop = cancelInputLoop
+	go p.readLoop(ctx, drv)
 
 	return nil
 }
 
-func (p *Program) readLoop() {
+func (p *Program) readLoop(ctx context.Context, scanner *uv.TerminalReader) {
 	defer close(p.readLoopDone)
 
-	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
+	// Capture internal snapshot replies before model dispatch can block or quit.
+	events := make(chan uv.Event)
+	done := make(chan error, 1)
+	go func() { done <- scanner.StreamEvents(ctx, events) }()
+	ctxDone := ctx.Done()
+	for {
 		select {
-		case <-p.ctx.Done():
+		case <-ctxDone:
+			// StreamEvents flushes buffered events before joining its byte reader.
+			// Keep draining until it returns, so closing our loop also means the
+			// worker no longer touches the cancel reader's file descriptors.
+			ctxDone = nil
+		case err := <-done:
+			if err != nil {
+				select {
+				case p.errs <- err:
+				case <-p.ctx.Done():
+				}
+			}
 			return
-		case p.errs <- err:
+		case event := <-events:
+			if !p.consumeCursorStyleReport(event) {
+				if ctx.Err() == nil {
+					select {
+					case p.msgs <- event:
+					case <-ctx.Done():
+					}
+				}
+			}
 		}
 	}
 }
