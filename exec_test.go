@@ -1,3 +1,5 @@
+//go:build !js && !wasip1 && !wasip2
+
 package tea
 
 import (
