@@ -19,6 +19,32 @@ jobs:
       go-version-file: ./examples/go.mod
       working-directory: ./examples
 
+  # wasip2 (TinyGo) is not covered yet: ultraviolet and x/termios still
+  # compile their linux TTY code under the wasip2 tag.
+  test-wasm:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { goos: wasip1, goarch: wasm }
+          - { goos: js,     goarch: wasm }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ./go.mod
+          cache: true
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+        if: matrix.target.goos == 'wasip1'
+      - name: Add Go's wasm exec wrappers to PATH
+        run: echo "$(go env GOROOT)/lib/wasm" >> "$GITHUB_PATH"
+      - name: Test on ${{ matrix.target.goos }}/${{ matrix.target.goarch }}
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+        run: go test ./...
+
   build-examples-wasm:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -34,27 +60,30 @@ jobs:
         with:
           go-version-file: ./examples/go.mod
           cache: true
-      - name: Tidy Go modules
+      - name: Check Go modules are tidy
         working-directory: ./examples
-        run: go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
       - name: Build examples for ${{ matrix.target.goos }}/${{ matrix.target.goarch }}
         working-directory: ./examples
         env:
           GOOS: ${{ matrix.target.goos }}
           GOARCH: ${{ matrix.target.goarch }}
         run: |
-          # Examples whose dep graph pulls atotto/clipboard, which has no
-          # wasm stubs upstream. Revisit if/when that's fixed.
-          exclude='^(autocomplete|capability|chat|dynamic-textarea|isbn-form|list-default|list-fancy|list-simple|pipe|prevent-quit|query-term|set-terminal-color|split-editors|textarea|textinput|textinputs)$'
           fail=0
           for d in */; do
             d="${d%/}"
             ls "$d"/*.go >/dev/null 2>&1 || continue
-            [[ "$d" =~ $exclude ]] && { echo "skip $d"; continue; }
+            # atotto/clipboard has no wasm implementation, so examples that
+            # depend on it (e.g. via bubbles/textinput) cannot build.
+            if go list -deps ./"$d" | grep -qx github.com/atotto/clipboard; then
+              echo "skip $d (depends on atotto/clipboard)"
+              continue
+            fi
             echo "build $d"
-            if ! go build -o /tmp/wasm-out ./"$d"; then
+            if ! go build -o /dev/null ./"$d"; then
               fail=1
             fi
           done
-          rm -f /tmp/wasm-out
           exit $fail
