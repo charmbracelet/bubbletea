@@ -1,4 +1,4 @@
-//go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || aix || zos
+//go:build (darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || aix || zos) && !wasip2
 
 package tea
 

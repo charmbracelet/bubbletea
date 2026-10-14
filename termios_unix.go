@@ -1,4 +1,4 @@
-//go:build darwin || linux || solaris || aix
+//go:build (darwin || linux || solaris || aix) && !wasip2
 
 package tea
 
