@@ -1323,7 +1323,7 @@ func (p *Program) recoverFromPanic(r interface{}) {
 	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", debug.Stack()), "\n", "\r\n")
 	fmt.Fprint(os.Stderr, stack)
 	if v, err := strconv.ParseBool(os.Getenv("TEA_DEBUG")); err == nil && v {
-		f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
+		f, err := os.OpenFile(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 		if err == nil {
 			defer f.Close()        //nolint:errcheck
 			fmt.Fprintln(f, rec)   //nolint:errcheck
@@ -1348,7 +1348,7 @@ func (p *Program) recoverFromGoPanic(r interface{}) {
 	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", debug.Stack()), "\n", "\r\n")
 	fmt.Fprint(os.Stderr, stack)
 	if v, err := strconv.ParseBool(os.Getenv("TEA_DEBUG")); err == nil && v {
-		f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
+		f, err := os.OpenFile(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 		if err == nil {
 			defer f.Close()        //nolint:errcheck
 			fmt.Fprintln(f, rec)   //nolint:errcheck
