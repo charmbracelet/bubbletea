@@ -844,3 +844,39 @@ func TestProgressBarStateStringOutOfRange(t *testing.T) {
 		}
 	}
 }
+
+type flushCountRenderer struct {
+	nilRenderer
+	flushes atomic.Int32
+}
+
+func (r *flushCountRenderer) flush(closing bool) error {
+	if !closing {
+		r.flushes.Add(1)
+	}
+	return nil
+}
+
+// Regression test for the renderer staying frozen after a stop and restart,
+// e.g. around tea.Exec. The old render goroutine stopped the ticker after
+// stopRenderer returned, which could undo the Reset in the next startRenderer.
+func TestRendererRestartKeepsTicking(t *testing.T) {
+	var buf bytes.Buffer
+	p := NewProgram(nil, WithOutput(&buf), WithFPS(120))
+	r := &flushCountRenderer{}
+	p.renderer = r
+
+	for i := range 50 {
+		before := r.flushes.Load()
+		p.startRenderer()
+
+		deadline := time.Now().Add(time.Second)
+		for r.flushes.Load() == before {
+			if time.Now().After(deadline) {
+				t.Fatalf("renderer did not flush after restart %d", i)
+			}
+			time.Sleep(time.Millisecond)
+		}
+		p.stopRenderer(true)
+	}
+}
