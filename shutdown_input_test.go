@@ -138,8 +138,10 @@ func TestShutdownInputFallbacks(t *testing.T) {
 	}
 }
 
-type inputStartedMsg struct{}
-type inputShutdownModel struct{ ready chan struct{} }
+type (
+	inputStartedMsg    struct{}
+	inputShutdownModel struct{ ready chan struct{} }
+)
 
 func (m inputShutdownModel) Init() Cmd { return func() Msg { return inputStartedMsg{} } }
 func (m inputShutdownModel) Update(msg Msg) (Model, Cmd) {
