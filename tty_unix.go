@@ -33,7 +33,10 @@ func (p *Program) initInput() (err error) {
 	return nil
 }
 
-const suspendSupported = true
+const (
+	ttySupported     = true
+	suspendSupported = true
+)
 
 // Send SIGTSTP to the entire process group.
 func suspendProcess() {

@@ -123,7 +123,28 @@ func TestFallbackDimensions(t *testing.T) {
 }
 
 func TestProgramNonTTYDimensions(t *testing.T) {
-	t.Run("non-tty output does not receive fallback dimensions", func(t *testing.T) {
+	t.Run("non-tty output uses default dimensions", func(t *testing.T) {
+		var buf bytes.Buffer
+		var in bytes.Buffer
+		m := &windowSizeModel{}
+
+		p := NewProgram(m,
+			WithInput(&in),
+			WithOutput(&buf),
+			WithEnvironment([]string{}),
+		)
+
+		if _, err := p.Run(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if m.windowSize.Width != defaultWidth || m.windowSize.Height != defaultHeight {
+			t.Errorf("expected WindowSizeMsg %dx%d, got %dx%d",
+				defaultWidth, defaultHeight, m.windowSize.Width, m.windowSize.Height)
+		}
+	})
+
+	t.Run("non-tty output uses dimensions from os environment", func(t *testing.T) {
 		t.Setenv("COLUMNS", "110")
 		t.Setenv("LINES", "35")
 
@@ -140,13 +161,13 @@ func TestProgramNonTTYDimensions(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if m.windowSize.Width != 0 || m.windowSize.Height != 0 {
-			t.Errorf("expected WindowSizeMsg 0x0 for non-TTY output, got %dx%d",
+		if m.windowSize.Width != 110 || m.windowSize.Height != 35 {
+			t.Errorf("expected WindowSizeMsg 110x35, got %dx%d",
 				m.windowSize.Width, m.windowSize.Height)
 		}
 	})
 
-	t.Run("non-tty output with program environment does not receive fallback dimensions", func(t *testing.T) {
+	t.Run("non-tty output uses dimensions from program environment", func(t *testing.T) {
 		var buf bytes.Buffer
 		var in bytes.Buffer
 		m := &windowSizeModel{}
@@ -161,8 +182,8 @@ func TestProgramNonTTYDimensions(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if m.windowSize.Width != 0 || m.windowSize.Height != 0 {
-			t.Errorf("expected WindowSizeMsg 0x0 for non-TTY output, got %dx%d",
+		if m.windowSize.Width != 150 || m.windowSize.Height != 60 {
+			t.Errorf("expected WindowSizeMsg 150x60, got %dx%d",
 				m.windowSize.Width, m.windowSize.Height)
 		}
 	})
@@ -175,6 +196,7 @@ func TestProgramNonTTYDimensions(t *testing.T) {
 		p := NewProgram(m,
 			WithInput(&in),
 			WithOutput(&buf),
+			WithEnvironment([]string{"COLUMNS=150", "LINES=60"}),
 			WithWindowSize(120, 50),
 		)
 

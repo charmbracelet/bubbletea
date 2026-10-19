@@ -1035,17 +1035,13 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.input = nil
 	} else if p.input == nil {
 		p.input = os.Stdin
-		if !term.IsTerminal(os.Stdin.Fd()) {
+		// WebAssembly uses runtime-managed stdin without a TTY to open.
+		if ttySupported && !term.IsTerminal(os.Stdin.Fd()) {
 			ttyIn, _, err := OpenTTY()
 			if err != nil {
-				// On platforms without TTY support, such as WASM targets,
-				// stdin is managed by the runtime, so keep using it.
-				if !errors.Is(err, uv.ErrPlatformNotSupported) {
-					return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
-				}
-			} else {
-				p.input = ttyIn
+				return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
 			}
+			p.input = ttyIn
 		}
 	}
 
@@ -1080,6 +1076,8 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		}
 
 		width, height = p.fallbackDimensions(w, h)
+	} else {
+		width, height = p.fallbackDimensions(width, height)
 	}
 
 	p.width, p.height = width, height

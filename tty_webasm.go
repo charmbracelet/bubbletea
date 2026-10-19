@@ -9,7 +9,10 @@ func (p *Program) initInput() error {
 	return nil
 }
 
-const suspendSupported = false
+const (
+	ttySupported     = false
+	suspendSupported = false
+)
 
 // suspendProcess is a no-op on WebAssembly.
 func suspendProcess() {}

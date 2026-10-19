@@ -58,6 +58,9 @@ func (p *Program) initInput() (err error) {
 	return //nolint:nakedret
 }
 
-const suspendSupported = false
+const (
+	ttySupported     = true
+	suspendSupported = false
+)
 
 func suspendProcess() {}
