@@ -94,11 +94,41 @@ func (p *Program) readLoop() {
 	}
 }
 
+const inputReadLoopTimeout = 500 * time.Millisecond
+
+// shutdownInput cancels input before closing the reader's resources. Keep the
+// bounded shutdown for slow readers, but retain ownership of a reader that is
+// still in use until its input loop has actually finished.
+func (p *Program) shutdownInput() {
+	reader := p.cancelReader
+	if reader == nil {
+		return
+	}
+
+	if reader.Cancel() && p.readLoopDone != nil {
+		done := p.readLoopDone
+		timer := time.NewTimer(inputReadLoopTimeout)
+		defer timer.Stop()
+
+		select {
+		case <-done:
+		case <-timer.C:
+			go func() {
+				<-done
+				_ = reader.Close()
+			}()
+			return
+		}
+	}
+
+	_ = reader.Close()
+}
+
 // waitForReadLoop waits for the cancelReader to finish its read loop.
 func (p *Program) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
-	case <-time.After(500 * time.Millisecond): //nolint:mnd
+	case <-time.After(inputReadLoopTimeout):
 		// The read loop hangs, which means the input
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.
