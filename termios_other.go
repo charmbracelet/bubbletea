@@ -1,4 +1,4 @@
-//go:build wasip2 || (!windows && !darwin && !dragonfly && !freebsd && !linux && !solaris && !aix)
+//go:build !windows && !darwin && !dragonfly && !freebsd && !linux && !solaris && !aix
 
 package tea
 

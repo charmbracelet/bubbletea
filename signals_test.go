@@ -1,4 +1,4 @@
-//go:build !windows && !js && !wasip1 && !wasip2
+//go:build !windows && !js && !wasip1
 
 package tea
 

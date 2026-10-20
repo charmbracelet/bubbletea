@@ -19,8 +19,6 @@ jobs:
       go-version-file: ./examples/go.mod
       working-directory: ./examples
 
-  # wasip2 (TinyGo) is not covered yet: ultraviolet and x/termios still
-  # compile their linux TTY code under the wasip2 tag.
   test-wasm:
     runs-on: ubuntu-latest
     strategy:
