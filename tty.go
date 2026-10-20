@@ -33,7 +33,7 @@ func (p *Program) initTerminal() error {
 // Bubble Tea program.
 func (p *Program) restoreTerminalState() error {
 	// Flush queued commands.
-	_ = p.flush()
+	p.keepWriteErr(p.flush())
 
 	return p.restoreInput()
 }

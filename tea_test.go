@@ -844,3 +844,32 @@ func TestProgressBarStateStringOutOfRange(t *testing.T) {
 		}
 	}
 }
+
+type failWriter struct{}
+
+func (failWriter) Write([]byte) (int, error) { return 0, errors.New("disk full") }
+
+func TestTeaRunReturnsWriteError(t *testing.T) {
+	t.Parallel()
+	var in bytes.Buffer
+	in.Write([]byte("q"))
+
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+	defer cancel()
+
+	p := NewProgram(&testModel{},
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(failWriter{}),
+	)
+	_, err := p.Run()
+	if err == nil {
+		t.Fatal("Run returned nil although every write to the output failed")
+	}
+	if !strings.Contains(err.Error(), "disk full") {
+		t.Fatalf("Run error does not wrap the write error: %v", err)
+	}
+	if errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("a write error alone should not report a killed program: %v", err)
+	}
+}
