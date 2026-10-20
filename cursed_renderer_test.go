@@ -201,3 +201,103 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+// Fixes the root cause of https://github.com/charmbracelet/bubbles/issues/993:
+// in inline mode, shrinking the frame redrew it top-aligned in the old frame
+// area, leaving blank rows below and never re-anchoring the frame.
+func TestCursedRenderer_shrinkStaysBottomAnchored(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+
+	rowText := func(y int) string {
+		var sb strings.Builder
+		for x := 0; x < r.cellbuf.Bounds().Dx(); x++ {
+			c := r.cellbuf.CellAt(x, y)
+			if c == nil {
+				break
+			}
+			sb.WriteString(c.Content)
+		}
+		return strings.TrimRight(sb.String(), " ")
+	}
+
+	// Initial 3-line frame.
+	r.view = View{Content: "line1\nline2\nline3"}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("initial flush: %v", err)
+	}
+	if h := r.cellbuf.Bounds().Dy(); h != 3 {
+		t.Fatalf("expected cell buffer height 3 after initial flush, got %d", h)
+	}
+
+	// Shrink to a 1-line frame: the buffer must keep its height and the
+	// content must be drawn bottom-aligned (last row), not top-aligned.
+	out.Reset()
+	r.view = View{Content: "shrunk"}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("shrink flush: %v", err)
+	}
+	if h := r.cellbuf.Bounds().Dy(); h != 3 {
+		t.Fatalf("expected cell buffer to keep height 3 after shrink, got %d", h)
+	}
+	if got := rowText(0); got != "" {
+		t.Fatalf("expected row 0 to be blank after shrink, got %q", got)
+	}
+	if got := rowText(1); got != "" {
+		t.Fatalf("expected row 1 to be blank after shrink, got %q", got)
+	}
+	if got := rowText(2); got != "shrunk" {
+		t.Fatalf("expected row 2 to hold %q after shrink, got %q", "shrunk", got)
+	}
+	if got := out.String(); !strings.Contains(got, "shrunk") {
+		t.Fatalf("expected shrink flush to emit the new content, got %q", got)
+	}
+
+	// A repeat flush with no changes must be a no-op.
+	out.Reset()
+	if err := r.flush(false); err != nil {
+		t.Fatalf("repeat flush: %v", err)
+	}
+	if out.Len() != 0 {
+		t.Fatalf("expected no output on unchanged flush, got %q", out.String())
+	}
+
+	// Growing within the retained area stays bottom-anchored too.
+	r.view = View{Content: "a\nb"}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("grow-within flush: %v", err)
+	}
+	if h := r.cellbuf.Bounds().Dy(); h != 3 {
+		t.Fatalf("expected cell buffer height 3 after grow-within, got %d", h)
+	}
+	if got := rowText(0); got != "" {
+		t.Fatalf("expected row 0 to stay blank after grow-within, got %q", got)
+	}
+	if got := rowText(1); got != "a" {
+		t.Fatalf("expected row 1 to hold %q after grow-within, got %q", "a", got)
+	}
+	if got := rowText(2); got != "b" {
+		t.Fatalf("expected row 2 to hold %q after grow-within, got %q", "b", got)
+	}
+
+	// Growing beyond the retained area resizes the buffer as before.
+	r.view = View{Content: "a\nb\nc\nd"}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("grow-beyond flush: %v", err)
+	}
+	if h := r.cellbuf.Bounds().Dy(); h != 4 {
+		t.Fatalf("expected cell buffer height 4 after grow-beyond, got %d", h)
+	}
+
+	// A width change still resizes the buffer as before.
+	r.width = 40
+	r.view = View{Content: "a\nb\nc\nd"}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("width-change flush: %v", err)
+	}
+	if b := r.cellbuf.Bounds(); b.Dx() != 40 || b.Dy() != 4 {
+		t.Fatalf("expected cell buffer 40x4 after width change, got %v", b)
+	}
+}
