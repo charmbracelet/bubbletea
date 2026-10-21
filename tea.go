@@ -60,7 +60,8 @@ type Model interface {
 	Update(Msg) (Model, Cmd)
 
 	// View renders the program's UI, which can be a string or a [Layer]. The
-	// view is rendered after every Update.
+	// view is rendered after Update, at most about once a frame: messages that
+	// arrive together are rendered together.
 	View() View
 }
 
@@ -764,147 +765,216 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
+//
+// Redraws are coalesced: messages that are already waiting are handled before
+// the view is rendered, and while messages keep coming the view is rendered
+// about once a frame, as the renderer doesn't draw more often than that. The
+// latest model is always rendered once they stop.
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
+	frame := time.Second / time.Duration(p.fps)
+	var (
+		dirty      bool             // the model changed since it was last rendered
+		deadline   time.Time        // when to render even if messages are waiting
+		lastRender time.Time        // when the view was last rendered
+		renderAt   <-chan time.Time // fires when a held back render is due
+	)
+	render := func() {
+		dirty, renderAt = false, nil
+		lastRender = time.Now()
+		p.render(model)
+	}
+
 	for {
-		select {
-		case <-p.ctx.Done():
-			return model, nil
-
-		case err := <-p.errs:
-			return model, err
-
-		case msg := <-p.msgs:
-			msg = p.translateInputEvent(msg)
-
-			// Filter messages.
-			if p.filter != nil {
-				msg = p.filter(model, msg)
+		var msg Msg
+		waiting := false
+		if dirty && time.Now().Before(deadline) {
+			// Handle a message that is already waiting first.
+			select {
+			case msg = <-p.msgs:
+				waiting = true
+			default:
 			}
-			if msg == nil {
+		}
+		if dirty && !waiting {
+			wait := frame - time.Since(lastRender)
+			if wait <= 0 {
+				render()
 				continue
 			}
-
-			// Handle special internal messages.
-			switch msg := msg.(type) {
-			case QuitMsg:
-				return model, nil
-
-			case InterruptMsg:
-				return model, ErrInterrupted
-
-			case SuspendMsg:
-				if suspendSupported {
-					p.suspend()
-				}
-
-			case CapabilityMsg:
-				switch msg.Content {
-				case "RGB", "Tc":
-					if *p.profile != colorprofile.TrueColor {
-						tc := colorprofile.TrueColor
-						p.profile = &tc
-						go p.Send(ColorProfileMsg{*p.profile})
-					}
-				}
-
-			case ModeReportMsg:
-				switch msg.Mode {
-				case ansi.ModeSynchronizedOutput:
-					if msg.Value == ansi.ModeReset {
-						// The terminal supports synchronized output and it's
-						// currently disabled, so we can enable it on the renderer.
-						p.renderer.setSyncdUpdates(true)
-					}
-				case ansi.ModeUnicodeCore:
-					if msg.Value == ansi.ModeReset || msg.Value == ansi.ModeSet || msg.Value == ansi.ModePermanentlySet {
-						p.renderer.setWidthMethod(ansi.GraphemeWidth)
-					}
-				}
-
-			case MouseMsg:
-				switch msg.(type) {
-				case MouseClickMsg, MouseReleaseMsg, MouseWheelMsg, MouseMotionMsg:
-					// Only send mouse messages to the renderer if they are an
-					// actual mouse event.
-					if cmd := p.renderer.onMouse(msg); cmd != nil {
-						go p.Send(cmd())
-					}
-				}
-
-			case readClipboardMsg:
-				p.executeQuery(ansi.RequestSystemClipboard)
-
-			case setClipboardMsg:
-				p.execute(ansi.SetSystemClipboard(string(msg)))
-
-			case readPrimaryClipboardMsg:
-				p.executeQuery(ansi.RequestPrimaryClipboard)
-
-			case setPrimaryClipboardMsg:
-				p.execute(ansi.SetPrimaryClipboard(string(msg)))
-
-			case backgroundColorMsg:
-				p.executeQuery(ansi.RequestBackgroundColor)
-
-			case foregroundColorMsg:
-				p.executeQuery(ansi.RequestForegroundColor)
-
-			case cursorColorMsg:
-				p.executeQuery(ansi.RequestCursorColor)
-
-			case programStatusSupportMsg:
-				p.executeQuery(ansi.RequestProgramStatusSupport)
-
-			case execMsg:
-				// NB: this blocks.
-				p.exec(msg.cmd, msg.fn)
-
-			case terminalVersion:
-				p.executeQuery(ansi.RequestNameVersion)
-
-			case requestCapabilityMsg:
-				p.executeQuery(ansi.RequestTermcap(string(msg)))
-
-			case BatchMsg:
-				go p.execBatchMsg(msg)
-				continue
-
-			case sequenceMsg:
-				go p.execSequenceMsg(msg)
-				continue
-
-			case WindowSizeMsg:
-				p.renderer.resize(msg.Width, msg.Height)
-
-			case windowSizeMsg:
-				go p.checkResize()
-
-			case requestCursorPosMsg:
-				p.executeQuery(ansi.RequestCursorPositionReport)
-
-			case RawMsg:
-				p.execute(fmt.Sprint(msg.Msg))
-
-			case printLineMessage:
-				p.renderer.insertAbove(msg.messageBody) //nolint:errcheck,gosec
-
-			case clearScreenMsg:
-				p.renderer.clearScreen()
-
-			case ColorProfileMsg:
-				p.renderer.setColorProfile(msg.Profile)
+			if renderAt == nil {
+				renderAt = time.After(wait)
 			}
+		}
 
-			var cmd Cmd
-			model, cmd = model.Update(msg) // run update
-
+		if !waiting {
 			select {
 			case <-p.ctx.Done():
 				return model, nil
-			case cmds <- cmd: // process command (if any)
+
+			case err := <-p.errs:
+				return model, err
+
+			case <-renderAt:
+				render()
+				continue
+
+			case msg = <-p.msgs:
+			}
+		}
+
+		msg = p.translateInputEvent(msg)
+
+		// Filter messages.
+		if p.filter != nil {
+			msg = p.filter(model, msg)
+		}
+		if msg == nil {
+			continue
+		}
+
+		// Handle special internal messages.
+		switch msg := msg.(type) {
+		case QuitMsg:
+			return model, nil
+
+		case InterruptMsg:
+			return model, ErrInterrupted
+
+		case SuspendMsg:
+			if suspendSupported {
+				if dirty {
+					render() // the terminal shows the latest view while suspended
+				}
+				p.suspend()
 			}
 
-			p.render(model) // render view
+		case CapabilityMsg:
+			switch msg.Content {
+			case "RGB", "Tc":
+				if *p.profile != colorprofile.TrueColor {
+					tc := colorprofile.TrueColor
+					p.profile = &tc
+					go p.Send(ColorProfileMsg{*p.profile})
+				}
+			}
+
+		case ModeReportMsg:
+			switch msg.Mode {
+			case ansi.ModeSynchronizedOutput:
+				if msg.Value == ansi.ModeReset {
+					// The terminal supports synchronized output and it's
+					// currently disabled, so we can enable it on the renderer.
+					p.renderer.setSyncdUpdates(true)
+				}
+			case ansi.ModeUnicodeCore:
+				if msg.Value == ansi.ModeReset || msg.Value == ansi.ModeSet || msg.Value == ansi.ModePermanentlySet {
+					p.renderer.setWidthMethod(ansi.GraphemeWidth)
+				}
+			}
+
+		case MouseMsg:
+			switch msg.(type) {
+			case MouseClickMsg, MouseReleaseMsg, MouseWheelMsg, MouseMotionMsg:
+				// Only send mouse messages to the renderer if they are an
+				// actual mouse event.
+				if cmd := p.renderer.onMouse(msg); cmd != nil {
+					go p.Send(cmd())
+				}
+			}
+
+		case readClipboardMsg:
+			p.executeQuery(ansi.RequestSystemClipboard)
+
+		case setClipboardMsg:
+			p.execute(ansi.SetSystemClipboard(string(msg)))
+
+		case readPrimaryClipboardMsg:
+			p.executeQuery(ansi.RequestPrimaryClipboard)
+
+		case setPrimaryClipboardMsg:
+			p.execute(ansi.SetPrimaryClipboard(string(msg)))
+
+		case backgroundColorMsg:
+			p.executeQuery(ansi.RequestBackgroundColor)
+
+		case foregroundColorMsg:
+			p.executeQuery(ansi.RequestForegroundColor)
+
+		case cursorColorMsg:
+			p.executeQuery(ansi.RequestCursorColor)
+
+		case programStatusSupportMsg:
+			p.executeQuery(ansi.RequestProgramStatusSupport)
+
+		case execMsg:
+			if dirty {
+				render() // the terminal shows the latest view while it's handed over
+			}
+			// NB: this blocks.
+			p.exec(msg.cmd, msg.fn)
+
+		case terminalVersion:
+			p.executeQuery(ansi.RequestNameVersion)
+
+		case requestCapabilityMsg:
+			p.executeQuery(ansi.RequestTermcap(string(msg)))
+
+		case BatchMsg:
+			go p.execBatchMsg(msg)
+			continue
+
+		case sequenceMsg:
+			go p.execSequenceMsg(msg)
+			continue
+
+		case WindowSizeMsg:
+			p.renderer.resize(msg.Width, msg.Height)
+
+		case windowSizeMsg:
+			go p.checkResize()
+
+		case requestCursorPosMsg:
+			p.executeQuery(ansi.RequestCursorPositionReport)
+
+		case RawMsg:
+			p.execute(fmt.Sprint(msg.Msg))
+
+		case printLineMessage:
+			if dirty {
+				render() // print above the view of the update that printed
+			}
+			p.renderer.insertAbove(msg.messageBody) //nolint:errcheck,gosec
+
+		case clearScreenMsg:
+			p.renderer.clearScreen()
+
+		case ColorProfileMsg:
+			p.renderer.setColorProfile(msg.Profile)
+		}
+
+		var cmd Cmd
+		model, cmd = model.Update(msg) // run update
+
+		select {
+		case <-p.ctx.Done():
+			return model, nil
+		case cmds <- cmd: // process command (if any)
+		}
+
+		if _, ok := msg.(WindowSizeMsg); ok {
+			// The renderer is at the new size already, so render the view
+			// for it now rather than have the old one drawn at it.
+			render()
+			continue
+		}
+		if !dirty {
+			// Render within a frame of the last render, or of now after a
+			// pause, even if messages keep coming.
+			dirty = true
+			deadline = lastRender.Add(frame)
+			if now := time.Now(); deadline.Before(now) {
+				deadline = now.Add(frame)
+			}
 		}
 	}
 }
