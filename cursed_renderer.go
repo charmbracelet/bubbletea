@@ -792,8 +792,9 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	offset := len(lines)
 	for _, line := range lines {
 		lineWidth := ansi.StringWidth(line)
-		if w > 0 && lineWidth > w {
-			offset += (lineWidth / w)
+		if w > 0 && lineWidth > 0 {
+			// A line that is exactly `w` wide occupies one row, not two.
+			offset += (lineWidth - 1) / w
 		}
 	}
 
@@ -809,7 +810,11 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	sb.WriteString(ansi.InsertLine(offset))
 	for _, line := range lines {
 		sb.WriteString(line)
-		sb.WriteString(ansi.EraseLineRight)
+		// Erasing the rest of the line after a full-width line would
+		// wipe the first cell of the following (wrapped) row.
+		if ansi.StringWidth(line) < w {
+			sb.WriteString(ansi.EraseLineRight)
+		}
 		sb.WriteString("\r\n")
 	}
 

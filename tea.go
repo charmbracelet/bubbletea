@@ -1035,6 +1035,15 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 
 	defer p.cancel()
 
+	openedTTY := false
+	defer func() {
+		if openedTTY && p.input != nil {
+			if c, ok := p.input.(io.Closer); ok {
+				c.Close()
+			}
+		}
+	}()
+
 	if p.disableInput {
 		p.input = nil
 	} else if p.input == nil {
@@ -1045,6 +1054,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 				return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
 			}
 			p.input = ttyIn
+			openedTTY = true
 		}
 	}
 
