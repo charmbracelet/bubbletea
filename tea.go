@@ -776,6 +776,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 		case msg := <-p.msgs:
 			msg = p.translateInputEvent(msg)
 
+			if size, ok := msg.(WindowSizeMsg); ok && !isPlausibleWindowSize(size.Width, size.Height) {
+				continue
+			}
+
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
