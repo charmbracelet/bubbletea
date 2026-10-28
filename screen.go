@@ -13,6 +13,11 @@ type WindowSizeMsg struct {
 // before the next update. This can be used to move the cursor to the top left
 // of the screen and clear visual clutter when the alt screen is not in use.
 //
+// ClearScreen also restores the terminal modes from the last view and forces a
+// full redraw. This makes it suitable for recovering the terminal after
+// something else wrote to the tty and reset its modes, for example a child
+// process that left the alt screen.
+//
 // Note that it should never be necessary to call ClearScreen() for regular
 // redraws.
 func ClearScreen() Msg {

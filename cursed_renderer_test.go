@@ -201,3 +201,126 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+// clearScreenTestRenderer returns a renderer wired to a buffer together with a
+// render function that pushes a view and flushes it.
+func clearScreenTestRenderer(t *testing.T) (*cursedRenderer, *bytes.Buffer, func(View)) {
+	t.Helper()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return r, &out, render
+}
+
+// After external tty damage ClearScreen must replay the alt screen and repaint
+// the whole view on a normal (non-closing) flush.
+func TestCursedRenderer_clearScreenRestoresAltScreen(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := clearScreenTestRenderer(t)
+
+	view := NewView("hello")
+	view.AltScreen = true
+	render(view)
+
+	out.Reset()
+	r.clearScreen()
+	// A normal flush, not a closing one, must not skip the redraw.
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	assertInOrder(t, got, ansi.SetModeAltScreenSaveCursor, "hello")
+}
+
+// Inline mode must keep working: ClearScreen must not enter the alt screen.
+func TestCursedRenderer_clearScreenInline(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := clearScreenTestRenderer(t)
+
+	view := NewView("hello")
+	render(view)
+
+	out.Reset()
+	r.clearScreen()
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	if strings.Contains(got, ansi.SetModeAltScreenSaveCursor) {
+		t.Fatalf("expected inline mode not to enter the alt screen, got %q", got)
+	}
+	if !strings.Contains(got, "hello") {
+		t.Fatalf("expected the full frame to be repainted, got %q", got)
+	}
+}
+
+// Calling ClearScreen repeatedly must update the Kitty keyboard flags in place
+// rather than pushing a new stack entry every time.
+func TestCursedRenderer_clearScreenDoesNotGrowKittyStack(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := clearScreenTestRenderer(t)
+
+	view := NewView("hello")
+	view.KeyboardEnhancements.ReportEventTypes = true
+	flags := keyboardEnhancementsFlags(view.KeyboardEnhancements)
+	render(view)
+
+	const clears = 3
+	out.Reset()
+	for range clears {
+		r.clearScreen()
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got := out.String()
+	if n := strings.Count(got, ansi.PushKittyKeyboard(flags)); n != 0 {
+		t.Fatalf("expected no kitty keyboard pushes, got %d in %q", n, got)
+	}
+	if n := strings.Count(got, ansi.KittyKeyboard(flags, 1)); n != clears {
+		t.Fatalf("expected kitty keyboard flags to be set in place %d times, got %d in %q", clears, n, got)
+	}
+}
+
+// ClearScreen must re-emit the modes carried by the view, e.g. mouse tracking,
+// bracketed paste, and focus reporting, which an external writer may have reset.
+func TestCursedRenderer_clearScreenRestoresModes(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := clearScreenTestRenderer(t)
+
+	view := NewView("hello")
+	view.MouseMode = MouseModeCellMotion
+	view.ReportFocus = true
+	render(view)
+
+	out.Reset()
+	r.clearScreen()
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	for _, want := range []string{
+		ansi.SetModeMouseButtonEvent + ansi.SetModeMouseExtSgr,
+		ansi.SetModeBracketedPaste,
+		ansi.SetModeFocusEvent,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q to be replayed by ClearScreen, got %q", want, got)
+		}
+	}
+}
