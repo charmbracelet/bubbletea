@@ -690,6 +690,12 @@ func (s *cursedRenderer) resize(w, h int) {
 	s.scr.Erase()
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
+	// Restore tab stops across the new width. The terminal keeps the stops
+	// from the previous size unless we send DECST8C again.
+	if s.hardTabs {
+		s.scr.SetTabStops(s.width)
+		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
+	}
 	s.pendingErase = true
 	s.mu.Unlock()
 }
