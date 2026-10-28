@@ -1,0 +1,13 @@
+// Copy this file to go.work to develop against the local bubbletea source.
+// go.work and go.work.sum are gitignored.
+//
+// Usage:
+//   cp go.work.example go.work
+//   go run ./examples/simple
+
+go 1.25.8
+
+use (
+	.
+	./examples
+)
