@@ -318,12 +318,30 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 	}
 
+	// In inline mode the frame is bottom-anchored to the terminal: the last
+	// row of the frame is the last row the program drew. When the frame
+	// shrinks we keep the cell buffer at its previous height and draw the
+	// smaller frame bottom-aligned into it, instead of resizing the buffer
+	// and redrawing top-aligned. The top-aligned redraw leaves the shrunken
+	// frame floating at the top of the old frame area with blank rows below
+	// it, and the frame never re-anchors (charmbracelet/bubbles#993).
+	drawOffset := 0
+	if !view.AltScreen && !s.starting && s.lastView != nil {
+		if old := s.cellbuf.Bounds(); old.Dx() == frameArea.Dx() &&
+			old.Dy() > frameArea.Dy() && frameArea.Dy() > 0 &&
+			old.Dy() <= s.height {
+			drawOffset = old.Dy() - frameArea.Dy()
+		}
+	}
+	bufArea := frameArea
+	bufArea.Max.Y += drawOffset
+
 	// Restore tab stops if we have tab optimizations enabled.
 	if s.starting && s.hardTabs {
 		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
-	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && bufArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return nil
 	}
@@ -332,7 +350,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	s.starting = false
 	s.pendingErase = false
 
-	if frameArea != s.cellbuf.Bounds() {
+	if bufArea != s.cellbuf.Bounds() {
 		s.scr.Erase() // Force a full redraw to avoid artifacts.
 
 		// We need to reset the touched lines buffer to match the new height.
@@ -342,13 +360,15 @@ func (s *cursedRenderer) flush(closing bool) error {
 		// to ensure that the screen buffer is the same size as the frame area
 		// and to avoid rendering issues when the frame area is smaller than
 		// the screen buffer.
-		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
+		s.cellbuf.Resize(bufArea.Dx(), bufArea.Dy())
 	}
 
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
 	s.cellbuf.Clear()
-	content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	drawArea := s.cellbuf.Bounds()
+	drawArea.Min.Y += drawOffset
+	content.Draw(s.cellbuf, drawArea)
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
