@@ -34,6 +34,7 @@ type cursedRenderer struct {
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	viewStale     bool // a resize occurred and we are waiting for render() to supply the new View
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
 }
 
@@ -296,6 +297,10 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 func (s *cursedRenderer) flush(closing bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if !closing && s.viewStale {
+		return nil
+	}
 
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
@@ -644,6 +649,7 @@ func (s *cursedRenderer) render(v View) {
 	defer s.mu.Unlock()
 
 	s.view = v
+	s.viewStale = false
 }
 
 // reset implements renderer.
@@ -691,6 +697,7 @@ func (s *cursedRenderer) resize(w, h int) {
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
 	s.pendingErase = true
+	s.viewStale = true
 	s.mu.Unlock()
 }
 
