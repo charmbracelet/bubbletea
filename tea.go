@@ -1372,9 +1372,8 @@ func (p *Program) releaseTerminal(reset bool) error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
 	if p.cancelReader != nil {
 		p.cancelReader.Cancel()
+		p.waitForReadLoop()
 	}
-
-	p.waitForReadLoop()
 
 	if p.renderer != nil {
 		p.stopRenderer(false)
