@@ -1,5 +1,4 @@
 //go:build dragonfly || freebsd
-// +build dragonfly freebsd
 
 package tea
 

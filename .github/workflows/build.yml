@@ -18,3 +18,70 @@ jobs:
       go-version: ""
       go-version-file: ./examples/go.mod
       working-directory: ./examples
+
+  test-wasm:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { goos: wasip1, goarch: wasm }
+          - { goos: js,     goarch: wasm }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: ./go.mod
+          cache: true
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+        if: matrix.target.goos == 'wasip1'
+      - name: Add Go's wasm exec wrappers to PATH
+        run: echo "$(go env GOROOT)/lib/wasm" >> "$GITHUB_PATH"
+      - name: Test on ${{ matrix.target.goos }}/${{ matrix.target.goarch }}
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+        run: go test ./...
+
+  build-examples-wasm:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { goos: wasip1, goarch: wasm }
+          - { goos: js,     goarch: wasm }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: ./examples/go.mod
+          cache: true
+      - name: Check Go modules are tidy
+        working-directory: ./examples
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Build examples for ${{ matrix.target.goos }}/${{ matrix.target.goarch }}
+        working-directory: ./examples
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+        run: |
+          fail=0
+          for d in */; do
+            d="${d%/}"
+            ls "$d"/*.go >/dev/null 2>&1 || continue
+            # atotto/clipboard has no wasm implementation, so examples that
+            # depend on it (e.g. via bubbles/textinput) cannot build.
+            if go list -deps ./"$d" | grep -qx github.com/atotto/clipboard; then
+              echo "skip $d (depends on atotto/clipboard)"
+              continue
+            fi
+            echo "build $d"
+            if ! go build -o /dev/null ./"$d"; then
+              fail=1
+            fi
+          done
+          exit $fail

@@ -1,5 +1,4 @@
 //go:build darwin || linux || solaris || aix
-// +build darwin linux solaris aix
 
 package tea
 
