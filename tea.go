@@ -522,6 +522,8 @@ type Program struct {
 
 	msgs         chan Msg
 	errs         chan error
+	writeErr     error // first error writing to the output; guarded by writeErrMu
+	writeErrMu   sync.Mutex
 	finished     chan struct{}
 	shutdownOnce sync.Once
 
@@ -1202,6 +1204,11 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Restore terminal state.
 	p.shutdown(killed)
 
+	if err == nil {
+		// Report a failure to write to the output, if there was one.
+		err = p.firstWriteErr()
+	}
+
 	return model, err
 }
 
@@ -1282,6 +1289,27 @@ func (p *Program) flush() error {
 		return fmt.Errorf("error writing to output: %w", err)
 	}
 	return nil
+}
+
+// keepWriteErr remembers err as the error to return from [Program.Run] if it
+// is the first error writing to the output. Later errors are dropped so they
+// do not hide the first one.
+func (p *Program) keepWriteErr(err error) {
+	if err == nil {
+		return
+	}
+	p.writeErrMu.Lock()
+	defer p.writeErrMu.Unlock()
+	if p.writeErr == nil {
+		p.writeErr = err
+	}
+}
+
+// firstWriteErr returns the first error kept by keepWriteErr.
+func (p *Program) firstWriteErr() error {
+	p.writeErrMu.Lock()
+	defer p.writeErrMu.Unlock()
+	return p.writeErr
 }
 
 // shutdown performs operations to free up resources and restore the terminal
@@ -1462,8 +1490,8 @@ func (p *Program) startRenderer() {
 				return
 
 			case <-p.ticker.C:
-				_ = p.flush()
-				_ = p.renderer.flush(false)
+				p.keepWriteErr(p.flush())
+				p.keepWriteErr(p.renderer.flush(false))
 			}
 		}
 	}()
@@ -1480,8 +1508,8 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_ = p.renderer.flush(true)
+		p.keepWriteErr(p.renderer.flush(true))
 	}
 
-	_ = p.renderer.close()
+	p.keepWriteErr(p.renderer.close())
 }
