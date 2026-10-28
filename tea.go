@@ -562,6 +562,11 @@ type Program struct {
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
 
+	// renderNow asks the renderer to flush at once instead of at the next
+	// tick: sent after an input message's update is rendered, so typed
+	// characters reach the terminal without waiting up to one frame period.
+	renderNow chan struct{}
+
 	// Initial window size. Mainly used for testing.
 	width, height int
 
@@ -620,6 +625,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
 		rendererDone: make(chan struct{}),
+		renderNow:    make(chan struct{}, 1),
 	}
 
 	// Apply all options to the program.
@@ -899,6 +905,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.renderer.setColorProfile(msg.Profile)
 			}
 
+			input := isInputMsg(msg)
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
 
@@ -909,8 +916,24 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			p.render(model) // render view
+			if input {
+				select {
+				case p.renderNow <- struct{}{}:
+				default: // a flush is already pending
+				}
+			}
 		}
 	}
+}
+
+// isInputMsg reports whether msg is user input whose effect should be shown
+// at once rather than at the next frame tick.
+func isInputMsg(msg Msg) bool {
+	switch msg.(type) {
+	case KeyPressMsg, KeyReleaseMsg, PasteMsg, PasteStartMsg, PasteEndMsg, MouseClickMsg, MouseReleaseMsg, MouseWheelMsg, MouseMotionMsg:
+		return true
+	}
+	return false
 }
 
 // render renders the given view to the renderer.
@@ -1462,6 +1485,10 @@ func (p *Program) startRenderer() {
 				return
 
 			case <-p.ticker.C:
+				_ = p.flush()
+				_ = p.renderer.flush(false)
+
+			case <-p.renderNow:
 				_ = p.flush()
 				_ = p.renderer.flush(false)
 			}
