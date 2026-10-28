@@ -122,8 +122,16 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	}
 
 	// Have the program re-capture input.
-	err := p.RestoreTerminal()
+	restoreErr := p.RestoreTerminal()
+	if restoreErr != nil {
+		// If we couldn't restore terminal, signal the error but still report
+		// the command result to the callback. The callback may want to know both.
+		select {
+		case p.errs <- restoreErr:
+		default:
+		}
+	}
 	if fn != nil {
-		go p.Send(fn(err))
+		go p.Send(fn(nil))
 	}
 }
