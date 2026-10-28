@@ -533,6 +533,28 @@ func TestTeaSend(t *testing.T) {
 
 	// sending a message after program has quit is a no-op
 	p.Send(Quit())
+
+	// Printing after the program has quit must also be a no-op. These helpers
+	// previously sent directly to the undrained messages channel and blocked
+	// the caller forever.
+	for name, print := range map[string]func(){
+		"Println": func() { p.Println("after exit") },
+		"Printf":  func() { p.Printf("after %s", "exit") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			done := make(chan struct{})
+			go func() {
+				print()
+				close(done)
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+				t.Fatal("print helper blocked after program exit")
+			}
+		})
+	}
 }
 
 func TestTeaNoRun(t *testing.T) {
