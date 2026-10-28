@@ -614,6 +614,44 @@ func TestTeaGoroutinePanic(t *testing.T) {
 	}
 }
 
+// flushPanicRenderer panics on every non-closing flush, simulating a renderer
+// crash inside the ticker goroutine started by startRenderer.
+type flushPanicRenderer struct {
+	nilRenderer
+}
+
+func (flushPanicRenderer) flush(closing bool) error {
+	if !closing {
+		panic("flushPanicRenderer")
+	}
+	return nil
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1848
+func TestTeaRendererFlushPanic(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &testModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+		WithoutSignals(),
+	)
+	p.renderer = flushPanicRenderer{}
+
+	_, err := p.Run()
+
+	if !errors.Is(err, ErrProgramPanic) {
+		t.Fatalf("Expected %v, got %v", ErrProgramPanic, err)
+	}
+
+	if !errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("Expected %v, got %v", ErrProgramKilled, err)
+	}
+}
+
 type benchModel struct {
 	t testing.TB
 }
