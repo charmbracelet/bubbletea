@@ -157,7 +157,7 @@ func (s *cursedRenderer) start() {
 		setProgressBar(s, s.lastView.ProgressBar)
 	}
 	if s.lastView.ProgramStatus != nil {
-		setProgramStatus(s, nil, s.lastView.ProgramStatus)
+		setProgramStatus(s, s.lastView.ProgramStatus)
 	}
 	if !s.noInput {
 		// Enable modifyOtherKeys and Kitty keyboard protocol.
@@ -248,9 +248,11 @@ func (s *cursedRenderer) close() (err error) {
 		if lv.ProgressBar != nil && lv.ProgressBar.State != ProgressBarNone {
 			_, _ = s.scr.WriteString(ansi.ResetProgressBar)
 		}
-		// Unlike the progress bar, the program status is left in place: done
-		// and error reports should outlive the program, and terminals drop
-		// working and blocked records when the process exits.
+		// Done and error should outlive the program; anything else would go
+		// stale. start re-sends the status after a suspend or exec.
+		if ps := lv.ProgramStatus; ps != nil && ps.State != ProgramStateDone && ps.State != ProgramStateError {
+			_, _ = s.scr.WriteString(ansi.ClearProgramStatus)
+		}
 	}
 
 	if s.cellbuf.Method == ansi.GraphemeWidth {
@@ -518,7 +520,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		lps = s.lastView.ProgramStatus
 	}
 	if !programStatusEquals(lps, view.ProgramStatus) {
-		setProgramStatus(s, lps, view.ProgramStatus)
+		setProgramStatus(s, view.ProgramStatus)
 	}
 
 	// Render and queue changes to the screen buffer.
@@ -872,15 +874,14 @@ func programStatusEquals(a, b *ProgramStatus) bool {
 	return *a == *b
 }
 
-// setProgramStatus reports cur to the terminal. When cur is nil, or addresses
-// a different record than prev, the record of prev is cleared first.
-func setProgramStatus(s *cursedRenderer, prev, cur *ProgramStatus) {
-	if prev != nil && (cur == nil || cur.ID != prev.ID) {
-		_, _ = s.scr.WriteString(ansi.ClearProgramStatusID(prev.ID))
+// setProgramStatus reports ps, or clears it when ps is nil. An invalid status
+// encodes to nothing, so the previous report stays.
+func setProgramStatus(s *cursedRenderer, ps *ProgramStatus) {
+	if ps == nil {
+		_, _ = s.scr.WriteString(ansi.ClearProgramStatus)
+		return
 	}
-	if cur != nil {
-		_, _ = s.scr.WriteString(ansi.SetProgramStatus(*cur))
-	}
+	_, _ = s.scr.WriteString(ansi.SetProgramStatus(ps.toANSI()))
 }
 
 func viewEquals(a, b *View) bool {
