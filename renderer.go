@@ -25,8 +25,10 @@ type renderer interface {
 	// render renders a frame to the output.
 	render(View)
 
-	// flush flushes the renderer's buffer to the output.
-	flush(closing bool) error
+	// flush flushes the renderer's buffer to the output. It reports whether
+	// there was anything to draw, so the caller can tell an idle screen from
+	// an active one.
+	flush(closing bool) (bool, error)
 
 	// reset resets the renderer's state to its initial state.
 	reset()
