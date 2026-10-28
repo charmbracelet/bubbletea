@@ -791,7 +791,12 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	lines := strings.Split(str, "\n")
 	offset := len(lines)
 	for _, line := range lines {
-		lineWidth := ansi.StringWidth(line)
+		// Measure with the active screen buffer's width method: when the
+		// terminal doesn't enable Unicode-core mode the buffer stays on
+		// WcWidth, and grapheme semantics would count a different number of
+		// wrapped lines than the renderer. See
+		// https://github.com/charmbracelet/bubbletea/issues/1802.
+		lineWidth := s.cellbuf.WidthMethod().StringWidth(line)
 		if w > 0 && lineWidth > w {
 			offset += (lineWidth / w)
 		}
