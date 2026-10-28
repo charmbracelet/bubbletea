@@ -20,6 +20,8 @@ type cursedRenderer struct {
 	buf           bytes.Buffer // updates buffer to be flushed to [w]
 	scr           *uv.TerminalRenderer
 	cellbuf       uv.ScreenBuffer
+	framebuf      frameBuffer // scratch: the new frame, drawn before it is diffed into cellbuf
+	fullRedraw    bool        // redraw every line, as upstream does (tests compare the two)
 	lastView      *View
 	env           []string
 	term          string // the terminal type $TERM
@@ -347,8 +349,12 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	// Clear our screen buffer before copying the new frame into it to ensure
 	// we erase any old content.
-	s.cellbuf.Clear()
-	content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	if s.fullRedraw {
+		s.cellbuf.Clear()
+		content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	} else {
+		s.drawChangedLines(content)
+	}
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
@@ -945,3 +951,73 @@ func keyboardEnhancementsFlags(ke KeyboardEnhancements) int {
 	}
 	return flags
 }
+
+// maxChangedLines is how many changed lines drawChangedLines diffs alone; a
+// frame that changes more (scrolling output, a new screen) is diffed whole.
+const maxChangedLines = 8
+
+// drawChangedLines draws the frame into a scratch buffer and copies it into
+// the screen buffer. When only a few lines changed (a keystroke changes one or
+// two), only those lines are marked as touched, so the
+// terminal renderer diffs them instead of every line of the screen. The
+// terminal ends up showing the same screen as after a full redraw (see
+// TestCursedRenderer_changedLinesMatchFullRedraw). When more than
+// maxChangedLines lines changed, every line is marked, as a full redraw does.
+func (s *cursedRenderer) drawChangedLines(content *uv.StyledString) {
+	if s.framebuf.Buffer == nil || s.framebuf.Bounds() != s.cellbuf.Bounds() {
+		s.framebuf.Buffer = uv.NewBuffer(s.cellbuf.Width(), s.cellbuf.Height())
+	}
+	s.framebuf.method = s.cellbuf.Method
+	content.Draw(s.framebuf, s.framebuf.Bounds())
+
+	var changed [maxChangedLines]int
+	n := 0
+	for y, nl := range s.framebuf.Lines {
+		if lineEqual(s.cellbuf.Lines[y], nl) {
+			continue
+		}
+		if n == maxChangedLines {
+			s.copyFrame()
+			return
+		}
+		changed[n] = y
+		n++
+	}
+	w := s.cellbuf.Width()
+	for _, y := range changed[:n] {
+		copy(s.cellbuf.Lines[y], s.framebuf.Lines[y])
+		s.cellbuf.TouchLine(0, y, w) // the terminal renderer re-diffs a touched line whole
+	}
+}
+
+// copyFrame copies the whole scratch frame into the screen buffer and marks
+// every line as touched: what clearing it and drawing the frame into it does.
+func (s *cursedRenderer) copyFrame() {
+	w := s.cellbuf.Width()
+	for y, nl := range s.framebuf.Lines {
+		copy(s.cellbuf.Lines[y], nl)
+		s.cellbuf.TouchLine(0, y, w)
+	}
+}
+
+func lineEqual(a, b uv.Line) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for x := range a {
+		if !a[x].Equal(&b[x]) {
+			return false
+		}
+	}
+	return true
+}
+
+// frameBuffer is a plain cell buffer used as a [uv.Screen]: the frame is
+// drawn into it without the change tracking of a [uv.RenderBuffer].
+type frameBuffer struct {
+	*uv.Buffer
+	method ansi.Method
+}
+
+// WidthMethod returns the width method used to measure the cells.
+func (f frameBuffer) WidthMethod() uv.WidthMethod { return f.method }
