@@ -1293,16 +1293,7 @@ func (p *Program) shutdown(kill bool) {
 		// Wait for all handlers to finish.
 		p.handlers.shutdown()
 
-		// Check if the cancel reader has been setup before waiting and closing.
-		if p.cancelReader != nil {
-			// Wait for input loop to finish.
-			if p.cancelReader.Cancel() {
-				if !kill {
-					p.waitForReadLoop()
-				}
-			}
-			_ = p.cancelReader.Close()
-		}
+		p.shutdownInput()
 
 		if p.renderer != nil {
 			p.stopRenderer(kill)
