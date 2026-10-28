@@ -23,6 +23,25 @@ func ClearScreen() Msg {
 // You can send a clearScreenMsg with ClearScreen.
 type clearScreenMsg struct{}
 
+// Repaint tells the renderer to recover from external terminal damage.
+// Unlike [ClearScreen], which only erases the buffered screen, Repaint
+// re-enters the modes implied by the current view (alternate screen, cursor,
+// mouse, bracketed paste, keyboard enhancements), drops cell-diff
+// assumptions, and forces the next flush to emit a full frame even if the
+// logical view is unchanged.
+//
+// Use it after a child process or another writer has mutated the tty behind
+// the program's back. [Program.RestoreTerminal] does the same work as part
+// of the release/restore lifecycle; Repaint is the in-loop equivalent that
+// does not leave the alternate screen.
+func Repaint() Msg {
+	return repaintMsg{}
+}
+
+// repaintMsg is an internal message that signals the renderer to recover
+// modes and force a full redraw. Send it with [Repaint].
+type repaintMsg struct{}
+
 // ModeReportMsg is a message that represents a mode report event (DECRPM).
 //
 // This is sent by the terminal in response to a request for a terminal mode
