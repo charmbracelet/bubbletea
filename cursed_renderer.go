@@ -8,10 +8,12 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/colorprofile"
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/ansi/parser"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -36,11 +38,13 @@ type cursedRenderer struct {
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
 
-	// rows are the last frame's lines, kept while each one ends with its
-	// styles reset and no hyperlink open: drawn on its own then, a row comes
-	// out as it does in the whole frame, so only the rows that changed are
-	// drawn again. Nil for a frame whose rows cannot be drawn apart.
-	rows []string
+	// rows are the last alt screen frame's lines, and checked reports that
+	// each one is independent (independentRow): drawn on its own then, a row
+	// comes out as it does in the whole frame, so only the rows that changed
+	// are drawn again.
+	rows    []string
+	checked bool
+	failed  int // the row that failed the check, -1 for none
 }
 
 var _ renderer = &cursedRenderer{}
@@ -52,6 +56,7 @@ func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedR
 	s.term = uv.Environ(env).Getenv("TERM")
 	s.width, s.height = width, height // This needs to happen before [cursedRenderer.reset].
 	s.cellbuf = uv.NewScreenBuffer(s.width, s.height)
+	s.failed = -1
 	reset(s)
 	return
 }
@@ -354,16 +359,41 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	// A frame of independent rows over one of the same shape draws only the
 	// rows that changed: the others are in the buffer already, untouched, so
-	// the renderer does not diff them either.
-	rows := strings.Split(view.Content, "\n")
-	if !independentRows(rows) {
-		rows = nil
+	// the renderer does not diff them either. A frame most of whose rows
+	// changed is drawn whole, unchecked: drawing its rows one by one would
+	// cost as much, and checking them more.
+	var rows []string
+	var checked bool
+	failed := -1
+	if view.AltScreen && !closing {
+		rows = strings.Split(view.Content, "\n")
+		switch f := s.failed; {
+		case changedRows(rows, s.rows) > len(rows)/2:
+		case f >= 0 && rows[f] == s.rows[f]: // it fails again
+			failed = f
+		default:
+			checked = true
+			for y, row := range rows {
+				if (!s.checked || row != s.rows[y]) && !independentRow(row, s.cellbuf.Method, y == len(rows)-1) {
+					checked, failed = false, y
+					break
+				}
+			}
+		}
 	}
 
-	if !resized && !closing && view.AltScreen && rows != nil && len(rows) == len(s.rows) && len(rows) <= s.cellbuf.Height() {
+	// The rows kept must have been drawn from checked rows too: a frame drawn
+	// whole and unchecked may have carried something from one row into the
+	// next, which drawing a row apart would not undo.
+	if checked && s.checked && !resized && len(rows) == len(s.rows) && len(rows) <= s.cellbuf.Height() {
 		w := s.cellbuf.Width()
 		for y, row := range rows {
 			if row != s.rows[y] {
+				// The row is diffed whole anyway, so it is touched whole
+				// first: a buffer that skips comparing a cell inside a
+				// touched span then compares none of its cells as they are
+				// drawn.
+				s.cellbuf.TouchLine(0, y, w)
 				uv.NewStyledString(row).Draw(s.cellbuf, uv.Rect(0, y, w, 1))
 			}
 		}
@@ -374,7 +404,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		content.Draw(s.cellbuf, s.cellbuf.Bounds())
 	}
 
-	s.rows = rows
+	s.rows, s.checked, s.failed = rows, checked, failed
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
@@ -791,7 +821,7 @@ func (s *cursedRenderer) setWidthMethod(method ansi.Method) {
 		_, _ = s.scr.WriteString(ansi.ResetModeUnicodeCore)
 	}
 	s.cellbuf.Method = method
-	s.rows = nil // the rows measure differently: draw the next frame whole
+	s.checked, s.failed = false, -1 // the rows measure differently: check them again
 	s.mu.Unlock()
 }
 
@@ -973,31 +1003,68 @@ func keyboardEnhancementsFlags(ke KeyboardEnhancements) int {
 	return flags
 }
 
-// independentRows reports whether each row ends with its styles reset and
-// no hyperlink open, so that it draws the same on its own as after the rows
-// above it. The last row may end any way: no row follows it.
-func independentRows(rows []string) bool {
-	for _, row := range rows[:len(rows)-1] {
-		if !strings.HasSuffix(row, "\x1b[m") && !strings.HasSuffix(row, "\x1b[0m") {
-			return false
-		}
-		if i := strings.LastIndex(row, "\x1b]8;"); i >= 0 && !linkClosed(row[i+len("\x1b]8;"):]) {
-			return false
-		}
-		if strings.ContainsRune(row, '\r') {
-			return false
-		}
+// independentRow reports whether row, drawn on its own, comes out as it
+// does after the rows above it: read as the screen buffer reads it, with
+// width method m, it is valid UTF-8, carries no sequence that waits for a
+// cell, has no zero-width mark before its first character, which would join
+// the last cell drawn on the row above, and, unless it is the last row,
+// leaves no style, hyperlink or sequence open for the next one.
+func independentRow(row string, m ansi.Method, last bool) bool {
+	if !utf8.ValidString(row) {
+		return false // a cut-off rune groups with what follows it: the row's end, or the newline before the next row
 	}
-	return true
+
+	decode := ansi.DecodeSequenceWc[string]
+	if m == ansi.GraphemeWidth {
+		decode = ansi.DecodeSequence[string]
+	}
+
+	p := ansi.GetParser()
+	defer ansi.PutParser(p)
+
+	var style uv.Style
+	var link uv.Link
+	var state byte
+	var printed bool
+	for len(row) > 0 {
+		// Printable ASCII opens nothing: it is skipped a run at a time.
+		if state == parser.GroundState && row[0] >= 0x20 && row[0] < 0x7f {
+			n := 1
+			for n < len(row) && row[n] >= 0x20 && row[n] < 0x7f {
+				n++
+			}
+			row, printed = row[n:], true
+			continue
+		}
+		seq, width, n, newState := decode(row, state, p)
+		switch {
+		case width > 0:
+			printed = true
+		case ansi.HasCsiPrefix(seq) && p.Command() == 'm':
+			uv.ReadStyle(p.Params(), &style)
+		case ansi.HasOscPrefix(seq) && p.Command() == 8:
+			uv.ReadLink(p.Data(), &link)
+		case ansi.HasApcPrefix(seq) || ansi.HasDcsPrefix(seq) || ansi.HasSosPrefix(seq) || ansi.HasPmPrefix(seq):
+			return false // it rides on the next cell, or with none after it the last one drawn: either may be another row's
+		case !printed && len(seq) > 0 && seq[0] >= 0xc0:
+			return false // a mark the last cell drawn takes, on the row above
+		}
+		state, row = newState, row[n:]
+	}
+	return last || state == parser.GroundState && style.IsZero() && link.IsZero()
 }
 
-// linkClosed reports whether an OSC 8 sequence, s after its "8;", closes
-// the hyperlink: its URI, after the parameters, is empty.
-func linkClosed(s string) bool {
-	i := strings.IndexByte(s, ';')
-	if i < 0 {
-		return false
+// changedRows is how many of rows differ from was, row for row: all of them
+// when the frame changed shape.
+func changedRows(rows, was []string) int {
+	if len(rows) != len(was) {
+		return len(rows)
 	}
-	s = s[i+1:]
-	return strings.HasPrefix(s, "\x07") || strings.HasPrefix(s, "\x1b\\")
+	n := 0
+	for y := range rows {
+		if rows[y] != was[y] {
+			n++
+		}
+	}
+	return n
 }

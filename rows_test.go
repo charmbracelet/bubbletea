@@ -4,25 +4,42 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
 	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // rowsFrame is a full-screen frame of styled rows, each closing its styles
-// and hyperlinks, with wide runes in some; the rows in dirty end open.
+// and hyperlinks, with wide runes in some; the rows in dirty carry one of
+// the things a row drawn on its own would leave out: a style or a link left
+// open, a sequence waiting for a cell, a mark for the row above.
 func rowsFrame(rng *rand.Rand, w, h int, dirty map[int]bool) string {
 	words := []string{"plain", "\x1b[1mbold\x1b[m", "\x1b[38;5;196mred\x1b[m", "世界", "\x1b]8;;https://x.y\x07link\x1b]8;;\x07", "😀", "\x1b[48;2;10;20;30m bg \x1b[m"}
+	open := []string{"\x1b[7mopen", "\x1b]8;;https://x.y\x07open", "\x9d8;;https://x.y\x9copen", "\x1b]8;id=1;\x07", "\x1b_Gx\x1b\\", "\x1b[1", "\x1b]0;title", "\xe4\xb8\x96\xe7"}
 	rows := make([]string, h)
 	for y := range rows {
+		k := -1 // the row's flaw: one of open, or the mark when len(open)
+		if dirty[y] {
+			k = rng.IntN(len(open) + 1)
+		}
+		if k == len(open) && rng.IntN(3) == 0 { // a row of nothing but a sequence waiting for a cell
+			rows[y] = "\x1b_Gx\x1b\\"
+			continue
+		}
 		var b strings.Builder
+		if k == len(open) {
+			b.WriteString("\u0301")
+		}
 		for n := 0; n < w; n += 6 {
 			b.WriteString(words[rng.IntN(len(words))])
 			b.WriteByte(' ')
 		}
-		if dirty[y] {
-			b.WriteString("\x1b[7mopen")
+		if k >= 0 && k < len(open) {
+			b.WriteString(open[k])
 		} else {
 			b.WriteString("\x1b[m")
 		}
@@ -32,70 +49,100 @@ func rowsFrame(rng *rand.Rand, w, h int, dirty map[int]bool) string {
 }
 
 // TestCursedRenderer_changedRows: a frame that redraws only its changed rows
-// leaves the buffer as a frame drawn whole does, whether its rows can be
-// drawn apart or not, and when they scrolled.
+// leaves the buffer as a frame drawn whole does, cell for cell, whether its
+// rows can be drawn apart or not, and when they scrolled, under either width
+// method.
 func TestCursedRenderer_changedRows(t *testing.T) {
 	t.Parallel()
 
-	const w, h = 60, 12
-	rng := rand.New(rand.NewPCG(1, 2))
-	r := newCursedRenderer(io.Discard, []string{"TERM=xterm-256color"}, w, h)
-	r.start()
+	for _, m := range []ansi.Method{ansi.WcWidth, ansi.GraphemeWidth} {
+		const w, h = 60, 12
+		rng := rand.New(rand.NewPCG(1, 2))
+		r := newCursedRenderer(io.Discard, []string{"TERM=xterm-256color"}, w, h)
+		r.start()
+		r.setWidthMethod(m)
 
-	rows := strings.Split(rowsFrame(rng, w, h, nil), "\n")
-	for i := range 200 {
-		for range rng.IntN(3) + 1 { // a few rows change, the rest stay
-			y := rng.IntN(h)
-			rows[y] = strings.Split(rowsFrame(rng, w, h, map[int]bool{y: i%7 == 0}), "\n")[y]
-		}
-		if i%5 == 0 { // or scroll, by one row or a few, either way
-			n := rng.IntN(h-1) + 1
-			rows = append(rows[n:], rows[:n]...)
-		}
+		rows := strings.Split(rowsFrame(rng, w, h, nil), "\n")
+		for i := range 1500 {
+			for range rng.IntN(3) + 1 { // a few rows change, the rest stay
+				y := rng.IntN(h)
+				rows[y] = strings.Split(rowsFrame(rng, w, h, map[int]bool{y: i%7 == 0}), "\n")[y]
+			}
+			if i%5 == 0 { // or scroll, by one row or a few, either way
+				n := rng.IntN(h-1) + 1
+				rows = append(rows[n:], rows[:n]...)
+			}
 
-		v := NewView(strings.Join(rows, "\n"))
-		v.AltScreen = true
-		r.render(v)
-		if err := r.flush(false); err != nil {
-			t.Fatal(err)
-		}
+			v := NewView(strings.Join(rows, "\n"))
+			v.AltScreen = true
+			r.render(v)
+			if err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
 
-		want := uv.NewScreenBuffer(w, h)
-		uv.NewStyledString(v.Content).Draw(want, want.Bounds())
-		for y := range h {
-			if got, exp := r.cellbuf.Line(y).Render(), want.Line(y).Render(); got != exp {
-				t.Fatalf("frame %d, row %d:\n got %q\nwant %q", i, y, got, exp)
+			want := uv.NewScreenBuffer(w, h)
+			want.Method = m
+			uv.NewStyledString(v.Content).Draw(want, want.Bounds())
+			for y := range h {
+				if got, exp := r.cellbuf.Line(y), want.Line(y); !reflect.DeepEqual(got, exp) {
+					t.Fatalf("method %d, frame %d, row %d:\n got %q\nwant %q", m, i, y, got.Render(), exp.Render())
+				}
 			}
 		}
 	}
 }
 
-// BenchmarkCursedRenderer_changedRows flushes a 220x55 frame of styled rows,
-// two of which change each time.
+// BenchmarkCursedRenderer_changedRows flushes a 220x55 frame of styled rows:
+// two rows changed each time, in the alt screen, without and with a row that
+// is never independent, and every row moved by a scroll, in the alt screen
+// and inline.
 func BenchmarkCursedRenderer_changedRows(b *testing.B) {
 	const w, h = 220, 55
 	rng := rand.New(rand.NewPCG(1, 2))
-	r := newCursedRenderer(io.Discard, []string{"TERM=xterm-256color"}, w, h)
-	r.start()
+	first := strings.Split(rowsFrame(rng, w, h, nil), "\n")
 
-	rows := strings.Split(rowsFrame(rng, w, h, nil), "\n")
-	frames := make([]string, 16)
-	for i := range frames {
+	two, scrolled := make([]string, 16), make([]string, 16)
+	rows := slices.Clone(first)
+	for i := range two {
 		for _, y := range []int{rng.IntN(h), rng.IntN(h)} {
 			rows[y] = fmt.Sprintf("\x1b[1m%d\x1b[m %s", i, rows[(y+1)%h])
 		}
-		frames[i] = strings.Join(rows, "\n")
+		two[i] = strings.Join(rows, "\n")
+	}
+	stuck := make([]string, 16) // two rows change, and a row with an image stays
+	rows = slices.Clone(first)
+	rows[h-3] = "\x1b_Ga=p,i=1\x1b\\" + rows[h-3]
+	for i := range stuck {
+		for _, y := range []int{rng.IntN(h - 4), rng.IntN(h - 4)} {
+			rows[y] = fmt.Sprintf("\x1b[1m%d\x1b[m %s", i, rows[(y+1)%h])
+		}
+		stuck[i] = strings.Join(rows, "\n")
+	}
+	rows = slices.Clone(first)
+	for i := range scrolled {
+		rows = append(rows[1:], fmt.Sprintf("\x1b[1m%d\x1b[m %s", i, rows[0]))
+		scrolled[i] = strings.Join(rows, "\n")
 	}
 
-	b.ReportAllocs()
-	i := 0
-	for b.Loop() {
-		v := NewView(frames[i%len(frames)])
-		v.AltScreen = true
-		r.render(v)
-		if err := r.flush(false); err != nil {
-			b.Fatal(err)
-		}
-		i++
+	for _, c := range []struct {
+		name   string
+		frames []string
+		alt    bool
+	}{{"two rows", two, true}, {"two rows, an image kept", stuck, true}, {"scroll", scrolled, true}, {"scroll inline", scrolled, false}} {
+		b.Run(c.name, func(b *testing.B) {
+			r := newCursedRenderer(io.Discard, []string{"TERM=xterm-256color"}, w, h)
+			r.start()
+			b.ReportAllocs()
+			i := 0
+			for b.Loop() {
+				v := NewView(c.frames[i%len(c.frames)])
+				v.AltScreen = c.alt
+				r.render(v)
+				if err := r.flush(false); err != nil {
+					b.Fatal(err)
+				}
+				i++
+			}
+		})
 	}
 }
