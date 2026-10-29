@@ -35,6 +35,12 @@ type cursedRenderer struct {
 	starting      bool // indicates whether the renderer is starting after being stopped
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+
+	// rows are the last frame's lines, kept while each one ends with its
+	// styles reset and no hyperlink open: drawn on its own then, a row comes
+	// out as it does in the whole frame, so only the rows that changed are
+	// drawn again. Nil for a frame whose rows cannot be drawn apart.
+	rows []string
 }
 
 var _ renderer = &cursedRenderer{}
@@ -332,7 +338,8 @@ func (s *cursedRenderer) flush(closing bool) error {
 	s.starting = false
 	s.pendingErase = false
 
-	if frameArea != s.cellbuf.Bounds() {
+	resized := frameArea != s.cellbuf.Bounds()
+	if resized {
 		s.scr.Erase() // Force a full redraw to avoid artifacts.
 
 		// We need to reset the touched lines buffer to match the new height.
@@ -345,10 +352,29 @@ func (s *cursedRenderer) flush(closing bool) error {
 		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
 	}
 
-	// Clear our screen buffer before copying the new frame into it to ensure
-	// we erase any old content.
-	s.cellbuf.Clear()
-	content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	// A frame of independent rows over one of the same shape draws only the
+	// rows that changed: the others are in the buffer already, untouched, so
+	// the renderer does not diff them either.
+	rows := strings.Split(view.Content, "\n")
+	if !independentRows(rows) {
+		rows = nil
+	}
+
+	if !resized && !closing && view.AltScreen && rows != nil && len(rows) == len(s.rows) && len(rows) <= s.cellbuf.Height() {
+		w := s.cellbuf.Width()
+		for y, row := range rows {
+			if row != s.rows[y] {
+				uv.NewStyledString(row).Draw(s.cellbuf, uv.Rect(0, y, w, 1))
+			}
+		}
+	} else {
+		// Clear our screen buffer before copying the new frame into it to
+		// ensure we erase any old content.
+		s.cellbuf.Clear()
+		content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	}
+
+	s.rows = rows
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
@@ -765,6 +791,7 @@ func (s *cursedRenderer) setWidthMethod(method ansi.Method) {
 		_, _ = s.scr.WriteString(ansi.ResetModeUnicodeCore)
 	}
 	s.cellbuf.Method = method
+	s.rows = nil // the rows measure differently: draw the next frame whole
 	s.mu.Unlock()
 }
 
@@ -944,4 +971,33 @@ func keyboardEnhancementsFlags(ke KeyboardEnhancements) int {
 		flags |= ansi.KittyReportAssociatedKeys
 	}
 	return flags
+}
+
+// independentRows reports whether each row ends with its styles reset and
+// no hyperlink open, so that it draws the same on its own as after the rows
+// above it. The last row may end any way: no row follows it.
+func independentRows(rows []string) bool {
+	for _, row := range rows[:len(rows)-1] {
+		if !strings.HasSuffix(row, "\x1b[m") && !strings.HasSuffix(row, "\x1b[0m") {
+			return false
+		}
+		if i := strings.LastIndex(row, "\x1b]8;"); i >= 0 && !linkClosed(row[i+len("\x1b]8;"):]) {
+			return false
+		}
+		if strings.ContainsRune(row, '\r') {
+			return false
+		}
+	}
+	return true
+}
+
+// linkClosed reports whether an OSC 8 sequence, s after its "8;", closes
+// the hyperlink: its URI, after the parameters, is empty.
+func linkClosed(s string) bool {
+	i := strings.IndexByte(s, ';')
+	if i < 0 {
+		return false
+	}
+	s = s[i+1:]
+	return strings.HasPrefix(s, "\x07") || strings.HasPrefix(s, "\x1b\\")
 }
