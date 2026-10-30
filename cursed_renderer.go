@@ -385,23 +385,25 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// The rows kept must have been drawn from checked rows too: a frame drawn
 	// whole and unchecked may have carried something from one row into the
 	// next, which drawing a row apart would not undo.
+	//
+	// Either way, every line drawn is touched whole first, so the renderer
+	// diffs it whole: it is drawn into the cells alone, since comparing each
+	// cell with the one it replaces, as the screen buffer does, would decide
+	// nothing.
+	cells := &untrackedCells{s.cellbuf.Buffer, s.cellbuf.Method}
 	if checked && s.checked && !resized && len(rows) == len(s.rows) && len(rows) <= s.cellbuf.Height() {
 		w := s.cellbuf.Width()
 		for y, row := range rows {
 			if row != s.rows[y] {
-				// The row is diffed whole anyway, so it is touched whole
-				// first: a buffer that skips comparing a cell inside a
-				// touched span then compares none of its cells as they are
-				// drawn.
 				s.cellbuf.TouchLine(0, y, w)
-				uv.NewStyledString(row).Draw(s.cellbuf, uv.Rect(0, y, w, 1))
+				uv.NewStyledString(row).Draw(cells, uv.Rect(0, y, w, 1))
 			}
 		}
 	} else {
 		// Clear our screen buffer before copying the new frame into it to
 		// ensure we erase any old content.
 		s.cellbuf.Clear()
-		content.Draw(s.cellbuf, s.cellbuf.Bounds())
+		content.Draw(cells, s.cellbuf.Bounds())
 	}
 
 	s.rows, s.checked, s.failed = rows, checked, failed
@@ -1067,4 +1069,17 @@ func changedRows(rows, was []string) int {
 		}
 	}
 	return n
+}
+
+// untrackedCells is a cell buffer as a [uv.Screen], without the change
+// tracking of a [uv.RenderBuffer]: what is drawn into it is not compared with
+// what it replaces, and no line is touched.
+type untrackedCells struct {
+	*uv.Buffer
+	method ansi.Method
+}
+
+// WidthMethod returns the width method used to measure the cells.
+func (c *untrackedCells) WidthMethod() uv.WidthMethod {
+	return c.method
 }

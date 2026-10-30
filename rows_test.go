@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"math/rand/v2"
@@ -88,6 +89,44 @@ func TestCursedRenderer_changedRows(t *testing.T) {
 					t.Fatalf("method %d, frame %d, row %d:\n got %q\nwant %q", m, i, y, got.Render(), exp.Render())
 				}
 			}
+		}
+	}
+}
+
+// TestCursedRenderer_changedRowsWritten: the rows a frame changed reach the
+// terminal, whether the frame is drawn whole or row by row. They are drawn
+// into the cells without the buffer tracking them, so the renderer diffs
+// them only because their lines are touched first.
+func TestCursedRenderer_changedRowsWritten(t *testing.T) {
+	t.Parallel()
+
+	const h = 10
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 20, h)
+	r.start()
+
+	rows := make([]string, h)
+	for i, c := range []struct {
+		word    string
+		changed []int
+	}{
+		{"zero", []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}}, // the first frame, drawn whole
+		{"one", []int{0}}, // drawn whole again, its rows checked
+		{"two", []int{3}}, // drawn row by row
+		{"six", []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}}, // drawn whole
+	} {
+		for _, y := range c.changed {
+			rows[y] = fmt.Sprintf("%s %d", c.word, y)
+		}
+		out.Reset()
+		v := NewView(strings.Join(rows, "\n"))
+		v.AltScreen = true
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+		if n := strings.Count(out.String(), c.word); n != len(c.changed) {
+			t.Errorf("frame %d: %q written %d times, want %d: %q", i, c.word, n, len(c.changed), out.String())
 		}
 	}
 }
