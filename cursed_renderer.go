@@ -361,7 +361,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	// rows that changed: the others are in the buffer already, untouched, so
 	// the renderer does not diff them either. A frame more than nine in ten
 	// of whose rows changed, such as a scroll, is drawn whole, unchecked:
-	// checking a row costs about a tenth of drawing and diffing one, so the
+	// checking a row costs up to a tenth of drawing and diffing one, so the
 	// few rows kept would not pay for checking the others.
 	var rows []string
 	var checked bool
@@ -1021,6 +1021,9 @@ func independentRow(row string, m ansi.Method, last bool) bool {
 	if m == ansi.GraphemeWidth {
 		decode = ansi.DecodeSequence[string]
 	}
+	if plainRow(row, decode, last) {
+		return true
+	}
 
 	p := ansi.GetParser()
 	defer ansi.PutParser(p)
@@ -1055,6 +1058,65 @@ func independentRow(row string, m ansi.Method, last bool) bool {
 		state, row = newState, row[n:]
 	}
 	return last || state == parser.GroundState && style.IsZero() && link.IsZero()
+}
+
+// plainRow is a quick independentRow for the common row: one whose only
+// sequences are CSI sequences and hyperlinks, whose last style sequence is
+// a reset, whose last hyperlink, if any, closes one without params, and
+// whose first character is printed rather than a mark. It reports false for
+// any other row, which is then read in full.
+func plainRow(row string, decode func(string, byte, *ansi.Parser) (string, int, int, byte), last bool) bool {
+	first, reset, link := true, true, false
+	for len(row) > 0 {
+		i := strings.IndexByte(row, ansi.ESC)
+		if i != 0 && first {
+			first = false
+			if c := row[0]; c < 0x20 || c == ansi.DEL {
+				return false // a mark after a control still joins the row above
+			} else if _, width, _, _ := decode(row, parser.GroundState, nil); width == 0 {
+				return false
+			}
+		}
+		if i < 0 {
+			break
+		}
+
+		row = row[i+1:]
+		if strings.HasPrefix(row, "]8;") {
+			// A hyperlink, up to a BEL or an ST.
+			n := 1
+			for n < len(row) && row[n] >= 0x20 {
+				n++
+			}
+			link = row[:n] != "]8;;"
+			switch {
+			case n < len(row) && row[n] == ansi.BEL:
+				row = row[n+1:]
+			case strings.HasPrefix(row[n:], "\x1b\\"):
+				row = row[n+2:]
+			default:
+				return false
+			}
+			continue
+		}
+
+		// Parameter and intermediate bytes, then a final byte.
+		if len(row) == 0 || row[0] != '[' {
+			return false
+		}
+		n := 1
+		for n < len(row) && row[n] >= 0x20 && row[n] < 0x40 {
+			n++
+		}
+		if n == len(row) || row[n] < 0x40 || row[n] > 0x7e {
+			return false
+		}
+		if row[n] == 'm' {
+			reset = n == 1 || row[1:n] == "0"
+		}
+		row = row[n+1:]
+	}
+	return last || reset && !link
 }
 
 // changedRows is how many of rows differ from was, row for row: all of them

@@ -131,6 +131,44 @@ func TestCursedRenderer_changedRowsWritten(t *testing.T) {
 	}
 }
 
+// TestIndependentRow checks rows the quick read takes and rows it leaves to
+// the full one, under either width method.
+func TestIndependentRow(t *testing.T) {
+	t.Parallel()
+
+	for _, c := range []struct {
+		row  string
+		want bool
+	}{
+		{"plain \x1b[1mbold\x1b[m tail", true},
+		{"\x1b[38;2;1;2;3m│\x1b[m 世界", true},
+		{"x\x1b[?25h", true},
+		{"", true},
+		{"\x1b[1mbold\x1b[22m", true}, // the last style is no reset: read in full
+		{"x\x1b]8;;https://x.y\x07link\x1b]8;;\x07", true},
+		{"x\x1b]8;;https://x.y\x1b\\link\x1b]8;;\x1b\\y", true},
+		{"x\x1b]8;;\x07y", true},
+		{"x\x1b]0;title\x07", true},                             // an OSC other than a link: read in full
+		{"\x1b[1mbold", false},                                  // a style left open
+		{"x\x1b]8;;https://x.y\x07link", false},                 // a link left open
+		{"x\x1b]8;id=1;\x07y", false},                           // a link closed with params, which stay
+		{"x\x1b]8;;https://x.y\x1b[1m\x07\x1b]8;;\x07y", false}, // a link cut short by a sequence
+		{"x\x1b]8;;", false},                                    // a link left unterminated
+		{"x\x1b_Gx\x1b\\", false},                               // a sequence waiting for a cell
+		{"x\x1b[1", false},                                      // a sequence left open
+		{"x\x1b[0\x1b[7m", false},                               // a sequence cut short by the next
+		{"\u0301x\x1b[m", false},                                // a mark for the row above
+		{"\x1b[m\u0301x", false},                                // the same, after a sequence
+		{"\t\u0301x", false},                                    // the same, after a control
+	} {
+		for _, m := range []ansi.Method{ansi.WcWidth, ansi.GraphemeWidth} {
+			if got := independentRow(c.row, m, false); got != c.want {
+				t.Errorf("method %d, %q: %v, want %v", m, c.row, got, c.want)
+			}
+		}
+	}
+}
+
 // BenchmarkCursedRenderer_changedRows flushes a 220x55 frame of styled rows:
 // two rows changed each time, in the alt screen, without and with a row that
 // is never independent, and every row moved by a scroll, in the alt screen
