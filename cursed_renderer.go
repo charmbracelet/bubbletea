@@ -8,10 +8,12 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/colorprofile"
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/ansi/parser"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -35,6 +37,14 @@ type cursedRenderer struct {
 	starting      bool // indicates whether the renderer is starting after being stopped
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+
+	// rows are the last alt screen frame's lines, and checked reports that
+	// each one is independent (independentRow): drawn on its own then, a row
+	// comes out as it does in the whole frame, so only the rows that changed
+	// are drawn again.
+	rows    []string
+	checked bool
+	failed  int // the row that failed the check, -1 for none
 }
 
 var _ renderer = &cursedRenderer{}
@@ -46,6 +56,7 @@ func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedR
 	s.term = uv.Environ(env).Getenv("TERM")
 	s.width, s.height = width, height // This needs to happen before [cursedRenderer.reset].
 	s.cellbuf = uv.NewScreenBuffer(s.width, s.height)
+	s.failed = -1
 	reset(s)
 	return
 }
@@ -332,7 +343,8 @@ func (s *cursedRenderer) flush(closing bool) error {
 	s.starting = false
 	s.pendingErase = false
 
-	if frameArea != s.cellbuf.Bounds() {
+	resized := frameArea != s.cellbuf.Bounds()
+	if resized {
 		s.scr.Erase() // Force a full redraw to avoid artifacts.
 
 		// We need to reset the touched lines buffer to match the new height.
@@ -345,10 +357,57 @@ func (s *cursedRenderer) flush(closing bool) error {
 		s.cellbuf.Resize(frameArea.Dx(), frameArea.Dy())
 	}
 
-	// Clear our screen buffer before copying the new frame into it to ensure
-	// we erase any old content.
-	s.cellbuf.Clear()
-	content.Draw(s.cellbuf, s.cellbuf.Bounds())
+	// A frame of independent rows over one of the same shape draws only the
+	// rows that changed: the others are in the buffer already, untouched, so
+	// the renderer does not diff them either. A frame more than nine in ten
+	// of whose rows changed, such as a scroll, is drawn whole, unchecked:
+	// checking a row costs up to a tenth of drawing and diffing one, so the
+	// few rows kept would not pay for checking the others.
+	var rows []string
+	var checked bool
+	failed := -1
+	if view.AltScreen && !closing {
+		rows = strings.Split(view.Content, "\n")
+		switch f := s.failed; {
+		case changedRows(rows, s.rows)*10 > len(rows)*9:
+		case f >= 0 && rows[f] == s.rows[f]: // it fails again
+			failed = f
+		default:
+			checked = true
+			for y, row := range rows {
+				if (!s.checked || row != s.rows[y]) && !independentRow(row, s.cellbuf.Method, y == len(rows)-1) {
+					checked, failed = false, y
+					break
+				}
+			}
+		}
+	}
+
+	// The rows kept must have been drawn from checked rows too: a frame drawn
+	// whole and unchecked may have carried something from one row into the
+	// next, which drawing a row apart would not undo.
+	//
+	// Either way, every line drawn is touched whole first, so the renderer
+	// diffs it whole: it is drawn into the cells alone, since comparing each
+	// cell with the one it replaces, as the screen buffer does, would decide
+	// nothing.
+	cells := &untrackedCells{s.cellbuf.Buffer, s.cellbuf.Method}
+	if checked && s.checked && !resized && len(rows) == len(s.rows) && len(rows) <= s.cellbuf.Height() {
+		w := s.cellbuf.Width()
+		for y, row := range rows {
+			if row != s.rows[y] {
+				s.cellbuf.TouchLine(0, y, w)
+				uv.NewStyledString(row).Draw(cells, uv.Rect(0, y, w, 1))
+			}
+		}
+	} else {
+		// Clear our screen buffer before copying the new frame into it to
+		// ensure we erase any old content.
+		s.cellbuf.Clear()
+		content.Draw(cells, s.cellbuf.Bounds())
+	}
+
+	s.rows, s.checked, s.failed = rows, checked, failed
 
 	// If the frame height is greater than the screen height, we drop the
 	// lines from the top of the buffer.
@@ -765,6 +824,7 @@ func (s *cursedRenderer) setWidthMethod(method ansi.Method) {
 		_, _ = s.scr.WriteString(ansi.ResetModeUnicodeCore)
 	}
 	s.cellbuf.Method = method
+	s.checked, s.failed = false, -1 // the rows measure differently: check them again
 	s.mu.Unlock()
 }
 
@@ -944,4 +1004,145 @@ func keyboardEnhancementsFlags(ke KeyboardEnhancements) int {
 		flags |= ansi.KittyReportAssociatedKeys
 	}
 	return flags
+}
+
+// independentRow reports whether row, drawn on its own, comes out as it
+// does after the rows above it: read as the screen buffer reads it, with
+// width method m, it is valid UTF-8, carries no sequence that waits for a
+// cell, has no zero-width mark before its first character, which would join
+// the last cell drawn on the row above, and, unless it is the last row,
+// leaves no style, hyperlink or sequence open for the next one.
+func independentRow(row string, m ansi.Method, last bool) bool {
+	if !utf8.ValidString(row) {
+		return false // a cut-off rune groups with what follows it: the row's end, or the newline before the next row
+	}
+
+	decode := ansi.DecodeSequenceWc[string]
+	if m == ansi.GraphemeWidth {
+		decode = ansi.DecodeSequence[string]
+	}
+	if plainRow(row, decode, last) {
+		return true
+	}
+
+	p := ansi.GetParser()
+	defer ansi.PutParser(p)
+
+	var style uv.Style
+	var link uv.Link
+	var state byte
+	var printed bool
+	for len(row) > 0 {
+		// Printable ASCII opens nothing: it is skipped a run at a time.
+		if state == parser.GroundState && row[0] >= 0x20 && row[0] < 0x7f {
+			n := 1
+			for n < len(row) && row[n] >= 0x20 && row[n] < 0x7f {
+				n++
+			}
+			row, printed = row[n:], true
+			continue
+		}
+		seq, width, n, newState := decode(row, state, p)
+		switch {
+		case width > 0:
+			printed = true
+		case ansi.HasCsiPrefix(seq) && p.Command() == 'm':
+			uv.ReadStyle(p.Params(), &style)
+		case ansi.HasOscPrefix(seq) && p.Command() == 8:
+			uv.ReadLink(p.Data(), &link)
+		case ansi.HasApcPrefix(seq) || ansi.HasDcsPrefix(seq) || ansi.HasSosPrefix(seq) || ansi.HasPmPrefix(seq):
+			return false // it rides on the next cell, or with none after it the last one drawn: either may be another row's
+		case !printed && len(seq) > 0 && seq[0] >= 0xc0:
+			return false // a mark the last cell drawn takes, on the row above
+		}
+		state, row = newState, row[n:]
+	}
+	return last || state == parser.GroundState && style.IsZero() && link.IsZero()
+}
+
+// plainRow is a quick independentRow for the common row: one whose only
+// sequences are CSI sequences and hyperlinks, whose last style sequence is
+// a reset, whose last hyperlink, if any, closes one without params, and
+// whose first character is printed rather than a mark. It reports false for
+// any other row, which is then read in full.
+func plainRow(row string, decode func(string, byte, *ansi.Parser) (string, int, int, byte), last bool) bool {
+	first, reset, link := true, true, false
+	for len(row) > 0 {
+		i := strings.IndexByte(row, ansi.ESC)
+		if i != 0 && first {
+			first = false
+			if c := row[0]; c < 0x20 || c == ansi.DEL {
+				return false // a mark after a control still joins the row above
+			} else if _, width, _, _ := decode(row, parser.GroundState, nil); width == 0 {
+				return false
+			}
+		}
+		if i < 0 {
+			break
+		}
+
+		row = row[i+1:]
+		if strings.HasPrefix(row, "]8;") {
+			// A hyperlink, up to a BEL or an ST.
+			n := 1
+			for n < len(row) && row[n] >= 0x20 {
+				n++
+			}
+			link = row[:n] != "]8;;"
+			switch {
+			case n < len(row) && row[n] == ansi.BEL:
+				row = row[n+1:]
+			case strings.HasPrefix(row[n:], "\x1b\\"):
+				row = row[n+2:]
+			default:
+				return false
+			}
+			continue
+		}
+
+		// Parameter and intermediate bytes, then a final byte.
+		if len(row) == 0 || row[0] != '[' {
+			return false
+		}
+		n := 1
+		for n < len(row) && row[n] >= 0x20 && row[n] < 0x40 {
+			n++
+		}
+		if n == len(row) || row[n] < 0x40 || row[n] > 0x7e {
+			return false
+		}
+		if row[n] == 'm' {
+			reset = n == 1 || row[1:n] == "0"
+		}
+		row = row[n+1:]
+	}
+	return last || reset && !link
+}
+
+// changedRows is how many of rows differ from was, row for row: all of them
+// when the frame changed shape.
+func changedRows(rows, was []string) int {
+	if len(rows) != len(was) {
+		return len(rows)
+	}
+	n := 0
+	for y := range rows {
+		if rows[y] != was[y] {
+			n++
+		}
+	}
+	return n
+}
+
+// untrackedCells is a cell buffer as a [uv.Screen], without the change
+// tracking of a [uv.RenderBuffer]: what is drawn into it is not compared with
+// what it replaces, and no line is touched.
+type untrackedCells struct {
+	*uv.Buffer
+	method ansi.Method
+}
+
+// WidthMethod returns the width method used to measure the cells.
+func (c *untrackedCells) WidthMethod() uv.WidthMethod {
+	return c.method
 }
