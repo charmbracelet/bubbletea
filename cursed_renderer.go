@@ -359,16 +359,17 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	// A frame of independent rows over one of the same shape draws only the
 	// rows that changed: the others are in the buffer already, untouched, so
-	// the renderer does not diff them either. A frame most of whose rows
-	// changed is drawn whole, unchecked: drawing its rows one by one would
-	// cost as much, and checking them more.
+	// the renderer does not diff them either. A frame more than nine in ten
+	// of whose rows changed, such as a scroll, is drawn whole, unchecked:
+	// checking a row costs about a tenth of drawing and diffing one, so the
+	// few rows kept would not pay for checking the others.
 	var rows []string
 	var checked bool
 	failed := -1
 	if view.AltScreen && !closing {
 		rows = strings.Split(view.Content, "\n")
 		switch f := s.failed; {
-		case changedRows(rows, s.rows) > len(rows)/2:
+		case changedRows(rows, s.rows)*10 > len(rows)*9:
 		case f >= 0 && rows[f] == s.rows[f]: // it fails again
 			failed = f
 		default:
