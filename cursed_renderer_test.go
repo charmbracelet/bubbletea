@@ -134,6 +134,67 @@ func TestCursedRenderer_insertAboveMultiScreen(t *testing.T) {
 	}
 }
 
+func TestCursedRenderer_insertAbovePendingProgramStatus(t *testing.T) {
+	t.Parallel()
+
+	previous := &ProgramStatus{State: ProgramStateWorking, ID: "old", Message: "Building"}
+	changed := &ProgramStatus{State: ProgramStateBlocked, ID: "new", Kind: ProgramStatusKindQuestion}
+	updated := &ProgramStatus{State: ProgramStateWorking, ID: "old", Message: "Linking"}
+	cases := []struct {
+		name string
+		next *ProgramStatus
+		want []string
+	}{
+		{name: "unchanged", next: previous},
+		{name: "updated", next: updated, want: []string{ansi.SetProgramStatus(*updated)}},
+		{name: "changed ID", next: changed, want: []string{ansi.ClearProgramStatusID("old"), ansi.SetProgramStatus(*changed)}},
+		{name: "removed", want: []string{ansi.ClearProgramStatusID("old")}},
+	}
+
+	for _, full := range []bool{false, true} {
+		for _, tc := range cases {
+			t.Run(fmt.Sprintf("full=%v/%s", full, tc.name), func(t *testing.T) {
+				e := vt.NewEmulator(40, 10)
+				defer e.Close()
+				var output bytes.Buffer
+				r := newCursedRenderer(io.MultiWriter(&output, e), []string{"TERM=xterm-256color"}, 40, 10)
+				r.setNoInput(true)
+				frame := "CONTROLS\n> input\nSTATUS"
+				if full {
+					frame = strings.Repeat("managed\n", 7) + frame
+				}
+				view := NewView(frame)
+				view.ProgramStatus = previous
+				r.render(view)
+				if err := r.flush(false); err != nil {
+					t.Fatal(err)
+				}
+				output.Reset()
+				view.ProgramStatus = tc.next
+				r.render(view)
+				if err := r.insertAbove(strings.Repeat("printed\n", 20) + "last"); err != nil {
+					t.Fatal(err)
+				}
+				got := output.String()
+				if count := strings.Count(got, "\x1b]7501;"); count != len(tc.want) {
+					t.Fatalf("got %d program status reports, want %d: %q", count, len(tc.want), got)
+				}
+				assertInOrder(t, got, tc.want...)
+				if !strings.Contains(e.String(), frame) {
+					t.Fatalf("managed View missing after insertion: %q", e.String())
+				}
+				output.Reset()
+				if err := r.flush(false); err != nil {
+					t.Fatal(err)
+				}
+				if strings.Contains(output.String(), "\x1b]7501;") {
+					t.Fatalf("unchanged status was sent again: %q", output.String())
+				}
+			})
+		}
+	}
+}
+
 func TestCursedRenderer_insertAbovePendingView(t *testing.T) {
 	t.Parallel()
 

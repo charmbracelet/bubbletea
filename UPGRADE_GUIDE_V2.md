@@ -98,6 +98,7 @@ The `tea.View` struct has fields for everything that used to be controlled by op
 | `ForegroundColor` | Set the terminal foreground color |
 | `BackgroundColor` | Set the terminal background color |
 | `ProgressBar` | Show a native terminal progress bar |
+| `ProgramStatus` | Report whether the program is working, waiting on the user, done, or failed (OSC 7501) |
 | `KeyboardEnhancements` | Request keyboard enhancement features |
 | `OnMouse` | Intercept mouse messages based on view content |
 
