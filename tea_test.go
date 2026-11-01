@@ -547,6 +547,54 @@ func TestTeaNoRun(t *testing.T) {
 	)
 }
 
+// runTwiceModel quits as soon as it starts, like quitModel, but reports
+// whether its Update ever ran so we can tell a real run from a torn-down one.
+type runTwiceModel struct {
+	updated atomic.Bool
+}
+
+func (m *runTwiceModel) Init() Cmd { return Quit }
+
+func (m *runTwiceModel) Update(msg Msg) (Model, Cmd) {
+	switch msg.(type) {
+	case WindowSizeMsg:
+		m.updated.Store(true)
+	}
+	return m, nil
+}
+
+func (m *runTwiceModel) View() View { return NewView("hello") }
+
+// TestTeaRunTwice is a regression test for running a Program a second time
+// after the first Run returned. Run resets its per-run state (handlers,
+// finished channel) at the top of every call, but before the fix the run
+// context, error channel, and shutdown guard stayed behind: the second run
+// tore down immediately with ErrProgramKilled and its shutdown was skipped,
+// leaving the terminal state it changed unrestored.
+func TestTeaRunTwice(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &runTwiceModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+
+	if _, err := p.Run(); err != nil {
+		t.Fatalf("first run: unexpected error: %v", err)
+	}
+	m.updated.Store(false)
+
+	if _, err := p.Run(); err != nil {
+		t.Fatalf("second run: unexpected error: %v", err)
+	}
+	if !m.updated.Load() {
+		t.Error("second run never delivered messages to Update")
+	}
+}
+
 func TestTeaPanic(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
