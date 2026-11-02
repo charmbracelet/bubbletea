@@ -547,18 +547,22 @@ func TestTeaNoRun(t *testing.T) {
 	)
 }
 
-// runTwiceModel quits as soon as it starts, like quitModel, but reports
-// whether its Update ever ran so we can tell a real run from a torn-down one.
+// runTwiceModel waits for a WindowSizeMsg before quitting, and reports whether
+// that message ever reached Update, so we can tell a real run from a
+// torn-down one.
 type runTwiceModel struct {
 	updated atomic.Bool
 }
 
-func (m *runTwiceModel) Init() Cmd { return Quit }
+// Init returns no command on purpose: the program exits from Update once it
+// has seen a WindowSizeMsg, so the quit is ordered after the observation
+// rather than racing it.
+func (m *runTwiceModel) Init() Cmd { return nil }
 
 func (m *runTwiceModel) Update(msg Msg) (Model, Cmd) {
-	switch msg.(type) {
-	case WindowSizeMsg:
+	if _, ok := msg.(WindowSizeMsg); ok {
 		m.updated.Store(true)
+		return m, Quit
 	}
 	return m, nil
 }
@@ -582,14 +586,30 @@ func TestTeaRunTwice(t *testing.T) {
 		WithOutput(&buf),
 	)
 
-	if _, err := p.Run(); err != nil {
-		t.Fatalf("first run: unexpected error: %v", err)
+	// The program quits from Update once it has observed a WindowSizeMsg, so
+	// every run returns on its own; a bounded wait keeps a genuinely broken
+	// run from hanging the test instead of failing it.
+	run := func(which string) {
+		t.Helper()
+		done := make(chan error, 1)
+		go func() {
+			_, err := p.Run()
+			done <- err
+		}()
+		select {
+		case err := <-done:
+			if err != nil {
+				t.Fatalf("%s run: unexpected error: %v", which, err)
+			}
+		case <-time.After(30 * time.Second):
+			t.Fatalf("%s run: Run did not return; the program never observed a WindowSizeMsg", which)
+		}
 	}
+
+	run("first")
 	m.updated.Store(false)
 
-	if _, err := p.Run(); err != nil {
-		t.Fatalf("second run: unexpected error: %v", err)
-	}
+	run("second")
 	if !m.updated.Load() {
 		t.Error("second run never delivered messages to Update")
 	}
