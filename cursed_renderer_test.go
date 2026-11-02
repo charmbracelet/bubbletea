@@ -301,3 +301,62 @@ func TestCursedRenderer_shrinkStaysBottomAnchored(t *testing.T) {
 		t.Fatalf("expected cell buffer 40x4 after width change, got %v", b)
 	}
 }
+
+// TestCursedRenderer_shrinkMovesCursorWithContent is a regression test for
+// a review on charmbracelet/bubbletea#1877: the retained-height shrink path
+// draws content shifted down by drawOffset, but the visible cursor was
+// moved to the unshifted frame coordinates, landing rows above the text.
+func TestCursedRenderer_shrinkMovesCursorWithContent(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+
+	// Initial 3-line frame, no cursor.
+	r.view = View{Content: "line1\nline2\nline3"}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("initial flush: %v", err)
+	}
+
+	// Shrink to a 1-line frame with a cursor at the frame origin. The
+	// content lands on buffer row 2, so the terminal cursor must land
+	// there too: (0, 2) in the renderer's tracked position.
+	out.Reset()
+	r.view = View{Content: "shrunk", Cursor: NewCursor(0, 0)}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("shrink flush: %v", err)
+	}
+	if got := rowTextAt(r, 2); got != "shrunk" {
+		t.Fatalf("expected row 2 to hold %q after shrink, got %q", "shrunk", got)
+	}
+	if x, y := r.scr.Position(); x != 0 || y != 2 {
+		t.Fatalf("expected terminal cursor at (0, 2) after shrink, got (%d, %d) (output %q)", x, y, out.String())
+	}
+
+	// Growing within the retained area shifts by the new, smaller offset:
+	// a 2-line frame in the 3-row buffer draws on rows 1-2, so a cursor
+	// at frame (1, 1) must land at (1, 2).
+	out.Reset()
+	r.view = View{Content: "a\nb", Cursor: NewCursor(1, 1)}
+	if err := r.flush(false); err != nil {
+		t.Fatalf("grow-within flush: %v", err)
+	}
+	if got := rowTextAt(r, 2); got != "b" {
+		t.Fatalf("expected row 2 to hold %q after grow-within, got %q", "b", got)
+	}
+	if x, y := r.scr.Position(); x != 1 || y != 2 {
+		t.Fatalf("expected terminal cursor at (1, 2) after grow-within, got (%d, %d) (output %q)", x, y, out.String())
+	}
+}
+
+func rowTextAt(r *cursedRenderer, y int) string {
+	var sb strings.Builder
+	for x := 0; x < r.cellbuf.Bounds().Dx(); x++ {
+		c := r.cellbuf.CellAt(x, y)
+		if c == nil {
+			break
+		}
+		sb.WriteString(c.Content)
+	}
+	return strings.TrimRight(sb.String(), " ")
+}

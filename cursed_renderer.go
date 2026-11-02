@@ -547,7 +547,10 @@ func (s *cursedRenderer) flush(closing bool) error {
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
 		// cursor position might get updated during rendering.
-		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y)
+		// On the retained-height shrink path the content is drawn shifted
+		// down by drawOffset, so the cursor must be shifted by the same
+		// amount or it lands rows above the text it belongs to.
+		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y+drawOffset)
 	} else if !view.AltScreen {
 		// We don't want the cursor to be dangling at the end of the line in
 		// inline mode because it can cause unwanted line wraps in some
