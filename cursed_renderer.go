@@ -297,6 +297,11 @@ func (s *cursedRenderer) flush(closing bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	return s.flushLocked(closing)
+}
+
+// flushLocked flushes the current view with s.mu held.
+func (s *cursedRenderer) flushLocked(closing bool) error {
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
 	if len(view.Content) == 0 {
@@ -775,6 +780,14 @@ func (s *cursedRenderer) insertAbove(str string) error {
 
 	if len(str) == 0 {
 		return nil
+	}
+
+	// A print command can arrive before the next frame flush. Finish a
+	// pending exit so the line is written to the main screen and persists.
+	if s.lastView != nil && s.lastView.AltScreen && !s.view.AltScreen {
+		if err := s.flushLocked(false); err != nil {
+			return err
+		}
 	}
 
 	var sb strings.Builder
