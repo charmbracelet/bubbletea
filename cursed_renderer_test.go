@@ -95,6 +95,35 @@ func assertInOrder(t *testing.T, got string, wants ...string) {
 	}
 }
 
+func TestCursedRenderer_printAfterLeavingAltScreen(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	view := NewView("alternate view")
+	view.AltScreen = true
+	r.render(view)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	// The update queues an inline view and returns a print command before
+	// the renderer's next scheduled flush.
+	r.render(NewView("inline view"))
+	if err := r.insertAbove("permanent line"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	assertInOrder(t, got, ansi.SetModeAltScreenSaveCursor, ansi.ResetModeAltScreenSaveCursor, "permanent line")
+	if strings.Count(got, "permanent line") != 1 {
+		t.Fatalf("expected the line to be printed once, got %q", got)
+	}
+}
+
 func TestCursedRenderer_restoresKittyKeyboardStack(t *testing.T) {
 	t.Parallel()
 
