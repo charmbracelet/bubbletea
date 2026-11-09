@@ -201,3 +201,116 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1838
+func TestCursedRenderer_refreshTabStopsOnResize(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.setOptimizations(true, false, false)
+	r.start()
+
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	view := NewView("hello")
+	render(view)
+
+	// Startup should have emitted SetTabEvery8Columns once.
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 1 {
+		t.Fatalf("expected 1 tab stops reset at startup, got %d in %q", count, out.String())
+	}
+
+	// Another render without resize should not re-emit SetTabEvery8Columns.
+	render(NewView("hello world"))
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 1 {
+		t.Fatalf("expected no additional tab stops reset without resize, got %d", count)
+	}
+
+	// Height-only resize should not re-emit SetTabEvery8Columns.
+	r.resize(80, 40)
+	render(NewView("hello height resize"))
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 1 {
+		t.Fatalf("expected no tab stops reset on height-only resize, got %d", count)
+	}
+
+	// Identical size resize should not re-emit SetTabEvery8Columns.
+	r.resize(80, 40)
+	render(NewView("hello same size"))
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 1 {
+		t.Fatalf("expected no tab stops reset on identical resize, got %d", count)
+	}
+
+	// Widening resize should re-emit SetTabEvery8Columns.
+	r.resize(272, 40)
+	render(NewView("hello widened"))
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 2 {
+		t.Fatalf("expected 2 tab stops resets after widening resize, got %d", count)
+	}
+
+	// Narrowing resize should also re-emit SetTabEvery8Columns.
+	r.resize(120, 40)
+	render(NewView("hello narrowed"))
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 3 {
+		t.Fatalf("expected 3 tab stops resets after narrowing resize, got %d", count)
+	}
+
+	// When hard tabs are disabled, resizing should not emit SetTabEvery8Columns.
+	r.setOptimizations(false, false, false)
+	r.resize(200, 40)
+	render(NewView("hello no hard tabs"))
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 3 {
+		t.Fatalf("expected no tab stops reset when hard tabs are disabled, got %d", count)
+	}
+
+	// Re-enabling hard tabs should reset tab stops on the next flush.
+	r.setOptimizations(true, false, false)
+	render(NewView("hello hard tabs re-enabled"))
+	if count := strings.Count(out.String(), ansi.SetTabEvery8Columns); count != 4 {
+		t.Fatalf("expected 4 tab stops resets after re-enabling hard tabs, got %d", count)
+	}
+}
+
+func TestCursedRenderer_refreshTabStopsOrdering(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.setOptimizations(true, false, false)
+	r.start()
+
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	render(NewView("initial frame"))
+	out.Reset()
+
+	// Widen window and check that SetTabEvery8Columns is output before the rendered content.
+	r.resize(272, 24)
+	render(NewView("widened content"))
+
+	got := out.String()
+	tabIdx := strings.Index(got, ansi.SetTabEvery8Columns)
+	contentIdx := strings.Index(got, "widened content")
+	if tabIdx < 0 {
+		t.Fatalf("expected SetTabEvery8Columns in output, got %q", got)
+	}
+	if contentIdx < 0 {
+		t.Fatalf("expected widened content in output, got %q", got)
+	}
+	if tabIdx > contentIdx {
+		t.Fatalf("expected SetTabEvery8Columns (idx %d) before frame content (idx %d)", tabIdx, contentIdx)
+	}
+}
+
