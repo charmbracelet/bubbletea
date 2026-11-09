@@ -162,6 +162,38 @@ func TestCursedRenderer_restoresKittyKeyboardStack(t *testing.T) {
 	}
 }
 
+func TestCursedRenderer_insertAboveUsesWidthMethod(t *testing.T) {
+	t.Parallel()
+
+	const line = "🏳️‍🌈aaaaaaa"
+
+	tests := []struct {
+		name         string
+		method       ansi.Method
+		wantNewlines int
+	}{
+		{name: "wcwidth", method: ansi.WcWidth, wantNewlines: 2},
+		{name: "grapheme", method: ansi.GraphemeWidth, wantNewlines: 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 8, 5)
+			r.setWidthMethod(tt.method)
+			if err := r.insertAbove(line); err != nil {
+				t.Fatal(err)
+			}
+
+			if got := strings.Count(out.String(), "\n"); got != tt.wantNewlines {
+				t.Fatalf("expected %d newlines, got %d in %q", tt.wantNewlines, got, out.String())
+			}
+		})
+	}
+}
+
 func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 	t.Parallel()
 
