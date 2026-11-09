@@ -201,3 +201,28 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+func TestCursedRenderer_progressBarSnapshotSurvivesPointerMutation(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	progressBar := NewProgressBar(ProgressBarDefault, 10)
+	view := NewView("stable")
+	view.ProgressBar = progressBar
+
+	r.render(view)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+
+	progressBar.Value = 20
+	r.render(view)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), ansi.SetProgressBar(20)) {
+		t.Fatalf("expected mutated progress bar to render %q, got %q", ansi.SetProgressBar(20), out.String())
+	}
+}
