@@ -201,3 +201,168 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+// repaintTestRenderer returns a renderer wired to a buffer together with a
+// render function that pushes a view and flushes it.
+func repaintTestRenderer(t *testing.T) (*cursedRenderer, *bytes.Buffer, func(View)) {
+	t.Helper()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return r, &out, render
+}
+
+// After external tty damage Repaint must replay the alt screen and repaint
+// the whole view on a normal (non-closing) flush.
+func TestCursedRenderer_repaintRestoresAltScreen(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := repaintTestRenderer(t)
+
+	view := NewView("hello")
+	view.AltScreen = true
+	render(view)
+
+	out.Reset()
+	r.repaint()
+	// A normal flush, not a closing one, must not skip the redraw.
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	assertInOrder(t, got, ansi.SetModeAltScreenSaveCursor, "hello")
+}
+
+// Baseline verification: ClearScreen alone does not re-enter the alternate
+// screen, whereas Repaint is the recovery operation that does.
+func TestCursedRenderer_clearScreenDoesNotRestoreAltScreen(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := repaintTestRenderer(t)
+
+	view := NewView("hello")
+	view.AltScreen = true
+	render(view)
+
+	out.Reset()
+	r.clearScreen()
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	if strings.Contains(got, ansi.SetModeAltScreenSaveCursor) {
+		t.Fatalf("expected ClearScreen not to replay alt screen, got %q", got)
+	}
+}
+
+// Inline mode must keep working: Repaint must not enter the alt screen.
+func TestCursedRenderer_repaintInline(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := repaintTestRenderer(t)
+
+	view := NewView("hello")
+	render(view)
+
+	out.Reset()
+	r.repaint()
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	if strings.Contains(got, ansi.SetModeAltScreenSaveCursor) {
+		t.Fatalf("expected inline mode not to enter the alt screen, got %q", got)
+	}
+	if !strings.Contains(got, "hello") {
+		t.Fatalf("expected the full frame to be repainted, got %q", got)
+	}
+}
+
+// Repaint must re-emit the modes carried by the view, e.g. mouse tracking,
+// bracketed paste, and focus reporting, which an external writer may have reset.
+func TestCursedRenderer_repaintRestoresModes(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := repaintTestRenderer(t)
+
+	view := NewView("hello")
+	view.MouseMode = MouseModeCellMotion
+	view.ReportFocus = true
+	render(view)
+
+	out.Reset()
+	r.repaint()
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	for _, want := range []string{
+		ansi.SetModeMouseButtonEvent + ansi.SetModeMouseExtSgr,
+		ansi.SetModeBracketedPaste,
+		ansi.SetModeFocusEvent,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q to be replayed by Repaint, got %q", want, got)
+		}
+	}
+}
+
+// Calling Repaint repeatedly must update the Kitty keyboard flags in place
+// rather than pushing a new stack entry every time.
+func TestCursedRenderer_repaintDoesNotGrowKittyStack(t *testing.T) {
+	t.Parallel()
+
+	r, out, render := repaintTestRenderer(t)
+
+	view := NewView("hello")
+	view.KeyboardEnhancements.ReportEventTypes = true
+	flags := keyboardEnhancementsFlags(view.KeyboardEnhancements)
+	render(view)
+
+	const repaints = 3
+	out.Reset()
+	for range repaints {
+		r.repaint()
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got := out.String()
+	if n := strings.Count(got, ansi.PushKittyKeyboard(flags)); n != 0 {
+		t.Fatalf("expected no kitty keyboard pushes, got %d in %q", n, got)
+	}
+	if n := strings.Count(got, ansi.KittyKeyboard(flags, 1)); n != repaints {
+		t.Fatalf("expected kitty keyboard flags to be set in place %d times, got %d in %q", repaints, n, got)
+	}
+}
+
+// Calling Repaint when lastView is nil must be a no-op and not panic.
+func TestCursedRenderer_repaintNilLastView(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.repaint()
+
+	view := NewView("hello")
+	r.render(view)
+	if err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(out.String(), "hello") {
+		t.Fatalf("expected view to be rendered after repaint, got %q", out.String())
+	}
+}

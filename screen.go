@@ -23,6 +23,24 @@ func ClearScreen() Msg {
 // You can send a clearScreenMsg with ClearScreen.
 type clearScreenMsg struct{}
 
+// Repaint is a command that forces a complete redraw and terminal mode
+// restoration. This invalidates the screen buffer and replays terminal modes
+// (such as alternate screen, mouse tracking, bracketed paste, focus reporting,
+// and cursor style) from the last view.
+//
+// This is useful for recovering the terminal display after external terminal
+// output or child processes corrupt the screen.
+//
+// Note that it should never be necessary to call Repaint() for regular
+// redraws.
+func Repaint() Msg {
+	return RepaintMsg{}
+}
+
+// RepaintMsg signals that the program should force a full redraw and restore
+// terminal modes. You can send a [RepaintMsg] with [Repaint].
+type RepaintMsg struct{}
+
 // ModeReportMsg is a message that represents a mode report event (DECRPM).
 //
 // This is sent by the terminal in response to a request for a terminal mode

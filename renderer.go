@@ -51,6 +51,9 @@ type renderer interface {
 	// clearScreen clears the screen.
 	clearScreen()
 
+	// repaint repaints the screen and restores terminal modes.
+	repaint()
+
 	// writeString writes a string to the renderer's output.
 	writeString(string) (int, error)
 
