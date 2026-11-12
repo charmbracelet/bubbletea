@@ -523,7 +523,13 @@ type Program struct {
 	msgs         chan Msg
 	errs         chan error
 	finished     chan struct{}
+	runMu        sync.Mutex
 	shutdownOnce sync.Once
+	started      atomic.Bool
+
+	// ranOnce reports whether [Program.Run] has been called before, so its
+	// per-run state can be reinitialized on subsequent runs.
+	ranOnce bool
 
 	profile *colorprofile.Profile // the terminal color profile
 
@@ -539,7 +545,8 @@ type Program struct {
 	// the environment variables for the program, defaults to os.Environ().
 	environ uv.Environ
 	// the program's logger for debugging.
-	logger uv.Logger
+	logger    uv.Logger
+	tracePath string
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
@@ -620,6 +627,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
+		finished:     make(chan struct{}),
 		rendererDone: make(chan struct{}),
 		rendererWake: make(chan struct{}, 1),
 	}
@@ -655,10 +663,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
 	if traceOk && len(tracePath) > 0 {
-		// We have a trace filepath.
-		if f, err := os.OpenFile(tracePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o600); err == nil {
-			p.logger = log.New(f, "bubbletea: ", log.LstdFlags|log.Lshortfile)
-		}
+		p.tracePath = tracePath
 	}
 
 	return p
@@ -1036,26 +1041,64 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		return nil, errors.New("bubbletea: InitialModel cannot be nil")
 	}
 
+	// Acquire runMu for the duration of initialization. Kill() will also
+	// acquire runMu before calling shutdown(), preventing data races between
+	// Run() writing to fields like p.handlers, p.renderer, and
+	// p.cancelReader and Kill() reading them.
+	p.runMu.Lock()
+	initialized := false
+	defer func() {
+		if !initialized {
+			p.runMu.Unlock()
+		}
+	}()
+
+	p.finished = make(chan struct{})
+	defer close(p.finished)
+
+	if p.tracePath != "" {
+		if f, err := os.OpenFile(p.tracePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o600); err == nil {
+			defer f.Close() //nolint:errcheck
+			p.logger = log.New(f, "bubbletea: ", log.LstdFlags|log.Lshortfile)
+		}
+	}
+
 	// Initialize context and teardown channel.
+	//
+	// When a previous run already tore down its per-run state, recreate it so
+	// the Program can be run again. The context is only recreated after an
+	// actual run: replacing it unconditionally would swallow a
+	// [Program.Kill] issued before the program started, which works by
+	// cancelling the context created in NewProgram.
+	if p.ranOnce {
+		p.ctx, p.cancel = context.WithCancel(p.externalCtx)
+		p.errs = make(chan error, 1)
+		p.shutdownOnce = sync.Once{}
+	}
+	p.ranOnce = true
+
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 
-	p.finished = make(chan struct{})
-	defer func() {
-		close(p.finished)
-	}()
-
 	defer p.cancel()
+	p.started.Store(true)
 
 	if p.disableInput {
 		p.input = nil
 	} else if p.input == nil {
 		p.input = os.Stdin
 		if !term.IsTerminal(os.Stdin.Fd()) {
-			ttyIn, _, err := OpenTTY()
+			ttyIn, ttyOut, err := OpenTTY()
 			if err != nil {
 				return p.initialModel, fmt.Errorf("bubbletea: error opening TTY: %w", err)
 			}
+			// Nothing else owns these files: close them when Run returns so
+			// each Run doesn't leak a /dev/tty fd (on Windows, CONIN$ and
+			// CONOUT$ handles).
+			defer func() {
+				_ = ttyIn.Close()
+				_ = ttyOut.Close()
+			}()
 			p.input = ttyIn
 		}
 	}
@@ -1078,6 +1121,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
+		// The input may already be in raw mode at this point (on Windows it
+		// is made raw before the output console-mode setup), so restore the
+		// terminal before returning the error.
+		_ = p.restoreTerminalState()
 		return p.initialModel, err
 	}
 
@@ -1087,6 +1134,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
+			_ = p.restoreTerminalState()
 			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
@@ -1143,6 +1191,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	model := p.initialModel
 	if p.input != nil {
 		if err := p.initInputReader(false); err != nil {
+			_ = p.restoreTerminalState()
 			return model, err
 		}
 	}
@@ -1182,6 +1231,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 
 	// Process commands.
 	p.handlers.add(p.handleCommands(cmds))
+
+	// Initialization is complete. Release the lock so Kill() can proceed.
+	p.runMu.Unlock()
+	initialized = true
 
 	// Run event loop, handle updates and draw.
 	var err error
@@ -1239,13 +1292,25 @@ func (p *Program) Send(msg Msg) {
 // If the program is not running this will be a no-op, so it's safe to call
 // if the program is unstarted or has already exited.
 func (p *Program) Quit() {
+	if !p.started.Load() {
+		return
+	}
 	p.Send(Quit())
 }
 
 // Kill stops the program immediately and restores the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
+//
+// If [Program.Run] is concurrently initializing, Kill will wait for it to
+// finish before performing shutdown. This prevents data races that could
+// occur when Kill reads fields that Run is still setting up.
 func (p *Program) Kill() {
+	// Wait for Run() to finish initializing before calling shutdown().
+	// This prevents data races between Run() writing to fields like
+	// p.handlers, p.renderer, and p.cancelReader and Kill() reading them.
+	p.runMu.Lock()
+	defer p.runMu.Unlock()
 	p.shutdown(true)
 }
 
@@ -1350,14 +1415,14 @@ func (p *Program) recoverFromPanic(r interface{}) {
 	}
 }
 
-// recoverFromGoPanic recovers from a goroutine panic, prints a stack trace and
-// signals for the program to be killed and terminal restored to a usable state.
+// recoverFromGoPanic recovers from a goroutine panic, prints a stack trace,
+// restores the terminal to a usable state, and signals the program to be killed.
 func (p *Program) recoverFromGoPanic(r interface{}) {
 	select {
 	case p.errs <- ErrProgramPanic:
 	default:
 	}
-	p.cancel()
+	p.shutdown(true)
 	// We use "\r\n" to ensure the output is formatted even when restoring the
 	// terminal does not work or when raw mode is still active.
 	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
@@ -1385,9 +1450,8 @@ func (p *Program) releaseTerminal(reset bool) error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
 	if p.cancelReader != nil {
 		p.cancelReader.Cancel()
+		p.waitForReadLoop()
 	}
-
-	p.waitForReadLoop()
 
 	if p.renderer != nil {
 		p.stopRenderer(false)
@@ -1430,10 +1494,11 @@ func (p *Program) RestoreTerminal() error {
 // and will persist across renders by the Program.
 //
 // If the altscreen is active no output will be printed.
+// If the program has already exited this is a no-op.
 func (p *Program) Println(args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprint(args...),
-	}
+	})
 }
 
 // Printf prints above the Program. It takes a format template followed by
@@ -1444,10 +1509,11 @@ func (p *Program) Println(args ...any) {
 // its own line.
 //
 // If the altscreen is active no output will be printed.
+// If the program has already exited this is a no-op.
 func (p *Program) Printf(template string, args ...any) {
-	p.msgs <- printLineMessage{
+	p.Send(printLineMessage{
 		messageBody: fmt.Sprintf(template, args...),
-	}
+	})
 }
 
 // startRenderer starts the renderer.

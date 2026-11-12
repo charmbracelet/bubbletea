@@ -214,8 +214,139 @@ func TestCursedRenderer_insertAboveBeforeFirstFlush(t *testing.T) {
 	}
 
 	want := "\r\n" + ansi.CursorUp(1) +
-		ansi.InsertLine(1) + "startup" + ansi.EraseLineRight + "\r\n"
+		ansi.InsertLine(1) + ansi.EraseLineRight + "startup" + "\r\n"
 	if got := output.String(); got != want {
 		t.Fatalf("unexpected insertAbove output:\nwant: %q\n got: %q", want, got)
+	}
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1780
+func TestCursedRenderer_resizeStaleFrame(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+
+	// Render the initial frame at 80x24.
+	initialView := NewView("initial 80x24 content")
+	initialView.AltScreen = true
+	r.render(initialView)
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+
+	// Simulate window resize: resize() is called first, updating dimensions.
+	r.resize(100, 30)
+
+	// In the race window, the 60Hz ticker fires flush() BEFORE render() provides the new View.
+	// flush() must NOT output the stale initialView at the new 100x30 size.
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if out.Len() > 0 {
+		t.Fatalf("expected no output during stale resize race window, got %q", out.String())
+	}
+
+	// Now render() provides the new View matching the new 100x30 size.
+	newView := NewView("resized 100x30 content")
+	newView.AltScreen = true
+	r.render(newView)
+
+	// The subsequent flush() must draw the new view.
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(out.String(), "resized 100x30 content") {
+		t.Fatalf("expected output to contain resized view, got %q", out.String())
+	}
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1802
+//
+// insertAbove must measure wrapped lines with the active screen buffer's
+// width method. When the terminal never answers the Unicode-core query the
+// buffer stays on WcWidth, but insertAbove used grapheme semantics, so wide
+// grapheme clusters inserted the wrong number of lines.
+func TestCursedRenderer_insertAboveUsesActiveWidthMethod(t *testing.T) {
+	t.Parallel()
+
+	insertNewlines := func(method ansi.Method, s string) int {
+		var out bytes.Buffer
+		r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 8, 4)
+		r.setWidthMethod(method)
+		if got := r.cellbuf.WidthMethod(); got != method {
+			t.Fatalf("expected width method %v, got %v", method, got)
+		}
+		if err := r.insertAbove(s); err != nil {
+			t.Fatal(err)
+		}
+		// One "\n" per inserted line, plus the trailing newline after each
+		// printed line.
+		return bytes.Count(out.Bytes(), []byte("\n"))
+	}
+
+	// "👨‍👩‍👧‍👦" is a single grapheme cluster (width 2) made of four wide
+	// codepoints (width 8), so the wrapped-line count differs per method.
+	// With an 8-column buffer: grapheme width 8 fits in 1 row, wcwidth 14
+	// wraps to 2 rows.
+	const line = "👨‍👩‍👧‍👦aaaaaa"
+
+	// WcWidth fallback: 1 line + (14-1)/8 extra -> 2 inserted lines, 3 newlines.
+	if got := insertNewlines(ansi.WcWidth, line); got != 3 {
+		t.Errorf("WcWidth: expected 3 newlines, got %d", got)
+	}
+
+	// GraphemeWidth (Unicode-core mode): 1 line + (8-1)/8 extra -> 1 inserted
+	// line, 2 newlines.
+	if got := insertNewlines(ansi.GraphemeWidth, line); got != 2 {
+		t.Errorf("GraphemeWidth: expected 2 newlines, got %d", got)
+	}
+}
+
+func TestCursedRenderer_insertAboveLineBoundaries(t *testing.T) {
+	t.Parallel()
+
+	const width = 40
+	tests := []struct {
+		name string
+		line string
+		rows int
+	}{
+		{name: "short", line: strings.Repeat("-", width-2) + "#", rows: 1},
+		{name: "exact width", line: strings.Repeat("-", width-1) + "#", rows: 1},
+		{name: "one cell over", line: strings.Repeat("-", width) + "#", rows: 2},
+		{name: "two exact rows", line: strings.Repeat("-", 2*width-1) + "#", rows: 2},
+		{name: "three exact rows", line: strings.Repeat("-", 3*width-1) + "#", rows: 3},
+		{name: "wide characters", line: strings.Repeat("界", width-1) + "-#", rows: 2},
+		{name: "styled", line: "\x1b[31m" + strings.Repeat("-", 2*width-1) + "#" + ansi.ResetStyle, rows: 2},
+		{name: "multiple lines", line: strings.Repeat("-", width-1) + "#\n" + strings.Repeat("-", 2*width-1) + "#", rows: 3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, width, 2)
+			r.render(NewView("view\nview"))
+			r.scr.SetPosition(0, 0)
+			if err := r.insertAbove(tt.line); err != nil {
+				t.Fatal(err)
+			}
+
+			got := out.String()
+			prefix := "\r" + ansi.CursorDown(1) + strings.Repeat("\n", tt.rows) + ansi.CursorUp(tt.rows+1) + ansi.InsertLine(tt.rows)
+			if !strings.HasPrefix(got, prefix) {
+				t.Fatalf("expected room for %d terminal rows with prefix %q, got %q", tt.rows, prefix, got)
+			}
+			for _, line := range strings.Split(tt.line, "\n") {
+				if ansi.StringWidth(line)%width == 0 && strings.Contains(got, line+ansi.EraseLineRight) {
+					t.Fatalf("erasing at the right margin would delete the inserted line's last cell, got %q", got)
+				}
+			}
+		})
 	}
 }
