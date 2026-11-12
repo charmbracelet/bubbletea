@@ -146,6 +146,20 @@ type View struct {
 	// progress bar section. Support depends on the terminal.
 	ProgressBar *ProgressBar
 
+	// ProgramStatus when not nil, reports the program status to the terminal
+	// using the Program Status Protocol (OSC 7501): whether the program is
+	// idle, working, waiting on the user, done, or failed. Support depends on
+	// the terminal.
+	//
+	// The status usually addresses the root record (empty ID). Changing it
+	// sends a new report, and setting it back to nil clears the record.
+	//
+	// The status is not cleared when the program exits, so done and error
+	// reports stay visible to the user. Report [ProgramStateDone],
+	// [ProgramStateError], or [ProgramStateIdle] before quitting rather than
+	// leaving a working or blocked status behind.
+	ProgramStatus *ProgramStatus
+
 	// AltScreen puts the program in the alternate screen buffer
 	// (i.e. the program goes into full window mode). Note that the altscreen will
 	// be automatically exited when the program quits.
@@ -539,14 +553,15 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
-	// ticker is the ticker that will be used to write to the renderer.
-	ticker *time.Ticker
-
 	// once is used to stop the renderer.
 	once sync.Once
 
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
+
+	// rendererWake wakes the renderer when it has stopped its ticker because
+	// nothing was changing. See [Program.startRenderer].
+	rendererWake chan struct{}
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -606,6 +621,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
 		rendererDone: make(chan struct{}),
+		rendererWake: make(chan struct{}, 1),
 	}
 
 	// Apply all options to the program.
@@ -674,11 +690,13 @@ func (p *Program) handleSignals() chan struct{} {
 
 			case s := <-sig:
 				if atomic.LoadUint32(&p.ignoreSignals) == 0 {
-					switch s {
-					case syscall.SIGINT:
-						p.msgs <- InterruptMsg{}
-					default:
-						p.msgs <- QuitMsg{}
+					var msg Msg = QuitMsg{}
+					if s == syscall.SIGINT {
+						msg = InterruptMsg{}
+					}
+					select {
+					case p.msgs <- msg:
+					case <-p.ctx.Done():
 					}
 					return
 				}
@@ -760,6 +778,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 		case msg := <-p.msgs:
 			msg = p.translateInputEvent(msg)
 
+			if size, ok := msg.(WindowSizeMsg); ok && !isPlausibleWindowSize(size.Width, size.Height) {
+				continue
+			}
+
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
@@ -816,35 +838,38 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}
 
 			case readClipboardMsg:
-				p.execute(ansi.RequestSystemClipboard)
+				p.executeQuery(ansi.RequestSystemClipboard)
 
 			case setClipboardMsg:
 				p.execute(ansi.SetSystemClipboard(string(msg)))
 
 			case readPrimaryClipboardMsg:
-				p.execute(ansi.RequestPrimaryClipboard)
+				p.executeQuery(ansi.RequestPrimaryClipboard)
 
 			case setPrimaryClipboardMsg:
 				p.execute(ansi.SetPrimaryClipboard(string(msg)))
 
 			case backgroundColorMsg:
-				p.execute(ansi.RequestBackgroundColor)
+				p.executeQuery(ansi.RequestBackgroundColor)
 
 			case foregroundColorMsg:
-				p.execute(ansi.RequestForegroundColor)
+				p.executeQuery(ansi.RequestForegroundColor)
 
 			case cursorColorMsg:
-				p.execute(ansi.RequestCursorColor)
+				p.executeQuery(ansi.RequestCursorColor)
+
+			case programStatusSupportMsg:
+				p.executeQuery(ansi.RequestProgramStatusSupport)
 
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
 
 			case terminalVersion:
-				p.execute(ansi.RequestNameVersion)
+				p.executeQuery(ansi.RequestNameVersion)
 
 			case requestCapabilityMsg:
-				p.execute(ansi.RequestTermcap(string(msg)))
+				p.executeQuery(ansi.RequestTermcap(string(msg)))
 
 			case BatchMsg:
 				go p.execBatchMsg(msg)
@@ -861,7 +886,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				go p.checkResize()
 
 			case requestCursorPosMsg:
-				p.execute(ansi.RequestCursorPositionReport)
+				p.executeQuery(ansi.RequestCursorPositionReport)
 
 			case RawMsg:
 				p.execute(fmt.Sprint(msg.Msg))
@@ -894,6 +919,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(model.View()) // send view to renderer
+		p.wakeRenderer()
+	}
+}
+
+// wakeRenderer restarts the renderer's ticker if it was stopped because
+// nothing was changing. It never blocks.
+func (p *Program) wakeRenderer() {
+	select {
+	case p.rendererWake <- struct{}{}:
+	default:
 	}
 }
 
@@ -1055,7 +1090,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
-		width, height = w, h
+		width, height = p.fallbackDimensions(w, h)
 	}
 
 	p.width, p.height = width, height
@@ -1119,7 +1154,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		// Query for synchronized updates support (mode 2026) and unicode core
 		// (mode 2027). If the terminal supports it, the renderer will enable
 		// it once we get the response.
-		p.execute(ansi.RequestModeSynchronizedOutput +
+		p.executeQuery(ansi.RequestModeSynchronizedOutput +
 			ansi.RequestModeUnicodeCore)
 	}
 
@@ -1224,6 +1259,23 @@ func (p *Program) execute(seq string) {
 	p.mu.Lock()
 	_, _ = p.outputBuf.WriteString(seq)
 	p.mu.Unlock()
+	p.wakeRenderer()
+}
+
+// executeQuery writes a terminal query to the program output. Queries expect a
+// reply on p.input, so when input is disabled the query is skipped: the
+// program cannot read the response, and the terminal's reply would leak into
+// the shell once the program exits (#1590).
+//
+// This covers every query that expects a reply, not just the startup
+// capability probe: background, foreground, and cursor color requests, cursor
+// position reports, clipboard reads, and terminal version and termcap
+// queries.
+func (p *Program) executeQuery(seq string) {
+	if p.disableInput {
+		return
+	}
+	p.execute(seq)
 }
 
 // flush flushes the output buffer to the program output.
@@ -1401,13 +1453,12 @@ func (p *Program) Printf(template string, args ...any) {
 // startRenderer starts the renderer.
 func (p *Program) startRenderer() {
 	framerate := time.Second / time.Duration(p.fps)
-	if p.ticker == nil {
-		p.ticker = time.NewTicker(framerate)
-	} else {
-		// If the ticker already exists, it has been stopped and we need to
-		// reset it.
-		p.ticker.Reset(framerate)
-	}
+	// Stop ticking after about half a second of frames with nothing to draw.
+	idleFrames := max(p.fps/2, 1)
+
+	// Each run of the renderer gets its own ticker, so a goroutine that is
+	// still exiting can't stop the ticker of the next one.
+	ticker := time.NewTicker(framerate)
 
 	// Since the renderer can be restarted after a stop, we need to reset
 	// the done channel and its corresponding sync.Once.
@@ -1416,15 +1467,43 @@ func (p *Program) startRenderer() {
 	// Start the renderer.
 	p.renderer.start()
 	go func() {
+		defer ticker.Stop()
+
+		var (
+			idle    int       // consecutive frames with nothing to draw
+			parked  bool      // whether the ticker is stopped
+			realign bool      // whether the ticker runs a shortened interval
+			last    time.Time // when the ticker last fired
+		)
 		for {
 			select {
 			case <-p.rendererDone:
-				p.ticker.Stop()
 				return
 
-			case <-p.ticker.C:
+			case <-p.rendererWake:
+				if !parked {
+					continue
+				}
+				// Resume on the same frame boundaries as if the ticker had
+				// never stopped, so frames are drawn exactly when they
+				// would have been.
+				parked, realign = false, true
+				ticker.Reset(framerate - time.Since(last)%framerate)
+
+			case last = <-ticker.C:
+				if realign {
+					realign = false
+					ticker.Reset(framerate)
+				}
 				_ = p.flush()
-				_ = p.renderer.flush(false)
+				if drew, _ := p.renderer.flush(false); drew {
+					idle = 0
+				} else if idle++; idle >= idleFrames {
+					// Nothing is changing. Stop waking up every frame until
+					// there is something to draw, see [Program.wakeRenderer].
+					ticker.Stop()
+					parked = true
+				}
 			}
 		}
 	}()
@@ -1441,7 +1520,7 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_ = p.renderer.flush(true)
+		_, _ = p.renderer.flush(true)
 	}
 
 	_ = p.renderer.close()
