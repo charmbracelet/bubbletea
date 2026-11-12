@@ -526,6 +526,10 @@ type Program struct {
 	runMu        sync.Mutex
 	shutdownOnce sync.Once
 
+	// ranOnce reports whether [Program.Run] has been called before, so its
+	// per-run state can be reinitialized on subsequent runs.
+	ranOnce bool
+
 	profile *colorprofile.Profile // the terminal color profile
 
 	// where to send output, this will usually be os.Stdout.
@@ -1051,6 +1055,19 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	}()
 
 	// Initialize context and teardown channel.
+	//
+	// When a previous run already tore down its per-run state, recreate it so
+	// the Program can be run again. The context is only recreated after an
+	// actual run: replacing it unconditionally would swallow a
+	// [Program.Kill] issued before the program started, which works by
+	// cancelling the context created in NewProgram.
+	if p.ranOnce {
+		p.ctx, p.cancel = context.WithCancel(p.externalCtx)
+		p.errs = make(chan error, 1)
+		p.shutdownOnce = sync.Once{}
+	}
+	p.ranOnce = true
+
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
 
