@@ -3,15 +3,15 @@ name: examples
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
     paths:
       - '.github/workflows/examples.yml'
-      - './examples/go.mod'
-      - './examples/go.sum'
-      - './tutorials/go.mod'
-      - './tutorials/go.sum'
-      - './go.mod'
-      - './go.sum'
+      - 'examples/go.mod'
+      - 'examples/go.sum'
+      - 'tutorials/go.mod'
+      - 'tutorials/go.sum'
+      - 'go.mod'
+      - 'go.sum'
   workflow_dispatch: {}
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore: go mod tidy tutorials and examples"
-          branch: master
+          branch: main
           commit_user_name: actions-user
           commit_user_email: actions@github.com
 

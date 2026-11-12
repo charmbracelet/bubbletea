@@ -152,7 +152,7 @@ const (
 	KeyMediaRewind      = uv.KeyMediaRewind
 	KeyMediaNext        = uv.KeyMediaNext
 	KeyMediaPrev        = uv.KeyMediaPrev
-	KeyMediaRecord
+	KeyMediaRecord      = uv.KeyMediaRecord
 
 	KeyLowerVol = uv.KeyLowerVol
 	KeyRaiseVol = uv.KeyRaiseVol
