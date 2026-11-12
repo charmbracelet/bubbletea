@@ -673,9 +673,18 @@ func reset(s *cursedRenderer) {
 // setColorProfile implements renderer.
 func (s *cursedRenderer) setColorProfile(p colorprofile.Profile) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.profile == p {
+		return
+	}
 	s.profile = p
 	s.scr.SetColorProfile(p)
-	s.mu.Unlock()
+	// The cells retain their original colors, but the terminal contains the
+	// colors downsampled with the previous profile. Redraw even if the view
+	// is unchanged so those cells are encoded with the new profile.
+	s.scr.Erase()
+	s.pendingErase = true
 }
 
 // resize implements renderer.
