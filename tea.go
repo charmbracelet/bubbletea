@@ -146,6 +146,20 @@ type View struct {
 	// progress bar section. Support depends on the terminal.
 	ProgressBar *ProgressBar
 
+	// ProgramStatus when not nil, reports the program status to the terminal
+	// using the Program Status Protocol (OSC 7501): whether the program is
+	// idle, working, waiting on the user, done, or failed. Support depends on
+	// the terminal.
+	//
+	// The status usually addresses the root record (empty ID). Changing it
+	// sends a new report, and setting it back to nil clears the record.
+	//
+	// The status is not cleared when the program exits, so done and error
+	// reports stay visible to the user. Report [ProgramStateDone],
+	// [ProgramStateError], or [ProgramStateIdle] before quitting rather than
+	// leaving a working or blocked status behind.
+	ProgramStatus *ProgramStatus
+
 	// AltScreen puts the program in the alternate screen buffer
 	// (i.e. the program goes into full window mode). Note that the altscreen will
 	// be automatically exited when the program quits.
@@ -509,6 +523,7 @@ type Program struct {
 	msgs         chan Msg
 	errs         chan error
 	finished     chan struct{}
+	runMu        sync.Mutex
 	shutdownOnce sync.Once
 
 	profile *colorprofile.Profile // the terminal color profile
@@ -539,14 +554,15 @@ type Program struct {
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
-	// ticker is the ticker that will be used to write to the renderer.
-	ticker *time.Ticker
-
 	// once is used to stop the renderer.
 	once sync.Once
 
 	// rendererDone is used to stop the renderer.
 	rendererDone chan struct{}
+
+	// rendererWake wakes the renderer when it has stopped its ticker because
+	// nothing was changing. See [Program.startRenderer].
+	rendererWake chan struct{}
 
 	// Initial window size. Mainly used for testing.
 	width, height int
@@ -605,7 +621,9 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 		initialModel: model,
 		msgs:         make(chan Msg),
 		errs:         make(chan error, 1),
+		finished:     make(chan struct{}),
 		rendererDone: make(chan struct{}),
+		rendererWake: make(chan struct{}, 1),
 	}
 
 	// Apply all options to the program.
@@ -762,6 +780,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 		case msg := <-p.msgs:
 			msg = p.translateInputEvent(msg)
 
+			if size, ok := msg.(WindowSizeMsg); ok && !isPlausibleWindowSize(size.Width, size.Height) {
+				continue
+			}
+
 			// Filter messages.
 			if p.filter != nil {
 				msg = p.filter(model, msg)
@@ -838,6 +860,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case cursorColorMsg:
 				p.executeQuery(ansi.RequestCursorColor)
 
+			case programStatusSupportMsg:
+				p.executeQuery(ansi.RequestProgramStatusSupport)
+
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
@@ -896,6 +921,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 func (p *Program) render(model Model) {
 	if p.renderer != nil {
 		p.renderer.render(model.View()) // send view to renderer
+		p.wakeRenderer()
+	}
+}
+
+// wakeRenderer restarts the renderer's ticker if it was stopped because
+// nothing was changing. It never blocks.
+func (p *Program) wakeRenderer() {
+	select {
+	case p.rendererWake <- struct{}{}:
+	default:
 	}
 }
 
@@ -1003,6 +1038,18 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		return nil, errors.New("bubbletea: InitialModel cannot be nil")
 	}
 
+	// Acquire runMu for the duration of initialization. Kill() will also
+	// acquire runMu before calling shutdown(), preventing data races between
+	// Run() writing to fields like p.handlers, p.renderer, and
+	// p.cancelReader and Kill() reading them.
+	p.runMu.Lock()
+	initialized := false
+	defer func() {
+		if !initialized {
+			p.runMu.Unlock()
+		}
+	}()
+
 	// Initialize context and teardown channel.
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
@@ -1057,7 +1104,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			return p.initialModel, fmt.Errorf("bubbletea: error getting terminal size: %w", err)
 		}
 
-		width, height = w, h
+		width, height = p.fallbackDimensions(w, h)
 	}
 
 	p.width, p.height = width, height
@@ -1150,6 +1197,10 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Process commands.
 	p.handlers.add(p.handleCommands(cmds))
 
+	// Initialization is complete. Release the lock so Kill() can proceed.
+	p.runMu.Unlock()
+	initialized = true
+
 	// Run event loop, handle updates and draw.
 	var err error
 	model, err = p.eventLoop(model, cmds)
@@ -1212,7 +1263,16 @@ func (p *Program) Quit() {
 // Kill stops the program immediately and restores the former terminal state.
 // The final render that you would normally see when quitting will be skipped.
 // [program.Run] returns a [ErrProgramKilled] error.
+//
+// If [Program.Run] is concurrently initializing, Kill will wait for it to
+// finish before performing shutdown. This prevents data races that could
+// occur when Kill reads fields that Run is still setting up.
 func (p *Program) Kill() {
+	// Wait for Run() to finish initializing before calling shutdown().
+	// This prevents data races between Run() writing to fields like
+	// p.handlers, p.renderer, and p.cancelReader and Kill() reading them.
+	p.runMu.Lock()
+	defer p.runMu.Unlock()
 	p.shutdown(true)
 }
 
@@ -1226,6 +1286,7 @@ func (p *Program) execute(seq string) {
 	p.mu.Lock()
 	_, _ = p.outputBuf.WriteString(seq)
 	p.mu.Unlock()
+	p.wakeRenderer()
 }
 
 // executeQuery writes a terminal query to the program output. Queries expect a
@@ -1419,13 +1480,12 @@ func (p *Program) Printf(template string, args ...any) {
 // startRenderer starts the renderer.
 func (p *Program) startRenderer() {
 	framerate := time.Second / time.Duration(p.fps)
-	if p.ticker == nil {
-		p.ticker = time.NewTicker(framerate)
-	} else {
-		// If the ticker already exists, it has been stopped and we need to
-		// reset it.
-		p.ticker.Reset(framerate)
-	}
+	// Stop ticking after about half a second of frames with nothing to draw.
+	idleFrames := max(p.fps/2, 1)
+
+	// Each run of the renderer gets its own ticker, so a goroutine that is
+	// still exiting can't stop the ticker of the next one.
+	ticker := time.NewTicker(framerate)
 
 	// Since the renderer can be restarted after a stop, we need to reset
 	// the done channel and its corresponding sync.Once.
@@ -1434,15 +1494,43 @@ func (p *Program) startRenderer() {
 	// Start the renderer.
 	p.renderer.start()
 	go func() {
+		defer ticker.Stop()
+
+		var (
+			idle    int       // consecutive frames with nothing to draw
+			parked  bool      // whether the ticker is stopped
+			realign bool      // whether the ticker runs a shortened interval
+			last    time.Time // when the ticker last fired
+		)
 		for {
 			select {
 			case <-p.rendererDone:
-				p.ticker.Stop()
 				return
 
-			case <-p.ticker.C:
+			case <-p.rendererWake:
+				if !parked {
+					continue
+				}
+				// Resume on the same frame boundaries as if the ticker had
+				// never stopped, so frames are drawn exactly when they
+				// would have been.
+				parked, realign = false, true
+				ticker.Reset(framerate - time.Since(last)%framerate)
+
+			case last = <-ticker.C:
+				if realign {
+					realign = false
+					ticker.Reset(framerate)
+				}
 				_ = p.flush()
-				_ = p.renderer.flush(false)
+				if drew, _ := p.renderer.flush(false); drew {
+					idle = 0
+				} else if idle++; idle >= idleFrames {
+					// Nothing is changing. Stop waking up every frame until
+					// there is something to draw, see [Program.wakeRenderer].
+					ticker.Stop()
+					parked = true
+				}
 			}
 		}
 	}()
@@ -1459,7 +1547,7 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_ = p.renderer.flush(true)
+		_, _ = p.renderer.flush(true)
 	}
 
 	_ = p.renderer.close()

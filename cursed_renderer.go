@@ -156,6 +156,9 @@ func (s *cursedRenderer) start() {
 	if s.lastView.ProgressBar != nil {
 		setProgressBar(s, s.lastView.ProgressBar)
 	}
+	if s.lastView.ProgramStatus != nil {
+		setProgramStatus(s, nil, s.lastView.ProgramStatus)
+	}
 	if !s.noInput {
 		// Enable modifyOtherKeys and Kitty keyboard protocol.
 		// Both can coexist; terminals ignore what they don't support.
@@ -245,6 +248,9 @@ func (s *cursedRenderer) close() (err error) {
 		if lv.ProgressBar != nil && lv.ProgressBar.State != ProgressBarNone {
 			_, _ = s.scr.WriteString(ansi.ResetProgressBar)
 		}
+		// Unlike the progress bar, the program status is left in place: done
+		// and error reports should outlive the program, and terminals drop
+		// working and blocked records when the process exits.
 	}
 
 	if s.cellbuf.Method == ansi.GraphemeWidth {
@@ -287,7 +293,7 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush(closing bool) error {
+func (s *cursedRenderer) flush(closing bool) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -319,7 +325,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
-		return nil
+		return false, nil
 	}
 
 	// We're no longer starting.
@@ -506,6 +512,15 @@ func (s *cursedRenderer) flush(closing bool) error {
 		setProgressBar(s, view.ProgressBar)
 	}
 
+	// Report the program status if it's changed.
+	var lps *ProgramStatus
+	if s.lastView != nil {
+		lps = s.lastView.ProgramStatus
+	}
+	if !programStatusEquals(lps, view.ProgramStatus) {
+		setProgramStatus(s, lps, view.ProgramStatus)
+	}
+
 	// Render and queue changes to the screen buffer.
 	s.scr.Render(s.cellbuf.RenderBuffer)
 
@@ -527,7 +542,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if err := s.scr.Flush(); err != nil {
-		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
+		return true, fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
 
 	// Check if we have any render updates to flush.
@@ -614,13 +629,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 			s.logger.Printf("output: %q", buf.String())
 		}
 		if _, err := io.Copy(s.w, &buf); err != nil {
-			return fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
+			return true, fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
 		}
 	}
 
 	s.lastView = &view
 
-	return nil
+	return true, nil
 }
 
 // render implements renderer.
@@ -850,8 +865,30 @@ func setProgressBar(s *cursedRenderer, pb *ProgressBar) {
 	}
 }
 
+func programStatusEquals(a, b *ProgramStatus) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
+}
+
+// setProgramStatus reports cur to the terminal. When cur is nil, or addresses
+// a different record than prev, the record of prev is cleared first.
+func setProgramStatus(s *cursedRenderer, prev, cur *ProgramStatus) {
+	if prev != nil && (cur == nil || cur.ID != prev.ID) {
+		_, _ = s.scr.WriteString(ansi.ClearProgramStatusID(prev.ID))
+	}
+	if cur != nil {
+		_, _ = s.scr.WriteString(ansi.SetProgramStatus(*cur))
+	}
+}
+
 func viewEquals(a, b *View) bool {
 	if a == nil || b == nil {
+		return false
+	}
+
+	if !programStatusEquals(a.ProgramStatus, b.ProgramStatus) {
 		return false
 	}
 
