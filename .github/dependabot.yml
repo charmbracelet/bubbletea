@@ -4,10 +4,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-      timezone: "America/New_York"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
@@ -25,10 +22,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-      timezone: "America/New_York"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
@@ -42,10 +36,7 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-      timezone: "America/New_York"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
@@ -59,10 +50,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/examples"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-      timezone: "America/New_York"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
@@ -76,10 +64,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/tutorials"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "05:00"
-      timezone: "America/New_York"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
