@@ -557,6 +557,10 @@ type Program struct {
 	inputScanner          *uv.TerminalReader
 	readLoopDone          chan struct{}
 
+	// queryPending is set when a terminal query has been written and its
+	// reply may still be in flight. See [Program.drainQueryReplies].
+	queryPending atomic.Bool
+
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
@@ -1340,6 +1344,7 @@ func (p *Program) executeQuery(seq string) {
 	if p.disableInput {
 		return
 	}
+	p.queryPending.Store(true)
 	p.execute(seq)
 }
 
@@ -1459,6 +1464,11 @@ func (p *Program) releaseTerminal(reset bool) error {
 			p.renderer.reset()
 		}
 	}
+
+	// Replies to queries we sent may still be in flight. Read them now, while
+	// the terminal is still in raw mode, so they don't end up as input for
+	// whoever gets the terminal next, e.g. an exec'd process.
+	p.drainQueryReplies()
 
 	return p.restoreTerminalState()
 }
