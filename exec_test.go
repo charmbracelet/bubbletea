@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 type execFinishedMsg struct{ err error }
@@ -134,6 +135,18 @@ func TestTeaExecWithNilInput(t *testing.T) {
 	}
 	if m.err != nil {
 		t.Fatalf("expected no error, got %v", m.err)
+	}
+}
+
+func TestReleaseTerminalWithNilInputDoesNotWait(t *testing.T) {
+	p := NewProgram(&testExecNoInputModel{}, WithInput(nil))
+
+	start := time.Now()
+	if err := p.ReleaseTerminal(); err != nil {
+		t.Fatal(err)
+	}
+	if elapsed := time.Since(start); elapsed >= 250*time.Millisecond {
+		t.Fatalf("ReleaseTerminal took %s without an input reader", elapsed)
 	}
 }
 

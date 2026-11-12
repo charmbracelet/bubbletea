@@ -545,7 +545,8 @@ type Program struct {
 	// the environment variables for the program, defaults to os.Environ().
 	environ uv.Environ
 	// the program's logger for debugging.
-	logger uv.Logger
+	logger    uv.Logger
+	tracePath string
 
 	// where to read inputs from, this will usually be os.Stdin.
 	input io.Reader
@@ -662,10 +663,7 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 
 	tracePath, traceOk := os.LookupEnv("TEA_TRACE")
 	if traceOk && len(tracePath) > 0 {
-		// We have a trace filepath.
-		if f, err := os.OpenFile(tracePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o600); err == nil {
-			p.logger = log.New(f, "bubbletea: ", log.LstdFlags|log.Lshortfile)
-		}
+		p.tracePath = tracePath
 	}
 
 	return p
@@ -1055,6 +1053,16 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		}
 	}()
 
+	p.finished = make(chan struct{})
+	defer close(p.finished)
+
+	if p.tracePath != "" {
+		if f, err := os.OpenFile(p.tracePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o600); err == nil {
+			defer f.Close() //nolint:errcheck
+			p.logger = log.New(f, "bubbletea: ", log.LstdFlags|log.Lshortfile)
+		}
+	}
+
 	// Initialize context and teardown channel.
 	//
 	// When a previous run already tore down its per-run state, recreate it so
@@ -1071,11 +1079,6 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 
 	p.handlers = channelHandlers{}
 	cmds := make(chan Cmd)
-
-	p.finished = make(chan struct{})
-	defer func() {
-		close(p.finished)
-	}()
 
 	defer p.cancel()
 	p.started.Store(true)
@@ -1447,9 +1450,8 @@ func (p *Program) releaseTerminal(reset bool) error {
 	atomic.StoreUint32(&p.ignoreSignals, 1)
 	if p.cancelReader != nil {
 		p.cancelReader.Cancel()
+		p.waitForReadLoop()
 	}
-
-	p.waitForReadLoop()
 
 	if p.renderer != nil {
 		p.stopRenderer(false)
