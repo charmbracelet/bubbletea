@@ -1543,6 +1543,9 @@ func (p *Program) stopRenderer(kill bool) {
 	// Stop the renderer before acquiring the mutex to avoid a deadlock.
 	p.once.Do(func() {
 		p.rendererDone <- struct{}{}
+		// Stop the ticker here rather than in the render goroutine, so it is
+		// always stopped before a later startRenderer resets it.
+		p.ticker.Stop()
 	})
 
 	if !kill {
