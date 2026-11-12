@@ -98,9 +98,7 @@ type model struct {
 
 ## Initialization
 
-Next, we’ll define our application’s initial state. `Init` can return a `Cmd`
-that could perform some initial I/O. For now, we don’t need to do any I/O, so
-for the command, we’ll just return `nil`, which translates to “no command.”
+Next, we’ll define our application’s initial state. In this case, we’re defining a function to return our initial model.
 
 ```go
 func initialModel() model {
@@ -112,6 +110,28 @@ func initialModel() model {
 		// the  map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
+	}
+}
+```
+
+However, we could just as easily define the initial model as a variable elsewhere, too.
+
+```go
+func main() {
+	initialModel := model{
+		// Our to-do list is a grocery list
+		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+
+		// A map which indicates which choices are selected. We're using
+		// the map like a mathematical set. The keys refer to the indexes
+		// of the `choices` slice, above.
+		selected: make(map[int]struct{}),
+	}
+
+	p := tea.NewProgram(initialModel)
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Alas, there's been an error: %v", err)
+		os.Exit(1)
 	}
 }
 ```
