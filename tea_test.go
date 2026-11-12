@@ -111,8 +111,8 @@ func TestProgramClosesTraceFile(t *testing.T) {
 	if !ok {
 		t.Fatalf("trace writer has type %T, want *os.File", logger.Writer())
 	}
-	if _, err := traceFile.Stat(); !errors.Is(err, os.ErrClosed) {
-		t.Fatalf("trace file remains open after Run: Stat error = %v", err)
+	if _, err := traceFile.Write([]byte("x")); !errors.Is(err, os.ErrClosed) {
+		t.Fatalf("trace file remains open after Run: Write error = %v", err)
 	}
 }
 
