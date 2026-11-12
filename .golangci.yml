@@ -27,6 +27,12 @@ linters:
     - wrapcheck
   exclusions:
     rules:
+      # On js/wasm x/term's GetSize and Restore always fail, so staticcheck
+      # calls the shared tty error checks always-true. ttyOutput is nil there.
+      - path: (tea|tty)\.go
+        text: 'SA4023'
+        linters:
+          - staticcheck
       - text: '(slog|log)\.\w+'
         linters:
           - noctx
