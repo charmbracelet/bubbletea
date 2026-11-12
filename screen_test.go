@@ -205,3 +205,25 @@ func TestClearMsg(t *testing.T) {
 		})
 	}
 }
+
+func TestIsPlausibleWindowSize(t *testing.T) {
+	tests := []struct {
+		w, h int
+		want bool
+	}{
+		{80, 24, true},
+		{0, 0, true},
+		{500, 200, true},
+		{-1, 24, false},
+		{80, -1, false},
+		{5000, 1, false},
+		{23000, 23000, false},
+		{29000, 29000, false},
+		{2000, 2000, false},
+	}
+	for _, tt := range tests {
+		if got := isPlausibleWindowSize(tt.w, tt.h); got != tt.want {
+			t.Errorf("isPlausibleWindowSize(%d, %d) = %v, want %v", tt.w, tt.h, got, tt.want)
+		}
+	}
+}
