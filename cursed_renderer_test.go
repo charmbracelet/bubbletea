@@ -202,6 +202,24 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 	}
 }
 
+func TestCursedRenderer_insertAboveBeforeFirstFlush(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	renderer := newCursedRenderer(&output, []string{"TERM=xterm-256color"}, 80, 24)
+	renderer.render(NewView("footer"))
+
+	if err := renderer.insertAbove("startup"); err != nil {
+		t.Fatal(err)
+	}
+
+	want := "\r\n" + ansi.CursorUp(1) +
+		ansi.InsertLine(1) + ansi.EraseLineRight + "startup" + "\r\n"
+	if got := output.String(); got != want {
+		t.Fatalf("unexpected insertAbove output:\nwant: %q\n got: %q", want, got)
+	}
+}
+
 // Fixes: https://github.com/charmbracelet/bubbletea/issues/1780
 func TestCursedRenderer_resizeStaleFrame(t *testing.T) {
 	t.Parallel()
@@ -313,6 +331,7 @@ func TestCursedRenderer_insertAboveLineBoundaries(t *testing.T) {
 
 			var out bytes.Buffer
 			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, width, 2)
+			r.render(NewView("view\nview"))
 			r.scr.SetPosition(0, 0)
 			if err := r.insertAbove(tt.line); err != nil {
 				t.Fatal(err)
