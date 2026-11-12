@@ -201,3 +201,42 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
 	}
 }
+
+func TestCursedRenderer_movesCursorChangedInPlace(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+
+	render := func(v View) {
+		t.Helper()
+		r.render(v)
+		if err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	cur := NewCursor(0, 0)
+	view := NewView("hello world")
+	view.Cursor = cur
+	render(view)
+
+	// Move the cursor the view already holds, as a model that keeps one
+	// cursor across frames does. The content stays the same.
+	out.Reset()
+	cur.X = 5
+	render(view)
+	if out.Len() == 0 {
+		t.Fatal("expected the cursor move to be written, got no output")
+	}
+	if x, y := r.scr.Position(); x != 5 || y != 0 {
+		t.Fatalf("expected the cursor at (5, 0), got (%d, %d) after writing %q", x, y, out.String())
+	}
+
+	// The next frame is unchanged and writes nothing.
+	out.Reset()
+	render(view)
+	if out.Len() != 0 {
+		t.Fatalf("expected no output for an unchanged frame, got %q", out.String())
+	}
+}

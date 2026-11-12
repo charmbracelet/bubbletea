@@ -643,6 +643,13 @@ func (s *cursedRenderer) render(v View) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Keep our own copy of the cursor. If the model changes the cursor it
+	// passed in, the last rendered view would change with it and flush would
+	// skip the cursor move.
+	if v.Cursor != nil {
+		cur := *v.Cursor
+		v.Cursor = &cur
+	}
 	s.view = v
 }
 
