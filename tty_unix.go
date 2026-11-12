@@ -1,5 +1,4 @@
 //go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || aix || zos
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris aix zos
 
 package tea
 
@@ -34,7 +33,10 @@ func (p *Program) initInput() (err error) {
 	return nil
 }
 
-const suspendSupported = true
+const (
+	ttySupported     = true
+	suspendSupported = true
+)
 
 // Send SIGTSTP to the entire process group.
 func suspendProcess() {
