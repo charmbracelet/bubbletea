@@ -249,6 +249,31 @@ func TestTeaWaitKill(t *testing.T) {
 	}
 }
 
+func TestKillDuringStartupRace(t *testing.T) {
+	t.Parallel()
+	for range 100 {
+		p := NewProgram(&testModel{},
+			WithInput(bytes.NewBuffer(nil)),
+			WithOutput(io.Discard),
+			WithoutSignals(),
+		)
+
+		done := make(chan struct{})
+		go func() {
+			_, _ = p.Run()
+			close(done)
+		}()
+
+		p.Kill()
+
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatal("program did not stop")
+		}
+	}
+}
+
 func TestTeaWithFilter(t *testing.T) {
 	for _, preventCount := range []uint32{0, 1, 2} {
 		t.Run(fmt.Sprintf("prevent_%d", preventCount), func(t *testing.T) {
@@ -560,6 +585,49 @@ func TestTeaSend(t *testing.T) {
 	p.Send(Quit())
 }
 
+func TestProgramPrintAfterExit(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	p := NewProgram(&testModel{},
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+	go p.Send(Quit())
+	if _, err := p.Run(); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name  string
+		print func()
+	}{
+		{"Println", func() { p.Println("after exit") }},
+		{"Printf", func() { p.Printf("after %s", "exit") }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			done := make(chan struct{})
+			go func() {
+				tt.print()
+				close(done)
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(100 * time.Millisecond):
+				// Receive only after detecting the block. This releases the
+				// direct channel send used before this regression was fixed,
+				// so the test does not leak a goroutine against the old code.
+				<-p.msgs
+				<-done
+				t.Fatal("print blocked after the program exited")
+			}
+		})
+	}
+}
+
 func TestTeaNoRun(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
@@ -570,6 +638,74 @@ func TestTeaNoRun(t *testing.T) {
 		WithInput(&in),
 		WithOutput(&buf),
 	)
+}
+
+// runTwiceModel waits for a WindowSizeMsg before quitting, and reports whether
+// that message ever reached Update, so we can tell a real run from a
+// torn-down one.
+type runTwiceModel struct {
+	updated atomic.Bool
+}
+
+// Init returns no command on purpose: the program exits from Update once it
+// has seen a WindowSizeMsg, so the quit is ordered after the observation
+// rather than racing it.
+func (m *runTwiceModel) Init() Cmd { return nil }
+
+func (m *runTwiceModel) Update(msg Msg) (Model, Cmd) {
+	if _, ok := msg.(WindowSizeMsg); ok {
+		m.updated.Store(true)
+		return m, Quit
+	}
+	return m, nil
+}
+
+func (m *runTwiceModel) View() View { return NewView("hello") }
+
+// TestTeaRunTwice is a regression test for running a Program a second time
+// after the first Run returned. Run resets its per-run state (handlers,
+// finished channel) at the top of every call, but before the fix the run
+// context, error channel, and shutdown guard stayed behind: the second run
+// tore down immediately with ErrProgramKilled and its shutdown was skipped,
+// leaving the terminal state it changed unrestored.
+func TestTeaRunTwice(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	var in bytes.Buffer
+
+	m := &runTwiceModel{}
+	p := NewProgram(m,
+		WithInput(&in),
+		WithOutput(&buf),
+	)
+
+	// The program quits from Update once it has observed a WindowSizeMsg, so
+	// every run returns on its own; a bounded wait keeps a genuinely broken
+	// run from hanging the test instead of failing it.
+	run := func(which string) {
+		t.Helper()
+		done := make(chan error, 1)
+		go func() {
+			_, err := p.Run()
+			done <- err
+		}()
+		select {
+		case err := <-done:
+			if err != nil {
+				t.Fatalf("%s run: unexpected error: %v", which, err)
+			}
+		case <-time.After(30 * time.Second):
+			t.Fatalf("%s run: Run did not return; the program never observed a WindowSizeMsg", which)
+		}
+	}
+
+	run("first")
+	m.updated.Store(false)
+
+	run("second")
+	if !m.updated.Load() {
+		t.Error("second run never delivered messages to Update")
+	}
 }
 
 func TestTeaPanic(t *testing.T) {

@@ -293,7 +293,7 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush(closing bool) error {
+func (s *cursedRenderer) flush(closing bool) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -325,7 +325,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 
 	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
-		return nil
+		return false, nil
 	}
 
 	// We're no longer starting.
@@ -542,7 +542,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if err := s.scr.Flush(); err != nil {
-		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
+		return true, fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
 
 	// Check if we have any render updates to flush.
@@ -629,13 +629,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 			s.logger.Printf("output: %q", buf.String())
 		}
 		if _, err := io.Copy(s.w, &buf); err != nil {
-			return fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
+			return true, fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
 		}
 	}
 
 	s.lastView = &view
 
-	return nil
+	return true, nil
 }
 
 // render implements renderer.
@@ -702,6 +702,18 @@ func (s *cursedRenderer) clearScreen() {
 	s.scr.MoveTo(0, 0)
 	s.scr.Erase()
 	s.pendingErase = true
+	s.mu.Unlock()
+}
+
+// clearView implements renderer.
+func (s *cursedRenderer) clearView() {
+	s.mu.Lock()
+	// Blank the view content so the next flush writes nothing to the output.
+	// Terminal mode flags such as AltScreen are preserved so that the screen
+	// mode is restored correctly when the program resumes after the subprocess
+	// exits (see close and start). See issue #431.
+	s.view.Content = ""
+	s.view.Cursor = nil
 	s.mu.Unlock()
 }
 
@@ -793,7 +805,7 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	for _, line := range lines {
 		lineWidth := ansi.StringWidth(line)
 		if w > 0 && lineWidth > w {
-			offset += (lineWidth / w)
+			offset += (lineWidth - 1) / w
 		}
 	}
 
@@ -808,8 +820,8 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	sb.WriteString(ansi.CursorUp(up))
 	sb.WriteString(ansi.InsertLine(offset))
 	for _, line := range lines {
-		sb.WriteString(line)
 		sb.WriteString(ansi.EraseLineRight)
+		sb.WriteString(line)
 		sb.WriteString("\r\n")
 	}
 

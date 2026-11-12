@@ -25,8 +25,10 @@ type renderer interface {
 	// render renders a frame to the output.
 	render(View)
 
-	// flush flushes the renderer's buffer to the output.
-	flush(closing bool) error
+	// flush flushes the renderer's buffer to the output. It reports whether
+	// there was anything to draw, so the caller can tell an idle screen from
+	// an active one.
+	flush(closing bool) (bool, error)
 
 	// reset resets the renderer's state to its initial state.
 	reset()
@@ -48,6 +50,13 @@ type renderer interface {
 
 	// clearScreen clears the screen.
 	clearScreen()
+
+	// clearView blanks the current view's content while preserving terminal
+	// mode flags such as AltScreen, so the next flush writes no View output to
+	// the terminal. It is used before handing the terminal to a subprocess
+	// (see Exec and ExecProcess) so the last View() does not leak to stdout
+	// and persist after the subprocess exits. See issue #431.
+	clearView()
 
 	// writeString writes a string to the renderer's output.
 	writeString(string) (int, error)

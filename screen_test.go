@@ -138,6 +138,9 @@ func TestViewModel(t *testing.T) {
 
 			m := &testViewModel{testModel: &testModel{}}
 			p := NewProgram(m,
+				// Keep the renderer ticker from introducing intermediate frames into
+				// this golden-output test.
+				WithFPS(1),
 				// Set the initial window size for the program.
 				WithWindowSize(80, 24),
 				// Use ANSI256 to increase test coverage.
@@ -203,5 +206,27 @@ func TestClearMsg(t *testing.T) {
 			}
 			golden.RequireEqual(t, buf.Bytes())
 		})
+	}
+}
+
+func TestIsPlausibleWindowSize(t *testing.T) {
+	tests := []struct {
+		w, h int
+		want bool
+	}{
+		{80, 24, true},
+		{0, 0, true},
+		{500, 200, true},
+		{-1, 24, false},
+		{80, -1, false},
+		{5000, 1, false},
+		{23000, 23000, false},
+		{29000, 29000, false},
+		{2000, 2000, false},
+	}
+	for _, tt := range tests {
+		if got := isPlausibleWindowSize(tt.w, tt.h); got != tt.want {
+			t.Errorf("isPlausibleWindowSize(%d, %d) = %v, want %v", tt.w, tt.h, got, tt.want)
+		}
 	}
 }

@@ -64,3 +64,18 @@ type ModeReportMsg struct {
 	// Value is the mode value.
 	Value ansi.ModeSetting
 }
+
+const (
+	maxWindowDimension = 4096
+	maxWindowCells     = 1 << 20
+)
+
+func isPlausibleWindowSize(width, height int) bool {
+	if width < 0 || height < 0 {
+		return false
+	}
+	if width > maxWindowDimension || height > maxWindowDimension {
+		return false
+	}
+	return width*height <= maxWindowCells
+}
