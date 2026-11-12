@@ -96,11 +96,10 @@ type model struct {
 }
 ```
 
-## Initialization
+### Initialization
 
-Next, we’ll define our application’s initial state. `Init` can return a `Cmd`
-that could perform some initial I/O. For now, we don’t need to do any I/O, so
-for the command, we’ll just return `nil`, which translates to “no command.”
+Next, we’ll define our application’s initial state. In this tutorial our
+application’s state is the to-do list and which of its items are selected.
 
 ```go
 func initialModel() model {
@@ -116,10 +115,9 @@ func initialModel() model {
 }
 ```
 
-After that, we’ll define our application’s initial state in the `Init` method. `Init`
-can return a `Cmd` that could perform some initial I/O. For now, we don't need
-to do any I/O, so for the command, we'll just return `nil`, which translates to
-"no command."
+After that, we’ll define the `Init` method. `Init` can return a `Cmd` that
+could perform some initial I/O. For now, we don’t need to do any I/O, so for
+the command, we’ll just return `nil`, which translates to “no command.”
 
 ```go
 func (m model) Init() tea.Cmd {
