@@ -154,6 +154,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus > len(m.inputs)-1 {
 				m.focus = len(m.inputs) - 1
 			}
+			cmd := m.inputs[m.focus].Focus()
+			cmds = append(cmds, cmd)
 		}
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
