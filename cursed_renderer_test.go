@@ -228,18 +228,61 @@ func TestCursedRenderer_insertAboveUsesActiveWidthMethod(t *testing.T) {
 
 	// "👨‍👩‍👧‍👦" is a single grapheme cluster (width 2) made of four wide
 	// codepoints (width 8), so the wrapped-line count differs per method.
-	// With an 8-column buffer: grapheme width 10 -> 1 extra line,
-	// wcwidth 16 -> 2 extra lines.
-	const line = "👨‍👩‍👧‍👦aaaaaaaa"
+	// With an 8-column buffer: grapheme width 8 fits in 1 row, wcwidth 14
+	// wraps to 2 rows.
+	const line = "👨‍👩‍👧‍👦aaaaaa"
 
-	// WcWidth fallback: 1 line + 16/8 extra -> 3 inserted lines, 4 newlines.
-	if got := insertNewlines(ansi.WcWidth, line); got != 4 {
-		t.Errorf("WcWidth: expected 4 newlines, got %d", got)
+	// WcWidth fallback: 1 line + (14-1)/8 extra -> 2 inserted lines, 3 newlines.
+	if got := insertNewlines(ansi.WcWidth, line); got != 3 {
+		t.Errorf("WcWidth: expected 3 newlines, got %d", got)
 	}
 
-	// GraphemeWidth (Unicode-core mode): 1 line + 10/8 extra -> 2 inserted
-	// lines, 3 newlines.
-	if got := insertNewlines(ansi.GraphemeWidth, line); got != 3 {
-		t.Errorf("GraphemeWidth: expected 3 newlines, got %d", got)
+	// GraphemeWidth (Unicode-core mode): 1 line + (8-1)/8 extra -> 1 inserted
+	// line, 2 newlines.
+	if got := insertNewlines(ansi.GraphemeWidth, line); got != 2 {
+		t.Errorf("GraphemeWidth: expected 2 newlines, got %d", got)
+	}
+}
+
+func TestCursedRenderer_insertAboveLineBoundaries(t *testing.T) {
+	t.Parallel()
+
+	const width = 40
+	tests := []struct {
+		name string
+		line string
+		rows int
+	}{
+		{name: "short", line: strings.Repeat("-", width-2) + "#", rows: 1},
+		{name: "exact width", line: strings.Repeat("-", width-1) + "#", rows: 1},
+		{name: "one cell over", line: strings.Repeat("-", width) + "#", rows: 2},
+		{name: "two exact rows", line: strings.Repeat("-", 2*width-1) + "#", rows: 2},
+		{name: "three exact rows", line: strings.Repeat("-", 3*width-1) + "#", rows: 3},
+		{name: "wide characters", line: strings.Repeat("界", width-1) + "-#", rows: 2},
+		{name: "styled", line: "\x1b[31m" + strings.Repeat("-", 2*width-1) + "#" + ansi.ResetStyle, rows: 2},
+		{name: "multiple lines", line: strings.Repeat("-", width-1) + "#\n" + strings.Repeat("-", 2*width-1) + "#", rows: 3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, width, 2)
+			r.scr.SetPosition(0, 0)
+			if err := r.insertAbove(tt.line); err != nil {
+				t.Fatal(err)
+			}
+
+			got := out.String()
+			prefix := "\r" + ansi.CursorDown(1) + strings.Repeat("\n", tt.rows) + ansi.CursorUp(tt.rows+1) + ansi.InsertLine(tt.rows)
+			if !strings.HasPrefix(got, prefix) {
+				t.Fatalf("expected room for %d terminal rows with prefix %q, got %q", tt.rows, prefix, got)
+			}
+			for _, line := range strings.Split(tt.line, "\n") {
+				if ansi.StringWidth(line)%width == 0 && strings.Contains(got, line+ansi.EraseLineRight) {
+					t.Fatalf("erasing at the right margin would delete the inserted line's last cell, got %q", got)
+				}
+			}
+		})
 	}
 }
