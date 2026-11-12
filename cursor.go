@@ -23,6 +23,7 @@ type requestCursorPosMsg struct{}
 
 // RequestCursorPosition is a command that requests the cursor position.
 // The cursor position will be sent as a [CursorPositionMsg] message.
+// Use [WithInput] to enable input, since the reply cannot be read otherwise.
 func RequestCursorPosition() Msg {
 	return requestCursorPosMsg{}
 }
