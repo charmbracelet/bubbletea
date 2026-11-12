@@ -525,6 +525,7 @@ type Program struct {
 	finished     chan struct{}
 	runMu        sync.Mutex
 	shutdownOnce sync.Once
+	started      atomic.Bool
 
 	// ranOnce reports whether [Program.Run] has been called before, so its
 	// per-run state can be reinitialized on subsequent runs.
@@ -1077,6 +1078,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	}()
 
 	defer p.cancel()
+	p.started.Store(true)
 
 	if p.disableInput {
 		p.input = nil
@@ -1287,6 +1289,9 @@ func (p *Program) Send(msg Msg) {
 // If the program is not running this will be a no-op, so it's safe to call
 // if the program is unstarted or has already exited.
 func (p *Program) Quit() {
+	if !p.started.Load() {
+		return
+	}
 	p.Send(Quit())
 }
 
