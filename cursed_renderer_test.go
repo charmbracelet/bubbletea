@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -199,5 +201,87 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 	}
 	if n := strings.Count(got, ansi.PushKittyKeyboard(0)); n > 1 {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
+	}
+}
+
+// rowsMovedUp sums the cursor-up movement the renderer emits before it starts
+// erasing, which is how far it reckons the top of the previous frame is.
+func rowsMovedUp(t *testing.T, output string) int {
+	t.Helper()
+
+	prefix, _, found := strings.Cut(output, ansi.EraseScreenBelow)
+	if !found {
+		t.Fatalf("output never erased the old frame: %q", output)
+	}
+	// Summed rather than matched once: the move up is emitted in two pieces,
+	// the rows skipped past the rewrap and the renderer's own move to the top
+	// of the frame, and only their total says where the erase begins.
+	var rows int
+	for _, m := range cursorUpSeq.FindAllStringSubmatch(prefix, -1) {
+		if m[1] == "" {
+			rows++ // a bare CUU moves one row
+			continue
+		}
+		n, err := strconv.Atoi(m[1])
+		if err != nil {
+			t.Fatalf("unreadable cursor-up count in %q: %v", m[0], err)
+		}
+		rows += n
+	}
+	return rows
+}
+
+var cursorUpSeq = regexp.MustCompile(`\x1b\[(\d*)A`)
+
+// A narrowed terminal rewraps the frame it is holding, so the row the renderer
+// counts as one is now two and the erase has further to travel to reach the top
+// of the frame.
+func TestCursedRenderer_resizeSkipsReflowedRows(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		rule string
+		to   int
+		env  []string
+		want int
+	}{
+		// Two frame rows sit above the cursor, and the rule among them spans 99
+		// of the 100 columns, so at 60 columns it covers two terminal rows.
+		{name: "rewrapping terminal", rule: strings.Repeat("-", 99), to: 60, want: 3},
+		// 21 double-width cells will not divide into rows of 21 columns: each
+		// row takes 10 of them and leaves its last column empty, so the row
+		// covers three terminal rows where dividing its width would say two.
+		{name: "double-width cells", rule: strings.Repeat("你", 21), to: 21, want: 4},
+		// tmux has rewrapped pane text on resize since 1.8, so it gets the
+		// same count as any other rewrapping terminal.
+		{name: "tmux", rule: strings.Repeat("-", 99), to: 60, want: 3,
+			env: []string{"TMUX=/tmp/tmux-501/default,1,0"}},
+		// GNU screen truncates instead, and moving up the extra rows would
+		// erase scrollback the renderer never drew.
+		{name: "screen", rule: strings.Repeat("-", 99), to: 60, want: 2,
+			env: []string{"STY=12345.pts-0.host"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var output bytes.Buffer
+			env := append([]string{"TERM=xterm-256color", "TERM_PROGRAM=Apple_Terminal"}, tc.env...)
+			r := newCursedRenderer(&output, env, 100, 24)
+
+			frame := NewView("\n" + tc.rule + "\n> \n" + tc.rule + "\nstatus")
+			frame.Cursor = NewCursor(2, 2)
+			r.render(frame)
+			if err := r.flush(false); err != nil {
+				t.Fatalf("flush initial frame: %v", err)
+			}
+
+			output.Reset()
+			r.resize(tc.to, 24)
+			r.render(frame)
+			if err := r.flush(false); err != nil {
+				t.Fatalf("flush after resize: %v", err)
+			}
+
+			if got := rowsMovedUp(t, output.String()); got != tc.want {
+				t.Errorf("moved up %d rows to reach the top of the frame, want %d", got, tc.want)
+			}
+		})
 	}
 }
