@@ -199,11 +199,11 @@ func (s *cursedRenderer) close() (err error) {
 		// we're in alt screen mode or not to avoid leaving the cursor in the
 		// middle in terminals that don't support alt screen mode.
 		s.scr.MoveTo(0, s.cellbuf.Height()-1)
+		// Clear the bottom line regardless of the mode to keep the prompt line clean.
+		_, _ = s.scr.WriteString(ansi.EraseScreenBelow)
 		_ = s.scr.Flush() // we need to flush to write the cursor movement
 		if lv.AltScreen {
 			enableAltScreen(s, false, true)
-		} else {
-			_, _ = s.scr.WriteString(ansi.EraseScreenBelow)
 		}
 		if lv.Cursor == nil {
 			enableTextCursor(s, true)
