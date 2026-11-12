@@ -712,6 +712,18 @@ func (s *cursedRenderer) clearScreen() {
 	s.mu.Unlock()
 }
 
+// clearView implements renderer.
+func (s *cursedRenderer) clearView() {
+	s.mu.Lock()
+	// Blank the view content so the next flush writes nothing to the output.
+	// Terminal mode flags such as AltScreen are preserved so that the screen
+	// mode is restored correctly when the program resumes after the subprocess
+	// exits (see close and start). See issue #431.
+	s.view.Content = ""
+	s.view.Cursor = nil
+	s.mu.Unlock()
+}
+
 // enableAltScreen sets the alt screen mode.
 // Note that this writes to the buffer directly if write is true.
 func enableAltScreen(s *cursedRenderer, enable bool, write bool) {
@@ -800,7 +812,7 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	for _, line := range lines {
 		lineWidth := ansi.StringWidth(line)
 		if w > 0 && lineWidth > w {
-			offset += (lineWidth / w)
+			offset += (lineWidth - 1) / w
 		}
 	}
 
@@ -815,8 +827,8 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	sb.WriteString(ansi.CursorUp(up))
 	sb.WriteString(ansi.InsertLine(offset))
 	for _, line := range lines {
-		sb.WriteString(line)
 		sb.WriteString(ansi.EraseLineRight)
+		sb.WriteString(line)
 		sb.WriteString("\r\n")
 	}
 
