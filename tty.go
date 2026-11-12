@@ -1,12 +1,14 @@
 package tea
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
 
 	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/term"
 )
 
@@ -114,6 +116,78 @@ func (p *Program) waitForReadLoop() {
 		// The read loop hangs, which means the input
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.
+	}
+}
+
+// queryDrainTimeout bounds how long [Program.drainQueryReplies] waits for the
+// terminal to answer.
+const queryDrainTimeout = 500 * time.Millisecond
+
+// drainQueryReplies reads the replies to terminal queries that are still in
+// flight after the input reader has been canceled, so they are not left in
+// the tty input queue for the next reader, such as a process started with
+// [ExecProcess].
+//
+// It sends a Primary Device Attributes (DA1) request and reads input until
+// the terminal answers it. Terminals answer requests in order, so by then
+// every earlier reply has been read. The replies are delivered to the program
+// once its event loop resumes.
+func (p *Program) drainQueryReplies() {
+	if !p.queryPending.Swap(false) || p.ttyInput == nil || p.input == nil {
+		return
+	}
+
+	// Make sure the pending queries themselves have been written, followed by
+	// the DA1 request that marks the end of their replies.
+	p.mu.Lock()
+	_, _ = p.outputBuf.WriteString(ansi.RequestPrimaryDeviceAttributes)
+	p.mu.Unlock()
+	if err := p.flush(); err != nil {
+		return
+	}
+
+	cr, err := uv.NewCancelReader(p.input)
+	if err != nil {
+		return
+	}
+	defer cr.Close() //nolint:errcheck
+
+	// Stop reading once the DA1 reply arrives, the timeout expires, or the
+	// program exits.
+	ctx, cancel := context.WithTimeout(p.ctx, queryDrainTimeout)
+	defer cancel()
+	context.AfterFunc(ctx, func() { cr.Cancel() })
+
+	drv := uv.NewTerminalReader(cr, p.environ.Getenv("TERM"))
+	drv.SetLogger(p.logger)
+
+	eventc := make(chan uv.Event)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = drv.StreamEvents(ctx, eventc)
+	}()
+
+	var events []Msg
+	for {
+		select {
+		case ev := <-eventc:
+			if _, ok := ev.(uv.PrimaryDeviceAttributesEvent); ok {
+				// Every earlier reply has been read.
+				cancel()
+				continue
+			}
+			events = append(events, ev)
+		case <-done:
+			if len(events) > 0 {
+				go func() {
+					for _, ev := range events {
+						p.Send(ev)
+					}
+				}()
+			}
+			return
+		}
 	}
 }
 
