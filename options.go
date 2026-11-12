@@ -61,7 +61,7 @@ func WithInput(input io.Reader) ProgramOption {
 //	var sess ssh.Session // ssh.Session is a type from the github.com/charmbracelet/ssh package
 //	pty, _, _ := sess.Pty()
 //	environ := append(sess.Environ(), "TERM="+pty.Term)
-//	p := tea.NewProgram(model, tea.WithEnvironment(environ)
+//	p := tea.NewProgram(model, tea.WithEnvironment(environ))
 func WithEnvironment(env []string) ProgramOption {
 	return func(p *Program) {
 		p.environ = env
