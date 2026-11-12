@@ -5,7 +5,8 @@ package tea
 type requestCapabilityMsg string
 
 // RequestCapability is a command that requests the terminal to send its
-// Termcap/Terminfo response for the given capability.
+// Termcap/Terminfo response for the given capability. Use [WithInput] to
+// enable input, since the reply cannot be read otherwise.
 //
 // Bubble Tea recognizes the following capabilities and will use them to
 // upgrade the program's color profile:

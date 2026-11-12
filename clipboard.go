@@ -38,7 +38,8 @@ func SetClipboard(s string) Cmd {
 type readClipboardMsg struct{}
 
 // ReadClipboard produces a command that reads the system clipboard using OSC52.
-// Note that OSC52 is not supported in all terminals.
+// Note that OSC52 is not supported in all terminals. Use [WithInput] to enable
+// input, since the reply cannot be read otherwise.
 func ReadClipboard() Msg {
 	return readClipboardMsg{}
 }
@@ -64,7 +65,8 @@ type readPrimaryClipboardMsg struct{}
 // ReadPrimaryClipboard produces a command that reads the primary clipboard
 // using OSC52. Primary clipboard selection is a feature present in X11 and
 // Wayland only.
-// Note that OSC52 is not supported in all terminals.
+// Note that OSC52 is not supported in all terminals. Use [WithInput] to enable
+// input, since the reply cannot be read otherwise.
 func ReadPrimaryClipboard() Msg {
 	return readPrimaryClipboardMsg{}
 }

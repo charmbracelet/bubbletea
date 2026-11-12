@@ -43,10 +43,10 @@ func (m model) Init() tea.Cmd {
 }
 
 // print string after stopping for a certain period of time
-func SleepPrintln(s string, milisecond int) tea.Cmd {
+func SleepPrintln(s string, millisecond int) tea.Cmd {
 	printCmd := tea.Println(s)
 	return func() tea.Msg {
-		time.Sleep(time.Duration(milisecond) * time.Millisecond)
+		time.Sleep(time.Duration(millisecond) * time.Millisecond)
 		return printCmd()
 	}
 }

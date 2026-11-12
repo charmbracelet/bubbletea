@@ -9,9 +9,9 @@ import (
 //
 // Example:
 //
-//	    func (m model) Init() (Model, Cmd) {
-//		       return m, tea.Batch(someCommand, someOtherCommand)
-//	    }
+//	func (m model) Init() tea.Cmd {
+//	    return tea.Batch(someCommand, someOtherCommand)
+//	}
 func Batch(cmds ...Cmd) Cmd {
 	return compactCmds[BatchMsg](cmds)
 }
