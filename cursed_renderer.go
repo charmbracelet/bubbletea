@@ -106,6 +106,11 @@ func (s *cursedRenderer) start() {
 	// starting the renderer again after it was stopped.
 	s.starting = true
 
+	// close disables Unicode mode; restore it for negotiated grapheme widths.
+	if s.cellbuf.Method == ansi.GraphemeWidth {
+		_, _ = s.scr.WriteString(ansi.SetModeUnicodeCore)
+	}
+
 	if s.lastView == nil {
 		return
 	}

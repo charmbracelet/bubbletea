@@ -11,6 +11,47 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+func TestCursedRendererResumeUnicodeMode(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name   string
+		method ansi.Method
+		want   bool
+	}{
+		{"grapheme mode restored", ansi.GraphemeWidth, true},
+		{"wcwidth fallback stays disabled", ansi.WcWidth, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+			r.start()
+			r.setWidthMethod(tt.method)
+			r.render(NewView("hello"))
+			if _, err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
+
+			out.Reset()
+			if err := r.close(); err != nil {
+				t.Fatal(err)
+			}
+			if got := strings.Contains(out.String(), ansi.ResetModeUnicodeCore); got != tt.want {
+				t.Fatalf("close reset Unicode mode = %v, want %v; output %q", got, tt.want, out.String())
+			}
+
+			out.Reset()
+			r.start()
+			if _, err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
+			if got := strings.Contains(out.String(), ansi.SetModeUnicodeCore); got != tt.want {
+				t.Fatalf("resume enabled Unicode mode = %v, want %v; output %q", got, tt.want, out.String())
+			}
+		})
+	}
+}
+
 type mouseRaceModel struct {
 	i int
 }
