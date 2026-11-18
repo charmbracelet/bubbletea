@@ -11,6 +11,81 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+func TestCursedRendererEnablesUnicodeModeForGraphemeWidth(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.GraphemeWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), ansi.SetModeUnicodeCore) {
+		t.Fatalf("grapheme rendering did not enable Unicode mode; output %q", out.String())
+	}
+}
+
+func TestCursedRendererWcWidthDoesNotEnableUnicodeMode(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.WcWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.ResetModeUnicodeCore); got != false {
+		t.Fatalf("close reset Unicode mode = %v, want false; output %q", got, out.String())
+	}
+
+	// Discard shutdown output so only the resume sequence can satisfy the assertion.
+	out.Reset()
+	r.start()
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.SetModeUnicodeCore); got != false {
+		t.Fatalf("resume enabled Unicode mode = %v, want false; output %q", got, out.String())
+	}
+}
+
+func TestCursedRendererResumeRestoresUnicodeMode(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.GraphemeWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.ResetModeUnicodeCore); got != true {
+		t.Fatalf("close reset Unicode mode = %v, want true; output %q", got, out.String())
+	}
+
+	// Discard shutdown output so only the resume sequence can satisfy the assertion.
+	out.Reset()
+	r.start()
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.SetModeUnicodeCore); got != true {
+		t.Fatalf("resume enabled Unicode mode = %v, want true; output %q", got, out.String())
+	}
+}
+
 type mouseRaceModel struct {
 	i int
 }
