@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image/color"
 	"io"
-	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -929,11 +928,18 @@ func setProgramStatus(s *cursedRenderer, prev, cur *ProgramStatus) {
 	}
 }
 
-// colorEqual reports whether two colors are equal. Unlike ==, it doesn't
-// panic on [color.Color] implementations whose dynamic type is uncomparable
-// (e.g. a struct containing a slice).
+// colorEqual reports whether two colors are equal. Colors are compared by
+// their RGBA values, which is all the terminal ever sees, rather than with ==,
+// which panics on [color.Color] implementations whose dynamic type is
+// uncomparable (e.g. a struct containing a slice). A nil color stays distinct
+// from any other color so that resetting a color still works.
 func colorEqual(a, b color.Color) bool {
-	return reflect.DeepEqual(a, b)
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	ar, ag, ab, aa := a.RGBA()
+	br, bg, bb, ba := b.RGBA()
+	return ar == br && ag == bg && ab == bb && aa == ba
 }
 
 func viewEquals(a, b *View) bool {

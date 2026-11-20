@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"fmt"
+	"image/color"
 	"io"
 	"strings"
 	"testing"
@@ -230,11 +231,12 @@ func TestCursedRenderer_mouseVsFlush(t *testing.T) {
 // uncomparableColor is a color.Color implementation whose dynamic type is
 // uncomparable (it contains a slice), so comparing two values with == panics.
 type uncomparableColor struct {
-	pad []int
+	rgba color.RGBA
+	pad  []int
 }
 
-func (uncomparableColor) RGBA() (r, g, b, a uint32) {
-	return 0xffff, 0, 0, 0xffff
+func (c uncomparableColor) RGBA() (r, g, b, a uint32) {
+	return c.rgba.RGBA()
 }
 
 // Fixes: https://github.com/charmbracelet/bubbletea/issues/1848
@@ -245,11 +247,12 @@ func TestCursedRenderer_uncomparableViewColors(t *testing.T) {
 	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
 	r.start()
 
+	red := color.RGBA{R: 0xff, A: 0xff}
 	view := NewView("hello")
 	view.AltScreen = true
-	view.ForegroundColor = uncomparableColor{pad: []int{1}}
-	view.BackgroundColor = uncomparableColor{pad: []int{2}}
-	view.Cursor = &Cursor{Color: uncomparableColor{pad: []int{3}}}
+	view.ForegroundColor = uncomparableColor{rgba: red, pad: []int{1}}
+	view.BackgroundColor = uncomparableColor{rgba: red, pad: []int{2}}
+	view.Cursor = &Cursor{Color: uncomparableColor{rgba: red, pad: []int{3}}}
 
 	// Render the same view twice. The second flush takes the viewEquals
 	// early-return path, which compares the color.Color interface values.
@@ -258,6 +261,67 @@ func TestCursedRenderer_uncomparableViewColors(t *testing.T) {
 		if _, err := r.flush(false); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+// Colors are compared by value: the same color, whatever its type, doesn't
+// redraw the view, while a different color or a reset does.
+func TestCursedRenderer_viewColorChanges(t *testing.T) {
+	t.Parallel()
+
+	red := color.RGBA{R: 0xff, A: 0xff}
+	blue := color.RGBA{B: 0xff, A: 0xff}
+	for _, tt := range []struct {
+		name  string
+		set   func(*View, color.Color)
+		code  string
+		reset string
+	}{
+		{"foreground", func(v *View, c color.Color) { v.ForegroundColor = c }, "10", "110"},
+		{"background", func(v *View, c color.Color) { v.BackgroundColor = c }, "11", "111"},
+		{"cursor", func(v *View, c color.Color) { v.Cursor = NewCursor(0, 0); v.Cursor.Color = c }, "12", "112"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+			render := func(c color.Color) bool {
+				t.Helper()
+				view := NewView("hello")
+				tt.set(&view, c)
+				r.render(view)
+				drew, err := r.flush(false)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return drew
+			}
+
+			render(uncomparableColor{rgba: red, pad: []int{1}})
+			if want := "\x1b]" + tt.code + ";#ff0000\a"; !strings.Contains(out.String(), want) {
+				t.Fatalf("missing red color sequence %q in %q", want, out.String())
+			}
+
+			out.Reset()
+			if render(uncomparableColor{rgba: red, pad: []int{2}}) || out.Len() != 0 {
+				t.Fatalf("unchanged color redrew the view: %q", out.String())
+			}
+			if render(red) || out.Len() != 0 {
+				t.Fatalf("the same color of another type redrew the view: %q", out.String())
+			}
+
+			render(uncomparableColor{rgba: blue})
+			if want := "\x1b]" + tt.code + ";#0000ff\a"; !strings.Contains(out.String(), want) {
+				t.Fatalf("missing blue color sequence %q in %q", want, out.String())
+			}
+
+			out.Reset()
+			render(nil)
+			if want := "\x1b]" + tt.reset + "\a"; !strings.Contains(out.String(), want) {
+				t.Fatalf("missing color reset %q in %q", want, out.String())
+			}
+		})
 	}
 }
 

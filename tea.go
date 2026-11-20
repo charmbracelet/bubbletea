@@ -1543,11 +1543,10 @@ func (p *Program) startRenderer() {
 		defer ticker.Stop()
 
 		var (
-			idle     int       // consecutive frames with nothing to draw
-			parked   bool      // whether the ticker is stopped
-			realign  bool      // whether the ticker runs a shortened interval
-			last     time.Time // when the ticker last fired
-			panicked bool      // whether a flush has already panicked
+			idle    int       // consecutive frames with nothing to draw
+			parked  bool      // whether the ticker is stopped
+			realign bool      // whether the ticker runs a shortened interval
+			last    time.Time // when the ticker last fired
 		)
 		for {
 			select {
@@ -1565,37 +1564,16 @@ func (p *Program) startRenderer() {
 				ticker.Reset(framerate - time.Since(last)%framerate)
 
 			case last = <-ticker.C:
-				if panicked {
-					// The renderer panicked on a previous flush; the panic was
-					// recovered and the program is shutting down. Keep draining
-					// the ticker so we stay alive to receive rendererDone.
-					continue
-				}
 				if realign {
 					realign = false
 					ticker.Reset(framerate)
 				}
-				drew := func() (drew bool) {
-					if !p.disableCatchPanics {
-						defer func() {
-							if r := recover(); r != nil {
-								panicked = true
-								// Recover off this goroutine: shutdown's
-								// stopRenderer sends on rendererDone, which
-								// only this goroutine can receive.
-								trace := debug.Stack()
-								go p.recoverFromGoPanicWithStack(r, trace)
-							}
-						}()
-					}
-					_ = p.flush()
-					drew, _ = p.renderer.flush(false)
-					return drew
-				}()
-				if panicked {
-					// Don't park the ticker: it has to keep draining so
-					// stopRenderer's rendererDone send is still received.
-					continue
+				drew, ok := p.flushFrame()
+				if !ok {
+					// The renderer panicked and the program is shutting
+					// down. Stop drawing and wait for stopRenderer.
+					<-p.rendererDone
+					return
 				}
 				if drew {
 					idle = 0
@@ -1608,6 +1586,25 @@ func (p *Program) startRenderer() {
 			}
 		}
 	}()
+}
+
+// flushFrame writes the queued output and the current frame, and reports
+// whether a frame was drawn. If the renderer panics, ok is false and the panic
+// is recovered so the terminal still gets restored. The recovery runs on
+// another goroutine: shutting down sends on rendererDone, which only the
+// renderer goroutine calling flushFrame receives.
+func (p *Program) flushFrame() (drew, ok bool) {
+	if !p.disableCatchPanics {
+		defer func() {
+			if r := recover(); r != nil {
+				ok = false
+				go p.recoverFromGoPanicWithStack(r, debug.Stack())
+			}
+		}()
+	}
+	_ = p.flush()
+	drew, _ = p.renderer.flush(false)
+	return drew, true
 }
 
 // stopRenderer stops the renderer.
