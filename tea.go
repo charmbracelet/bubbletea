@@ -672,6 +672,11 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 func (p *Program) handleSignals() chan struct{} {
 	ch := make(chan struct{})
 
+	// Run sets finished before it starts the handlers. Read it here, not in
+	// the goroutine below, which may still be running when Run is called
+	// again and replaces it.
+	finished := p.finished
+
 	// Listen for SIGINT and SIGTERM.
 	//
 	// In most cases ^C will not send an interrupt because the terminal will be
@@ -683,27 +688,34 @@ func (p *Program) handleSignals() chan struct{} {
 	go func() {
 		sig := make(chan os.Signal, 1)
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-		defer func() {
-			signal.Stop(sig)
-			close(ch)
-		}()
+		defer signal.Stop(sig)
 
 		for {
 			select {
 			case <-p.ctx.Done():
+				// The program is shutting down: report the handler done so
+				// shutdown can proceed, but keep the signal subscription
+				// alive until Run returns. A second SIGINT/SIGTERM arriving
+				// while the terminal is being restored is then caught and
+				// dropped instead of taking the runtime's default path,
+				// which kills the process before the terminal is restored.
+				close(ch)
+				if finished != nil {
+					<-finished
+				}
 				return
 
 			case s := <-sig:
-				if atomic.LoadUint32(&p.ignoreSignals) == 0 {
-					var msg Msg = QuitMsg{}
-					if s == syscall.SIGINT {
-						msg = InterruptMsg{}
-					}
-					select {
-					case p.msgs <- msg:
-					case <-p.ctx.Done():
-					}
-					return
+				if atomic.LoadUint32(&p.ignoreSignals) != 0 {
+					continue
+				}
+				var msg Msg = QuitMsg{}
+				if s == syscall.SIGINT {
+					msg = InterruptMsg{}
+				}
+				select {
+				case p.msgs <- msg:
+				case <-p.ctx.Done():
 				}
 			}
 		}
