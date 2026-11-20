@@ -1244,7 +1244,8 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		err = <-p.errs // Drain a leftover error in case eventLoop crashed.
 	}
 
-	killed := p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil
+	interrupted := errors.Is(err, ErrInterrupted)
+	killed := (p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil) && !interrupted
 	if killed {
 		if err == nil && p.externalCtx.Err() != nil {
 			// Return also as context error the cancellation of an external context.

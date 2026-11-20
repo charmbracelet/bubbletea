@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"strings"
 	"sync"
@@ -265,5 +266,39 @@ func TestRendererQuitWhileParked(t *testing.T) {
 	}
 	if !strings.Contains(h.out.since(mark), "last") {
 		t.Error("final frame not drawn")
+	}
+}
+
+func TestRendererInterruptWhileParked(t *testing.T) {
+	t.Parallel()
+
+	h := newParkHarness(t, 60)
+	h.waitParked()
+
+	mark := h.out.Len()
+	h.setView(func(v *View) { v.Content = "last" })
+	h.p.Send(runCmdMsg{cmd: Interrupt})
+	if err := h.waitDone(); !errors.Is(err, ErrInterrupted) {
+		t.Errorf("Run returned %v, want ErrInterrupted", err)
+	}
+	if !strings.Contains(h.out.since(mark), "last") {
+		t.Error("final frame not drawn on interrupt")
+	}
+}
+
+func TestRendererInterruptWhileParkedWithEmptyView(t *testing.T) {
+	t.Parallel()
+
+	h := newParkHarness(t, 60)
+	h.waitParked()
+
+	mark := h.out.Len()
+	h.setView(func(v *View) { v.Content = "" })
+	h.p.Send(runCmdMsg{cmd: Interrupt})
+	if err := h.waitDone(); !errors.Is(err, ErrInterrupted) {
+		t.Errorf("Run returned %v, want ErrInterrupted", err)
+	}
+	if !strings.Contains(h.out.since(mark), "\r\x1b[J") {
+		t.Error("empty final frame not flushed on interrupt")
 	}
 }
