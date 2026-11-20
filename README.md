@@ -98,8 +98,8 @@ type model struct {
 
 ### Initialization
 
-Next, we’ll define our application’s initial state. In this tutorial our
-application’s state is the to-do list and which of its items are selected.
+Next, we’ll define our application’s initial state. Here, `initialModel()`
+returns the initial model, but we could also define the model as a variable.
 
 ```go
 func initialModel() model {
