@@ -107,6 +107,11 @@ func (s *cursedRenderer) start() {
 	// starting the renderer again after it was stopped.
 	s.starting = true
 
+	// close disables Unicode mode; restore it for negotiated grapheme widths.
+	if s.cellbuf.Method == ansi.GraphemeWidth {
+		_, _ = s.scr.WriteString(ansi.SetModeUnicodeCore)
+	}
+
 	if s.lastView == nil {
 		return
 	}
@@ -324,12 +329,20 @@ func (s *cursedRenderer) flush(closing bool) (bool, error) {
 		}
 	}
 
+	// An empty screen buffer has zero width as well as zero height.
+	if frameArea.Dy() == 0 {
+		frameArea.Max.X = 0
+	}
+
 	// Restore tab stops if we have tab optimizations enabled.
 	if s.starting && s.hardTabs {
 		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
-	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	// Oversized inline frames retain only the rows that fit on the screen.
+	held := frameArea
+	held.Max.Y = min(held.Max.Y, s.height)
+	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && held == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return false, nil
 	}

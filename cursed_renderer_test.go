@@ -11,6 +11,150 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+func TestCursedRendererEnablesUnicodeModeForGraphemeWidth(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.GraphemeWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), ansi.SetModeUnicodeCore) {
+		t.Fatalf("grapheme rendering did not enable Unicode mode; output %q", out.String())
+	}
+}
+
+func TestCursedRendererWcWidthDoesNotEnableUnicodeMode(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.WcWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.ResetModeUnicodeCore); got != false {
+		t.Fatalf("close reset Unicode mode = %v, want false; output %q", got, out.String())
+	}
+
+	// Discard shutdown output so only the resume sequence can satisfy the assertion.
+	out.Reset()
+	r.start()
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.SetModeUnicodeCore); got != false {
+		t.Fatalf("resume enabled Unicode mode = %v, want false; output %q", got, out.String())
+	}
+}
+
+func TestCursedRendererResumeRestoresUnicodeMode(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.GraphemeWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.ResetModeUnicodeCore); got != true {
+		t.Fatalf("close reset Unicode mode = %v, want true; output %q", got, out.String())
+	}
+
+	// Discard shutdown output so only the resume sequence can satisfy the assertion.
+	out.Reset()
+	r.start()
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.SetModeUnicodeCore); got != true {
+		t.Fatalf("resume enabled Unicode mode = %v, want true; output %q", got, out.String())
+	}
+}
+
+func TestCursedRendererSkipsUnchangedView(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 4, 3)
+	r.start()
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	if drawn, err := r.flush(false); err != nil || drawn || out.Len() != 0 {
+		t.Fatalf("unchanged view: drawn=%v, err=%v, output=%q", drawn, err, out.String())
+	}
+}
+
+func TestCursedRendererDrawsChangedEmptyAndTallViews(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name          string
+		before, after View
+	}{
+		{"empty inline becomes nonempty", View{}, NewView("new")},
+		{"empty alt screen becomes nonempty", View{AltScreen: true}, View{Content: "new", AltScreen: true}},
+		{"tall inline changes visible rows", NewView("a\nb\nc\nd\ne"), NewView("a\nb\nx\ny\nz")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 4, 3)
+			r.start()
+			r.render(tt.before)
+			if _, err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
+			out.Reset()
+			r.render(tt.after)
+			if drawn, err := r.flush(false); err != nil || !drawn || out.Len() == 0 {
+				t.Fatalf("changed view: drawn=%v, err=%v, output=%q", drawn, err, out.String())
+			}
+		})
+	}
+}
+
+func TestCursedRendererSkipsUnchangedEmptyAndTallViews(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name string
+		view View
+	}{
+		{"empty inline", View{}},
+		{"empty alt screen", View{AltScreen: true}},
+		{"tall inline", NewView("a\nb\nc\nd\ne\nf\ng")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 4, 3)
+			r.start()
+			r.render(tt.view)
+			if _, err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
+			// Measure only the second flush, after the initial frame is drawn.
+			out.Reset()
+			if drawn, err := r.flush(false); err != nil || drawn || out.Len() != 0 {
+				t.Fatalf("unchanged view: drawn=%v, err=%v, output=%q", drawn, err, out.String())
+			}
+		})
+	}
+}
+
 type mouseRaceModel struct {
 	i int
 }
