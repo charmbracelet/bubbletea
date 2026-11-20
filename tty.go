@@ -162,18 +162,24 @@ func (p *Program) waitForReadLoop() {
 // terminal to answer.
 const queryDrainTimeout = 500 * time.Millisecond
 
-// drainQueryReplies reads the replies to terminal queries that are still in
-// flight after the input reader has been canceled, so they are not left in
-// the tty input queue for the next reader, such as a process started with
-// [ExecProcess].
+// queryReplyWindow is how long after a query its reply may still be on its
+// way. The input reader reads replies that arrive later than that.
+const queryReplyWindow = time.Second
+
+// drainQueryReplies reads the replies to terminal queries that may still be in
+// flight after the input reader has stopped, and returns them. Otherwise they
+// stay in the tty input queue for the next reader: a process started with
+// [ExecProcess], or the shell once the program exits (#1590).
 //
 // It sends a Primary Device Attributes (DA1) request and reads input until
 // the terminal answers it. Terminals answer requests in order, so by then
-// every earlier reply has been read. The replies are delivered to the program
-// once its event loop resumes.
-func (p *Program) drainQueryReplies() {
-	if !p.queryPending.Swap(false) || p.ttyInput == nil || p.input == nil {
-		return
+// every earlier reply has been read. Nothing is drained when the last query
+// was sent long enough ago for its reply to have been read already.
+func (p *Program) drainQueryReplies(ctx context.Context) []Msg {
+	last := p.lastQuery.Swap(0)
+	if last == 0 || time.Since(time.Unix(0, last)) > queryReplyWindow ||
+		p.ttyInput == nil || p.ttyOutput == nil || p.input == nil {
+		return nil
 	}
 
 	// Make sure the pending queries themselves have been written, followed by
@@ -182,18 +188,18 @@ func (p *Program) drainQueryReplies() {
 	_, _ = p.outputBuf.WriteString(ansi.RequestPrimaryDeviceAttributes)
 	p.mu.Unlock()
 	if err := p.flush(); err != nil {
-		return
+		return nil
 	}
 
 	cr, err := uv.NewCancelReader(p.input)
 	if err != nil {
-		return
+		return nil
 	}
 	defer cr.Close() //nolint:errcheck
 
-	// Stop reading once the DA1 reply arrives, the timeout expires, or the
-	// program exits.
-	ctx, cancel := context.WithTimeout(p.ctx, queryDrainTimeout)
+	// Stop reading once the DA1 reply arrives, the timeout expires, or ctx is
+	// done.
+	ctx, cancel := context.WithTimeout(ctx, queryDrainTimeout)
 	defer cancel()
 	context.AfterFunc(ctx, func() { cr.Cancel() })
 
@@ -218,14 +224,7 @@ func (p *Program) drainQueryReplies() {
 			}
 			events = append(events, ev)
 		case <-done:
-			if len(events) > 0 {
-				go func() {
-					for _, ev := range events {
-						p.Send(ev)
-					}
-				}()
-			}
-			return
+			return events
 		}
 	}
 }
