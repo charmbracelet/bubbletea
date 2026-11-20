@@ -188,6 +188,7 @@ func (p *Program) drainQueryReplies(ctx context.Context) []Msg {
 	_, _ = p.outputBuf.WriteString(ansi.RequestPrimaryDeviceAttributes)
 	p.mu.Unlock()
 	if err := p.flush(); err != nil {
+		p.keepWriteErr(err)
 		return nil
 	}
 
