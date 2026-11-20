@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"strings"
 	"sync"
@@ -265,5 +266,56 @@ func TestRendererQuitWhileParked(t *testing.T) {
 	}
 	if !strings.Contains(h.out.since(mark), "last") {
 		t.Error("final frame not drawn")
+	}
+}
+
+// Regression test for #1898: on Interrupt, Run treated ErrInterrupted as
+// killed, so it skipped the final render and stopped the renderer without
+// the final flush. The screen then kept whatever the ticker last flushed,
+// which is nondeterministic under load. The final frame must be drawn and
+// flushed on interrupt, exactly as on quit.
+func TestRendererInterruptWhileParked(t *testing.T) {
+	t.Parallel()
+
+	h := newParkHarness(t, 60)
+	h.waitParked()
+
+	mark := h.out.Len()
+	h.setView(func(v *View) { v.Content = "last" })
+	h.p.Send(runCmdMsg{cmd: Interrupt})
+	if err := h.waitDone(); !errors.Is(err, ErrInterrupted) {
+		t.Errorf("Run returned %v, want ErrInterrupted", err)
+	}
+	if !strings.Contains(h.out.since(mark), "last") {
+		t.Error("final frame not drawn on interrupt")
+	}
+}
+
+// The empty-view case is the huh scenario in #1898: a finished form renders
+// an empty view on quit, so the final frame must erase the menu. A multi-line
+// menu makes the erase observable: the final flush moves the cursor up over
+// the menu and clears it, while shutdown alone only clears the cursor line.
+func TestRendererInterruptWhileParkedWithEmptyView(t *testing.T) {
+	t.Parallel()
+
+	h := newParkHarness(t, 60)
+	h.waitParked()
+
+	// Draw a three-line menu and let the renderer park on it.
+	h.setView(func(v *View) { v.Content = "m1\nm2\nm3" })
+	h.waitOutput(0, 5*time.Second, "m3")
+	h.waitParked()
+
+	mark := h.out.Len()
+	h.setView(func(v *View) { v.Content = "" })
+	h.p.Send(runCmdMsg{cmd: Interrupt})
+	if err := h.waitDone(); !errors.Is(err, ErrInterrupted) {
+		t.Errorf("Run returned %v, want ErrInterrupted", err)
+	}
+	// Erasing a three-line menu moves the cursor up two lines and clears
+	// below. Without the final flush only shutdown's single-line clear
+	// ("\r\x1b[J") is emitted and the menu stays on screen.
+	if !strings.Contains(h.out.since(mark), "\x1b[2A\x1b[J") {
+		t.Error("empty final frame not flushed on interrupt")
 	}
 }
