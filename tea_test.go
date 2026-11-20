@@ -1005,3 +1005,192 @@ func TestProgressBarStateStringOutOfRange(t *testing.T) {
 		}
 	}
 }
+
+// failingWriter is an io.Writer whose every Write call fails.
+type failingWriter struct{}
+
+func (failingWriter) Write([]byte) (int, error) {
+	return 0, errors.New("disk full")
+}
+
+// failModel is a test model that quits immediately.
+type failModel struct{}
+
+func (failModel) Init() Cmd               { return Quit }
+func (failModel) Update(Msg) (Model, Cmd) { return failModel{}, nil }
+func (failModel) View() View              { return NewView("hello") }
+
+// TestTeaRunReturnsWriteError tests that Run() returns an error when
+// writing to the output fails (e.g., closed pipe, full disk).
+func TestTeaRunReturnsWriteError(t *testing.T) {
+	// Run the program with a failing output writer
+	_, err := NewProgram(failModel{}, WithOutput(failingWriter{}), WithInput(nil)).Run()
+
+	// Check that an error was returned
+	if err == nil {
+		t.Fatal("Run() returned nil, expected an error from failing writer")
+	}
+
+	// Check that the error message contains relevant information
+	if !strings.Contains(err.Error(), "disk full") {
+		t.Fatalf("Run() error = %v, expected error to contain 'disk full'", err)
+	}
+}
+
+// partialFailingWriter fails only on the first write, then succeeds.
+// This tests that error handling works correctly when output is partially written.
+type partialFailingWriter struct {
+	attemptCount int
+	mu           sync.Mutex
+}
+
+func (w *partialFailingWriter) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.attemptCount++
+	if w.attemptCount == 1 {
+		return 0, errors.New("temporary write failure")
+	}
+	return len(p), nil
+}
+
+// modelThatUpdates is a model that updates multiple times before quitting.
+type modelThatUpdates struct {
+	count int
+}
+
+func (m *modelThatUpdates) Init() Cmd {
+	return func() Msg { return incrementMsg{} }
+}
+
+func (m *modelThatUpdates) Update(msg Msg) (Model, Cmd) {
+	switch msg.(type) {
+	case incrementMsg:
+		m.count++
+		if m.count >= 2 {
+			return m, Quit
+		}
+		return m, func() Msg { return incrementMsg{} }
+	}
+	return m, nil
+}
+
+func (m *modelThatUpdates) View() View {
+	return NewView(fmt.Sprintf("count: %d", m.count))
+}
+
+// TestTeaRunReturnsWriteErrorWithMultipleRenders tests that the first write
+// error is captured and returned, even if subsequent renders succeed.
+func TestTeaRunReturnsWriteErrorWithMultipleRenders(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	writer := &partialFailingWriter{}
+	_, err := NewProgram(
+		&modelThatUpdates{},
+		WithContext(ctx),
+		WithOutput(writer),
+		WithInput(nil),
+	).Run()
+
+	// The program should capture the first write error
+	if err == nil {
+		t.Fatal("Run() returned nil, expected an error from partial failing writer")
+	}
+
+	if !strings.Contains(err.Error(), "temporary write failure") {
+		t.Fatalf("Run() error = %v, expected error to contain 'temporary write failure'", err)
+	}
+}
+
+// immediateFailingWriter fails on every write attempt.
+type immediateFailingWriter struct{}
+
+func (immediateFailingWriter) Write([]byte) (int, error) {
+	return 0, errors.New("closed pipe")
+}
+
+// quickQuitModel quits on first update without waiting.
+type quickQuitModel struct{}
+
+func (quickQuitModel) Init() Cmd { return Quit }
+func (quickQuitModel) Update(Msg) (Model, Cmd) {
+	return quickQuitModel{}, nil
+}
+func (quickQuitModel) View() View { return NewView("quit") }
+
+// TestTeaRunReturnsImmediateWriteError tests that write errors are caught
+// even when the program quits immediately.
+func TestTeaRunReturnsImmediateWriteError(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	_, err := NewProgram(
+		quickQuitModel{},
+		WithContext(ctx),
+		WithOutput(immediateFailingWriter{}),
+		WithInput(nil),
+	).Run()
+
+	if err == nil {
+		t.Fatal("Run() returned nil, expected write error from closed pipe")
+	}
+
+	if !strings.Contains(err.Error(), "closed pipe") {
+		t.Fatalf("Run() error = %v, expected error to contain 'closed pipe'", err)
+	}
+}
+
+// TestTeaRunWriteErrorDoesNotHideOtherErrors tests that other errors
+// (like program panic or kill) take precedence over write errors.
+func TestTeaRunWriteErrorDoesNotHideOtherErrors(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	// Use a model that panics
+	panicingModel := &testModel{}
+	_, err := NewProgram(
+		panicingModel,
+		WithContext(ctx),
+		WithOutput(failingWriter{}),
+		WithInput(nil),
+		WithoutRenderer(), // Avoid renderer goroutine issues
+	).Run()
+
+	// The panic error should take precedence
+	if err == nil {
+		t.Fatal("Run() returned nil, expected a panic error")
+	}
+
+	// The error should be ErrProgramPanic or ErrProgramKilled, not a write error
+	if !strings.Contains(err.Error(), "panic") && !strings.Contains(err.Error(), "killed") {
+		t.Fatalf("Run() error = %v, expected panic or killed error", err)
+	}
+}
+
+// TestTeaRunSuccessfulWriteReturnsNil tests that when writes succeed,
+// Run() returns nil (not a write error).
+func TestTeaRunSuccessfulWriteReturnsNil(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+
+	var buf bytes.Buffer
+	_, err := NewProgram(
+		quickQuitModel{},
+		WithContext(ctx),
+		WithOutput(&buf),
+		WithInput(nil),
+	).Run()
+
+	if err != nil {
+		t.Fatalf("Run() returned error %v, expected nil when writes succeed", err)
+	}
+
+	if buf.Len() == 0 {
+		t.Fatal("no output written")
+	}
+}
