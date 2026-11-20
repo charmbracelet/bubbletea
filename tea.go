@@ -559,6 +559,11 @@ type Program struct {
 	inputScanner          *uv.TerminalReader
 	readLoopDone          chan struct{}
 
+	// lastQuery is when a terminal query was last written, in Unix
+	// nanoseconds, or 0 once its reply has been read. See
+	// [Program.drainQueryReplies].
+	lastQuery atomic.Int64
+
 	// modes keeps track of terminal modes that have been enabled or disabled.
 	ignoreSignals uint32
 
@@ -1183,6 +1188,7 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 			// raw mode. See issue #1572.
 			mapNl := runtime.GOOS != "windows" && p.ttyInput == nil
 			r.setOptimizations(p.useHardTabs, p.useBackspace, mapNl)
+			r.onQuery = p.noteQuery
 			p.renderer = r
 		}
 	}
@@ -1362,7 +1368,15 @@ func (p *Program) executeQuery(seq string) {
 	if p.disableInput {
 		return
 	}
+	p.noteQuery()
 	p.execute(seq)
+}
+
+// noteQuery records that a terminal query is about to be written, so its
+// reply can be read before the terminal is handed back. See
+// [Program.drainQueryReplies].
+func (p *Program) noteQuery() {
+	p.lastQuery.Store(time.Now().UnixNano())
 }
 
 // flush flushes the output buffer to the program output.
@@ -1419,6 +1433,11 @@ func (p *Program) shutdown(kill bool) {
 		if p.renderer != nil {
 			p.stopRenderer(kill)
 		}
+
+		// Read the replies to queries that are still in flight, so they don't
+		// end up in the shell as typed input once the program exits. The
+		// program's context is already canceled, so give the drain its own.
+		_ = p.drainQueryReplies(context.Background())
 
 		_ = p.restoreTerminalState()
 	})
@@ -1499,6 +1518,18 @@ func (p *Program) releaseTerminal(reset bool) error {
 		if reset {
 			p.renderer.reset()
 		}
+	}
+
+	// Replies to queries we sent may still be in flight. Read them now, while
+	// the terminal is still in raw mode, so they don't end up as input for
+	// whoever gets the terminal next, e.g. an exec'd process. The program gets
+	// them once its event loop resumes.
+	if events := p.drainQueryReplies(p.ctx); len(events) > 0 {
+		go func() {
+			for _, ev := range events {
+				p.Send(ev)
+			}
+		}()
 	}
 
 	return p.restoreTerminalState()

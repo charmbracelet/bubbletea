@@ -31,11 +31,12 @@ type cursedRenderer struct {
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 	backspace     bool // whether to use backspace to optimize cursor movements
 	mapnl         bool
-	syncdUpdates  bool // whether to use synchronized output mode for updates
-	starting      bool // indicates whether the renderer is starting after being stopped
-	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
-	viewStale     bool // a resize occurred and we are waiting for render() to supply the new View
-	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	syncdUpdates  bool   // whether to use synchronized output mode for updates
+	starting      bool   // indicates whether the renderer is starting after being stopped
+	pendingErase  bool   // an scr.Erase() is pending and hasn't been drained by flush yet
+	viewStale     bool   // a resize occurred and we are waiting for render() to supply the new View
+	noInput       bool   // whether input is disabled, in which case keyboard enhancement queries are pointless
+	onQuery       func() // called when a terminal query is written, see [Program.noteQuery]
 }
 
 var _ renderer = &cursedRenderer{}
@@ -290,6 +291,14 @@ func (s *cursedRenderer) close() (err error) {
 	return nil
 }
 
+// query writes a terminal query and reports it to onQuery.
+func (s *cursedRenderer) query(seq string) {
+	_, _ = s.scr.WriteString(seq)
+	if s.onQuery != nil {
+		s.onQuery()
+	}
+}
+
 // writeString implements renderer.
 func (s *cursedRenderer) writeString(str string) (int, error) {
 	s.mu.Lock()
@@ -467,7 +476,7 @@ func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
 		}
 		if !closing {
 			// Request keyboard enhancements when they change
-			_, _ = s.scr.WriteString(ansi.RequestKittyKeyboard)
+			s.query(ansi.RequestKittyKeyboard)
 		}
 	}
 
