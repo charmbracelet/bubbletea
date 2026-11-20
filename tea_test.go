@@ -1043,3 +1043,79 @@ func TestProgressBarStateStringOutOfRange(t *testing.T) {
 		}
 	}
 }
+
+type failWriter struct{}
+
+func (failWriter) Write([]byte) (int, error) { return 0, errors.New("disk full") }
+
+func TestTeaRunReturnsWriteError(t *testing.T) {
+	t.Parallel()
+	var in bytes.Buffer
+	in.Write([]byte("q"))
+
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+	defer cancel()
+
+	p := NewProgram(&testModel{},
+		WithContext(ctx),
+		WithInput(&in),
+		WithOutput(failWriter{}),
+	)
+	_, err := p.Run()
+	if err == nil {
+		t.Fatal("Run returned nil although every write to the output failed")
+	}
+	if !strings.Contains(err.Error(), "disk full") {
+		t.Fatalf("Run error does not wrap the write error: %v", err)
+	}
+	if errors.Is(err, ErrProgramKilled) {
+		t.Fatalf("a write error alone should not report a killed program: %v", err)
+	}
+}
+
+// helloQuitModel draws a line and quits as soon as it starts.
+type helloQuitModel struct{ init Cmd }
+
+func (m helloQuitModel) Init() Cmd               { return m.init }
+func (m helloQuitModel) Update(Msg) (Model, Cmd) { return m, nil }
+func (helloQuitModel) View() View                { return NewView("hello") }
+
+// A write error belongs to the run it happened in: running the program again
+// with a working output returns no error.
+func TestTeaRunWriteErrorDoesNotCarryOver(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	p := NewProgram(helloQuitModel{init: Quit}, WithInput(nil), WithOutput(&buf), WithWindowSize(80, 24))
+	// Pretend an earlier run failed to write.
+	p.ranOnce = true
+	p.keepWriteErr(errors.New("disk full"))
+
+	if _, err := p.Run(); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(buf.String(), "hello") {
+		t.Fatalf("expected the view to be written, got %q", buf.String())
+	}
+}
+
+// printFailWriter fails the writes that print a line above the program.
+type printFailWriter struct{}
+
+func (printFailWriter) Write(b []byte) (int, error) {
+	if bytes.Contains(b, []byte("printed line")) {
+		return 0, errors.New("broken pipe")
+	}
+	return len(b), nil
+}
+
+// Failing to print a line above the program is a write error too.
+func TestTeaRunReturnsPrintWriteError(t *testing.T) {
+	t.Parallel()
+
+	m := helloQuitModel{init: Sequence(Println("printed line"), Quit)}
+	_, err := NewProgram(m, WithInput(nil), WithOutput(printFailWriter{})).Run()
+	if err == nil || !strings.Contains(err.Error(), "broken pipe") {
+		t.Fatalf("expected the print's write error, got %v", err)
+	}
+}
