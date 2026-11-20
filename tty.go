@@ -91,28 +91,67 @@ func (p *Program) initInputReader(cancel bool) error {
 	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
 
-	go p.readLoop()
+	go p.readLoop(p.ctx, drv, p.readLoopDone, p.errs)
 
 	return nil
 }
 
-func (p *Program) readLoop() {
-	defer close(p.readLoopDone)
+// readLoop streams input events to the program until ctx is done or reading
+// fails. It takes the per-run state it uses as arguments rather than reading
+// it from p: the loop can outlive [Program.shutdown], see
+// [Program.shutdownInput], and must not race with a later run replacing it.
+func (p *Program) readLoop(ctx context.Context, scanner *uv.TerminalReader, done chan struct{}, errs chan error) {
+	defer close(done)
 
-	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
+	if err := scanner.StreamEvents(ctx, p.msgs); err != nil {
 		select {
-		case <-p.ctx.Done():
+		case <-ctx.Done():
 			return
-		case p.errs <- err:
+		case errs <- err:
 		}
 	}
+}
+
+const inputReadLoopTimeout = 500 * time.Millisecond
+
+// shutdownInput cancels input before closing the reader's resources. Keep the
+// bounded shutdown for slow readers, but retain ownership of a reader that is
+// still in use until its input loop has actually finished.
+func (p *Program) shutdownInput() {
+	reader := p.cancelReader
+	if reader == nil {
+		return
+	}
+	// The reader is closed below, or later once its input loop finishes.
+	// Forget it so that a later run doesn't close it again: closing it closes
+	// raw file descriptors, and closing one twice can close an unrelated file
+	// that has since reused the number.
+	p.cancelReader = nil
+
+	if reader.Cancel() && p.readLoopDone != nil {
+		done := p.readLoopDone
+		timer := time.NewTimer(inputReadLoopTimeout)
+		defer timer.Stop()
+
+		select {
+		case <-done:
+		case <-timer.C:
+			go func() {
+				<-done
+				_ = reader.Close()
+			}()
+			return
+		}
+	}
+
+	_ = reader.Close()
 }
 
 // waitForReadLoop waits for the cancelReader to finish its read loop.
 func (p *Program) waitForReadLoop() {
 	select {
 	case <-p.readLoopDone:
-	case <-time.After(500 * time.Millisecond): //nolint:mnd
+	case <-time.After(inputReadLoopTimeout):
 		// The read loop hangs, which means the input
 		// cancelReader's cancel function has returned true even
 		// though it was not able to cancel the read.

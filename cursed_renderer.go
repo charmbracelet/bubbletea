@@ -106,6 +106,11 @@ func (s *cursedRenderer) start() {
 	// starting the renderer again after it was stopped.
 	s.starting = true
 
+	// close disables Unicode mode; restore it for negotiated grapheme widths.
+	if s.cellbuf.Method == ansi.GraphemeWidth {
+		_, _ = s.scr.WriteString(ansi.SetModeUnicodeCore)
+	}
+
 	if s.lastView == nil {
 		return
 	}
@@ -323,12 +328,20 @@ func (s *cursedRenderer) flush(closing bool) (bool, error) {
 		}
 	}
 
+	// An empty screen buffer has zero width as well as zero height.
+	if frameArea.Dy() == 0 {
+		frameArea.Max.X = 0
+	}
+
 	// Restore tab stops if we have tab optimizations enabled.
 	if s.starting && s.hardTabs {
 		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
-	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	// Oversized inline frames retain only the rows that fit on the screen.
+	held := frameArea
+	held.Max.Y = min(held.Max.Y, s.height)
+	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && held == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
 		return false, nil
 	}
@@ -478,7 +491,7 @@ func (s *cursedRenderer) flush(closing bool) (bool, error) {
 		{newColor: view.ForegroundColor, oldColor: lfg, reset: ansi.ResetForegroundColor, setter: ansi.SetForegroundColor},
 		{newColor: view.BackgroundColor, oldColor: lbg, reset: ansi.ResetBackgroundColor, setter: ansi.SetBackgroundColor},
 	} {
-		if c.newColor != c.oldColor {
+		if !colorEqual(c.newColor, c.oldColor) {
 			if c.newColor == nil {
 				// Reset the color if it was set to nil.
 				_, _ = s.scr.WriteString(c.reset)
@@ -915,6 +928,20 @@ func setProgramStatus(s *cursedRenderer, prev, cur *ProgramStatus) {
 	}
 }
 
+// colorEqual reports whether two colors are equal. Colors are compared by
+// their RGBA values, which is all the terminal ever sees, rather than with ==,
+// which panics on [color.Color] implementations whose dynamic type is
+// uncomparable (e.g. a struct containing a slice). A nil color stays distinct
+// from any other color so that resetting a color still works.
+func colorEqual(a, b color.Color) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	ar, ag, ab, aa := a.RGBA()
+	br, bg, bb, ba := b.RGBA()
+	return ar == br && ag == bg && ab == bb && aa == ba
+}
+
 func viewEquals(a, b *View) bool {
 	if a == nil || b == nil {
 		return false
@@ -930,8 +957,8 @@ func viewEquals(a, b *View) bool {
 		a.ReportFocus != b.ReportFocus ||
 		a.MouseMode != b.MouseMode ||
 		a.WindowTitle != b.WindowTitle ||
-		a.ForegroundColor != b.ForegroundColor ||
-		a.BackgroundColor != b.BackgroundColor ||
+		!colorEqual(a.ForegroundColor, b.ForegroundColor) ||
+		!colorEqual(a.BackgroundColor, b.BackgroundColor) ||
 		a.KeyboardEnhancements != b.KeyboardEnhancements {
 		return false
 	}
@@ -944,7 +971,7 @@ func viewEquals(a, b *View) bool {
 			a.Cursor.Y != b.Cursor.Y ||
 			a.Cursor.Shape != b.Cursor.Shape ||
 			a.Cursor.Blink != b.Cursor.Blink ||
-			a.Cursor.Color != b.Cursor.Color {
+			!colorEqual(a.Cursor.Color, b.Cursor.Color) {
 			return false
 		}
 	}
