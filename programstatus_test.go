@@ -22,7 +22,7 @@ func TestCursedRenderer_programStatus(t *testing.T) {
 		v := NewView("hello")
 		v.ProgramStatus = ps
 		r.render(v)
-		if err := r.flush(false); err != nil {
+		if _, err := r.flush(false); err != nil {
 			t.Fatalf("%s: %v", name, err)
 		}
 		return out.String()
@@ -72,7 +72,7 @@ func TestCursedRenderer_programStatus(t *testing.T) {
 	// Resuming re-sends the last status.
 	out.Reset()
 	r.start()
-	if err := r.flush(false); err != nil {
+	if _, err := r.flush(false); err != nil {
 		t.Fatal(err)
 	}
 	if got := out.String(); !strings.Contains(got, ansi.SetProgramStatus(*done)) {

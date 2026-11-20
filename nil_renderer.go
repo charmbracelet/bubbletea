@@ -17,6 +17,9 @@ func (n nilRenderer) start() {}
 // clearScreen implements renderer.
 func (n nilRenderer) clearScreen() {}
 
+// clearView implements renderer.
+func (nilRenderer) clearView() {}
+
 // insertAbove implements renderer.
 func (n nilRenderer) insertAbove(string) error { return nil }
 
@@ -27,7 +30,7 @@ func (n nilRenderer) resize(int, int) {}
 func (n nilRenderer) setColorProfile(colorprofile.Profile) {}
 
 // flush implements the Renderer interface.
-func (nilRenderer) flush(bool) error { return nil }
+func (nilRenderer) flush(bool) (bool, error) { return false, nil }
 
 // close implements the Renderer interface.
 func (nilRenderer) close() error { return nil }

@@ -3,6 +3,7 @@ package tea
 import (
 	"bytes"
 	"fmt"
+	"image/color"
 	"io"
 	"strings"
 	"testing"
@@ -10,6 +11,150 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 )
+
+func TestCursedRendererEnablesUnicodeModeForGraphemeWidth(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.GraphemeWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), ansi.SetModeUnicodeCore) {
+		t.Fatalf("grapheme rendering did not enable Unicode mode; output %q", out.String())
+	}
+}
+
+func TestCursedRendererWcWidthDoesNotEnableUnicodeMode(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.WcWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.ResetModeUnicodeCore); got != false {
+		t.Fatalf("close reset Unicode mode = %v, want false; output %q", got, out.String())
+	}
+
+	// Discard shutdown output so only the resume sequence can satisfy the assertion.
+	out.Reset()
+	r.start()
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.SetModeUnicodeCore); got != false {
+		t.Fatalf("resume enabled Unicode mode = %v, want false; output %q", got, out.String())
+	}
+}
+
+func TestCursedRendererResumeRestoresUnicodeMode(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 3)
+	r.start()
+	r.setWidthMethod(ansi.GraphemeWidth)
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.ResetModeUnicodeCore); got != true {
+		t.Fatalf("close reset Unicode mode = %v, want true; output %q", got, out.String())
+	}
+
+	// Discard shutdown output so only the resume sequence can satisfy the assertion.
+	out.Reset()
+	r.start()
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Contains(out.String(), ansi.SetModeUnicodeCore); got != true {
+		t.Fatalf("resume enabled Unicode mode = %v, want true; output %q", got, out.String())
+	}
+}
+
+func TestCursedRendererSkipsUnchangedView(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 4, 3)
+	r.start()
+	r.render(NewView("hello"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	if drawn, err := r.flush(false); err != nil || drawn || out.Len() != 0 {
+		t.Fatalf("unchanged view: drawn=%v, err=%v, output=%q", drawn, err, out.String())
+	}
+}
+
+func TestCursedRendererDrawsChangedEmptyAndTallViews(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name          string
+		before, after View
+	}{
+		{"empty inline becomes nonempty", View{}, NewView("new")},
+		{"empty alt screen becomes nonempty", View{AltScreen: true}, View{Content: "new", AltScreen: true}},
+		{"tall inline changes visible rows", NewView("a\nb\nc\nd\ne"), NewView("a\nb\nx\ny\nz")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 4, 3)
+			r.start()
+			r.render(tt.before)
+			if _, err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
+			out.Reset()
+			r.render(tt.after)
+			if drawn, err := r.flush(false); err != nil || !drawn || out.Len() == 0 {
+				t.Fatalf("changed view: drawn=%v, err=%v, output=%q", drawn, err, out.String())
+			}
+		})
+	}
+}
+
+func TestCursedRendererSkipsUnchangedEmptyAndTallViews(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name string
+		view View
+	}{
+		{"empty inline", View{}},
+		{"empty alt screen", View{AltScreen: true}},
+		{"tall inline", NewView("a\nb\nc\nd\ne\nf\ng")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 4, 3)
+			r.start()
+			r.render(tt.view)
+			if _, err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
+			// Measure only the second flush, after the initial frame is drawn.
+			out.Reset()
+			if drawn, err := r.flush(false); err != nil || drawn || out.Len() != 0 {
+				t.Fatalf("unchanged view: drawn=%v, err=%v, output=%q", drawn, err, out.String())
+			}
+		})
+	}
+}
 
 type mouseRaceModel struct {
 	i int
@@ -83,6 +228,103 @@ func TestCursedRenderer_mouseVsFlush(t *testing.T) {
 	}
 }
 
+// uncomparableColor is a color.Color implementation whose dynamic type is
+// uncomparable (it contains a slice), so comparing two values with == panics.
+type uncomparableColor struct {
+	rgba color.RGBA
+	pad  []int
+}
+
+func (c uncomparableColor) RGBA() (r, g, b, a uint32) {
+	return c.rgba.RGBA()
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1848
+func TestCursedRenderer_uncomparableViewColors(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+
+	red := color.RGBA{R: 0xff, A: 0xff}
+	view := NewView("hello")
+	view.AltScreen = true
+	view.ForegroundColor = uncomparableColor{rgba: red, pad: []int{1}}
+	view.BackgroundColor = uncomparableColor{rgba: red, pad: []int{2}}
+	view.Cursor = &Cursor{Color: uncomparableColor{rgba: red, pad: []int{3}}}
+
+	// Render the same view twice. The second flush takes the viewEquals
+	// early-return path, which compares the color.Color interface values.
+	for range 2 {
+		r.render(view)
+		if _, err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// Colors are compared by value: the same color, whatever its type, doesn't
+// redraw the view, while a different color or a reset does.
+func TestCursedRenderer_viewColorChanges(t *testing.T) {
+	t.Parallel()
+
+	red := color.RGBA{R: 0xff, A: 0xff}
+	blue := color.RGBA{B: 0xff, A: 0xff}
+	for _, tt := range []struct {
+		name  string
+		set   func(*View, color.Color)
+		code  string
+		reset string
+	}{
+		{"foreground", func(v *View, c color.Color) { v.ForegroundColor = c }, "10", "110"},
+		{"background", func(v *View, c color.Color) { v.BackgroundColor = c }, "11", "111"},
+		{"cursor", func(v *View, c color.Color) { v.Cursor = NewCursor(0, 0); v.Cursor.Color = c }, "12", "112"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+			render := func(c color.Color) bool {
+				t.Helper()
+				view := NewView("hello")
+				tt.set(&view, c)
+				r.render(view)
+				drew, err := r.flush(false)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return drew
+			}
+
+			render(uncomparableColor{rgba: red, pad: []int{1}})
+			if want := "\x1b]" + tt.code + ";#ff0000\a"; !strings.Contains(out.String(), want) {
+				t.Fatalf("missing red color sequence %q in %q", want, out.String())
+			}
+
+			out.Reset()
+			if render(uncomparableColor{rgba: red, pad: []int{2}}) || out.Len() != 0 {
+				t.Fatalf("unchanged color redrew the view: %q", out.String())
+			}
+			if render(red) || out.Len() != 0 {
+				t.Fatalf("the same color of another type redrew the view: %q", out.String())
+			}
+
+			render(uncomparableColor{rgba: blue})
+			if want := "\x1b]" + tt.code + ";#0000ff\a"; !strings.Contains(out.String(), want) {
+				t.Fatalf("missing blue color sequence %q in %q", want, out.String())
+			}
+
+			out.Reset()
+			render(nil)
+			if want := "\x1b]" + tt.reset + "\a"; !strings.Contains(out.String(), want) {
+				t.Fatalf("missing color reset %q in %q", want, out.String())
+			}
+		})
+	}
+}
+
 func assertInOrder(t *testing.T, got string, wants ...string) {
 	t.Helper()
 	rest := got
@@ -110,7 +352,7 @@ func TestCursedRenderer_restoresKittyKeyboardStack(t *testing.T) {
 	render := func(v View) {
 		t.Helper()
 		r.render(v)
-		if err := r.flush(false); err != nil {
+		if _, err := r.flush(false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -171,7 +413,7 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 	render := func(v View) {
 		t.Helper()
 		r.render(v)
-		if err := r.flush(false); err != nil {
+		if _, err := r.flush(false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -199,5 +441,154 @@ func TestCursedRenderer_updatesKittyKeyboardFlagsInPlace(t *testing.T) {
 	}
 	if n := strings.Count(got, ansi.PushKittyKeyboard(0)); n > 1 {
 		t.Fatalf("expected kitty keyboard protocol to be pushed once, got %d pushes in %q", n, got)
+	}
+}
+
+func TestCursedRenderer_insertAboveBeforeFirstFlush(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	renderer := newCursedRenderer(&output, []string{"TERM=xterm-256color"}, 80, 24)
+	renderer.render(NewView("footer"))
+
+	if err := renderer.insertAbove("startup"); err != nil {
+		t.Fatal(err)
+	}
+
+	want := "\r\n" + ansi.CursorUp(1) +
+		ansi.InsertLine(1) + ansi.EraseLineRight + "startup" + "\r\n"
+	if got := output.String(); got != want {
+		t.Fatalf("unexpected insertAbove output:\nwant: %q\n got: %q", want, got)
+	}
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1780
+func TestCursedRenderer_resizeStaleFrame(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+
+	// Render the initial frame at 80x24.
+	initialView := NewView("initial 80x24 content")
+	initialView.AltScreen = true
+	r.render(initialView)
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	out.Reset()
+
+	// Simulate window resize: resize() is called first, updating dimensions.
+	r.resize(100, 30)
+
+	// In the race window, the 60Hz ticker fires flush() BEFORE render() provides the new View.
+	// flush() must NOT output the stale initialView at the new 100x30 size.
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if out.Len() > 0 {
+		t.Fatalf("expected no output during stale resize race window, got %q", out.String())
+	}
+
+	// Now render() provides the new View matching the new 100x30 size.
+	newView := NewView("resized 100x30 content")
+	newView.AltScreen = true
+	r.render(newView)
+
+	// The subsequent flush() must draw the new view.
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(out.String(), "resized 100x30 content") {
+		t.Fatalf("expected output to contain resized view, got %q", out.String())
+	}
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1802
+//
+// insertAbove must measure wrapped lines with the active screen buffer's
+// width method. When the terminal never answers the Unicode-core query the
+// buffer stays on WcWidth, but insertAbove used grapheme semantics, so wide
+// grapheme clusters inserted the wrong number of lines.
+func TestCursedRenderer_insertAboveUsesActiveWidthMethod(t *testing.T) {
+	t.Parallel()
+
+	insertNewlines := func(method ansi.Method, s string) int {
+		var out bytes.Buffer
+		r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 8, 4)
+		r.setWidthMethod(method)
+		if got := r.cellbuf.WidthMethod(); got != method {
+			t.Fatalf("expected width method %v, got %v", method, got)
+		}
+		if err := r.insertAbove(s); err != nil {
+			t.Fatal(err)
+		}
+		// One "\n" per inserted line, plus the trailing newline after each
+		// printed line.
+		return bytes.Count(out.Bytes(), []byte("\n"))
+	}
+
+	// "👨‍👩‍👧‍👦" is a single grapheme cluster (width 2) made of four wide
+	// codepoints (width 8), so the wrapped-line count differs per method.
+	// With an 8-column buffer: grapheme width 8 fits in 1 row, wcwidth 14
+	// wraps to 2 rows.
+	const line = "👨‍👩‍👧‍👦aaaaaa"
+
+	// WcWidth fallback: 1 line + (14-1)/8 extra -> 2 inserted lines, 3 newlines.
+	if got := insertNewlines(ansi.WcWidth, line); got != 3 {
+		t.Errorf("WcWidth: expected 3 newlines, got %d", got)
+	}
+
+	// GraphemeWidth (Unicode-core mode): 1 line + (8-1)/8 extra -> 1 inserted
+	// line, 2 newlines.
+	if got := insertNewlines(ansi.GraphemeWidth, line); got != 2 {
+		t.Errorf("GraphemeWidth: expected 2 newlines, got %d", got)
+	}
+}
+
+func TestCursedRenderer_insertAboveLineBoundaries(t *testing.T) {
+	t.Parallel()
+
+	const width = 40
+	tests := []struct {
+		name string
+		line string
+		rows int
+	}{
+		{name: "short", line: strings.Repeat("-", width-2) + "#", rows: 1},
+		{name: "exact width", line: strings.Repeat("-", width-1) + "#", rows: 1},
+		{name: "one cell over", line: strings.Repeat("-", width) + "#", rows: 2},
+		{name: "two exact rows", line: strings.Repeat("-", 2*width-1) + "#", rows: 2},
+		{name: "three exact rows", line: strings.Repeat("-", 3*width-1) + "#", rows: 3},
+		{name: "wide characters", line: strings.Repeat("界", width-1) + "-#", rows: 2},
+		{name: "styled", line: "\x1b[31m" + strings.Repeat("-", 2*width-1) + "#" + ansi.ResetStyle, rows: 2},
+		{name: "multiple lines", line: strings.Repeat("-", width-1) + "#\n" + strings.Repeat("-", 2*width-1) + "#", rows: 3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out bytes.Buffer
+			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, width, 2)
+			r.render(NewView("view\nview"))
+			r.scr.SetPosition(0, 0)
+			if err := r.insertAbove(tt.line); err != nil {
+				t.Fatal(err)
+			}
+
+			got := out.String()
+			prefix := "\r" + ansi.CursorDown(1) + strings.Repeat("\n", tt.rows) + ansi.CursorUp(tt.rows+1) + ansi.InsertLine(tt.rows)
+			if !strings.HasPrefix(got, prefix) {
+				t.Fatalf("expected room for %d terminal rows with prefix %q, got %q", tt.rows, prefix, got)
+			}
+			for _, line := range strings.Split(tt.line, "\n") {
+				if ansi.StringWidth(line)%width == 0 && strings.Contains(got, line+ansi.EraseLineRight) {
+					t.Fatalf("erasing at the right margin would delete the inserted line's last cell, got %q", got)
+				}
+			}
+		})
 	}
 }
