@@ -34,6 +34,7 @@ type cursedRenderer struct {
 	syncdUpdates  bool // whether to use synchronized output mode for updates
 	starting      bool // indicates whether the renderer is starting after being stopped
 	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
+	viewStale     bool // a resize occurred and we are waiting for render() to supply the new View
 	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
 }
 
@@ -104,6 +105,11 @@ func (s *cursedRenderer) start() {
 	// Mark that we're starting. This is used to restore some state when
 	// starting the renderer again after it was stopped.
 	s.starting = true
+
+	// close disables Unicode mode; restore it for negotiated grapheme widths.
+	if s.cellbuf.Method == ansi.GraphemeWidth {
+		_, _ = s.scr.WriteString(ansi.SetModeUnicodeCore)
+	}
 
 	if s.lastView == nil {
 		return
@@ -293,9 +299,13 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush(closing bool) error {
+func (s *cursedRenderer) flush(closing bool) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if !closing && s.viewStale {
+		return false, nil
+	}
 
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
@@ -318,14 +328,22 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 	}
 
+	// An empty screen buffer has zero width as well as zero height.
+	if frameArea.Dy() == 0 {
+		frameArea.Max.X = 0
+	}
+
 	// Restore tab stops if we have tab optimizations enabled.
 	if s.starting && s.hardTabs {
 		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
-	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	// Oversized inline frames retain only the rows that fit on the screen.
+	held := frameArea
+	held.Max.Y = min(held.Max.Y, s.height)
+	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && held == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
-		return nil
+		return false, nil
 	}
 
 	// We're no longer starting.
@@ -542,7 +560,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if err := s.scr.Flush(); err != nil {
-		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
+		return true, fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
 
 	// Check if we have any render updates to flush.
@@ -629,13 +647,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 			s.logger.Printf("output: %q", buf.String())
 		}
 		if _, err := io.Copy(s.w, &buf); err != nil {
-			return fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
+			return true, fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
 		}
 	}
 
 	s.lastView = &view
 
-	return nil
+	return true, nil
 }
 
 // render implements renderer.
@@ -644,6 +662,7 @@ func (s *cursedRenderer) render(v View) {
 	defer s.mu.Unlock()
 
 	s.view = v
+	s.viewStale = false
 }
 
 // reset implements renderer.
@@ -691,6 +710,7 @@ func (s *cursedRenderer) resize(w, h int) {
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
 	s.pendingErase = true
+	s.viewStale = true
 	s.mu.Unlock()
 }
 
@@ -702,6 +722,18 @@ func (s *cursedRenderer) clearScreen() {
 	s.scr.MoveTo(0, 0)
 	s.scr.Erase()
 	s.pendingErase = true
+	s.mu.Unlock()
+}
+
+// clearView implements renderer.
+func (s *cursedRenderer) clearView() {
+	s.mu.Lock()
+	// Blank the view content so the next flush writes nothing to the output.
+	// Terminal mode flags such as AltScreen are preserved so that the screen
+	// mode is restored correctly when the program resumes after the subprocess
+	// exits (see close and start). See issue #431.
+	s.view.Content = ""
+	s.view.Cursor = nil
 	s.mu.Unlock()
 }
 
@@ -780,6 +812,14 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	var sb strings.Builder
 	w, h := s.cellbuf.Width(), s.cellbuf.Height()
 	_, y := s.scr.Position()
+	// Before the first flush, the cell buffer still has the terminal height
+	// rather than the height of the current inline view.
+	if s.lastView == nil && !s.view.AltScreen {
+		h = uv.NewStyledString(s.view.Content).Height()
+		if y < 0 {
+			y = 0
+		}
+	}
 
 	// We need to scroll the screen up by the number of lines in the queue.
 	sb.WriteByte('\r')
@@ -791,9 +831,14 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	lines := strings.Split(str, "\n")
 	offset := len(lines)
 	for _, line := range lines {
-		lineWidth := ansi.StringWidth(line)
+		// Measure with the active screen buffer's width method: when the
+		// terminal doesn't enable Unicode-core mode the buffer stays on
+		// WcWidth, and grapheme semantics would count a different number of
+		// wrapped lines than the renderer. See
+		// https://github.com/charmbracelet/bubbletea/issues/1802.
+		lineWidth := s.cellbuf.WidthMethod().StringWidth(line)
 		if w > 0 && lineWidth > w {
-			offset += (lineWidth / w)
+			offset += (lineWidth - 1) / w
 		}
 	}
 
@@ -808,8 +853,8 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	sb.WriteString(ansi.CursorUp(up))
 	sb.WriteString(ansi.InsertLine(offset))
 	for _, line := range lines {
-		sb.WriteString(line)
 		sb.WriteString(ansi.EraseLineRight)
+		sb.WriteString(line)
 		sb.WriteString("\r\n")
 	}
 
