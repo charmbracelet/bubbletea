@@ -58,6 +58,9 @@ type renderer interface {
 	// and persist after the subprocess exits. See issue #431.
 	clearView()
 
+	// repaint repaints the screen and restores terminal modes.
+	repaint()
+
 	// writeString writes a string to the renderer's output.
 	writeString(string) (int, error)
 
