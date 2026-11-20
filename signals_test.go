@@ -83,19 +83,23 @@ func TestHandleSignalsCatchesSecondSignalDuringShutdown(t *testing.T) {
 	done := p.handleSignals()
 	time.Sleep(100 * time.Millisecond) // let the handler register its signal.Notify
 
-	if err := syscall.Kill(os.Getpid(), syscall.SIGINT); err != nil {
-		t.Fatalf("failed to send SIGINT: %v", err)
-	}
-	<-ours
-
-	// The first signal is forwarded as an interrupt message.
-	select {
-	case msg := <-p.msgs:
-		if _, ok := msg.(InterruptMsg); !ok {
-			t.Fatalf("expected InterruptMsg, got %T", msg)
+	// While the program runs, every signal is forwarded as an interrupt
+	// message, so a program that doesn't quit on the first one (for example
+	// because a filter dropped it) still gets the next one.
+	for i := range 2 {
+		if err := syscall.Kill(os.Getpid(), syscall.SIGINT); err != nil {
+			t.Fatalf("failed to send SIGINT: %v", err)
 		}
-	case <-time.After(5 * time.Second):
-		t.Fatal("first SIGINT was not forwarded")
+		<-ours
+
+		select {
+		case msg := <-p.msgs:
+			if _, ok := msg.(InterruptMsg); !ok {
+				t.Fatalf("expected InterruptMsg, got %T", msg)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("SIGINT %d was not forwarded", i+1)
+		}
 	}
 
 	// Context cancellation (the start of shutdown) ends the handler.

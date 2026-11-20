@@ -672,6 +672,11 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 func (p *Program) handleSignals() chan struct{} {
 	ch := make(chan struct{})
 
+	// Run sets finished before it starts the handlers. Read it here, not in
+	// the goroutine below, which may still be running when Run is called
+	// again and replaces it.
+	finished := p.finished
+
 	// Listen for SIGINT and SIGTERM.
 	//
 	// In most cases ^C will not send an interrupt because the terminal will be
@@ -685,7 +690,6 @@ func (p *Program) handleSignals() chan struct{} {
 		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 		defer signal.Stop(sig)
 
-		var quitSent bool
 		for {
 			select {
 			case <-p.ctx.Done():
@@ -693,16 +697,16 @@ func (p *Program) handleSignals() chan struct{} {
 				// shutdown can proceed, but keep the signal subscription
 				// alive until Run returns. A second SIGINT/SIGTERM arriving
 				// while the terminal is being restored is then caught and
-				// dropped instead of taking the runtime's default path —
-				// which re-raises it and kills the process mid-teardown.
+				// dropped instead of taking the runtime's default path,
+				// which kills the process before the terminal is restored.
 				close(ch)
-				if p.finished != nil {
-					<-p.finished
+				if finished != nil {
+					<-finished
 				}
 				return
 
 			case s := <-sig:
-				if quitSent || atomic.LoadUint32(&p.ignoreSignals) != 0 {
+				if atomic.LoadUint32(&p.ignoreSignals) != 0 {
 					continue
 				}
 				var msg Msg = QuitMsg{}
@@ -711,7 +715,6 @@ func (p *Program) handleSignals() chan struct{} {
 				}
 				select {
 				case p.msgs <- msg:
-					quitSent = true
 				case <-p.ctx.Done():
 				}
 			}
