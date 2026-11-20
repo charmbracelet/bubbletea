@@ -155,6 +155,68 @@ func TestCursedRendererSkipsUnchangedEmptyAndTallViews(t *testing.T) {
 	}
 }
 
+// An inline frame taller than the terminal keeps only its bottom rows. The
+// cursor position is frame-relative, so it must be moved by the number of
+// dropped rows. Before the fix, every visible row past the terminal height
+// collapsed onto the bottom row.
+func TestCursedRendererTallInlineFrameCursor(t *testing.T) {
+	t.Parallel()
+
+	const (
+		width  = 10
+		height = 3
+	)
+	content := "l0\nl1\nl2\nl3\nl4\nl5" // six rows; rows 3-5 stay visible
+
+	for _, tt := range []struct {
+		frameY int
+		wantY  int
+	}{
+		{0, 0}, // clipped row, clamps to the top visible row
+		{1, 0}, // clipped row
+		{2, 0}, // clipped row
+		{3, 0}, // first visible row
+		{4, 1}, // middle visible row
+		{5, 2}, // last visible row
+	} {
+		var out bytes.Buffer
+		r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, width, height)
+		r.start()
+
+		v := NewView(content)
+		v.Cursor = NewCursor(0, tt.frameY)
+		r.render(v)
+		if _, err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+
+		if x, y := r.scr.Position(); x != 0 || y != tt.wantY {
+			t.Errorf("cursor at frame row %d: got (%d,%d), want (0,%d); output=%q",
+				tt.frameY, x, y, tt.wantY, out.String())
+		}
+	}
+}
+
+// A frame that fits keeps the cursor exactly where the frame says.
+func TestCursedRendererShortFrameCursor(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 10, 5)
+	r.start()
+
+	v := NewView("l0\nl1")
+	v.Cursor = NewCursor(0, 1)
+	r.render(v)
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if x, y := r.scr.Position(); x != 0 || y != 1 {
+		t.Errorf("cursor at frame row 1: got (%d,%d), want (0,1); output=%q", x, y, out.String())
+	}
+}
+
 type mouseRaceModel struct {
 	i int
 }
