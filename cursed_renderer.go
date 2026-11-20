@@ -303,6 +303,11 @@ func (s *cursedRenderer) flush(closing bool) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	return s.flushLocked(closing)
+}
+
+// flushLocked is [cursedRenderer.flush] for callers that hold s.mu.
+func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
 	if !closing && s.viewStale {
 		return false, nil
 	}
@@ -802,22 +807,26 @@ func (s *cursedRenderer) setWidthMethod(method ansi.Method) {
 
 // insertAbove implements renderer.
 func (s *cursedRenderer) insertAbove(str string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if len(str) == 0 {
 		return nil
 	}
 
-	// render only queues the latest View; the frame ticker flushes it later.
-	// A Println can therefore reach insertAbove after the model has changed
-	// View but before that frame is physically on the terminal. Scrolling with
-	// the previous cellbuf geometry can weld rows from the stale frame into
-	// native scrollback. Flush the queued View first so cellbuf, the terminal,
-	// and the geometry below all describe one frame.
-	if _, err := s.flush(false); err != nil {
-		return fmt.Errorf("bubbletea: error flushing before insert above: %w", err)
+	// render only queues the latest view; the frame ticker draws it later, so
+	// a print can arrive before the view the program just returned is on the
+	// terminal. Draw that view first, so the lines go above what is actually
+	// on screen: scrolling with the old frame's geometry can move rows of the
+	// old frame into the scrollback, and a view that leaves the alt screen
+	// hasn't left it yet, so the lines would be printed on the alt screen and
+	// lost. A view that enters the alt screen is left for later: until then,
+	// the lines are still printed on the normal screen, where they persist.
+	if !s.view.AltScreen {
+		if _, err := s.flushLocked(false); err != nil {
+			return fmt.Errorf("bubbletea: error flushing before insert above: %w", err)
+		}
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	var sb strings.Builder
 	w, h := s.cellbuf.Width(), s.cellbuf.Height()

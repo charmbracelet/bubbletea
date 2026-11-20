@@ -635,3 +635,59 @@ func TestCursedRenderer_insertAboveFlushesQueuedView(t *testing.T) {
 	}
 }
 
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1881
+func TestCursedRenderer_insertAboveAfterLeavingAltScreen(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	alt := NewView("alt screen view")
+	alt.AltScreen = true
+	r.render(alt)
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	// The update leaves the alt screen and prints a line before the next
+	// frame is drawn. The line must be printed on the normal screen, after
+	// leaving the alt screen, or it is lost with it.
+	r.render(NewView("inline view"))
+	if err := r.insertAbove("printed line"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	assertInOrder(t, got, ansi.SetModeAltScreenSaveCursor, ansi.ResetModeAltScreenSaveCursor, "inline view", "printed line")
+	if n := strings.Count(got, "printed line"); n != 1 {
+		t.Fatalf("expected the line to be printed once, got %d times in %q", n, got)
+	}
+}
+
+func TestCursedRenderer_insertAboveBeforeEnteringAltScreen(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.render(NewView("inline view"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	// The update enters the alt screen and prints a line before the next
+	// frame is drawn. The line is printed on the normal screen, before
+	// entering the alt screen, so it's still there after leaving it.
+	alt := NewView("alt screen view")
+	alt.AltScreen = true
+	r.render(alt)
+	if err := r.insertAbove("printed line"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	assertInOrder(t, out.String(), "inline view", "printed line", ansi.SetModeAltScreenSaveCursor, "alt screen view")
+}
