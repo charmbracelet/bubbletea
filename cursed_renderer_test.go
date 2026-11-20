@@ -455,10 +455,14 @@ func TestCursedRenderer_insertAboveBeforeFirstFlush(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := "\r\n" + ansi.CursorUp(1) +
+	// The one-line view is drawn first, then the line is inserted above it,
+	// making room for one line rather than for the terminal's height.
+	got := output.String()
+	frame := "\r" + ansi.EraseScreenBelow + "footer"
+	insert := "\r\n" + ansi.CursorUp(1) +
 		ansi.InsertLine(1) + ansi.EraseLineRight + "startup" + "\r\n"
-	if got := output.String(); got != want {
-		t.Fatalf("unexpected insertAbove output:\nwant: %q\n got: %q", want, got)
+	if !strings.HasSuffix(got, frame+insert) {
+		t.Fatalf("unexpected insertAbove output:\nwant suffix: %q\n         got: %q", frame+insert, got)
 	}
 }
 
@@ -574,6 +578,10 @@ func TestCursedRenderer_insertAboveLineBoundaries(t *testing.T) {
 			var out bytes.Buffer
 			r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, width, 2)
 			r.render(NewView("view\nview"))
+			if _, err := r.flush(false); err != nil {
+				t.Fatal(err)
+			}
+			out.Reset()
 			r.scr.SetPosition(0, 0)
 			if err := r.insertAbove(tt.line); err != nil {
 				t.Fatal(err)
@@ -591,4 +599,95 @@ func TestCursedRenderer_insertAboveLineBoundaries(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCursedRenderer_insertAboveFlushesQueuedView(t *testing.T) {
+	var output bytes.Buffer
+	r := newCursedRenderer(
+		&output,
+		[]string{"TERM=xterm-256color", "TERM_PROGRAM=Apple_Terminal"},
+		80,
+		24,
+	)
+
+	r.render(NewView("stale frame\nstale row"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatalf("flush initial view: %v", err)
+	}
+
+	output.Reset()
+	r.render(NewView("current frame"))
+	if err := r.insertAbove("committed block"); err != nil {
+		t.Fatalf("insert above: %v", err)
+	}
+
+	if r.lastView == nil || r.lastView.Content != "current frame" {
+		t.Fatalf("insertAbove did not flush the queued view: %#v", r.lastView)
+	}
+	written := output.String()
+	currentAt := strings.Index(written, "current frame")
+	committedAt := strings.Index(written, "committed block")
+	if currentAt < 0 || committedAt < 0 {
+		t.Fatalf("output missing markers (current=%d, committed=%d): %q", currentAt, committedAt, written)
+	}
+	if currentAt > committedAt {
+		t.Fatalf("inserted scrollback before flushing current frame: %q", written)
+	}
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1881
+func TestCursedRenderer_insertAboveAfterLeavingAltScreen(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	alt := NewView("alt screen view")
+	alt.AltScreen = true
+	r.render(alt)
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	// The update leaves the alt screen and prints a line before the next
+	// frame is drawn. The line must be printed on the normal screen, after
+	// leaving the alt screen, or it is lost with it.
+	r.render(NewView("inline view"))
+	if err := r.insertAbove("printed line"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	got := out.String()
+	assertInOrder(t, got, ansi.SetModeAltScreenSaveCursor, ansi.ResetModeAltScreenSaveCursor, "inline view", "printed line")
+	if n := strings.Count(got, "printed line"); n != 1 {
+		t.Fatalf("expected the line to be printed once, got %d times in %q", n, got)
+	}
+}
+
+func TestCursedRenderer_insertAboveBeforeEnteringAltScreen(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.render(NewView("inline view"))
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	// The update enters the alt screen and prints a line before the next
+	// frame is drawn. The line is printed on the normal screen, before
+	// entering the alt screen, so it's still there after leaving it.
+	alt := NewView("alt screen view")
+	alt.AltScreen = true
+	r.render(alt)
+	if err := r.insertAbove("printed line"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+
+	assertInOrder(t, out.String(), "inline view", "printed line", ansi.SetModeAltScreenSaveCursor, "alt screen view")
 }
