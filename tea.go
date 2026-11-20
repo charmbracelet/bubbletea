@@ -522,6 +522,8 @@ type Program struct {
 
 	msgs         chan Msg
 	errs         chan error
+	writeErr     error // first error writing to the output; guarded by writeErrMu
+	writeErrMu   sync.Mutex
 	finished     chan struct{}
 	runMu        sync.Mutex
 	shutdownOnce sync.Once
@@ -914,7 +916,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprint(msg.Msg))
 
 			case printLineMessage:
-				p.renderer.insertAbove(msg.messageBody) //nolint:errcheck,gosec
+				p.keepWriteErr(p.renderer.insertAbove(msg.messageBody))
 
 			case clearScreenMsg:
 				p.renderer.clearScreen()
@@ -1091,6 +1093,9 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.ctx, p.cancel = context.WithCancel(p.externalCtx)
 		p.errs = make(chan error, 1)
 		p.shutdownOnce = sync.Once{}
+		p.writeErrMu.Lock()
+		p.writeErr = nil
+		p.writeErrMu.Unlock()
 	}
 	p.ranOnce = true
 
@@ -1285,6 +1290,11 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Restore terminal state.
 	p.shutdown(killed)
 
+	if err == nil {
+		// Report a failure to write to the output, if there was one.
+		err = p.firstWriteErr()
+	}
+
 	return model, err
 }
 
@@ -1386,6 +1396,27 @@ func (p *Program) flush() error {
 		return fmt.Errorf("error writing to output: %w", err)
 	}
 	return nil
+}
+
+// keepWriteErr remembers err as the error to return from [Program.Run] if it
+// is the first error writing to the output. Later errors are dropped so they
+// do not hide the first one.
+func (p *Program) keepWriteErr(err error) {
+	if err == nil {
+		return
+	}
+	p.writeErrMu.Lock()
+	defer p.writeErrMu.Unlock()
+	if p.writeErr == nil {
+		p.writeErr = err
+	}
+}
+
+// firstWriteErr returns the first error kept by keepWriteErr.
+func (p *Program) firstWriteErr() error {
+	p.writeErrMu.Lock()
+	defer p.writeErrMu.Unlock()
+	return p.writeErr
 }
 
 // shutdown performs operations to free up resources and restore the terminal
@@ -1636,8 +1667,9 @@ func (p *Program) flushFrame() (drew, ok bool) {
 			}
 		}()
 	}
-	_ = p.flush()
-	drew, _ = p.renderer.flush(false)
+	p.keepWriteErr(p.flush())
+	drew, err := p.renderer.flush(false)
+	p.keepWriteErr(err)
 	return drew, true
 }
 
@@ -1652,8 +1684,9 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_, _ = p.renderer.flush(true)
+		_, err := p.renderer.flush(true)
+		p.keepWriteErr(err)
 	}
 
-	_ = p.renderer.close()
+	p.keepWriteErr(p.renderer.close())
 }
