@@ -1,6 +1,7 @@
 package tea
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -89,19 +90,23 @@ func (p *Program) initInputReader(cancel bool) error {
 	p.inputScanner = drv
 	p.readLoopDone = make(chan struct{})
 
-	go p.readLoop()
+	go p.readLoop(p.ctx, drv, p.readLoopDone, p.errs)
 
 	return nil
 }
 
-func (p *Program) readLoop() {
-	defer close(p.readLoopDone)
+// readLoop streams input events to the program until ctx is done or reading
+// fails. It takes the per-run state it uses as arguments rather than reading
+// it from p: the loop can outlive [Program.shutdown], see
+// [Program.shutdownInput], and must not race with a later run replacing it.
+func (p *Program) readLoop(ctx context.Context, scanner *uv.TerminalReader, done chan struct{}, errs chan error) {
+	defer close(done)
 
-	if err := p.inputScanner.StreamEvents(p.ctx, p.msgs); err != nil {
+	if err := scanner.StreamEvents(ctx, p.msgs); err != nil {
 		select {
-		case <-p.ctx.Done():
+		case <-ctx.Done():
 			return
-		case p.errs <- err:
+		case errs <- err:
 		}
 	}
 }
@@ -116,6 +121,11 @@ func (p *Program) shutdownInput() {
 	if reader == nil {
 		return
 	}
+	// The reader is closed below, or later once its input loop finishes.
+	// Forget it so that a later run doesn't close it again: closing it closes
+	// raw file descriptors, and closing one twice can close an unrelated file
+	// that has since reused the number.
+	p.cancelReader = nil
 
 	if reader.Cancel() && p.readLoopDone != nil {
 		done := p.readLoopDone

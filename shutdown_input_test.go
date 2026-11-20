@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -97,6 +98,31 @@ func TestShutdownDefersCloseAfterInputTimeout(t *testing.T) {
 			})
 		})
 	}
+}
+
+// A reader that shutdown closed must not be closed again when a later run
+// replaces it: closing a cancel reader closes raw file descriptors, so a
+// second close can close an unrelated file that reused the number.
+func TestShutdownClosesInputOnce(t *testing.T) {
+	p := NewProgram(&testModel{}, WithInput(strings.NewReader("")), WithOutput(io.Discard))
+	r := &shutdownInputReader{cancelable: true}
+	p.cancelReader = r
+	p.readLoopDone = make(chan struct{})
+	close(p.readLoopDone)
+
+	p.shutdown(false)
+	if r.closes != 1 {
+		t.Fatalf("shutdown closed the reader %d times, want 1", r.closes)
+	}
+
+	// The next run starts a new reader in place of the closed one.
+	if err := p.initInputReader(false); err != nil {
+		t.Fatal(err)
+	}
+	if r.closes != 1 {
+		t.Errorf("starting a new reader closed the old one again: %d closes", r.closes)
+	}
+	p.shutdownInput()
 }
 
 func TestShutdownInputFallbacks(t *testing.T) {
