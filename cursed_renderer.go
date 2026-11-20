@@ -31,10 +31,12 @@ type cursedRenderer struct {
 	hardTabs      bool // whether to use hard tabs to optimize cursor movements
 	backspace     bool // whether to use backspace to optimize cursor movements
 	mapnl         bool
-	syncdUpdates  bool // whether to use synchronized output mode for updates
-	starting      bool // indicates whether the renderer is starting after being stopped
-	pendingErase  bool // an scr.Erase() is pending and hasn't been drained by flush yet
-	noInput       bool // whether input is disabled, in which case keyboard enhancement queries are pointless
+	syncdUpdates  bool   // whether to use synchronized output mode for updates
+	starting      bool   // indicates whether the renderer is starting after being stopped
+	pendingErase  bool   // an scr.Erase() is pending and hasn't been drained by flush yet
+	viewStale     bool   // a resize occurred and we are waiting for render() to supply the new View
+	noInput       bool   // whether input is disabled, in which case keyboard enhancement queries are pointless
+	onQuery       func() // called when a terminal query is written, see [Program.noteQuery]
 }
 
 var _ renderer = &cursedRenderer{}
@@ -104,6 +106,11 @@ func (s *cursedRenderer) start() {
 	// Mark that we're starting. This is used to restore some state when
 	// starting the renderer again after it was stopped.
 	s.starting = true
+
+	// close disables Unicode mode; restore it for negotiated grapheme widths.
+	if s.cellbuf.Method == ansi.GraphemeWidth {
+		_, _ = s.scr.WriteString(ansi.SetModeUnicodeCore)
+	}
 
 	if s.lastView == nil {
 		return
@@ -284,6 +291,14 @@ func (s *cursedRenderer) close() (err error) {
 	return nil
 }
 
+// query writes a terminal query and reports it to onQuery.
+func (s *cursedRenderer) query(seq string) {
+	_, _ = s.scr.WriteString(seq)
+	if s.onQuery != nil {
+		s.onQuery()
+	}
+}
+
 // writeString implements renderer.
 func (s *cursedRenderer) writeString(str string) (int, error) {
 	s.mu.Lock()
@@ -293,9 +308,18 @@ func (s *cursedRenderer) writeString(str string) (int, error) {
 }
 
 // flush implements renderer.
-func (s *cursedRenderer) flush(closing bool) error {
+func (s *cursedRenderer) flush(closing bool) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	return s.flushLocked(closing)
+}
+
+// flushLocked is [cursedRenderer.flush] for callers that hold s.mu.
+func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
+	if !closing && s.viewStale {
+		return false, nil
+	}
 
 	view := s.view
 	frameArea := uv.Rect(0, 0, s.width, s.height)
@@ -318,14 +342,28 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 	}
 
+	// An empty screen buffer has zero width as well as zero height.
+	if frameArea.Dy() == 0 {
+		frameArea.Max.X = 0
+	}
+
 	// Restore tab stops if we have tab optimizations enabled.
 	if s.starting && s.hardTabs {
 		_, _ = s.scr.WriteString(ansi.SetTabEvery8Columns)
 	}
 
-	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && frameArea == s.cellbuf.Bounds() {
+	// Oversized inline frames retain only the rows that fit on the screen.
+	held := frameArea
+	held.Max.Y = min(held.Max.Y, s.height)
+	if !s.starting && !closing && !s.pendingErase && s.lastView != nil && viewEquals(s.lastView, &view) && held == s.cellbuf.Bounds() {
 		// No changes, nothing to do.
-		return nil
+		return false, nil
+	}
+
+	// Use the previous frame before replacing its cells, once per redraw even
+	// if several resize events arrived since it was drawn.
+	if !view.AltScreen {
+		s.skipReflowedRows()
 	}
 
 	// We're no longer starting.
@@ -444,7 +482,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		}
 		if !closing {
 			// Request keyboard enhancements when they change
-			_, _ = s.scr.WriteString(ansi.RequestKittyKeyboard)
+			s.query(ansi.RequestKittyKeyboard)
 		}
 	}
 
@@ -473,7 +511,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 		{newColor: view.ForegroundColor, oldColor: lfg, reset: ansi.ResetForegroundColor, setter: ansi.SetForegroundColor},
 		{newColor: view.BackgroundColor, oldColor: lbg, reset: ansi.ResetBackgroundColor, setter: ansi.SetBackgroundColor},
 	} {
-		if c.newColor != c.oldColor {
+		if !colorEqual(c.newColor, c.oldColor) {
 			if c.newColor == nil {
 				// Reset the color if it was set to nil.
 				_, _ = s.scr.WriteString(c.reset)
@@ -542,7 +580,7 @@ func (s *cursedRenderer) flush(closing bool) error {
 	}
 
 	if err := s.scr.Flush(); err != nil {
-		return fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
+		return true, fmt.Errorf("bubbletea: error flushing screen writer: %w", err)
 	}
 
 	// Check if we have any render updates to flush.
@@ -629,13 +667,13 @@ func (s *cursedRenderer) flush(closing bool) error {
 			s.logger.Printf("output: %q", buf.String())
 		}
 		if _, err := io.Copy(s.w, &buf); err != nil {
-			return fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
+			return true, fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
 		}
 	}
 
 	s.lastView = &view
 
-	return nil
+	return true, nil
 }
 
 // render implements renderer.
@@ -644,6 +682,7 @@ func (s *cursedRenderer) render(v View) {
 	defer s.mu.Unlock()
 
 	s.view = v
+	s.viewStale = false
 }
 
 // reset implements renderer.
@@ -687,65 +726,53 @@ func (s *cursedRenderer) resize(w, h int) {
 	// width hasn't changed in inline mode. On the other hand, when using
 	// alt screen mode, we always want to redraw because some terminals
 	// would scroll the screen and our content would be lost.
-	s.skipReflowedRows(w)
 	s.scr.Erase()
 	s.width, s.height = w, h
 	s.scr.Resize(s.width, s.height)
 	s.pendingErase = true
+	s.viewStale = true
 	s.mu.Unlock()
 }
 
-// skipReflowedRows moves the cursor past the rows a narrowing terminal added to
-// the frame we already drew, so the forced redraw erases from the frame's real
-// top row.
-//
-// The redraw reaches that top row by moving the cursor up by its row *within*
-// the frame, which is the physical distance only while every frame row occupies
-// one terminal row. A terminal that rewraps on resize breaks that: once it
-// narrows, a row wider than the new width spans several terminal rows, the move
-// up lands short of the top, and the rows above where it landed survive the
-// erase. The next frame is drawn below them, so each resize leaves another copy
-// stranded on screen.
-//
-// A terminal that truncates rather than rewraps keeps one terminal row per
-// frame row. There the extra movement would reach above the frame and erase
-// scrollback we never drew, which costs the user real output — worse than the
-// stranded rows — so GNU screen is left alone. tmux is not one of them: it has
-// reflowed pane text on resize since 1.8.
-func (s *cursedRenderer) skipReflowedRows(width int) {
-	if width <= 0 || width >= s.width || s.lastView == nil || s.lastView.AltScreen {
+// skipReflowedRows accounts for terminal reflow before the relative cursor
+// move to the top of the previous frame. This assumes the terminal reflows
+// using the rendered cell widths. GNU screen truncates instead, so adjusting
+// there could erase output above the frame.
+func (s *cursedRenderer) skipReflowedRows() {
+	width := s.width
+	if width <= 0 || width >= s.cellbuf.Width() || s.lastView == nil || s.lastView.AltScreen {
 		return
 	}
 	if uv.Environ(s.env).Getenv("STY") != "" {
 		return
 	}
-	// Only the rows above the cursor matter: the erase runs from there to the
-	// bottom of the screen, so whatever the rows below it rewrapped into is
-	// cleared either way.
-	rows := strings.Split(s.lastView.Content, "\n")
-	if len(rows) > s.height {
-		// Taller frames are drawn bottom-aligned; the rows scrolled off the top
-		// are not on screen to be rewrapped.
-		rows = rows[len(rows)-s.height:]
-	}
+
+	// Use the clipped cells actually drawn above the cursor, not the source
+	// view or the unused columns at the end of each row.
 	_, y := s.scr.Position()
 	var reflowed int
-	for i := 0; i < y && i < len(rows); i++ {
-		// Wrapped rather than divided by the width: a double-width grapheme
-		// that will not fit in the last column moves to the next row whole and
-		// leaves that column unused, so dividing undercounts every row a
-		// terminal breaks that way — which is most of them once the text is
-		// CJK and the width is odd.
-		reflowed += strings.Count(ansi.Hardwrap(rows[i], width, true), "\n")
+	for i := 0; i < y && i < len(s.cellbuf.Lines); i++ {
+		row := s.cellbuf.Lines[i]
+		end := len(row)
+		for end > 0 && (row[end-1].Width == 0 || row[end-1].Equal(&uv.EmptyCell)) {
+			end--
+		}
+		var col int
+		for _, cell := range row[:end] {
+			if cell.Width <= 0 || cell.Width > width {
+				continue
+			}
+			// A wide cell moves whole to the next row, leaving a gap.
+			if col+cell.Width > width {
+				reflowed++
+				col = 0
+			}
+			col += cell.Width
+		}
 	}
 	if reflowed > 0 {
-		// Written straight out rather than through the renderer's own cursor
-		// movement, which clamps to the frame height — exactly the bound this
-		// has to cross. The renderer's idea of where the cursor is stays
-		// behind by these rows on purpose: inline mode moves relatively (see
-		// SetRelativeCursor in reset), so the move it makes next to reach the
-		// top of the frame stacks on this one instead of replacing it. A
-		// renderer that ever positioned absolutely here would land short again.
+		// Leave the logical cursor alone so the redraw's relative move
+		// adds to this one.
 		_, _ = s.scr.WriteString(ansi.CursorUp(reflowed))
 	}
 }
@@ -758,6 +785,18 @@ func (s *cursedRenderer) clearScreen() {
 	s.scr.MoveTo(0, 0)
 	s.scr.Erase()
 	s.pendingErase = true
+	s.mu.Unlock()
+}
+
+// clearView implements renderer.
+func (s *cursedRenderer) clearView() {
+	s.mu.Lock()
+	// Blank the view content so the next flush writes nothing to the output.
+	// Terminal mode flags such as AltScreen are preserved so that the screen
+	// mode is restored correctly when the program resumes after the subprocess
+	// exits (see close and start). See issue #431.
+	s.view.Content = ""
+	s.view.Cursor = nil
 	s.mu.Unlock()
 }
 
@@ -833,9 +872,31 @@ func (s *cursedRenderer) insertAbove(str string) error {
 		return nil
 	}
 
+	// render only queues the latest view; the frame ticker draws it later, so
+	// a print can arrive before the view the program just returned is on the
+	// terminal. Draw that view first, so the lines go above what is actually
+	// on screen: scrolling with the old frame's geometry can move rows of the
+	// old frame into the scrollback, and a view that leaves the alt screen
+	// hasn't left it yet, so the lines would be printed on the alt screen and
+	// lost. A view that enters the alt screen is left for later: until then,
+	// the lines are still printed on the normal screen, where they persist.
+	if !s.view.AltScreen {
+		if _, err := s.flushLocked(false); err != nil {
+			return fmt.Errorf("bubbletea: error flushing before insert above: %w", err)
+		}
+	}
+
 	var sb strings.Builder
 	w, h := s.cellbuf.Width(), s.cellbuf.Height()
 	_, y := s.scr.Position()
+	// Before the first flush, the cell buffer still has the terminal height
+	// rather than the height of the current inline view.
+	if s.lastView == nil && !s.view.AltScreen {
+		h = uv.NewStyledString(s.view.Content).Height()
+		if y < 0 {
+			y = 0
+		}
+	}
 
 	// We need to scroll the screen up by the number of lines in the queue.
 	sb.WriteByte('\r')
@@ -847,9 +908,14 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	lines := strings.Split(str, "\n")
 	offset := len(lines)
 	for _, line := range lines {
-		lineWidth := ansi.StringWidth(line)
+		// Measure with the active screen buffer's width method: when the
+		// terminal doesn't enable Unicode-core mode the buffer stays on
+		// WcWidth, and grapheme semantics would count a different number of
+		// wrapped lines than the renderer. See
+		// https://github.com/charmbracelet/bubbletea/issues/1802.
+		lineWidth := s.cellbuf.WidthMethod().StringWidth(line)
 		if w > 0 && lineWidth > w {
-			offset += (lineWidth / w)
+			offset += (lineWidth - 1) / w
 		}
 	}
 
@@ -864,8 +930,8 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	sb.WriteString(ansi.CursorUp(up))
 	sb.WriteString(ansi.InsertLine(offset))
 	for _, line := range lines {
-		sb.WriteString(line)
 		sb.WriteString(ansi.EraseLineRight)
+		sb.WriteString(line)
 		sb.WriteString("\r\n")
 	}
 
@@ -939,6 +1005,20 @@ func setProgramStatus(s *cursedRenderer, prev, cur *ProgramStatus) {
 	}
 }
 
+// colorEqual reports whether two colors are equal. Colors are compared by
+// their RGBA values, which is all the terminal ever sees, rather than with ==,
+// which panics on [color.Color] implementations whose dynamic type is
+// uncomparable (e.g. a struct containing a slice). A nil color stays distinct
+// from any other color so that resetting a color still works.
+func colorEqual(a, b color.Color) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	ar, ag, ab, aa := a.RGBA()
+	br, bg, bb, ba := b.RGBA()
+	return ar == br && ag == bg && ab == bb && aa == ba
+}
+
 func viewEquals(a, b *View) bool {
 	if a == nil || b == nil {
 		return false
@@ -954,8 +1034,8 @@ func viewEquals(a, b *View) bool {
 		a.ReportFocus != b.ReportFocus ||
 		a.MouseMode != b.MouseMode ||
 		a.WindowTitle != b.WindowTitle ||
-		a.ForegroundColor != b.ForegroundColor ||
-		a.BackgroundColor != b.BackgroundColor ||
+		!colorEqual(a.ForegroundColor, b.ForegroundColor) ||
+		!colorEqual(a.BackgroundColor, b.BackgroundColor) ||
 		a.KeyboardEnhancements != b.KeyboardEnhancements {
 		return false
 	}
@@ -968,7 +1048,7 @@ func viewEquals(a, b *View) bool {
 			a.Cursor.Y != b.Cursor.Y ||
 			a.Cursor.Shape != b.Cursor.Shape ||
 			a.Cursor.Blink != b.Cursor.Blink ||
-			a.Cursor.Color != b.Cursor.Color {
+			!colorEqual(a.Cursor.Color, b.Cursor.Color) {
 			return false
 		}
 	}
