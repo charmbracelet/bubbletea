@@ -899,7 +899,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				p.execute(fmt.Sprint(msg.Msg))
 
 			case printLineMessage:
-				p.renderer.insertAbove(msg.messageBody) //nolint:errcheck,gosec
+				p.keepWriteErr(p.renderer.insertAbove(msg.messageBody))
 
 			case clearScreenMsg:
 				p.renderer.clearScreen()
@@ -1076,6 +1076,9 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.ctx, p.cancel = context.WithCancel(p.externalCtx)
 		p.errs = make(chan error, 1)
 		p.shutdownOnce = sync.Once{}
+		p.writeErrMu.Lock()
+		p.writeErr = nil
+		p.writeErrMu.Unlock()
 	}
 	p.ranOnce = true
 
