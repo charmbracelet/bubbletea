@@ -531,6 +531,10 @@ type Program struct {
 	// per-run state can be reinitialized on subsequent runs.
 	ranOnce bool
 
+	// writeErr stores the first write error that occurs. Protected by mu.
+	writeErr     error
+	writeErrOnce sync.Once
+
 	profile *colorprofile.Profile // the terminal color profile
 
 	// where to send output, this will usually be os.Stdout.
@@ -1074,6 +1078,8 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		p.ctx, p.cancel = context.WithCancel(p.externalCtx)
 		p.errs = make(chan error, 1)
 		p.shutdownOnce = sync.Once{}
+		p.writeErr = nil
+		p.writeErrOnce = sync.Once{}
 	}
 	p.ranOnce = true
 
@@ -1267,6 +1273,11 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 	// Restore terminal state.
 	p.shutdown(killed)
 
+	// Return the write error if no other error occurred.
+	if err == nil && p.writeErr != nil {
+		err = p.writeErr
+	}
+
 	return model, err
 }
 
@@ -1343,6 +1354,21 @@ func (p *Program) executeQuery(seq string) {
 	p.execute(seq)
 }
 
+// storeWriteError stores the first write error that occurs.
+// Subsequent calls have no effect.
+func (p *Program) storeWriteError(err error) {
+	if err == nil {
+		return
+	}
+	p.writeErrOnce.Do(func() {
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		if p.writeErr == nil {
+			p.writeErr = err
+		}
+	})
+}
+
 // flush flushes the output buffer to the program output.
 func (p *Program) flush() error {
 	p.mu.Lock()
@@ -1357,7 +1383,9 @@ func (p *Program) flush() error {
 	_, err := p.output.Write(p.outputBuf.Bytes())
 	p.outputBuf.Reset()
 	if err != nil {
-		return fmt.Errorf("error writing to output: %w", err)
+		err = fmt.Errorf("bubbletea: error flushing update to the writer: %w", err)
+		p.storeWriteError(err)
+		return err
 	}
 	return nil
 }
@@ -1561,9 +1589,13 @@ func (p *Program) startRenderer() {
 					realign = false
 					ticker.Reset(framerate)
 				}
-				_ = p.flush()
-				if drew, _ := p.renderer.flush(false); drew {
+				if err := p.flush(); err != nil {
+					p.storeWriteError(err)
+				}
+				if drew, err := p.renderer.flush(false); drew {
 					idle = 0
+				} else if err != nil {
+					p.storeWriteError(err)
 				} else if idle++; idle >= idleFrames {
 					// Nothing is changing. Stop waking up every frame until
 					// there is something to draw, see [Program.wakeRenderer].
@@ -1586,8 +1618,12 @@ func (p *Program) stopRenderer(kill bool) {
 
 	if !kill {
 		// flush locks the mutex
-		_, _ = p.renderer.flush(true)
+		if _, err := p.renderer.flush(true); err != nil {
+			p.storeWriteError(err)
+		}
 	}
 
-	_ = p.renderer.close()
+	if err := p.renderer.close(); err != nil {
+		p.storeWriteError(err)
+	}
 }

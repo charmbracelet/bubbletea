@@ -1005,3 +1005,34 @@ func TestProgressBarStateStringOutOfRange(t *testing.T) {
 		}
 	}
 }
+
+// failingWriter is an io.Writer whose every Write call fails.
+type failingWriter struct{}
+
+func (failingWriter) Write([]byte) (int, error) {
+	return 0, errors.New("disk full")
+}
+
+// failModel is a test model that quits immediately.
+type failModel struct{}
+
+func (failModel) Init() Cmd               { return Quit }
+func (failModel) Update(Msg) (Model, Cmd) { return failModel{}, nil }
+func (failModel) View() View              { return NewView("hello") }
+
+// TestTeaRunReturnsWriteError tests that Run() returns an error when
+// writing to the output fails (e.g., closed pipe, full disk).
+func TestTeaRunReturnsWriteError(t *testing.T) {
+	// Run the program with a failing output writer
+	_, err := NewProgram(failModel{}, WithOutput(failingWriter{}), WithInput(nil)).Run()
+
+	// Check that an error was returned
+	if err == nil {
+		t.Fatal("Run() returned nil, expected an error from failing writer")
+	}
+
+	// Check that the error message contains relevant information
+	if !strings.Contains(err.Error(), "disk full") {
+		t.Fatalf("Run() error = %v, expected error to contain 'disk full'", err)
+	}
+}
