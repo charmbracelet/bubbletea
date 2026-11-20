@@ -1430,6 +1430,13 @@ func (p *Program) recoverFromPanic(r interface{}) {
 // recoverFromGoPanic recovers from a goroutine panic, prints a stack trace,
 // restores the terminal to a usable state, and signals the program to be killed.
 func (p *Program) recoverFromGoPanic(r interface{}) {
+	p.recoverFromGoPanicWithStack(r, debug.Stack())
+}
+
+// recoverFromGoPanicWithStack is [Program.recoverFromGoPanic] with the stack
+// captured at the panic site. The renderer ticker goroutine uses this because
+// it must not block in [Program.shutdown].
+func (p *Program) recoverFromGoPanicWithStack(r interface{}, trace []byte) {
 	select {
 	case p.errs <- ErrProgramPanic:
 	default:
@@ -1439,7 +1446,7 @@ func (p *Program) recoverFromGoPanic(r interface{}) {
 	// terminal does not work or when raw mode is still active.
 	rec := strings.ReplaceAll(fmt.Sprintf("%s", r), "\n", "\r\n")
 	fmt.Fprintf(os.Stderr, "Caught panic:\r\n\r\n%s\r\n\r\nRestoring terminal...\r\n\r\n", rec)
-	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", debug.Stack()), "\n", "\r\n")
+	stack := strings.ReplaceAll(fmt.Sprintf("%s\n", trace), "\n", "\r\n")
 	fmt.Fprint(os.Stderr, stack)
 	if v, err := strconv.ParseBool(os.Getenv("TEA_DEBUG")); err == nil && v {
 		f, err := os.Create(fmt.Sprintf("bubbletea-panic-%d.log", time.Now().Unix()))
@@ -1573,8 +1580,14 @@ func (p *Program) startRenderer() {
 					realign = false
 					ticker.Reset(framerate)
 				}
-				_ = p.flush()
-				if drew, _ := p.renderer.flush(false); drew {
+				drew, ok := p.flushFrame()
+				if !ok {
+					// The renderer panicked and the program is shutting
+					// down. Stop drawing and wait for stopRenderer.
+					<-p.rendererDone
+					return
+				}
+				if drew {
 					idle = 0
 				} else if idle++; idle >= idleFrames {
 					// Nothing is changing. Stop waking up every frame until
@@ -1585,6 +1598,25 @@ func (p *Program) startRenderer() {
 			}
 		}
 	}()
+}
+
+// flushFrame writes the queued output and the current frame, and reports
+// whether a frame was drawn. If the renderer panics, ok is false and the panic
+// is recovered so the terminal still gets restored. The recovery runs on
+// another goroutine: shutting down sends on rendererDone, which only the
+// renderer goroutine calling flushFrame receives.
+func (p *Program) flushFrame() (drew, ok bool) {
+	if !p.disableCatchPanics {
+		defer func() {
+			if r := recover(); r != nil {
+				ok = false
+				go p.recoverFromGoPanicWithStack(r, debug.Stack())
+			}
+		}()
+	}
+	_ = p.flush()
+	drew, _ = p.renderer.flush(false)
+	return drew, true
 }
 
 // stopRenderer stops the renderer.
