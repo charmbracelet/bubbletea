@@ -691,3 +691,161 @@ func TestCursedRenderer_insertAboveBeforeEnteringAltScreen(t *testing.T) {
 
 	assertInOrder(t, out.String(), "inline view", "printed line", ansi.SetModeAltScreenSaveCursor, "alt screen view")
 }
+
+func TestCursedRenderer_pointerShape(t *testing.T) {
+	t.Parallel()
+
+	const osc22 = "\x1b]22;"
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+	render := func(shape PointerShape) bool {
+		t.Helper()
+		view := NewView("hello")
+		view.PointerShape = shape
+		r.render(view)
+		drew, err := r.flush(false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return drew
+	}
+
+	render("")
+	if strings.Contains(out.String(), osc22) {
+		t.Fatalf("empty pointer shape wrote OSC 22 on the first frame: %q", out.String())
+	}
+
+	out.Reset()
+	render(PointerPointer)
+	if want := ansi.SetPointerShape("pointer"); !strings.Contains(out.String(), want) {
+		t.Fatalf("missing pointer shape sequence %q in %q", want, out.String())
+	}
+
+	out.Reset()
+	if render(PointerPointer) || out.Len() != 0 {
+		t.Fatalf("unchanged pointer shape redrew the view: %q", out.String())
+	}
+
+	out.Reset()
+	render(PointerEWResize)
+	if want := ansi.SetPointerShape("ew-resize"); !strings.Contains(out.String(), want) {
+		t.Fatalf("missing pointer shape sequence %q in %q", want, out.String())
+	}
+
+	out.Reset()
+	render("")
+	if want := resetPointerShape; !strings.Contains(out.String(), want) {
+		t.Fatalf("clearing the pointer shape did not reset it with %q: %q", want, out.String())
+	}
+
+	// Closing with no pointer shape set leaves the pointer alone.
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out.String(), osc22) {
+		t.Fatalf("close wrote OSC 22 although no pointer shape was set: %q", out.String())
+	}
+
+	// Closing with a pointer shape set resets it, and resuming restores it.
+	r.start()
+	render(PointerMove)
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	if want := resetPointerShape; !strings.Contains(out.String(), want) {
+		t.Fatalf("close did not reset the pointer shape with %q: %q", want, out.String())
+	}
+
+	out.Reset()
+	r.start()
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if want := ansi.SetPointerShape("move"); !strings.Contains(out.String(), want) {
+		t.Fatalf("resume did not restore the pointer shape with %q: %q", want, out.String())
+	}
+}
+
+func TestCursedRenderer_pointerShapeResentAfterStateChanges(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+	view := NewView("hello")
+	view.PointerShape = PointerMove
+	render := func() {
+		t.Helper()
+		r.render(view)
+		if _, err := r.flush(false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	set := ansi.SetPointerShape("move")
+
+	render()
+
+	// Ghostty replaces the pointer shape when mouse tracking changes, so the
+	// shape must be sent again after the mouse mode.
+	out.Reset()
+	view.MouseMode = MouseModeAllMotion
+	render()
+	assertInOrder(t, out.String(), ansi.SetModeMouseAnyEvent, set)
+
+	// kitty keeps a pointer shape per screen, so switching screens resets the
+	// shape on the screen being left and sets it again on the new one.
+	for _, alt := range []bool{true, false} {
+		out.Reset()
+		view.AltScreen = alt
+		switchSeq := ansi.SetModeAltScreenSaveCursor
+		if !alt {
+			switchSeq = ansi.ResetModeAltScreenSaveCursor
+		}
+		render()
+		assertInOrder(t, out.String(), resetPointerShape, switchSeq, set)
+	}
+
+	// Closing from the alt screen resets the shape before leaving it.
+	view.AltScreen = true
+	render()
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	assertInOrder(t, out.String(), resetPointerShape, ansi.ResetModeAltScreenSaveCursor)
+}
+
+func TestCursedRenderer_pointerShapeResetWhenClosingBeforeFlush(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+	r.start()
+	view := NewView("hello")
+	view.PointerShape = PointerMove
+	r.render(view)
+	if _, err := r.flush(false); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Resume, then close again before any frame is flushed, as when the
+	// program is killed right after resuming. The shape that start queues
+	// must not land after the reset.
+	r.start()
+	out.Reset()
+	if err := r.close(); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	assertInOrder(t, got, ansi.SetPointerShape(string(PointerMove)), resetPointerShape)
+	if last := strings.LastIndex(got, "\x1b]22;"); last != strings.LastIndex(got, resetPointerShape) {
+		t.Fatalf("the last pointer shape sequence is not a reset: %q", got)
+	}
+}
