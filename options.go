@@ -131,9 +131,9 @@ func WithoutRenderer() ProgramOption {
 //		return msg
 //	}
 //
-//	p := tea.NewProgram(Model{}, tea.WithFilter(filter));
+//	p := tea.NewProgram(myModel{}, tea.WithFilter(filter))
 //
-//	if _,err := p.Run(); err != nil {
+//	if _, err := p.Run(); err != nil {
 //		fmt.Println("Error running program:", err)
 //		os.Exit(1)
 //	}
