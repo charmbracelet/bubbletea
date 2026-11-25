@@ -892,7 +892,18 @@ func (s *cursedRenderer) insertAbove(str string) error {
 		s.logger.Printf("insert above: %q", sb.String())
 	}
 
-	_, err := io.WriteString(s.w, sb.String())
+	// Downsample the output to the renderer's color profile, the same
+	// treatment the frame renderer applies to the view: unmanaged lines
+	// committed to scrollback must respect NO_COLOR and low-color terminals
+	// as well. Non-color sequences (cursor movement, line insertion) pass
+	// through unchanged. At NoTTY and below there is nothing to downsample:
+	// keep writing the sequences, as before, so output captured through a
+	// pipe is unchanged.
+	var dst io.Writer = s.w
+	if s.profile > colorprofile.NoTTY {
+		dst = &colorprofile.Writer{Forward: s.w, Profile: s.profile}
+	}
+	_, err := io.WriteString(dst, sb.String())
 	if err != nil {
 		return fmt.Errorf("bubbletea: error writing insert above to the writer: %w", err)
 	}

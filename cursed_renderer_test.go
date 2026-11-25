@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -690,4 +691,54 @@ func TestCursedRenderer_insertAboveBeforeEnteringAltScreen(t *testing.T) {
 	}
 
 	assertInOrder(t, out.String(), "inline view", "printed line", ansi.SetModeAltScreenSaveCursor, "alt screen view")
+}
+
+// Fixes: https://github.com/charmbracelet/bubbletea/issues/1709
+func TestCursedRenderer_insertAboveDownsamplesColors(t *testing.T) {
+	t.Parallel()
+
+	red := "\x1b[38;2;255;0;0mred\x1b[0m"
+	insert := func(p colorprofile.Profile) string {
+		var out bytes.Buffer
+		r := newCursedRenderer(&out, []string{"TERM=xterm-256color"}, 80, 24)
+		r.setColorProfile(p)
+		r.render(NewView("footer"))
+		if err := r.insertAbove(red); err != nil {
+			t.Fatal(err)
+		}
+		return out.String()
+	}
+
+	// TrueColor output keeps the 24-bit sequence as is.
+	if got := insert(colorprofile.TrueColor); !strings.Contains(got, "38;2;255;0;0") {
+		t.Errorf("expected TrueColor output to pass through unchanged, got %q", got)
+	}
+
+	// ANSI256 output downsamples to the nearest 8-bit color.
+	got256 := insert(colorprofile.ANSI256)
+	if strings.Contains(got256, "38;2;255;0;0") {
+		t.Errorf("expected truecolor sequence to be downsampled under ANSI256, got %q", got256)
+	}
+	if !strings.Contains(got256, "38;5;") {
+		t.Errorf("expected an ANSI256 color sequence, got %q", got256)
+	}
+
+	// ASCII (NO_COLOR) output carries no color sequences at all.
+	gotASCII := insert(colorprofile.ASCII)
+	if strings.Contains(gotASCII, "38;") || strings.Contains(gotASCII, "[31m") {
+		t.Errorf("expected colors to be stripped under ASCII, got %q", gotASCII)
+	}
+
+	// The text and the line-insertion geometry survive in every profile.
+	for name, got := range map[string]string{"ansi256": got256, "ascii": gotASCII} {
+		if !strings.Contains(got, "red") {
+			t.Errorf("%s: expected text content to survive, got %q", name, got)
+		}
+		if !strings.Contains(got, ansi.InsertLine(1)) {
+			t.Errorf("%s: expected InsertLine sequence to survive, got %q", name, got)
+		}
+		if !strings.Contains(got, ansi.EraseLineRight) {
+			t.Errorf("%s: expected EraseLineRight sequence to survive, got %q", name, got)
+		}
+	}
 }
