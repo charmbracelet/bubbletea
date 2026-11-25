@@ -899,7 +899,7 @@ func (s *cursedRenderer) insertAbove(str string) error {
 	// through unchanged. At NoTTY and below there is nothing to downsample:
 	// keep writing the sequences, as before, so output captured through a
 	// pipe is unchanged.
-	var dst io.Writer = s.w
+	dst := s.w
 	if s.profile > colorprofile.NoTTY {
 		dst = &colorprofile.Writer{Forward: s.w, Profile: s.profile}
 	}
