@@ -54,3 +54,6 @@ func (n nilRenderer) setWidthMethod(ansi.Method) {}
 func (n nilRenderer) onMouse(MouseMsg) Cmd {
 	return nil
 }
+
+// reportsProgramResume implements the Renderer interface.
+func (nilRenderer) reportsProgramResume() bool { return false }

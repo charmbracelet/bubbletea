@@ -4,6 +4,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"slices"
+	"strings"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 // execMsg is used internally to run an ExecCommand sent with Exec.
@@ -120,6 +124,14 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 	c.SetStdin(p.input)
 	c.SetStdout(p.output)
 	c.SetStderr(os.Stderr)
+
+	// A program that resumes itself brings back what it started, so the
+	// child must not be resumed in its place.
+	if oc, ok := c.(*osExecCommand); ok && p.renderer != nil && p.renderer.reportsProgramResume() {
+		oc.Env = slices.DeleteFunc(oc.Environ(), func(kv string) bool {
+			return strings.HasPrefix(kv, ansi.ProgramResumeTokenEnv+"=")
+		})
+	}
 
 	// Execute system command.
 	if err := c.Run(); err != nil {
