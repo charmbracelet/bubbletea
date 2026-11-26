@@ -142,6 +142,28 @@ type View struct {
 	// terminal.
 	WindowTitle string
 
+	// PointerShape sets the shape of the mouse pointer while it is over the
+	// terminal, using OSC 22. Use one of the [PointerShape] constants, such as
+	// [PointerPointer] or [PointerEWResize]. Terminals without OSC 22
+	// support, and tmux, ignore the sequence.
+	//
+	// An empty string leaves the pointer shape to the terminal. When the
+	// field changes back to empty, and when the program exits or is
+	// suspended, the shape is handed back to the terminal, which shows its
+	// own default.
+	//
+	// Example:
+	//
+	//	func (m model) View() tea.View {
+	//	    v := tea.NewView(m.content)
+	//	    v.MouseMode = tea.MouseModeAllMotion
+	//	    if m.hoveringLink {
+	//	        v.PointerShape = tea.PointerPointer
+	//	    }
+	//	    return v
+	//	}
+	PointerShape PointerShape
+
 	// ProgressBar when not nil, shows a progress bar in the terminal's
 	// progress bar section. Support depends on the terminal.
 	ProgressBar *ProgressBar

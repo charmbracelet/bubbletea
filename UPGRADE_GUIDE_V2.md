@@ -94,6 +94,7 @@ The `tea.View` struct has fields for everything that used to be controlled by op
 | `ReportFocus` | Enable focus/blur event reporting |
 | `DisableBracketedPasteMode` | Disable bracketed paste |
 | `WindowTitle` | Set the terminal window title |
+| `PointerShape` | Set the mouse pointer shape (OSC 22) |
 | `Cursor` | Control cursor position, shape, color, and blink |
 | `ForegroundColor` | Set the terminal foreground color |
 | `BackgroundColor` | Set the terminal background color |

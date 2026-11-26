@@ -45,6 +45,12 @@ type cursedRenderer struct {
 
 var _ renderer = &cursedRenderer{}
 
+// resetPointerShape is an OSC 22 sequence with an empty shape name. It hands
+// the mouse pointer shape back to the terminal, which picks its own default
+// (often a text beam, or an arrow while mouse tracking is on). Sending the
+// literal "default" shape instead would force an arrow.
+var resetPointerShape = ansi.SetPointerShape("")
+
 func newCursedRenderer(w io.Writer, env []string, width, height int) (s *cursedRenderer) {
 	s = new(cursedRenderer)
 	s.w = w
@@ -165,6 +171,9 @@ func (s *cursedRenderer) start() {
 	if s.lastView.WindowTitle != "" {
 		_, _ = s.scr.WriteString(ansi.SetWindowTitle(s.lastView.WindowTitle))
 	}
+	if s.lastView.PointerShape != "" {
+		_, _ = s.scr.WriteString(ansi.SetPointerShape(string(s.lastView.PointerShape)))
+	}
 	if s.lastView.ProgressBar != nil {
 		setProgressBar(s, s.lastView.ProgressBar)
 	}
@@ -215,6 +224,13 @@ func (s *cursedRenderer) close() (err error) {
 		// we're in alt screen mode or not to avoid leaving the cursor in the
 		// middle in terminals that don't support alt screen mode.
 		s.scr.MoveTo(0, s.cellbuf.Height()-1)
+		if lv.PointerShape != "" {
+			// Reset the pointer shape so it isn't left stuck after exit.
+			// kitty keeps a separate shape per screen, so this must reach
+			// the terminal before leaving the alt screen below. It goes
+			// through s.scr so it lands after any shape that start queued.
+			_, _ = s.scr.WriteString(resetPointerShape)
+		}
 		_ = s.scr.Flush() // we need to flush to write the cursor movement
 		if lv.AltScreen {
 			enableAltScreen(s, false, true)
@@ -458,6 +474,20 @@ func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
 		}
 	}
 
+	// Set mouse pointer shape. An empty shape after a non-empty one hands the
+	// shape back to the terminal. Terminals tie the shape to other state:
+	// kitty keeps a separate shape per screen, and Ghostty replaces it
+	// whenever mouse tracking is turned on or off. So the shape is sent again
+	// after switching screens or changing the mouse mode.
+	if s.lastView == nil || view.PointerShape != s.lastView.PointerShape ||
+		shouldUpdateAltScreen || view.MouseMode != s.lastView.MouseMode {
+		if view.PointerShape != "" {
+			_, _ = s.scr.WriteString(ansi.SetPointerShape(string(view.PointerShape)))
+		} else if s.lastView != nil && s.lastView.PointerShape != "" {
+			_, _ = s.scr.WriteString(resetPointerShape)
+		}
+	}
+
 	// kitty keyboard protocol. Skipped entirely when input is disabled: the
 	// enhancements only affect keyboard input, and querying the terminal
 	// would leave its response unconsumed, leaking into the shell after
@@ -631,6 +661,12 @@ func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
 		// because the terminal is expected to have two different keyboard
 		// registries for main and alt screens.
 		s.resetKeyboardEnhancements(&buf)
+		if s.lastView != nil && s.lastView.PointerShape != "" {
+			// Reset the pointer shape on the screen being left, since kitty
+			// keeps a separate shape per screen. The shape is set again on
+			// the new screen after the switch.
+			buf.WriteString(resetPointerShape)
+		}
 		if view.AltScreen {
 			// Entering alt screen mode.
 			buf.WriteString(ansi.SetModeAltScreenSaveCursor)
@@ -1043,6 +1079,7 @@ func viewEquals(a, b *View) bool {
 		a.ReportFocus != b.ReportFocus ||
 		a.MouseMode != b.MouseMode ||
 		a.WindowTitle != b.WindowTitle ||
+		a.PointerShape != b.PointerShape ||
 		!colorEqual(a.ForegroundColor, b.ForegroundColor) ||
 		!colorEqual(a.BackgroundColor, b.BackgroundColor) ||
 		a.KeyboardEnhancements != b.KeyboardEnhancements {
