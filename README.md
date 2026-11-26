@@ -85,7 +85,7 @@ state and three simple methods on that model:
 
 ### The Model
 
-So let's start by defining our model which will store our application's state.
+So let's start by defining our model, which will store our application's state.
 It can be any type, but a `struct` usually makes the most sense.
 
 ```go
@@ -109,7 +109,7 @@ func initialModel() model {
 		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
 
 		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
+		// the map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
 		selected: make(map[int]struct{}),
 	}
@@ -130,8 +130,8 @@ func (m model) Init() tea.Cmd {
 
 ### The Update Method
 
-Next up is the update method. The update function is called when “things
-happen.” Its job is to look at what has happened and return an updated model in
+Next up is the update method. The update function is called when "things
+happen." Its job is to look at what has happened and return an updated model in
 response. It can also return a `Cmd` to make more things happen, but for now
 don't worry about that part.
 
