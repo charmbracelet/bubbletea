@@ -394,9 +394,12 @@ func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
 	content.Draw(s.cellbuf, s.cellbuf.Bounds())
 
 	// If the frame height is greater than the screen height, we drop the
-	// lines from the top of the buffer.
+	// lines from the top of the buffer. Track how many rows were dropped so
+	// the frame-relative cursor can be moved to the same visible row.
+	clipped := 0
 	if frameHeight := frameArea.Dy(); frameHeight > s.height {
-		s.cellbuf.Lines = s.cellbuf.Lines[frameHeight-s.height:]
+		clipped = frameHeight - s.height
+		s.cellbuf.Lines = s.cellbuf.Lines[clipped:]
 	}
 
 	// Alt screen mode.
@@ -579,7 +582,15 @@ func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
 	if cur := view.Cursor; cur != nil {
 		// MoveTo must come after [uv.TerminalRenderer.Render] because the
 		// cursor position might get updated during rendering.
-		s.scr.MoveTo(view.Cursor.X, view.Cursor.Y)
+		//
+		// The cursor position is relative to the frame, but only the last
+		// rows of an oversized inline frame are visible. Offset it by the
+		// dropped rows; a cursor on a clipped row clamps to the top row.
+		y := cur.Y
+		if clipped > 0 {
+			y = max(y-clipped, 0)
+		}
+		s.scr.MoveTo(cur.X, y)
 	} else if !view.AltScreen {
 		// We don't want the cursor to be dangling at the end of the line in
 		// inline mode because it can cause unwanted line wraps in some
