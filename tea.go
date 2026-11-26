@@ -1284,7 +1284,14 @@ func (p *Program) Run() (returnModel Model, returnErr error) {
 		err = <-p.errs // Drain a leftover error in case eventLoop crashed.
 	}
 
-	killed := p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil
+	// An interrupt (SIGINT, or an InterruptMsg) is a user-initiated cancel,
+	// not a kill: the program must still render its final frame and flush it,
+	// exactly as on a graceful quit. Otherwise the screen keeps whatever the
+	// renderer ticker last flushed, which is nondeterministic under load
+	// (#1898). A real kill (Kill, or a canceled context) still skips the
+	// final render and flush.
+	interrupted := errors.Is(err, ErrInterrupted)
+	killed := (p.externalCtx.Err() != nil || p.ctx.Err() != nil || err != nil) && !interrupted
 	if killed {
 		if err == nil && p.externalCtx.Err() != nil {
 			// Return also as context error the cancellation of an external context.
