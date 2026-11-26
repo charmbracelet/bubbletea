@@ -1447,6 +1447,10 @@ func (p *Program) shutdown(kill bool) {
 
 		p.shutdownInput()
 
+		// Write queued output (tea.Raw, queries) while the program's screen
+		// is still active: stopping the renderer leaves the alt screen.
+		p.keepWriteErr(p.flush())
+
 		if p.renderer != nil {
 			p.stopRenderer(kill)
 		}
