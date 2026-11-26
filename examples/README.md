@@ -9,6 +9,34 @@ screen buffer and the normal screen buffer using Bubble Tea.
   <img width="750" src="./altscreen-toggle/altscreen-toggle.gif" />
 </a>
 
+### Autocomplete
+
+The `autocomplete` example shows how to use the `textinput` bubble's
+suggestion feature to autocomplete input, cycling through matches with
+`ctrl+n`.
+
+<a href="./autocomplete/main.go">
+  <img width="750" src="./autocomplete/autocomplete.gif" />
+</a>
+
+### Canvas
+
+The `canvas` example shows how to layer and z-order content using
+[Lip Gloss](https://github.com/charmbracelet/lipgloss)'s `Compositor`.
+
+<a href="./canvas/main.go">
+  <img width="750" src="./canvas/canvas.gif" />
+</a>
+
+### Capability
+
+The `capability` example shows how to query the terminal for Termcap/Terminfo
+capabilities using `tea.RequestCapability`.
+
+<a href="./capability/main.go">
+  <img width="750" src="./capability/capability.gif" />
+</a>
+
 ### Chat
 
 The `chat` examples shows a basic chat application with a multi-line `textarea`
