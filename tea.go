@@ -59,8 +59,8 @@ type Model interface {
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
 
-	// View renders the program's UI, which can be a string or a [Layer]. The
-	// view is rendered after every Update.
+	// View renders the program's UI as a [View]. The view is rendered after
+	// every Update.
 	View() View
 }
 
