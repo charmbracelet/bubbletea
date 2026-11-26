@@ -568,6 +568,10 @@ func TestCursedRenderer_insertAboveLineBoundaries(t *testing.T) {
 		{name: "two exact rows", line: strings.Repeat("-", 2*width-1) + "#", rows: 2},
 		{name: "three exact rows", line: strings.Repeat("-", 3*width-1) + "#", rows: 3},
 		{name: "wide characters", line: strings.Repeat("界", width-1) + "-#", rows: 2},
+		{name: "wide character wraps early", line: strings.Repeat("a", width-1) + "界" + strings.Repeat("a", width-1), rows: 3},
+		{name: "space at wrap point", line: strings.Repeat("a", width) + " " + strings.Repeat("b", width), rows: 3},
+		{name: "trailing padding", line: "abc" + strings.Repeat(" ", 3*width-3), rows: 3},
+		{name: "leading wide space", line: strings.Repeat("　", 20) + "x", rows: 2},
 		{name: "styled", line: "\x1b[31m" + strings.Repeat("-", 2*width-1) + "#" + ansi.ResetStyle, rows: 2},
 		{name: "multiple lines", line: strings.Repeat("-", width-1) + "#\n" + strings.Repeat("-", 2*width-1) + "#", rows: 3},
 	}
