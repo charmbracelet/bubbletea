@@ -124,7 +124,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		// Don't match any of the keys below if we're actively filtering.
-		if m.list.FilterState() == list.Filtering {
+		if m.list.SettingFilter() {
 			break
 		}
 
