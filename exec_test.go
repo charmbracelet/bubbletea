@@ -75,7 +75,8 @@ func TestTeaExec(t *testing.T) {
 		},
 	}
 
-	if runtime.GOOS != "windows" {
+	// js/wasm has no processes to run, so only the failing case applies.
+	if runtime.GOOS != "windows" && runtime.GOOS != "js" {
 		tests = append(tests, []test{
 			{
 				name:      "true",
@@ -121,6 +122,9 @@ func TestTeaExec(t *testing.T) {
 }
 
 func TestTeaExecWithNilInput(t *testing.T) {
+	if runtime.GOOS == "js" {
+		t.Skip("js/wasm cannot start processes")
+	}
 	t.Parallel()
 	var buf bytes.Buffer
 
