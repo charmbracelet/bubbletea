@@ -63,6 +63,10 @@ type renderer interface {
 
 	// onMouse handles a mouse event.
 	onMouse(MouseMsg) Cmd
+
+	// reportsProgramResume reports whether the program is telling the
+	// terminal how to resume it. See [View.ProgramResume].
+	reportsProgramResume() bool
 }
 
 type printLineMessage struct {

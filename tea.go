@@ -160,6 +160,23 @@ type View struct {
 	// leaving a working or blocked status behind.
 	ProgramStatus *ProgramStatus
 
+	// ProgramResume when not nil, tells the terminal how to resume the
+	// program after the terminal restarts, using the Program Resume Protocol
+	// (OSC 7577). Support depends on the terminal: one that supports it sets
+	// the OSC7577_TOKEN environment variable (see [EnvMsg]), and nothing is
+	// reported without it. Resuming is a hint the terminal may ignore.
+	//
+	// Changing it sends a new report, and setting it back to nil, or to a
+	// command that can't be reported, clears the record. It is reported again
+	// when the program gets the terminal back after a suspend or [Exec].
+	// While it is set, programs started with [ExecProcess] don't inherit the
+	// token, so they can't take the program's place.
+	//
+	// It is not cleared when the program exits, because a program that exits
+	// as the terminal closes must keep it. When the user quits, leave it nil
+	// in the last view so the terminal doesn't bring the program back.
+	ProgramResume *ProgramResume
+
 	// AltScreen puts the program in the alternate screen buffer
 	// (i.e. the program goes into full window mode). Note that the altscreen will
 	// be automatically exited when the program quits.
