@@ -1447,6 +1447,12 @@ func (p *Program) shutdown(kill bool) {
 
 		p.shutdownInput()
 
+		// Flush output that is still queued, e.g. a tea.Raw printed right
+		// before tea.Quit, before the renderer leaves the alternate screen.
+		// Otherwise it is written after the terminal is restored, onto the
+		// primary screen.
+		p.keepWriteErr(p.flush())
+
 		if p.renderer != nil {
 			p.stopRenderer(kill)
 		}
