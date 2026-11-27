@@ -371,6 +371,12 @@ func (s *cursedRenderer) flushLocked(closing bool) (bool, error) {
 		return false, nil
 	}
 
+	// Use the previous frame before replacing its cells, once per redraw even
+	// if several resize events arrived since it was drawn.
+	if !view.AltScreen {
+		s.skipReflowedRows()
+	}
+
 	// We're no longer starting.
 	s.starting = false
 	s.pendingErase = false
@@ -751,6 +757,49 @@ func (s *cursedRenderer) resize(w, h int) {
 	s.pendingErase = true
 	s.viewStale = true
 	s.mu.Unlock()
+}
+
+// skipReflowedRows accounts for terminal reflow before the relative cursor
+// move to the top of the previous frame. This assumes the terminal reflows
+// using the rendered cell widths. GNU screen truncates instead, so adjusting
+// there could erase output above the frame.
+func (s *cursedRenderer) skipReflowedRows() {
+	width := s.width
+	if width <= 0 || width >= s.cellbuf.Width() || s.lastView == nil || s.lastView.AltScreen {
+		return
+	}
+	if uv.Environ(s.env).Getenv("STY") != "" {
+		return
+	}
+
+	// Use the clipped cells actually drawn above the cursor, not the source
+	// view or the unused columns at the end of each row.
+	_, y := s.scr.Position()
+	var reflowed int
+	for i := 0; i < y && i < len(s.cellbuf.Lines); i++ {
+		row := s.cellbuf.Lines[i]
+		end := len(row)
+		for end > 0 && (row[end-1].Width == 0 || row[end-1].Equal(&uv.EmptyCell)) {
+			end--
+		}
+		var col int
+		for _, cell := range row[:end] {
+			if cell.Width <= 0 || cell.Width > width {
+				continue
+			}
+			// A wide cell moves whole to the next row, leaving a gap.
+			if col+cell.Width > width {
+				reflowed++
+				col = 0
+			}
+			col += cell.Width
+		}
+	}
+	if reflowed > 0 {
+		// Leave the logical cursor alone so the redraw's relative move
+		// adds to this one.
+		_, _ = s.scr.WriteString(ansi.CursorUp(reflowed))
+	}
 }
 
 // clearScreen implements renderer.
